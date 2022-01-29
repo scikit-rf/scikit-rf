@@ -276,16 +276,7 @@ class VectorFitting:
                 # coefficient matrix A
 
                 A_sub = np.empty((len(freqs_norm), n_cols_unused + n_cols_used), dtype=complex)
-                A_sub_real = np.empty((len(freqs_norm), n_poles_real_it, 2), dtype=complex)
-                A_sub_cplx = np.empty((len(freqs_norm), n_poles_cplx_it, 2, 2), dtype=complex)
-                A_sub_dres = np.empty((len(freqs_norm)), dtype=complex)
-
-                #if fit_constant:
-                A_sub_const = np.empty((len(freqs_norm)), dtype=complex)
-                #if fit_proportional:
-                A_sub_prop = np.empty((len(freqs_norm)), dtype=complex)
-                
-                A_row_extra_cplx = np.empty((A_sub_cplx.shape[1], 2))
+                A_row_extra = np.empty(n_cols_used)
 
                 # responses will be weighted according to their norm;
                 # alternative: equal weights with weight_response = 1.0
@@ -302,26 +293,35 @@ class VectorFitting:
                 poles_real_idx = np.nonzero(real_mask)
                 poles_real = poles[poles_real_idx]
 
-                A_sub_real_idx = poles_real_idx[0] * 2
+                A_sub_real_mask = []
+                for rm in real_mask:
+                    if rm:
+                        A_sub_real_mask += [True]
+                    else:
+                        A_sub_real_mask += [False, False]
+                
+                A_sub_real_mask = np.array(A_sub_real_mask)
+                
+                A_sub_real_idx = np.nonzero(A_sub_real_mask)[0]
 
                 denom = (omega[:, None] ** 2 + poles_real ** 2)
                 coeff = - (poles_real + 1j * omega[:, None]) / denom
 
                 # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
-                A_sub_real[:, :, 0] = coeff
+                A_sub[:, A_sub_real_idx] = coeff
 
                 # part 3: coeff = -1 * H(s_k) / (s_k - pole)
                 # Re{coeff} = -1 * coeff_re * resp_re + coeff_im * resp_im
                 # Im{coeff} = -1 * coeff_re * resp_im - coeff_im * resp_re
-                A_sub_real[:, :, 1] = - coeff * freq_response[:, None]
+                A_sub[:, A_sub_real_idx + n_cols_unused] = - coeff * freq_response[:, None]
 
                 # extra equation to avoid trivial solution:
                 # coeff += Re(1 / (s_k - pole)) = coeff_re
-                A_row_extra_real = np.sum(coeff.real, axis=0)
+                A_row_extra[A_sub_real_idx] = np.sum(coeff.real, axis=0)
 
                 poles_cplx_idx = np.nonzero(~real_mask)
                 poles_cplx = poles[poles_cplx_idx]
-                A_sub_real_idx = np.concatenate((2 * poles_cplx_idx[0], 2 * poles_cplx_idx[0] + 1))
+                A_sub_cplx_idx = np.nonzero(~A_sub_real_mask)[0][::2]
 
                 # coefficient for a complex pole of a conjugated pair: p = p' + jp''
                 denom1 = poles_cplx.real ** 2 + (omega[:, None] - poles_cplx.imag) ** 2
@@ -331,72 +331,46 @@ class VectorFitting:
                 # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
                 coeff = (-1 * poles_cplx.real * (1 / denom1 + 1 / denom2)
                                 +1j * ((poles_cplx.imag - omega[:, None]) / denom1 - (poles_cplx.imag + omega[:, None]) / denom2))
-                A_sub_cplx[:, :, 0, 0] = coeff
+                A_sub[:, A_sub_cplx_idx] = coeff
 
                 # extra equation to avoid trivial solution:
                 # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
 
-                A_row_extra_cplx[:, 0] = np.sum(coeff.real, axis=0)
+                A_row_extra[A_sub_cplx_idx] = np.sum(coeff.real, axis=0)
                 # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
-                A_sub_cplx[:, :, 1, 0] = - coeff * freq_response[:, None]
+                A_sub[:, A_sub_cplx_idx + n_cols_unused] = - coeff * freq_response[:, None]
 
                 # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
                 #               = (p'' - omega + j p') * (1 / denom2 - 1 / denom1)
                 coeff = ((omega[:, None] - poles_cplx.imag) / denom1 - (omega[:, None] + poles_cplx.imag) / denom2
                             + 1j * poles_cplx.real * (1 / denom2 - 1 / denom1)
                         )
-                A_sub_cplx[:, :, 0, 1] = coeff
+                A_sub[:, A_sub_cplx_idx + 1] = coeff
 
                 # extra equation to avoid trivial solution:
                 # coeff += Re(1j / (s_k - pole) - 1j / (s_k - conj(pole)))
 
-                A_row_extra_cplx[:, 1] = np.sum(coeff.real, axis=0)
+                A_row_extra[A_sub_cplx_idx + 1] = np.sum(coeff.real, axis=0)
                 # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
-                A_sub_cplx[:, :, 1, 1] = -coeff * freq_response[:, None]
+                A_sub[:, A_sub_cplx_idx + 1 + n_cols_unused] = -coeff * freq_response[:, None]
 
                 # part 4: constant (variable d_res)
                 # coeff = -1 * H(s_k)
-                A_sub_dres[:] = -freq_response
+                A_sub[:,-1] = - freq_response
 
                 # part 2: constant (variable d) and proportional term (variable e)
+                offset = n_cols_unused - 1
                 if fit_constant:
                     # coeff = 1 + j0
-                    A_sub_const[:] = 1
+                    A_sub[:, offset] = 1
+                    offset -=1
                     
                 if fit_proportional:
                     # coeff = s_k = j omega_k
-                    A_sub_prop[:] = 1j * omega    
+                    A_sub[:, offset] = 1j * omega
+                    
                 
-                col_real = 0
-                col_cplx = 0
-                offset = 0
-
-                A_row_extra = np.zeros(n_cols_used)
-                for i in range(len(poles)):
-                    if real_mask[i]:
-                        A_sub[:, offset] = A_sub_real[:, col_real, 0]
-                        A_sub[:, offset + n_cols_unused] = A_sub_real[:, col_real, 1]
-                        A_row_extra[offset] = A_row_extra_real[col_real]
-                        col_real += 1
-                        offset += 1
-                    if ~real_mask[i]:
-                        A_sub[:, offset] = A_sub_cplx[:, col_cplx, 0, 0]
-                        A_sub[:, offset + n_cols_unused] = A_sub_cplx[:, col_cplx, 1, 0]
-                        A_sub[:, offset + 1] = A_sub_cplx[:, col_cplx, 0, 1]
-                        A_sub[:, offset + n_cols_unused + 1] = A_sub_cplx[:, col_cplx, 1, 1]
-                        A_row_extra[offset: offset+2] = A_row_extra_cplx[col_cplx].flatten()
-                        col_cplx += 1
-                        offset += 2
-
                 A_row_extra[-1] = len(freqs_norm)
-
-                A_sub[:, -1] = A_sub_dres
-                offset = n_cols_unused - 1
-                if fit_proportional:
-                    A_sub[:, offset] = A_sub_prop
-                    offset -= 1
-                if fit_constant:
-                    A_sub[:, offset] = A_sub_const
 
                 # QR decomposition
                 A_ri = np.empty((2 * A_sub.shape[0], A_sub.shape[1]))
