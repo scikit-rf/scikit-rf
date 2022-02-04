@@ -383,7 +383,7 @@ class VectorFitting:
                 A_ri[::2] = A_sub.real
                 A_ri[1::2] = A_sub.imag
 
-                Q, R = np.linalg.qr(A_ri, 'reduced')
+                R = np.linalg.qr(A_ri, 'r')
 
                 # only R22 is required to solve for c_res and d_res
                 R22 = R[n_cols_unused:, n_cols_unused:]
