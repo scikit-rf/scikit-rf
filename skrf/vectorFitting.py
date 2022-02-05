@@ -260,6 +260,7 @@ class VectorFitting:
         converged = False
 
         omega = 2 * np.pi * freqs_norm
+        s = 1j * omega
         
 
         while iterations > 0:
@@ -310,7 +311,7 @@ class VectorFitting:
                 # part 1: first sum of rational functions (residue variable c)
                 # merged with
                 # part 3: second sum of rational functions (variable c_res)
-                coeff = 1 / (1j * omega[:, None] - poles_real)
+                coeff = 1 / (s[:, None] - poles_real)
 
                 # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
                 A_sub[:, A_sub_real_idx] = coeff
@@ -328,7 +329,7 @@ class VectorFitting:
 
                 # row 1: add coefficient for real part of residue
                 # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
-                coeff = 1 / (1j * omega[:, None] - poles_cplx) + 1 / (1j * omega[:, None] - np.conj(poles_cplx))
+                coeff = 1 / (s[:, None] - poles_cplx) + 1 / (s[:, None] - np.conj(poles_cplx))
                 A_sub[:, A_sub_cplx_idx] = coeff
 
                 # extra equation to avoid trivial solution:
@@ -339,7 +340,7 @@ class VectorFitting:
                 A_sub[:, A_sub_cplx_idx + n_cols_unused] = - coeff * freq_response[:, None]
 
                 # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
-                coeff = 1j / (1j * omega[:, None] - poles_cplx) - 1j / (1j * omega[:, None] - np.conj(poles_cplx))
+                coeff = 1j / (s[:, None] - poles_cplx) - 1j / (s[:, None] - np.conj(poles_cplx))
                 A_sub[:, A_sub_cplx_idx + 1] = coeff
 
                 # extra equation to avoid trivial solution:
@@ -362,7 +363,7 @@ class VectorFitting:
                     
                 if fit_proportional:
                     # coeff = s_k = j omega_k
-                    A_sub[:, offset] = 1j * omega
+                    A_sub[:, offset] = s
                     
                 
                 A_row_extra[-1] = len(freqs_norm)
@@ -530,22 +531,22 @@ class VectorFitting:
             # add coefficients for a pair of complex conjugate poles
             # part 1: first sum of rational functions (residue variable c)
 
-            A_matrix[:, A_sub_real_idx] = 1 / (1j * omega[:, None] - poles_real)
+            A_matrix[:, A_sub_real_idx] = 1 / (s[:, None] - poles_real)
 
             # coefficient for real part of residue
-            A_matrix[:, A_sub_cplx_idx] = (1 / (1j * omega[:, None] - poles_cplx) + 
-                1 / (1j * omega[:, None] - np.conj(poles_cplx)))
+            A_matrix[:, A_sub_cplx_idx] = (1 / (s[:, None] - poles_cplx) + 
+                1 / (s[:, None] - np.conj(poles_cplx)))
 
             # coefficient for imaginary part of residue
-            A_matrix[:, A_sub_cplx_idx + 1] = (1j / (1j * omega[:, None] - poles_cplx) 
-                - 1j / (1j * omega[:, None] - np.conj(poles_cplx)))
+            A_matrix[:, A_sub_cplx_idx + 1] = (1j / (s[:, None] - poles_cplx) 
+                - 1j / (s[:, None] - np.conj(poles_cplx)))
 
             offset = np.sum((poles.imag != 0) + 1)
             if fit_constant:
                 A_matrix[:, offset] = 1
                 offset += 1
             if fit_proportional:
-                A_matrix[:, offset] = 1j * omega
+                A_matrix[:, offset] = s
 
             logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
