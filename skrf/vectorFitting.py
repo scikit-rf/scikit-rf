@@ -145,7 +145,6 @@ class VectorFitting:
         
         return np.array(A_sub_real_mask)
 
-    @profile
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """
