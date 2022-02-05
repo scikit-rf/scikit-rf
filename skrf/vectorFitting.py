@@ -141,7 +141,7 @@ class VectorFitting:
         Parameters
         ----------
         poles: np.ndarray
-            The array of poles
+            The complex array of poles
         real: bool
             Return the indices for real values poles if True, the indices of complex valued poles otherwise
         """
