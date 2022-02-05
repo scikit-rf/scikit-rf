@@ -297,8 +297,6 @@ class VectorFitting:
                 # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
                 weight_response = np.linalg.norm(freq_response)
 
-                
-
                 # Split up real and complex poles and store the correspondend column from A_sub
                 real_mask = poles.imag == 0
                 poles_real = poles[np.nonzero(real_mask)]
@@ -312,8 +310,7 @@ class VectorFitting:
                 # part 1: first sum of rational functions (residue variable c)
                 # merged with
                 # part 3: second sum of rational functions (variable c_res)
-                denom = (omega[:, None] ** 2 + poles_real ** 2)
-                coeff = - (poles_real + 1j * omega[:, None]) / denom
+                coeff = 1 / (1j * omega[:, None] - poles_real)
 
                 # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
                 A_sub[:, A_sub_real_idx] = coeff
@@ -327,15 +324,11 @@ class VectorFitting:
                 # coeff += Re(1 / (s_k - pole)) = coeff_re
                 A_row_extra[A_sub_real_idx] = np.sum(coeff.real, axis=0)
 
-
                 # coefficient for a complex pole of a conjugated pair: p = p' + jp''
-                denom1 = poles_cplx.real ** 2 + (omega[:, None] - poles_cplx.imag) ** 2
-                denom2 = poles_cplx.real ** 2 + (omega[:, None] + poles_cplx.imag) ** 2
 
                 # row 1: add coefficient for real part of residue
                 # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
-                coeff = (-1 * poles_cplx.real * (1 / denom1 + 1 / denom2)
-                                +1j * ((poles_cplx.imag - omega[:, None]) / denom1 - (poles_cplx.imag + omega[:, None]) / denom2))
+                coeff = 1 / (1j * omega[:, None] - poles_cplx) + 1 / (1j * omega[:, None] - np.conj(poles_cplx))
                 A_sub[:, A_sub_cplx_idx] = coeff
 
                 # extra equation to avoid trivial solution:
@@ -346,10 +339,7 @@ class VectorFitting:
                 A_sub[:, A_sub_cplx_idx + n_cols_unused] = - coeff * freq_response[:, None]
 
                 # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
-                #               = (p'' - omega + j p') * (1 / denom2 - 1 / denom1)
-                coeff = ((omega[:, None] - poles_cplx.imag) / denom1 - (omega[:, None] + poles_cplx.imag) / denom2
-                            + 1j * poles_cplx.real * (1 / denom2 - 1 / denom1)
-                        )
+                coeff = 1j / (1j * omega[:, None] - poles_cplx) - 1j / (1j * omega[:, None] - np.conj(poles_cplx))
                 A_sub[:, A_sub_cplx_idx + 1] = coeff
 
                 # extra equation to avoid trivial solution:
@@ -540,22 +530,15 @@ class VectorFitting:
             # add coefficients for a pair of complex conjugate poles
             # part 1: first sum of rational functions (residue variable c)
 
-            denom = poles_real.real ** 2 + omega[:, None] ** 2
-            A_matrix[:, A_sub_real_idx] = - (poles_real + 1j * omega[:, None]) / denom
+            A_matrix[:, A_sub_real_idx] = 1 / (1j * omega[:, None] - poles_real)
 
             # coefficient for real part of residue
-            denom1 = poles_cplx.real ** 2 + (omega[:, None] - poles_cplx.imag) ** 2
-            denom2 = poles_cplx.real ** 2 + (omega[:, None] + poles_cplx.imag) ** 2
-            A_matrix[:, A_sub_cplx_idx] = (
-                -1 * poles_cplx.real * (1 / denom1 + 1 / denom2)
-                + 1j * ((poles_cplx.imag - omega[:, None]) / denom1 - (poles_cplx.imag + omega[:, None]) / denom2)
-            )
-            
+            A_matrix[:, A_sub_cplx_idx] = (1 / (1j * omega[:, None] - poles_cplx) + 
+                1 / (1j * omega[:, None] - np.conj(poles_cplx)))
+
             # coefficient for imaginary part of residue
-            A_matrix[:, A_sub_cplx_idx + 1] = (
-                (omega[:, None] - poles_cplx.imag) / denom1 - (poles_cplx.imag + omega[:, None]) / denom2
-                + 1j * poles_cplx.real * (1 / denom2 - 1 / denom1)
-            )
+            A_matrix[:, A_sub_cplx_idx + 1] = (1j / (1j * omega[:, None] - poles_cplx) 
+                - 1j / (1j * omega[:, None] - np.conj(poles_cplx)))
 
             offset = np.sum((poles.imag != 0) + 1)
             if fit_constant:
