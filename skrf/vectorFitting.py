@@ -314,10 +314,8 @@ class VectorFitting:
                 # layout of this row in A_sub:
                 # [pole1, pole2, ..., (constant), (proportional), pole1, pole2, ..., constant]
                 A_sub = np.empty((len(freqs_norm), n_cols_unused + n_cols_used), dtype=complex)
-                A_sub[:] = np.nan
 
                 A_row_extra = np.empty(n_cols_used)
-                A_row_extra[:] = np.nan
 
                 # responses will be weighted according to their norm;
                 # alternative: equal weights with weight_response = 1.0
