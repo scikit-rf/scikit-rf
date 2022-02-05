@@ -85,7 +85,6 @@ class VectorFitting:
 
     def __init__(self, network: 'Network'):
         self.network = network
-        self.initial_poles = None
 
         self.poles = None
         """ Instance variable holding the list of fitted poles. Will be initialized by :func:`vector_fit`. """
@@ -146,6 +145,7 @@ class VectorFitting:
         
         return np.array(A_sub_real_mask)
 
+    @profile
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """
@@ -228,7 +228,7 @@ class VectorFitting:
             poles[i_offset + i] = (-0.01 + 1j) * omega
 
         # save initial poles (un-normalize first)
-        self.initial_poles = poles * norm
+        initial_poles = poles * norm
         max_singular = 1
 
         logging.info('### Starting pole relocation process.\n')
@@ -378,9 +378,6 @@ class VectorFitting:
                 # only R22 is required to solve for c_res and d_res
                 R22 = R[n_cols_unused:, n_cols_unused:]
 
-                # similarly, only right half of Q is required (not used here, because RHS is zero)
-                # Q2 = Q[:, n_cols_unused:]
-
                 # apply weight of this response and add coefficients to the system matrix
                 A[i_response * n_cols_used:(i_response + 1) * n_cols_used, :] = np.sqrt(weight_response) * R22
                 # multiplication of Q2 by rhs=0 omitted; right-hand side would also require weighting
@@ -495,7 +492,7 @@ class VectorFitting:
 
         # ITERATIONS DONE
         logging.info('Initial poles before relocation:')
-        logging.info(self.initial_poles)
+        logging.info(initial_poles)
 
         logging.info('Final poles:')
         logging.info(poles * norm)
