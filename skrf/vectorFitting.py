@@ -132,9 +132,18 @@ class VectorFitting:
                       'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
         self.residues = value
 
-    def _get_real_pole_mask(self, poles: np.ndarray) -> np.ndarray:
-        """
-        Returns a mask need for addressing the A matrices
+    def _get_pole_idx(self, poles: np.ndarray, real: bool) -> np.ndarray:
+        """Returns the indices for addressing the A matrix.
+
+        A matrix contains one column for a real pole and two columns for complex poles.
+        Return the appropriate indizes, by checking the imaginary part of the specified poles.
+
+        Parameters
+        ----------
+        poles: np.ndarray
+            The array of poles
+        real: bool
+            Return the indices for real values poles if True, the indices of complex valued poles otherwise
         """
         A_sub_real_mask = []
         for rm in poles.imag == 0:
@@ -142,9 +151,19 @@ class VectorFitting:
                 A_sub_real_mask += [True]
             else:
                 A_sub_real_mask += [False, False]
-        
-        return np.array(A_sub_real_mask)
 
+        A_sub_real_mask = np.array(A_sub_real_mask)
+
+        if not real:
+            A_sub_real_mask = ~A_sub_real_mask
+
+        idx = np.nonzero(A_sub_real_mask)[0]
+
+        if not real:
+            idx = idx[::2]
+        
+        return idx
+    
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """
@@ -218,7 +237,7 @@ class VectorFitting:
         # add real poles
         for i, f in enumerate(pole_freqs_real):
             omega = 2 * np.pi * f
-            poles[i] = - omega
+            poles[i] = -1 * omega
 
         # add complex-conjugate poles (store only positive imaginary parts)
         i_offset = len(pole_freqs_real)
@@ -268,6 +287,9 @@ class VectorFitting:
             # count number of rows and columns in final coefficient matrix to solve for (c_res, d_res)
             # (ratio #real/#complex poles might change during iterations)
 
+            # We need two columns for complex poles and one column for real poles in A matrix.
+            # poles.imag != 0 is True(1) for complex poles, False (0) for real poles.
+            # Adding one to each element gives 2 columns for complex and 1 column for real poles.
             n_cols_unused = np.sum((poles.imag != 0) + 1)
 
             n_cols_used = n_cols_unused
@@ -289,8 +311,13 @@ class VectorFitting:
                 # A_sub which will be reduced first (QR decomposition) and then filled into the main
                 # coefficient matrix A
 
+                # layout of this row in A_sub:
+                # [pole1, pole2, ..., (constant), (proportional), pole1, pole2, ..., constant]
                 A_sub = np.empty((len(freqs_norm), n_cols_unused + n_cols_used), dtype=complex)
+                A_sub[:] = np.nan
+
                 A_row_extra = np.empty(n_cols_used)
+                A_row_extra[:] = np.nan
 
                 # responses will be weighted according to their norm;
                 # alternative: equal weights with weight_response = 1.0
@@ -302,29 +329,24 @@ class VectorFitting:
                 poles_real = poles[np.nonzero(real_mask)]
                 poles_cplx = poles[np.nonzero(~real_mask)]
 
-                A_sub_real_idx = np.nonzero(self._get_real_pole_mask(poles))[0]
-                A_sub_cplx_idx = np.nonzero(~self._get_real_pole_mask(poles))[0][::2]
-
+                A_sub_real_idx = self._get_pole_idx(poles, real=True)
+                A_sub_cplx_idx = self._get_pole_idx(poles, real=False)
 
                 # add coefficients for a pair of complex conjugate poles
                 # part 1: first sum of rational functions (residue variable c)
                 # merged with
                 # part 3: second sum of rational functions (variable c_res)
-                coeff = 1 / (s[:, None] - poles_real)
 
                 # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
+                coeff = 1 / (s[:, None] - poles_real)
                 A_sub[:, A_sub_real_idx] = coeff
 
                 # part 3: coeff = -1 * H(s_k) / (s_k - pole)
-                # Re{coeff} = -1 * coeff_re * resp_re + coeff_im * resp_im
-                # Im{coeff} = -1 * coeff_re * resp_im - coeff_im * resp_re
                 A_sub[:, A_sub_real_idx + n_cols_unused] = - coeff * freq_response[:, None]
 
                 # extra equation to avoid trivial solution:
                 # coeff += Re(1 / (s_k - pole)) = coeff_re
                 A_row_extra[A_sub_real_idx] = np.sum(coeff.real, axis=0)
-
-                # coefficient for a complex pole of a conjugated pair: p = p' + jp''
 
                 # row 1: add coefficient for real part of residue
                 # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
@@ -333,8 +355,8 @@ class VectorFitting:
 
                 # extra equation to avoid trivial solution:
                 # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
-
                 A_row_extra[A_sub_cplx_idx] = np.sum(coeff.real, axis=0)
+
                 # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
                 A_sub[:, A_sub_cplx_idx + n_cols_unused] = - coeff * freq_response[:, None]
 
@@ -343,9 +365,9 @@ class VectorFitting:
                 A_sub[:, A_sub_cplx_idx + 1] = coeff
 
                 # extra equation to avoid trivial solution:
-                # coeff += Re(1j / (s_k - pole) - 1j / (s_k - conj(pole)))
-
+                # coeff = sum(Re(1j / (s_k - pole) - 1j / (s_k - conj(pole))))
                 A_row_extra[A_sub_cplx_idx + 1] = np.sum(coeff.real, axis=0)
+
                 # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
                 A_sub[:, A_sub_cplx_idx + 1 + n_cols_unused] = -coeff * freq_response[:, None]
 
@@ -364,13 +386,10 @@ class VectorFitting:
                     # coeff = s_k = j omega_k
                     A_sub[:, offset] = s
                     
-                
                 A_row_extra[-1] = len(freqs_norm)
 
                 # QR decomposition
-                A_ri = np.empty((2 * A_sub.shape[0], A_sub.shape[1]))
-                A_ri[::2] = A_sub.real
-                A_ri[1::2] = A_sub.imag
+                A_ri = A_sub.view(np.float64).reshape(-1, A_sub.shape[1], 2).transpose(0,2,1).reshape((-1, A_sub.shape[1]))
 
                 R = np.linalg.qr(A_ri, 'r')
 
@@ -432,16 +451,11 @@ class VectorFitting:
             poles_new = np.linalg.eigvals(H)
 
             # replace poles for next iteration
-            poles_lst = []
+            # complex poles need to come in complex conjugate pairs; append only the positive part
+            poles = poles_new[np.nonzero(poles_new.imag >= 0)]
 
-            for k, pole in enumerate(poles_new):
-                if pole.imag >= 0.0:
-                    # complex poles need to come in complex conjugate pairs; append only the positive part
-                    poles_lst.append(pole)
-
-            poles = np.array(poles_lst)
             # flip real part of unstable poles (real part needs to be negative for stability)
-            poles.real = - np.abs(poles.real)
+            poles.real = -1 * np.abs(poles.real)
 
 
             # calculate relative changes in the singular values; stop iteration loop once poles have converged
@@ -521,8 +535,8 @@ class VectorFitting:
             poles_real = poles[np.nonzero(real_mask)]
             poles_cplx = poles[np.nonzero(~real_mask)]
 
-            A_sub_real_idx = np.nonzero(self._get_real_pole_mask(poles))[0]
-            A_sub_cplx_idx = np.nonzero(~self._get_real_pole_mask(poles))[0][::2]
+            A_sub_real_idx = self._get_pole_idx(poles, real=True)
+            A_sub_cplx_idx = self._get_pole_idx(poles, real=False)
 
             # add coefficients for a pair of complex conjugate poles
             # part 1: first sum of rational functions (residue variable c)
