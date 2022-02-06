@@ -386,9 +386,17 @@ class VectorFitting:
                     
                 A_row_extra[-1] = len(freqs_norm)
 
-                # QR decomposition
-                A_ri = A_sub.view(np.float64).reshape(-1, A_sub.shape[1], 2).transpose(0,2,1).reshape((-1, A_sub.shape[1]))
+                # (view) View complex array (rows,cols) as float (rows,cols * 2)
+                # (reshape) Put complex tuples in an own dimension (rows,cols,2)
+                # (transpose) Swap last two dimensions (rows, 2, cols)
+                # (reshape) Merge rows and second dimension (rows * 2, cols)
+                # This results in rows with alternating real/imaginary content
+                A_ri = A_sub.view(np.float64) \
+                    .reshape(-1, A_sub.shape[1], 2) \
+                    .transpose(0,2,1) \
+                    .reshape((-1, A_sub.shape[1]))
 
+                # QR decomposition
                 R = np.linalg.qr(A_ri, 'r')
 
                 # only R22 is required to solve for c_res and d_res
