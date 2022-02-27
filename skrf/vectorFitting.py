@@ -251,23 +251,25 @@ class VectorFitting:
 
         logging.info('### Starting pole relocation process.\n')
 
+        # select network representation type
+        if parameter_type.lower() == 's':
+            freq_responses = self.network.s
+        elif parameter_type.lower() == 'z':
+            freq_responses = self.network.z
+        elif parameter_type.lower() == 'y':
+            freq_responses = self.network.y
+        else:
+            warnings.warn('Invalid choice of matrix parameter type (S, Z, or Y); proceeding with scattering '
+                          'representation.', UserWarning, stacklevel=2)
+            freq_responses = self.network.s
+
+        n_responses = self.network.nports ** 2
+        n_freqs = len(freqs_norm)
+
         # stack frequency responses as a single vector
         # stacking order (row-major):
         # s11, s12, s13, ..., s21, s22, s23, ...
-        freq_responses = []
-        for i in range(self.network.nports):
-            for j in range(self.network.nports):
-                if parameter_type.lower() == 's':
-                    freq_responses.append(self.network.s[:, i, j])
-                elif parameter_type.lower() == 'z':
-                    freq_responses.append(self.network.z[:, i, j])
-                elif parameter_type.lower() == 'y':
-                    freq_responses.append(self.network.y[:, i, j])
-                else:
-                    warnings.warn('Invalid choice of matrix parameter type (S, Z, or Y); proceeding with scattering '
-                                  'representation.', UserWarning, stacklevel=2)
-                    freq_responses.append(self.network.s[:, i, j])
-        freq_responses = np.array(freq_responses)
+        freq_responses = np.reshape(np.transpose(freq_responses), (n_responses, n_freqs))
 
         # ITERATIVE FITTING OF POLES to the provided frequency responses
         # initial set of poles will be replaced with new poles after every iteration
