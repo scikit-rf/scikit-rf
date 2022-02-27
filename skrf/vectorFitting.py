@@ -329,8 +329,16 @@ class VectorFitting:
                 poles_real = poles[np.nonzero(real_mask)]
                 poles_cplx = poles[np.nonzero(~real_mask)]
 
-                A_sub_real_idx = self._get_pole_idx(poles, real=True)
-                A_sub_cplx_idx = self._get_pole_idx(poles, real=False)
+                # positions (columns) of coefficients for real and complex-conjugate terms in the rows of A are arbitrary
+                # however, the calculated residues in the results vector will have the same positions
+                # so, to simplify the indexing of real and imaginary parts of the residues, let's place real poles first,
+                # then complex-conjugate poles with their respective real and imaginary parts:
+                # [r1', r2', ..., r3', r3'', r4', r4'', ...]
+                n_real = len(poles_real)
+                n_cmplx = len(poles_cplx)
+                idx_res_real = np.arange(n_real)
+                idx_res_complex_re = n_real + 2 * np.arange(n_cmplx)
+                idx_res_complex_im = idx_res_complex_re + 1
 
                 # add coefficients for a pair of complex conjugate poles
                 # part 1: first sum of rational functions (residue variable c)
@@ -339,37 +347,37 @@ class VectorFitting:
 
                 # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
                 coeff = 1 / (s[:, None] - poles_real)
-                A_sub[:, A_sub_real_idx] = coeff
+                A_sub[:, idx_res_real] = coeff
 
                 # part 3: coeff = -1 * H(s_k) / (s_k - pole)
-                A_sub[:, A_sub_real_idx + n_cols_unused] = - coeff * freq_response[:, None]
+                A_sub[:, idx_res_real + n_cols_unused] = - coeff * freq_response[:, None]
 
                 # extra equation to avoid trivial solution:
                 # coeff += Re(1 / (s_k - pole)) = coeff_re
-                A_row_extra[A_sub_real_idx] = np.sum(coeff.real, axis=0)
+                A_row_extra[idx_res_real] = np.sum(coeff.real, axis=0)
 
                 # row 1: add coefficient for real part of residue
                 # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
                 coeff = 1 / (s[:, None] - poles_cplx) + 1 / (s[:, None] - np.conj(poles_cplx))
-                A_sub[:, A_sub_cplx_idx] = coeff
+                A_sub[:, idx_res_complex_re] = coeff
 
                 # extra equation to avoid trivial solution:
                 # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
-                A_row_extra[A_sub_cplx_idx] = np.sum(coeff.real, axis=0)
+                A_row_extra[idx_res_complex_re] = np.sum(coeff.real, axis=0)
 
                 # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
-                A_sub[:, A_sub_cplx_idx + n_cols_unused] = - coeff * freq_response[:, None]
+                A_sub[:, idx_res_complex_re + n_cols_unused] = - coeff * freq_response[:, None]
 
                 # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
                 coeff = 1j / (s[:, None] - poles_cplx) - 1j / (s[:, None] - np.conj(poles_cplx))
-                A_sub[:, A_sub_cplx_idx + 1] = coeff
+                A_sub[:, idx_res_complex_im] = coeff
 
                 # extra equation to avoid trivial solution:
                 # coeff = sum(Re(1j / (s_k - pole) - 1j / (s_k - conj(pole))))
-                A_row_extra[A_sub_cplx_idx + 1] = np.sum(coeff.real, axis=0)
+                A_row_extra[idx_res_complex_im] = np.sum(coeff.real, axis=0)
 
                 # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
-                A_sub[:, A_sub_cplx_idx + 1 + n_cols_unused] = -coeff * freq_response[:, None]
+                A_sub[:, idx_res_complex_im + n_cols_unused] = -coeff * freq_response[:, None]
 
                 # part 4: constant (variable d_res)
                 # coeff = -1 * H(s_k)
@@ -429,19 +437,24 @@ class VectorFitting:
             # build test matrix H, which will hold the new poles as eigenvalues
             H = np.zeros((len(c_res), len(c_res)))
 
-            A_sub_real_idx = self._get_pole_idx(poles, real=True)
-            A_sub_cplx_idx = self._get_pole_idx(poles, real=False)
-            poles_real = poles[np.nonzero(poles.imag == 0)]
-            poles_cplx = poles[np.nonzero(poles.imag != 0)]
+            real_mask = poles.imag == 0
+            poles_real = poles[np.nonzero(real_mask)]
+            poles_cplx = poles[np.nonzero(~real_mask)]
 
-            H[A_sub_real_idx, A_sub_real_idx] = poles_real.real
-            H[A_sub_real_idx] -= c_res / d_res
+            n_real = len(poles_real)
+            n_cmplx = len(poles_cplx)
+            idx_res_real = np.arange(n_real)
+            idx_res_complex_re = n_real + 2 * np.arange(n_cmplx)
+            idx_res_complex_im = idx_res_complex_re + 1
 
-            H[A_sub_cplx_idx, A_sub_cplx_idx] = poles_cplx.real
-            H[A_sub_cplx_idx + 1, A_sub_cplx_idx + 1] = poles_cplx.real
-            H[A_sub_cplx_idx, A_sub_cplx_idx + 1] = poles_cplx.imag
-            H[A_sub_cplx_idx + 1, A_sub_cplx_idx] = -1 * poles_cplx.imag
-            H[A_sub_cplx_idx] -= 2 * c_res / d_res
+            H[idx_res_real, idx_res_real] = poles_real.real
+            H[idx_res_real] -= c_res / d_res
+
+            H[idx_res_complex_re, idx_res_complex_re] = poles_cplx.real
+            H[idx_res_complex_re, idx_res_complex_im] = poles_cplx.imag
+            H[idx_res_complex_im, idx_res_complex_re] = -1 * poles_cplx.imag
+            H[idx_res_complex_im, idx_res_complex_im] = poles_cplx.real
+            H[idx_res_complex_re] -= 2 * c_res / d_res
 
             poles_new = np.linalg.eigvals(H)
 
