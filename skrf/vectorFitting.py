@@ -436,24 +436,21 @@ class VectorFitting:
 
             # build test matrix H, which will hold the new poles as eigenvalues
             H = np.zeros((len(c_res), len(c_res)))
-            i = 0
-            for i_pole in range(len(poles)):
-                # fill diagonal with previous poles
-                pole_re = poles.real[i_pole]
-                pole_im = poles.imag[i_pole]
-                if pole_im == 0.0:
-                    # one row for a real pole
-                    H[i, i] = pole_re
-                    H[i] -= c_res / d_res
-                    i += 1
-                else:
-                    # two rows for a complex pole of a conjugated pair
-                    H[i, i] = pole_re
-                    H[i, i + 1] = pole_im
-                    H[i + 1, i] = -1 * pole_im
-                    H[i + 1, i + 1] = pole_re
-                    H[i] -= 2 * c_res / d_res
-                    i += 2
+
+            A_sub_real_idx = self._get_pole_idx(poles, real=True)
+            A_sub_cplx_idx = self._get_pole_idx(poles, real=False)
+            poles_real = poles[np.nonzero(poles.imag == 0)]
+            poles_cplx = poles[np.nonzero(poles.imag != 0)]
+
+            H[A_sub_real_idx, A_sub_real_idx] = poles_real.real
+            H[A_sub_real_idx] -= c_res / d_res
+
+            H[A_sub_cplx_idx, A_sub_cplx_idx] = poles_cplx.real
+            H[A_sub_cplx_idx + 1, A_sub_cplx_idx + 1] = poles_cplx.real
+            H[A_sub_cplx_idx, A_sub_cplx_idx + 1] = poles_cplx.imag
+            H[A_sub_cplx_idx + 1, A_sub_cplx_idx] = -1 * poles_cplx.imag
+            H[A_sub_cplx_idx] -= 2 * c_res / d_res
+
             poles_new = np.linalg.eigvals(H)
 
             # replace poles for next iteration
