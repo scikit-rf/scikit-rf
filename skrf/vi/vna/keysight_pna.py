@@ -246,15 +246,16 @@ class PNA(abcvna.VNA):
         if raw_data is True:
             if self.scpi.query_channel_correction_state(channel):
                 self.scpi.set_channel_correction_state(channel, False)
-                data = self.scpi.query_snp_data(channel, ports)
+                data = self.scpi.query_snp_data_ascii(channel, ports)
                 self.scpi.set_channel_correction_state(channel, True)
             else:
-                data = self.scpi.query_snp_data(channel, ports)
+                data = self.scpi.query_snp_data_ascii(channel, ports)
         else:
-            data = self.scpi.query_snp_data(channel, ports)
+            data = self.scpi.query_snp_data_ascii(channel, ports)
         self.scpi.set_snp_format(snp_fmt)  # restore the value before we got the RI data
         self.scpi.set_snp_format(snp_fmt)  # restore the value before we got the RI data
 
+        data = np.array(data)
         nrows = int(len(data) / npoints)
         nports = int(np.sqrt((nrows - 1)/2))
         data = data.reshape([nrows, -1])
@@ -336,7 +337,7 @@ class PNA(abcvna.VNA):
             frequency = ch_data["frequency"] = self.get_frequency()
             for trace in ch_data["traces"]:
                 self.scpi.set_selected_meas_by_number(trace["channel"], trace["measurement number"])
-                sdata = self.scpi.query_data(trace["channel"], "SDATA")
+                sdata = np.array(self.scpi.query_data_ascii(trace["channel"], "SDATA"))
                 s = sdata[::2] + 1j * sdata[1::2]
                 ntwk = skrf.Network()
                 ntwk.s = s
@@ -362,9 +363,9 @@ class PNA(abcvna.VNA):
         channel = kwargs.get("channel", self.active_channel)
         sweep_type = self.scpi.query_sweep_type(channel)
         if sweep_type in ["LIN", "LOG", "SEGM"]:
-            freqs = self.scpi.query_sweep_data(channel)
+            freqs = self.scpi.query_sweep_data_ascii(channel)
         else:
-            freqs = np.array([self.scpi.query_f_start(channel)])
+            freqs = np.array([self.scpi.query_f_start_ascii(channel)])
 
         frequency = skrf.Frequency.from_f(freqs, unit="Hz")
         frequency.unit = kwargs.get("f_unit", "Hz")
@@ -460,7 +461,7 @@ class PNA(abcvna.VNA):
             self.sweep(channel=channel)
 
         ntwk = skrf.Network()
-        sdata = self.scpi.query_data(channel)
+        sdata = np.array(self.scpi.query_data_ascii(channel))
         ntwk.s = sdata[::2] + 1j * sdata[1::2]
         ntwk.frequency = self.get_frequency(channel=channel)
         return ntwk
