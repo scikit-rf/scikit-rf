@@ -1305,7 +1305,7 @@ class Network(object):
         return out
 
     @property
-    def f(self) -> Frequency:
+    def f(self) -> npy.ndarray:
         """
         the frequency vector for the network, in Hz.
 
