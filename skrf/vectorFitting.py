@@ -265,17 +265,20 @@ class VectorFitting:
 
         n_responses = self.network.nports ** 2
         n_freqs = len(freqs_norm)
+        n_samples = n_responses * n_freqs
 
         # responses will be weighted according to their norm;
         # alternative: equal weights with weight_response = 1.0
         # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
         weights_responses = np.linalg.norm(freq_responses, axis=0)
+        #weights_responses = np.ones((self.network.nports, self.network.nports))
 
         # weight of extra equation to avoid trivial solution
-        weight_extra = np.linalg.norm(weights_responses * freq_responses) / n_freqs
-        #weights_extra = np.linalg.norm(weights_responses * freq_responses, axis=0) / n_freqs
-        weights_responses = weights_responses.flatten()
-        #weights_extra = weights_extra.flatten()
+        weight_extra = np.linalg.norm(weights_responses * freq_responses) / n_samples
+
+        # weights w are applied directly to the samples, which get squared during least-squares fitting; hence sqrt(w)
+        weights_responses = np.sqrt(weights_responses.flatten())
+        weight_extra = np.sqrt(weight_extra)
 
         # stack frequency responses as a single vector
         # stacking order (row-major):
@@ -371,28 +374,32 @@ class VectorFitting:
             # part 4: constant (variable d_res)
             A[:, :, [-1]] = -1 * freq_responses[:, :, None]
 
-            # weighting
-            A = np.sqrt(weights_responses.flatten(order='C')[:, None, None]) * A
-
             # QR decomposition
             R = np.linalg.qr(np.hstack((A.real, A.imag)), 'r')
 
             # only R22 is required to solve for c_res and d_res
             R22 = R[:, n_cols_unused:, n_cols_unused:]
 
+            # weighting
+            R22 = weights_responses[:, None, None] * R22
+
             # assemble compressed coefficient matrix A_fast by row-stacking individual upper triangular matrices R22
             A_fast = np.empty((n_responses * n_cols_used + 1, n_cols_used))
-            A_fast[:-1, :] = np.hstack(np.vsplit(R22, n_responses))
+            #A_fast[:-1, :] = np.hstack(np.vsplit(R22, n_responses))
+            A_fast[:-1, :] = np.reshape(R22, (n_responses * n_cols_used, n_cols_used))
 
             # extra equations to avoid trivial solution (one for each frequency response)
-            A_fast[-1, idx_res_real] = np.sqrt(weight_extra) * np.sum(coeff_real.real, axis=0)
-            A_fast[-1, idx_res_complex_re] = np.sqrt(weight_extra) * np.sum(coeff_complex_re.real, axis=0)
-            A_fast[-1, idx_res_complex_im] = np.sqrt(weight_extra) * np.sum(coeff_complex_im.real, axis=0)
-            A_fast[-1, -1] = np.sqrt(weight_extra) * n_freqs
+            A_fast[-1, idx_res_real] = np.sum(coeff_real.real, axis=0)
+            A_fast[-1, idx_res_complex_re] = np.sum(coeff_complex_re.real, axis=0)
+            A_fast[-1, idx_res_complex_im] = np.sum(coeff_complex_im.real, axis=0)
+            A_fast[-1, -1] = n_samples
 
-            # right hand side vector
+            # weighting
+            A_fast[-1, :] = weight_extra * A_fast[-1, :]
+
+            # right hand side vector (weighted)
             b = np.zeros(n_responses * n_cols_used + 1)
-            b[-1] = np.sqrt(weight_extra) * n_freqs
+            b[-1] = weight_extra * n_samples
 
             cond_A = np.linalg.cond(A_fast)
             logging.info('Condition number of coeff. matrix A = {}'.format(int(cond_A)))
@@ -419,7 +426,6 @@ class VectorFitting:
             # build test matrix H, which will hold the new poles as eigenvalues
             H = np.zeros((len(c_res), len(c_res)))
 
-            real_mask = poles.imag == 0
             poles_real = poles[np.nonzero(real_mask)]
             poles_cplx = poles[np.nonzero(~real_mask)]
 
