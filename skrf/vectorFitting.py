@@ -251,39 +251,43 @@ class VectorFitting:
 
         logging.info('### Starting pole relocation process.\n')
 
-        # select network representation type
-        if parameter_type.lower() == 's':
-            freq_responses = self.network.s
-        elif parameter_type.lower() == 'z':
-            freq_responses = self.network.z
-        elif parameter_type.lower() == 'y':
-            freq_responses = self.network.y
-        else:
-            warnings.warn('Invalid choice of matrix parameter type (S, Z, or Y); proceeding with scattering '
-                          'representation.', UserWarning, stacklevel=2)
-            freq_responses = self.network.s
-
         n_responses = self.network.nports ** 2
         n_freqs = len(freqs_norm)
         n_samples = n_responses * n_freqs
 
-        # responses will be weighted according to their norm;
-        # alternative: equal weights with weight_response = 1.0
-        # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
-        weights_responses = np.linalg.norm(freq_responses, axis=0)
-        #weights_responses = np.ones((self.network.nports, self.network.nports))
-
-        # weight of extra equation to avoid trivial solution
-        weight_extra = np.linalg.norm(weights_responses * freq_responses) / n_samples
-
-        # weights w are applied directly to the samples, which get squared during least-squares fitting; hence sqrt(w)
-        weights_responses = np.sqrt(weights_responses.flatten())
-        weight_extra = np.sqrt(weight_extra)
+        # select network representation type
+        if parameter_type.lower() == 's':
+            nw_responses = self.network.s
+        elif parameter_type.lower() == 'z':
+            nw_responses = self.network.z
+        elif parameter_type.lower() == 'y':
+            nw_responses = self.network.y
+        else:
+            warnings.warn('Invalid choice of matrix parameter type (S, Z, or Y); proceeding with scattering '
+                          'representation.', UserWarning, stacklevel=2)
+            nw_responses = self.network.s
 
         # stack frequency responses as a single vector
         # stacking order (row-major):
         # s11, s12, s13, ..., s21, s22, s23, ...
-        freq_responses = np.reshape(np.transpose(freq_responses), (n_responses, n_freqs))
+        freq_responses = []
+        for i in range(self.network.nports):
+            for j in range(self.network.nports):
+                freq_responses.append(nw_responses[:, i, j])
+        freq_responses = np.array(freq_responses)
+
+        # responses will be weighted according to their norm;
+        # alternative: equal weights with weight_response = 1.0
+        # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
+        weights_responses = np.linalg.norm(freq_responses, axis=1)
+        #weights_responses = np.ones(self.network.nports ** 2)
+
+        # weight of extra equation to avoid trivial solution
+        weight_extra = np.linalg.norm(weights_responses[:, None] * freq_responses) / n_samples
+
+        # weights w are applied directly to the samples, which get squared during least-squares fitting; hence sqrt(w)
+        weights_responses = np.sqrt(weights_responses)
+        weight_extra = np.sqrt(weight_extra)
 
         # ITERATIVE FITTING OF POLES to the provided frequency responses
         # initial set of poles will be replaced with new poles after every iteration
@@ -385,13 +389,13 @@ class VectorFitting:
 
             # assemble compressed coefficient matrix A_fast by row-stacking individual upper triangular matrices R22
             A_fast = np.empty((n_responses * n_cols_used + 1, n_cols_used))
-            A_fast[:-1, :] = np.reshape(R22, (n_responses * n_cols_used, n_cols_used))
+            A_fast[:-1, :] = R22.reshape((n_responses * n_cols_used, n_cols_used))
 
-            # extra equations to avoid trivial solution (one for each frequency response)
+            # extra equation to avoid trivial solution
             A_fast[-1, idx_res_real] = np.sum(coeff_real.real, axis=0)
             A_fast[-1, idx_res_complex_re] = np.sum(coeff_complex_re.real, axis=0)
             A_fast[-1, idx_res_complex_im] = np.sum(coeff_complex_im.real, axis=0)
-            A_fast[-1, -1] = n_samples
+            A_fast[-1, -1] = np.shape(coeff_real)[0]
 
             # weighting
             A_fast[-1, :] = weight_extra * A_fast[-1, :]
