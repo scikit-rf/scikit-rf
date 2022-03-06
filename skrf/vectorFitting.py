@@ -266,6 +266,17 @@ class VectorFitting:
         n_responses = self.network.nports ** 2
         n_freqs = len(freqs_norm)
 
+        # responses will be weighted according to their norm;
+        # alternative: equal weights with weight_response = 1.0
+        # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
+        weights_responses = np.linalg.norm(freq_responses, axis=0)
+
+        # weight of extra equation to avoid trivial solution
+        weight_extra = np.linalg.norm(weights_responses * freq_responses) / n_freqs
+        #weights_extra = np.linalg.norm(weights_responses * freq_responses, axis=0) / n_freqs
+        weights_responses = weights_responses.flatten()
+        #weights_extra = weights_extra.flatten()
+
         # stack frequency responses as a single vector
         # stacking order (row-major):
         # s11, s12, s13, ..., s21, s22, s23, ...
@@ -281,7 +292,6 @@ class VectorFitting:
 
         omega = 2 * np.pi * freqs_norm
         s = 1j * omega
-        
 
         while iterations > 0:
             logging.info('Iteration {}'.format(self.max_iterations - iterations + 1))
@@ -296,128 +306,100 @@ class VectorFitting:
 
             n_cols_used = n_cols_unused
             n_cols_used += 1
+            idx_constant = []
+            idx_proportional = []
             if fit_constant:
+                idx_constant = [n_cols_unused]
                 n_cols_unused += 1
             if fit_proportional:
+                idx_proportional = [n_cols_unused]
                 n_cols_unused += 1
-            n_rows_A = n_cols_used * len(freq_responses)
 
-            # generate coefficients of approximation function for each target frequency response
-            # responses will be reduced independently using QR decomposition
-            # simplified coeff. matrices of all responses will be stacked in matrix A for least-squares solver
-            A = np.empty((n_rows_A, n_cols_used))
-            b = np.zeros(n_rows_A)
+            real_mask = poles.imag == 0
+            # list of indices in 'poles' with real values
+            idx_poles_real = np.nonzero(real_mask)[0]
+            # list of indices in 'poles' with complex values
+            idx_poles_complex = np.nonzero(~real_mask)[0]
 
-            for i_response, freq_response in enumerate(freq_responses):
-                # calculate coefficients for each frequency response
-                # A_sub which will be reduced first (QR decomposition) and then filled into the main
-                # coefficient matrix A
+            # positions (columns) of coefficients for real and complex-conjugate terms in the rows of A are arbitrary
+            # however, the calculated residues in the results vector will have the same positions
+            # so, to simplify the indexing of real and imaginary parts of the residues, let's place real poles first,
+            # then complex-conjugate poles with their respective real and imaginary parts:
+            # [r1', r2', ..., r3', r3'', r4', r4'', ...]
+            n_real = len(idx_poles_real)
+            n_cmplx = len(idx_poles_complex)
+            idx_res_real = np.arange(n_real)
+            idx_res_complex_re = n_real + 2 * np.arange(n_cmplx)
+            idx_res_complex_im = idx_res_complex_re + 1
 
-                # layout of this row in A_sub:
-                # [pole1, pole2, ..., (constant), (proportional), pole1, pole2, ..., constant]
-                A_sub = np.empty((len(freqs_norm), n_cols_unused + n_cols_used), dtype=complex)
+            # complex coefficient matrix of shape [N_responses, N_freqs, n_cols_unused + n_cols_used]
+            # layout of each row:
+            # [pole1, pole2, ..., (constant), (proportional), pole1, pole2, ..., constant]
+            A = np.empty((n_responses, n_freqs, n_cols_unused + n_cols_used), dtype=np.complex)
 
-                A_row_extra = np.empty(n_cols_used)
+            # calculate coefficients for real and complex residues in the solution vector
+            #
+            # real pole-residue term (r = r', p = p'):
+            # fractional term is r' / (s - p')
+            # coefficient for r' is 1 / (s - p')
+            coeff_real = 1 / (s[:, None] - poles[None, idx_poles_real])
 
-                # responses will be weighted according to their norm;
-                # alternative: equal weights with weight_response = 1.0
-                # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
-                weight_response = np.linalg.norm(freq_response)
+            # complex-conjugate pole-residue pair (r = r' + j r'', p = p' + j p''):
+            # fractional term is r / (s - p) + conj(r) / (s - conj(p))
+            #                   = [1 / (s - p) + 1 / (s - conj(p))] * r' + [1j / (s - p) - 1j / (s - conj(p))] * r''
+            # coefficient for r' is 1 / (s - p) + 1 / (s - conj(p))
+            # coefficient for r'' is 1j / (s - p) - 1j / (s - conj(p))
+            coeff_complex_re = (1 / (s[:, None] - poles[None, idx_poles_complex]) +
+                                1 / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
+            coeff_complex_im = (1j / (s[:, None] - poles[None, idx_poles_complex]) -
+                                1j / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
 
-                # Split up real and complex poles and store the correspondend column from A_sub
-                real_mask = poles.imag == 0
-                poles_real = poles[np.nonzero(real_mask)]
-                poles_cplx = poles[np.nonzero(~real_mask)]
+            # part 1: first sum of rational functions (variable c)
+            A[:, :, idx_res_real] = coeff_real
+            A[:, :, idx_res_complex_re] = coeff_complex_re
+            A[:, :, idx_res_complex_im] = coeff_complex_im
 
-                # positions (columns) of coefficients for real and complex-conjugate terms in the rows of A are arbitrary
-                # however, the calculated residues in the results vector will have the same positions
-                # so, to simplify the indexing of real and imaginary parts of the residues, let's place real poles first,
-                # then complex-conjugate poles with their respective real and imaginary parts:
-                # [r1', r2', ..., r3', r3'', r4', r4'', ...]
-                n_real = len(poles_real)
-                n_cmplx = len(poles_cplx)
-                idx_res_real = np.arange(n_real)
-                idx_res_complex_re = n_real + 2 * np.arange(n_cmplx)
-                idx_res_complex_im = idx_res_complex_re + 1
+            # part 2: constant (variable d) and proportional term (variable e)
+            A[:, :, idx_constant] = 1
+            A[:, :, idx_proportional] = s[:, None]
 
-                # add coefficients for a pair of complex conjugate poles
-                # part 1: first sum of rational functions (residue variable c)
-                # merged with
-                # part 3: second sum of rational functions (variable c_res)
+            # part 3: second sum of rational functions multiplied with frequency response (variable c_res)
+            A[:, :, n_cols_unused + idx_res_real] = -1 * freq_responses[:, :, None] * coeff_real
+            A[:, :, n_cols_unused + idx_res_complex_re] = -1 * freq_responses[:, :, None] * coeff_complex_re
+            A[:, :, n_cols_unused + idx_res_complex_im] = -1 * freq_responses[:, :, None] * coeff_complex_im
 
-                # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
-                coeff = 1 / (s[:, None] - poles_real)
-                A_sub[:, idx_res_real] = coeff
+            # part 4: constant (variable d_res)
+            A[:, :, [-1]] = -1 * freq_responses[:, :, None]
 
-                # part 3: coeff = -1 * H(s_k) / (s_k - pole)
-                A_sub[:, idx_res_real + n_cols_unused] = - coeff * freq_response[:, None]
+            # weighting
+            A = np.sqrt(weights_responses.flatten(order='C')[:, None, None]) * A
 
-                # extra equation to avoid trivial solution:
-                # coeff += Re(1 / (s_k - pole)) = coeff_re
-                A_row_extra[idx_res_real] = np.sum(coeff.real, axis=0)
+            # QR decomposition
+            R = np.linalg.qr(np.hstack((A.real, A.imag)), 'r')
 
-                # row 1: add coefficient for real part of residue
-                # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
-                coeff = 1 / (s[:, None] - poles_cplx) + 1 / (s[:, None] - np.conj(poles_cplx))
-                A_sub[:, idx_res_complex_re] = coeff
+            # only R22 is required to solve for c_res and d_res
+            R22 = R[:, n_cols_unused:, n_cols_unused:]
 
-                # extra equation to avoid trivial solution:
-                # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
-                A_row_extra[idx_res_complex_re] = np.sum(coeff.real, axis=0)
+            # assemble compressed coefficient matrix A_fast by row-stacking individual upper triangular matrices R22
+            A_fast = np.empty((n_responses * n_cols_used + 1, n_cols_used))
+            A_fast[:-1, :] = np.hstack(np.vsplit(R22, n_responses))
 
-                # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
-                A_sub[:, idx_res_complex_re + n_cols_unused] = - coeff * freq_response[:, None]
+            # extra equations to avoid trivial solution (one for each frequency response)
+            A_fast[-1, idx_res_real] = np.sqrt(weight_extra) * np.sum(coeff_real.real, axis=0)
+            A_fast[-1, idx_res_complex_re] = np.sqrt(weight_extra) * np.sum(coeff_complex_re.real, axis=0)
+            A_fast[-1, idx_res_complex_im] = np.sqrt(weight_extra) * np.sum(coeff_complex_im.real, axis=0)
+            A_fast[-1, -1] = np.sqrt(weight_extra) * n_freqs
 
-                # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
-                coeff = 1j / (s[:, None] - poles_cplx) - 1j / (s[:, None] - np.conj(poles_cplx))
-                A_sub[:, idx_res_complex_im] = coeff
+            # right hand side vector
+            b = np.zeros(n_responses * n_cols_used + 1)
+            b[-1] = np.sqrt(weight_extra) * n_freqs
 
-                # extra equation to avoid trivial solution:
-                # coeff = sum(Re(1j / (s_k - pole) - 1j / (s_k - conj(pole))))
-                A_row_extra[idx_res_complex_im] = np.sum(coeff.real, axis=0)
-
-                # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
-                A_sub[:, idx_res_complex_im + n_cols_unused] = -coeff * freq_response[:, None]
-
-                # part 4: constant (variable d_res)
-                # coeff = -1 * H(s_k)
-                A_sub[:,-1] = - freq_response
-
-                # part 2: constant (variable d) and proportional term (variable e)
-                offset = n_cols_unused - 1
-                if fit_constant:
-                    # coeff = 1 + j0
-                    A_sub[:, offset] = 1
-                    offset -=1
-                    
-                if fit_proportional:
-                    # coeff = s_k = j omega_k
-                    A_sub[:, offset] = s
-                    
-                A_row_extra[-1] = len(freqs_norm)
-
-                # QR decomposition
-                R = np.linalg.qr(np.vstack((A_sub.real, A_sub.imag)), 'r')
-
-                # only R22 is required to solve for c_res and d_res
-                R22 = R[n_cols_unused:, n_cols_unused:]
-
-                # apply weight of this response and add coefficients to the system matrix
-                A[i_response * n_cols_used:(i_response + 1) * n_cols_used, :] = np.sqrt(weight_response) * R22
-                # multiplication of Q2 by rhs=0 omitted; right-hand side would also require weighting
-                # b[i_response * n_cols_used:(i_response + 1) * n_cols_used] = np.matmul(np.transpose(Q2), rhs)
-
-                # add extra equation to avoid trivial solution
-                weight_extra = np.linalg.norm(weight_response * freq_response) / len(freq_response)
-                A[(i_response + 1) * n_cols_used - 1, :] = np.sqrt(weight_extra) * A_row_extra
-                b[(i_response + 1) * n_cols_used - 1] = np.sqrt(weight_extra) * len(freq_response)
-
-            cond_A = np.linalg.cond(A)
-            logging.info('Condition number of coeff. matrix A = {}'.format(cond_A))
+            cond_A = np.linalg.cond(A_fast)
+            logging.info('Condition number of coeff. matrix A = {}'.format(int(cond_A)))
             self.history_cond_A.append(cond_A)
 
             # solve least squares for real parts
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A, b, rcond=None)
+            x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
 
             # assemble individual result vectors from single LS result x
             c_res = x[:-1]
