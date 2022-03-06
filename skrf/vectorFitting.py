@@ -385,7 +385,6 @@ class VectorFitting:
 
             # assemble compressed coefficient matrix A_fast by row-stacking individual upper triangular matrices R22
             A_fast = np.empty((n_responses * n_cols_used + 1, n_cols_used))
-            #A_fast[:-1, :] = np.hstack(np.vsplit(R22, n_responses))
             A_fast[:-1, :] = np.reshape(R22, (n_responses * n_cols_used, n_cols_used))
 
             # extra equations to avoid trivial solution (one for each frequency response)
@@ -428,12 +427,6 @@ class VectorFitting:
 
             poles_real = poles[np.nonzero(real_mask)]
             poles_cplx = poles[np.nonzero(~real_mask)]
-
-            n_real = len(poles_real)
-            n_cmplx = len(poles_cplx)
-            idx_res_real = np.arange(n_real)
-            idx_res_complex_re = n_real + 2 * np.arange(n_cmplx)
-            idx_res_complex_im = idx_res_complex_re + 1
 
             H[idx_res_real, idx_res_real] = poles_real.real
             H[idx_res_real] -= c_res / d_res
