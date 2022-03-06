@@ -342,7 +342,7 @@ class VectorFitting:
             # complex coefficient matrix of shape [N_responses, N_freqs, n_cols_unused + n_cols_used]
             # layout of each row:
             # [pole1, pole2, ..., (constant), (proportional), pole1, pole2, ..., constant]
-            A = np.empty((n_responses, n_freqs, n_cols_unused + n_cols_used), dtype=np.complex)
+            A = np.empty((n_responses, n_freqs, n_cols_unused + n_cols_used), dtype=complex)
 
             # calculate coefficients for real and complex residues in the solution vector
             #
@@ -450,7 +450,6 @@ class VectorFitting:
             # flip real part of unstable poles (real part needs to be negative for stability)
             poles.real = -1 * np.abs(poles.real)
 
-
             # calculate relative changes in the singular values; stop iteration loop once poles have converged
             new_max_singular = np.amax(singular_vals)
             delta_max = np.abs(1 - new_max_singular / max_singular)
@@ -510,79 +509,79 @@ class VectorFitting:
         constant_coeff = []
         proportional_coeff = []
 
-        for freq_response in freq_responses:
-            # calculate coefficients (row A_k in matrix) for each frequency sample s_k of the target response
-            # row will be appended to submatrix A_sub of complete coeff matrix A_matrix
-            # 2 rows per pole in result vector (1st for real part, 2nd for imaginary part)
-            # --> 2 columns per pole in coeff matrix
-            n_cols = np.sum((poles.imag != 0) + 1)
+        # We need two columns for complex poles and one column for real poles in A matrix.
+        # poles.imag != 0 is True(1) for complex poles, False (0) for real poles.
+        # Adding one to each element gives 2 columns for complex and 1 column for real poles.
+        n_cols = np.sum((poles.imag != 0) + 1)
 
-            if fit_constant:
-                n_cols += 1
-            if fit_proportional:
-                n_cols += 1
-            A_matrix = np.empty((len(freqs_norm), n_cols), dtype=complex)
+        idx_constant = []
+        idx_proportional = []
+        if fit_constant:
+            idx_constant = [n_cols]
+            n_cols += 1
+        if fit_proportional:
+            idx_proportional = [n_cols]
+            n_cols += 1
 
-            # Split up real and complex poles and store the correspondend column from A_sub
-            real_mask = poles.imag == 0
-            poles_real = poles[np.nonzero(real_mask)]
-            poles_cplx = poles[np.nonzero(~real_mask)]
+        # list of indices in 'poles' with real and with complex values
+        real_mask = poles.imag == 0
+        idx_poles_real = np.nonzero(real_mask)[0]
+        idx_poles_complex = np.nonzero(~real_mask)[0]
 
-            A_sub_real_idx = self._get_pole_idx(poles, real=True)
-            A_sub_cplx_idx = self._get_pole_idx(poles, real=False)
+        # corresponding indices of real and complex residues in the solution vectors
+        idx_res_real = self._get_pole_idx(poles, real=True)
+        idx_res_complex_re = self._get_pole_idx(poles, real=False)
+        idx_res_complex_im = idx_res_complex_re + 1
 
-            # add coefficients for a pair of complex conjugate poles
-            # part 1: first sum of rational functions (residue variable c)
+        # complex coefficient matrix of shape [N_freqs, n_cols]
+        # layout of each row:
+        # [pole1, pole2, ..., (constant), (proportional)]
+        A = np.empty((n_freqs, n_cols), dtype=complex)
 
-            A_matrix[:, A_sub_real_idx] = 1 / (s[:, None] - poles_real)
+        # calculate coefficients for real and complex residues in the solution vector
+        #
+        # real pole-residue term (r = r', p = p'):
+        # fractional term is r' / (s - p')
+        # coefficient for r' is 1 / (s - p')
+        coeff_real = 1 / (s[:, None] - poles[None, idx_poles_real])
 
-            # coefficient for real part of residue
-            A_matrix[:, A_sub_cplx_idx] = (1 / (s[:, None] - poles_cplx) + 
-                1 / (s[:, None] - np.conj(poles_cplx)))
+        # complex-conjugate pole-residue pair (r = r' + j r'', p = p' + j p''):
+        # fractional term is r / (s - p) + conj(r) / (s - conj(p))
+        #                   = [1 / (s - p) + 1 / (s - conj(p))] * r' + [1j / (s - p) - 1j / (s - conj(p))] * r''
+        # coefficient for r' is 1 / (s - p) + 1 / (s - conj(p))
+        # coefficient for r'' is 1j / (s - p) - 1j / (s - conj(p))
+        coeff_complex_re = (1 / (s[:, None] - poles[None, idx_poles_complex]) +
+                            1 / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
+        coeff_complex_im = (1j / (s[:, None] - poles[None, idx_poles_complex]) -
+                            1j / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
 
-            # coefficient for imaginary part of residue
-            A_matrix[:, A_sub_cplx_idx + 1] = (1j / (s[:, None] - poles_cplx) 
-                - 1j / (s[:, None] - np.conj(poles_cplx)))
+        # part 1: first sum of rational functions (variable c)
+        A[:, idx_res_real] = coeff_real
+        A[:, idx_res_complex_re] = coeff_complex_re
+        A[:, idx_res_complex_im] = coeff_complex_im
 
-            offset = np.sum((poles.imag != 0) + 1)
-            if fit_constant:
-                A_matrix[:, offset] = 1
-                offset += 1
-            if fit_proportional:
-                A_matrix[:, offset] = s
+        # part 2: constant (variable d) and proportional term (variable e)
+        A[:, idx_constant] = 1
+        A[:, idx_proportional] = s[:, None]
 
-            logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
+        logging.info('Condition number of coefficient matrix = {}'.format(int(np.linalg.cond(A))))
 
-            # solve least squares and obtain results as stack of real part vector and imaginary part vector
-            x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((A_matrix.real, A_matrix.imag)), np.hstack((freq_response.real, freq_response.imag)), rcond=None)
+        # solve least squares and obtain results as stack of real part vector and imaginary part vector
+        x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((A.real, A.imag)),
+                                                            np.hstack((freq_responses.real, freq_responses.imag)).transpose(),
+                                                            rcond=None)
 
-            i = 0
-            residues_response = []
-            for pole_im in poles.imag:
-                if pole_im == 0.0:
-                    residues_response.append(x[i] + 0j)
-                    i += 1
-                else:
-                    residues_response.append(x[i] + 1j * x[i + 1])
-                    i += 2
-            residues.append(residues_response)
+        residues = np.concatenate((x[idx_res_real], x[idx_res_complex_re] + 1j * x[idx_res_complex_im]), axis=0).transpose()
 
-            if fit_constant and fit_proportional:
-                # both constant d and proportional e were fitted
-                constant_coeff.append(x[-2])
-                proportional_coeff.append(x[-1])
-            elif fit_constant:
-                # only constant d was fitted
-                constant_coeff.append(x[-1])
-                proportional_coeff.append(0.0)
-            elif fit_proportional:
-                # only proportional e was fitted
-                constant_coeff.append(0.0)
-                proportional_coeff.append(x[-1])
-            else:
-                # neither constant d nor proportional e was fitted
-                constant_coeff.append(0.0)
-                proportional_coeff.append(0.0)
+        if fit_constant:
+            constant_coeff = x[idx_constant][0]
+        else:
+            constant_coeff = np.zeros(n_responses)
+
+        if fit_proportional:
+            proportional_coeff = x[idx_proportional][0]
+        else:
+            proportional_coeff = np.zeros(n_responses)
 
         # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
