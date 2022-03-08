@@ -131,38 +131,6 @@ class VectorFitting:
         warnings.warn('Attribute `zeros` is deprecated and will be removed in a future version. Please use the new '
                       'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
         self.residues = value
-
-    def _get_pole_idx(self, poles: np.ndarray, real: bool) -> np.ndarray:
-        """Returns the indices for addressing the A matrix.
-
-        A matrix contains one column for a real pole and two columns for complex poles.
-        Return the appropriate indizes, by checking the imaginary part of the specified poles.
-
-        Parameters
-        ----------
-        poles: np.ndarray
-            The complex array of poles
-        real: bool
-            Return the indices for real values poles if True, the indices of complex valued poles otherwise
-        """
-        A_sub_real_mask = []
-        for rm in poles.imag == 0:
-            if rm:
-                A_sub_real_mask += [True]
-            else:
-                A_sub_real_mask += [False, False]
-
-        A_sub_real_mask = np.array(A_sub_real_mask)
-
-        if not real:
-            A_sub_real_mask = ~A_sub_real_mask
-
-        idx = np.nonzero(A_sub_real_mask)[0]
-
-        if not real:
-            idx = idx[::2]
-        
-        return idx
     
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
@@ -505,9 +473,6 @@ class VectorFitting:
         logging.info('\n### Starting residues calculation process.\n')
 
         # finally, solve for the residues with the previously calculated poles
-        residues = []
-        constant_coeff = []
-        proportional_coeff = []
 
         # We need two columns for complex poles and one column for real poles in A matrix.
         # poles.imag != 0 is True(1) for complex poles, False (0) for real poles.
@@ -528,10 +493,19 @@ class VectorFitting:
         idx_poles_real = np.nonzero(real_mask)[0]
         idx_poles_complex = np.nonzero(~real_mask)[0]
 
-        # corresponding indices of real and complex residues in the solution vectors
-        idx_res_real = self._get_pole_idx(poles, real=True)
-        idx_res_complex_re = self._get_pole_idx(poles, real=False)
-        idx_res_complex_im = idx_res_complex_re + 1
+        # find and save indices of real and complex poles in the poles list
+        i = 0
+        idx_res_real = []
+        idx_res_complex_re = []
+        idx_res_complex_im = []
+        for pole in poles:
+            if pole.imag == 0:
+                idx_res_real.append(i)
+                i += 1
+            else:
+                idx_res_complex_re.append(i)
+                idx_res_complex_im.append(i + 1)
+                i += 2
 
         # complex coefficient matrix of shape [N_freqs, n_cols]
         # layout of each row:
