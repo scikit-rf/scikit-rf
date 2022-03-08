@@ -545,6 +545,8 @@ class VectorFitting:
                                                             np.hstack((freq_responses.real, freq_responses.imag)).transpose(),
                                                             rcond=None)
 
+        # align poles and residues arrays to get matching pole-residue pairs
+        poles = np.concatenate((poles[idx_poles_real], poles[idx_poles_complex]))
         residues = np.concatenate((x[idx_res_real], x[idx_res_complex_re] + 1j * x[idx_res_complex_im]), axis=0).transpose()
 
         if fit_constant:
