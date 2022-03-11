@@ -351,8 +351,10 @@ class VectorFitting:
 
             # direct QR of stacked matrices for linalg.qr() only works with numpy>=1.22.0
             # workaround for old numpy:
-            qr = np.vectorize(np.linalg.qr, signature='(m,n)->(n,n)', excluded=["mode"])
-            R = qr(np.hstack((A.real, A.imag)), mode='r')
+            R = np.empty((n_responses, n_cols_unused + n_cols_used, n_cols_unused + n_cols_used))
+            A_ri = np.hstack((A.real, A.imag))
+            for i in range(n_responses):
+                R[i] = np.linalg.qr(A_ri[i], mode='r')
 
             # only R22 is required to solve for c_res and d_res
             R22 = R[:, n_cols_unused:, n_cols_unused:]
