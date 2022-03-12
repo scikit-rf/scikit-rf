@@ -344,7 +344,7 @@ class VectorFitting:
             A[:, :, n_cols_unused + idx_res_complex_im] = -1 * freq_responses[:, :, None] * coeff_complex_im
 
             # part 4: constant (variable d_res)
-            A[:, :, [-1]] = -1 * freq_responses[:, :, None]
+            A[:, :, -1] = -1 * freq_responses
 
             # QR decomposition
             #R = np.linalg.qr(np.hstack((A.real, A.imag)), 'r')
@@ -370,7 +370,7 @@ class VectorFitting:
             A_fast[-1, idx_res_real] = np.sum(coeff_real.real, axis=0)
             A_fast[-1, idx_res_complex_re] = np.sum(coeff_complex_re.real, axis=0)
             A_fast[-1, idx_res_complex_im] = np.sum(coeff_complex_im.real, axis=0)
-            A_fast[-1, -1] = np.shape(coeff_real)[0]
+            A_fast[-1, -1] = n_freqs
 
             # weighting
             A_fast[-1, :] = weight_extra * A_fast[-1, :]
