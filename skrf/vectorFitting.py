@@ -296,11 +296,11 @@ class VectorFitting:
             # list of indices in 'poles' with complex values
             idx_poles_complex = np.nonzero(~real_mask)[0]
 
-            # positions (columns) of coefficients for real and complex-conjugate terms in the rows of A are arbitrary
-            # however, the calculated residues in the results vector will have the same positions
-            # so, to simplify the indexing of real and imaginary parts of the residues, let's place real poles first,
-            # then complex-conjugate poles with their respective real and imaginary parts:
-            # [r1', r2', ..., r3', r3'', r4', r4'', ...]
+            # positions (columns) of coefficients for real and complex-conjugate terms in the rows of A determine the
+            # respective positions of the calculated residues in the results vector.
+            # to have them ordered properly for the subsequent assembly of the test matrix H for eigenvalue extraction,
+            # place real poles first, then complex-conjugate poles with their respective real and imaginary parts:
+            # [r1', r2', ..., (r3', r3''), (r4', r4''), ...]
             n_real = len(idx_poles_real)
             n_cmplx = len(idx_poles_complex)
             idx_res_real = np.arange(n_real)
