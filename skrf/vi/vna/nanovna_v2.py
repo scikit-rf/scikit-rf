@@ -92,16 +92,36 @@ class NanoVNAv2(abcvna.VNA):
         else:
             return 'Unknown device, got deviceVariant={}'.format(v)
 
+    def reset(self):
+        raise NotImplementedError
+
+    def wait_until_finished(self):
+        raise NotImplementedError
+
     def _protocol_reset(self):
         # send 8x NOP (0x00) to reset the communication protocol
         self.resource.write_raw([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 
-    def get_traces(self, traces: list = None, **kwargs) -> list:
+    def get_s11_s21(self) -> (np.ndarray, np.ndarray):
         """
-        Returns the measured data of the sweep.
-        :param traces:
-        :param kwargs:
-        :return:
+        Returns individual NumPy arrays of the measured data of the sweep. Being a 1.5-port analyzer, the results only
+        include :math:`S_{1,1}` and :math:`S_{2,1}`.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            List of NumPy arrays with :math:`S_{1,1}` and :math:`S_{2,1}`.
+
+        Notes
+        -----
+        Regardless of the calibration state of the NanoVNA, the results returned by this method are always raw, i.e.
+        uncalibrated. The user needs to apply a manual calibration in postprocessing, if required.
+
+        See Also
+        --------
+        set_frequency_sweep
+        get_traces
+        :mod:`Calibration`
         """
 
         # data is continuously being sampled and stored in the FIFO (address 0x30)
@@ -142,10 +162,7 @@ class NanoVNAv2(abcvna.VNA):
             data_s11[freqIndex] = b1 / a1
             data_s21[freqIndex] = b2 / a1
 
-        frequency = skrf.Frequency.from_f(self._frequency, unit='hz')
-        nw_s11 = skrf.Network(frequency=frequency, s=data_s11, name='Trace0_S11')
-        nw_s21 = skrf.Network(frequency=frequency, s=data_s21, name='Trace1_S21')
-        return [nw_s11, nw_s21]
+        return data_s11, data_s21
 
     def set_frequency_sweep(self, start_freq: float, stop_freq: float, num_points: int = 201, **kwargs) -> None:
         """
@@ -210,8 +227,51 @@ class NanoVNAv2(abcvna.VNA):
         return [{'channel': 0, 'parameter': 'S11'},
                 {'channel': 1, 'parameter': 'S21'}]
 
-    def get_snp_network(self, ports, **kwargs):
-        pass
+    def get_traces(self, traces: list = None, **kwargs) -> list:
+        """
+        Returns the data of the traces listed in `traces` as 1-port networks.
+
+        Parameters
+        ----------
+        traces: list, optional
+            Legacy parameter which is ignored.
+
+        kwargs: list
+
+        Returns
+        -------
+        list
+            List with trace data as 1-port networks.
+        """
+
+        data_s11, data_s21 = self.get_s11_s21()
+        frequency = skrf.Frequency.from_f(self._frequency, unit='hz')
+        nw_s11 = skrf.Network(frequency=frequency, s=data_s11, name='Trace0_S11')
+        nw_s21 = skrf.Network(frequency=frequency, s=data_s21, name='Trace1_S21')
+        return [nw_s11, nw_s21]
+
+    def get_snp_network(self, ports: tuple = (1, 2), **kwargs) -> skrf.Network:
+        """
+        Returns a N-port network of the ports specified in `ports`.
+
+        Parameters
+        ----------
+        ports: tuple of int, optional
+            Ports
+
+        kwargs: list
+
+        Returns
+        -------
+        skrf.Network
+        """
+
+        data_s11, data_s21 = self.get_s11_s21()
+        frequency = skrf.Frequency.from_f(self._frequency, unit='hz')
+        s = np.zeros((len(frequency), len(ports), len(ports)))
+        s[:, 0, 0] = data_s11
+        s[:, 1, 0] = data_s21
+        return skrf.Network(frequency=frequency, s=s)
 
     def get_switch_terms(self, ports=(1, 2), **kwargs):
-        pass
+        raise NotImplementedError
