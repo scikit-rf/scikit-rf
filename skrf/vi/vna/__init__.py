@@ -41,3 +41,4 @@ from .hp8510c import HP8510C
 from .keysight_pna import PNA, PNAX
 from .keysight_fieldfox import FieldFox
 from .rs_zva import ZVA
+from .nanovna_v2 import NanoVNAv2
