@@ -88,6 +88,18 @@ class NanoVNAv2(abcvna.VNA):
 
     >>> s11, s21 = nanovna.get_s11_s21()
 
+    Get list of available traces (will always return `[{'channel': 0, 'parameter': 'S11'},
+    {'channel': 1, 'parameter': 'S21'}]`):
+
+    >>> traces_avail = nanovna.get_list_of_traces()
+
+    Get data of one or more of the traces listed in `get_list_of_traces()` as a list of 1-port networks:
+
+    >>> nw_s11 = nanovna.get_traces([traces_avail[0])
+    >>> nw_s21 = nanovna.get_traces([traces_avail[1])
+    >>> nw_all = nanovna.get_traces(traces_avail)
+    >>> for nw in nw_all: print(nw)
+
     Get S11 as a 1-port skrf.Network:
 
     >>> nw_1 = nanovna.get_snp_network(ports=(1,))
@@ -284,8 +296,8 @@ class NanoVNAv2(abcvna.VNA):
 
         data_s11, data_s21 = self.get_s11_s21()
         frequency = skrf.Frequency.from_f(self._frequency, unit='hz')
-        nw_s11 = skrf.Network(frequency=frequency, s=data_s11, name='Trace0_S11')
-        nw_s21 = skrf.Network(frequency=frequency, s=data_s21, name='Trace1_S21')
+        nw_s11 = skrf.Network(frequency=frequency, s=data_s11, name='Trace0')
+        nw_s21 = skrf.Network(frequency=frequency, s=data_s21, name='Trace1')
 
         traces_valid = self.get_list_of_traces()
         networks = []
@@ -335,7 +347,7 @@ class NanoVNAv2(abcvna.VNA):
 
         data_s11, data_s21 = self.get_s11_s21()
         frequency = skrf.Frequency.from_f(self._frequency, unit='hz')
-        s = np.zeros((len(frequency), len(ports), len(ports)))
+        s = np.zeros((len(frequency), len(ports), len(ports)), dtype=complex)
 
         if ports == (1, ):
             # 1-port with s11
@@ -346,8 +358,8 @@ class NanoVNAv2(abcvna.VNA):
             s[:, 1, 0] = data_s21
         elif ports == (2, 1):
             # 1.5-port with s12 and s22 (reverse order)
-            s[:, 0, 1] = data_s11
-            s[:, 1, 1] = data_s21
+            s[:, 0, 1] = data_s21
+            s[:, 1, 1] = data_s11
         else:
             raise ValueError('Higher order networks (N>2) are not supported.')
 
