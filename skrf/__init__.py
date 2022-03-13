@@ -46,10 +46,9 @@ from .vectorFitting import *
 
 # Try to import vi, but if except if pyvisa not installed
 try:
-    from .vi import vna
-    from .vi import sa
-    from .vi import stages
-except ImportError:
+    import vi
+    from vi import *
+except(ImportError):
     pass
 
 # try to import data but if it fails whatever. it fails if some pickles 
