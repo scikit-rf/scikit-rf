@@ -66,7 +66,43 @@ from time import sleep
 
 class NanoVNAv2(abcvna.VNA):
     """
-    Class for NanoVNA_v2 network analyzers.
+    Python class for NanoVNA_v2 network analyzers [#website]_.
+
+    Examples
+    --------
+    Load and initialize NanoVNA on `COM1` (Windows, see Device Manager):
+
+    >>> from skrf.vi import vna
+    >>> nanovna = vna.NanoVNAv2('COM1')
+
+    Load and initialize NanoVNA on `/dev/ttyACM0` (Linux, see dmesg):
+
+    >>> from skrf.vi import vna
+    >>> nanovna = vna.NanoVNAv2('/dev/ttyACM0')
+
+    Configure frequency sweep (200 points from 20 MHz to 4 GHz, i.e. 20 MHz step):
+
+    >>> nanovna.set_frequency_sweep(20e6, 4e9, 200)
+
+    Get S11 and S21 as NumPy arrays:
+
+    >>> s11, s21 = nanovna.get_s11_s21()
+
+    Get S11 as a 1-port skrf.Network:
+
+    >>> nw_1 = nanovna.get_snp_network(ports=(1,))
+
+    Get S11 and S21 as 2-port skrf.Network (with S12=S22=0):
+
+    >>> nw_2 = nanovna.get_snp_network(ports=(1, 2))
+
+    Get S12 and S22 as 2-port skrf.Network (with S11=S21=0):
+
+    >>> nw_3 = nanovna.get_snp_network(ports=(2, 1))
+
+    References
+    ----------
+    .. [website] Website of NanoVNA V2: https://nanorfe.com/nanovna-v2.html
     """
 
     def __init__(self, serial_port: str = '/dev/ttyACM0'):
@@ -81,12 +117,14 @@ class NanoVNAv2(abcvna.VNA):
         Returns
         -------
         str
+            Identification string, e.g. `NanoVNA_v2`.
         """
 
         # send 1-byte READ (0x10) of address 0xf0 to retrieve device variant code
         self.resource.write_raw([0x10, 0xf0])
         v_byte = self.resource.read_bytes(1)
         v = int.from_bytes(v_byte, byteorder='little')
+
         if v == 2:
             return 'NanoVNA_v2'
         else:
@@ -233,44 +271,86 @@ class NanoVNAv2(abcvna.VNA):
 
         Parameters
         ----------
-        traces: list, optional
-            Legacy parameter which is ignored.
+        traces: list of dict, optional
+            Traces selected from :func:`get_list_of_traces`.
 
         kwargs: list
 
         Returns
         -------
-        list
-            List with trace data as 1-port networks.
+        list of skrf.Network
+            List with trace data as individual 1-port networks.
         """
 
         data_s11, data_s21 = self.get_s11_s21()
         frequency = skrf.Frequency.from_f(self._frequency, unit='hz')
         nw_s11 = skrf.Network(frequency=frequency, s=data_s11, name='Trace0_S11')
         nw_s21 = skrf.Network(frequency=frequency, s=data_s21, name='Trace1_S21')
-        return [nw_s11, nw_s21]
+
+        traces_valid = self.get_list_of_traces()
+        networks = []
+        for trace in traces:
+            if trace in traces_valid:
+                if trace['channel'] == 0:
+                    networks.append(nw_s11)
+                elif trace['channel'] == 1:
+                    networks.append(nw_s21)
+
+        return networks
 
     def get_snp_network(self, ports: tuple = (1, 2), **kwargs) -> skrf.Network:
         """
-        Returns a N-port network of the ports specified in `ports`.
+        Returns a N-port network with the measured responses saved at the positions specified in `ports`.
+        For a 1.5-port analyzer such as the NanoVNA, only two responses get measured. Consequently, this method only
+        works for retrieving either a 1-port (with `ports=(1,)`), or a 2-port (with `ports=(1, 2)` or `ports=(2, 1)`).
 
         Parameters
         ----------
         ports: tuple of int, optional
-            Ports
+            Ports specifying the location of the measured responses in the network.
 
         kwargs: list
 
         Returns
         -------
         skrf.Network
+
+        Examples
+        --------
+        >>> from skrf.vi import vna
+        >>> nanovna = vna.NanoVNAv2()
+
+        Get a 1-port network with `s11 = measurement`:
+
+        >>> nw = nanovna.get_snp_network(ports=(1,))
+
+        Get a 1.5-port network (incomplete 2-port) with `(s11, s12) = measurement, (s21, S22) = 0`:
+
+        >>> nw = nanovna.get_snp_network(ports=(1, 2))
+
+        Get a 1.5-port network (incomplete 2-port) with `(s11, S21) = 0, (s12, s22) = measurement`:
+
+        >>> nw = nanovna.get_snp_network(ports=(2, 1))
         """
 
         data_s11, data_s21 = self.get_s11_s21()
         frequency = skrf.Frequency.from_f(self._frequency, unit='hz')
         s = np.zeros((len(frequency), len(ports), len(ports)))
-        s[:, 0, 0] = data_s11
-        s[:, 1, 0] = data_s21
+
+        if ports == (1, ):
+            # 1-port with s11
+            s[:, 0, 0] = data_s11
+        elif ports == (1, 2):
+            # 1.5-port with s11 and s21
+            s[:, 0, 0] = data_s11
+            s[:, 1, 0] = data_s21
+        elif ports == (2, 1):
+            # 1.5-port with s12 and s22 (reverse order)
+            s[:, 0, 1] = data_s11
+            s[:, 1, 1] = data_s21
+        else:
+            raise ValueError('Higher order networks (N>2) are not supported.')
+
         return skrf.Network(frequency=frequency, s=s)
 
     def get_switch_terms(self, ports=(1, 2), **kwargs):
