@@ -117,6 +117,7 @@ class NanoVNAv2(abcvna.VNA):
 
     def __init__(self, serial_port: str = '/dev/ttyACM0'):
         super().__init__(address='ASRL/dev/ttyACM0::INSTR', kwargs={'visa_library': 'py'})
+        self._protocol_reset()
         self._frequency = np.linspace(1e6, 10e6, 101)
         self.set_frequency_sweep(1e6, 10e6, 101)
 
@@ -177,15 +178,24 @@ class NanoVNAv2(abcvna.VNA):
 
         f_points = len(self._frequency)
 
-        self._protocol_reset()
-
         # write any byte to register 0x30 to clear FIFO
         self.resource.write_raw([0x20, 0x30, 0x00])
 
-        # read 'f_point' values from FIFO (32 * f_points bytes)
-        # can only read 256 values (f_points <= 256)
-        self.resource.write_raw([0x18, 0x30, f_points])
-        data_raw = self.resource.read_bytes(32 * f_points)
+        data_raw = []
+        f_remaining = f_points
+
+        while f_remaining > 0:
+
+            # can only read 255 values in one take
+            if f_remaining > 255:
+                len_segment = 255
+            else:
+                len_segment = f_remaining
+            f_remaining = f_remaining - len_segment
+
+            # read 'len_segment' values from FIFO (32 * len_segment bytes)
+            self.resource.write_raw([0x18, 0x30, len_segment])
+            data_raw.extend(self.resource.read_bytes(32 * len_segment))
 
         # parse FIFO data
         data_s11 = np.zeros(f_points, dtype=complex)
@@ -214,7 +224,7 @@ class NanoVNAv2(abcvna.VNA):
 
     def set_frequency_sweep(self, start_freq: float, stop_freq: float, num_points: int = 201, **kwargs) -> None:
         """
-        Configures the frequency sweep.
+        Configures the frequency sweep. Only linear spacing is supported.
 
         Parameters
         ----------
@@ -231,14 +241,9 @@ class NanoVNAv2(abcvna.VNA):
         None
         """
 
-        if num_points > 255:
-            raise ValueError('Number of frequency points cannot be greater than 255.')
-
         f_step = 0.0
         if num_points > 1:
             f_step = (stop_freq - start_freq) / (num_points - 1)
-
-        self._protocol_reset()
 
         self._frequency = np.linspace(start_freq, stop_freq, num_points)
 
@@ -316,7 +321,7 @@ class NanoVNAv2(abcvna.VNA):
         For example when measuring a 3-port (e.g a balun) with the 1.5-port NanoVNA, the required six individual
         measurements with the slices (s11, s21), (_, s31), (s22, s12), (_, s32), (s33, s13), and (_, s23) can be
         obtained directly as (incomplete) 3-port networks, which can later be combined very easily by adding them
-        together: nw_balun = nw_s1 + nw_s2 + ... + nw_s3.
+        together: nw_balun = nw_s1 + nw_s2 + ... + nw_s6.
 
         Parameters
         ----------
