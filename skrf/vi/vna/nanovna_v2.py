@@ -398,8 +398,6 @@ class NanoVNAv2(abcvna.VNA):
                 j.append(i_port)
                 if port == 0:
                     i = i_port
-        if max(j) > 2:
-            raise ValueError('Port index p>2 is not possible with a 1.5 port analyzer.')
 
         # populate N-port network with s11 and s21
         k = 0
