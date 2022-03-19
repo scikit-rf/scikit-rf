@@ -188,6 +188,12 @@ class Circuit:
                 raise AttributeError('All Networks must have same frequencies')
         # All frequencies are the same, Circuit frequency can be any of the ntw
         self.frequency = ntws[0].frequency
+        
+        # Check that a (ntwk, port) combination appears only once in the connexion map
+        nodes = [(ntwk.name, port) for (con_idx, (ntwk, port)) in [con for con in self.connections_list]]
+        if len(nodes) > len(set(nodes)):
+            raise AttributeError('A (network, port) node appears twice in the connection description.')
+        
 
     def _is_named(self, ntw):
         """
