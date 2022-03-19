@@ -176,7 +176,6 @@ from numpy.linalg import inv as npy_inv
 from numpy import fft, gradient, ndarray, reshape, shape, ones, std
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
-from scipy.ndimage.filters import convolve1d
 import unittest  # fotr unitest.skip
 
 from . import mathFunctions as mf
