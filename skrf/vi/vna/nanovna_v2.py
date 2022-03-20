@@ -313,25 +313,27 @@ class NanoVNAv2(abcvna.VNA):
 
         return networks
 
-    def get_snp_network(self, ports: tuple = (1, 2), **kwargs) -> skrf.Network:
+    def get_snp_network(self, ports: tuple = (0, 1), **kwargs) -> skrf.Network:
         """
-        Returns a :math:`N`-port network with the measured responses saved at the positions specified in `ports`.
-        The remaining responses will be 0. This can be useful for sliced measurements of larger networks with an
-        analyzer that does not have enough ports.
-        For example when measuring a 3-port (e.g a balun) with the 1.5-port NanoVNA, the required six individual
-        measurements with the slices (s11, s21), (_, s31), (s22, s12), (_, s32), (s33, s13), and (_, s23) can be
-        obtained directly as (incomplete) 3-port networks, which can later be combined very easily by adding them
-        together: nw_balun = nw_s1 + nw_s2 + ... + nw_s6.
+        Returns a :math:`N`-port network containing the measured parameters at the positions specified in `ports`.
+        The remaining responses will be 0. The rows and the column to be populated in the network are selected
+        implicitly based on the position and the order of the entries in `ports`. See the parameter desciption for
+        details.
+        This function can be useful for sliced measurements of larger networks with an analyzer that does not have
+        enough ports, for example when measuring a 3-port (e.g a balun) with the 1.5-port NanoVNA (example below).
 
         Parameters
         ----------
         ports: tuple of int or None, optional
-            Specifies the position, order, and type of the measured responses in the returned N-port network. The
-            length of the tuple defines the size N of the network, the entries define the type and position. Valid
-            entries are `0`, `1`, or `None`. Number `0` refers to `s11` from the measurement, `1` refers to `s21`,
-            and `None` skips this position (required to increase `N`). See examples below.
+            Specifies the position and order of the measured responses in the returned `N`-port network. Valid entries
+            are `0`, `1`, or `None`. The length of the tuple defines the size `N` of the network, the entries
+            define the type (forward/reverse) and position (indices of the rows and the column to be populated).
+            Number `0` refers to the source port (`s11` from the NanoVNA), `1` refers to the receiver port (`s21` from
+            the NanoVNA), and `None` skips this position (required to increase `N`). For `N>1`, the colum index is
+            determined by the position of the source port `0` in `ports`. See examples below.
 
         kwargs: list
+            Additional parameters will be ignored.
 
         Returns
         -------
@@ -339,8 +341,63 @@ class NanoVNAv2(abcvna.VNA):
 
         Examples
         --------
+        To get the measured S-matrix of a 3-port from six individual measurements, the slices (s11, s21), (s11, s31),
+        (s12, s22), (s22, s32), (s13, s33), and (s23, s33) can be obtained directly as (incomplete) 3-port networks
+        with the results stored at the correct positions, which helps combining them afterwards.
+
         >>> from skrf.vi import vna
         >>> nanovna = vna.NanoVNAv2()
+
+        1st slice: connect VNA_P1=P1 and VNA_P2=P2 to measure s11 and s21:
+
+        >>> nw_s1 = nanovna.get_snp_network(ports=(0, 1, None))
+
+        This will return a 3-port network with [[s11_vna, 0, 0], [s21_vnas, 0, 0], [0, 0, 0]].
+
+        2nd slice: connect VNA_P1=P1 and VNA_P2=P3 to measure s11 and s31:
+
+        >>> nw_s2 = nanovna.get_snp_network(ports=(0, None, 1))
+
+        This will return a 3-port network with [[s11_vna, 0, 0], [0, 0, 0], [s21_vna, 0, 0]].
+
+        3rd slice: connect VNA_P1=P2 and VNA_P2=P1 to measure s22 and s12:
+
+        >>> nw_s3 = nanovna.get_snp_network(ports=(1, 0, None))
+
+        This will return a 3-port network with [[0, s21_vna, 0], [0, s11_vna, 0], [0, 0, 0]].
+
+        4th slice: connect VNA_P1=P2 and VNA_P2=P3 to measure s22 and s32:
+
+        >>> nw_s4 = nanovna.get_snp_network(ports=(None, 0, 1))
+
+        This will return a 3-port network with [[0, 0, 0], [0, s11_vna, 0], [0, s21_vna, 0]].
+
+        5th slice: connect VNA_P1=P3 and VNA_P2=P1 to measure s13 and s33:
+
+        >>> nw_s5 = nanovna.get_snp_network(ports=(1, None, 0))
+
+        This will return a 3-port network with [[0, 0, s21_vna], [0, 0, 0], [0, 0, s11_vna]].
+
+        6th slice: connect VNA_P1=P3 and VNA_P2=P2 to measure s23 and s33:
+
+        >>> nw_s6 = nanovna.get_snp_network(ports=(None, 1, 0))
+
+        This will return a 3-port network with [[0, 0, 0], [0, 0, s21_vna], [0, 0, s11_vna]].
+
+        Now, the six incomplete networks can simply be added to get to complete network of the 3-port:
+
+        >>> nw = nw_s1 + nw_s2 + nw_s3 + nw_s4 + nw_s5 + nw_s6
+
+        The reflection coefficients s11, s22, s33 have been measured twice, so the sum still needs to be divided by 2
+        to get the correct result:
+
+        >>> nw.s[:, 0, 0] = 0.5 * nw.s[:, 0, 0]
+        >>> nw.s[:, 1, 1] = 0.5 * nw.s[:, 1, 1]
+        >>> nw.s[:, 2, 2] = 0.5 * nw.s[:, 2, 2]
+
+        This gives the average, but you could also replace it with just one of the measurements.
+
+        This function can also be used for smaller networks:
 
         Get a 1-port network with `s11`, i.e. [s11_meas]:
 
@@ -350,65 +407,55 @@ class NanoVNAv2(abcvna.VNA):
 
         >>> nw = nanovna.get_snp_network(ports=(1, ))
 
-        Get a 2-port network (incomplete) with `(s11, s12) = measurement, (s21, S22) = 0`,
-        i.e. [[s11_meas, s21_meas], [0, 0]]:
+        Get a 2-port network (incomplete) with `(s11, s21) = measurement, (s12, S22) = 0`,
+        i.e. [[s11_meas, 0], [s21_meas, 0]]:
 
         >>> nw = nanovna.get_snp_network(ports=(0, 1))
 
-        Get a 2-port network (incomplete) with `(s21, s22) = measurement, (s11, S12) = 0`,
-        i.e. [[0, 0], [s21_meas, s11_meas]]:
+        Get a 2-port network (incomplete) with `(s12, s22) = measurement, (s11, S21) = 0`,
+        i.e. [[0, s21_meas], [0, s11_meas]]:
 
         >>> nw = nanovna.get_snp_network(ports=(1, 0))
-
-        Get a 3-port network (incomplete) with `(s31, s33) = measurement, rest = 0`,
-        i.e. [[0, 0, 0], [0, 0, 0], [s21_meas, 0, s11_meas]]:
-
-        >>> nw = nanovna.get_snp_network(ports=(1, None, 0))
-
-        Get a 3-port network (incomplete) with `(s32, s33) = measurement, rest = 0`,
-        i.e. [[0, 0, 0], [0, 0, 0], [0, s21_meas, s11_meas]]:
-
-        >>> nw = nanovna.get_snp_network(ports=(None, 1, 0))
-
-        Get a 3-port network (incomplete) with `(s22, s23) = measurement, rest = 0`,
-        i.e. [[0, 0, 0], [0, s11_meas, s21_meas], [0, 0, 0]]:
-
-        >>> nw = nanovna.get_snp_network(ports=(None, 0, 1))
-
-        Get a 3-port network (incomplete) with `(s11, s12) = measurement, rest = 0`,
-        i.e. [[s11_meas, s21_meas, 0], [0, 0, 0], [0, 0, 0]]:
-
-        >>> nw = nanovna.get_snp_network(ports=(0, 1, None))
-
-        Get a 3-port network (incomplete) with only `(s13) = measurement, rest = 0`,
-        i.e. [[0, 0, s21_meas], [0, 0, 0], [0, 0, 0]]:
-
-        >>> nw = nanovna.get_snp_network(ports=(None, None, 1))
         """
 
+        # load s11, s21 from NanoVNA
         data_s11, data_s21 = self.get_s11_s21()
         frequency = skrf.Frequency.from_f(self._frequency, unit='hz')
+
+        # prepare empty S matrix to be populated
         s = np.zeros((len(frequency), len(ports), len(ports)), dtype=complex)
 
         # get trace indices from 'ports' (without None)
-        j = []
-        i = 0
+        rows = []
+        col = -1
         for i_port, port in enumerate(ports):
             if port is not None:
-                j.append(i_port)
+                # get row indices directly from entries in `ports`
+                rows.append(i_port)
+
+                # try to get column index from from position of `0` entry (if present)
                 if port == 0:
-                    i = i_port
+                    col = i_port
+
+        if col == -1:
+            # `0` entry was not present to specify the column index
+            if len(ports) == 1:
+                # not a problem; it's a 1-port
+                col = 0
+            else:
+                # problem: column index is ambiguous
+                raise ValueError('Source port index `0` is missing in `ports` with length > 1. Column index is ambiguous.')
 
         # populate N-port network with s11 and s21
         k = 0
         for _, port in enumerate(ports):
             if port is not None:
                 if port == 0:
-                    s[:, i, j[k]] = data_s11
+                    s[:, rows[k], col] = data_s11
                 elif port == 1:
-                    s[:, i, j[k]] = data_s21
+                    s[:, rows[k], col] = data_s21
                 else:
-                    raise ValueError('Invalid port index `{}` in ports'.format(port))
+                    raise ValueError('Invalid port index `{}` in `ports`'.format(port))
                 k += 1
 
         return skrf.Network(frequency=frequency, s=s)
