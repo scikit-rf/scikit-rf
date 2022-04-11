@@ -1,5 +1,5 @@
 import pprint
-from typing import Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence
 
 import numpy as np
 
@@ -10,8 +10,8 @@ from .vna import VNA
 
 
 class PNA(VNA):
-    def __init__(self, address: str, timeout: int = 2000):
-        super().__init__(address, timeout)
+    def __init__(self, address: str, timeout: int = 2000, backend: str='@py'):
+        super().__init__(address, timeout, backend)
 
     @property
     def start_freq(self) -> float:
@@ -36,6 +36,7 @@ class PNA(VNA):
     @npoints.setter
     def npoints(self, n: int) -> None:
         self.write(f"sense:sweep:points {n}")
+
 
     @property
     def sweep_type(self) -> str:
@@ -120,6 +121,11 @@ class PNA(VNA):
         self.write(f"mmemory:store:trace:format:snp {format}")
 
     @property
+    def ports(self) -> List:
+        query = "system:capability:hardware:ports:internal:catalog?"
+        return self.query(query).split(",")
+
+    @property
     def sysinfo(self) -> str:
         def capability(setting: str) -> str:
             return self.query(f"system:capability:{setting}?")
@@ -169,3 +175,9 @@ class PNA(VNA):
                 ntwk.s[:, m, n] = s_data[i * 2] + 1j * s_data[i * 2 + 1]
 
         return ntwk
+
+    def upload_oneport_calibration(self, port: int, cal: Calibration) -> None:
+        pass
+
+    def upload_twoport_calibration(self, ports: Sequence, cal: Calibration) -> None:
+        pass

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 import pyvisa
 from pyvisa.constants import RENLineOperation
@@ -50,7 +50,7 @@ class VNA(ABC):
     set_frequency_sweep
     """
 
-    def __init__(self, address: str, timeout: int = 3000) -> None:
+    def __init__(self, address: str, timeout: int = 3000, backend: str='@py') -> None:
         """
         Initialize a network analyzer object
 
@@ -64,14 +64,7 @@ class VNA(ABC):
         Notes
         -----
         """
-        intf_regex = re.compile(
-            r"^(?P<bus>ASRL|GPIB|PXI|TCPIP|USB|VXI)\d?::", re.IGNORECASE
-        )
-
-        if not re.match(intf_regex, address):
-            raise ValueError(f"Invalid address [invalid interface]: {address}")
-
-        rm = pyvisa.ResourceManager()
+        rm = pyvisa.ResourceManager(backend)
         self.resource = rm.open_resource(address)
 
         if isinstance(self.resource, pyvisa.resources.MessageBasedResource):
@@ -129,6 +122,13 @@ class VNA(ABC):
 
     def id_string(self) -> str:
         return self.query("*IDN?")
+
+    @classmethod
+    def available(cls, backend: str='@py') -> List[str]:
+        rm = pyvisa.ResourceManager(backend)
+        avail = rm.list_resources()
+        rm.close()
+        return list(avail)
 
     @property
     @abstractmethod
