@@ -90,8 +90,19 @@ class PNA(VNA):
         self.write(f"sense:sweep:groups:count {n}")
 
     @property
-    def channels_in_use(self) -> str:
-        return self.query("system:channels:catalog?")
+    def channels_in_use(self) -> List[int]:
+        response = self.query("system:channels:catalog?")
+        response = response.strip().replace('"', '')
+        return [int(c) for c in response]
+
+    def measurements_on_channel(self, channel: int) -> List[int]:
+        channels = self.channels_in_use
+        if channel not in channels:
+            return list()
+        else:
+            response = self.query(f"system:measurement:catalog? {channel}")
+            response = response.strip().replace('"', '').split(',')
+            return [int(m) for m in response]
 
     @property
     def active_channel(self) -> Optional[int]:
@@ -101,18 +112,32 @@ class PNA(VNA):
         else:
             return int(active)
 
+    @active_channel.setter
+    def active_channel(self, channel: int) -> None:
+        channels = self.channels_in_use
+        if channel not in channels:
+            raise IndexError(f"Channel {channel} doesn't exist")
+        else:
+            # No command to set active channel, so get first measurement on `channel` 
+            # and set the selected measurement to that to hack set the active channel
+            mnum = self.measurements_on_channel(channel)[0]
+            self.active_measurement = mnum
+
     @property
     def active_measurement(self) -> Optional[str]:
         active = self.query("system:active:measurement?")
         return None if active == "" else active
 
-    @property
-    def measurement_numbers(self) -> str:
-        return self.query("system:measurement:catalog?")
+    @active_measurement.setter
+    def active_measurement(self, mnum: int) -> None:
+        self.write(f"calculate:parameter:mnumber {mnum}")
+
+    def measurement_numbers(self, chan: int) -> str:
+        return self.query(f"system:measurement:catalog? {chan}")
 
     @property
     def snp_format(self) -> str:
-        return self.query("mmemory:store:trace:format:snp?")
+        return self.query("mmemory:store:trace:format:snp?").strip()
 
     @snp_format.setter
     def snp_format(self, format: str) -> None:
@@ -123,7 +148,8 @@ class PNA(VNA):
     @property
     def ports(self) -> List:
         query = "system:capability:hardware:ports:internal:catalog?"
-        return self.query(query).split(",")
+        ports = self.query(query).split(',')
+        return [p.lstrip('"').rstrip('"\n')[-1] for p in ports]
 
     @property
     def sysinfo(self) -> str:
@@ -146,14 +172,20 @@ class PNA(VNA):
 
         return pprint.pformat(info)
 
+    def create_measurement(self, name: str, measurement: str) -> None:
+        self.write(f"calculate:parameter:extended '{name}', '{measurement}'")
+
+    # OPTIMIZE: create and getting measurement data might be faster than 
+    # e.g. getting a whole four port network
     def get_snp_network(self, ports: Sequence = (1, 2)) -> Network:
         self.resource.clear()
 
         old_snp_format = self.snp_format
         port_str = ",".join(map(str, ports))
         self.snp_format = "RI"
+        self.active_channel = 1
         raw_data = self.query_ascii(
-            f"calculate:data:snp:ports? {port_str}", container=np.array
+            f"calculate:data:snp:ports? '{port_str}'", container=np.array
         )
         self.query("*OPC?")
         self.snp_format = old_snp_format
@@ -169,12 +201,14 @@ class PNA(VNA):
         ntwk = Network()
         ntwk.frequency = Frequency.from_f(freq_data, unit="hz")
         ntwk.s = np.empty(shape=(s_data.shape[1], nports, nports), dtype=np.complex64)
+        # Can we speed this up?
         for n in range(nports):
             for m in range(nports):
                 i = n * nports + m
-                ntwk.s[:, m, n] = s_data[i * 2] + 1j * s_data[i * 2 + 1]
+                ntwk.s[:, n, m] = s_data[i * 2] + 1j * s_data[i * 2 + 1]
 
         return ntwk
+
 
     def upload_oneport_calibration(self, port: int, cal: Calibration) -> None:
         pass
