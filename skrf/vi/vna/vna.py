@@ -90,8 +90,6 @@ class VNA(ABC):
         if isinstance(self.resource, pyvisa.resources.GPIBInstrument):
             self.resource.control_ren(RENLineOperation.deassert_gtl)
 
-        self.reset()
-
     def __enter__(self) -> VNA:
         """
         context manager entry point
