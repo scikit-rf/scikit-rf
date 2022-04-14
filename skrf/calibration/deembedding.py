@@ -1119,7 +1119,6 @@ class Ieeep370nzc2xthru(Deembedding):
         step11 = self.makeStep(t11)
         z11 = -50 * (step11 + 1) / (step11 - 1)
         z11x = z11[x]
-        print(z11x)
         
         temp = Network(frequency = self.s2xthru.frequency, s = s, z0 = 50)
         temp.renormalize(z11x)
