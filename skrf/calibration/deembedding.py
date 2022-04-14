@@ -917,11 +917,10 @@ class ImpedanceCancel(Deembedding):
 
 class Ieeep370nzc2xthru(Deembedding):
     """
-    IEEEP3702xThru.m creates error boxes from a test fixture 2x thru.
+    Creates error boxes from a test fixture 2x thru.
     
     Based on https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP3702xThru.m
     commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
-    See github issue https://github.com/scikit-rf/scikit-rf/issues/521
 
     A deembedding object is created with one 2x thru measurement,
     `dummy_2xthru` which is split into left and right fixtures with IEEEP370
@@ -934,7 +933,7 @@ class Ieeep370nzc2xthru(Deembedding):
     Example
     --------
     >>> import skrf as rf
-    >>> from skrf.calibration import Ieeep370_2xthru
+    >>> from skrf.calibration import Ieeep370nzc2xthru
 
     Create network objects for dummy structure and dut
 
@@ -943,7 +942,7 @@ class Ieeep370nzc2xthru(Deembedding):
 
     Create de-embedding object
 
-    >>> dm = Ieeep370_2xthru(dummy_2xthru = s2xthru, name = '2xthru')
+    >>> dm = Ieeep370nzc2xthru(dummy_2xthru = s2xthru, name = '2xthru')
 
     Remove parasitics to get the actual device network
 
@@ -1025,9 +1024,7 @@ class Ieeep370nzc2xthru(Deembedding):
     
     
     def makeStep(self, impulse):
-        """
-        mhuser : no need to call step function here, cumsum will be enough and efficient
-        """
+        #mhuser : no need to call step function here, cumsum will be enough and efficient
         #step = np.convolve(np.ones((len(impulse))), impulse)
         #return step[0:len(impulse)]
         return np.cumsum(impulse, axis=0)
@@ -1206,25 +1203,28 @@ class Ieeep370nzc2xthru(Deembedding):
     
 class Ieeep370zc2xthru(Deembedding):
     """
-    IEEEP370Zc2xThru.m creates error boxes from a test fixture 2x thru and the
+    Creates error boxes from a test fixture 2x thru and the
     fixture-dut-fixture S-parameters.
     
     Based on https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370Zc2xThru.m
     commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
-    See github issue https://github.com/scikit-rf/scikit-rf/issues/521
 
-    A deembedding object is created with one 2x thru measurement,
-    `dummy_2xthru` which is split into left and right fixtures with IEEEP370
+    A deembedding object is created with 2x thru and fixture-dut-fixture
+    measurements, which is split into left and right fixtures with IEEEP370
     Zc2xThru method. When :func:`Deembedding.deembed` is applied,
     the s-parameters of the left and right fixture are deembedded from
     fixture-dut-fixture measurement.
 
-    This method is applicable only when there is a 2xthru measurement.
+    This method is applicable only when there is a 2xthru measurement and a 
+    fixture-dut-fixture measurement.
+    
+    The possible difference of impedance between 2xthru and fixture-dut-fixture
+    is corrected.
 
     Example
     --------
     >>> import skrf as rf
-    >>> from skrf.calibration import Ieeep370_2xthru
+    >>> from skrf.calibration import Ieeep370zc2xthru
 
     Create network objects for dummy structure and dut
 
@@ -1233,7 +1233,11 @@ class Ieeep370zc2xthru(Deembedding):
 
     Create de-embedding object
 
-    >>> dm = Ieeep370_2xthru(dummy_2xthru = s2xthru, name = '2xthru')
+    >>> dm = Ieeep370zc2xthru(dummy_2xthru = s2xthru, dummy_fix_dut_fix = fdf,
+                             bandwidth_limit = 10e9,
+                             pullback1 = 0, pullback2 = 0,
+                             leadin = 0,
+                             name = 'zc2xthru')
 
     Remove parasitics to get the actual device network
 
