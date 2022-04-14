@@ -1779,7 +1779,7 @@ class TwoPortOnePath(TwelveTerm):
     """
     family = 'TwoPortOnePath'
 
-    def __init__(self, measured, ideals,n_thrus=None,  source_port=1,
+    def __init__(self, measured, ideals, n_thrus=None, source_port=1,
                  *args, **kwargs):
         """
         Two Port One Path Calibration initializer.
@@ -1817,11 +1817,18 @@ class TwoPortOnePath(TwelveTerm):
         TwelveTerm.__init__
         """
 
-
+        if source_port not in [1, 2]:
+            raise ValueError("Invalid source_port value. Expected 1 or 2.")
 
         self.sp = source_port-1
         self.rp = 1 if self.sp == 0 else 0
-        kwargs.update({'measured':measured,
+        # Make S12 = S21 and S22 = S11 for numerical reasons
+        measured_sym = [m.copy() for m in measured]
+        for m in measured_sym:
+            m.s[:,self.sp, self.rp] = m.s[:,self.rp, self.sp]
+            m.s[:,self.rp, self.rp] = m.s[:,self.sp, self.sp]
+
+        kwargs.update({'measured':measured_sym,
                        'ideals':ideals,
                        'n_thrus':n_thrus})
         TwelveTerm.__init__(self,*args, **kwargs)
@@ -1829,34 +1836,7 @@ class TwoPortOnePath(TwelveTerm):
 
     def run(self):
         """
-        run
         """
-        """
-        if self.sp !=0:
-            raise NotImplementedError('not implemented yet. you can just flip() all your data though. ')
-        n_thrus = self.n_thrus
-        p1_m = [k.s11 for k in self.measured[:-n_thrus]]
-        p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
-        thru = NetworkSet(self.measured[-n_thrus:]).mean_s
-
-        # create one port calibration for reflective standards
-        port1_cal = OnePort(measured = p1_m, ideals = p1_i)
-
-        # cal coefficient pdictionaries
-        p1_coefs = port1_cal.coefs
-
-        if self.kwargs.get('isolation',None) is not None:
-            raise NotImplementedError()
-            p1_coefs['isolation'] = isolation.s21.s.flatten()
-        else:
-            p1_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
-
-        p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
-        p1_coefs['transmission tracking'] = \
-            (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
-            (1. - p1_coefs['source match']*p1_coefs['load match'])
-
-        coefs = {}"""
 
         # run a full twelve term then just copy all forward error terms
         # over reverse error terms
