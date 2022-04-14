@@ -1386,9 +1386,7 @@ class Ieeep370zc2xthru(Deembedding):
     
     
     def makeStep(self, impulse):
-        """
-        mhuser : no need to call step function here, cumsum will be enough and efficient
-        """
+        #mhuser : no need to call step function here, cumsum will be enough and efficient
         #step = np.convolve(np.ones((len(impulse))), impulse)
         #return step[0:len(impulse)]
         return np.cumsum(impulse, axis=0)
