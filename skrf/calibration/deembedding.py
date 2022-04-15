@@ -1129,14 +1129,13 @@ class Ieeep370nzc2xthru(Deembedding):
         
         dcs11r = self.DC(s11r, f)
         t11r = np.fft.fftshift(np.fft.ifft(self.makeSymmetric(concatenate(([dcs11r], s11r))), axis=0), axes=0)
-        t11r[x//2:] = 0 # mhuser: factor 2 here
+        t11r[x:] = 0
         e001 = np.fft.fft(np.fft.ifftshift(t11r))
         e001 = e001[1:n+1]
         
         dcs22r = self.DC(s22r, f)
         t22r = np.fft.fftshift(np.fft.ifft(self.makeSymmetric(concatenate(([dcs22r], s22r))), axis=0), axes=0)
-        #t22r[x:] = 0
-        t22r[x//2:] = 0 # mhuser: strange here but x seems to be wrong by factor 2
+        t22r[x:] = 0
         e002 = np.fft.fft(np.fft.ifftshift(t22r))
         e002 = e002[1:n+1]
         
@@ -1574,8 +1573,8 @@ class Ieeep370zc2xthru(Deembedding):
             zline1 = self.getz(p[:, 0, 0], f, z0)
             zline2 = self.getz(p[:, 1, 1], f, z0)
             #this is the transmission line to be removed
-            TL1 = self.makeTL(zline1, z0, betal, 0.5)
-            TL2 = self.makeTL(zline2, z0, betal, 0.5)
+            TL1 = self.makeTL(zline1, z0, betal, 1)
+            TL2 = self.makeTL(zline2, z0, betal, 1)
             sTL1 = nin.copy()
             sTL1.s = TL1
             sTL2 = nin.copy()
@@ -1596,14 +1595,14 @@ class Ieeep370zc2xthru(Deembedding):
         f = s2x.frequency.f
         s212x = s2x.s[:, 1, 0]
         DC21 = self.dc_interp(s212x, f)
-        x = np.argmax(np.fft.irfft(self.makeSymmetric(concatenate(([DC21], s212x)))))//2 # why to divide by 2 here ?
+        x = np.argmax(np.fft.irfft(self.makeSymmetric(concatenate(([DC21], s212x)))))
         #define relative length
         l = 1 / (2 * x)
         #define the reflections to be mimicked
         s11dut = s_dut.s[:, 0, 0]
         s22dut = s_dut.s[:, 1, 1]
         #peel the fixture away and create the fixture model
-        for i in range(x - pullback):
+        for i in range(x - pullback + 1): #mhuser: python is not matlab
             zline1 = self.getz(s11dut, f, z0)
             zline2 = self.getz(s22dut, f, z0)
             TL1 = self.makeTL(zline1,z0,gamma,l)
@@ -1691,8 +1690,8 @@ class Ieeep370zc2xthru(Deembedding):
         s212x = self.s2xthru.s[:, 1, 0]
         #get the attenuation and phase constant per length
         beta_per_length = -np.unwrap(np.angle(s212x))
-        attenuation = np.abs(self.s2xthru.s[:,1,0])**2 / (1. - np.abs(self.s2xthru.s[:,1,1])**2)
-        alpha_per_length = (10 * np.log10(attenuation)) / -8.686;
+        attenuation = np.abs(self.s2xthru.s[:,1,0])**2 / (1. - np.abs(self.s2xthru.s[:,0,0])**2)
+        alpha_per_length = (10.0 * np.log10(attenuation)) / -8.686
         if self.bandwidth_limit == 0:
             #divide by 2*n + 1 to get prop constant per descrete unit length
             gamma = alpha_per_length + 1j * beta_per_length # gamma without DC
