@@ -56,6 +56,7 @@ import warnings
 import numpy as np
 from numpy import concatenate, conj, flip, real, angle, exp, zeros
 from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
 
 
 class Deembedding(ABC):
@@ -1051,8 +1052,8 @@ class Ieeep370nzc2xthru(Deembedding):
         ts = np.argmin(np.abs(t - (-3e-9)))
         Hr = self.COM_receiver_noise_filter(f, f[-1]/2)
         while(err > allowedError):
-            h1 = self.makeStep(np.fft.fftshift(np.fft.irfft(self.makeSymmetric(concatenate(([DCpoint], Hr * s))), axis=0), axes=0))
-            h2 = self.makeStep(np.fft.fftshift(np.fft.irfft(self.makeSymmetric(concatenate(([DCpoint + 0.001], Hr * s))), axis=0), axes=0))
+            h1 = self.makeStep(np.fft.fftshift(np.fft.irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
+            h2 = self.makeStep(np.fft.fftshift(np.fft.irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
             m = (h2[ts] - h1[ts]) / 0.001
             b = h1[ts] - m * DCpoint
             DCpoint = (0 - b) / m
@@ -1108,11 +1109,11 @@ class Ieeep370nzc2xthru(Deembedding):
         # e001
         s21 = s[:, 1, 0]
         dcs21 = self.dc_interp(s21, f)
-        t21 = np.fft.fftshift(np.fft.irfft(self.makeSymmetric(concatenate(([dcs21], s21))), axis=0), axes=0)
+        t21 = np.fft.fftshift(np.fft.irfft(concatenate(([dcs21], s21)), axis=0), axes=0)
         x = np.argmax(t21)
         
         dcs11 = self.DC(s11,f)
-        t11 = np.fft.fftshift(np.fft.irfft(self.makeSymmetric(concatenate(([dcs11], s11))), axis=0), axes=0)
+        t11 = np.fft.fftshift(np.fft.irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
         step11 = self.makeStep(t11)
         z11 = -50 * (step11 + 1) / (step11 - 1)
         z11x = z11[x]
@@ -1390,17 +1391,6 @@ class Ieeep370zc2xthru(Deembedding):
         #return step[0:len(impulse)]
         return np.cumsum(impulse, axis=0)
     
-    
-    def makeSymmetric(self, nonsymmetric):
-        """
-        this takes the nonsymmetric frequency domain input and makes it
-        symmetric.
-        The function assumes the DC point is in the nonsymmetric data
-        """
-        symmetric_abs = concatenate((np.abs(nonsymmetric), flip(np.abs(nonsymmetric[1:]))))
-        symmetric_ang = concatenate((angle(nonsymmetric), -flip(angle(nonsymmetric[1:]))))
-        return symmetric_abs * exp(1j * symmetric_ang)
-    
     def DC2(self, s, f):
         DCpoint = 0.002 # seed for the algorithm
         err = 1 # error seed
@@ -1412,8 +1402,8 @@ class Ieeep370zc2xthru(Deembedding):
         ts = np.argmin(np.abs(t - (-3e-9)))
         Hr = self.COM_receiver_noise_filter(f, f[-1]/2)
         while(err > allowedError):
-            h1 = self.makeStep(np.fft.fftshift(np.fft.irfft(self.makeSymmetric(concatenate(([DCpoint], Hr * s))), axis=0), axes=0))
-            h2 = self.makeStep(np.fft.fftshift(np.fft.irfft(self.makeSymmetric(concatenate(([DCpoint + 0.001], Hr * s))), axis=0), axes=0))
+            h1 = self.makeStep(np.fft.fftshift(np.fft.irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
+            h2 = self.makeStep(np.fft.fftshift(np.fft.irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
             m = (h2[ts] - h1[ts]) / 0.001
             b = h1[ts] - m * DCpoint
             DCpoint = (0 - b) / m
@@ -1423,14 +1413,14 @@ class Ieeep370zc2xthru(Deembedding):
     
     def getz(self, s, f, z0):
         DC11 = self.DC2(s, f)
-        t112x = np.fft.irfft(self.makeSymmetric(concatenate(([DC11], s))))
+        t112x = np.fft.irfft(concatenate(([DC11], s)))
         #get the step response of t112x. Shift is needed for makeStep to
         #work prpoerly.
         t112xStep = self.makeStep(np.fft.fftshift(t112x))
         #construct the transmission line
         z = -z0 * (t112xStep + 1) / (t112xStep - 1)
-        z = np.fft.fftshift(z) #impedance. Shift again to get the first point
-        return z[0]
+        z = np.fft.ifftshift(z) #impedance. Shift again to get the first point
+        return z[0], z
     
     def makeTL(self, zline, z0, gamma, l):
         n = len(gamma)
@@ -1570,8 +1560,8 @@ class Ieeep370zc2xthru(Deembedding):
         for i in range(N):
             p = out.s
             #calculate impedance
-            zline1 = self.getz(p[:, 0, 0], f, z0)
-            zline2 = self.getz(p[:, 1, 1], f, z0)
+            zline1 = self.getz(p[:, 0, 0], f, z0)[0]
+            zline2 = self.getz(p[:, 1, 1], f, z0)[0]
             #this is the transmission line to be removed
             TL1 = self.makeTL(zline1, z0, betal, 1)
             TL2 = self.makeTL(zline2, z0, betal, 1)
@@ -1593,18 +1583,21 @@ class Ieeep370zc2xthru(Deembedding):
     
     def makeErrorBox_v7(self, s_dut, s2x, gamma, z0, pullback):
         f = s2x.frequency.f
+        n = len(f)
         s212x = s2x.s[:, 1, 0]
         DC21 = self.dc_interp(s212x, f)
-        x = np.argmax(np.fft.irfft(self.makeSymmetric(concatenate(([DC21], s212x)))))
+        x = np.argmax(np.fft.irfft(concatenate(([DC21], s212x))))
         #define relative length
-        l = 1 / (2 * x)
+        #python first index is 0, thus 1 should be added to get the length
+        l = 1. / (2. * x + 1.)
         #define the reflections to be mimicked
         s11dut = s_dut.s[:, 0, 0]
         s22dut = s_dut.s[:, 1, 1]
         #peel the fixture away and create the fixture model
-        for i in range(x - pullback + 1): #mhuser: python is not matlab
-            zline1 = self.getz(s11dut, f, z0)
-            zline2 = self.getz(s22dut, f, z0)
+        #python range to n-1, thus 1 to be added to have proper iteration number
+        for i in range(x - pullback + 1):
+            zline1 = self.getz(s11dut, f, z0)[0]
+            zline2 = self.getz(s22dut, f, z0)[0]
             TL1 = self.makeTL(zline1,z0,gamma,l)
             TL2 = self.makeTL(zline2,z0,gamma,l)
             sTL1 = s_dut.copy()
@@ -1614,6 +1607,8 @@ class Ieeep370zc2xthru(Deembedding):
             if i == 0:
                 errorbox1 = sTL1
                 errorbox2 = sTL2
+                _, z1 = self.getz(s11dut, f, z0)
+                _, z2 = self.getz(s22dut, f, z0)
             else:
                 errorbox1 = errorbox1 ** sTL1
                 errorbox2 = errorbox2 ** sTL2
@@ -1627,6 +1622,23 @@ class Ieeep370zc2xthru(Deembedding):
             # s_dut.a = abcd_in
             s11dut = s_dut.s[:, 0, 0]
             s22dut = s_dut.s[:, 1, 1]
+            if self.verbose:
+                if i == 0:
+                    fig, axs = plt.subplots(2, 2)
+                    axs[0, 0].plot(z1, color = 'k')
+                    axs[0, 0].set_xlim((0, x))
+                    axs[0, 1].plot(z2, color = 'k')
+                    axs[0, 1].set_xlim((0, x))
+                    axs[1, 0].set_xlim((n-100, n+x*2+10))
+                    axs[1, 1].set_xlim((n-100, n+x*2+10))
+                _, zeb1 = self.getz(errorbox1.s[:, 0, 0], f, z0)
+                _, zeb2 = self.getz(errorbox2.s[:, 0, 0], f, z0)
+                _, zdut1 = self.getz(s11dut, f, z0)
+                _, zdut2 = self.getz(s22dut, f, z0)
+                axs[0, 0].plot(zeb1)
+                axs[0, 1].plot(zeb2)
+                axs[1, 0].plot(np.fft.ifftshift(zdut1))
+                axs[1, 1].plot(np.fft.ifftshift(zdut2))
         return errorbox1, errorbox2.flipped()
     
     
@@ -1693,15 +1705,15 @@ class Ieeep370zc2xthru(Deembedding):
         attenuation = np.abs(self.s2xthru.s[:,1,0])**2 / (1. - np.abs(self.s2xthru.s[:,0,0])**2)
         alpha_per_length = (10.0 * np.log10(attenuation)) / -8.686
         if self.bandwidth_limit == 0:
-            #divide by 2*n + 1 to get prop constant per descrete unit length
+            #divide by 2*n + 1 to get prop constant per discrete unit length
             gamma = alpha_per_length + 1j * beta_per_length # gamma without DC
         else:
             #fit the attenuation up to the limited bandwidth
             bwl_x = np.argmin(np.abs(f - self.bandwidth_limit))
-            X = np.array([np.sqrt(f[0:bwl_x]), f[0:bwl_x], f[0:bwl_x]**2])
+            X = np.array([np.sqrt(f[0:bwl_x+1]), f[0:bwl_x+1], f[0:bwl_x+1]**2])
             b = np.linalg.lstsq(X.conj().T, alpha_per_length[0:bwl_x], rcond=None)[0]
             alpha_per_length_fit = b[0] * np.sqrt(f) + b[1] * f + b[2] * f**2
-            #divide by 2*n + 1 to get prop constant per descrete unit length
+            #divide by 2*n + 1 to get prop constant per discrete unit length
             gamma = alpha_per_length_fit + 1j * beta_per_length # gamma without DC
              
         # extract error boxes
