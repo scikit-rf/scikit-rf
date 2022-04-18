@@ -1711,7 +1711,7 @@ class Ieeep370zc2xthru(Deembedding):
             #fit the attenuation up to the limited bandwidth
             bwl_x = np.argmin(np.abs(f - self.bandwidth_limit))
             X = np.array([np.sqrt(f[0:bwl_x+1]), f[0:bwl_x+1], f[0:bwl_x+1]**2])
-            b = np.linalg.lstsq(X.conj().T, alpha_per_length[0:bwl_x], rcond=None)[0]
+            b = np.linalg.lstsq(X.conj().T, alpha_per_length[0:bwl_x+1], rcond=None)[0]
             alpha_per_length_fit = b[0] * np.sqrt(f) + b[1] * f + b[2] * f**2
             #divide by 2*n + 1 to get prop constant per discrete unit length
             gamma = alpha_per_length_fit + 1j * beta_per_length # gamma without DC
