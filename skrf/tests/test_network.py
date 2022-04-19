@@ -11,7 +11,6 @@ import numpy as npy
 from pathlib import Path
 import pickle
 import skrf as rf
-from copy import deepcopy
 import warnings
 
 from skrf import setup_pylab
@@ -905,22 +904,37 @@ class NetworkTestCase(unittest.TestCase):
           self.assertTrue(abs(gamma_opt_rb.s[0,0,0] - gamma_opt_set) < 1.e-1, 'nf not retrieved by noise deembed')
 
 
-    def test_se2gmm2se_mag(self):
-
+    def test_se2gmm2se(self):
+        # Test that se2gmm followed by gmm2se gives back the original network
         for z0 in [None, 45, 75]:
             ntwk4 = rf.Network(os.path.join(self.test_dir, 'cst_example_4ports.s4p'))
 
             if z0 is not None:
                 ntwk4.z0 = z0
 
-            ntwk4t = deepcopy(ntwk4)
+            ntwk4t = ntwk4.copy()
             ntwk4t.se2gmm(p=2)
             ntwk4t.gmm2se(p=2)
 
-            self.assertTrue(npy.allclose(abs(ntwk4.s), abs(ntwk4t.s), rtol=1E-7, atol=0))
+            self.assertTrue(npy.allclose(ntwk4.s, ntwk4t.s))
             self.assertTrue(npy.allclose(ntwk4.z0, ntwk4t.z0))
-            # phase testing does not pass - see #367
-            #self.assertTrue(npy.allclose(npy.angle(ntwk4.s), npy.angle(ntwk4t.s), rtol=1E-7, atol=1E-10))
+
+    def test_se2gmm(self):
+        # Test mixed mode conversion of two parallel thrus
+        se = npy.zeros((1,4,4), dtype=complex)
+        se[:,2,0] = 1
+        se[:,0,2] = 1
+        se[:,3,1] = 1
+        se[:,1,3] = 1
+        net = rf.Network(s=se, f=[1])
+        gmm = npy.zeros((1,4,4), dtype=complex)
+        gmm[:,0,1] = 1
+        gmm[:,1,0] = 1
+        gmm[:,2,3] = 1
+        gmm[:,3,2] = 1
+        net.se2gmm(p=2)
+        self.assertTrue(npy.allclose(net.s, gmm))
+
 
     def test_s_active(self):
         """
