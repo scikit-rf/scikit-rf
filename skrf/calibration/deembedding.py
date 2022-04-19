@@ -949,15 +949,19 @@ class Ieeep370nzc2xthru(Deembedding):
 
     >>> dut = dm.deembed(fdf)
     """
-    def __init__(self, dummy_2xthru, name=None, *args, **kwargs):
+    def __init__(self, dummy_2xthru, name=None,
+                 z0 = 50, *args, **kwargs):
         """
-        Ieeep370_2xthru De-embedding Initializer
+        Ieeep370nzc2xthru De-embedding Initializer
 
         Parameters
         -----------
 
         dummy_2xthru : :class:`~skrf.network.Network` object
             Measurement of the 2x thru.
+            
+        z0 :
+            reference impedance of the S-parameters (default: 50)
 
         name : string
             Optional name of de-embedding object
@@ -971,6 +975,7 @@ class Ieeep370nzc2xthru(Deembedding):
 
         """
         self.s2xthru = dummy_2xthru.copy()
+        self.z0 = z0
         dummies = [self.s2xthru]
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
@@ -1093,7 +1098,7 @@ class Ieeep370nzc2xthru(Deembedding):
             else:
                 dfnew = f[-1]/10000
                 fnew = dfnew * (np.arange(0, 10000) + 1)
-            stemp = skrf.Network(frequency = skrf.Frequency.from_f(f), s = s)
+            stemp = Network(frequency = skrf.Frequency.from_f(f), s = s)
             stemp.interpolate(fnew)
             f = fnew
             s = stemp.s
@@ -1115,10 +1120,10 @@ class Ieeep370nzc2xthru(Deembedding):
         dcs11 = self.DC(s11,f)
         t11 = np.fft.fftshift(np.fft.irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
         step11 = self.makeStep(t11)
-        z11 = -50 * (step11 + 1) / (step11 - 1)
+        z11 = -self.z0 * (step11 + 1) / (step11 - 1)
         z11x = z11[x]
         
-        temp = Network(frequency = self.s2xthru.frequency, s = s, z0 = 50)
+        temp = Network(frequency = self.s2xthru.frequency, s = s, z0 = self.z0)
         temp.renormalize(z11x)
         sr = temp.s
         del temp
@@ -1193,14 +1198,200 @@ class Ieeep370nzc2xthru(Deembedding):
         s_fixture_model_r1  = Network(frequency = s2xthru.frequency, s = fixture_model_1r, z0 = z11x)
         s_fixture_model_r2  = Network(frequency = s2xthru.frequency, s = fixture_model_2r, z0 = z11x)
             
-        # renormalize the S-parameter errorboxes to the original reference impedance (assumed to be 50)
-        s_fixture_model_r1.renormalize(50)
-        s_fixture_model_r2.renormalize(50)
+        # renormalize the S-parameter errorboxes to the original reference impedance
+        s_fixture_model_r1.renormalize(self.z0)
+        s_fixture_model_r2.renormalize(self.z0)
         s_side1 = s_fixture_model_r1
         s_side2 = s_fixture_model_r2
         
         return (s_side1, s_side2)
+
+class Ieeep370mmnzc2xthru(Deembedding):
+    """
+    Creates error boxes from a 4-port test fixture 2x thru.
     
+    Based on https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
+    commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+
+    A deembedding object is created with one 2x thru measurement,
+    `dummy_2xthru` which is split into left and right fixtures with IEEEP370
+    2xThru method. When :func:`Deembedding.deembed` is applied,
+    the s-parameters of the left and right fixture are deembedded from
+    fixture-dut-fixture measurement.
+
+    This method is applicable only when there is a 2xthru measurement.
+    
+    Note
+    ----
+    The `port_order` ='first', means front-to-back also known as odd/even,
+    while `port_order`='second' means left-to-right also known as sequential.
+    `port_order`='third' means yet another numbering method.
+    Next figure show example of port numbering with 4-port networks.
+    The `scikit-rf` cascade ** 2N-port operator use second scheme. This is very
+    convenient to write compact deembedding and other expressions.
+
+      port_order = 'first'
+           +---------+ 
+          -|0       1|-
+          -|2       3|-
+           +---------+ 
+           
+      port_order = 'second' 
+           +---------+ 
+          -|0       2|-
+          -|1       3|-
+           +---------+ 
+           
+      port_order = 'third' 
+           +---------+ 
+          -|0       3|-
+          -|1       2|-
+           +---------+ 
+
+
+    use `Network.renumber` to change port ordering.
+
+    Example
+    --------
+    >>> import skrf as rf
+    >>> from skrf.calibration import Ieeep370nzc2xthru
+
+    Create network objects for dummy structure and dut
+
+    >>> s2xthru = rf.Network('2xthru.s4p')
+    >>> fdf = rf.Network('f-dut-f.s4p')
+
+    Create de-embedding object
+
+    >>> dm = Ieeep370nzc2xthru(dummy_2xthru = s2xthru, name = '2xthru')
+
+    Remove parasitics to get the actual device network
+
+    >>> dut = dm.deembed(fdf)
+    """
+    def __init__(self, dummy_2xthru, name=None,
+                 z0 = 50, port_order: str = 'second', *args, **kwargs):
+        """
+        Ieeep370nzc2xthru De-embedding Initializer
+
+        Parameters
+        -----------
+
+        dummy_2xthru : :class:`~skrf.network.Network` object
+            Measurement of the 2x thru.
+            
+        z0 :
+            reference impedance of the S-parameters (default: 50)
+            
+        port_order : ['first', 'second', 'third']
+            specify what numbering scheme to use. See above. (default: second)
+
+        name : string
+            Optional name of de-embedding object
+
+        args, kwargs:
+            Passed to :func:`Deembedding.__init__`
+
+        See Also
+        ---------
+        :func:`Deembedding.__init__`
+
+        """
+        self.s2xthru = dummy_2xthru.copy()
+        self.z0 = z0
+        self.port_order = port_order
+        dummies = [self.s2xthru]
+
+        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+        self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru)
+
+    def deembed(self, ntwk):
+        """
+        Perform the de-embedding calculation
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+            Network data of device measurement from which
+            thru fixtures needs to be removed via de-embedding
+
+        Returns
+        -------
+        caled : :class:`~skrf.network.Network` object
+            Network data of the device after de-embedding
+
+        """
+
+        # check if the frequencies match with dummy frequencies
+        if ntwk.frequency != self.s2xthru.frequency:
+            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+
+        # TODO: attempt to interpolate if frequencies do not match
+        
+        # check if 4-port
+        if ntwk.nports != 4:
+            raise(ValueError('2xthru has to be a 4-port network.'))
+        # renumber if required
+        if self.port_order == 'first':
+            N = ntwk.nports
+            old_order = list(range(N))
+            new_order = list(range(0, N, 2)) + list(range(1, N, 2))
+            ntwk.renumber(old_order, new_order)
+        elif self.port_order == 'third':
+            N = ntwk.nports
+            old_order = list(range(N))
+            new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
+            ntwk.renumber(old_order, new_order)
+
+        deembedded = self.se_side1.inv ** ntwk ** self.se_side2.inv
+        #renumber back if required
+        if self.port_order != 'second':
+            deembedded.renumber(new_order, old_order)
+        return deembedded
+    
+    def split2xthru(self, se_2xthru):
+        # check if 4-port
+        if se_2xthru.nports != 4:
+            raise(ValueError('2xthru has to be a 4-port network.'))
+        # renumber if required
+        if self.port_order == 'first':
+            N = se_2xthru.nports
+            old_order = list(range(N))
+            new_order = list(range(0, N, 2)) + list(range(1, N, 2))
+            se_2xthru.renumber(old_order, new_order)
+        elif self.port_order == 'third':
+            N = se_2xthru.nports
+            old_order = list(range(N))
+            new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
+            se_2xthru.renumber(old_order, new_order)
+            
+        #convert to mixed-modes
+        mm_2xthru = se_2xthru.copy()
+        mm_2xthru.se2gmm(p = 2)
+        
+        #extract common and differential mode and model fixtures for each
+        sdd = subnetwork(mm_2xthru, [0, 1])
+        scc = subnetwork(mm_2xthru, [2, 3])
+        dm_dd  = Ieeep370nzc2xthru(dummy_2xthru = sdd, z0 = self.z0 * 2)
+        dm_cc  = Ieeep370nzc2xthru(dummy_2xthru = scc, z0 = self.z0 / 2)
+        
+        #convert back to single-ended
+        mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
+        se_side1 = mm_side1.copy()
+        se_side1.gmm2se(p = 2)
+        #todo: remove next two lines once gmm2se if fixed
+        se_side1.se2gmm(p = 2)
+        se_side1.gmm2se(p = 2)
+        mm_side2 = concat_ports([dm_dd.s_side2, dm_cc.s_side2], port_order = 'first')
+        se_side2 = mm_side2.copy()
+        se_side2.gmm2se(p = 2)
+        #todo: remove next two lines once gmm2se if fixed
+        se_side2.se2gmm(p = 2)
+        se_side2.gmm2se(p = 2)
+        
+        return (se_side1, se_side2)
+
+
 class Ieeep370zc2xthru(Deembedding):
     """
     Creates error boxes from a test fixture 2x thru and the
@@ -1251,7 +1442,7 @@ class Ieeep370zc2xthru(Deembedding):
                  verbose = False,
                  *args, **kwargs):
         """
-        Ieeep370_2xthru De-embedding Initializer
+        Ieeep370zc2xthru De-embedding Initializer
 
         Parameters
         -----------
@@ -1359,7 +1550,7 @@ class Ieeep370zc2xthru(Deembedding):
         snew[0, 1, 1] = self.dc_interp(s[:, 1, 1], f)
         
         f = concatenate(([0], f))
-        return skrf.Network(frequency = skrf.Frequency.from_f(f), s = snew)
+        return Network(frequency = skrf.Frequency.from_f(f), s = snew)
     
     def dc_interp(self, s, f):
         """
@@ -1589,13 +1780,14 @@ class Ieeep370zc2xthru(Deembedding):
         x = np.argmax(np.fft.irfft(concatenate(([DC21], s212x))))
         #define relative length
         #python first index is 0, thus 1 should be added to get the length
-        l = 1. / (2. * x + 1.)
+        l = 1. / (2 * x + 1)
+        print(l)
         #define the reflections to be mimicked
         s11dut = s_dut.s[:, 0, 0]
         s22dut = s_dut.s[:, 1, 1]
         #peel the fixture away and create the fixture model
         #python range to n-1, thus 1 to be added to have proper iteration number
-        for i in range(x - pullback + 1):
+        for i in range(x + 1 - pullback):
             zline1 = self.getz(s11dut, f, z0)[0]
             zline2 = self.getz(s22dut, f, z0)[0]
             TL1 = self.makeTL(zline1,z0,gamma,l)
@@ -1657,7 +1849,7 @@ class Ieeep370zc2xthru(Deembedding):
             self.flag_DC = True
             f = f[1:]
             s = s[:, :, 1:]
-            sfix_dut_fix = skrf.Network(frequency = skrf.Frequency.from_f(f), s = s)
+            sfix_dut_fix = Network(frequency = skrf.Frequency.from_f(f), s = s)
         
         # check for bad frequency vector
         df = f[1] - f[0]
@@ -1671,11 +1863,11 @@ class Ieeep370zc2xthru(Deembedding):
             forg = f
             projected_n = np.floor(f[-1]/f[0])
             fnew = f[0] * (np.arange(0, projected_n) + 1)
-            sfix_dut_fix.interpolate(skrf.Frequancy.from_f(fnew))
+            sfix_dut_fix.interpolate(Frequancy.from_f(fnew))
         
         # if the frequency vector needed to change, adjust the 2x-thru
         if self.flag_DC or self.flag_df:
-            s2xthru.interpolate(skrf.Frequancy.from_f(fnew))
+            s2xthru.interpolate(Frequancy.from_f(fnew))
             
         # check if 2x-thru is not the same frequency vector as the
         # fixture-dut-fixture
@@ -1699,10 +1891,10 @@ class Ieeep370zc2xthru(Deembedding):
         
         # calculate gamma
         #grabbing s21
-        s212x = self.s2xthru.s[:, 1, 0]
+        s212x = s2xthru.s[:, 1, 0]
         #get the attenuation and phase constant per length
         beta_per_length = -np.unwrap(np.angle(s212x))
-        attenuation = np.abs(self.s2xthru.s[:,1,0])**2 / (1. - np.abs(self.s2xthru.s[:,0,0])**2)
+        attenuation = np.abs(s2xthru.s[:,1,0])**2 / (1. - np.abs(s2xthru.s[:,0,0])**2)
         alpha_per_length = (10.0 * np.log10(attenuation)) / -8.686
         if self.bandwidth_limit == 0:
             #divide by 2*n + 1 to get prop constant per discrete unit length
@@ -1737,8 +1929,8 @@ class Ieeep370zc2xthru(Deembedding):
         # interpolate to original frequency if needed
         # revert back to original frequency vector
         if self.flag_df:
-            s_side1.interpolate(skrf.Frequency.from_f(forg))
-            s_side2.interpolate(skrf.Frequency.from_f(forg))
+            s_side1.interpolate(Frequency.from_f(forg))
+            s_side2.interpolate(Frequency.from_f(forg))
         
         # add DC back in
         if self.flag_DC:
