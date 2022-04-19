@@ -3401,14 +3401,9 @@ class Network(object):
             return (forward - reverse)
 
     # generalized mixed mode transformations
-    # XXX: experimental implementation of gmm s parameters
-    # TODO: automated test cases
     def se2gmm(self, p: int, z0_mm: npy.ndarray = None) -> None:
         """
         Transform network from single ended parameters to generalized mixed mode parameters [#]_
-
-        .. warning::
-            This is not fully tested, and should be considered as experimental
 
         Parameters
         ----------
@@ -3471,9 +3466,6 @@ class Network(object):
         """
         Transform network from generalized mixed mode parameters [#]_ to single ended parameters
 
-        .. warning::
-            This is not fully tested, and should be considered as experimental
-
         Parameters
         ----------
 
@@ -3493,7 +3485,6 @@ class Network(object):
         se2gmm
 
         """
-        # TODO: testing of reverse transformation
         # XXX: assumes 'proper' order (differential ports, single ended ports)
         if z0_se is None:
             z0_se = self.z0.copy()
@@ -3501,7 +3492,9 @@ class Network(object):
             z0_se[:, p:2 * p] *= 2  # common mode impedance
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, z0_se, self.z0)
         A = Xi_tilde_22 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_12)
-        B = Xi_tilde_21 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_11)
+        # Note that B sign is incorrect in the paper. Inverted B here gives the
+        # correct result.
+        B = -Xi_tilde_21 + npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_11)
         self.s = npy.linalg.solve(A, B)  # (35)
         self.z0 = z0_se
 
