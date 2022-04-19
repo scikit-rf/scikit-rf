@@ -1272,7 +1272,7 @@ class Ieeep370mmnzc2xthru(Deembedding):
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, port_order: str = 'second', *args, **kwargs):
         """
-        Ieeep370nzc2xthru De-embedding Initializer
+        Ieeep370mmnzc2xthru De-embedding Initializer
 
         Parameters
         -----------
@@ -1781,7 +1781,6 @@ class Ieeep370zc2xthru(Deembedding):
         #define relative length
         #python first index is 0, thus 1 should be added to get the length
         l = 1. / (2 * x + 1)
-        print(l)
         #define the reflections to be mimicked
         s11dut = s_dut.s[:, 0, 0]
         s22dut = s_dut.s[:, 1, 1]
@@ -1948,3 +1947,264 @@ class Ieeep370zc2xthru(Deembedding):
             s_side2, _ = self.NRP(s_side2, TD, 1)
         
         return (s_side1, s_side2)
+    
+    
+class Ieeep370mmzc2xthru(Deembedding):
+    """
+    Creates error boxes from a 4-port test fixture 2x thru and the
+    fixture-dut-fixture S-parameters.
+    
+    Based on https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
+    commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+
+    A deembedding object is created with 2x thru and fixture-dut-fixture
+    measurements, which is split into left and right fixtures with IEEEP370
+    Zc2xThru method. When :func:`Deembedding.deembed` is applied,
+    the s-parameters of the left and right fixture are deembedded from
+    fixture-dut-fixture measurement.
+
+    This method is applicable only when there is a 2xthru measurement and a 
+    fixture-dut-fixture measurement.
+    
+    The possible difference of impedance between 2xthru and fixture-dut-fixture
+    is corrected.
+    
+    Note
+    ----
+    The `port_order` ='first', means front-to-back also known as odd/even,
+    while `port_order`='second' means left-to-right also known as sequential.
+    `port_order`='third' means yet another numbering method.
+    Next figure show example of port numbering with 4-port networks.
+    The `scikit-rf` cascade ** 2N-port operator use second scheme. This is very
+    convenient to write compact deembedding and other expressions.
+
+      port_order = 'first'
+           +---------+ 
+          -|0       1|-
+          -|2       3|-
+           +---------+ 
+           
+      port_order = 'second' 
+           +---------+ 
+          -|0       2|-
+          -|1       3|-
+           +---------+ 
+           
+      port_order = 'third' 
+           +---------+ 
+          -|0       3|-
+          -|1       2|-
+           +---------+ 
+
+
+    use `Network.renumber` to change port ordering.
+
+    Example
+    --------
+    >>> import skrf as rf
+    >>> from skrf.calibration import Ieeep370zc2xthru
+
+    Create network objects for dummy structure and dut
+
+    >>> s2xthru = rf.Network('2xthru.s4p')
+    >>> fdf = rf.Network('f-dut-f.s4p')
+
+    Create de-embedding object
+
+    >>> dm = Ieeep370mmzc2xthru(dummy_2xthru = s2xthru, dummy_fix_dut_fix = fdf,
+                             bandwidth_limit = 10e9,
+                             pullback1 = 0, pullback2 = 0,
+                             leadin = 0,
+                             name = 'zc2xthru')
+    
+    Remove parasitics to get the actual device network
+
+    >>> dut = dm.deembed(fdf)
+        
+    """
+    def __init__(self, dummy_2xthru, dummy_fix_dut_fix, name=None, 
+                 z0 = 50, port_order: str = 'second',
+                 bandwidth_limit = 0,
+                 pullback1 = 0, pullback2 = 0,
+                 side1 = True, side2 = True,
+                 NRP_enable = True, leadin = 1,
+                 verbose = False,
+                 *args, **kwargs):
+        """
+        Ieeep370mmzc2xthru De-embedding Initializer
+
+        Parameters
+        -----------
+
+        dummy_2xthru : :class:`~skrf.network.Network` object
+            Measurement of the 2x thru.
+
+        name : string
+            Optional name of de-embedding object
+        
+        z0 :
+            reference impedance of the S-parameters (default: 50)
+            
+        port_order : ['first', 'second', 'third']
+            specify what numbering scheme to use. See above. (default: second)
+            
+        bandwidth_limit :
+            max frequency for a fitting function
+            (default: 0, use all s-parameters without fit)
+            
+        pullback1, pullback2 :
+            a number of discrete points to leave in the fixture on side 1
+            respectively on side 2 (default: 0 leave all)
+            
+        side1, side2 :
+            set to de-embed the side1 resp. side2 errorbox (default: True)
+            
+        NRP_enable :
+            set to enforce the Nyquist Rate Point during de-embedding and to
+            add the appropriote delay to the errorboxes (default: True)
+        
+        leadin :
+            a number of discrete points before t = 0 that are non-zero from
+            calibration error (default: 1)
+            
+        verbose :
+            view the process (default: False)
+
+        args, kwargs:
+            Passed to :func:`Deembedding.__init__`
+
+        See Also
+        ---------
+        :func:`Deembedding.__init__`
+
+        """
+        self.s2xthru = dummy_2xthru.copy()
+        self.sfix_dut_fix = dummy_fix_dut_fix.copy()
+        dummies = [self.s2xthru]
+        self.z0 = z0
+        self.port_order = port_order
+        self.bandwidth_limit = bandwidth_limit
+        self.pullback1 = pullback1
+        self.pullback2 = pullback2
+        self.side1 = side1
+        self.side2 = side2
+        self.NRP_enable = NRP_enable
+        self.leadin = leadin
+        self.verbose = verbose
+        self.flag_DC = False
+        self.flag_df = False
+
+        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+        self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru, self.sfix_dut_fix)
+
+    def deembed(self, ntwk):
+        """
+        Perform the de-embedding calculation
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+            Network data of device measurement from which
+            thru fixtures needs to be removed via de-embedding
+
+        Returns
+        -------
+        caled : :class:`~skrf.network.Network` object
+            Network data of the device after de-embedding
+
+        """
+
+        # check if the frequencies match with dummy frequencies
+        if ntwk.frequency != self.s2xthru.frequency:
+            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+
+        # TODO: attempt to interpolate if frequencies do not match
+        
+        # check if 4-port
+        if ntwk.nports != 4:
+            raise(ValueError('2xthru has to be a 4-port network.'))
+        # renumber if required
+        if self.port_order == 'first':
+            N = ntwk.nports
+            old_order = list(range(N))
+            new_order = list(range(0, N, 2)) + list(range(1, N, 2))
+            ntwk.renumber(old_order, new_order)
+        elif self.port_order == 'third':
+            N = ntwk.nports
+            old_order = list(range(N))
+            new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
+            ntwk.renumber(old_order, new_order)
+
+        deembedded = self.se_side1.inv ** ntwk ** self.se_side2.inv
+        #renumber back if required
+        if self.port_order != 'second':
+            deembedded.renumber(new_order, old_order)
+        return deembedded
+    
+    def split2xthru(self, se_2xthru, se_fdf):
+        # check if 4-port
+        if se_2xthru.nports != 4 or se_fdf.nports != 4:
+            raise(ValueError('2xthru has to be a 4-port network.'))
+        # renumber if required
+        if self.port_order == 'first':
+            N = se_2xthru.nports
+            old_order = list(range(N))
+            new_order = list(range(0, N, 2)) + list(range(1, N, 2))
+            se_2xthru.renumber(old_order, new_order)
+            se_fdf.renumber(old_order, new_order)
+        elif self.port_order == 'third':
+            N = se_2xthru.nports
+            old_order = list(range(N))
+            new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
+            se_2xthru.renumber(old_order, new_order)
+            se_fdf.renumber(old_order, new_order)
+            
+        #convert to mixed-modes
+        mm_2xthru = se_2xthru.copy()
+        mm_2xthru.se2gmm(p = 2)
+        mm_fdf = se_fdf.copy()
+        mm_fdf.se2gmm(p = 2)
+        
+        #extract common and differential mode and model fixtures for each
+        sdd = subnetwork(mm_2xthru, [0, 1])
+        scc = subnetwork(mm_2xthru, [2, 3])
+        sdd_fdf = subnetwork(mm_fdf, [0, 1])
+        scc_fdf = subnetwork(mm_fdf, [2, 3])
+        dm_dd  = Ieeep370zc2xthru(dummy_2xthru = sdd,
+                                  dummy_fix_dut_fix = sdd_fdf,
+                                  z0 = self.z0 * 2,
+                                  bandwidth_limit = self.bandwidth_limit,
+                                  pullback1 = self.pullback1,
+                                  pullback2 = self.pullback2,
+                                  side1 = self.side1,
+                                  side2 = self.side2,
+                                  NRP_enable = self.NRP_enable,
+                                  leadin = self.leadin,
+                                  verbose = self.verbose)
+        dm_cc  = Ieeep370zc2xthru(dummy_2xthru = scc,
+                                  dummy_fix_dut_fix = scc_fdf,
+                                  z0 = self.z0 / 2,
+                                  bandwidth_limit = self.bandwidth_limit,
+                                  pullback1 = self.pullback1,
+                                  pullback2 = self.pullback2,
+                                  side1 = self.side1,
+                                  side2 = self.side2,
+                                  NRP_enable = self.NRP_enable,
+                                  leadin = self.leadin,
+                                  verbose = self.verbose)
+        
+        #convert back to single-ended
+        mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
+        se_side1 = mm_side1.copy()
+        se_side1.gmm2se(p = 2)
+        #todo: remove next two lines once gmm2se if fixed
+        se_side1.se2gmm(p = 2)
+        se_side1.gmm2se(p = 2)
+        mm_side2 = concat_ports([dm_dd.s_side2, dm_cc.s_side2], port_order = 'first')
+        se_side2 = mm_side2.copy()
+        se_side2.gmm2se(p = 2)
+        #todo: remove next two lines once gmm2se if fixed
+        se_side2.se2gmm(p = 2)
+        se_side2.gmm2se(p = 2)
+        
+        return (se_side1, se_side2)
