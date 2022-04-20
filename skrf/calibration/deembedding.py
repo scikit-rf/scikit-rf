@@ -1379,14 +1379,8 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
         se_side1 = mm_side1.copy()
         se_side1.gmm2se(p = 2)
-        #todo: remove next two lines once gmm2se if fixed
-        se_side1.se2gmm(p = 2)
-        se_side1.gmm2se(p = 2)
         mm_side2 = concat_ports([dm_dd.s_side2, dm_cc.s_side2], port_order = 'first')
         se_side2 = mm_side2.copy()
-        se_side2.gmm2se(p = 2)
-        #todo: remove next two lines once gmm2se if fixed
-        se_side2.se2gmm(p = 2)
         se_side2.gmm2se(p = 2)
         
         return (se_side1, se_side2)
@@ -2197,14 +2191,8 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
         se_side1 = mm_side1.copy()
         se_side1.gmm2se(p = 2)
-        #todo: remove next two lines once gmm2se if fixed
-        se_side1.se2gmm(p = 2)
-        se_side1.gmm2se(p = 2)
         mm_side2 = concat_ports([dm_dd.s_side2, dm_cc.s_side2], port_order = 'first')
         se_side2 = mm_side2.copy()
-        se_side2.gmm2se(p = 2)
-        #todo: remove next two lines once gmm2se if fixed
-        se_side2.se2gmm(p = 2)
         se_side2.gmm2se(p = 2)
         
         return (se_side1, se_side2)
