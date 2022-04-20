@@ -198,6 +198,7 @@ class DeembeddingTestCase(unittest.TestCase):
                                        bandwidth_limit = 10e9, 
                                        pullback1 = 0, pullback2 = 0,
                                        leadin = 0,
+                                       NRP_enable = False,
                                        name = 'zc2xthru')
 
         # relative tolerance for comparisons
@@ -316,5 +317,5 @@ class DeembeddingTestCase(unittest.TestCase):
         # insertion loss phase deviate from 0 degree from less than 45 degree
         # too much tolerance here allowed as for now
         il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
-        self.assertTrue(np.max(np.abs(il_phase)) <= 45.0, 'residual IL Phase')
+        self.assertTrue(np.max(np.abs(il_phase)) <= 2.0, 'residual IL Phase')
         
