@@ -1152,7 +1152,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         # calc e01
         k = 1
         test = k * np.sqrt(s21r * (1 - e111 * e112))
-        e01 = zeros((n), dtype = np.complex)
+        e01 = zeros((n), dtype = complex)
         for i, value in enumerate(test):
             if(i>0):
                 if(angle(test[i]) - angle(test[i-1]) > 0):
@@ -1163,7 +1163,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         # calc e10
         k = 1
         test = k * np.sqrt(s12r * (1 - e111 * e112))
-        e10 = zeros((n), dtype = np.complex)
+        e10 = zeros((n), dtype = complex)
         for i, value in enumerate(test):
             if(i>0):
                 if(angle(test[i]) - angle(test[i-1]) > 0):
@@ -1173,13 +1173,13 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         
         # S-parameters are setup correctly
         if not flag_DC and not flag_df:
-            fixture_model_1r = zeros((n, 2, 2), dtype = np.complex)
+            fixture_model_1r = zeros((n, 2, 2), dtype = complex)
             fixture_model_1r[:, 0, 0] = e001
             fixture_model_1r[:, 1, 0] = e01
             fixture_model_1r[:, 0, 1] = e01
             fixture_model_1r[:, 1, 1] = e111
             
-            fixture_model_2r = zeros((n, 2, 2), dtype = np.complex)
+            fixture_model_2r = zeros((n, 2, 2), dtype = complex)
             fixture_model_2r[:, 1, 1] = e002
             fixture_model_2r[:, 0, 1] = e10
             fixture_model_2r[:, 1, 0] = e10
@@ -1536,7 +1536,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         f = sin.frequency.f
         
         n = len(f)
-        snew = zeros((n + 1, 2,2), dtype = np.complex)
+        snew = zeros((n + 1, 2,2), dtype = complex)
         snew[1:,:,:] = s
         snew[0, 0, 0] = self.dc_interp(s[:, 0, 0], f)
         snew[0, 0, 1] = self.dc_interp(s[:, 0, 1], f)
@@ -1609,7 +1609,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
     
     def makeTL(self, zline, z0, gamma, l):
         n = len(gamma)
-        TL = np.zeros((n, 2, 2), dtype = np.complex)
+        TL = np.zeros((n, 2, 2), dtype = complex)
         TL[:, 0, 0] = ((zline**2 - z0**2) * np.sinh(gamma * l)) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
         TL[:, 1, 0] = (2 * z0 * zline) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
         TL[:, 0, 1] = (2 * z0 * zline) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
@@ -1633,8 +1633,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 else:
                     theta = -theta0
                 TD[i] = -theta / (2 * np.pi * fend)
-                pd = np.zeros((n, X, X), dtype = np.complex)
-                delay = np.exp(-1j *2 * np.pi * f * TD[i] / 2)
+                pd = np.zeros((n, X, X), dtype = complex)
+                delay = np.exp(-1j * 2. * np.pi * f * TD[i] / 2.)
                 if i == 0:
                     pd[:, i + X//2, i] = delay
                     pd[:, i, i + X//2] = delay
@@ -1654,10 +1654,10 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                     spd.s = pd
                     out = out ** spd
         else:
-            pd = np.zeros((n, X, X), dtype = np.complex)
+            pd = np.zeros((n, X, X), dtype = complex)
             if port != None:
                 i = port
-                delay = np.exp(-1j *2 * np.pi * f * TD[i] / 2)
+                delay = np.exp(1j * 2. * np.pi * f * TD[i] / 2.)
                 if i < X//2:
                     pd[:, i + X//2, i] = delay
                     pd[:, i, i + X//2] = delay
@@ -1670,26 +1670,27 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                     spd = nin.copy()
                     spd.s = pd
                     out = nin ** spd 
-            for i in range(X):
-                delay = np.exp(-1j *2 * np.pi * f * TD[i] / 2)
-                if i == 0:
-                    pd[:, i + X//2, i] = delay
-                    pd[:, i, i + X//2] = delay
-                    spd = nin.copy()
-                    spd.s = pd
-                    out = spd ** nin
-                elif i < X//2:
-                    pd[:, i + X//2, i] = delay
-                    pd[:, i, i + X//2] = delay
-                    spd = nin.copy()
-                    spd.s = pd
-                    out = spd ** out
-                else:
-                    pd[:, i - X//2, i] = delay
-                    pd[:, i, i - X//2] = delay
-                    spd = nin.copy()
-                    spd.s = pd
-                    out = out ** spd 
+            else:
+                for i in range(X):
+                    delay = np.exp(1j * 2. * np.pi * f * TD[i] / 2)
+                    if i == 0:
+                        pd[:, i + X//2, i] = delay
+                        pd[:, i, i + X//2] = delay
+                        spd = nin.copy()
+                        spd.s = pd
+                        out = spd ** nin
+                    elif i < X//2:
+                        pd[:, i + X//2, i] = delay
+                        pd[:, i, i + X//2] = delay
+                        spd = nin.copy()
+                        spd.s = pd
+                        out = spd ** out
+                    else:
+                        pd[:, i - X//2, i] = delay
+                        pd[:, i, i - X//2] = delay
+                        spd = nin.copy()
+                        spd.s = pd
+                        out = out ** spd 
         return out, TD
     
     def shiftOnePort(self, nin, N, port):
@@ -1699,7 +1700,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         Omega0 = np.pi/n
         Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
         delay = np.exp(-N * 1j * Omega/2)
-        pd = np.zeros((n, 2, 2), dtype = np.complex)
+        pd = np.zeros((n, 2, 2), dtype = complex)
         if port < X//2:
             pd[:, port, port + X//2] = delay
             pd[:, port + X//2, port] = delay
@@ -1721,7 +1722,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         Omega0 = np.pi/n
         Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
         delay = np.exp(-N * 1j * Omega/2)
-        pd = np.zeros((n, 2, 2), dtype = np.complex)
+        pd = np.zeros((n, 2, 2), dtype = complex)
         for port in range(X):
             if port < X//2:
                 pd[:, port, port + X//2] = delay
@@ -1774,7 +1775,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         x = np.argmax(np.fft.irfft(concatenate(([DC21], s212x))))
         #define relative length
         #python first index is 0, thus 1 should be added to get the length
-        l = 1. / (2 * x + 1)
+        l = 1. / (2 * (x + 1))
         #define the reflections to be mimicked
         s11dut = s_dut.s[:, 0, 0]
         s22dut = s_dut.s[:, 1, 1]
@@ -1874,7 +1875,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         # enforce Nyquist rate point
         if self.NRP_enable:
             sfix_dut_fix, TD = self.NRP(sfix_dut_fix)
-            s2xthru, _ = self.NRP(s2xthru)
+            s2xthru, _ = self.NRP(s2xthru, -TD)
         
         # remove lead-in points
         if self.leadin > 0:
