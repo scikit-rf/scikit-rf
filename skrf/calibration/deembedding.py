@@ -916,7 +916,7 @@ class ImpedanceCancel(Deembedding):
         return caled
 
 
-class Ieeep370nzc2xthru(Deembedding):
+class IEEEP370_SE_NZC_2xThru(Deembedding):
     """
     Creates error boxes from a test fixture 2x thru.
     
@@ -934,7 +934,7 @@ class Ieeep370nzc2xthru(Deembedding):
     Example
     --------
     >>> import skrf as rf
-    >>> from skrf.calibration import Ieeep370nzc2xthru
+    >>> from skrf.calibration import IEEEP370_SE_NZC_2xThru
 
     Create network objects for dummy structure and dut
 
@@ -943,7 +943,7 @@ class Ieeep370nzc2xthru(Deembedding):
 
     Create de-embedding object
 
-    >>> dm = Ieeep370nzc2xthru(dummy_2xthru = s2xthru, name = '2xthru')
+    >>> dm = IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru, name = '2xthru')
 
     Remove parasitics to get the actual device network
 
@@ -952,7 +952,7 @@ class Ieeep370nzc2xthru(Deembedding):
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, *args, **kwargs):
         """
-        Ieeep370nzc2xthru De-embedding Initializer
+        IEEEP370_SE_NZC_2xThru De-embedding Initializer
 
         Parameters
         -----------
@@ -1206,7 +1206,7 @@ class Ieeep370nzc2xthru(Deembedding):
         
         return (s_side1, s_side2)
 
-class Ieeep370mmnzc2xthru(Deembedding):
+class IEEEP370_MM_NZC_2xThru(Deembedding):
     """
     Creates error boxes from a 4-port test fixture 2x thru.
     
@@ -1254,7 +1254,7 @@ class Ieeep370mmnzc2xthru(Deembedding):
     Example
     --------
     >>> import skrf as rf
-    >>> from skrf.calibration import Ieeep370nzc2xthru
+    >>> from skrf.calibration import IEEEP370_MM_NZC_2xThru
 
     Create network objects for dummy structure and dut
 
@@ -1263,7 +1263,7 @@ class Ieeep370mmnzc2xthru(Deembedding):
 
     Create de-embedding object
 
-    >>> dm = Ieeep370nzc2xthru(dummy_2xthru = s2xthru, name = '2xthru')
+    >>> dm = IEEEP370_MM_NZC_2xThru(dummy_2xthru = s2xthru, name = '2xthru')
 
     Remove parasitics to get the actual device network
 
@@ -1272,7 +1272,7 @@ class Ieeep370mmnzc2xthru(Deembedding):
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, port_order: str = 'second', *args, **kwargs):
         """
-        Ieeep370mmnzc2xthru De-embedding Initializer
+        IEEEP370_MM_NZC_2xThru De-embedding Initializer
 
         Parameters
         -----------
@@ -1372,8 +1372,8 @@ class Ieeep370mmnzc2xthru(Deembedding):
         #extract common and differential mode and model fixtures for each
         sdd = subnetwork(mm_2xthru, [0, 1])
         scc = subnetwork(mm_2xthru, [2, 3])
-        dm_dd  = Ieeep370nzc2xthru(dummy_2xthru = sdd, z0 = self.z0 * 2)
-        dm_cc  = Ieeep370nzc2xthru(dummy_2xthru = scc, z0 = self.z0 / 2)
+        dm_dd  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = sdd, z0 = self.z0 * 2)
+        dm_cc  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = scc, z0 = self.z0 / 2)
         
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
@@ -1392,7 +1392,7 @@ class Ieeep370mmnzc2xthru(Deembedding):
         return (se_side1, se_side2)
 
 
-class Ieeep370zc2xthru(Deembedding):
+class IEEEP370_SE_ZC_2xThru(Deembedding):
     """
     Creates error boxes from a test fixture 2x thru and the
     fixture-dut-fixture S-parameters.
@@ -1415,7 +1415,7 @@ class Ieeep370zc2xthru(Deembedding):
     Example
     --------
     >>> import skrf as rf
-    >>> from skrf.calibration import Ieeep370zc2xthru
+    >>> from skrf.calibration import IEEEP370_SE_ZC_2xThru
 
     Create network objects for dummy structure and dut
 
@@ -1424,7 +1424,7 @@ class Ieeep370zc2xthru(Deembedding):
 
     Create de-embedding object
 
-    >>> dm = Ieeep370zc2xthru(dummy_2xthru = s2xthru, dummy_fix_dut_fix = fdf,
+    >>> dm = IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru, dummy_fix_dut_fix = fdf,
                              bandwidth_limit = 10e9,
                              pullback1 = 0, pullback2 = 0,
                              leadin = 0,
@@ -1442,7 +1442,7 @@ class Ieeep370zc2xthru(Deembedding):
                  verbose = False,
                  *args, **kwargs):
         """
-        Ieeep370zc2xthru De-embedding Initializer
+        IEEEP370_SE_ZC_2xThru De-embedding Initializer
 
         Parameters
         -----------
@@ -1949,7 +1949,7 @@ class Ieeep370zc2xthru(Deembedding):
         return (s_side1, s_side2)
     
     
-class Ieeep370mmzc2xthru(Deembedding):
+class IEEEP370_MM_ZC_2xThru(Deembedding):
     """
     Creates error boxes from a 4-port test fixture 2x thru and the
     fixture-dut-fixture S-parameters.
@@ -2002,7 +2002,7 @@ class Ieeep370mmzc2xthru(Deembedding):
     Example
     --------
     >>> import skrf as rf
-    >>> from skrf.calibration import Ieeep370zc2xthru
+    >>> from skrf.calibration import IEEEP370_MM_ZC_2xThru
 
     Create network objects for dummy structure and dut
 
@@ -2011,7 +2011,7 @@ class Ieeep370mmzc2xthru(Deembedding):
 
     Create de-embedding object
 
-    >>> dm = Ieeep370mmzc2xthru(dummy_2xthru = s2xthru, dummy_fix_dut_fix = fdf,
+    >>> dm = IEEEP370_MM_ZC_2xThru(dummy_2xthru = s2xthru, dummy_fix_dut_fix = fdf,
                              bandwidth_limit = 10e9,
                              pullback1 = 0, pullback2 = 0,
                              leadin = 0,
@@ -2031,7 +2031,7 @@ class Ieeep370mmzc2xthru(Deembedding):
                  verbose = False,
                  *args, **kwargs):
         """
-        Ieeep370mmzc2xthru De-embedding Initializer
+        IEEEP370_MM_ZC_2xThru De-embedding Initializer
 
         Parameters
         -----------
@@ -2170,7 +2170,7 @@ class Ieeep370mmzc2xthru(Deembedding):
         scc = subnetwork(mm_2xthru, [2, 3])
         sdd_fdf = subnetwork(mm_fdf, [0, 1])
         scc_fdf = subnetwork(mm_fdf, [2, 3])
-        dm_dd  = Ieeep370zc2xthru(dummy_2xthru = sdd,
+        dm_dd  = IEEEP370_SE_ZC_2xThru(dummy_2xthru = sdd,
                                   dummy_fix_dut_fix = sdd_fdf,
                                   z0 = self.z0 * 2,
                                   bandwidth_limit = self.bandwidth_limit,
@@ -2181,7 +2181,7 @@ class Ieeep370mmzc2xthru(Deembedding):
                                   NRP_enable = self.NRP_enable,
                                   leadin = self.leadin,
                                   verbose = self.verbose)
-        dm_cc  = Ieeep370zc2xthru(dummy_2xthru = scc,
+        dm_cc  = IEEEP370_SE_ZC_2xThru(dummy_2xthru = scc,
                                   dummy_fix_dut_fix = scc_fdf,
                                   z0 = self.z0 / 2,
                                   bandwidth_limit = self.bandwidth_limit,

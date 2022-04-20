@@ -191,9 +191,9 @@ class DeembeddingTestCase(unittest.TestCase):
         self.dm_tee = rf.SplitTee(self.thru4_1f)
         self.dm_ac = rf.AdmittanceCancel(self.thru5_1f)
         self.dm_ic = rf.ImpedanceCancel(self.thru6_1f)
-        self.dm_nzc = rf.Ieeep370nzc2xthru(dummy_2xthru = self.s2xthru, 
+        self.dm_nzc = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru, 
                                         name = '2xthru')
-        self.dm_zc  = rf.Ieeep370zc2xthru(dummy_2xthru = self.s2xthru, 
+        self.dm_zc  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = self.s2xthru, 
                                        dummy_fix_dut_fix = self.fdf, 
                                        bandwidth_limit = 10e9, 
                                        pullback1 = 0, pullback2 = 0,
@@ -289,7 +289,7 @@ class DeembeddingTestCase(unittest.TestCase):
         ind_calc = 1e9*np.imag(1/dut.y[0,0,0])/2/np.pi/dut.f
         self.assertTrue(np.isclose(ind_calc, 1, rtol=self.rtol))
         
-    def test_Ieeep370nzc2xthru(self):
+    def test_IEEEP370_SE_NZC_2xThru(self):
         """
         After de-embedding fixtures model from 2xtru, the network is a perfect
         thru.
@@ -303,7 +303,7 @@ class DeembeddingTestCase(unittest.TestCase):
         il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
         self.assertTrue(np.max(np.abs(il_phase)) <= 1.0, 'residual IL Phase')
         
-    def test_Ieeep370zc2xthru(self):
+    def test_IEEEP370_SE_ZC_2xThru(self):
         """
         After de-embedding fixtures model from 2xtru, the network is a perfect
         thru.
