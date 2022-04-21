@@ -3412,8 +3412,12 @@ class Network(object):
             number of differential ports
         z0_mm : Numpy array
             `f x n x n` matrix of mixed mode impedances, optional
-            if input is None, 2 * z_o Ohms differential and z_0 / 2 Ohms common mode 
-            reference impedance is used
+            if input is None, 2 * z0 Ohms differential and z0 / 2 Ohms common mode
+            reference impedance is used.
+            Pseudowave definition is used.
+
+            If None and differential pair z0 is not identical, average of pair
+            z0 is used for mixed mode z0 calculation.
 
 
         Note Odd Number of Ports
@@ -3450,11 +3454,15 @@ class Network(object):
         gmm2se
 
         """
-        # XXX: assumes 'proper' order (first differential ports, then single ended ports)
+        # Assumes 'proper' order (first differential ports, then single ended ports)
         if z0_mm is None:
             z0_mm = self.z0.copy()
-            z0_mm[:, 0:p] *= 2  # differential mode impedance
-            z0_mm[:, p:2 * p] /= 2  # common mode impedance
+            z0_avg = 0.5*(z0_mm[:, 0:2*p:2] + z0_mm[:, 1:2*p:2])
+            z0_mm[:, 0:p] = 2*z0_avg  # differential mode impedance
+            z0_mm[:, p:2 * p] = 0.5*z0_avg  # common mode impedance
+        else:
+            # Make sure shape is correct
+            z0_mm = npy.broadcast_to(z0_mm, self.z0.shape)
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, self.z0, z0_mm)
         A = Xi_tilde_21 + npy.einsum('...ij,...jk->...ik', Xi_tilde_22, self.s)
         B = Xi_tilde_11 + npy.einsum('...ij,...jk->...ik', Xi_tilde_12, self.s)
@@ -3471,9 +3479,12 @@ class Network(object):
 
         p : int
             number of differential ports
-        z0_mm: Numpy array
+        z0_se: Numpy array
             `f x n x n` matrix of single ended impedances, optional
-            if input is None, extract the reference impedance from the differential network
+            if input is None, extract the reference impedance from the differential network.
+            Pseudowave definition is used.
+
+            if None, z0 is calculated as 0.5 * (0.5 * z0_diff + 2 * z0_comm) for each differential port.
 
         References
         ----------
@@ -3485,11 +3496,15 @@ class Network(object):
         se2gmm
 
         """
-        # XXX: assumes 'proper' order (differential ports, single ended ports)
+        # Assumes 'proper' order (differential ports, single ended ports)
         if z0_se is None:
             z0_se = self.z0.copy()
-            z0_se[:, 0:p] /= 2  # differential mode impedance
-            z0_se[:, p:2 * p] *= 2  # common mode impedance
+            z0_avg = 0.5*(0.5*z0_se[:, 0:p] + 2*z0_se[:, p:2*p])
+            z0_se[:, 0:p] = z0_avg
+            z0_se[:, p:2 * p] = z0_avg
+        else:
+            # Make sure shape is correct
+            z0_se = npy.broadcast_to(z0_se, self.z0.shape)
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, z0_se, self.z0)
         A = Xi_tilde_22 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_12)
         # Note that B sign is incorrect in the paper. Inverted B here gives the
