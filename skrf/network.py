@@ -3414,7 +3414,6 @@ class Network(object):
             `f x 2*p x 2*p` matrix of mixed mode impedances, optional
             if input is None, 2 * z0 Ohms differential and z0 / 2 Ohms common mode
             reference impedance is used.
-            Pseudowave definition is used.
 
             If None and differential pair z0 is not identical, average of pair
             z0 is used for mixed mode z0 calculation.
@@ -3495,7 +3494,6 @@ class Network(object):
         z0_se: Numpy array
             `f x 2*p x 2*p` matrix of single ended impedances, optional
             if input is None, extract the reference impedance from the differential network.
-            Pseudowave definition is used.
 
             if None, z0 is calculated as 0.5 * (0.5 * z0_diff + 2 * z0_comm) for each differential port.
         s_def : str -> s_def :  can be: 'power' or 'pseudo'
