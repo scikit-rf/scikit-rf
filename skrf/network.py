@@ -3411,7 +3411,7 @@ class Network(object):
         p : int
             number of differential ports
         z0_mm : Numpy array
-            `f x n x n` matrix of mixed mode impedances, optional
+            `f x 2*p x 2*p` matrix of mixed mode impedances, optional
             if input is None, 2 * z0 Ohms differential and z0 / 2 Ohms common mode
             reference impedance is used.
             Pseudowave definition is used.
@@ -3454,6 +3454,8 @@ class Network(object):
         gmm2se
 
         """
+        if 2*p > self.nports or p < 0:
+            raise ValueError('Invalid number of differential ports')
         # Assumes 'proper' order (first differential ports, then single ended ports)
         if z0_mm is None:
             z0_mm = self.z0.copy()
@@ -3462,7 +3464,12 @@ class Network(object):
             z0_mm[:, p:2 * p] = 0.5*z0_avg  # common mode impedance
         else:
             # Make sure shape is correct
-            z0_mm = npy.broadcast_to(z0_mm, self.z0.shape)
+            # Only set mixed mode ports
+            _z0_mm = self.z0.copy()
+            shape = [self.z0.shape[0], 2 * p]
+            z0_p = npy.broadcast_to(z0_mm, shape)
+            _z0_mm[:,:2*p] = z0_p
+            z0_mm = _z0_mm
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, self.z0, z0_mm)
         A = Xi_tilde_21 + npy.einsum('...ij,...jk->...ik', Xi_tilde_22, self.s)
         B = Xi_tilde_11 + npy.einsum('...ij,...jk->...ik', Xi_tilde_12, self.s)
@@ -3480,7 +3487,7 @@ class Network(object):
         p : int
             number of differential ports
         z0_se: Numpy array
-            `f x n x n` matrix of single ended impedances, optional
+            `f x 2*p x 2*p` matrix of single ended impedances, optional
             if input is None, extract the reference impedance from the differential network.
             Pseudowave definition is used.
 
@@ -3496,6 +3503,8 @@ class Network(object):
         se2gmm
 
         """
+        if 2*p > self.nports or p < 0:
+            raise ValueError('Invalid number of differential ports')
         # Assumes 'proper' order (differential ports, single ended ports)
         if z0_se is None:
             z0_se = self.z0.copy()
@@ -3504,7 +3513,12 @@ class Network(object):
             z0_se[:, p:2 * p] = z0_avg
         else:
             # Make sure shape is correct
-            z0_se = npy.broadcast_to(z0_se, self.z0.shape)
+            # Only set mixed mode ports
+            _z0_se = self.z0.copy()
+            shape = [self.z0.shape[0], 2 * p]
+            z0_p = npy.broadcast_to(z0_se, shape)
+            _z0_se[:,:2*p] = z0_p
+            z0_se = _z0_se
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, z0_se, self.z0)
         A = Xi_tilde_22 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_12)
         # Note that B sign is incorrect in the paper. Inverted B here gives the
@@ -3553,9 +3567,9 @@ class Network(object):
             Pca[l, 4 * (l + 1) - 1 - 1] = True
             Pdb[l, 4 * (l + 1) - 2 - 1] = True
             Pcb[l, 4 * (l + 1) - 1] = True
-            if Pa.shape[0] != 0:
-                Pa[l, 4 * p + 2 * (l + 1) - 1 - 1] = True
-                Pb[l, 4 * p + 2 * (l + 1) - 1] = True
+        for l in npy.arange(n - 2 * p):
+            Pa[l, 4 * p + 2 * (l + 1) - 1 - 1] = True
+            Pb[l, 4 * p + 2 * (l + 1) - 1] = True
         return npy.concatenate((Pda, Pca, Pa, Pdb, Pcb, Pb))
 
     def _Q(self) -> npy.ndarray:  # (29) error corrected
