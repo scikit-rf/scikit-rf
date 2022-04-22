@@ -979,52 +979,54 @@ class NetworkTestCase(unittest.TestCase):
         # Test that se2gmm renormalization is compatible with network renormalization
 
         # Single-ended ports
-        for ports in range(2, 10):
-            # Number of differential pairs to convert
-            for p in range(0, ports//2 + 1):
-                # Create a random network, z0=50
-                s_random = npy.random.uniform(-1, 1, (1, ports, ports)) +\
-                            1j * npy.random.uniform(-1, 1, (1, ports, ports))
-                net = rf.Network(s=s_random, frequency=[1], z0=50)
-                net_original = net.copy()
-                net_renorm = net.copy()
+        for s_def in ['power', 'pseudo']:
+            for ports in range(2, 10):
+                # Number of differential pairs to convert
+                for p in range(0, ports//2 + 1):
+                    print(s_def, ports, p)
+                    # Create a random network, z0=50
+                    s_random = npy.random.uniform(-1, 1, (1, ports, ports)) +\
+                                1j * npy.random.uniform(-1, 1, (1, ports, ports))
+                    net = rf.Network(s=s_random, frequency=[1], z0=50)
+                    net_original = net.copy()
+                    net_renorm = net.copy()
 
-                # Random z0 for mixed mode ports
-                z0 = npy.random.uniform(1, 100, 2*p) +\
-                        1j * npy.random.uniform(-100, 100, 2*p)
+                    # Random z0 for mixed mode ports
+                    z0 = npy.random.uniform(1, 100, 2*p) +\
+                            1j * npy.random.uniform(-100, 100, 2*p)
 
-                # Convert net to mixed mode with random z0
-                net.se2gmm(p=p, z0_mm=z0)
+                    # Convert net to mixed mode with random z0
+                    net.se2gmm(p=p, z0_mm=z0, s_def=s_def)
 
-                # Convert net_renorm to mixed mode with different z0
-                z0_mm = npy.zeros(2*p, dtype=complex)
-                z0_mm[:p] = 100
-                z0_mm[p:] = 25
-                net_renorm.se2gmm(p=p, z0_mm=z0_mm)
+                    # Convert net_renorm to mixed mode with different z0
+                    z0_mm = npy.zeros(2*p, dtype=complex)
+                    z0_mm[:p] = 100
+                    z0_mm[p:] = 25
+                    net_renorm.se2gmm(p=p, z0_mm=z0_mm, s_def=s_def)
 
-                if p > 0:
-                    # S-parameters should be different
-                    self.assertFalse(npy.allclose(net.s, net_renorm.s))
-                else:
-                    # Same if no differential ports
+                    if p > 0:
+                        # S-parameters should be different
+                        self.assertFalse(npy.allclose(net.s, net_renorm.s))
+                    else:
+                        # Same if no differential ports
+                        self.assertTrue(npy.allclose(net.s, net_renorm.s))
+
+                    # Renormalize net_renorm to the random z0
+                    # net and net_renorm should match after this
+                    # Single-ended ports stay 50 ohms
+                    # se2gmm uses pseudo wave definition
+                    full_z0 = 50 * npy.ones(ports, dtype=complex)
+                    full_z0[:2*p] = z0
+                    net_renorm.renormalize(z_new=full_z0, s_def=s_def)
+
+                    # Nets should match now
+                    self.assertTrue(npy.allclose(net.z0, net_renorm.z0))
                     self.assertTrue(npy.allclose(net.s, net_renorm.s))
 
-                # Renormalize net_renorm to the random z0
-                # net and net_renorm should match after this
-                # Single-ended ports stay 50 ohms
-                # se2gmm uses pseudo wave definition
-                full_z0 = 50 * npy.ones(ports, dtype=complex)
-                full_z0[:2*p] = z0
-                net_renorm.renormalize(z_new=full_z0, s_def='pseudo')
-
-                # Nets should match now
-                self.assertTrue(npy.allclose(net.z0, net_renorm.z0))
-                self.assertTrue(npy.allclose(net.s, net_renorm.s))
-
-                # Test that we get the original network back
-                net.gmm2se(p=p, z0_se=50)
-                self.assertTrue(npy.allclose(net.z0, net_original.z0))
-                self.assertTrue(npy.allclose(net.s, net_original.s))
+                    # Test that we get the original network back
+                    net.gmm2se(p=p, z0_se=50, s_def=s_def)
+                    self.assertTrue(npy.allclose(net.z0, net_original.z0))
+                    self.assertTrue(npy.allclose(net.s, net_original.s))
 
 
     def test_s_active(self):

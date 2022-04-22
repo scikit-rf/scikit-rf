@@ -3401,7 +3401,7 @@ class Network(object):
             return (forward - reverse)
 
     # generalized mixed mode transformations
-    def se2gmm(self, p: int, z0_mm: npy.ndarray = None) -> None:
+    def se2gmm(self, p: int, z0_mm: npy.ndarray = None, s_def : str = S_DEF_DEFAULT) -> None:
         """
         Transform network from single ended parameters to generalized mixed mode parameters [#]_
 
@@ -3419,6 +3419,10 @@ class Network(object):
             If None and differential pair z0 is not identical, average of pair
             z0 is used for mixed mode z0 calculation.
 
+        s_def : str -> s_def :  can be: 'power' or 'pseudo'
+            Scattering parameter definition : 'power' for power-waves definition [#Kurokawa]_,
+            'pseudo' for pseudo-waves definition [#Marks]_.
+            Default is 'power'.
 
         Note Odd Number of Ports
 
@@ -3448,6 +3452,8 @@ class Network(object):
         ----------
         .. [#] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
             Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
+        .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+        .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
         See Also
         --------
@@ -3470,14 +3476,14 @@ class Network(object):
             z0_p = npy.broadcast_to(z0_mm, shape)
             _z0_mm[:,:2*p] = z0_p
             z0_mm = _z0_mm
-        Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, self.z0, z0_mm)
+        Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, self.z0, z0_mm, s_def)
         A = Xi_tilde_21 + npy.einsum('...ij,...jk->...ik', Xi_tilde_22, self.s)
         B = Xi_tilde_11 + npy.einsum('...ij,...jk->...ik', Xi_tilde_12, self.s)
         self.s = npy.transpose(npy.linalg.solve(npy.transpose(B, (0, 2, 1)).conj(), npy.transpose(A, (0, 2, 1)).conj()),
                                (0, 2, 1)).conj()  # (34)
         self.z0 = z0_mm
 
-    def gmm2se(self, p: int, z0_se: NumberLike = None) -> None:
+    def gmm2se(self, p: int, z0_se: NumberLike = None, s_def : str = S_DEF_DEFAULT) -> None:
         """
         Transform network from generalized mixed mode parameters [#]_ to single ended parameters
 
@@ -3492,11 +3498,17 @@ class Network(object):
             Pseudowave definition is used.
 
             if None, z0 is calculated as 0.5 * (0.5 * z0_diff + 2 * z0_comm) for each differential port.
+        s_def : str -> s_def :  can be: 'power' or 'pseudo'
+            Scattering parameter definition : 'power' for power-waves definition [#Kurokawa]_,
+            'pseudo' for pseudo-waves definition [#Marks]_.
+            Default is 'power'.
 
         References
         ----------
         .. [#] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
             Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
+        .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+        .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
         See Also
         --------
@@ -3519,7 +3531,7 @@ class Network(object):
             z0_p = npy.broadcast_to(z0_se, shape)
             _z0_se[:,:2*p] = z0_p
             z0_se = _z0_se
-        Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, z0_se, self.z0)
+        Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, z0_se, self.z0, s_def)
         A = Xi_tilde_22 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_12)
         # Note that B sign is incorrect in the paper. Inverted B here gives the
         # correct result.
@@ -3530,28 +3542,39 @@ class Network(object):
     # generalized mixed mode supplement functions
     _T = npy.array([[1, 0, -1, 0], [0, 0.5, 0, -0.5], [0.5, 0, 0.5, 0], [0, 1, 0, 1]])  # (5)
 
-    def _m(self, z0: npy.ndarray) -> npy.ndarray:
-        scaling = npy.sqrt(z0.real) / (2 * npy.abs(z0))
-        Z = npy.ones((z0.shape[0], 2, 2), dtype=npy.complex128)
-        Z[:, 0, 1] = z0
-        Z[:, 1, 1] = -z0
-        return scaling[:, npy.newaxis, npy.newaxis] * Z
+    def _m(self, z0: npy.ndarray, s_def : str) -> npy.ndarray:
+        if s_def == 'pseudo':
+            scaling = npy.sqrt(z0.real) / (2 * npy.abs(z0))
+            Z = npy.ones((z0.shape[0], 2, 2), dtype=npy.complex128)
+            Z[:, 0, 1] = z0
+            Z[:, 1, 1] = -z0
+            return scaling[:, npy.newaxis, npy.newaxis] * Z
+        elif s_def == 'power':
+            scaling = 1 / (2 * npy.sqrt(z0.real))
+            Z = npy.ones((z0.shape[0], 2, 2), dtype=npy.complex128)
+            Z[:, 0, 1] = z0
+            Z[:, 1, 1] = -z0.conj()
+            return scaling[:, npy.newaxis, npy.newaxis] * Z
+        elif s_def == 'traveling':
+            raise NotImplementedError("s_def = 'traveling' not implemented")
+        else:
+            raise ValueError('Unknown s_def')
 
-    def _M(self, j: int, k: int, z0_se: npy.ndarray) -> npy.ndarray:  # (14)
+    def _M(self, j: int, k: int, z0_se: npy.ndarray, s_def : str) -> npy.ndarray:  # (14)
         M = npy.zeros((self.f.shape[0], 4, 4), dtype=npy.complex128)
-        M[:, :2, :2] = self._m(z0_se[:, j])
-        M[:, 2:, 2:] = self._m(z0_se[:, k])
+        M[:, :2, :2] = self._m(z0_se[:, j], s_def)
+        M[:, 2:, 2:] = self._m(z0_se[:, k], s_def)
         return M
 
-    def _M_circle(self, l: int, p: int, z0_mm: npy.ndarray) -> npy.ndarray:  # (12)
+    def _M_circle(self, l: int, p: int, z0_mm: npy.ndarray, s_def : str) -> npy.ndarray:  # (12)
         M = npy.zeros((self.f.shape[0], 4, 4), dtype=npy.complex128)
-        M[:, :2, :2] = self._m(z0_mm[:, l])  # differential mode impedance of port pair
-        M[:, 2:, 2:] = self._m(z0_mm[:, p + l])  # common mode impedance of port pair
+        M[:, :2, :2] = self._m(z0_mm[:, l], s_def)  # differential mode impedance of port pair
+        M[:, 2:, 2:] = self._m(z0_mm[:, p + l], s_def)  # common mode impedance of port pair
         return M
 
-    def _X(self, j: int, k: int , l: int, p: int, z0_se: npy.ndarray, z0_mm: npy.ndarray) -> npy.ndarray:  # (15)
-        return npy.einsum('...ij,...jk->...ik', self._M_circle(l, p, z0_mm).dot(self._T),
-                          npy.linalg.inv(self._M(j, k, z0_se)))  # matrix multiplication elementwise for each frequency
+    def _X(self, j: int, k: int , l: int, p: int, z0_se: npy.ndarray, z0_mm: npy.ndarray, s_def : str) -> npy.ndarray:  # (15)
+        return npy.einsum('...ij,...jk->...ik', self._M_circle(l, p, z0_mm, s_def).dot(self._T),
+                          npy.linalg.inv(self._M(j, k, z0_se, s_def)))  # matrix multiplication elementwise for each frequency
 
     def _P(self, p: int) -> npy.ndarray:  # (27) (28)
         n = self.nports
@@ -3582,18 +3605,18 @@ class Network(object):
             Qb[l, 2 * (l + 1) - 1] = True
         return npy.concatenate((Qa, Qb))
 
-    def _Xi(self, p: int, z0_se: npy.ndarray, z0_mm: npy.ndarray) -> npy.ndarray:  # (24)
+    def _Xi(self, p: int, z0_se: npy.ndarray, z0_mm: npy.ndarray, s_def : str) -> npy.ndarray:  # (24)
         n = self.nports
         Xi = npy.ones(self.f.shape[0])[:, npy.newaxis, npy.newaxis] * npy.eye(2 * n, dtype=npy.complex128)
         for l in npy.arange(p):
-            Xi[:, 4 * l:4 * l + 4, 4 * l:4 * l + 4] = self._X(l * 2, l * 2 + 1, l, p, z0_se, z0_mm)
+            Xi[:, 4 * l:4 * l + 4, 4 * l:4 * l + 4] = self._X(l * 2, l * 2 + 1, l, p, z0_se, z0_mm, s_def)
         return Xi
 
-    def _Xi_tilde(self, p: int, z0_se: npy.ndarray, z0_mm: npy.ndarray) -> npy.ndarray:  # (31)
+    def _Xi_tilde(self, p: int, z0_se: npy.ndarray, z0_mm: npy.ndarray, s_def : str) -> npy.ndarray:  # (31)
         n = self.nports
         P = npy.ones(self.f.shape[0])[:, npy.newaxis, npy.newaxis] * self._P(p)
         QT = npy.ones(self.f.shape[0])[:, npy.newaxis, npy.newaxis] * self._Q().T
-        Xi = self._Xi(p, z0_se, z0_mm)
+        Xi = self._Xi(p, z0_se, z0_mm, s_def)
         Xi_tilde = npy.einsum('...ij,...jk->...ik', npy.einsum('...ij,...jk->...ik', P, Xi), QT)
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
