@@ -3407,20 +3407,18 @@ class Network(object):
 
         Parameters
         ----------
-
         p : int
             number of differential ports
         z0_mm : Numpy array
-            `f x 2*p x 2*p` matrix of mixed mode impedances, optional
-            if input is None, 2 * z0 Ohms differential and z0 / 2 Ohms common mode
-            reference impedance is used.
-
-            If None and differential pair z0 is not identical, average of pair
-            z0 is used for mixed mode z0 calculation.
-
-        s_def : str -> s_def :  can be: 'power' or 'pseudo'
+            `f x 2*p x 2*p` matrix of mixed mode impedances, optional.
+            If input is None, 2 * z0 Ohms differential and z0 / 2 Ohms common mode
+            reference impedance is used, where z0 is average of the differential
+            pair ports reference impedance.
+            Single-ended ports not converted to differential mode keep their z0.
+        s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
             Scattering parameter definition : 'power' for power-waves definition [#Kurokawa]_,
             'pseudo' for pseudo-waves definition [#Marks]_.
+            All the definitions give the same result if z0 is real valued.
             Default is 'power'.
 
         Note Odd Number of Ports
@@ -3493,12 +3491,13 @@ class Network(object):
             number of differential ports
         z0_se: Numpy array
             `f x 2*p x 2*p` matrix of single ended impedances, optional
-            if input is None, extract the reference impedance from the differential network.
-
-            if None, z0 is calculated as 0.5 * (0.5 * z0_diff + 2 * z0_comm) for each differential port.
-        s_def : str -> s_def :  can be: 'power' or 'pseudo'
+            if input is None, extract the reference impedance from the differential network
+            calculated as 0.5 * (0.5 * z0_diff + 2 * z0_comm) for each differential port.
+            Single-ended ports not converted to differential mode keep their z0.
+        s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
             Scattering parameter definition : 'power' for power-waves definition [#Kurokawa]_,
             'pseudo' for pseudo-waves definition [#Marks]_.
+            All the definitions give the same result if z0 is real valued.
             Default is 'power'.
 
         References
@@ -3554,7 +3553,13 @@ class Network(object):
             Z[:, 1, 1] = -z0.conj()
             return scaling[:, npy.newaxis, npy.newaxis] * Z
         elif s_def == 'traveling':
-            raise NotImplementedError("s_def = 'traveling' not implemented")
+            Z = npy.ones((z0.shape[0], 2, 2), dtype=npy.complex128)
+            sqrtz0 = npy.sqrt(z0)
+            Z[:, 0, 0] = 1 / sqrtz0
+            Z[:, 0, 1] = sqrtz0
+            Z[:, 1, 0] = 1 / sqrtz0
+            Z[:, 1, 1] = -sqrtz0
+            return 0.5 * Z
         else:
             raise ValueError('Unknown s_def')
 

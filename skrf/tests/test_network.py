@@ -979,11 +979,10 @@ class NetworkTestCase(unittest.TestCase):
         # Test that se2gmm renormalization is compatible with network renormalization
 
         # Single-ended ports
-        for s_def in ['power', 'pseudo']:
+        for s_def in rf.S_DEFINITIONS:
             for ports in range(2, 10):
                 # Number of differential pairs to convert
                 for p in range(0, ports//2 + 1):
-                    print(s_def, ports, p)
                     # Create a random network, z0=50
                     s_random = npy.random.uniform(-1, 1, (1, ports, ports)) +\
                                 1j * npy.random.uniform(-1, 1, (1, ports, ports))
@@ -1014,7 +1013,6 @@ class NetworkTestCase(unittest.TestCase):
                     # Renormalize net_renorm to the random z0
                     # net and net_renorm should match after this
                     # Single-ended ports stay 50 ohms
-                    # se2gmm uses pseudo wave definition
                     full_z0 = 50 * npy.ones(ports, dtype=complex)
                     full_z0[:2*p] = z0
                     net_renorm.renormalize(z_new=full_z0, s_def=s_def)
