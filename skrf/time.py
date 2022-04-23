@@ -17,7 +17,7 @@ Time domain functions
 
 """
 from .util import find_nearest_index
-from scipy.ndimage.filters import convolve1d
+from scipy.ndimage import convolve1d
 from scipy import signal
 import numpy as npy
 from numpy import fft
