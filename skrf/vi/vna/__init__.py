@@ -34,6 +34,7 @@ Available VNAs
     ZVA40
     HP8510C
     HP8720
+    NanoVNAv2
 """
 
 from .abcvna import VNA

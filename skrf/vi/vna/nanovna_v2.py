@@ -66,7 +66,13 @@ from time import sleep
 
 class NanoVNAv2(abcvna.VNA):
     """
-    Python class for NanoVNA_v2 network analyzers [#website]_.
+    Python class for NanoVNA V2 network analyzers [#website]_.
+
+    Parameters
+    ----------
+    address : str
+            SCPI identifier of the serial port for the NanoVNA. For example `'ASRL1::INSTR'` for `COM1` on Windows, or
+            `'ASRL/dev/ttyACM0::INSTR'` for `/dev/ttyACM0` on Linux.
 
     Examples
     --------
@@ -112,11 +118,11 @@ class NanoVNAv2(abcvna.VNA):
 
     References
     ----------
-    .. [website] Website of NanoVNA V2: https://nanorfe.com/nanovna-v2.html
+    .. [#website] Website of NanoVNA V2: https://nanorfe.com/nanovna-v2.html
     """
 
-    def __init__(self, serial_port: str = '/dev/ttyACM0'):
-        super().__init__(address='ASRL/dev/ttyACM0::INSTR', kwargs={'visa_library': 'py'})
+    def __init__(self, address: str = 'ASRL/dev/ttyACM0::INSTR'):
+        super().__init__(address=address, kwargs={'visa_library': 'py'})
         self._protocol_reset()
         self._frequency = np.linspace(1e6, 10e6, 101)
         self.set_frequency_sweep(1e6, 10e6, 101)
