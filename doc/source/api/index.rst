@@ -20,6 +20,7 @@ API
     vi/index
 
     vectorFitting
+    qfactor
     time
     circuit
     media/device

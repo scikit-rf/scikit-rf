@@ -2,30 +2,38 @@
 r"""
 Qfactor (:mod:`skrf.qfactor`)
 ========================================
-
-Q-factor determination from Network-parameters fitting.
+Module for fitting Q-factor(s) from S-parameters.
 
 Measurements of Q-factor are straightforward, but to obtain uncertainty <1%
 (which is considered to be low for Q-factor measurement) requires attention
 to several aspects of the experimental procedure.
 
-This class implements methods for determining Q-factor from frequency-domain
-S-parameters, that can be applied to measurements of transmission or reflection.
+This class implements methods for determining loaded and unloaded Q-factor 
+from frequency-domain S-parameters, that can be applied to measurements 
+of transmission or reflection.
 
-Documenation and implementation are adapted from [#]_
+Documentation and implementation are adapted from [#]_
 
 Q-factor
 --------
 .. autosummary::
-   :toctree: generated/
+    :toctree: generated/
+    :nosignatures:
+    :recursive:
 
+    Qfactor
+
+.. currentmodule:: skrf.qfactor
+
+    
 Loaded and Unloaded Q-factor
 ----------------------------
 The Q-factor of a resonator is defined by:
 
-.. maths::
+.. math::
 
     Q = \frac{2 \pi U}{\Delta U}
+
 
 where :math:`U` is the average energy stored by the resonator and
 :math:`\Delta U` is the decrease in the average stored energy per wave cycle
@@ -42,14 +50,40 @@ has 50 Ohm impedance, such as a VNA, causes :math:`Q_L` to be reduced substantia
 if strong coupling is used.
 
 For most applications the quantity that is desired is the unloaded Q-factor :math:`Q_0`,
- which is determined by energy dissipation associated with the resonator only
- and therefore gives the best description of the resonant mode.
+which is determined by energy dissipation associated with the resonator only
+and therefore gives the best description of the resonant mode.
 
 In other words, :math:`Q_0` is the Q-factor of the uncoupled resonator. The value of
 :math:`Q_0` can be estimated from measurements of :math:`Q_L`, but cannot be measured directly.
 :math:`Q_0` is largely governed by ohmic loss arising from surface currents
 in the metal conductors (walls and loop couplings), and from dielectric loss
-in any insulating materials that may be present. This class offers method to
+in any insulating materials that may be present.
+
+
+
+Energy dissipation in the external circuit is characterised by the external Q-factor,
+:math:`Q_e`. For both series and parallel equivalent circuits, the three 
+Q-factors are related by:
+    
+.. math::
+    
+    \frac{1}{Q_L} = \frac{1}{Q_0} + \frac{1}{Q_e}
+
+
+The coupling factor :math:`\beta` is defined by:
+    
+.. math::
+    
+    \beta = \frac{Q_0}{Q_e}
+
+where a a coupling factor is defined for each port.
+
+The diameter of the Q-circle displayed by the VNA provides a visual
+indication of whether the coupling is strong or weak. :math:`Q_0` can be 
+calculated from the measured :math:`Q_L` when coupling factor(s) are known. 
+Hence, coupling factors can be calculated from calibrated Q-circle diameters.
+
+This class offers methods to
 determine the uncoupled (unloaded) Q-factor :math:`Q_0` from advanced fittings.
 
 Q-factor determination through equivalent-circuit models
@@ -59,7 +93,7 @@ can be achieved through equivalent-circuit models. A high Q-factor resonator
 (in practice, :math:`Q_L` > 100), the S-parameter response of a resonator
 measured in a calibrated system with reference planes at the resonator couplings is:
 
-.. maths::
+.. math::
 
     S = S_D + d \frac{e^{−2j\delta}}{1 + j Q_L t}
 
@@ -69,7 +103,7 @@ resonance, :math:`d` is The diameter of the Q-circle, :math:``delta` is a
 real-valued constant that defines the orientation of the Q-circle, and :math:`t`
 is the fractional offset frequency given by:
 
-.. maths::
+.. math::
     t = 2 \frac{f − f_L}{f_0} \approx 2 \frac{f − f_L}{f_L}
 
 
@@ -78,12 +112,7 @@ resonant frequency and :math:`f` the frequency at which S is measured.
 This equation can be applied to measurements by transmission (S21 or S12) or
 reflection (S11 or S22).
 
-Time-domain (“ring down”) methods [#]_ enable measurement of the loaded
-Q-factor :math:`Q_L`, in which :math:`U` and :math:`\Delta U` pertain to the
-entire system comprising of the resonator and the instrument that is used for
-observing resonances. The time-domain method requires excitation of a
-resonance followed by a measurement of the exponential decay of the amplitude
-(or stored energy).
+
 
 
 References
@@ -110,8 +139,6 @@ from typing import List, TYPE_CHECKING, Tuple
 class Qfactor:
     """
     Q-factor calculation.
-
-
 
     Parameters
     ----------
