@@ -681,13 +681,8 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(b.z0[-1] == a.z0[-1])
 
     def test_interpolate_self(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a = rf.N(f=[1,2], s=[1+2j, 3+4j], z0=1)
         a.interpolate_self(4)
-        # TODO: numerically test for correct interpolation
-
-    def test_interpolate_from_f(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
-        a.interpolate_from_f(npy.linspace(1,2,4), unit='ghz')
         # TODO: numerically test for correct interpolation
 
     def test_slicer(self):

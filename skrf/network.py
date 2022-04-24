@@ -2616,46 +2616,6 @@ class Network(object):
     ##convenience
     resample = interpolate_self
 
-    def interpolate_from_f(self, f: Frequency, interp_kwargs: dict = {}, **kwargs) -> 'Network':
-        r"""
-        Interpolates s-parameters from a frequency vector.
-
-        Given a frequency vector, and optionally a `unit` (see \*\*kwargs)
-        , interpolate the networks s-parameters linearly in real and
-        imaginary components.
-
-        See :func:`~Network.interpolate` for more information.
-
-
-        Note
-        ----
-        This creates a new :class:`~skrf.frequency.Frequency`, object
-        using the method :func:`~skrf.frequency.Frequency.from_f`,
-        and then calls :func:`~Network.interpolate_self`.
-
-
-        Parameters
-        ----------
-        new_frequency : :class:`~skrf.frequency.Frequency`
-            frequency information to interpolate at
-        interp_kwargs :
-            dictionary of kwargs to be passed through to
-            :func:`scipy.interpolate.interpolate.interp1d`
-        \*\*kwargs :
-            passed to :func:`scipy.interpolate.interp1d` initializer.
-
-        See Also
-        --------
-        resample
-        interpolate
-        interpolate_self
-        """
-        warnings.warn('Use interpolate', DeprecationWarning)
-        return self.interpolate(freq_or_n=f, f_kwargs=kwargs,
-                                **interp_kwargs)
-        # freq = Frequency.from_f(f,**kwargs)
-        # self.interpolate_self(freq, **interp_kwargs)
-
     def extrapolate_to_dc(self, points: int = None, dc_sparam: NumberLike = None,
                           kind: str = 'cubic', coords: str = 'cart',
                           **kwargs) -> 'Network':
