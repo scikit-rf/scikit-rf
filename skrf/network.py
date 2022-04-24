@@ -2422,7 +2422,7 @@ class Network(object):
 
         The input 'freq_or_n` can be either a new
         :class:`~skrf.frequency.Frequency` or an `int`, or a new
-        frequency vector (in hz).
+        frequency vector (in Hz).
 
         This interpolates  a given `basis`, ie s, z, y, etc, in the
         coordinate system defined by `coord` like polar or cartesian.
@@ -2572,68 +2572,35 @@ class Network(object):
               result.noise_freq = new_frequency
         return result
 
-    def interpolate_self_npoints(self, npoints: int, **kwargs) -> None:
-        """
-
-        Interpolate network based on a new number of frequency points
-
-
-        Note
-        ----
-        The function :func:`~Network.resample` is an alias for
-        :func:`~Network.interpolate_self_npoints`.
-
-        Parameters
-        ----------
-        npoints : int
-                number of frequency points
-        **kwargs : keyword arguments
-                passed to :func:`scipy.interpolate.interp1d` initializer.
-
-        See Also
-        --------
-        interpolate_self : same functionality but takes a Frequency
-                object
-        interpolate : same functionality but takes a Frequency
-                object and returns a new Network, instead of updating
-                itself.
-
-
-        Examples
-        --------
-        .. ipython::
-
-            @suppress
-            In [21]: import skrf as rf
-
-            In [21]: n = rf.data.ring_slot
-
-            In [21]: n
-
-            In [21]: n.resample(501) # resample is an alias
-
-            In [21]: n
-
-        """
-        warnings.warn('Use interpolate_self', DeprecationWarning)
-        new_frequency = self.frequency.copy()
-        new_frequency.npoints = npoints
-        self.interpolate_self(new_frequency, **kwargs)
-
     def interpolate_self(self, freq_or_n: Union[Frequency, NumberLike], **kwargs) -> None:
         """
-        Interpolates s-parameters given a new
+        Interpolate the current Network along frequency axis (inplace).
 
-        :class:'~skrf.frequency.Frequency' object.
+        The input 'freq_or_n` can be either a new
+        :class:`~skrf.frequency.Frequency` or an `int`, or a new
+        frequency vector (in Hz).
 
         See :func:`~Network.interpolate` for more information.
 
         Parameters
         ----------
-        new_frequency : :class:`~skrf.frequency.Frequency`
-                frequency information to interpolate at
+        freq_or_n : :class:`~skrf.frequency.Frequency` or int or list-like
+            The new frequency over which to interpolate. this arg may be
+            one of the following:
+
+            * a new :class:`~skrf.frequency.Frequency` object
+
+            * an int: the current frequency span is resampled linearly.
+
+            * a list-like: create a new frequency using :meth:`~skrf.frequency.Frequency.from_f`
+
         **kwargs : keyword arguments
                 passed to :func:`scipy.interpolate.interp1d` initializer.
+
+        Returns
+        -------
+        None
+            The interpolation is performed inplace.
 
         See Also
         --------
