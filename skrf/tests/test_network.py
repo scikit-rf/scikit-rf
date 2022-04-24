@@ -251,7 +251,7 @@ class NetworkTestCase(unittest.TestCase):
             nport = rf.Network()
             nport.frequency = freq
             nport.s = npy.zeros((10, nport_portnum, nport_portnum))
-            nport.z0 = npy.arange(nport_portnum)
+            nport.z0 = npy.arange(start=1, stop=nport_portnum + 1)
 
             # Connect the line to each port and check for port impedance
             for port in range(nport_portnum):
