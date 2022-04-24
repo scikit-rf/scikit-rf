@@ -2690,7 +2690,7 @@ class Network(object):
         # self.interpolate_self(freq, **interp_kwargs)
 
     def extrapolate_to_dc(self, points: int = None, dc_sparam: NumberLike = None,
-                          kind: str = 'warn', coords: str = 'cart',
+                          kind: str = 'cubic', coords: str = 'cart',
                           **kwargs) -> 'Network':
         """
         Extrapolate S-parameters down to 0 Hz and interpolate to uniform spacing.
@@ -2710,8 +2710,7 @@ class Network(object):
         dc_sparam : class:`npy.ndarray` or None
             NxN S-parameters matrix at 0 Hz.
             If None S-parameters at 0 Hz are determined by linear extrapolation.
-        kind : str or int, default is 'rational'
-            Default value will be changed to 'cubic' in future version.
+        kind : str or int, default is 'cubic'
             Specifies the kind of interpolation as a string ('linear',
             'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
             as an integer specifying the order of the spline
@@ -2737,14 +2736,6 @@ class Network(object):
         impulse_response
         step_response
         """
-        if kind == 'warn':
-            warnings.warn("The default `kind` parameter will change "
-                          "from `rational` to `cubic` in future versions."
-                          "Use `kind='rational'` to keep the old default."
-                          "To silent this warning, explitly define `kind`.",
-                          category=DeprecationWarning, stacklevel=2)
-            kind = 'rational'
-
         result = self.copy()
 
         if self.frequency.f[0] == 0:
