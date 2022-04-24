@@ -346,7 +346,7 @@ class Network(object):
 
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
-                 comments: str = None, f_unit: str = None, 
+                 comments: str = None, f_unit: str = None,
                  s_def: str = S_DEF_DEFAULT, **kwargs) -> None:
         r"""
         Network constructor.
@@ -360,13 +360,13 @@ class Network(object):
 
         file : str or file-object
             file to load information from. supported formats are:
-             * touchstone file (.s?p) (or .ts)  
+             * touchstone file (.s?p) (or .ts)
              * io.StringIO object (with `.name` property which contains the file extension, such as `myfile.s4p`)
              * pickled Network (.ntwk, .p) see :func:`write`
         name : str, optional
             Name of this Network. if None will try to use file, if it is a str
         params : dict, optional
-            Dictionnary of parameters associated with the Network            
+            Dictionnary of parameters associated with the Network
         comments : str, optional
             Comments associated with the Network
         s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
@@ -399,9 +399,9 @@ class Network(object):
         Directly from values
 
         >>> n = rf.Network(f=[1,2,3], s=[1,2,3], z0=[1,2,3])
-        
+
         Define some parameters associated with the Network
-        
+
         >>> n = rf.Network('ntwk1.s2p', params={'temperature': 25, 'voltage':5})
 
         See Also
@@ -421,7 +421,7 @@ class Network(object):
         self.comments = comments
         self.port_names = None
         self.encoding = kwargs.pop('encoding', None)
-                
+
         self.deembed = None
         self.noise = None
         self.noise_freq = None
@@ -1871,8 +1871,8 @@ class Network(object):
         Example
         -------
 
-        The following example shows how to use the :func:`drop_non_monotonic_increasing` 
-        automatically, if invalid frequency data is detected and an 
+        The following example shows how to use the :func:`drop_non_monotonic_increasing`
+        automatically, if invalid frequency data is detected and an
         :class:`~skrf.frequency.InvalidFrequencyWarning` is thrown.
 
 
@@ -1939,8 +1939,8 @@ class Network(object):
         filename : str or file-object
             touchstone file name.
         encoding : str, optional
-            define the file encoding to use. Default value is None, 
-            meaning the encoding is guessed.            
+            define the file encoding to use. Default value is None,
+            meaning the encoding is guessed.
 
         Note
         ----
@@ -2689,7 +2689,7 @@ class Network(object):
         # freq = Frequency.from_f(f,**kwargs)
         # self.interpolate_self(freq, **interp_kwargs)
 
-    def extrapolate_to_dc(self, points: int = None, dc_sparam: NumberLike = None, 
+    def extrapolate_to_dc(self, points: int = None, dc_sparam: NumberLike = None,
                           kind: str = 'warn', coords: str = 'cart',
                           **kwargs) -> 'Network':
         """
@@ -2744,7 +2744,7 @@ class Network(object):
                           "To silent this warning, explitly define `kind`.",
                           category=DeprecationWarning, stacklevel=2)
             kind = 'rational'
-        
+
         result = self.copy()
 
         if self.frequency.f[0] == 0:
@@ -3654,7 +3654,7 @@ class Network(object):
                 If None value is determined automatically based on if the
                 frequency vector begins from 0.
         squeeze: bool
-                Squeeze impulse response to one dimension, 
+                Squeeze impulse response to one dimension,
                 if a oneport gets transformed.
                 Has no effect when transforming a multiport.
                 Default = True
@@ -3718,7 +3718,7 @@ class Network(object):
                 Number of zeros to add as padding for FFT.
                 Adding more zeros improves accuracy of peaks.
         squeeze: bool
-                Squeeze step response to one dimension, 
+                Squeeze step response to one dimension,
                 if a oneport gets transformed.
                 Has no effect when transforming a multiport.
                 Default = True
@@ -4767,6 +4767,9 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
     subntwk = Network(frequency=ntwk.frequency, z0=ntwk.z0[:,ports], name=subntwk_name)
     # keep requested rows and columns of the s-matrix. ports can be not contiguous
     subntwk.s = ntwk.s[npy.ix_(npy.arange(ntwk.s.shape[0]), ports, ports)]
+    # keep port_names
+    if ntwk.port_names:
+        subntwk.port_names = [ntwk.port_names[idx] for idx in ports]
     return subntwk
 
 ## Building composit networks from sub-networks
@@ -6349,12 +6352,12 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
      To use the pseudo-wave formulation, use s_def='pseudo'.
      However, results should be the same for real-valued characteristic impedances.
      See the [#Marks]_ and [#Anritsu]_ for more details.
-    
-    
+
+
     Note
     ----
     This just calls ::
-   
+
         z2s(s2z(s, z0=z_old), z0=z_new, s_def=s_def)
 
 
