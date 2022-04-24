@@ -6668,13 +6668,9 @@ def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
     .. [#] D. Williams, IEEE Microw. Mag. 14, 38 (2013).
 
     """
-    # TODO : vectorize the for loop
-    nfreqs, nports, nports = s.shape
-    s_act = npy.zeros((nfreqs, nports), dtype='complex')
-    s[ s == 0 ] = 1e-12  # solve numerical singularity
-
-    for fidx in range(s.shape[0]):
-        s_act[fidx] = npy.matmul(s[fidx], a) / a
+    a = npy.asarray(a, dtype=complex)
+    a[a == 0] = 1e-12  # solve numerical singularity
+    s_act = npy.einsum('fmi,i,m->fm', s, a, npy.reciprocal(a))
     return s_act  # shape : (n_freqs, n_ports)
 
 def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
@@ -6716,11 +6712,8 @@ def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     # TODO : vectorize the for loop
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
-    z_act = npy.zeros((nfreqs, nports), dtype='complex')
     s_act = s2s_active(s, a)
-
-    for fidx in range(s.shape[0]):
-        z_act[fidx] = z0[fidx] * (1 + s_act[fidx])/(1 - s_act[fidx])
+    z_act = npy.einsum('fp,fp,fp->fp', z0, 1 + s_act, npy.reciprocal(1 - s_act))
     return z_act
 
 def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
@@ -6760,11 +6753,8 @@ def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     """
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
-    y_act = npy.zeros((nfreqs, nports), dtype='complex')
     s_act = s2s_active(s, a)
-
-    for fidx in range(s.shape[0]):
-        y_act[fidx] = 1/z0[fidx] * (1 - s_act[fidx])/(1 + s_act[fidx])
+    y_act = npy.einsum('fp,fp,fp->fp', npy.reciprocal(z0), 1 - s_act, npy.reciprocal(1 + s_act))        
     return y_act
 
 def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
@@ -6799,13 +6789,8 @@ def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
         s2z_active : active Z-parameters
         s2y_active : active Y-parameters
     """
-    nfreqs, nports, nports = s.shape
-    vswr_act = npy.zeros((nfreqs, nports), dtype='complex')
     s_act = s2s_active(s, a)
-
-    for fidx in range(s.shape[0]):
-        vswr_act[fidx] = (1 + npy.abs(s_act[fidx]))/(1 - npy.abs(s_act[fidx]))
-
+    vswr_act = npy.einsum('fp,fp->fp', (1 + npy.abs(s_act)), npy.reciprocal(1 - npy.abs(s_act)))
     return vswr_act
 
 
