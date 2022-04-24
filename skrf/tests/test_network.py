@@ -132,7 +132,7 @@ class NetworkTestCase(unittest.TestCase):
             t1, y1[:,i,j] = oneport.step_response(n=1000)
 
         t2, y2 = dut_dc.step_response(n=1000)
-        
+
         npy.testing.assert_almost_equal(t1, t2)
         npy.testing.assert_almost_equal(y1, y2)
 
@@ -190,7 +190,7 @@ class NetworkTestCase(unittest.TestCase):
             sio = io.StringIO(data)
             sio.name = os.path.basename(filename) # hack a bug to touchstone reader
             rf.Network(sio)
-            
+
         filename = os.path.join(self.test_dir, 'hfss_oneport.s1p')
         with open(filename) as fid:
             data = fid.read()
@@ -570,7 +570,7 @@ class NetworkTestCase(unittest.TestCase):
         ntwk.z0 = z0
         self.assertTrue(npy.allclose(ntwk.z0, npy.array([z0, z0, z0], dtype=complex)))
 
-        # If the s-array has been set and we want to set z0 along the frequency axis, 
+        # If the s-array has been set and we want to set z0 along the frequency axis,
         # wer require the frequency vector to be set too.
         # Unfortunately the frequency vector and the s shape can distinguish
         z0 = [1,2,3]
@@ -590,7 +590,7 @@ class NetworkTestCase(unittest.TestCase):
         ntwk.z0 = npy.array(z0) + 1 # Passing as npy.array
         self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)+1))
 
-        # Setting the frequency is required to be set, as the matrix size is checked against the 
+        # Setting the frequency is required to be set, as the matrix size is checked against the
         # frequency vector
         ntwk.s = npy.random.rand(1,2,2)
         ntwk.f = [1]
@@ -1128,6 +1128,21 @@ class NetworkTestCase(unittest.TestCase):
         ntw_list = [tee12, tee23, tee13]
         tee2 = rf.n_twoports_2_nport(ntw_list, nports=3)
         self.assertTrue(tee2 == tee)
+
+    def test_subnetwork_port_names(self):
+        """ Test that subnetwork keeps port_names property. Issue #429 """
+        self.ntwk1.port_names = ['A', 'B']
+        extract_ports = ['A']  # list of port names to extract
+        extract_ports_idx = [self.ntwk1.port_names.index(p) for p in extract_ports]  # get port indices
+        sub_nwk1 = self.ntwk1.subnetwork(extract_ports_idx)
+        self.assertEqual(sub_nwk1.port_names, extract_ports)
+
+        tee = rf.data.tee
+        tee.port_names = ['A', 'B', 'C']
+        extract_ports = ['A', 'C']
+        extract_ports_idx = [tee.port_names.index(p) for p in extract_ports]
+        sub_nwk = tee.subnetwork(extract_ports_idx)
+        self.assertEqual(sub_nwk.port_names, extract_ports)
 
     def test_invalid_freq(self):
 
