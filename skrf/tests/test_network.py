@@ -386,6 +386,30 @@ class NetworkTestCase(unittest.TestCase):
                 npy.testing.assert_allclose(rf.t2s(rf.s2t(ntwk.s)), ntwk.s)
         npy.testing.assert_allclose(rf.t2s(rf.s2t(self.Fix.s)), self.Fix.s)
 
+    def test_multiport_conversions(self):
+        #Converting to other format and back to S-parameters should return the original network
+        for ports in range(3, 6):
+            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
+            ntwk_random = rf.Network(s=s_random, frequency=self.freq)
+            for test_z0 in (50, 20+60j, 90-50j):
+                for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3, ntwk_random):
+                    ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0)
+                    npy.testing.assert_allclose(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0), ntwk.s)
+                    npy.testing.assert_allclose(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0), ntwk.s)
+
+    def test_sparam_renormalize(self):
+        #Converting to other format and back to S-parameters should return the original network
+        for ports in range(2, 6):
+            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
+            test_ntwk = rf.Network(s=s_random, frequency=self.freq)
+            for test_z0 in (50, 20+60j, 70-30j):
+                for method in rf.S_DEFINITIONS:
+                    ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=50)
+                    ntwk_renorm = ntwk.copy()
+                    ntwk_renorm.renormalize(test_z0, method)
+                    ntwk_renorm.renormalize(50, method)
+                    npy.testing.assert_allclose(ntwk_renorm.s, ntwk.s)
+
     def test_setters(self):
         s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
         ntwk = rf.Network(s=s_random, frequency=self.freq)
@@ -926,14 +950,81 @@ class NetworkTestCase(unittest.TestCase):
         se[:,0,2] = 1
         se[:,3,1] = 1
         se[:,1,3] = 1
-        net = rf.Network(s=se, f=[1])
+        net = rf.Network(s=se, f=[1], z0=50)
         gmm = npy.zeros((1,4,4), dtype=complex)
         gmm[:,0,1] = 1
         gmm[:,1,0] = 1
         gmm[:,2,3] = 1
         gmm[:,3,2] = 1
         net.se2gmm(p=2)
+        self.assertTrue(npy.allclose(net.z0, npy.array([[100,100,25,25]])))
         self.assertTrue(npy.allclose(net.s, gmm))
+
+    def test_se2gmm_3port(self):
+        # Test mixed mode conversion of ideal balun
+        se = npy.zeros((1,3,3), dtype=complex)
+        se[:,2,0] =  1/2**0.5
+        se[:,0,2] =  1/2**0.5
+        se[:,2,1] = -1/2**0.5
+        se[:,1,2] = -1/2**0.5
+        net = rf.Network(s=se, f=[1], z0=50)
+        gmm = npy.zeros((1,3,3), dtype=complex)
+        gmm[:,0,2] = 1
+        gmm[:,2,0] = 1
+        net.se2gmm(p=1)
+        self.assertTrue(npy.allclose(net.z0, npy.array([[100,25,50]])))
+        self.assertTrue(npy.allclose(net.s, gmm))
+
+    def test_se2gmm_renorm(self):
+        # Test that se2gmm renormalization is compatible with network renormalization
+
+        # Single-ended ports
+        for s_def in rf.S_DEFINITIONS:
+            for ports in range(2, 10):
+                # Number of differential pairs to convert
+                for p in range(0, ports//2 + 1):
+                    # Create a random network, z0=50
+                    s_random = npy.random.uniform(-1, 1, (1, ports, ports)) +\
+                                1j * npy.random.uniform(-1, 1, (1, ports, ports))
+                    net = rf.Network(s=s_random, frequency=[1], z0=50)
+                    net_original = net.copy()
+                    net_renorm = net.copy()
+
+                    # Random z0 for mixed mode ports
+                    z0 = npy.random.uniform(1, 100, 2*p) +\
+                            1j * npy.random.uniform(-100, 100, 2*p)
+
+                    # Convert net to mixed mode with random z0
+                    net.se2gmm(p=p, z0_mm=z0, s_def=s_def)
+
+                    # Convert net_renorm to mixed mode with different z0
+                    z0_mm = npy.zeros(2*p, dtype=complex)
+                    z0_mm[:p] = 100
+                    z0_mm[p:] = 25
+                    net_renorm.se2gmm(p=p, z0_mm=z0_mm, s_def=s_def)
+
+                    if p > 0:
+                        # S-parameters should be different
+                        self.assertFalse(npy.allclose(net.s, net_renorm.s))
+                    else:
+                        # Same if no differential ports
+                        self.assertTrue(npy.allclose(net.s, net_renorm.s))
+
+                    # Renormalize net_renorm to the random z0
+                    # net and net_renorm should match after this
+                    # Single-ended ports stay 50 ohms
+                    full_z0 = 50 * npy.ones(ports, dtype=complex)
+                    full_z0[:2*p] = z0
+                    net_renorm.renormalize(z_new=full_z0, s_def=s_def)
+
+                    # Nets should match now
+                    self.assertTrue(npy.allclose(net.z0, net_renorm.z0))
+                    self.assertTrue(npy.allclose(net.s, net_renorm.s))
+
+                    # Test that we get the original network back
+                    net.gmm2se(p=p, z0_se=50, s_def=s_def)
+                    self.assertTrue(npy.allclose(net.z0, net_original.z0))
+                    self.assertTrue(npy.allclose(net.s, net_original.s))
 
 
     def test_s_active(self):
