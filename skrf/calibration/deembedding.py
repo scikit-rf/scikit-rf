@@ -1098,7 +1098,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             else:
                 dfnew = f[-1]/10000
                 fnew = dfnew * (np.arange(0, 10000) + 1)
-            stemp = Network(frequency = skrf.Frequency.from_f(f), s = s)
+            stemp = Network(frequency = Frequency.from_f(f), s = s)
             stemp.interpolate(fnew)
             f = fnew
             s = stemp.s
@@ -1192,7 +1192,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             if flag_DC:
                 raise ValueError("TODO : handle DC point already existing.")
             if flag_df:
-                raise ValueError("TODO : handle interpolation.")
+                raise NotImplementedError("TODO : handle interpolation.")
         
         # create the S-parameter objects for the errorboxes
         s_fixture_model_r1  = Network(frequency = s2xthru.frequency, s = fixture_model_1r, z0 = z11x)
@@ -1544,7 +1544,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         snew[0, 1, 1] = self.dc_interp(s[:, 1, 1], f)
         
         f = concatenate(([0], f))
-        return Network(frequency = skrf.Frequency.from_f(f), s = snew)
+        return Network(frequency = Frequency.from_f(f), s = snew)
     
     def dc_interp(self, s, f):
         """
@@ -1843,7 +1843,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             self.flag_DC = True
             f = f[1:]
             s = s[:, :, 1:]
-            sfix_dut_fix = Network(frequency = skrf.Frequency.from_f(f), s = s)
+            sfix_dut_fix = Network(frequency = Frequency.from_f(f), s = s)
         
         # check for bad frequency vector
         df = f[1] - f[0]
@@ -1857,11 +1857,11 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             forg = f
             projected_n = np.floor(f[-1]/f[0])
             fnew = f[0] * (np.arange(0, projected_n) + 1)
-            sfix_dut_fix.interpolate(Frequancy.from_f(fnew))
+            sfix_dut_fix.interpolate(Frequency.from_f(fnew))
         
         # if the frequency vector needed to change, adjust the 2x-thru
         if self.flag_DC or self.flag_df:
-            s2xthru.interpolate(Frequancy.from_f(fnew))
+            s2xthru.interpolate(Frequency.from_f(fnew))
             
         # check if 2x-thru is not the same frequency vector as the
         # fixture-dut-fixture
