@@ -251,7 +251,7 @@ class NetworkTestCase(unittest.TestCase):
             nport = rf.Network()
             nport.frequency = freq
             nport.s = npy.zeros((10, nport_portnum, nport_portnum))
-            nport.z0 = npy.arange(nport_portnum)
+            nport.z0 = npy.arange(start=1, stop=nport_portnum + 1)
 
             # Connect the line to each port and check for port impedance
             for port in range(nport_portnum):
@@ -680,14 +680,9 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(b.z0[1] == 0.5*(a.z0[0] + a.z0[1]))
         self.assertTrue(b.z0[-1] == a.z0[-1])
 
-    def test_interpolate_self_npoints(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
-        a.interpolate_self_npoints(4)
-        # TODO: numerically test for correct interpolation
-
-    def test_interpolate_from_f(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
-        a.interpolate_from_f(npy.linspace(1,2,4), unit='ghz')
+    def test_interpolate_self(self):
+        a = rf.N(f=[1,2], s=[1+2j, 3+4j], z0=1)
+        a.interpolate_self(4)
         # TODO: numerically test for correct interpolation
 
     def test_slicer(self):

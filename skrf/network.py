@@ -2422,7 +2422,7 @@ class Network(object):
 
         The input 'freq_or_n` can be either a new
         :class:`~skrf.frequency.Frequency` or an `int`, or a new
-        frequency vector (in hz).
+        frequency vector (in Hz).
 
         This interpolates  a given `basis`, ie s, z, y, etc, in the
         coordinate system defined by `coord` like polar or cartesian.
@@ -2572,68 +2572,35 @@ class Network(object):
               result.noise_freq = new_frequency
         return result
 
-    def interpolate_self_npoints(self, npoints: int, **kwargs) -> None:
-        """
-
-        Interpolate network based on a new number of frequency points
-
-
-        Note
-        ----
-        The function :func:`~Network.resample` is an alias for
-        :func:`~Network.interpolate_self_npoints`.
-
-        Parameters
-        ----------
-        npoints : int
-                number of frequency points
-        **kwargs : keyword arguments
-                passed to :func:`scipy.interpolate.interp1d` initializer.
-
-        See Also
-        --------
-        interpolate_self : same functionality but takes a Frequency
-                object
-        interpolate : same functionality but takes a Frequency
-                object and returns a new Network, instead of updating
-                itself.
-
-
-        Examples
-        --------
-        .. ipython::
-
-            @suppress
-            In [21]: import skrf as rf
-
-            In [21]: n = rf.data.ring_slot
-
-            In [21]: n
-
-            In [21]: n.resample(501) # resample is an alias
-
-            In [21]: n
-
-        """
-        warnings.warn('Use interpolate_self', DeprecationWarning)
-        new_frequency = self.frequency.copy()
-        new_frequency.npoints = npoints
-        self.interpolate_self(new_frequency, **kwargs)
-
     def interpolate_self(self, freq_or_n: Union[Frequency, NumberLike], **kwargs) -> None:
         """
-        Interpolates s-parameters given a new
+        Interpolate the current Network along frequency axis (inplace).
 
-        :class:'~skrf.frequency.Frequency' object.
+        The input 'freq_or_n` can be either a new
+        :class:`~skrf.frequency.Frequency` or an `int`, or a new
+        frequency vector (in Hz).
 
         See :func:`~Network.interpolate` for more information.
 
         Parameters
         ----------
-        new_frequency : :class:`~skrf.frequency.Frequency`
-                frequency information to interpolate at
+        freq_or_n : :class:`~skrf.frequency.Frequency` or int or list-like
+            The new frequency over which to interpolate. this arg may be
+            one of the following:
+
+            * a new :class:`~skrf.frequency.Frequency` object
+
+            * an int: the current frequency span is resampled linearly.
+
+            * a list-like: create a new frequency using :meth:`~skrf.frequency.Frequency.from_f`
+
         **kwargs : keyword arguments
                 passed to :func:`scipy.interpolate.interp1d` initializer.
+
+        Returns
+        -------
+        None
+            The interpolation is performed inplace.
 
         See Also
         --------
@@ -2649,48 +2616,8 @@ class Network(object):
     ##convenience
     resample = interpolate_self
 
-    def interpolate_from_f(self, f: Frequency, interp_kwargs: dict = {}, **kwargs) -> 'Network':
-        r"""
-        Interpolates s-parameters from a frequency vector.
-
-        Given a frequency vector, and optionally a `unit` (see \*\*kwargs)
-        , interpolate the networks s-parameters linearly in real and
-        imaginary components.
-
-        See :func:`~Network.interpolate` for more information.
-
-
-        Note
-        ----
-        This creates a new :class:`~skrf.frequency.Frequency`, object
-        using the method :func:`~skrf.frequency.Frequency.from_f`,
-        and then calls :func:`~Network.interpolate_self`.
-
-
-        Parameters
-        ----------
-        new_frequency : :class:`~skrf.frequency.Frequency`
-            frequency information to interpolate at
-        interp_kwargs :
-            dictionary of kwargs to be passed through to
-            :func:`scipy.interpolate.interpolate.interp1d`
-        \*\*kwargs :
-            passed to :func:`scipy.interpolate.interp1d` initializer.
-
-        See Also
-        --------
-        resample
-        interpolate
-        interpolate_self
-        """
-        warnings.warn('Use interpolate', DeprecationWarning)
-        return self.interpolate(freq_or_n=f, f_kwargs=kwargs,
-                                **interp_kwargs)
-        # freq = Frequency.from_f(f,**kwargs)
-        # self.interpolate_self(freq, **interp_kwargs)
-
     def extrapolate_to_dc(self, points: int = None, dc_sparam: NumberLike = None,
-                          kind: str = 'warn', coords: str = 'cart',
+                          kind: str = 'cubic', coords: str = 'cart',
                           **kwargs) -> 'Network':
         """
         Extrapolate S-parameters down to 0 Hz and interpolate to uniform spacing.
@@ -2710,8 +2637,7 @@ class Network(object):
         dc_sparam : class:`npy.ndarray` or None
             NxN S-parameters matrix at 0 Hz.
             If None S-parameters at 0 Hz are determined by linear extrapolation.
-        kind : str or int, default is 'rational'
-            Default value will be changed to 'cubic' in future version.
+        kind : str or int, default is 'cubic'
             Specifies the kind of interpolation as a string ('linear',
             'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
             as an integer specifying the order of the spline
@@ -2737,14 +2663,6 @@ class Network(object):
         impulse_response
         step_response
         """
-        if kind == 'warn':
-            warnings.warn("The default `kind` parameter will change "
-                          "from `rational` to `cubic` in future versions."
-                          "Use `kind='rational'` to keep the old default."
-                          "To silent this warning, explitly define `kind`.",
-                          category=DeprecationWarning, stacklevel=2)
-            kind = 'rational'
-
         result = self.copy()
 
         if self.frequency.f[0] == 0:
@@ -5515,8 +5433,7 @@ def z2y(z: npy.ndarray) -> npy.ndarray:
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     """
-    return npy.array([npy.mat(z[f, :, :]) ** -1 for f in range(z.shape[0])])
-
+    return npy.linalg.inv(z)
 
 def z2t(z: npy.ndarray) -> NoReturn:
     """
@@ -5902,7 +5819,7 @@ def y2z(y: npy.ndarray) -> npy.ndarray:
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     """
-    return npy.array([npy.mat(y[f, :, :]) ** -1 for f in range(y.shape[0])])
+    return npy.linalg.inv(y)
 
 
 def y2t(y: npy.ndarray) -> NoReturn:
@@ -6751,13 +6668,9 @@ def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
     .. [#] D. Williams, IEEE Microw. Mag. 14, 38 (2013).
 
     """
-    # TODO : vectorize the for loop
-    nfreqs, nports, nports = s.shape
-    s_act = npy.zeros((nfreqs, nports), dtype='complex')
-    s[ s == 0 ] = 1e-12  # solve numerical singularity
-
-    for fidx in range(s.shape[0]):
-        s_act[fidx] = npy.matmul(s[fidx], a) / a
+    a = npy.asarray(a, dtype=complex)
+    a[a == 0] = 1e-12  # solve numerical singularity
+    s_act = npy.einsum('fmi,i,m->fm', s, a, npy.reciprocal(a))
     return s_act  # shape : (n_freqs, n_ports)
 
 def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
@@ -6799,11 +6712,8 @@ def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     # TODO : vectorize the for loop
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
-    z_act = npy.zeros((nfreqs, nports), dtype='complex')
     s_act = s2s_active(s, a)
-
-    for fidx in range(s.shape[0]):
-        z_act[fidx] = z0[fidx] * (1 + s_act[fidx])/(1 - s_act[fidx])
+    z_act = npy.einsum('fp,fp,fp->fp', z0, 1 + s_act, npy.reciprocal(1 - s_act))
     return z_act
 
 def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
@@ -6843,11 +6753,8 @@ def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     """
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
-    y_act = npy.zeros((nfreqs, nports), dtype='complex')
     s_act = s2s_active(s, a)
-
-    for fidx in range(s.shape[0]):
-        y_act[fidx] = 1/z0[fidx] * (1 - s_act[fidx])/(1 + s_act[fidx])
+    y_act = npy.einsum('fp,fp,fp->fp', npy.reciprocal(z0), 1 - s_act, npy.reciprocal(1 + s_act))        
     return y_act
 
 def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
@@ -6882,13 +6789,8 @@ def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
         s2z_active : active Z-parameters
         s2y_active : active Y-parameters
     """
-    nfreqs, nports, nports = s.shape
-    vswr_act = npy.zeros((nfreqs, nports), dtype='complex')
     s_act = s2s_active(s, a)
-
-    for fidx in range(s.shape[0]):
-        vswr_act[fidx] = (1 + npy.abs(s_act[fidx]))/(1 - npy.abs(s_act[fidx]))
-
+    vswr_act = npy.einsum('fp,fp->fp', (1 + npy.abs(s_act)), npy.reciprocal(1 - npy.abs(s_act)))
     return vswr_act
 
 
