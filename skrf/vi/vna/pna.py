@@ -1,5 +1,5 @@
 import pprint
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, final
 
 import numpy as np
 
@@ -38,6 +38,14 @@ class PNA(VNA):
         self.write(f"sense:sweep:points {n}")
 
     @property
+    def sweep_mode(self) -> str:
+        return self.query("sense:sweep:mode?")
+
+    @sweep_mode.setter
+    def sweep_mode(self, mode: str) -> None:
+        self.write(f"sense:sweep:mode {mode}")
+
+    @property
     def sweep_type(self) -> str:
         return self.query("sense:sweep:type?")
 
@@ -63,7 +71,8 @@ class PNA(VNA):
 
     @property  # ???
     def averaging(self) -> bool:
-        return bool(self.query("sense:average?"))
+        avg = self.query("sense:average?").strip()
+        return avg != "0"
 
     @averaging.setter
     def averaging(self, onoff: bool) -> None:
@@ -76,6 +85,14 @@ class PNA(VNA):
     @average_count.setter
     def average_count(self, n: int) -> None:
         self.write(f"sense:average:count {n}")
+
+    @property
+    def average_mode(self) -> str:
+        return self.query("sense:average:mode?")
+
+    @average_mode.setter
+    def average_mode(self, mode: str) -> None:
+        self.write("sense:average:mode {mode}")
 
     def clear_averaging(self) -> None:
         self.write("sense:average:clear")
@@ -174,10 +191,46 @@ class PNA(VNA):
     def create_measurement(self, name: str, measurement: str) -> None:
         self.write(f"calculate:parameter:extended '{name}', '{measurement}'")
 
+    def sweep(self) -> None:
+        self.resource.clear()
+        orig_timeout = self.resource.timeout
+        self.write("trigger:source immediate")
+        sweep_mode = self.sweep_mode
+        continuous = "CONT" in sweep_mode.upper()
+        sweep_time = self.sweep_time
+        avg_on = self.averaging
+        avg_mode = self.average_mode
+
+        if avg_on and "SWE" in avg_mode.upper():
+            sweep_mode = "groups"
+            n_sweeps = self.average_count
+            self.num_sweep_groups = n_sweeps
+            n_sweeps *= 4
+        else:
+            sweep_mode = "single"
+            n_sweeps = 4
+
+        try:
+            sweep_time = sweep_time * n_sweeps * 1000
+            self.resource.timeout = max(sweep_time * 2, 5000)
+            self.sweep_mode = sweep_mode
+            self.query("*OPC?")
+        finally:
+            self.resource.clear()
+            if continuous:
+                self.sweep_mode = "continuous"
+            self.resource.time = orig_timeout
+
+
+
     # OPTIMIZE: create and getting measurement data might be faster than
     # e.g. getting a whole four port network
+    # FIXME: This is very broken. Right now, the PNA won't get data for
+    # measurements that don't exist. So we either have to create all of the
+    # measurements based on the ports OR figure how to just trigger the 4-port
     def get_snp_network(self, ports: Optional[Sequence] = None) -> Network:
         self.resource.clear()
+        self.sweep()
 
         old_snp_format = self.snp_format
         if ports:
