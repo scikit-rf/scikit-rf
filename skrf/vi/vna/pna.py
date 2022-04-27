@@ -10,7 +10,7 @@ from .vna import VNA
 
 
 class PNA(VNA):
-    def __init__(self, address: str, timeout: int = 2000, backend: str='@py'):
+    def __init__(self, address: str, timeout: int = 2000, backend: str = "@py"):
         super().__init__(address, timeout, backend)
 
     @property
@@ -36,7 +36,6 @@ class PNA(VNA):
     @npoints.setter
     def npoints(self, n: int) -> None:
         self.write(f"sense:sweep:points {n}")
-
 
     @property
     def sweep_type(self) -> str:
@@ -92,7 +91,7 @@ class PNA(VNA):
     @property
     def channels_in_use(self) -> List[int]:
         response = self.query("system:channels:catalog?")
-        response = response.strip().replace('"', '')
+        response = response.strip().replace('"', "")
         return [int(c) for c in response]
 
     def measurements_on_channel(self, channel: int) -> List[int]:
@@ -101,7 +100,7 @@ class PNA(VNA):
             return list()
         else:
             response = self.query(f"system:measurement:catalog? {channel}")
-            response = response.strip().replace('"', '').split(',')
+            response = response.strip().replace('"', "").split(",")
             return [int(m) for m in response]
 
     @property
@@ -118,7 +117,7 @@ class PNA(VNA):
         if channel not in channels:
             raise IndexError(f"Channel {channel} doesn't exist")
         else:
-            # No command to set active channel, so get first measurement on `channel` 
+            # No command to set active channel, so get first measurement on `channel`
             # and set the selected measurement to that to hack set the active channel
             mnum = self.measurements_on_channel(channel)[0]
             self.active_measurement = mnum
@@ -148,7 +147,7 @@ class PNA(VNA):
     @property
     def ports(self) -> List:
         query = "system:capability:hardware:ports:internal:catalog?"
-        ports = self.query(query).split(',')
+        ports = self.query(query).split(",")
         return [p.lstrip('"').rstrip('"\n')[-1] for p in ports]
 
     @property
@@ -175,13 +174,16 @@ class PNA(VNA):
     def create_measurement(self, name: str, measurement: str) -> None:
         self.write(f"calculate:parameter:extended '{name}', '{measurement}'")
 
-    # OPTIMIZE: create and getting measurement data might be faster than 
+    # OPTIMIZE: create and getting measurement data might be faster than
     # e.g. getting a whole four port network
-    def get_snp_network(self, ports: Sequence = (1, 2)) -> Network:
+    def get_snp_network(self, ports: Optional[Sequence] = None) -> Network:
         self.resource.clear()
 
         old_snp_format = self.snp_format
-        port_str = ",".join(map(str, ports))
+        if ports:
+            port_str = ",".join(map(str, ports))
+        else:
+            port_str = ",".join(map(str, self.ports))  # If None, get all ports
         self.snp_format = "RI"
         self.active_channel = 1
         raw_data = self.query_ascii(
@@ -208,7 +210,6 @@ class PNA(VNA):
                 ntwk.s[:, n, m] = s_data[i * 2] + 1j * s_data[i * 2 + 1]
 
         return ntwk
-
 
     def upload_oneport_calibration(self, port: int, cal: Calibration) -> None:
         pass
