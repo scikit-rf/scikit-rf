@@ -11,13 +11,14 @@ MLine (:mod:`skrf.media.MLine`)
 
 """
 import numpy as npy
-from numpy import log, tanh, sqrt, exp, real, imag, cosh, \
+from numpy import log, log10, tanh, sqrt, exp, real, imag, cosh, \
                             ones, zeros, arctan
 from scipy.constants import  epsilon_0, mu_0, c, pi
 from .media import Media
 from ..tlineFunctions import skin_depth, surface_resistivity
 from ..constants import NumberLike
 from typing import Union, TYPE_CHECKING
+import warnings
 
 if TYPE_CHECKING:
     from .. frequency import Frequency
@@ -89,7 +90,7 @@ class MLine(Media):
         * 'hammerstadjensen'
         * 'yamashita'
         * 'kobayashi'
-        * None
+        * 'none'
 
     f_low : number, or array-like
         lower frequency for wideband Debye Djordjevic/Svensson dielectric model
@@ -120,13 +121,20 @@ class MLine(Media):
                  f_low: NumberLike = 1e3, f_high: NumberLike = 1e12,
                  f_epr_tand: NumberLike = 1e9,
                  *args, **kwargs):
-        Media.__init__(self, frequency=frequency,z0=z0)
+        Media.__init__(self, frequency=frequency)
 
         self.w, self.h, self.t = w, h, t
+        self._z0 = z0,
         self.ep_r, self.mu_r, self.diel = ep_r, mu_r, diel
         self.rho, self.tand, self.rough, self.disp =  rho, tand, rough, disp
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
-
+        # quasi-static effective dielectric constant of substrate + line and
+        # the impedance of the microstrip line
+        self.analyseQuasiStatic()
+        # analyse dispersion of Zl and Er
+        self.analyseDispersion()
+        # analyse losses of line
+        self.analyseLoss()
 
     def __str__(self) -> str:
         f=self.frequency
@@ -139,29 +147,6 @@ class MLine(Media):
 
     def __repr__(self) -> str:
         return self.__str__()
-
-    @property
-    def delta_w1(self) -> NumberLike:
-        """
-        Intermediary parameter. see qucs docs on microstrip lines.
-        """
-        w, h, t = self.w, self.h, self.t
-        if t > 0.:
-            # Qucs formula 11.22 is wrong, normalized w has to be used instead (see Hammerstad and Jensen Article)
-            return t/pi * log(1. + 4*exp(1.)*tanh(sqrt(6.517*w/h))**2/t) * h
-        else:
-            return 0.
-
-    @property
-    def delta_wr(self) -> NumberLike:
-        """
-        Intermediary parameter. see qucs docs on microstrip lines.
-        """
-        delta_w1, ep_r = self.delta_w1, real(self.ep_r_f)
-        if self.t > 0.:
-            return delta_w1/2 * (1+1/cosh(sqrt(ep_r-1)))
-        else:
-            return 0.
 
     @property
     def ep_r_f(self) -> NumberLike:
@@ -191,149 +176,11 @@ class MLine(Media):
         return -imag(ep_r) / real(ep_r)
 
     @property
-    def ep_reff(self) -> NumberLike:
-        """
-        Quasistatic effective relative permittivity of dielectric,
-        accounting for the filling factor between air and substrate.
-        """
-        h, ep_r  = self.h, self.ep_r_f
-        w1 = self.w + self.delta_w1
-        wr = self.w + self.delta_wr
-        return ep_re(wr, h, ep_r) * (ZL1(w1, h)/ZL1(wr, h))**2
-
-    @property
-    def G(self) -> NumberLike:
-        """
-        intermediary parameter. see qucs docs on microstrip lines.
-        """
-        ep_r, ep_reff, ZL = self.ep_r_f, self.ep_reff, self.Z0
-        ZF0 = npy.sqrt(mu_0/epsilon_0)
-        return (pi**2)/12 * (ep_r-1)/ep_reff * sqrt(2*pi*ZL/ZF0)
-
-    @property
-    def ep_reff_f(self) -> NumberLike:
-        """
-        Frequency dependent effective relative permittivity of dielectric,
-        accounting for microstripline dispersion.
-        """
-        ep_r, ep_reff  = self.ep_r_f, self.ep_reff
-        w, h = self.w + self.delta_wr, self.h
-        f = self.frequency.f
-        if self.disp == 'hammerstadjensen':
-            ZL, G = self.Z0, self.G
-            fp = ZL/(2*mu_0*h)
-            return ep_r - (ep_r - ep_reff) / (1+G*(f/fp)**2)
-        elif self.disp == 'kirschningjansen':
-            fn = self.frequency.f * h * 1e-6
-            P1 = 0.27488+(0.6315+0.525/(1+0.0157*fn)**20)*w/h -0.065683*exp(-8.7513*w/h)
-            P2 = 0.33622*(1-exp(-0.03442*ep_r))
-            P3 = 0.0363*exp(-4.6*w/h)*(1-exp(-(fn/38.7)**4.97))
-            P4 = 1+2.751*(1-exp(-(ep_r/15.916)**8))
-            Pf = P1*P2*((0.1844+P3*P4)*fn)**1.5763
-            return ep_r - (ep_r-ep_reff)/(1+Pf)
-        elif self.disp == 'yamashita':
-            k = sqrt(ep_r/ep_reff)
-            F = 4*h*f*sqrt(ep_r-1)/c * (0.5+(1+2*log(1+w/h))**2)
-            return ep_reff * ((1+1/4*k*F**1.5)/(1+1/4*F**1.5))**2
-        elif self.disp == 'kobayashi':
-            f50 = c/(2*pi*h*(0.75+(0.75-0.332/(ep_r**1.73)*w/h))) \
-                * arctan(ep_r*sqrt((ep_reff-1)/(ep_r-ep_reff)))/ \
-                sqrt(ep_r-ep_reff)
-            m0 = 1+1/(1+sqrt(w/h))+0.32*(1/(1+sqrt(w/h)))**3
-            mc = 1+1.4/(1+w/h)*(0.15-0.235*exp(-0.45*f/f50))
-            if(w/h >= 0.7):
-                mc = 1
-            m = m0*mc
-            return ep_r - (ep_r-ep_reff)/(1+f/f50)**m
-        elif self.disp == 'none':
-            return ones(self.frequency.f.shape)*self.ep_reff
-        else:
-            raise ValueError('Unknown microstripline dispersion model')
-
-    @property
     def Z0(self) -> NumberLike:
         """
         Quasistatic characteristic impedance.
         """
-        h, ep_reff = self.h, real(self.ep_reff)
-        wr = self.w + self.delta_wr
-        return ZL1(wr, h)/sqrt(ep_reff)
-
-    @property
-    def Z0_f(self) -> NumberLike:
-        """
-        Frequency dependent characteristic impedance.
-        """
-        ZL, ep_reff, ep_reff_f = self.Z0, real(self. ep_reff), real(self.ep_reff_f)
-        wr, h = self.w + self.delta_wr, self.h
-        if self.disp == 'hammerstadjensen':
-            return ZL * sqrt(ep_reff/ ep_reff_f) * (ep_reff_f-1)/(ep_reff-1)
-        elif self.disp == 'kirschningjansen':
-            u = wr/h
-            fn = self.frequency.f * self.h * 1e-6
-            ep_r = real(self.ep_r_f)
-            R1 = 0.03891*ep_r**1.4
-            R2 = 0.267*u**7
-            R3 = 4.766*exp(-3.228*u**0.641)
-            R4 = 0.016+(0.0514*ep_r)**4.524
-            R5 = (fn/28.843)**12
-            R6 = 22.20*u**1.92
-            R7 = 1.206-0.3144*exp(-R1)*(1-exp(-R2))
-            R8 = 1+1.275*(1-exp(-0.004625*R3*ep_r**1.674)*(fn/18.365)**2.745)
-            R9 = 5.086*R4*R5/(0.3838+0.386*R4)*exp(-R6)/(1+1.2992*R5)*(ep_r-1)**6/(1+10*(ep_r-1)**6)
-            R10 = 0.00044*ep_r**2.136+0.0184
-            R11 = (fn/19.47)**6/(1+0.0962*(fn/19.47)**6)
-            R12 = 1/(1+0.00245*u**2)
-            R13 = 0.9408*ep_reff_f**R8-0.9603
-            R14 = (0.9408-R9)*ep_reff**R8-0.9603
-            R15 = 0.707*R10*(fn/12.3)**1.097
-            R16 = 1+0.0503*ep_r**2*R11*(1-exp(-(u/15)**6))
-            R17 = R7 * (1-1.1241*R12/R16*exp(-0.026*fn**1.15656-R15))
-            return ZL * (R13/R14)**R17
-        elif self.disp == 'yamashita':
-            return ZL * npy.sqrt(ep_reff/ ep_reff_f) * (ep_reff_f-1)/(ep_reff-1)
-        elif self.disp == 'kobayashi':
-            return ZL * npy.sqrt(ep_reff/ ep_reff_f) * (ep_reff_f-1)/(ep_reff-1)
-        elif self.disp == 'none':
-            return npy.ones(self.frequency.f.shape)*self.Z0
-        else:
-            raise ValueError('Unknown microstripline dispersion model')
-
-    @property
-    def alpha_conductor(self) -> NumberLike:
-        """
-        Losses due to conductor resistivity.
-
-        Returns
-        -------
-        alpha_conductor : array-like
-                lossyness due to conductor losses
-        See Also
-        --------
-        surface_resistivity : calculates surface resistivity
-        """
-        if self.rho is None or self.t is None:
-            raise(AttributeError('must provide values conductivity to calculate this. see initializer help'))
-        else:
-            f = self.frequency.f
-            ZF0 = npy.sqrt(mu_0/epsilon_0)
-            ZL, rho, mu_r  = real(self.Z0_f), self.rho, self.mu_r
-            w = self.w + self.delta_wr
-            rough = self.rough
-            Kr  = 1 + 2/pi*arctan(1.4*(rough/skin_depth(f, rho, mu_r))**2)
-            Ki  = exp(-1.2*(ZL/ZF0)**0.7)
-            Rs  = surface_resistivity(f=f, rho=rho, mu_r=1)
-        return  Rs*Kr*Ki/(ZL*w)
-
-    @property
-    def alpha_dielectric(self) -> NumberLike:
-        """
-        Losses due to dielectric.
-
-        """
-        ep_r, ep_reff, tand = real(self.ep_r_f), real(self.ep_reff), self.tand_f
-        f = self.frequency.f
-        return pi*f/c * ep_r/sqrt(ep_reff) * (ep_reff-1)/(ep_r-1) * tand
+        return self.zl_eff_f
 
     @property
     def beta_phase(self):
@@ -341,7 +188,7 @@ class MLine(Media):
         Phase parameter.
         """
         ep_reff, f = real(self.ep_reff_f), self.frequency.f
-        return 2*pi*f*sqrt(ep_reff)/c
+        return 2 * pi * f* sqrt(ep_reff) / c
 
     @property
     def gamma(self):
@@ -358,40 +205,219 @@ class MLine(Media):
         alpha = zeros(len(f))
         beta  = zeros(len(f))
         beta  = self.beta_phase
-        alpha = self.alpha_dielectric
+        alpha = self.alpha_dielectric.copy()
         if self.rho is not None:
             alpha += self.alpha_conductor
         return alpha + 1j*beta
+    
+    @property
+    def z0(self) -> npy.ndarray:
+        """
+        Characteristic Impedance.
 
-def a(u: NumberLike) -> NumberLike:
+        Returns
+        -------
+        z0 : :class:`numpy.ndarray`
+        """
+        return self.Z0
+    
+    @z0.setter
+    def z0(self, val):
+        self._z0 = val
+        
+    def analyseQuasiStatic(self):
+        """
+        This function calculates the quasi-static impedance of a microstrip
+        line, the value of the effective dielectric constant and the
+        effective width due to the finite conductor thickness for the given
+        microstrip line and substrate properties.
+        """
+        # limited to only Hammerstad and Jensen model
+        w, h, t, ep_r = self.w, self.h, self.t, real(self.ep_r_f)
+        u = w / h
+        t = t/h
+        du1 = 0.
+        
+        # compute strip thickness effect
+        if t > 0.:
+            # Qucs formula 11.22 is wrong, normalized w has to be used instead (see Hammerstad and Jensen Article)
+            # Normalized w is named u and is actually used in qucsator source code
+            # coth(alpha) = 1/tanh(alpha)
+            du1 = t / pi * log(1. + 4. * exp(1.) / t * tanh(sqrt(6.517 * u))**2)
+        
+        # sech(alpha) = 1/cosh(alpha)
+        dur =  du1 * (1. + 1. / cosh(sqrt(ep_r - 1.))) / 2.
+        
+        u1 = u + du1
+        ur = u + dur
+        self.w_eff = ur * h
+        
+        # compute impedances for homogeneous medium
+        zr = hammerstad_zl(ur)
+        z1 = hammerstad_zl(u1)
+        
+        # compute effective dielectric constant
+        a, b  = hammerstad_ab(ur, ep_r)
+        e = hammerstad_er(ur, ep_r, a, b)
+        
+        # compute final characteristic impedance and dielectric constant
+        #including strip thickness effects
+        self.zl_eff = zr / sqrt(e)
+        self.ep_reff = e * (z1 / zr)**2
+        
+    def analyseDispersion(self):
+         """
+         Frequency dependent characteristic impedance and dielectric constant
+         accounting for microstripline dispersion.
+         """
+         zl_eff, ep_reff = self.zl_eff, self.ep_reff
+         ep_r = real(self.ep_r_f)
+         wr, h = self.w, self.h # use w_eff here ?
+         u = wr/h
+         f = self.frequency.f
+         if self.disp == 'hammerstadjensen':
+             Z0 = sqrt(mu_0 / epsilon_0)
+             g = pi**2 / 12 * (ep_r - 1) / ep_reff * sqrt(2 * pi * zl_eff / Z0)
+             fp = (2 * mu_0 * h * f) / zl_eff
+             e = ep_r - (ep_r - ep_reff) / (1 + g * fp**2)
+             z =  zl_eff * sqrt(ep_reff / e) * (e - 1) / (ep_reff - 1)
+         elif self.disp == 'kirschningjansen':
+             fn = f * h * 1e-6
+             e = kirsching_er(u, fn, ep_r, ep_reff)
+             z, _ = kirsching_zl(u, fn, ep_r, ep_reff, e, zl_eff)
+         elif self.disp == 'yamashita':
+             k = sqrt(ep_r / ep_reff)
+             fp = 4 * h * f / c * sqrt(ep_r - 1) * \
+                 (0.5 + (1 + 2 * log10(1 + u))**2)
+             e = ep_reff * ((1 + k * fp**1.5 / 4) / (1 + fp**1.5 / 4))**2
+             z =  npy.ones(f.shape) * zl_eff
+         elif self.disp == 'kobayashi':
+             fk = c * arctan(ep_r * sqrt((ep_reff - 1) / (ep_r - ep_reff)))/ \
+                 (2 * pi * h * sqrt(ep_r - ep_reff))
+             fh = fk / (0.75 + (0.75 - 0.332 / (ep_r**1.73)) * u) 
+             no = 1 + 1 / (1 + sqrt(u)) + 0.32 * (1 / (1 + sqrt(u)))**3 
+             if(u < 0.7):
+                 nc = 1 + 1.4 / (1 + u) * (0.15 - 0.235 * exp(-0.45 * f / fh))
+             else:
+                 nc = 1
+             n = no * nc
+             e =  ep_r - (ep_r - ep_reff) / (1 + f / fh)**n
+             z =  npy.ones(f.shape) * zl_eff
+         elif self.disp == 'none':
+             e = ones(f.shape) * ep_reff
+             z = ones(f.shape) * zl_eff
+             
+         else:
+             raise ValueError('Unknown microstripline dispersion model')
+             
+         self.zl_eff_f = z
+         self.ep_reff_f = e
+         
+    def analyseLoss(self):
+        """
+        The function calculates the conductor and dielectric losses of a
+        single microstrip line.
+        """
+        # limited to only Hammerstad and Jensen model
+        ep_r, ep_reff, tand = real(self.ep_r_f), real(self.ep_reff), self.tand_f
+        rho, mu_r  = self.rho, self.mu_r
+        zl_eff_f1, zl_eff_f2 = real(self.zl_eff_f), real(self.zl_eff_f)
+        f = self.frequency.f
+        Z0 = npy.sqrt(mu_0/epsilon_0)
+        w, t = self.w, self.t
+        D = self.rough
+        # conductor losses
+        if self.t > 0:
+            if self.rho is None:
+                raise(AttributeError('must provide resistivity rho. '
+                                     'see initializer help'))
+            else:
+                Rs  = surface_resistivity(f=f, rho=rho, mu_r=1)
+                ds = skin_depth(f, rho, mu_r)
+                if(npy.any(t < 3 * ds)):
+                    warnings.warn(
+                        'Conductor loss calculation invalid for line'
+                        'height t ({})  < 3 * skin depth ({})'.format(t, ds[0]),
+                        RuntimeWarning
+                        )
+                # current distribution factor
+                Ki  = exp(-1.2 * ((zl_eff_f1 + zl_eff_f2) / 2 / Z0)**0.7)
+                # D is RMS surface roughness
+                Kr  = 1 + 2 / pi * arctan(1.4 * (D/ds)**2)
+            self.alpha_conductor = Rs / (zl_eff_f1 * w) * Ki * Kr
+        else:
+            self.alpha_conductor = zeros(f.shape)
+        
+        # dielectric losses
+        l0 = c / f
+        self.alpha_dielectric =  pi * ep_r / (ep_r - 1) * (ep_reff - 1) / \
+            sqrt(ep_reff) * tand / l0
+
+def hammerstad_ab(u: NumberLike, ep_r: NumberLike) -> NumberLike:
     """
     Intermediary parameter. see qucs docs on microstrip lines.
     """
-    return 1. + 1./49.*log((u**4+(u/52)**2)/(u**4+0.432)) + 1./18.7*log(1+(u/18.1)**3)
+    a = 1. + log((u**4 + (u / 52.)**2) / (u**4 + 0.432)) / 49. \
+        + log(1 + (u / 18.1)**3) / 18.7
+        
+    b = 0.564 * ((ep_r - 0.9) / (ep_r + 3.))**0.053
+    
+    return a, b
 
-def b(ep_r: NumberLike) -> NumberLike:
+def hammerstad_zl(u: NumberLike) -> NumberLike:
     """
     intermediary parameter. see qucs docs on microstrip lines.
     """
-    return 0.564 * ((ep_r-0.9)/(ep_r+3.))**0.053
+    fu = 6 + (2 * pi - 6) * exp(-(30.666 / u)**0.7528)
+    Z0 = sqrt(mu_0/epsilon_0)
+    return Z0 / 2. / pi * log(fu / u + sqrt(1. + (2. / u)**2))
 
-def f(u: NumberLike) -> NumberLike:
+def hammerstad_er(u: NumberLike, ep_r: NumberLike, a: NumberLike,
+                  b: NumberLike) -> NumberLike:
     """
     intermediary parameter. see qucs docs on microstrip lines.
     """
-    return 6 + (2*pi-6)*exp(-(30.666/u)**0.7528)
+    return (ep_r + 1) / 2 + (ep_r - 1) / 2 * (1. + 10. / u)**(-a * b)
 
-def ZL1(w: NumberLike, h: NumberLike) -> NumberLike:
+def kirsching_zl(u: NumberLike, fn: NumberLike,
+                 ep_r: NumberLike, ep_reff: NumberLike, ep_reff_f: NumberLike,
+                 zl_eff: NumberLike):
     """
     intermediary parameter. see qucs docs on microstrip lines.
     """
-    u = w/h
-    ZF0 = sqrt(mu_0/epsilon_0)
-    return ZF0/(2*pi)*log(f(u)/u + sqrt(1.+(2./u)**2))
+    #fn = self.frequency.f * self.h * 1e-6
+    R1 = 0.03891 * ep_r**1.4
+    R2 = 0.267 * u**7
+    R3 = 4.766 * exp(-3.228 * u**0.641)
+    R4 = 0.016 + (0.0514 * ep_r)**4.524
+    R5 = (fn / 28.843)**12
+    R6 = 22.20 * u **1.92
+    R7 = 1.206 - 0.3144 * exp(-R1) * (1 - exp(-R2))
+    R8 = 1 + 1.275 * (1 - exp(-0.004625 * R3 * ep_r**1.674 \
+                              * (fn / 18.365)**2.745))
+    R9 = 5.086 * R4 * R5/(0.3838 + 0.386 * R4) \
+        * exp(-R6) / (1 + 1.2992 * R5) \
+        * (ep_r - 1)**6 / (1 + 10 * (ep_r - 1)**6)
+    R10 = 0.00044 * ep_r**2.136 + 0.0184
+    R11 = (fn / 19.47)**6 / (1 + 0.0962 * (fn / 19.47)**6)
+    R12 = 1 / (1 + 0.00245 * u**2)
+    R13 = 0.9408 * ep_reff_f**R8 - 0.9603
+    R14 = (0.9408 - R9) * ep_reff**R8 - 0.9603
+    R15 = 0.707 * R10 * (fn / 12.3)**1.097
+    R16 = 1 + 0.0503 * ep_r**2 * R11 * (1 - exp(-(u / 15)**6))
+    R17 = R7 * (1 - 1.1241 * R12 / R16 \
+        *exp(-0.026 * fn**1.15656 - R15))
+    return zl_eff * (R13 / R14)**R17, R17
 
-def ep_re(w: NumberLike, h: NumberLike, ep_r: NumberLike) -> NumberLike:
+def kirsching_er(u: NumberLike, fn: NumberLike,
+                 ep_r: NumberLike, ep_reff: NumberLike):
     """
     intermediary parameter. see qucs docs on microstrip lines.
     """
-    u = w/h
-    return (ep_r+1)/2 + (ep_r-1)/2 * (1.+10./u)**(-a(u)*b(ep_r))
+    P1 = 0.27488 + (0.6315 + 0.525 / ( 1+ 0.0157 * fn)**20) * u \
+        -0.065683 * exp(-8.7513 * u)
+    P2 = 0.33622 * (1  -exp(-0.03442 * ep_r))
+    P3 = 0.0363 * exp(-4.6 * u) * (1 - exp(-(fn / 38.7)**4.97))
+    P4 = 1 + 2.751 * (1 - exp(-(ep_r / 15.916)**8))
+    Pf = P1 * P2 * ((0.1844 + P3 * P4) * fn)**1.5763
+    return ep_r - (ep_r - ep_reff) / (1 + Pf)
