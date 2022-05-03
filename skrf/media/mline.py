@@ -121,10 +121,9 @@ class MLine(Media):
                  f_low: NumberLike = 1e3, f_high: NumberLike = 1e12,
                  f_epr_tand: NumberLike = 1e9,
                  *args, **kwargs):
-        Media.__init__(self, frequency=frequency)
+        Media.__init__(self, frequency = frequency, z0 = z0)
 
         self.w, self.h, self.t = w, h, t
-        self._z0 = z0,
         self.ep_r, self.mu_r, self.diel = ep_r, mu_r, diel
         self.rho, self.tand, self.rough, self.disp =  rho, tand, rough, disp
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
@@ -176,13 +175,6 @@ class MLine(Media):
         return -imag(ep_r) / real(ep_r)
 
     @property
-    def Z0(self) -> NumberLike:
-        """
-        Quasistatic characteristic impedance.
-        """
-        return self.zl_eff_f
-
-    @property
     def beta_phase(self):
         """
         Phase parameter.
@@ -205,25 +197,21 @@ class MLine(Media):
         alpha = zeros(len(f))
         beta  = zeros(len(f))
         beta  = self.beta_phase
-        alpha = self.alpha_dielectric.copy()
+        alpha = self._alpha_dielectric.copy()
         if self.rho is not None:
-            alpha += self.alpha_conductor
+            alpha += self._alpha_conductor
         return alpha + 1j*beta
     
     @property
-    def z0(self) -> npy.ndarray:
+    def Z0(self) -> npy.ndarray:
         """
         Characteristic Impedance.
 
         Returns
         -------
-        z0 : :class:`numpy.ndarray`
+        Z0 : :class:`numpy.ndarray`
         """
-        return self.Z0
-    
-    @z0.setter
-    def z0(self, val):
-        self._z0 = val
+        return self._z_characteristic
         
     def analyseQuasiStatic(self):
         """
@@ -300,8 +288,8 @@ class MLine(Media):
                  nc = 1 + 1.4 / (1 + u) * (0.15 - 0.235 * exp(-0.45 * f / fh))
              else:
                  nc = 1
-             n = no * nc
-             e =  ep_r - (ep_r - ep_reff) / (1 + f / fh)**n
+             n = no * nc if no * nc < 2.32 else 2.32
+             e =  ep_r - (ep_r - ep_reff) / (1 + (f / fh)**n)
              z =  npy.ones(f.shape) * zl_eff
          elif self.disp == 'none':
              e = ones(f.shape) * ep_reff
@@ -310,7 +298,7 @@ class MLine(Media):
          else:
              raise ValueError('Unknown microstripline dispersion model')
              
-         self.zl_eff_f = z
+         self._z_characteristic = z
          self.ep_reff_f = e
          
     def analyseLoss(self):
@@ -321,7 +309,7 @@ class MLine(Media):
         # limited to only Hammerstad and Jensen model
         ep_r, ep_reff, tand = real(self.ep_r_f), real(self.ep_reff), self.tand_f
         rho, mu_r  = self.rho, self.mu_r
-        zl_eff_f1, zl_eff_f2 = real(self.zl_eff_f), real(self.zl_eff_f)
+        zl_eff_f1, zl_eff_f2 = real(self._z_characteristic), real(self._z_characteristic)
         f = self.frequency.f
         Z0 = npy.sqrt(mu_0/epsilon_0)
         w, t = self.w, self.t
@@ -344,13 +332,13 @@ class MLine(Media):
                 Ki  = exp(-1.2 * ((zl_eff_f1 + zl_eff_f2) / 2 / Z0)**0.7)
                 # D is RMS surface roughness
                 Kr  = 1 + 2 / pi * arctan(1.4 * (D/ds)**2)
-            self.alpha_conductor = Rs / (zl_eff_f1 * w) * Ki * Kr
+            self._alpha_conductor = Rs / (zl_eff_f1 * w) * Ki * Kr
         else:
-            self.alpha_conductor = zeros(f.shape)
+            self._alpha_conductor = zeros(f.shape)
         
         # dielectric losses
         l0 = c / f
-        self.alpha_dielectric =  pi * ep_r / (ep_r - 1) * (ep_reff - 1) / \
+        self._alpha_dielectric =  pi * ep_r / (ep_r - 1) * (ep_reff - 1) / \
             sqrt(ep_reff) * tand / l0
 
 def hammerstad_ab(u: NumberLike, ep_r: NumberLike) -> NumberLike:
