@@ -76,7 +76,10 @@ class MLine(Media):
     mu_r : number, or array-like
         relative permeability of dielectric (assumed frequency invariant)
     diel : str
-        dielectric dispersion model: 'djordjevicsvensson' or 'frequencyinvariant'.
+        dielectric dispersion model in:
+        
+        *'djordjevicsvensson' (default)
+        * 'frequencyinvariant'.
     rho: number, or array-like, optional
         resistivity of conductor (None)
     tand : number, or array-like
@@ -86,7 +89,7 @@ class MLine(Media):
     disp : str
         microstripline dispersion model in:
 
-        * 'kirschningjansen'
+        * 'kirschningjansen' (default)
         * 'hammerstadjensen'
         * 'yamashita'
         * 'kobayashi'
