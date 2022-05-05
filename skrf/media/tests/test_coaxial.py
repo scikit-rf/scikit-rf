@@ -94,6 +94,21 @@ class MediaTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             coax = Coaxial.from_attenuation_VF(frequency=frequency2, att=att)
 
+    def test_R(self):
+        freq = rf.Frequency(0, 100, 2)
+
+        rho = 1e-7
+        dint = 0.44e-3
+        coax = Coaxial(freq, z0=50, Dint=dint, Dout=1.0e-3, sigma=1/rho)
+
+        dc_res = rho / (npy.pi * (dint/2)**2)
+
+        # Old R calculation valid only when skin depth is much smaller
+        # then inner conductor radius
+        R_simple = coax.Rs/(2*npy.pi)*(1/coax.a + 1/coax.b)
+
+        self.assertTrue(abs(1 - coax.R[0]/dc_res) < 1e-2)
+        self.assertTrue(abs(1 - coax.R[1]/R_simple[1]) < 1e-2)
 
 if __name__ == "__main__":
     # Launch all tests

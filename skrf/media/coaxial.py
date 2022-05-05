@@ -14,8 +14,8 @@ A coaxial transmission line defined from its electrical or geometrical/physical 
 
 #from copy import deepcopy
 from scipy.constants import  epsilon_0, mu_0, pi, c
-from numpy import sqrt, log, real, imag, exp, size
-from ..tlineFunctions import surface_resistivity
+from numpy import sqrt, log, real, imag, exp, expm1, size
+from ..tlineFunctions import surface_resistivity, skin_depth
 from .distributedCircuit import DistributedCircuit
 from .media import Media, DefinedGammaZ0
 from ..constants import INF, NumberLike
@@ -227,7 +227,7 @@ class Coaxial(DistributedCircuit, Media):
     def b(self) -> NumberLike:
         """
         Outer radius of the coaxial line
-        
+
         Returns
         -------
         b : float
@@ -235,20 +235,33 @@ class Coaxial(DistributedCircuit, Media):
         """
         return self.Dout/2.
 
-
     # derivation of distributed circuit parameters
     @property
     def R(self) -> NumberLike:
         """
-        Distributed resistance R, in Ohm/m
+        Distributed resistance R, in Ohm/m.
+        See [#]_ for more information.
 
         Returns
         -------
         R : number, or array-like
             distributed resistance, in Ohm/m
 
+        References
+        -------
+
+        .. [#] https://www.microwaves101.com/encyclopedias/a-more-exact-coax-attenuation-solution
+
         """
-        return self.Rs/(2.*pi)*(1./self.a + 1./self.b)
+        rho = 1/self.sigma
+        delta = skin_depth(f=self.frequency.f, rho=rho, mu_r=1)
+        # Avoid infinites at DC
+        delta[delta > 1e6] = 1e6
+
+        Rin = rho / (2*pi*delta*self.a + 2*pi*delta**2*expm1(-self.a/delta))
+        # Outer shield is assumed to be much thicker than skin depth
+        Rout = rho / (2*pi*delta*self.b)
+        return Rin + Rout
 
     @property
     def L(self) -> NumberLike:
