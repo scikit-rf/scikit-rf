@@ -28,8 +28,8 @@ class MLine(Media):
     """
     Microstripline class
 
-    This class was made from the technical documentation [#]_ provided
-    by the qucs project [#]_ .
+    This class was made from the technical documentation [#]_ and sources
+    provided by the qucs project [#]_ .
     The variables  and properties of this class are coincident with
     their derivations.
 
@@ -37,13 +37,11 @@ class MLine(Media):
     model is considered to provide more realistic modelling of broadband
     microstrip as well as causal time domain response.
 
-    * Quasi-static characteristic impedance models:
+    * Quasi-static characteristic impedance and dielectric constant models:
 
-        + Kirschning and Jansen
         + Hammerstad and Jensen
-        + None
 
-    * Quasi-static effective dielectric constant models:
+    * Frequency dispersion of impedance and dielectric constant models:
 
         + Kirschning and Jansen
         + Hammerstad and Jensen
@@ -54,9 +52,6 @@ class MLine(Media):
     * Strip thickness correction model:
 
         + Hammerstad and Jensen, add a certain amount to W if T > 0.
-
-    In the case another model is used for effective dielectric constant,
-    Hammerstad and Jensen method is used for the impedance.
 
     Parameters
     ----------
@@ -78,7 +73,7 @@ class MLine(Media):
     diel : str
         dielectric dispersion model in:
         
-        *'djordjevicsvensson' (default)
+        * 'djordjevicsvensson' (default)
         * 'frequencyinvariant'.
     rho: number, or array-like, optional
         resistivity of conductor (None)
@@ -105,7 +100,7 @@ class MLine(Media):
     References
     ----------
     .. [#] http://qucs.sourceforge.net/docs/technical.pdf
-    .. [#] http://www.qucs.sourceforge.net/
+    .. [#] https://github.com/Qucs/qucsator/blob/develop/src/components/microstrip/msline.cpp
     .. [#] C. Svensson, G.E. Dermer,
         Time domain modeling of lossy interconnects,
         IEEE Trans. on Advanced Packaging, May 2001, N2, Vol. 24, pp.191-196.
@@ -130,13 +125,29 @@ class MLine(Media):
         self.ep_r, self.mu_r, self.diel = ep_r, mu_r, diel
         self.rho, self.tand, self.rough, self.disp =  rho, tand, rough, disp
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
+        
+        # variation of dielectric constant with frequency
+        self.ep_r_f, self.tand_f = self.analyseDielectric(self.ep_r, self.tand,
+            self.f_low, self.f_high, self.f_epr_tand, self.frequency.f,
+            self.diel)
+        
         # quasi-static effective dielectric constant of substrate + line and
         # the impedance of the microstrip line
-        self.analyseQuasiStatic()
+        self.zl_eff, self.ep_reff, self.w_eff = self.analyseQuasiStatic(
+            self.ep_r, self.w, self.h, self.t)
+        
         # analyse dispersion of Zl and Er
-        self.analyseDispersion()
+        # use w_eff here ? Not used in Qucs
+        self._z_characteristic, self.ep_reff_f = self.analyseDispersion(
+            self.zl_eff, self.ep_reff, real(self.ep_r_f), self.w, self.h,
+            self.frequency.f, self.disp)
+        
         # analyse losses of line
-        self.analyseLoss()
+        self._alpha_conductor, self._alpha_dielectric = self.analyseLoss(
+            real(self.ep_r_f), real(self.ep_reff), self.tand_f,
+            self.rho, self.mu_r,
+            real(self._z_characteristic), real(self._z_characteristic),
+            self.frequency.f, self.w, self.t, self.rough)
 
     def __str__(self) -> str:
         f=self.frequency
@@ -150,40 +161,6 @@ class MLine(Media):
     def __repr__(self) -> str:
         return self.__str__()
 
-    @property
-    def ep_r_f(self) -> NumberLike:
-        """
-        Frequency dependent relative permittivity of dielectric.
-        """
-        ep_r, tand  = self.ep_r, self.tand
-        f_low, f_high, f_epr_tand = self.f_low, self.f_high, self.f_epr_tand
-        f = self.frequency.f
-        if self.diel == 'djordjevicsvensson':
-            # compute the slope for a log frequency scale, tanD dependent.
-            m = (ep_r*tand)  * (pi/(2*log(10)))
-            # value for frequency above f_high
-            ep_inf = (ep_r - 1j*ep_r*tand - m*log((f_high + 1j*f_epr_tand)/(f_low + 1j*f_epr_tand)))
-            return ep_inf + m*log((f_high + 1j*f)/(f_low + 1j*f))
-        elif self.diel == 'frequencyinvariant':
-            return ones(self.frequency.f.shape) * (ep_r - 1j*ep_r*tand)
-        else:
-            raise ValueError('Unknown dielectric dispersion model')
-
-    @property
-    def tand_f(self) -> NumberLike:
-        """
-        Frequency dependent dielectric loss tangent.
-        """
-        ep_r = self.ep_r_f
-        return -imag(ep_r) / real(ep_r)
-
-    @property
-    def beta_phase(self):
-        """
-        Phase parameter.
-        """
-        ep_reff, f = real(self.ep_reff_f), self.frequency.f
-        return 2 * pi * f* sqrt(ep_reff) / c
 
     @property
     def gamma(self):
@@ -196,13 +173,14 @@ class MLine(Media):
         alpha_dielectric: calculates losses to dielectric
         beta            : calculates phase parameter
         """
-        f = self.frequency.f
-        alpha = zeros(len(f))
-        beta  = zeros(len(f))
-        beta  = self.beta_phase
+        ep_reff, f = real(self.ep_reff_f), self.frequency.f
+        
         alpha = self._alpha_dielectric.copy()
         if self.rho is not None:
             alpha += self._alpha_conductor
+        
+        beta  = 2 * pi * f* sqrt(ep_reff) / c
+        
         return alpha + 1j*beta
     
     @property
@@ -215,8 +193,31 @@ class MLine(Media):
         Z0 : :class:`numpy.ndarray`
         """
         return self._z_characteristic
+    
+    def analyseDielectric(self, ep_r: NumberLike, tand: NumberLike,
+                          f_low: NumberLike, f_high: NumberLike,
+                          f_epr_tand: NumberLike, f: NumberLike,
+                          diel: str):
+        """
+        Frequency dependent relative permittivity of dielectric.
+        """
+        if diel == 'djordjevicsvensson':
+            # compute the slope for a log frequency scale, tanD dependent.
+            m = (ep_r*tand)  * (pi/(2*log(10)))
+            # value for frequency above f_high
+            ep_inf = (ep_r - 1j*ep_r*tand - m*log((f_high + 1j*f_epr_tand)/(f_low + 1j*f_epr_tand)))
+            ep_r_f = ep_inf + m*log((f_high + 1j*f)/(f_low + 1j*f))
+        elif diel == 'frequencyinvariant':
+            ep_r_f =  ones(self.frequency.f.shape) * (ep_r - 1j*ep_r*tand)
+        else:
+            raise ValueError('Unknown dielectric dispersion model')
+            
+        tand_f = -imag(ep_r_f) / real(ep_r_f)
         
-    def analyseQuasiStatic(self):
+        return real(ep_r_f), tand_f
+    
+    def analyseQuasiStatic(self, ep_r: NumberLike, 
+                           w: NumberLike, h: NumberLike, t: NumberLike):
         """
         This function calculates the quasi-static impedance of a microstrip
         line, the value of the effective dielectric constant and the
@@ -224,7 +225,6 @@ class MLine(Media):
         microstrip line and substrate properties.
         """
         # limited to only Hammerstad and Jensen model
-        w, h, t, ep_r = self.w, self.h, self.t, real(self.ep_r_f)
         u = w / h
         t = t/h
         du1 = 0.
@@ -241,7 +241,7 @@ class MLine(Media):
         
         u1 = u + du1
         ur = u + dur
-        self.w_eff = ur * h
+        w_eff = ur * h
         
         # compute impedances for homogeneous medium
         zr = hammerstad_zl(ur)
@@ -253,36 +253,36 @@ class MLine(Media):
         
         # compute final characteristic impedance and dielectric constant
         #including strip thickness effects
-        self.zl_eff = zr / sqrt(e)
-        self.ep_reff = e * (z1 / zr)**2
+        zl_eff = zr / sqrt(e)
+        ep_reff = e * (z1 / zr)**2
         
-    def analyseDispersion(self):
+        return zl_eff, ep_reff, w_eff
+        
+    def analyseDispersion(self, zl_eff: NumberLike, ep_reff: NumberLike,
+                          ep_r: NumberLike, wr: NumberLike, h: NumberLike, 
+                          f: NumberLike, disp: str):
          """
          Frequency dependent characteristic impedance and dielectric constant
          accounting for microstripline dispersion.
          """
-         zl_eff, ep_reff = self.zl_eff, self.ep_reff
-         ep_r = real(self.ep_r_f)
-         wr, h = self.w, self.h # use w_eff here ?
          u = wr/h
-         f = self.frequency.f
-         if self.disp == 'hammerstadjensen':
+         if disp == 'hammerstadjensen':
              Z0 = sqrt(mu_0 / epsilon_0)
              g = pi**2 / 12 * (ep_r - 1) / ep_reff * sqrt(2 * pi * zl_eff / Z0)
              fp = (2 * mu_0 * h * f) / zl_eff
              e = ep_r - (ep_r - ep_reff) / (1 + g * fp**2)
              z =  zl_eff * sqrt(ep_reff / e) * (e - 1) / (ep_reff - 1)
-         elif self.disp == 'kirschningjansen':
+         elif disp == 'kirschningjansen':
              fn = f * h * 1e-6
              e = kirsching_er(u, fn, ep_r, ep_reff)
              z, _ = kirsching_zl(u, fn, ep_r, ep_reff, e, zl_eff)
-         elif self.disp == 'yamashita':
+         elif disp == 'yamashita':
              k = sqrt(ep_r / ep_reff)
              fp = 4 * h * f / c * sqrt(ep_r - 1) * \
                  (0.5 + (1 + 2 * log10(1 + u))**2)
              e = ep_reff * ((1 + k * fp**1.5 / 4) / (1 + fp**1.5 / 4))**2
              z =  npy.ones(f.shape) * zl_eff
-         elif self.disp == 'kobayashi':
+         elif disp == 'kobayashi':
              fk = c * arctan(ep_r * sqrt((ep_reff - 1) / (ep_r - ep_reff)))/ \
                  (2 * pi * h * sqrt(ep_r - ep_reff))
              fh = fk / (0.75 + (0.75 - 0.332 / (ep_r**1.73)) * u) 
@@ -294,29 +294,27 @@ class MLine(Media):
              n = no * nc if no * nc < 2.32 else 2.32
              e =  ep_r - (ep_r - ep_reff) / (1 + (f / fh)**n)
              z =  npy.ones(f.shape) * zl_eff
-         elif self.disp == 'none':
+         elif disp == 'none':
              e = ones(f.shape) * ep_reff
              z = ones(f.shape) * zl_eff
              
          else:
              raise ValueError('Unknown microstripline dispersion model')
              
-         self._z_characteristic = z
-         self.ep_reff_f = e
+         return z, e
          
-    def analyseLoss(self):
+    def analyseLoss(self, ep_r: NumberLike, ep_reff: NumberLike, 
+                    tand: NumberLike, rho: NumberLike, mu_r: NumberLike,
+                    zl_eff_f1: NumberLike, zl_eff_f2: NumberLike, 
+                    f: NumberLike, w: NumberLike, t: NumberLike,
+                    D: NumberLike):
         """
         The function calculates the conductor and dielectric losses of a
         single microstrip line.
         """
         # limited to only Hammerstad and Jensen model
-        ep_r, ep_reff, tand = real(self.ep_r_f), real(self.ep_reff), self.tand_f
-        rho, mu_r  = self.rho, self.mu_r
-        zl_eff_f1, zl_eff_f2 = real(self._z_characteristic), real(self._z_characteristic)
-        f = self.frequency.f
         Z0 = npy.sqrt(mu_0/epsilon_0)
-        w, t = self.w, self.t
-        D = self.rough
+
         # conductor losses
         if self.t > 0:
             if self.rho is None:
@@ -335,14 +333,16 @@ class MLine(Media):
                 Ki  = exp(-1.2 * ((zl_eff_f1 + zl_eff_f2) / 2 / Z0)**0.7)
                 # D is RMS surface roughness
                 Kr  = 1 + 2 / pi * arctan(1.4 * (D/ds)**2)
-            self._alpha_conductor = Rs / (zl_eff_f1 * w) * Ki * Kr
+            a_conductor = Rs / (zl_eff_f1 * w) * Ki * Kr
         else:
-            self._alpha_conductor = zeros(f.shape)
+            a_conductor = zeros(f.shape)
         
         # dielectric losses
         l0 = c / f
-        self._alpha_dielectric =  pi * ep_r / (ep_r - 1) * (ep_reff - 1) / \
+        a_dielectric =  pi * ep_r / (ep_r - 1) * (ep_reff - 1) / \
             sqrt(ep_reff) * tand / l0
+            
+        return a_conductor, a_dielectric
 
 def hammerstad_ab(u: NumberLike, ep_r: NumberLike) -> NumberLike:
     """

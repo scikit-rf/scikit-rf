@@ -4,7 +4,6 @@ import os
 import numpy as npy
 
 from skrf.media import MLine
-from skrf.network import Network
 from skrf.frequency import Frequency
 import skrf as rf
 from numpy.testing import run_module_suite
