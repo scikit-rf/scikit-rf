@@ -40,6 +40,23 @@ class MLineTestCase(unittest.TestCase):
         self.rho  = 1.7e-8
         self.d    = 0.15e-6
         self.f_et = 1e9
+        
+    def test_Z0_ep_reff(self):
+        """
+        Test against characterisitc impedance from another calculator using
+        Hammerstadt-Jensen model
+        http://web.mit.edu/~geda/arch/i386_rhel3/versions/20050830/html/mcalc-1.5/
+        """
+        freq = Frequency(1, 1, 1, 'GHz')
+        mline1 = MLine(frequency = freq, z0 = 50.,
+                       w = self.w, h = self.h, t = self.t,
+                       ep_r = self.ep_r, rho = self.rho,
+                       tand = self.tand, rough = self.d,
+                       diel = 'frequencyinvariant', disp = 'hammerstadjensen')
+        
+        self.assertTrue(npy.abs((mline1.Z0[0] - 49.142) / 49.142) < 0.01)
+        self.assertTrue(npy.abs((mline1.ep_reff_f[0] - 3.324) / 3.324) < 0.01)
+
 
     def test_line(self):
         """
