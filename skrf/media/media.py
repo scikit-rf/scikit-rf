@@ -32,6 +32,7 @@ from typing import Union
 from abc import ABC, abstractmethod
 import re
 from copy import deepcopy as copy
+from ..constants import S_DEF_DEFAULT
 
 class Media(ABC):
     """
@@ -821,7 +822,9 @@ class Media(ABC):
             z0 = parse_z0(z0)* self.z0
 
         kwargs.update({'z0':z0})
-        result = self.match(nports=2,**kwargs)
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+        # Zref = Z0 so these S-parameters correspond to traveling waves.
+        result = self.match(nports=2, s_def='pseudo', **kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
 
@@ -830,8 +833,9 @@ class Media(ABC):
         result.s = \
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 
-        if  embed:
+        if embed:
             result = self.thru()**result**self.thru()
+        result.renormalize(result.z0, s_def=s_def)
 
         return result
 
