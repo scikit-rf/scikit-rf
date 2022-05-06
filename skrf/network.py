@@ -4052,12 +4052,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
 
 def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     """
-    Connect two n-port networks together (using C-implementation)
-
-    Specifically, connect ports `k` on `ntwkA` to ports
-    `l` thru  on `ntwkB`. The resultant network has
-    `(ntwkA.nports + ntwkB.nports - 2)` ports. The port indices ('k','l')
-    start from 0. Port impedances **are** taken into account.
+    Alias for connect
 
     Parameters
     ----------
@@ -4075,56 +4070,9 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     -------
     ntwkC : :class:`Network`
             new network of rank `(ntwkA.nports + ntwkB.nports - 2)`
-
-    Note
-    ----
-    The effect of mis-matched port impedances is handled by inserting
-    a 2-port 'mismatch' network between the two connected ports.
-    This mismatch Network is calculated with the
-    :func:`impedance_mismatch` function.
-
-
-    Examples
-    --------
-    To implement a *cascade* of two networks
-
-    >>> ntwkA = rf.Network('ntwkA.s2p')
-    >>> ntwkB = rf.Network('ntwkB.s2p')
-    >>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
-
     """
-    num = 1
-    from .src import connect_s_fast
-
-    # some checking
-    check_frequency_equal(ntwkA, ntwkB)
-
-    # create output Network, from copy of input
-    ntwkC = ntwkA.copy()
-
-    # if networks' z0's are not identical, then connect a impedance
-    # mismatch, which takes into account the effect of differing port
-    # impedances.
-
-    if assert_z0_at_ports_equal(ntwkA, k, ntwkB, l) == False:
-        ntwkC.s = connect_s(
-            ntwkA.s, k,
-            impedance_mismatch(ntwkA.z0[:, k], ntwkB.z0[:, l]), 0)
-        # the connect_s() put the mismatch's output port at the end of
-        #   ntwkC's ports.  Fix the new port's impedance, then insert it
-        #   at position k where it belongs.
-        ntwkC.z0[:, k:] = npy.hstack((ntwkC.z0[:, k + 1:], ntwkB.z0[:, [l]]))
-        ntwkC.renumber(from_ports=[ntwkC.nports - 1] + range(k, ntwkC.nports - 1),
-                       to_ports=range(k, ntwkC.nports))
-
-    # call s-matrix connection function
-    ntwkC.s = connect_s_fast(ntwkC.s, k, ntwkB.s, l)
-
-    # combine z0 arrays and remove ports which were `connected`
-    ntwkC.z0 = npy.hstack(
-        (npy.delete(ntwkA.z0, range(k, k + num), 1), npy.delete(ntwkB.z0, range(l, l + num), 1)))
-
-    return ntwkC
+    warnings.warn("connect_fast is deprecated. Use connect", warnings.DeprecationWarning)
+    return connect(ntwkA, k, ntwkB, l)
 
 
 def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
