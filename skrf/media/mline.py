@@ -39,6 +39,8 @@ class MLine(Media):
 
     * Quasi-static characteristic impedance and dielectric constant models:
 
+        + wheeler
+        + schneider
         + Hammerstad and Jensen
 
     * Frequency dispersion of impedance and dielectric constant models:
@@ -47,7 +49,7 @@ class MLine(Media):
         + Hammerstad and Jensen
         + Yamashita
         + Kobayashi
-        + None
+        + No dispersion
 
     * Strip thickness correction model:
 
@@ -70,26 +72,34 @@ class MLine(Media):
         relative permittivity of dielectric at frequency f_epr_tand
     mu_r : number, or array-like
         relative permeability of dielectric (assumed frequency invariant)
-    diel : str
-        dielectric dispersion model in:
-        
-        * 'djordjevicsvensson' (default)
-        * 'frequencyinvariant'.
-    rho: number, or array-like, optional
-        resistivity of conductor (None)
-    tand : number, or array-like
-        dielectric loss factor at frequency f_epr_tand
-    rough : number, or array-like
-        RMS roughness of conductor in m.
     disp : str
-        microstripline dispersion model in:
+        microstripline quasi-static impedance and dielectric model in:
+
+        * 'wheeler'
+        * 'schneider'
+        * 'hammerstadjensen' (default)
+        
+    disp : str
+        microstripline impedance and dielectric frequency dispersion model in:
 
         * 'kirschningjansen' (default)
         * 'hammerstadjensen'
         * 'yamashita'
         * 'kobayashi'
         * 'none'
-
+        
+    diel : str
+        dielectric frequency dispersion model in:
+        
+        * 'djordjevicsvensson' (default)
+        * 'frequencyinvariant'
+        
+    rho: number, or array-like, optional
+        resistivity of conductor (None)
+    tand : number, or array-like
+        dielectric loss factor at frequency f_epr_tand
+    rough : number, or array-like
+        RMS roughness of conductor in m.
     f_low : number, or array-like
         lower frequency for wideband Debye Djordjevic/Svensson dielectric model
     f_high : number, or array-like
@@ -113,16 +123,19 @@ class MLine(Media):
                  w: NumberLike = 3, h: NumberLike = 1.6,
                  t: Union[NumberLike, None] = None,
                  ep_r: NumberLike = 4.5, mu_r: NumberLike = 1,
+                 model: str = 'hammerstadjensen',
+                 disp: str = 'kirschningjansen',
                  diel: str = 'djordjevicsvensson',
                  rho: NumberLike = 1.68e-8, tand: NumberLike = 0,
-                 rough: NumberLike = 0.15e-6, disp: str = 'kirschningjansen',
+                 rough: NumberLike = 0.15e-6,
                  f_low: NumberLike = 1e3, f_high: NumberLike = 1e12,
                  f_epr_tand: NumberLike = 1e9,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency, z0 = z0)
 
         self.w, self.h, self.t = w, h, t
-        self.ep_r, self.mu_r, self.diel = ep_r, mu_r, diel
+        self.ep_r, self.mu_r = ep_r, mu_r
+        self.model, self.disp, self.diel = model, disp, diel
         self.rho, self.tand, self.rough, self.disp =  rho, tand, rough, disp
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
         
@@ -134,7 +147,7 @@ class MLine(Media):
         # quasi-static effective dielectric constant of substrate + line and
         # the impedance of the microstrip line
         self.zl_eff, self.ep_reff, self.w_eff = self.analyse_quasi_static(
-            self.ep_r, self.w, self.h, self.t)
+            self.ep_r, self.w, self.h, self.t, self.model)
         
         # analyse dispersion of Zl and Er
         # use w_eff here ? Not used in Qucs
@@ -233,45 +246,118 @@ class MLine(Media):
         return real(ep_r_f), tand_f
     
     def analyse_quasi_static(self, ep_r: NumberLike, 
-                           w: NumberLike, h: NumberLike, t: NumberLike):
+                           w: NumberLike, h: NumberLike, t: NumberLike,
+                           model: str):
         """
         This function calculates the quasi-static impedance of a microstrip
         line, the value of the effective dielectric constant and the
         effective width due to the finite conductor thickness for the given
         microstrip line and substrate properties.
         """
-        # limited to only Hammerstad and Jensen model
-        u = w / h
-        if t is not None:
-            t = t/h
-        du1 = 0.
+        Z0 = sqrt(mu_0 / epsilon_0)
+        zl_eff = Z0
+        ep_reff = ep_r
+        w_eff = w
         
-        # compute strip thickness effect
-        if t is not None and t > 0:
-            # Qucs formula 11.22 is wrong, normalized w has to be used instead (see Hammerstad and Jensen Article)
-            # Normalized w is named u and is actually used in qucsator source code
-            # coth(alpha) = 1/tanh(alpha)
-            du1 = t / pi * log(1. + 4. * exp(1.) / t * tanh(sqrt(6.517 * u))**2)
-        
-        # sech(alpha) = 1/cosh(alpha)
-        dur =  du1 * (1. + 1. / cosh(sqrt(ep_r - 1.))) / 2.
-        
-        u1 = u + du1
-        ur = u + dur
-        w_eff = ur * h
-        
-        # compute impedances for homogeneous medium
-        zr = hammerstad_zl(ur)
-        z1 = hammerstad_zl(u1)
-        
-        # compute effective dielectric constant
-        a, b  = hammerstad_ab(ur, ep_r)
-        e = hammerstad_er(ur, ep_r, a, b)
-        
-        # compute final characteristic impedance and dielectric constant
-        #including strip thickness effects
-        zl_eff = zr / sqrt(e)
-        ep_reff = e * (z1 / zr)**2
+        if model == 'wheeler':
+            # compute strip thickness effect
+            dw1 = 0
+            if t is not None and t > 0:
+                dw1 = t / pi * log(4. * exp(1.) / sqrt((t / h)**2) + \
+                                   (1. / pi / (w / t + 1.1))**2)
+            dwr = (1. + 1. / ep_r) / 2. * dw1
+            wr = w + dwr
+            w_eff = wr
+            
+            # compute characteristic impedance
+            if (w / h) < 3.3:
+                cp = log(4. * h / wr + sqrt((4 * h / wr)**2 + 2))
+                b = (ep_r - 1.) / (ep_r + 1.) / \
+                    2 * (log(pi / 2.) + log(4. / pi) / ep_r)
+                zl_eff = (cp - b) * Z0 / pi / sqrt(2 * (ep_r + 1.))
+            else:
+                cp = 1 + log(pi / 2.) + log(wr / h / 2. + 0.94)
+                d = 1. / pi / 2. * (1. + log(pi**2 / 16.)) * (ep_r - 1.) \
+                    / ep_r**2
+                x = 2. * log(2.) / pi + wr / h / 2. + (ep_r + 1.) / 2 / pi / \
+                ep_r * cp + d
+                zl_eff = Z0 / 2 / x / sqrt(ep_r)
+            
+            # compute effective dielectric constant
+            if (w / h) < 1.3:
+                a = log(8 * h / wr) + (wr / h)**2 / 32
+                b = (ep_r - 1.) / (ep_r + 1.) / \
+                    2 * (log(pi / 2.) + log(4. / pi) / ep_r)
+                ep_reff = (ep_r + 1.) / 2. * (a / (a - b))**2 
+            else:
+                # qucsator is 4.0137 but doc 0.94 * 2 = 1.88
+                d = (ep_r - 1.) / 2. / pi / ep_r * \
+                    (log(2.1349 * wr / h + 4.0137) - 0.5169 / ep_r)
+                e = wr / h / 2 + 1. / pi * log(8.5397 * wr / h + 16.0547)
+                ep_reff = ep_r * ((e - d) / e)**2 
+                
+        elif model == 'schneider':
+            u = w / h
+            dw = 0
+            
+            # consider strip thickness equations
+            if t is not None and t > 0:
+                if t < (w / 2):
+                    if u < (1. / pi / 2):
+                        arg = 2 * pi * w / t
+                    else:
+                        arg = h / t
+                    dw = t / pi * (1. + log(2 * arg))
+                    if (t / dw) >= 0.75:
+                        dw = 0
+            w_eff = w + dw
+            u = w_eff / h
+                
+            # effective dielectric constant
+            ep_reff = (ep_r + 1.) / 2. + (ep_r - 1.) / 2. / sqrt (1. + 10. / u)
+            
+            # characteristic impedance
+            if u < 1.:
+                z = 1. / pi / 2. * log(8. / u + u / 4)
+            else:
+                z = 1. / (u + 2.42 - 0.44 / u + (1. - 1. / u)**6)
+            zl_eff = Z0 * z / sqrt(ep_reff)
+            
+        elif model == 'hammerstadjensen':
+            u = w / h
+            if t is not None:
+                t = t/h
+            du1 = 0.
+            
+            # compute strip thickness effect
+            if t is not None and t > 0:
+                # Qucs formula 11.22 is wrong, normalized w has to be used instead (see Hammerstad and Jensen Article)
+                # Normalized w is named u and is actually used in qucsator source code
+                # coth(alpha) = 1/tanh(alpha)
+                du1 = t / pi * log(1. + 4. * exp(1.) / t * tanh(sqrt(6.517 * u))**2)
+            
+            # sech(alpha) = 1/cosh(alpha)
+            dur =  du1 * (1. + 1. / cosh(sqrt(ep_r - 1.))) / 2.
+            
+            u1 = u + du1
+            ur = u + dur
+            w_eff = ur * h
+            
+            # compute impedances for homogeneous medium
+            zr = hammerstad_zl(ur)
+            z1 = hammerstad_zl(u1)
+            
+            # compute effective dielectric constant
+            a, b  = hammerstad_ab(ur, ep_r)
+            e = hammerstad_er(ur, ep_r, a, b)
+            
+            # compute final characteristic impedance and dielectric constant
+            #including strip thickness effects
+            zl_eff = zr / sqrt(e)
+            ep_reff = e * (z1 / zr)**2
+            
+        else:
+            raise ValueError('Unknown microstripline quasi-static model')
         
         return zl_eff, ep_reff, w_eff
         
@@ -283,7 +369,13 @@ class MLine(Media):
          accounting for microstripline dispersion.
          """
          u = wr/h
-         if disp == 'hammerstadjensen':
+         if disp == 'schneider':
+             k = sqrt(ep_reff / ep_r)
+             fn = 4. * h * f / c * sqrt(ep_r - 1.)
+             fn2 = fn**2
+             e = ep_reff * ((1. + fn2) / (1. + k * fn2))**2
+             z = zl_eff * sqrt(ep_reff / e)
+         elif disp == 'hammerstadjensen':
              Z0 = sqrt(mu_0 / epsilon_0)
              g = pi**2 / 12 * (ep_r - 1) / ep_reff * sqrt(2 * pi * zl_eff / Z0)
              fp = (2 * mu_0 * h * f) / zl_eff

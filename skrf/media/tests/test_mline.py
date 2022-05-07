@@ -28,9 +28,13 @@ class MLineTestCase(unittest.TestCase):
                            'mline,hammerstad,kobayashi.s2p'))
         self.ref4 = rf.Network(os.path.join(self.data_dir,
                            'mline,hammerstad,yamashita.s2p'))
-        self.ref5 = rf.Network(os.path.join(
+        self.ref5 = rf.Network(os.path.join(self.data_dir,
+                           'mline,wheeler,schneider.s2p'))
+        self.ref6 = rf.Network(os.path.join(self.data_dir,
+                           'mline,schneider,schneider.s2p'))
+        self.ref7 = rf.Network(os.path.join(
             os.path.dirname(os.path.abspath(__file__)) + '/' + \
-                           'mlin_ads,svenson-djordjevic, kirschning.s2p'))
+                           'mlin_ads,svenson-djordjevic,kirschning.s2p'))
         
         # default parameter set for tests
         self.w    = 3.00e-3
@@ -103,16 +107,25 @@ class MLineTestCase(unittest.TestCase):
                        tand = self.tand, rough = self.d,
                        diel = 'frequencyinvariant', disp = 'yamashita')
         mline5 = MLine(frequency = self.ref5.frequency, z0 = 50.,
-                       w = self.w, h = self.h, t = self.t,
-                       ep_r = self.ep_r, rho = self.rho,
-                       tand = self.tand, rough = self.d,
-                       diel = 'djordjevicsvensson', disp = 'kirschningjansen')
+                        w = self.w, h = self.h, t = self.t,
+                        ep_r = self.ep_r, rho = self.rho,
+                        tand = self.tand, rough = self.d,
+                        model = 'wheeler', disp = 'schneider',
+                        diel = 'frequencyinvariant')
+        mline6 = MLine(frequency = self.ref6.frequency, z0 = 50.,
+                        w = self.w, h = self.h, t = self.t,
+                        ep_r = self.ep_r, rho = self.rho,
+                        tand = self.tand, rough = self.d,
+                        model = 'schneider', disp = 'schneider',
+                        diel = 'frequencyinvariant')
+        
 
         l1 = mline1.line(d=self.l, unit='m', embed = True, z0=mline1.Z0)
         l2 = mline2.line(d=self.l, unit='m', embed = True, z0=mline2.Z0)
         l3 = mline3.line(d=self.l, unit='m', embed = True, z0=mline3.Z0)
         l4 = mline4.line(d=self.l, unit='m', embed = True, z0=mline4.Z0)
-        l5 = mline5.line(d=0.1, unit='m', embed = True, z0=mline5.Z0)
+        l5 = mline5.line(d=self.l, unit='m', embed = True, z0=mline5.Z0)
+        l6 = mline6.line(d=self.l, unit='m', embed = True, z0=mline6.Z0)
         
         self.assertTrue(npy.all(npy.abs(l1.s_db - self.ref1.s_db) < 0.1))
         self.assertTrue(npy.all(npy.abs(l1.s_deg - self.ref1.s_deg) < 1.))
@@ -122,46 +135,49 @@ class MLineTestCase(unittest.TestCase):
         self.assertTrue(npy.all(npy.abs(l3.s_deg - self.ref3.s_deg) < 1.))
         self.assertTrue(npy.all(npy.abs(l4.s_db - self.ref4.s_db) < 0.1))
         self.assertTrue(npy.all(npy.abs(l4.s_deg - self.ref4.s_deg) < 1.))
-        # fixme: cannot pass currently
-        #self.assertTrue(npy.all(npy.abs(l4.s_db - self.ref4.s_db) < 0.1))
-        #self.assertTrue(npy.all(npy.abs(l5.s_deg - self.ref5.s_deg) < 1.))
+        self.assertTrue(npy.all(npy.abs(l5.s_db - self.ref5.s_db) < 0.1))
+        self.assertTrue(npy.all(npy.abs(l5.s_deg - self.ref5.s_deg) < 1.))
+        self.assertTrue(npy.all(npy.abs(l6.s_db - self.ref6.s_db) < 0.1))
+        self.assertTrue(npy.all(npy.abs(l6.s_deg - self.ref6.s_deg) < 1.))
+        
+    def test_line2(self):
+        """
+        Test against the ADS results
+        """
+        mline7 = MLine(frequency = self.ref7.frequency, z0 = 50.,
+                       w = self.w, h = self.h, t = self.t,
+                       ep_r = self.ep_r, rho = self.rho,
+                       tand = self.tand, rough = self.d,
+                       diel = 'djordjevicsvensson', disp = 'kirschningjansen')
+        
+        l7 = mline7.line(d=0.1, unit='m', embed = True, z0=mline7.Z0)
+        
+        # fixme: cannot pass currently (test against ADS)
+        #self.assertTrue(npy.all(npy.abs(l7.s_db - self.ref7.s_db) < 0.1))
+        #self.assertTrue(npy.all(npy.abs(l7.s_deg - self.ref7.s_deg) < 1.))
         
         # uncomment plots to see results
         # from matplotlib import pyplot as plt
         # plt.figure(figsize=(10, 8))
-        # plt.subplot(2, 1, 1)
-        # self.ref1.plot_s_db(0, 0, color = 'r', label = '_nolegend_')
-        # self.ref2.plot_s_db(0, 0, color = 'g', label = '_nolegend_')
-        # self.ref3.plot_s_db(0, 0, color = 'b', label = '_nolegend_')
-        # self.ref4.plot_s_db(0, 0, color = 'c', label = '_nolegend_')
-        # self.ref5.plot_s_db(0, 0, color = 'k', label = '_nolegend_')
-        # l1.plot_s_db(0, 0, color = 'r', linestyle = 'none', marker = 'x',
-        #              label = '_nolegend_')
-        # l2.plot_s_db(0, 0, color = 'g', linestyle = 'none', marker = 'x',
-        #              label = '_nolegend_')
-        # l3.plot_s_db(0, 0, color = 'b', linestyle = 'none', marker = 'x',
-        #              label = '_nolegend_')
-        # l4.plot_s_db(0, 0, color = 'c', linestyle = 'none', marker = 'x',
-        #              label = '_nolegend_')
-        # l5.plot_s_db(0, 0, color = 'k', linestyle = 'none', marker = 'x',
-        #              label = '_nolegend_')
+        # plt.subplot(2, 2, 1)
+        # self.ref7.plot_s_db(0, 0, color = 'k', label = '_nolegend_')
+        # l7.plot_s_db(0, 0, color = 'k', linestyle = 'none', marker = 'x',
+        #               markevery = 100, label = '_nolegend_')
         # plt.grid()
-        # plt.subplot(2, 1, 2)
-        # self.ref1.plot_s_db(1, 0, color = 'r')
-        # self.ref2.plot_s_db(1, 0, color = 'g')
-        # self.ref3.plot_s_db(1, 0, color = 'b')
-        # self.ref4.plot_s_db(1, 0, color = 'c')
-        # self.ref5.plot_s_db(1, 0, color = 'k')
-        # l1.plot_s_db(1, 0, color = 'r', linestyle = 'none', marker = 'x',
-        #              label = '_nolegend_')
-        # l2.plot_s_db(1, 0, color = 'g', linestyle = 'none', marker = 'x',
-        #              label = '_nolegend_')
-        # l3.plot_s_db(1, 0, color = 'b', linestyle = 'none', marker = 'x',
-        #              label = '_nolegend_')
-        # l4.plot_s_db(1, 0, color = 'c', linestyle = 'none', marker = 'x',
-        #              label = '_nolegend_')
-        # l5.plot_s_db(1, 0, color = 'k', linestyle = 'none', marker = 'x',
-        #              label = '_nolegend_')
+        # plt.subplot(2, 2, 2)
+        # self.ref7.plot_s_deg(0, 0, color = 'k', label = '_nolegend_')
+        # l7.plot_s_deg(0, 0, color = 'k', linestyle = 'none', marker = 'x',
+        #               markevery = 100, label = '_nolegend_')
+        # plt.grid()
+        # plt.subplot(2, 2, 3)
+        # self.ref7.plot_s_db(1, 0, color = 'k', label = 'reference')
+        # l7.plot_s_db(1, 0, color = 'k', linestyle = 'none', marker = 'x',
+        #               markevery = 100, label = 'model')
+        # plt.grid()
+        # plt.subplot(2, 2, 4)
+        # self.ref7.plot_s_deg(1, 0, color = 'k', label = '_nolegend_')
+        # l7.plot_s_deg(1, 0, color = 'k', linestyle = 'none', marker = 'x',
+        #               markevery = 100, label = '_nolegend_')
         # plt.grid()
         # plt.tight_layout()
         
