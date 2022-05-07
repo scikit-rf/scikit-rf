@@ -143,7 +143,7 @@ class MLine(Media):
             self.frequency.f, self.disp)
         
         # analyse losses of line
-        self._alpha_conductor, self._alpha_dielectric = self.analyseLoss(
+        self.alpha_conductor, self.alpha_dielectric = self.analyseLoss(
             real(self.ep_r_f), real(self.ep_reff), self.tand_f,
             self.rho, self.mu_r,
             real(self._z_characteristic), real(self._z_characteristic),
@@ -175,9 +175,9 @@ class MLine(Media):
         """
         ep_reff, f = real(self.ep_reff_f), self.frequency.f
         
-        alpha = self._alpha_dielectric.copy()
+        alpha = self.alpha_dielectric.copy()
         if self.rho is not None:
-            alpha += self._alpha_conductor
+            alpha += self.alpha_conductor
         
         beta  = 2 * pi * f* sqrt(ep_reff) / c
         
@@ -192,6 +192,22 @@ class MLine(Media):
         -------
         Z0 : :class:`numpy.ndarray`
         """
+        return self._z_characteristic
+    
+    @property
+    def Z0_f(self) -> npy.ndarray:
+        """
+        Alias fos Characteristic Impedance for backward compatibility.
+        Deprecated, do not use.
+
+        Returns
+        -------
+        Z0 : :class:`numpy.ndarray`
+        """
+        warnings.warn(
+            "`Z0_f` is deprecated, use `Z0` instead",
+             DeprecationWarning
+        )
         return self._z_characteristic
     
     def analyseDielectric(self, ep_r: NumberLike, tand: NumberLike,
@@ -226,11 +242,12 @@ class MLine(Media):
         """
         # limited to only Hammerstad and Jensen model
         u = w / h
-        t = t/h
+        if t is not None:
+            t = t/h
         du1 = 0.
         
         # compute strip thickness effect
-        if t > 0.:
+        if t is not None and t > 0:
             # Qucs formula 11.22 is wrong, normalized w has to be used instead (see Hammerstad and Jensen Article)
             # Normalized w is named u and is actually used in qucsator source code
             # coth(alpha) = 1/tanh(alpha)
@@ -316,8 +333,8 @@ class MLine(Media):
         Z0 = npy.sqrt(mu_0/epsilon_0)
 
         # conductor losses
-        if self.t > 0:
-            if self.rho is None:
+        if t is not None and  t > 0:
+            if rho is None:
                 raise(AttributeError('must provide resistivity rho. '
                                      'see initializer help'))
             else:

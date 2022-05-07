@@ -56,8 +56,26 @@ class MLineTestCase(unittest.TestCase):
                        tand = self.tand, rough = self.d,
                        diel = 'frequencyinvariant', disp = 'hammerstadjensen')
         
+        # without t (t = None)
+        mline2 = MLine(frequency = freq, z0 = 50.,
+                       w = self.w, h = self.h,
+                       ep_r = self.ep_r, rho = self.rho,
+                       tand = self.tand, rough = self.d,
+                       diel = 'frequencyinvariant', disp = 'hammerstadjensen')
+        
+        # with t = 0
+        mline3 = MLine(frequency = freq, z0 = 50.,
+                       w = self.w, h = self.h, t = 0,
+                       ep_r = self.ep_r, rho = self.rho,
+                       tand = self.tand, rough = self.d,
+                       diel = 'frequencyinvariant', disp = 'hammerstadjensen')
+        
         self.assertTrue(npy.abs((mline1.Z0[0] - 49.142) / 49.142) < 0.01)
         self.assertTrue(npy.abs((mline1.ep_reff_f[0] - 3.324) / 3.324) < 0.01)
+        self.assertTrue(npy.abs(mline2.w_eff - mline2.w) < 1e-16)
+        self.assertTrue(npy.abs(mline2.alpha_conductor) < 1e-16)
+        self.assertTrue(npy.abs(mline3.w_eff - mline3.w) < 1e-16)
+        self.assertTrue(npy.abs(mline3.alpha_conductor) < 1e-16)
 
 
     def test_line(self):
