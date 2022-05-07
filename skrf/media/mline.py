@@ -127,23 +127,23 @@ class MLine(Media):
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
         
         # variation of dielectric constant with frequency
-        self.ep_r_f, self.tand_f = self.analyseDielectric(self.ep_r, self.tand,
+        self.ep_r_f, self.tand_f = self.analyse_dielectric(self.ep_r, self.tand,
             self.f_low, self.f_high, self.f_epr_tand, self.frequency.f,
             self.diel)
         
         # quasi-static effective dielectric constant of substrate + line and
         # the impedance of the microstrip line
-        self.zl_eff, self.ep_reff, self.w_eff = self.analyseQuasiStatic(
+        self.zl_eff, self.ep_reff, self.w_eff = self.analyse_quasi_static(
             self.ep_r, self.w, self.h, self.t)
         
         # analyse dispersion of Zl and Er
         # use w_eff here ? Not used in Qucs
-        self._z_characteristic, self.ep_reff_f = self.analyseDispersion(
+        self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
             self.zl_eff, self.ep_reff, real(self.ep_r_f), self.w, self.h,
             self.frequency.f, self.disp)
         
         # analyse losses of line
-        self.alpha_conductor, self.alpha_dielectric = self.analyseLoss(
+        self.alpha_conductor, self.alpha_dielectric = self.analyse_loss(
             real(self.ep_r_f), real(self.ep_reff), self.tand_f,
             self.rho, self.mu_r,
             real(self._z_characteristic), real(self._z_characteristic),
@@ -210,7 +210,7 @@ class MLine(Media):
         )
         return self._z_characteristic
     
-    def analyseDielectric(self, ep_r: NumberLike, tand: NumberLike,
+    def analyse_dielectric(self, ep_r: NumberLike, tand: NumberLike,
                           f_low: NumberLike, f_high: NumberLike,
                           f_epr_tand: NumberLike, f: NumberLike,
                           diel: str):
@@ -232,7 +232,7 @@ class MLine(Media):
         
         return real(ep_r_f), tand_f
     
-    def analyseQuasiStatic(self, ep_r: NumberLike, 
+    def analyse_quasi_static(self, ep_r: NumberLike, 
                            w: NumberLike, h: NumberLike, t: NumberLike):
         """
         This function calculates the quasi-static impedance of a microstrip
@@ -275,7 +275,7 @@ class MLine(Media):
         
         return zl_eff, ep_reff, w_eff
         
-    def analyseDispersion(self, zl_eff: NumberLike, ep_reff: NumberLike,
+    def analyse_dispersion(self, zl_eff: NumberLike, ep_reff: NumberLike,
                           ep_r: NumberLike, wr: NumberLike, h: NumberLike, 
                           f: NumberLike, disp: str):
          """
@@ -320,7 +320,7 @@ class MLine(Media):
              
          return z, e
          
-    def analyseLoss(self, ep_r: NumberLike, ep_reff: NumberLike, 
+    def analyse_loss(self, ep_r: NumberLike, ep_reff: NumberLike, 
                     tand: NumberLike, rho: NumberLike, mu_r: NumberLike,
                     zl_eff_f1: NumberLike, zl_eff_f2: NumberLike, 
                     f: NumberLike, w: NumberLike, t: NumberLike,
