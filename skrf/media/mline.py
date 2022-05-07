@@ -39,9 +39,9 @@ class MLine(Media):
 
     * Quasi-static characteristic impedance and dielectric constant models:
 
-        + wheeler
-        + schneider
         + Hammerstad and Jensen
+        + Schneider
+        + Wheeler
 
     * Frequency dispersion of impedance and dielectric constant models:
 
@@ -72,20 +72,22 @@ class MLine(Media):
         relative permittivity of dielectric at frequency f_epr_tand
     mu_r : number, or array-like
         relative permeability of dielectric (assumed frequency invariant)
-    disp : str
+    model : str
         microstripline quasi-static impedance and dielectric model in:
 
-        * 'wheeler'
-        * 'schneider'
+        
         * 'hammerstadjensen' (default)
+        * 'schneider'
+        * 'wheeler'
         
     disp : str
         microstripline impedance and dielectric frequency dispersion model in:
 
-        * 'kirschningjansen' (default)
         * 'hammerstadjensen'
-        * 'yamashita'
+        * 'kirschningjansen' (default)
         * 'kobayashi'
+        * 'schneider'
+        * 'yamashita'
         * 'none'
         
     diel : str
@@ -140,14 +142,14 @@ class MLine(Media):
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
         
         # variation of dielectric constant with frequency
-        self.ep_r_f, self.tand_f = self.analyse_dielectric(self.ep_r, self.tand,
+        self.ep_r_f = self.analyse_dielectric(self.ep_r, self.tand,
             self.f_low, self.f_high, self.f_epr_tand, self.frequency.f,
             self.diel)
         
         # quasi-static effective dielectric constant of substrate + line and
         # the impedance of the microstrip line
         self.zl_eff, self.ep_reff, self.w_eff = self.analyse_quasi_static(
-            self.ep_r, self.w, self.h, self.t, self.model)
+            self.ep_r_f, self.w, self.h, self.t, self.model)
         
         # analyse dispersion of Zl and Er
         # use w_eff here ? Not used in Qucs
@@ -157,7 +159,7 @@ class MLine(Media):
         
         # analyse losses of line
         self.alpha_conductor, self.alpha_dielectric = self.analyse_loss(
-            real(self.ep_r_f), real(self.ep_reff), self.tand_f,
+            real(self.ep_r_f), real(self.ep_reff), self.tand,
             self.rho, self.mu_r,
             real(self._z_characteristic), real(self._z_characteristic),
             self.frequency.f, self.w, self.t, self.rough)
@@ -240,10 +242,8 @@ class MLine(Media):
             ep_r_f =  ones(self.frequency.f.shape) * (ep_r - 1j*ep_r*tand)
         else:
             raise ValueError('Unknown dielectric dispersion model')
-            
-        tand_f = -imag(ep_r_f) / real(ep_r_f)
         
-        return real(ep_r_f), tand_f
+        return real(ep_r_f)
     
     def analyse_quasi_static(self, ep_r: NumberLike, 
                            w: NumberLike, h: NumberLike, t: NumberLike,

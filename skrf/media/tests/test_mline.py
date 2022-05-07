@@ -152,9 +152,14 @@ class MLineTestCase(unittest.TestCase):
         
         l7 = mline7.line(d=0.1, unit='m', embed = True, z0=mline7.Z0)
         
-        # fixme: cannot pass currently (test against ADS)
-        #self.assertTrue(npy.all(npy.abs(l7.s_db - self.ref7.s_db) < 0.1))
-        #self.assertTrue(npy.all(npy.abs(l7.s_deg - self.ref7.s_deg) < 1.))
+        res = l7 / self.ref7
+        # fixme: cannot pass currently. is it due to dielectric dispersion ?
+        # self.assertTrue(npy.all(npy.abs(res.s_db[:, 0, 0]) < 0.5))
+        # self.assertTrue(npy.all(npy.abs(res.s_deg[:, 0, 0]) < 5.))
+        # pass for S21
+        res.name = 'residuals'
+        self.assertTrue(npy.all(npy.abs(res.s_db[:, 1, 0]) < 0.5))
+        self.assertTrue(npy.all(npy.abs(res.s_deg[:, 1, 0]) < 5.))
         
         # uncomment plots to see results
         # from matplotlib import pyplot as plt
@@ -163,21 +168,25 @@ class MLineTestCase(unittest.TestCase):
         # self.ref7.plot_s_db(0, 0, color = 'k', label = '_nolegend_')
         # l7.plot_s_db(0, 0, color = 'k', linestyle = 'none', marker = 'x',
         #               markevery = 100, label = '_nolegend_')
+        # res.plot_s_db(0,0)
         # plt.grid()
         # plt.subplot(2, 2, 2)
         # self.ref7.plot_s_deg(0, 0, color = 'k', label = '_nolegend_')
         # l7.plot_s_deg(0, 0, color = 'k', linestyle = 'none', marker = 'x',
         #               markevery = 100, label = '_nolegend_')
+        # res.plot_s_deg(0,0)
         # plt.grid()
         # plt.subplot(2, 2, 3)
         # self.ref7.plot_s_db(1, 0, color = 'k', label = 'reference')
         # l7.plot_s_db(1, 0, color = 'k', linestyle = 'none', marker = 'x',
         #               markevery = 100, label = 'model')
+        # res.plot_s_db(1,0)
         # plt.grid()
         # plt.subplot(2, 2, 4)
         # self.ref7.plot_s_deg(1, 0, color = 'k', label = '_nolegend_')
         # l7.plot_s_deg(1, 0, color = 'k', linestyle = 'none', marker = 'x',
         #               markevery = 100, label = '_nolegend_')
+        # res.plot_s_deg(1,0)
         # plt.grid()
         # plt.tight_layout()
         
