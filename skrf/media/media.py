@@ -823,8 +823,9 @@ class Media(ABC):
 
         kwargs.update({'z0':z0})
         s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
-        # Zref = Z0 so these S-parameters correspond to traveling waves.
-        result = self.match(nports=2, s_def='pseudo', **kwargs)
+        # Need to use either traveling or pseudo definition here
+        # for the network to match traveling waves.
+        result = self.match(nports=2, s_def='traveling', **kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
 
@@ -834,7 +835,9 @@ class Media(ABC):
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 
         if embed:
-            result = self.thru()**result**self.thru()
+            # Use the same s_def here as the line to avoid changing it during
+            # cascade.
+            result = self.thru(s_def='traveling')**result**self.thru(s_def='traveling')
         result.renormalize(result.z0, s_def=s_def)
 
         return result
