@@ -6447,7 +6447,7 @@ def reciprocity(s: npy.ndarray) -> npy.ndarray:
 
 
 ## renormalize
-def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:str = S_DEF_DEFAULT, s_def_old:str = None) -> npy.ndarray:
+def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:str = S_DEF_DEFAULT, s_def_old: Union[str, None] = None) -> npy.ndarray:
 
     """
     Renormalize a s-parameter matrix given old and new port impedances.
@@ -6488,7 +6488,7 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
         'traveling' corresponds to the initial implementation.
         Default is 'power'.
 
-    s_def_old : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
+    s_def_old : str -> s_def :  can be: None, 'power', 'pseudo' or 'traveling'
         Scattering parameter definition of the input network:
         None to copy s_def.
         'power' for power-waves definition,
@@ -6766,7 +6766,7 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling')
             complex impedance of port 1
     z2 : number or array-like
             complex impedance of port 2
-    s_def : str
+    s_def : str, optional. Default is 'traveling'.
         Scattering parameter definition:
         'pseudo' for pseudo-waves definition.
         'traveling' corresponds to the initial implementation.
