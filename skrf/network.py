@@ -1328,7 +1328,7 @@ class Network(object):
         return self.frequency.f
 
     @f.setter
-    def f(self, f: NumberLike) -> None:
+    def f(self, f: Union[NumberLike, Frequency]) -> None:
         if isinstance(f, Frequency):
             self.frequency = f
         else:
