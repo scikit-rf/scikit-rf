@@ -2,12 +2,14 @@ import skrf as rf
 import numpy as np
 import unittest
 import os
-from numpy.testing import assert_almost_equal, run_module_suite
+from numpy.testing import (
+    assert_almost_equal, assert_allclose, 
+    assert_array_equal, run_module_suite
+    )
 
 
 class QfactorTests(unittest.TestCase):
-    """
-    Q-factor class tests.
+    """ Q-factor class tests.
 
     References
     ----------
@@ -21,6 +23,48 @@ class QfactorTests(unittest.TestCase):
         Q-factor tests initalizer.
         """
         self.test_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
+        self.ntwk_2port = rf.data.ring_slot
+        self.ntwk_1port = rf.data.ring_slot_meas
+
+    def csv_file_example_to_network(self, file: str) -> rf.Network:
+        """Convert the S-parameter txt file to Network.        
+
+        Parameters
+        ----------
+        file : str
+            file path.
+
+        Returns
+        -------
+        ntwk : rf.Network (1-port)
+
+        """
+        # Load frequency and S-parameter data from a file.
+        try:
+            f, s_re, s_im = np.loadtxt(file, comments="%", unpack=True)
+        except ValueError as e:
+            f, s_re, s_im, s_abs, s_mag = np.loadtxt(file, comments="%", unpack=True)
+        
+        s = s_re + 1j * s_im
+        freq = rf.Frequency.from_f(f, unit='GHz')
+        return rf.Network(s=s, frequency=freq)        
+
+    def test_constructor(self):
+        """
+        Test the Qfactor() constructor.
+        """
+        # Passing a 2-port Network raises a ValueError
+        self.assertRaises(ValueError, rf.Qfactor, self.ntwk_2port, 'reflection')
+        
+        # Uncorrect resonance type raises a ValueError
+        self.assertRaises(ValueError, rf.Qfactor, self.ntwk_1port, 'dummy')
+        
+        # constructor tests
+        _Q1 = rf.Qfactor(self.ntwk_1port, res_type='reflection')
+        _Q2 = rf.Qfactor(self.ntwk_1port, res_type='reflection', Q_L0=3)
+        _Q3 = rf.Qfactor(self.ntwk_1port, res_type='reflection', f_L0=85e9)
+        _Q3 = rf.Qfactor(self.ntwk_1port, res_type='reflection', Q_L0=3, f_L0=85e9)
+        
 
     def test_NLQFIT6(self):
         """
@@ -31,69 +75,34 @@ class QfactorTests(unittest.TestCase):
         Test data is read from file Figure6b.txt (as used in Figure 6(b) of MAT 58).
 
         """
-        # Load frequency and S-parameter data from a file.
         # File 'Figure6b.txt' contains S21 data for Fig. 6(b) in MAT 58
-        f, s21re, s21im = np.loadtxt(
-            self.test_dir + "qfactor_data/Figure6b.txt", comments="%", unpack=True
-        )
-        s21 = s21re + 1j * s21im
+        ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Figure6b.txt")
+        
+        Q = rf.Qfactor(ntwk, res_type='transmission', verbose=True)
 
-        # The convergence algorithm uses a number of steps set by loop_plan, a string of characters as follows:
-        #   f - fit once without testing for convergence
-        #   c - repeated fit, iterating until convergence is obtained
-        #   w - re-calculate weighting factors on basis of previous fit
-        #       Initially the weighting factors are all unity.
-        #   The first character in loop_plan must not be w.
-        loop_plan = "fwfwc"
+        # Test against expected solutions
+        assert_almost_equal(Q._a, 0.8104 - 1.6928j, decimal=4)
+        assert_almost_equal(Q._b, 0.0077 - 0.0071j, decimal=4)
+        assert_almost_equal(Q.Q_L, 7440.848, decimal=3)
 
-        # Find peak in |S21| - this is used to give initial value of freq.
-        # Tol is 1.0E-5 * |S21| at peak.
-        Mg = np.absolute(s21)
-        index_max = np.argmax(Mg)
-
-        Tol = Mg[index_max] * 1.0e-5
-        Fseed = f[index_max]
-
-        # Set Qseed: An order-of-magnitude estimate for Q-factor
-        mult = 5.0  # Not critical. A value of around 5.0 will work well for initial and optimised fits (Section 2.6).
-        Qseed = mult * Fseed / (f[-1] - f[0])
-
-        quiet = False
-        if not quiet:
-            print("Initial values for iteration:  Freq=", Fseed, " QL=", Qseed)
-        # Step 1: Initial unweighted fit --> solution vector
-        N = len(f)
-        Q = rf.Qfactor()
-
-        sv = Q.initial_fit(f, s21, N, Fseed, Qseed)
-        a_re, a_im, b_re, b_im, QL = sv
+        # Optimised weighted fit --> result vector
+        res = Q.fit(method="NLQFIT6")
         
         # Test against expected solutions
-        assert_almost_equal(a_re + 1j*a_im, 0.8104 - 1.6928j, decimal=4)
-        assert_almost_equal(b_re + 1j*b_im, 0.0077 - 0.0071j, decimal=4)
-        assert_almost_equal(QL, 7440.848, decimal=3)
-
-        # Step 2: Optimised weighted fit --> result vector
-        mv, weighting_ratio, number_iterations, RMS_Error = Q.optimise_fit6(
-            f, s21, N, Fseed, sv, loop_plan, Tol, quiet
-        )
-        m1, m2, m3, m4, QL, FL = mv
-
-        # Test against expected solutions
-        assert_almost_equal(FL, 3.987848, decimal=6)
-        assert_almost_equal(QL, 7454, decimal=0)
-        assert_almost_equal(weighting_ratio, 5.149, decimal=3)
-        assert_almost_equal(RMS_Error, 0.00001216)
+        assert_allclose(res.f_L, 3.987848e9)
+        assert_almost_equal(res.Q_L, 7454, decimal=0)
+        assert_almost_equal(res.RMS_Error, 0.00001216)
+        assert_array_equal(res.f_L, Q.f_L)
+        assert_array_equal(res.Q_L, Q.Q_L)
 
         # Now calculate unloaded Q-factor and some other useful quantities.
         # Reciprocal of |S21| of a thru in place of resonator
         scaling_factor_A = 1 / 0.874  # 1/|S21_thru|
-        trmode = "transmission"
-        p = Q.Q_unloaded(mv, scaling_factor_A, trmode, quiet)
-        Qo, cal_diam, cal_gamma_V, cal_gamma_T = p
+        Q0 = Q.Q_unloaded(res, scaling_factor_A)
+        cal_diam, cal_gamma_V, cal_gamma_T = Q.Q_circle(res, scaling_factor_A)
 
         # Q-factor of uncoupled two-port resonator (unloaded Q-factor)
-        assert_almost_equal(Qo, 7546, decimal=0)
+        assert_almost_equal(Q0, 7546, decimal=0)
         assert_almost_equal(cal_diam, 0.0121, decimal=4)
         # S21 detuned = leakage vector
         assert_almost_equal(cal_gamma_V, -0.00008895 + 0.00003852j)
@@ -111,55 +120,34 @@ class QfactorTests(unittest.TestCase):
         Test data is read from file Figure27.txt (as used in Figure 27 of MAT 58).
 
         """
-        quiet = True
-        f, s21re, s21im = np.loadtxt(
-            self.test_dir + "qfactor_data/Figure27.txt", comments="%", unpack=True
-        )
-        s21 = s21re + 1j * s21im
-
-        loop_plan = "fwfwc"
-
-        # Find notch in |S21| - this is used to give initial value of freq.
-        Mg = np.abs(s21)
-        index_min = np.argmin(Mg)
-        Fseed = f[index_min]
-
-        # argmax(Mg) could be much less than 1.0 as cables
-        # through cryostat wall attenuate the signal
-        Tol = 1.0e-5 * np.argmax(Mg)
-
-        # Set Qseed: An order-of-magnitude estimate for Q-factor
-        mult = 5.0  # Not critical. A value of around 5.0 will work well for initial and optimised fits (Section 2.6).
-        Qseed = mult * Fseed / (f[-1] - f[0])
-
-        # Step 1: Initial unweighted fit --> solution vector
-        N = len(f)
-        Q = rf.Qfactor()
-        sv = Q.initial_fit(f, s21, N, Fseed, Qseed)
-        a_re, a_im, b_re, b_im, QL = sv
-
-        # Step 2: Optimised weighted fit --> result vector
-        mv, weighting_ratio, number_iterations, RMS_Error = Q.optimise_fit6(
-            f, s21, N, Fseed, sv, loop_plan, Tol, quiet
-        )
-        m1, m2, m3, m4, QL, FL = mv
-
-        p = Q.Q_unloaded(mv, "AUTO", "absorption", quiet)
-        Qo, cal_diam, cal_gamma_V, cal_gamma_T = p
-
-        y = [1.0 / complex(1.0, 2.0 * (QL / FL * _f - QL)) for _f in f]
-        DFIT = [complex(m1, m2) + complex(m3, m4) * yi for yi in y]
+        ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Figure27.txt")
+        
+        Q = rf.Qfactor(ntwk, res_type='absorption', verbose=True)
 
         # Test against expected solutions
-        assert_almost_equal(a_re + 1j * a_im, -17072.3098 + 9047.0761j, decimal=4)
-        assert_almost_equal(b_re + 1j * b_im, 0.0063 + 0.0168j, decimal=4)
-        assert_almost_equal(FL, 6.07225567, decimal=6)
-        assert_almost_equal(QL, 56019.85, decimal=0)
-        assert_almost_equal(Qo, 1846782.51, decimal=0)
-        assert_almost_equal(weighting_ratio, 4.714, decimal=3)
-        assert_almost_equal(RMS_Error, 0.01394722)
-        assert_almost_equal(cal_diam, 0.970, decimal=3)
-        assert_almost_equal(2.0 * FL / QL, 0.00021678942580071302, decimal=10)
+        assert_almost_equal(Q._a, -17072.3098 + 9047.0761j, decimal=4)
+        assert_almost_equal(Q._b, 0.0063 + 0.0168j, decimal=4)
+        
+        # Q.tol = 1.0e-5 * np.argmax(np.abs(Q.s))
+       
+        # Step 2: Optimised weighted fit --> result vector
+        res = Q.fit(method="NLQFIT6")
+        
+        assert_allclose(res.f_L, 6.07225567e9)
+        assert_almost_equal(res.Q_L, 56019.85, decimal=0)
+        assert_almost_equal(res.weighting_ratio, 4.714, decimal=3)
+        assert_almost_equal(res.RMS_Error, 0.01394722)
+        assert_allclose(Q.Q_L, res.Q_L)
+        assert_allclose(Q.f_L, res.f_L)
+        
+        Q0 = Q.Q_unloaded(res, A="AUTO")
+        cal_diam, cal_gamma_V, cal_gamma_T = Q.Q_circle(res, A="AUTO")
+
+        assert_allclose(Q0, 1846782, rtol=1/100)
+        assert_allclose(cal_diam, 0.970, rtol=1/100)
+        assert_almost_equal(2.0 * res.f_L / res.Q_L/1e9, 0.00021678942580071302, decimal=10)
+
+
 
     def test_NLQFIT7(self):
         """
@@ -171,80 +159,48 @@ class QfactorTests(unittest.TestCase):
         Table 6(c) of MAT 58).
 
         """
-        f, s11re, s11im, s11abs, s11phase = np.loadtxt(
-            self.test_dir + "qfactor_data/Table6c27.txt", comments="%", unpack=True
-        )
-        s11 = s11re + 1j * s11im
+        ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Table6c27.txt")
+        
+        Q = rf.Qfactor(ntwk, res_type='reflection', verbose=True)
+        # Expected results after initial fit
+        assert_almost_equal(Q._a, 760.9731 + 67.7804j, decimal=4)
+        assert_almost_equal(Q._b, 0.0609 - 0.6432j, decimal=4)
+        assert_almost_equal(Q.Q_L, 779.068, decimal=3)
+        
+        # Expected results after fit
+        res = Q.fit(method='NLQFIT7')
+        # Fitted length of uncalibrated line [m]
+        assert_almost_equal(-res.m7a*rf.c/(4.0*np.pi*1.3), 57.47056249053462e-3)
+        assert_allclose(Q.f_L, 3.65293800e9)
+        assert_almost_equal(Q.Q_L, 708, decimal=0)
 
-        loop_plan = "fwfwc"
-
-        # Find minimum in |S11| - this is used to give initial value of freq.
-        Mg = np.absolute(s11)
-        index_min = np.argmin(Mg)
-
-        Tol = 1.0e-5
-        Fseed = f[index_min]
-
-        # Set Qseed: An order-of-magnitude estimate for Q-factor
-        mult = 5.0  # Not critical. A value of around 5.0 will work well for initial and optimised fits (Section 2.6).
-        Qseed = mult * Fseed / (f[-1] - f[0])
-
-        quiet = True
-        if not quiet:
-            print("Initial values for iteration:  Freq=", Fseed, " QL=", Qseed)
-        # Step 1: Initial unweighted fit --> solution vector
-        N = len(f)
-        Q = rf.Qfactor()
-        sv = Q.initial_fit(f, s11, N, Fseed, Qseed)
-        a_re, a_im, b_re, b_im, QL = sv
-
-        assert_almost_equal(a_re + 1j * a_im, 760.9731 + 67.7804j, decimal=4)
-        assert_almost_equal(b_re + 1j * b_im, 0.0609 - 0.6432j, decimal=4)
-        assert_almost_equal(QL, 779.068, decimal=3)
-
-        # Step 2: Optimised weighted fit --> result vector
-        mv, weighting_ratio, number_iterations, RMS_Error = Q.optimise_fit7(
-            f, s11, N, Fseed, sv, loop_plan, Tol, quiet
-        )
-        m1, m2, m3, m4, QL, FL, m7a = mv
-
-        # Fitted length of uncalibrated line [mm]
-        assert_almost_equal(
-            -m7a * 2.99792458e2 / (4.0 * np.pi * 1.3), 57.47056249053462
-        )
-
-        # Test against expected solutions
-        assert_almost_equal(FL, 3.65293800, decimal=6)
-        assert_almost_equal(QL, 708, decimal=0)
-
-        # Now calculate unloaded Q-factor and some other useful quantities.
+        # Unloaded Q-factor and some other useful quantities.
         print("Q-factor of unloaded one-port resonator by Method 1:")
         print("Assumes attenuating uncalibrated line")
-        scaling_factor_A = "Auto"
-        trmode = "reflection_method1"
-        p = Q.Q_unloaded(mv, scaling_factor_A, trmode, quiet)
-        Qo, cal_diam, cal_gamma_V, cal_gamma_T = p
-
+        Q0 = Q.Q_unloaded(res, A="AUTO")
+        cal_diam, cal_gamma_V, cal_gamma_T = Q.Q_circle(res, A="AUTO")
+        
         # Test against expected solutions
-        assert_almost_equal(Qo, 862, decimal=0)
+        assert_almost_equal(Q0, 862, decimal=0)
         assert_almost_equal(cal_diam, 0.3573, decimal=4)
         assert_almost_equal(cal_gamma_V, 0.09084890 - 0.99586469j)  # S11 detuned
         assert_almost_equal(cal_gamma_T, 0.05878773 - 0.64003179j)  # S11 tuned
 
         print("Q-factor of unloaded one-port resonator by Method 2:")
         print("Scaling factor A = 1.0 (assume no attenuation in uncalibrated line)")
-        scaling_factor_A = 1.0
-        trmode = "reflection_method2"
-        p = Q.Q_unloaded(mv, scaling_factor_A, trmode, quiet)
-        Qo, cal_diam, cal_gamma_V, cal_gamma_T = p
+        Q2 = rf.Qfactor(ntwk, res_type='reflection_method2', verbose=True)
+        res2 = Q2.fit(method='NLQFIT7')
+
+        Q0_2 = Q.Q_unloaded(res2, A=1)
+        cal_diam2, cal_gamma_V2, cal_gamma_T2 = Q.Q_circle(res2, A=1)
 
         # Test against expected solutions
-        assert_almost_equal(Qo, 862, decimal=0)
-        assert_almost_equal(weighting_ratio, 28.317, decimal=3)
-        assert_almost_equal(RMS_Error, 0.00145957)
-        assert_almost_equal(cal_diam, 0.3573, decimal=2)
-        assert_almost_equal(cal_gamma_V, 0.08996562 - 0.98618239j)
-        assert_almost_equal(cal_gamma_T, 0.05821616 - 0.63380908j)
+        assert_almost_equal(Q0_2, 862, decimal=0)
+        assert_almost_equal(res2.weighting_ratio, 28.317, decimal=3)
+        assert_almost_equal(res2.RMS_Error, 0.00145957)
+        assert_almost_equal(cal_diam2, 0.3573, decimal=2)
+        assert_almost_equal(cal_gamma_V2, 0.08996562 - 0.98618239j)
+        assert_almost_equal(cal_gamma_T2, 0.05821616 - 0.63380908j)
 
     def test_NLQFIT8(self):
         """
@@ -257,67 +213,71 @@ class QfactorTests(unittest.TestCase):
         Test data is read from file Figure23.txt (shown in Figure 23 of MAT 58)
 
         """
-        f, s21re, s21im, s21db, s21phase = np.loadtxt(
-            self.test_dir + "qfactor_data/Figure23.txt", comments="%", unpack=True
-        )
-        s21 = s21re + 1j * s21im
-
-        # De-embed cables
-        N = len(f)
+        ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Figure23.txt")
+        
+        Q = rf.Qfactor(ntwk, res_type='transmission')
+        
+        # # De-embed cables
+        # N = len(Q.f)
         ncablelen = 1.2  # root_eps * cable length in metres
-        D = [
-            s21[i]
-            * np.exp(complex(0.0, -2e9 * np.pi * f[i] * ncablelen / 2.99792458e8))
-            for i in range(N)
-        ]
-
-        loop_plan = "fwfwfwc"
-
+        # D =  ntwk.s[:,0,0]* np.exp(-1j * 2*np.pi *Q.f * ncablelen / rf.c)
+    
+        # ntwk2 = ntwk.copy()
+        # ntwk2.s[:,0,0] = D
+        
+        # piece of transmission line to deembbed
+        gamma = 0 - 1j*ntwk.frequency.w * ncablelen / rf.c
+        coax = rf.media.DefinedGammaZ0(frequency=ntwk.frequency, gamma=gamma)
+        line = coax.line(1/2, unit='m')
+        ntwk2 = line.inv ** ntwk
+        
         # Find peak in |S21| - this is used to give initial value of freq.
         # Tol is 1.0E-5 * |S21| at peak.
-        Mg = np.abs(D)
+        Mg = np.abs(ntwk2.s).squeeze()
         index_max = np.argmax(Mg)
         Tol = Mg[index_max] * 1.0e-5
-        Fseed = f[index_max]
+        Fseed = Q.f[index_max]
 
         # Set Qseed: An order-of-magnitude estimate for Q-factor
         mult = 5.0  # Not critical. A value of around 5.0 will work well for initial and optimised fits (Section 2.6).
-        Qseed = mult * Fseed / (f[-1] - f[0])
+        Qseed = mult * Fseed / (Q.f[-1] - Q.f[0])
 
-        quiet = False
-        if not quiet:
-            print("Initial values for iteration:  Freq=", Fseed, " QL=", Qseed)
+        Q = rf.Qfactor(ntwk2, res_type='transmission', Q_L0=Qseed, f_L0=Fseed)
+        assert_almost_equal(Q._a, 8.9408 + 2.1298j, decimal=4)
+        assert_almost_equal(Q._b, 0.0054 - 0.0045j, decimal=4)
+        assert_almost_equal(Q.Q_L, 4664.2418, decimal=3)
 
-        # Step 1: Initial unweighted fit --> solution vector
-        Q = rf.Qfactor()
-        sv = Q.initial_fit(f, D, N, Fseed, Qseed)
-        a_re, a_im, b_re, b_im, QL = sv
+        # Step 2: Optimised weighted fit
+        res = Q.fit(method="NLQFIT8", loop_plan="fwfwfwc")
 
-        assert_almost_equal(a_re + 1j * a_im, 8.9408 + 2.1298j, decimal=4)
-        assert_almost_equal(b_re + 1j * b_im, 0.0054 - 0.0045j, decimal=4)
-        assert_almost_equal(QL, 4664.2418, decimal=3)
-
-        # Step 2: Optimised weighted fit --> result vector
-        mv, weighting_ratio, number_iterations, RMS_Error = Q.optimise_fit8(
-            f, D, N, Fseed, sv, loop_plan, Tol, quiet
-        )
-        m1, m2, m3, m4, m8, m9, QL, FL = mv
-
-        # Now calculate unloaded Q-factor and some other useful quantities.
+        # Unloaded Q-factor and some other useful quantities.
         # Reciprocal of |S21| of a thru in place of resonator
         scaling_factor_A = 1 / 0.949  # 1/|S21_thru|
-        trmode = "transmission"
-        p = Q.Q_unloaded(mv, scaling_factor_A, trmode, quiet)
-        Qo, cal_diam, cal_gamma_V, cal_gamma_T = p
-
+        Q0 = Q.Q_unloaded(res, scaling_factor_A)
+        cal_diam, cal_gamma_V, cal_gamma_T = Q.Q_circle(res, scaling_factor_A)
+        
         # Test against expected solutions
-        assert_almost_equal(FL, 9.76015571, decimal=6)
-        assert_almost_equal(QL, 4760.04, decimal=0)
-        assert_almost_equal(Qo, 4789.49, decimal=0)
-        assert_almost_equal(weighting_ratio, 5.078, decimal=3)
-        assert_almost_equal(RMS_Error, 0.00000910)
+        assert_allclose(Q.f_L, 9.76015571e9)
+        assert_almost_equal(Q.Q_L, 4760.04, decimal=0)
+        assert_almost_equal(Q0, 4789.49, decimal=0)
+        assert_almost_equal(res.weighting_ratio, 5.078, decimal=3)
+        assert_almost_equal(res.RMS_Error, 0.00000910)
         assert_almost_equal(cal_diam, 0.0061, decimal=2)
 
+    def test_Q_unloaded(self):
+        """Test unloaded Q factor method."""
+        Q = rf.Qfactor(self.ntwk_1port, res_type='reflection')
+        res = Q.fit()
+        self.assertRaises(ValueError, Q.Q_unloaded, res, A='dummy')
+        self.assertRaises(ValueError, Q.Q_unloaded, res, A=1j)
+
+    def test_Q_circle(self):
+        """Test Q-circle method."""
+        Q = rf.Qfactor(self.ntwk_1port, res_type='reflection')
+        res = Q.fit()
+        self.assertRaises(ValueError, Q.Q_circle, res, A='dummy')
+        self.assertRaises(ValueError, Q.Q_circle, res, A=1j)        
+        
 
 if __name__ == "__main__":
     # Launch all tests
