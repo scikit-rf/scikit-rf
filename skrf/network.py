@@ -4005,12 +4005,20 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     # If definitions aren't identical and there are complex ports renormalize first
     # Output will have ntwkA s_def if they are different.
     if ntwkA.s_def != ntwkB.s_def and have_complex_ports:
+        warnings.warn('Connecting two networks with different s_def and complex ports. '
+                'The resulting network will have s_def of the first network: ' + ntwkA.s_def + '. '\
+                'To silence this warning explicitly convert the networks to same s_def '
+                'using `renormalize` function.')
         ntwkB = ntwkB.copy()
         ntwkB.renormalize(ntwkB.z0, ntwkA.s_def)
 
     s_def_original = ntwkA.s_def
     if ntwkA.s_def == 'power' and have_complex_ports:
-        # Connecting power wave is not supported, so renormalize to pseudo waves
+        # When port impedance is complex, power-waves are discontinuous across
+        # a junction between two identical transmission lines while traveling
+        # waves and pseudo-waves are continuous. The connection algorithm relies
+        # on continuity and 'power' networks must be first converted to either
+        # of the other definition.
         ntwkA = ntwkA.copy()
         ntwkA.renormalize(ntwkA.z0, 'pseudo')
         ntwkB = ntwkB.copy()
@@ -4157,7 +4165,7 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     ntwkC : :class:`Network`
             new network of rank `(ntwkA.nports + ntwkB.nports - 2)`
     """
-    warnings.warn("connect_fast is deprecated. Use connect", warnings.DeprecationWarning)
+    warnings.warn("connect_fast is deprecated. Use connect.", DeprecationWarning, stacklevel=2)
     return connect(ntwkA, k, ntwkB, l)
 
 
@@ -6776,6 +6784,11 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling')
     Returns
     -------
     s' : 2-port s-matrix for the impedance mis-match
+
+    References
+    ----------
+    .. [#] R. B. Marks et D. F. Williams, A general waveguide circuit theory,
+            J. RES. NATL. INST. STAN., vol. 97, no. 5, p. 533, sept. 1992.
     """
     from .tlineFunctions import zl_2_Gamma0
     gamma = zl_2_Gamma0(z1, z2)

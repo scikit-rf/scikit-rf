@@ -348,7 +348,16 @@ class NetworkTestCase(unittest.TestCase):
                 net2.z = z2
 
                 # Cascade calculated with S-parameters
-                net12 = net1 ** net2
+                with warnings.catch_warnings(record=True) as w:
+                    # Trigger all warnings
+                    warnings.simplefilter("always")
+                    net12 = net1 ** net2
+                    # Check that method warns about connecting networks with
+                    # different s_def.
+                    if net1.s_def != net2.s_def:
+                        self.assertTrue(len(w) == 1)
+                    else:
+                        self.assertTrue(len(w) == 0)
                 net12.renormalize(z0_3)
                 self.assertTrue(net12.s_def == s_def1)
                 self.assertTrue(net3_ref.s_def == s_def1)
