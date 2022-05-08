@@ -955,7 +955,7 @@ class Network(object):
             where f is frequency axis and n is number of ports.
 
         """
-        self._s = npy.array(fix_param_shape(s), dtype=complex)
+        self._s = fix_param_shape(s)
         self.__generate_secondary_properties()
         self.__generate_subnetworks()
 
@@ -6368,7 +6368,7 @@ def fix_param_shape(p: NumberLike):
     if p.shape[-1] != p.shape[-2]:
         raise ValueError('Input matrix must be square')
     if len(p.shape) == 2:
-        # One port with many frequencies
+        # Many port with one frequency
         return p.reshape(-1, p.shape[0], p.shape[0])
     if len(p.shape) != 3:
         raise ValueError('Input array has too many dimensions. Shape: {}' \
