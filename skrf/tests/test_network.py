@@ -535,6 +535,29 @@ class NetworkTestCase(unittest.TestCase):
                     npy.testing.assert_allclose(ntwk_renorm.s, ntwk.s)
                     npy.testing.assert_allclose(ntwk_renorm.z0, ntwk.z0)
 
+    def test_sparam_renorm_different_z0(self):
+        """
+        Test changing S-parameter definition with complex ports.
+        renormalize handles cases with same z0 and different z0 before and
+        after conversion with different method.
+        """
+        for ports in range(2, 6):
+            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
+            test_ntwk = rf.Network(s=s_random, frequency=self.freq)
+            random_z0 = npy.random.uniform(1, 100, size=(self.freq.npoints, ports)) +\
+                        1j*npy.random.uniform(-100, 100, size=(self.freq.npoints, ports))
+            random_z0_2 = npy.random.uniform(1, 100, size=(self.freq.npoints, ports)) +\
+                        1j*npy.random.uniform(-100, 100, size=(self.freq.npoints, ports))
+            for def1 in rf.S_DEFINITIONS:
+                for def2 in rf.S_DEFINITIONS:
+                    ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=random_z0, s_def=def1)
+                    ntwk_renorm = ntwk.copy()
+                    ntwk_renorm.renormalize(random_z0_2, s_def=def2)
+                    npy.testing.assert_allclose(ntwk_renorm.z, ntwk.z)
+                    ntwk_renorm.renormalize(ntwk.z0, s_def=def1)
+                    npy.testing.assert_allclose(ntwk_renorm.s, ntwk.s)
+                    npy.testing.assert_allclose(ntwk_renorm.z0, ntwk.z0)
+
     def test_setters(self):
         s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
         ntwk = rf.Network(s=s_random, frequency=self.freq)
@@ -551,6 +574,27 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_allclose(ntwk.s, s_random)
         ntwk.h = ntwk.h
         npy.testing.assert_allclose(ntwk.s, s_random)
+
+    def test_s_def_setters(self):
+        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
+        ntwk = rf.Network(s=s_random, frequency=self.freq)
+        ntwk.z0 = npy.random.uniform(1, 100, len(ntwk.z0)) + 1j*npy.random.uniform(-100, 100, len(ntwk.z0))
+        ntwk.s = ntwk.s
+
+        s_traveling = rf.s2s(s_random, ntwk.z0, 'traveling', ntwk.s_def)
+        s_power = rf.s2s(s_random, ntwk.z0, 'power', ntwk.s_def)
+        s_pseudo = rf.s2s(s_random, ntwk.z0, 'pseudo', ntwk.s_def)
+
+        ntwk.s_traveling = s_traveling
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.s_power = s_power
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.s_pseudo = s_pseudo
+        npy.testing.assert_allclose(ntwk.s, s_random)
+
+        npy.testing.assert_allclose(ntwk.s_traveling, s_traveling)
+        npy.testing.assert_allclose(ntwk.s_power, s_power)
+        npy.testing.assert_allclose(ntwk.s_pseudo, s_pseudo)
 
     def test_sparam_conversion_with_complex_char_impedance(self):
         """

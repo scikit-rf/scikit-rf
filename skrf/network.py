@@ -957,6 +957,87 @@ class Network(object):
         self.__generate_subnetworks()
 
     @property
+    def s_traveling(self) -> npy.ndarray:
+        """
+        Scattering parameter matrix with s_def = 'traveling'.
+
+        Returns
+        -------
+        s : complex :class:`numpy.ndarray` of shape `fxnxn`
+            The scattering parameter matrix.
+
+        See Also
+        --------
+        s
+        s_power
+        s_pseudo
+        s_traveling
+
+        References
+        ----------
+        .. [#] http://en.wikipedia.org/wiki/Scattering_parameters
+        """
+        return s2s(self._s, self.z0, 'traveling', self.s_def)
+
+    @s_traveling.setter
+    def s_traveling(self, s) -> npy.ndarray:
+        self.s = s2s(s, self.z0, self.s_def, 'traveling')
+
+    @property
+    def s_power(self) -> npy.ndarray:
+        """
+        Scattering parameter matrix with s_def = 'power'.
+
+        Returns
+        -------
+        s : complex :class:`numpy.ndarray` of shape `fxnxn`
+            The scattering parameter matrix.
+
+        See Also
+        --------
+        s
+        s_power
+        s_pseudo
+        s_traveling
+
+        References
+        ----------
+        .. [#] http://en.wikipedia.org/wiki/Scattering_parameters
+        """
+        return s2s(self._s, self.z0, 'power', self.s_def)
+
+    @s_power.setter
+    def s_power(self, s) -> npy.ndarray:
+        self.s = s2s(s, self.z0, self.s_def, 'power')
+
+    @property
+    def s_pseudo(self) -> npy.ndarray:
+        """
+        Scattering parameter matrix with s_def = 'pseudo'.
+
+        Returns
+        -------
+        s : complex :class:`numpy.ndarray` of shape `fxnxn`
+            The scattering parameter matrix.
+
+        See Also
+        --------
+        s
+        s_power
+        s_pseudo
+        s_traveling
+
+        References
+        ----------
+        .. [#] http://en.wikipedia.org/wiki/Scattering_parameters
+        """
+        return s2s(self._s, self.z0, 'pseudo', self.s_def)
+
+    @s_pseudo.setter
+    def s_pseudo(self, s) -> npy.ndarray:
+        self.s = s2s(s, self.z0, self.s_def, 'pseudo')
+
+    @property
     def h(self) -> npy.ndarray:
         """
         Hybrid parameter matrix.
@@ -2910,7 +2991,12 @@ class Network(object):
         if s_def != self.s_def and (self.z0.imag != 0).any():
             need_to_renorm = True
         if need_to_renorm:
-            self.s = renormalize_s(self.s, self.z0, z_new, s_def, self.s_def)
+            # We can use s2s if z0 is the same. This is numerically much more
+            # accurate.
+            if (self.z0 == z_new).all():
+                self.s = s2s(self.s, self.z0, s_def, self.s_def)
+            else:
+                self.s = renormalize_s(self.s, self.z0, z_new, s_def, self.s_def)
         # Update s_def if it was changed
         self.s_def = s_def
         self.z0 = fix_z0_shape(z_new, self.frequency.npoints, self.nports)
@@ -5306,6 +5392,100 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
         t[k, yh:y, xh:x] = sinv[k]
     return t
 
+def s2s(s: NumberLike, z0: NumberLike, s_def_new: str, s_def_old: str):
+    r"""
+    Convert scattering parameters to scattering parameters with different
+    definition.
+
+    Calculates port voltages and currents using the old definition and
+    then calculates the incoming and reflected waves from the voltages
+    using the new S-parameter definition.
+
+    Only has effect if z0 has at least one complex impedance port.
+
+    Parameters
+    ----------
+    s : complex array-like
+        impedance parameters
+    z0 : complex array-like or number
+        port impedances
+    s_def_new : str -> s_def : can be: 'power', 'pseudo' or 'traveling'
+        Scattering parameter definition of the output network.
+        'power' for power-waves definition [#Kurokawa]_,
+        'pseudo' for pseudo-waves definition [#Marks]_.
+        'traveling' corresponds to the initial implementation.
+    s_def_old : str -> s_def : can be: 'power', 'pseudo' or 'traveling'
+        Scattering parameter definition of the input network.
+        'power' for power-waves definition [#Kurokawa]_,
+        'pseudo' for pseudo-waves definition [#Marks]_.
+        'traveling' corresponds to the initial implementation.
+
+    Returns
+    -------
+    s : complex array-like
+        scattering parameters
+
+    References
+    ----------
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+    """
+    if s_def_new == s_def_old:
+        # Nothing to do.
+        return s
+    nfreqs, nports, nports = s.shape
+    z0 = fix_z0_shape(z0, nfreqs, nports)
+
+    # Calculate port voltages and currents using the old s_def.
+    F, G = npy.zeros_like(s), npy.zeros_like(s)
+    if s_def_old == 'power':
+        npy.einsum('ijj->ij', F)[...] = 1.0/(npy.sqrt(z0.real))
+        npy.einsum('ijj->ij', G)[...] = z0
+        Id = npy.eye(s.shape[1], dtype=complex)
+        v = F @ (G.conjugate() + G @ s)
+        i = F @ (Id - s)
+    elif s_def_old == 'pseudo':
+        npy.einsum('ijj->ij', F)[...] = abs(z0)/npy.sqrt(z0.real)
+        npy.einsum('ijj->ij', G)[...] = abs(z0)/(z0*npy.sqrt(z0.real))
+        Id = npy.eye(s.shape[1], dtype=complex)
+        v = F @ (Id + s)
+        i = G @ (Id - s)
+    elif s_def_old == 'traveling':
+        npy.einsum('ijj->ij', F)[...] = npy.sqrt(z0)
+        npy.einsum('ijj->ij', G)[...] = 1/(npy.sqrt(z0))
+        Id = npy.eye(s.shape[1], dtype=complex)
+        v = F @ (Id + s)
+        i = G @ (Id - s)
+    else:
+        raise ValueError('Unknown s_def: {}'.format(s_def_old))
+
+    # Calculate a and b waves from the voltages and currents.
+    F, G = npy.zeros_like(s), npy.zeros_like(s)
+    if s_def_new == 'power':
+        npy.einsum('ijj->ij', F)[...] = 1/(2*npy.sqrt(z0.real))
+        npy.einsum('ijj->ij', G)[...] = z0
+        a = F @ (v + G @ i)
+        b = F @ (v - G.conjugate() @ i)
+    elif s_def_new == 'pseudo':
+        npy.einsum('ijj->ij', F)[...] = npy.sqrt(z0.real)/(2*abs(z0))
+        npy.einsum('ijj->ij', G)[...] = z0
+        a = F @ (v + G @ i)
+        b = F @ (v - G @ i)
+    elif s_def_new == 'traveling':
+        npy.einsum('ijj->ij', F)[...] = 1/(npy.sqrt(z0))
+        npy.einsum('ijj->ij', G)[...] = z0
+        a = F @ (v + G @ i)
+        b = F @ (v - G @ i)
+    else:
+        raise ValueError('Unknown s_def: {}'.format(s_def_old))
+
+    # New S-parameter matrix from a and b waves.
+    s_new = npy.zeros_like(s)
+    for n in range(nports):
+        for m in range(nports):
+            s_new[:, m, n] = b[:, m, n] / a[:, n, n]
+
+    return s_new
 
 def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.ndarray:
     r"""
