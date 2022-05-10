@@ -195,7 +195,11 @@ class DistributedCircuit(Media):
             Distributed impedance in units of ohm/m
         """
         w  = self.frequency.w
-        return self.R + 1j*w*self.L
+        Z = self.R + 1j*w*self.L
+        # Avoid divide by zero.
+        # Needs to be imaginary to avoid all divide by zeros in the media class.
+        Z[Z.imag == 0] += 1j*1e-12
+        return Z
 
     @property
     def Y(self) -> NumberLike:
@@ -215,7 +219,11 @@ class DistributedCircuit(Media):
         """
 
         w  = self.frequency.w
-        return self.G + 1j*w*self.C
+        Y = self.G + 1j*w*self.C
+        # Avoid divide by zero.
+        # Needs to be imaginary to avoid all divide by zeros in the media class.
+        Y[Y.imag == 0] += 1j*1e-12
+        return Y
 
     @property
     def Z0(self) -> NumberLike:
