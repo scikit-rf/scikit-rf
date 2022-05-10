@@ -17,24 +17,27 @@ class MLineTestCase(unittest.TestCase):
         """
         Read in all the network data required for tests
         """
-        self.data_dir = os.path.dirname(os.path.abspath(__file__)) + \
+        self.data_dir_qucs = os.path.dirname(os.path.abspath(__file__)) + \
             '/qucs_prj/'
+        self.data_dir_ads = os.path.dirname(os.path.abspath(__file__)) + \
+            '/ads/'
         
-        self.ref1 = rf.Network(os.path.join(self.data_dir,
+        self.ref1 = rf.Network(os.path.join(self.data_dir_qucs,
                            'mline,hammerstad,hammerstad.s2p'))
-        self.ref2 = rf.Network(os.path.join(self.data_dir,
+        self.ref2 = rf.Network(os.path.join(self.data_dir_qucs,
                            'mline,hammerstad,kirschning.s2p'))
-        self.ref3 = rf.Network(os.path.join(self.data_dir,
+        self.ref3 = rf.Network(os.path.join(self.data_dir_qucs,
                            'mline,hammerstad,kobayashi.s2p'))
-        self.ref4 = rf.Network(os.path.join(self.data_dir,
+        self.ref4 = rf.Network(os.path.join(self.data_dir_qucs,
                            'mline,hammerstad,yamashita.s2p'))
-        self.ref5 = rf.Network(os.path.join(self.data_dir,
+        self.ref5 = rf.Network(os.path.join(self.data_dir_qucs,
                            'mline,wheeler,schneider.s2p'))
-        self.ref6 = rf.Network(os.path.join(self.data_dir,
+        self.ref6 = rf.Network(os.path.join(self.data_dir_qucs,
                            'mline,schneider,schneider.s2p'))
-        self.ref7 = rf.Network(os.path.join(
-            os.path.dirname(os.path.abspath(__file__)) + '/' + \
-                           'mlin_ads,svenson-djordjevic,kirschning.s2p'))
+        self.ref_ads_1 = rf.Network(os.path.join(self.data_dir_ads,
+                           'mlin,freqencyinvariant,kirschning.s2p'))
+        self.ref_ads_2 = rf.Network(os.path.join(self.data_dir_ads,
+                           'mlin,djordjevicsvensson,kirschning.s2p'))
         
         # default parameter set for tests
         self.w    = 3.00e-3
@@ -82,7 +85,7 @@ class MLineTestCase(unittest.TestCase):
         self.assertTrue(npy.abs(mline3.alpha_conductor) < 1e-16)
 
 
-    def test_line(self):
+    def test_line_qucs(self):
         """
         Test against the Qucs project results
         """
@@ -127,69 +130,153 @@ class MLineTestCase(unittest.TestCase):
         l5 = mline5.line(d=self.l, unit='m', embed = True, z0=mline5.Z0)
         l6 = mline6.line(d=self.l, unit='m', embed = True, z0=mline6.Z0)
         
-        self.assertTrue(npy.all(npy.abs(l1.s_db - self.ref1.s_db) < 0.1))
-        self.assertTrue(npy.all(npy.abs(l1.s_deg - self.ref1.s_deg) < 1.))
-        self.assertTrue(npy.all(npy.abs(l2.s_db - self.ref2.s_db) < 0.1))
-        self.assertTrue(npy.all(npy.abs(l2.s_deg - self.ref2.s_deg) < 1.))
-        self.assertTrue(npy.all(npy.abs(l3.s_db - self.ref3.s_db) < 0.1))
-        self.assertTrue(npy.all(npy.abs(l3.s_deg - self.ref3.s_deg) < 1.))
-        self.assertTrue(npy.all(npy.abs(l4.s_db - self.ref4.s_db) < 0.1))
-        self.assertTrue(npy.all(npy.abs(l4.s_deg - self.ref4.s_deg) < 1.))
-        self.assertTrue(npy.all(npy.abs(l5.s_db - self.ref5.s_db) < 0.1))
-        self.assertTrue(npy.all(npy.abs(l5.s_deg - self.ref5.s_deg) < 1.))
-        self.assertTrue(npy.all(npy.abs(l6.s_db - self.ref6.s_db) < 0.1))
-        self.assertTrue(npy.all(npy.abs(l6.s_deg - self.ref6.s_deg) < 1.))
+        # residuals
+        res1 = l1 / self.ref1
+        res2 = l2 / self.ref2
+        res3 = l3 / self.ref3
+        res4 = l4 / self.ref4
+        res5 = l5 / self.ref5
+        res6 = l6 / self.ref6
         
-    def test_line2(self):
-        """
-        Test against the ADS results
-        """
-        mline7 = MLine(frequency = self.ref7.frequency, z0 = 50.,
-                       w = self.w, h = self.h, t = self.t,
-                       ep_r = self.ep_r, rho = self.rho,
-                       tand = self.tand, rough = self.d,
-                       diel = 'djordjevicsvensson', disp = 'kirschningjansen')
-        
-        l7 = mline7.line(d=0.1, unit='m', embed = True, z0=mline7.Z0)
-        
-        res = l7 / self.ref7
-        # fixme: cannot pass currently. is it due to dielectric dispersion ?
-        # self.assertTrue(npy.all(npy.abs(res.s_db[:, 0, 0]) < 0.5))
-        # self.assertTrue(npy.all(npy.abs(res.s_deg[:, 0, 0]) < 5.))
-        # pass for S21
-        res.name = 'residuals'
-        self.assertTrue(npy.all(npy.abs(res.s_db[:, 1, 0]) < 0.5))
-        self.assertTrue(npy.all(npy.abs(res.s_deg[:, 1, 0]) < 5.))
+        # tolerate quite large errors due to qucs issue in attenuation computation
+        limit_db = 2
+        limit_deg = 5.
+        self.assertTrue(npy.all(npy.abs(res1.s_db) < limit_db))
+        self.assertTrue(npy.all(npy.abs(res1.s_deg) < limit_deg))
+        self.assertTrue(npy.all(npy.abs(res2.s_db) < limit_db))
+        self.assertTrue(npy.all(npy.abs(res2.s_deg) < limit_deg))
+        self.assertTrue(npy.all(npy.abs(res3.s_db) < limit_db))
+        self.assertTrue(npy.all(npy.abs(res3.s_deg) < limit_deg))
+        self.assertTrue(npy.all(npy.abs(res4.s_db) < limit_db))
+        self.assertTrue(npy.all(npy.abs(res4.s_deg) < limit_deg))
+        self.assertTrue(npy.all(npy.abs(res5.s_db) < limit_db))
+        self.assertTrue(npy.all(npy.abs(res5.s_deg) < limit_deg))
+        self.assertTrue(npy.all(npy.abs(res6.s_db) < limit_db))
+        self.assertTrue(npy.all(npy.abs(res6.s_deg) < limit_deg))
         
         # uncomment plots to see results
         # from matplotlib import pyplot as plt
-        # plt.figure(figsize=(10, 8))
-        # plt.subplot(2, 2, 1)
-        # self.ref7.plot_s_db(0, 0, color = 'k', label = '_nolegend_')
-        # l7.plot_s_db(0, 0, color = 'k', linestyle = 'none', marker = 'x',
-        #               markevery = 100, label = '_nolegend_')
-        # res.plot_s_db(0,0)
-        # plt.grid()
-        # plt.subplot(2, 2, 2)
-        # self.ref7.plot_s_deg(0, 0, color = 'k', label = '_nolegend_')
-        # l7.plot_s_deg(0, 0, color = 'k', linestyle = 'none', marker = 'x',
-        #               markevery = 100, label = '_nolegend_')
-        # res.plot_s_deg(0,0)
-        # plt.grid()
-        # plt.subplot(2, 2, 3)
-        # self.ref7.plot_s_db(1, 0, color = 'k', label = 'reference')
-        # l7.plot_s_db(1, 0, color = 'k', linestyle = 'none', marker = 'x',
-        #               markevery = 100, label = 'model')
-        # res.plot_s_db(1,0)
-        # plt.grid()
-        # plt.subplot(2, 2, 4)
-        # self.ref7.plot_s_deg(1, 0, color = 'k', label = '_nolegend_')
-        # l7.plot_s_deg(1, 0, color = 'k', linestyle = 'none', marker = 'x',
-        #               markevery = 100, label = '_nolegend_')
-        # res.plot_s_deg(1,0)
-        # plt.grid()
-        # plt.tight_layout()
+        # rf.stylely()
+        # plt.figure(figsize=(8, 7))
         
+        # plt.subplot(2, 2, 1)
+        # self.ref1.plot_s_db(0, 0, color = 'r')
+        # l1.plot_s_db(0, 0, linestyle = 'none', marker = 'x', color = 'r')
+        # res1.plot_s_db(0,0, linestyle = 'dashed', color = 'r')
+        # self.ref2.plot_s_db(0, 0, color = 'g')
+        # l2.plot_s_db(0, 0, linestyle = 'none', marker = 'x', color = 'g')
+        # res2.plot_s_db(0,0, linestyle = 'dashed', color = 'g')
+        # plt.ylim((-120, 5))
+        
+        # ax2 = plt.subplot(2, 2, 2)
+        # self.ref1.plot_s_deg(0, 0, color = 'r')
+        # l1.plot_s_deg(0, 0, linestyle = 'none', marker = 'x', color = 'r')
+        # res1.plot_s_deg(0,0, linestyle = 'dashed', color = 'r')
+        # self.ref2.plot_s_deg(0, 0, color = 'g')
+        # l2.plot_s_deg(0, 0, linestyle = 'none', marker = 'x', color = 'g')
+        # res2.plot_s_deg(0,0, linestyle = 'dashed', color = 'g')
+        # ax2.get_legend().remove()
+        
+        # ax3 = plt.subplot(2, 2, 3)
+        # self.ref1.plot_s_db(1, 0, color = 'r')
+        # l1.plot_s_db(1, 0, linestyle = 'none', marker = 'x', color = 'r')
+        # res1.plot_s_db(1,0, linestyle = 'dashed', color = 'r')
+        # self.ref2.plot_s_db(1, 0, color = 'g')
+        # l2.plot_s_db(1, 0, linestyle = 'none', marker = '+', color = 'g')
+        # res2.plot_s_db(1,0, linestyle = 'dashed', color = 'g')
+        # ax3.get_legend().remove()
+        
+        # ax4 = plt.subplot(2, 2, 4)
+        # self.ref1.plot_s_deg(1, 0, color = 'r')
+        # l1.plot_s_deg(1, 0, linestyle = 'none', marker = 'x', color = 'r')
+        # res1.plot_s_deg(1,0, linestyle = 'dashed', color = 'r')
+        # self.ref2.plot_s_deg(1, 0, color = 'g')
+        # l2.plot_s_deg(1, 0, linestyle = 'none', marker = 'x', color = 'g')
+        # res2.plot_s_deg(1,0, linestyle = 'dashed', color = 'g')
+        # ax4.get_legend().remove()
+        
+    def test_line_ads(self):
+        """
+        Test against the ADS results
+        """
+        mline1 = MLine(frequency = self.ref_ads_1.frequency, z0 = 50.,
+                       w = self.w, h = self.h, t = self.t,
+                       ep_r = self.ep_r, rho = 1.718e-8,
+                       tand = self.tand, rough = self.d,
+                       diel = 'frequencyinvariant', disp = 'kirschningjansen')
+        mline2 = MLine(frequency = self.ref_ads_2.frequency, z0 = 50.,
+                       w = self.w, h = self.h, t = self.t,
+                       ep_r = self.ep_r, rho = 1.718e-8,
+                       tand = self.tand, rough = self.d,
+                       f_epr_tand = 1e9, f_low = 1e3, f_high = 1e12,
+                       diel = 'djordjevicsvensson', disp = 'kirschningjansen')
+        
+        l1 = mline1.line(d=self.l, unit='m', embed = True, z0=mline1.Z0)
+        l2 = mline2.line(d=self.l, unit='m', embed = True, z0=mline2.Z0)
+        
+        res1 = l1 / self.ref_ads_1
+        res2 = l2 / self.ref_ads_2
+        res1.name = 'res, freqinv'
+        res2.name = 'res, svendjor'
+        
+        # fixme: cannot pass currently. is it due to dielectric dispersion ?
+        # self.assertTrue(npy.all(npy.abs(res.s_db[:, 0, 0]) < 0.5))
+        # self.assertTrue(npy.all(npy.abs(res.s_deg[:, 0, 0]) < 5.))
+        
+        # pass for S21
+        self.assertTrue(npy.all(npy.abs(res1.s_db[:, 1, 0]) < 0.1))
+        self.assertTrue(npy.all(npy.abs(res1.s_deg[:, 1, 0]) < 1.))
+        self.assertTrue(npy.all(npy.abs(res2.s_db[:, 1, 0]) < 0.1))
+        self.assertTrue(npy.all(npy.abs(res2.s_deg[:, 1, 0]) < 1.))
+        
+        # uncomment plots to see results
+        # from matplotlib import pyplot as plt
+        # rf.stylely()
+        # self.ref_ads_1.name = 'ads, freqinv'
+        # self.ref_ads_2.name = 'ads, svendjor'
+        # l1.name = 'skrf, freqinv'
+        # l2.name = 'skrf, svendjor'
+        
+        # plt.figure(figsize=(8, 7))
+        
+        # plt.subplot(2, 2, 1)
+        # self.ref_ads_1.plot_s_db(0, 0, color = 'r')
+        # l1.plot_s_db(0, 0, linestyle = 'none', marker = 'x', color = 'r')
+        # res1.plot_s_db(0,0, linestyle = 'dashed', color = 'r')
+        # self.ref_ads_2.plot_s_db(0, 0, color = 'g')
+        # l2.plot_s_db(0, 0, linestyle = 'none', marker = 'x', color = 'g')
+        # res2.plot_s_db(0,0, linestyle = 'dashed', color = 'g')
+        # plt.ylim((-120, 5))
+        
+        # ax2 = plt.subplot(2, 2, 2)
+        # self.ref_ads_1.plot_s_deg(0, 0, color = 'r')
+        # l1.plot_s_deg(0, 0, linestyle = 'none', marker = 'x', color = 'r')
+        # res1.plot_s_deg(0,0, linestyle = 'dashed', color = 'r')
+        # self.ref_ads_2.plot_s_deg(0, 0, color = 'g')
+        # l2.plot_s_deg(0, 0, linestyle = 'none', marker = 'x', color = 'g')
+        # res2.plot_s_deg(0,0, linestyle = 'dashed', color = 'g')
+        # ax2.get_legend().remove()
+        
+        # ax3 = plt.subplot(2, 2, 3)
+        # self.ref_ads_1.plot_s_db(1, 0, color = 'r')
+        # l1.plot_s_db(1, 0, linestyle = 'none', marker = 'x', color = 'r')
+        # res1.plot_s_db(1,0, linestyle = 'dashed', color = 'r')
+        # self.ref_ads_2.plot_s_db(1, 0, color = 'g')
+        # l2.plot_s_db(1, 0, linestyle = 'none', marker = '+', color = 'g')
+        # res2.plot_s_db(1,0, linestyle = 'dashed', color = 'g')
+        # ax3.get_legend().remove()
+        
+        # ax4 = plt.subplot(2, 2, 4)
+        # self.ref_ads_1.plot_s_deg(1, 0, color = 'r')
+        # l1.plot_s_deg(1, 0, linestyle = 'none', marker = 'x', color = 'r')
+        # res1.plot_s_deg(1,0, linestyle = 'dashed', color = 'r')
+        # self.ref_ads_2.plot_s_deg(1, 0, color = 'g')
+        # l2.plot_s_deg(1, 0, linestyle = 'none', marker = 'x', color = 'g')
+        # res2.plot_s_deg(1,0, linestyle = 'dashed', color = 'g')
+        # ax4.get_legend().remove()
+        
+        #plt.tight_layout()
+               
     def test_alpha_warning(self):
         """
         Test if warns when t < 3 * skin_depth

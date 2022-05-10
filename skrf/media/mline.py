@@ -142,24 +142,26 @@ class MLine(Media):
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
         
         # variation of dielectric constant with frequency
-        self.ep_r_f = self.analyse_dielectric(self.ep_r, self.tand,
+        self.ep_r_f, self.tand_f = self.analyse_dielectric(self.ep_r, self.tand,
             self.f_low, self.f_high, self.f_epr_tand, self.frequency.f,
             self.diel)
         
         # quasi-static effective dielectric constant of substrate + line and
         # the impedance of the microstrip line
         self.zl_eff, self.ep_reff, self.w_eff = self.analyse_quasi_static(
-            self.ep_r_f, self.w, self.h, self.t, self.model)
+            real(self.ep_r_f), self.w, self.h, self.t, self.model)
         
         # analyse dispersion of Zl and Er
-        # use w_eff here ? Not used in Qucs
+        # beware qucs use w here instead w_eff
         self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
             self.zl_eff, self.ep_reff, real(self.ep_r_f), self.w, self.h,
             self.frequency.f, self.disp)
         
         # analyse losses of line
+        # beware qucs use quasi-static values here, leading to a difference
+        # against ads
         self.alpha_conductor, self.alpha_dielectric = self.analyse_loss(
-            real(self.ep_r_f), real(self.ep_reff), self.tand,
+            real(self.ep_r_f), real(self.ep_reff_f), self.tand_f,
             self.rho, self.mu_r,
             real(self._z_characteristic), real(self._z_characteristic),
             self.frequency.f, self.w, self.t, self.rough)
@@ -234,16 +236,22 @@ class MLine(Media):
         """
         if diel == 'djordjevicsvensson':
             # compute the slope for a log frequency scale, tanD dependent.
-            m = (ep_r*tand)  * (pi/(2*log(10)))
+            k = log((f_high + 1j * f_epr_tand) / (f_low + 1j * f_epr_tand))
+            fd = log((f_high + 1j * f) / (f_low + 1j * f))
+            ep_d = -tand * ep_r  / imag(k)
             # value for frequency above f_high
-            ep_inf = (ep_r - 1j*ep_r*tand - m*log((f_high + 1j*f_epr_tand)/(f_low + 1j*f_epr_tand)))
-            ep_r_f = ep_inf + m*log((f_high + 1j*f)/(f_low + 1j*f))
+            ep_inf = ep_r * (1. + tand * real(k) / imag(k))
+            # compute complex permitivity
+            ep_r_f = ep_inf + ep_d * fd
+            # get tand
+            tand_f = -imag(ep_r_f) / real(ep_r_f)
         elif diel == 'frequencyinvariant':
-            ep_r_f =  ones(self.frequency.f.shape) * (ep_r - 1j*ep_r*tand)
+            ep_r_f =  ep_r
+            tand_f = tand
         else:
             raise ValueError('Unknown dielectric dispersion model')
         
-        return real(ep_r_f)
+        return real(ep_r_f), tand_f
     
     def analyse_quasi_static(self, ep_r: NumberLike, 
                            w: NumberLike, h: NumberLike, t: NumberLike,
@@ -485,15 +493,16 @@ def kirsching_zl(u: NumberLike, fn: NumberLike,
     """
     intermediary parameter. see qucs docs on microstrip lines.
     """
-    #fn = self.frequency.f * self.h * 1e-6
-    R1 = 0.03891 * ep_r**1.4
-    R2 = 0.267 * u**7
+    #fn = f * h * 1e-6 # GHz-mm
+    R1 = npy.minimum(0.03891 * ep_r**1.4, 20.)
+    R2 = npy.minimum(0.267 * u**7, 20.)
     R3 = 4.766 * exp(-3.228 * u**0.641)
     R4 = 0.016 + (0.0514 * ep_r)**4.524
     R5 = (fn / 28.843)**12
-    R6 = 22.20 * u **1.92
+    R6 = npy.minimum(22.20 * u **1.92, 20.)
     R7 = 1.206 - 0.3144 * exp(-R1) * (1 - exp(-R2))
-    R8 = 1 + 1.275 * (1 - exp(-0.004625 * R3 * ep_r**1.674 \
+    # beware original paper has 1.1275 while qucs has 1.275
+    R8 = 1 + 1.1275 * (1 - exp(-0.004625 * R3 * ep_r**1.674 \
                               * (fn / 18.365)**2.745))
     R9 = 5.086 * R4 * R5/(0.3838 + 0.386 * R4) \
         * exp(-R6) / (1 + 1.2992 * R5) \
@@ -514,6 +523,8 @@ def kirsching_er(u: NumberLike, fn: NumberLike,
     """
     intermediary parameter. see qucs docs on microstrip lines.
     """
+    # in the paper fn is in GHz-cm while in Qucs it is GHz-mm, thus a factor
+    # 10 for all constant that multiply fn
     P1 = 0.27488 + (0.6315 + 0.525 / ( 1+ 0.0157 * fn)**20) * u \
         -0.065683 * exp(-8.7513 * u)
     P2 = 0.33622 * (1  -exp(-0.03442 * ep_r))
