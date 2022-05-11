@@ -6776,9 +6776,9 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling')
             complex impedance of port 2
     s_def : str, optional. Default is 'traveling'.
         Scattering parameter definition:
+        'power' for power-waves definition,
         'pseudo' for pseudo-waves definition.
         'traveling' corresponds to the initial implementation.
-        'power' is not supported.
         NB: results are the same for real-valued characteristic impedances.
 
     Returns
@@ -6805,6 +6805,12 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling')
         result[:, 1, 1] = -gamma
         result[:, 1, 0] = 2 * z2 / (n * (z1 + z2))
         result[:, 0, 1] = 2 * z1 * n / (z1 + z2)
+    elif s_def == 'power':
+        n = npy.sqrt(z1.real / z2.real)
+        result[:, 0, 0] = (z2 - z1.conjugate()) / (z1 + z2)
+        result[:, 1, 1] = (z1 - z2.conjugate()) / (z1 + z2)
+        result[:, 1, 0] = (2 * z1.real) / (n * (z1 + z2))
+        result[:, 0, 1] = (2 * z2.real) * n / (z1 + z2)
     else:
         raise ValueError('Unsupported s_def: {}'.format(s_def))
 

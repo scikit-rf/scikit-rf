@@ -21,7 +21,7 @@ from scipy import stats
 from scipy.constants import  c, inch, mil
 
 from ..frequency import Frequency
-from ..network import Network, connect
+from ..network import Network, connect, impedance_mismatch
 
 from .. import tlineFunctions as tf
 from .. import mathFunctions as mf
@@ -447,15 +447,13 @@ class Media(ABC):
         result.s = npy.array(Gamma0).reshape(-1, 1, 1) * \
             npy.eye(nports, dtype=complex).reshape((-1, nports, nports)).\
             repeat(self.frequency.npoints, 0)
-        #except(ValueError):
-        #    for f in range(self.frequency.npoints):
-        #        result.s[f,:,:] = Gamma0[f]*npy.eye(nports, dtype=complex)
-
         return result
 
     def short(self, nports: int = 1, **kwargs) -> Network:
         r"""
         Short (:math:`\Gamma_0 = -1`)
+
+        For s_def = 'power' (:math:`-Z_{ref}^*/Z_{ref}`)
 
         Parameters
         ----------
@@ -476,7 +474,12 @@ class Media(ABC):
         open
         load
         """
-        return self.load(-1., nports, **kwargs)
+        s_short = -1
+        # Powerwave short is not necessarily -1
+        if kwargs.get('s_def', S_DEF_DEFAULT) == 'power':
+            z0 = kwargs.get('z0', self.z0)
+            s_short = -npy.conjugate(z0) / z0
+        return self.load(s_short, nports, **kwargs)
 
     def open(self, nports: int = 1, **kwargs) -> Network:
         r"""
@@ -646,11 +649,9 @@ class Media(ABC):
         resistor
         """
         result = self.match(nports=2, **kwargs)
+        s_def = kwargs.get('s_def', S_DEF_DEFAULT)
         gamma = tf.zl_2_Gamma0(z1,z2)
-        result.s[:,0,0] = gamma
-        result.s[:,1,1] = -gamma
-        result.s[:,1,0] = (1+gamma)*npy.sqrt(1.0*z1/z2)
-        result.s[:,0,1] = (1-gamma)*npy.sqrt(1.0*z2/z1)
+        result.s = impedance_mismatch(z1, z2, s_def)
         return result
 
 
