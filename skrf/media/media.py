@@ -650,8 +650,8 @@ class Media(ABC):
         """
         result = self.match(nports=2, **kwargs)
         s_def = kwargs.get('s_def', S_DEF_DEFAULT)
-        gamma = tf.zl_2_Gamma0(z1,z2)
-        result.s = impedance_mismatch(z1, z2, s_def)
+        mismatch = npy.broadcast_to(impedance_mismatch(z1, z2, s_def), result.s.shape)
+        result.s = mismatch
         return result
 
 
