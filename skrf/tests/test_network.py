@@ -198,6 +198,61 @@ class NetworkTestCase(unittest.TestCase):
             sio.name = os.path.basename(filename) # hack a bug to touchstone reader
             rf.Network(sio)
 
+    def test_constructor_from_parameters(self):
+        """Test creating Network from all supported parameters
+        with default z0 and specified z0.
+        """
+        random_z0 = npy.random.uniform(0.1, 1, (1, 2)) + \
+                1j*npy.random.uniform(0.1, 1, (1, 2))
+        for z0 in [None, random_z0]:
+            for param in rf.Network.PRIMARY_PROPERTIES:
+                params = npy.random.uniform(0.1, 1, (1, 2, 2)) + \
+                        1j*npy.random.uniform(0.1, 1, (1, 2, 2))
+                kwargs = {param:params}
+                if z0 is not None:
+                    kwargs['z0'] = z0
+                net = rf.Network(**kwargs)
+                if z0 is not None:
+                    npy.testing.assert_allclose(net.z0, z0)
+                npy.testing.assert_allclose(getattr(net, param), params)
+
+    def test_constructor_from_parameters2(self):
+        """Test creating Network from all supported parameters
+        with default z0 and specified z0.
+        Multiple frequency points and z0 broadcasted
+        """
+        random_z0 = npy.random.uniform(0.1, 1, 2) + \
+                1j*npy.random.uniform(0.1, 1, 2)
+        for z0 in [None, random_z0]:
+            for param in rf.Network.PRIMARY_PROPERTIES:
+                params = npy.random.uniform(0.1, 1, (5, 2, 2)) + \
+                        1j*npy.random.uniform(0.1, 1, (5, 2, 2))
+                kwargs = {param:params}
+                if z0 is not None:
+                    kwargs['z0'] = z0
+                net = rf.Network(**kwargs)
+                if z0 is not None:
+                    # Network z0 is broadcasted
+                    npy.testing.assert_allclose(net.z0[0,:], z0)
+                npy.testing.assert_allclose(getattr(net, param), params)
+
+    def test_constructor_invalid_networks(self):
+        with pytest.raises(Exception) as e_info:
+            # z0 size doesn't match
+            rf.Network(s=npy.zeros((2,2,2)), z0=[1,2,3])
+        with pytest.raises(Exception) as e_info:
+            # z0 size doesn't match, Z-parameters
+            rf.Network(z=npy.zeros((2,2,2)), z0=[1,2,3])
+        with pytest.raises(Exception) as e_info:
+            # Invalid s shape, non-square matrix
+            rf.Network(s=npy.zeros((2,2,1)))
+        with pytest.raises(Exception) as e_info:
+            # invalid s shape, too many dimensions
+            rf.network(s=npy.zeros((1,2,2,2)))
+        with pytest.raises(Exception) as e_info:
+            # Multiple input parameters
+            rf.network(s=1, z=1)
+
     def test_zipped_touchstone(self):
         zippath = os.path.join(self.test_dir, 'ntwks.zip')
         fname = 'ntwk1.s2p'
