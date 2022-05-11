@@ -108,6 +108,12 @@ class MLine(Media):
         higher frequency for wideband Debye Djordjevic/Svensson dielectric model
     f_epr_tand : number, or array-like
         measurement frequency for ep_r and tand of dielectric
+    compatibility_mode: str
+        This switch the behaviour to stick with ADS or Qucs simulator
+        implementations of microstriplines.
+        
+        * 'qucs' (default) follow QUCS behaviour
+        * 'ads' : follow ADS behaviour
 
     References
     ----------
@@ -132,6 +138,7 @@ class MLine(Media):
                  rough: NumberLike = 0.15e-6,
                  f_low: NumberLike = 1e3, f_high: NumberLike = 1e12,
                  f_epr_tand: NumberLike = 1e9,
+                 compatibility_mode: str = 'qucs',
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency, z0 = z0)
 
@@ -140,8 +147,10 @@ class MLine(Media):
         self.model, self.disp, self.diel = model, disp, diel
         self.rho, self.tand, self.rough, self.disp =  rho, tand, rough, disp
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
+        self.compatibility_mode = compatibility_mode
         
         # variation of dielectric constant with frequency
+        # implemented by ADS only
         self.ep_r_f, self.tand_f = self.analyse_dielectric(self.ep_r, self.tand,
             self.f_low, self.f_high, self.f_epr_tand, self.frequency.f,
             self.diel)
@@ -152,19 +161,33 @@ class MLine(Media):
             real(self.ep_r_f), self.w, self.h, self.t, self.model)
         
         # analyse dispersion of Zl and Er
-        # beware qucs use w here instead w_eff
-        self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
-            self.zl_eff, self.ep_reff, real(self.ep_r_f), self.w, self.h,
-            self.frequency.f, self.disp)
+        # qucs use w instead of w_eff here
+        if compatibility_mode == 'qucs':
+            self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
+                self.zl_eff, self.ep_reff, real(self.ep_r_f),
+                self.w, self.h,
+                self.frequency.f, self.disp)
+        else:
+            self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
+                self.zl_eff, self.ep_reff, real(self.ep_r_f),
+                self.w_eff, self.h,
+                self.frequency.f, self.disp)
         
         # analyse losses of line
-        # beware qucs use quasi-static values here, leading to a difference
+        # qucs use quasi-static values here, leading to a difference
         # against ads
-        self.alpha_conductor, self.alpha_dielectric = self.analyse_loss(
-            real(self.ep_r_f), real(self.ep_reff_f), self.tand_f,
-            self.rho, self.mu_r,
-            real(self._z_characteristic), real(self._z_characteristic),
-            self.frequency.f, self.w, self.t, self.rough)
+        if compatibility_mode == 'qucs':
+            self.alpha_conductor, self.alpha_dielectric = self.analyse_loss(
+                real(self.ep_r_f), real(self.ep_reff), self.tand_f,
+                self.rho, self.mu_r,
+                real(self.zl_eff), real(self.zl_eff),
+                self.frequency.f, self.w, self.t, self.rough)
+        else:
+            self.alpha_conductor, self.alpha_dielectric = self.analyse_loss(
+                real(self.ep_r_f), real(self.ep_reff_f), self.tand_f,
+                self.rho, self.mu_r,
+                real(self._z_characteristic), real(self._z_characteristic),
+                self.frequency.f, self.w, self.t, self.rough)
 
     def __str__(self) -> str:
         f=self.frequency
@@ -404,11 +427,10 @@ class MLine(Media):
                  (2 * pi * h * sqrt(ep_r - ep_reff))
              fh = fk / (0.75 + (0.75 - 0.332 / (ep_r**1.73)) * u) 
              no = 1 + 1 / (1 + sqrt(u)) + 0.32 * (1 / (1 + sqrt(u)))**3 
-             if(u < 0.7):
-                 nc = 1 + 1.4 / (1 + u) * (0.15 - 0.235 * exp(-0.45 * f / fh))
-             else:
-                 nc = 1
-             n = no * nc if no * nc < 2.32 else 2.32
+             nc = npy.where(u < 0.7,
+                 1 + 1.4 / (1 + u) * (0.15 - 0.235 * exp(-0.45 * f / fh)),
+                 1)
+             n = npy.where(no * nc < 2.32, no * nc, 2.32)
              e =  ep_r - (ep_r - ep_reff) / (1 + (f / fh)**n)
              z =  npy.ones(f.shape) * zl_eff
          elif disp == 'none':
@@ -501,8 +523,7 @@ def kirsching_zl(u: NumberLike, fn: NumberLike,
     R5 = (fn / 28.843)**12
     R6 = npy.minimum(22.20 * u **1.92, 20.)
     R7 = 1.206 - 0.3144 * exp(-R1) * (1 - exp(-R2))
-    # beware original paper has 1.1275 while qucs has 1.275
-    R8 = 1 + 1.1275 * (1 - exp(-0.004625 * R3 * ep_r**1.674 \
+    R8 = 1 + 1.275 * (1 - exp(-0.004625 * R3 * ep_r**1.674 \
                               * (fn / 18.365)**2.745))
     R9 = 5.086 * R4 * R5/(0.3838 + 0.386 * R4) \
         * exp(-R6) / (1 + 1.2992 * R5) \
@@ -524,7 +545,7 @@ def kirsching_er(u: NumberLike, fn: NumberLike,
     intermediary parameter. see qucs docs on microstrip lines.
     """
     # in the paper fn is in GHz-cm while in Qucs it is GHz-mm, thus a factor
-    # 10 for all constant that multiply fn
+    # 10 for all constant that multiply or divide fn
     P1 = 0.27488 + (0.6315 + 0.525 / ( 1+ 0.0157 * fn)**20) * u \
         -0.065683 * exp(-8.7513 * u)
     P2 = 0.33622 * (1  -exp(-0.03442 * ep_r))
