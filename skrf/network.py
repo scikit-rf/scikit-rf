@@ -280,7 +280,7 @@ class Network(object):
 
     """
 
-    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h']
+    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 't']
     """
     Primary Network Properties list like 's', 'z', 'y', etc.
     """
@@ -462,11 +462,22 @@ class Network(object):
         if self.frequency is not None and f_unit is not None:
             self.frequency.unit = f_unit
 
-        # allow properties to be set through the constructor
+        # Check for multiple attributes
+        params = [attr for attr in PRIMARY_PROPERTIES if attr in kwargs]
+        if len(params) > 1:
+            raise ValueError('Multiple input parameters provided: {}'.format(params))
+
+        # When initializing Network from different parameters than s
+        # we need to make sure that z0 has been set first because it will be
+        # needed in conversion to S-parameters.
+        self.z0 = kwargs.get('z0', self._z0)
+
+        # z0 might be set here again, but it's on purpose as z0.setter will
+        # fix the _z0 shape if s has been assigned or raise Exception if
+        # z0 and s shapes are not compatible.
         for attr in PRIMARY_PROPERTIES + ['frequency', 'f', 'z0', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
-                # self.nports = self.number_of_ports
 
     @classmethod
     def from_z(cls, z: npy.ndarray, *args, **kw) -> 'Network':
@@ -944,15 +955,7 @@ class Network(object):
             where f is frequency axis and n is number of ports.
 
         """
-        s_shape = npy.shape(s)
-        if len(s_shape) < 3:
-            if len(s_shape) == 2:
-                # reshape to kx1x1, this simplifies indexing in function
-                s = npy.reshape(s, (-1, s_shape[0], s_shape[0]))
-            else:
-                s = npy.reshape(s, (-1, 1, 1))
-
-        self._s = npy.array(s, dtype=complex)
+        self._s = fix_param_shape(s)
         self.__generate_secondary_properties()
         self.__generate_subnetworks()
 
@@ -989,7 +992,7 @@ class Network(object):
 
     @h.setter
     def h(self, value: npy.ndarray) -> None:
-        self._s = h2s(value, self.z0)
+        self._s = h2s(fix_param_shape(value), self.z0)
 
     @property
     def y(self) -> npy.ndarray:
@@ -1023,7 +1026,7 @@ class Network(object):
 
     @y.setter
     def y(self, value: npy.ndarray) -> None:
-        self._s = y2s(value, self.z0, s_def=self.s_def)
+        self._s = y2s(fix_param_shape(value), self.z0, s_def=self.s_def)
 
     @property
     def z(self) -> npy.ndarray:
@@ -1057,7 +1060,7 @@ class Network(object):
 
     @z.setter
     def z(self, value: npy.ndarray) -> None:
-        self._s = z2s(value, self.z0, s_def=self.s_def)
+        self._s = z2s(fix_param_shape(value), self.z0, s_def=self.s_def)
 
     @property
     def t(self) -> npy.ndarray:
@@ -1094,7 +1097,7 @@ class Network(object):
 
     @t.setter
     def t(self, value: npy.ndarray) -> None:
-        self._s = t2s(value)
+        self._s = t2s(fix_param_shape(value))
 
     @property
     def s_invert(self) -> npy.ndarray:
@@ -1161,7 +1164,7 @@ class Network(object):
 
     @a.setter
     def a(self, value: npy.ndarray) -> None:
-        self._s = a2s(value, self.z0)
+        self._s = a2s(fix_param_shape(value), self.z0)
 
     @property
     def z0(self) -> npy.ndarray:
@@ -1232,6 +1235,10 @@ class Network(object):
                 return
         elif z0.ndim == 2:
             if z0.shape == (self.frequency.npoints, self.nports):
+                self._z0 = z0
+                return
+            # Matches _s shape. Can be reached if there is no frequency.
+            if z0.shape[1] == npy.shape(self._s)[1] and z0.shape[0] == 1:
                 self._z0 = z0
                 return
         raise AttributeError('Unable to broadcast z0 to s shape')
@@ -1321,9 +1328,12 @@ class Network(object):
         return self.frequency.f
 
     @f.setter
-    def f(self, f: NumberLike) -> None:
-        tmpUnit = self.frequency.unit
-        self.frequency = Frequency.from_f(f, unit=tmpUnit)
+    def f(self, f: Union[NumberLike, Frequency]) -> None:
+        if isinstance(f, Frequency):
+            self.frequency = f
+        else:
+            tmpUnit = self.frequency.unit
+            self.frequency = Frequency.from_f(f, unit=tmpUnit)
 
     @property
     def noisy(self) -> bool:
@@ -6327,6 +6337,43 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
     # thats a heck of a one-liner!
     return z2s(s2z(s, z0=z_old, s_def=s_def), z0=z_new, s_def=s_def)
 
+def fix_param_shape(p: NumberLike):
+    """
+    This attempts to broadcast p to satisfy
+        npy.shape(p) == (nfreqs, nports, nports)
+
+    Parameters
+    ----------
+    p : number, array-like
+        p can be:
+        * a number (one frequency, one port)
+        * 1D array-like (many frequencies, one port)
+        * 2D array-like (one frequency, many ports)
+        * 3D array-like (many frequencies, many ports)
+
+    Returns
+    -------
+    p : array of shape == (nfreqs, nports, nports)
+        p with the right shape for a nport Network
+
+    """
+    # Ensure input is numpy array
+    p = npy.array(p, dtype=complex)
+    if len(p.shape) == 0:
+        # Scalar
+        return p.reshape(1, 1, 1)
+    if len(p.shape) == 1:
+        # One port with many frequencies
+        return p.reshape(p.shape[0], 1, 1)
+    if p.shape[-1] != p.shape[-2]:
+        raise ValueError('Input matrix must be square')
+    if len(p.shape) == 2:
+        # Many port with one frequency
+        return p.reshape(-1, p.shape[0], p.shape[0])
+    if len(p.shape) != 3:
+        raise ValueError('Input array has too many dimensions. Shape: {}' \
+                .format(p.shape))
+    return p
 
 def fix_z0_shape(z0: NumberLike, nfreqs: int, nports: int) -> npy.ndarray:
     """
@@ -6369,8 +6416,8 @@ def fix_z0_shape(z0: NumberLike, nfreqs: int, nports: int) -> npy.ndarray:
         # z0 is of correct shape. super duper.return it quick.
         return z0.copy()
 
-    elif npy.isscalar(z0):
-        # z0 is a single number
+    elif npy.ndim(z0) == 0:
+        # z0 is a single number or npy.array without dimensions.
         return npy.array(nfreqs * [nports * [z0]])
 
     elif len(z0) == nports:
