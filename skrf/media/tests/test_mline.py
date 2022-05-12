@@ -50,21 +50,21 @@ class MLineTestCase(unittest.TestCase):
             {'diel': 'frequencyinvariant', 'disp': 'kirschningjansen', 'color': 'r',
              'n': rf.Network(os.path.join(self.data_dir_ads,
                            'mlin,freqencyinvariant,kirschning.s2p'))},
-            #{'diel': 'djordjevicsvensson', 'disp': 'kirschningjansen', 'color': 'c',
-            # 'n': rf.Network(os.path.join(self.data_dir_ads,
-            #               'mlin,djordjevicsvensson,kirschning.s2p'))},
+            {'diel': 'djordjevicsvensson', 'disp': 'kirschningjansen', 'color': 'c',
+             'n': rf.Network(os.path.join(self.data_dir_ads,
+                           'mlin,djordjevicsvensson,kirschning.s2p'))},
             {'diel': 'frequencyinvariant', 'disp': 'kobayashi', 'color': 'k',
              'n': rf.Network(os.path.join(self.data_dir_ads,
                            'mlin,freqencyinvariant,kobayashi.s2p'))},
-            #{'diel': 'djordjevicsvensson', 'disp': 'kobayashi', 'color': 'g',
-            # 'n': rf.Network(os.path.join(self.data_dir_ads,
-            #               'mlin,djordjevicsvensson,kobayashi.s2p'))},
+            {'diel': 'djordjevicsvensson', 'disp': 'kobayashi', 'color': 'g',
+             'n': rf.Network(os.path.join(self.data_dir_ads,
+                           'mlin,djordjevicsvensson,kobayashi.s2p'))},
             {'diel': 'frequencyinvariant', 'disp': 'yamashita', 'color': 'm',
              'n': rf.Network(os.path.join(self.data_dir_ads,
                            'mlin,freqencyinvariant,yamashita.s2p'))},
-            #{'diel': 'djordjevicsvensson', 'disp': 'yamashita', 'color': 'b',
-            # 'n': rf.Network(os.path.join(self.data_dir_ads,
-            #               'mlin,djordjevicsvensson,yamashita.s2p'))}
+            {'diel': 'djordjevicsvensson', 'disp': 'yamashita', 'color': 'b',
+             'n': rf.Network(os.path.join(self.data_dir_ads,
+                           'mlin,djordjevicsvensson,yamashita.s2p'))}
             ]
         
         # default parameter set for tests
@@ -122,6 +122,8 @@ class MLineTestCase(unittest.TestCase):
         if self.verbose:
             fig, axs = plt.subplots(2, 2, figsize = (8,6))
             fig.suptitle('qucs/skrf')
+            fig2, axs2 = plt.subplots(2, 2, figsize = (8,6))
+            fig2.suptitle('ads/skrf residuals')
             
         limit_db = 0.1
         limit_deg = 1.
@@ -139,6 +141,7 @@ class MLineTestCase(unittest.TestCase):
             
             # residuals
             res = line / ref['n']
+            res.name = 'residuals ' + ref['n'].name
 
             # test if within limit lines
             self.assertTrue(npy.all(npy.abs(res.s_db) < limit_db))
@@ -148,34 +151,40 @@ class MLineTestCase(unittest.TestCase):
                 line.plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'],
                                linestyle = 'none', marker = 'x')
                 ref['n'].plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'])
-                #res.plot_s_db(0, 0, ax = axs[0, 0], linestyle = 'dashed',
-                #              color = ref['color'])
+                res.plot_s_db(0, 0, ax = axs2[0, 0], linestyle = 'dashed',
+                              color = ref['color'])
                 
                 line.plot_s_deg(0, 0, ax = axs[0, 1], color = ref['color'],
                                linestyle = 'none', marker = 'x')
                 ref['n'].plot_s_deg(0, 0, ax = axs[0, 1], color = ref['color'])
-                #res.plot_s_deg(0, 0, ax = axs[0, 1], linestyle = 'dashed',
-                #              color = ref['color'])
+                res.plot_s_deg(0, 0, ax = axs2[0, 1], linestyle = 'dashed',
+                              color = ref['color'])
                 
                 line.plot_s_db(1, 0, ax = axs[1, 0], color = ref['color'],
                                linestyle = 'none', marker = 'x')
                 ref['n'].plot_s_db(1, 0, ax = axs[1, 0], color = ref['color'])
-                #res.plot_s_db(1, 0, ax = axs[1, 0], linestyle = 'dashed',
-                #              color = ref['color'])
+                res.plot_s_db(1, 0, ax = axs2[1, 0], linestyle = 'dashed',
+                              color = ref['color'])
                 
                 line.plot_s_deg(1, 0, ax = axs[1, 1], color = ref['color'],
                                linestyle = 'none', marker = 'x')
                 ref['n'].plot_s_deg(1, 0, ax = axs[1, 1], color = ref['color'])
-                #res.plot_s_deg(1, 0, ax = axs[1, 1], linestyle = 'dashed',
-                #              color = ref['color'])
+                res.plot_s_deg(1, 0, ax = axs2[1, 1], linestyle = 'dashed',
+                              color = ref['color'])
+                
         
         if self.verbose:
-            axs[1, 0].set_ylim((-4, 1))
             axs[1, 0].legend(prop={'size': 6})
             axs[0, 0].get_legend().remove()
             axs[0, 1].get_legend().remove()
             axs[1, 1].get_legend().remove()
-            plt.tight_layout()
+            fig.tight_layout()
+            
+            axs2[1, 0].legend(prop={'size': 6})
+            axs2[0, 0].get_legend().remove()
+            axs2[0, 1].get_legend().remove()
+            axs2[1, 1].get_legend().remove()
+            fig2.tight_layout()
         
     def test_line_ads(self):
         """
@@ -184,6 +193,8 @@ class MLineTestCase(unittest.TestCase):
         if self.verbose:
             fig, axs = plt.subplots(2, 2, figsize = (8,6))
             fig.suptitle('ads/skrf')
+            fig2, axs2 = plt.subplots(2, 2, figsize = (8,6))
+            fig2.suptitle('ads/skrf residuals')
         
         # todo: restore to smal values
         limit_db = 10 # 0.1
@@ -196,15 +207,17 @@ class MLineTestCase(unittest.TestCase):
                             tand = self.tand, rough = self.d,
                             model = 'hammerstadjensen', disp = ref['disp'],
                             diel = ref['diel'],
-                            compatibility_mode = 'qucs')
+                            compatibility_mode = 'ads')
             line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
             line.name = 'skrf,ads'
             
             # residuals
             res = line / ref['n']
+            res.name = 'residuals ' + ref['n'].name
 
             # test if within limit lines
-            # fixme: cannot pass currently. is it due to dielectric dispersion ?
+            # fixme: cannot pass currently because of a unexplained feature
+            # in S11
             # self.assertTrue(npy.all(npy.abs(res.s_db[:, 0, 0]) < limit_db))
             # self.assertTrue(npy.all(npy.abs(res.s_deg[:, 0, 0]) <limit_deg))
             self.assertTrue(npy.all(npy.abs(res.s_db[:, 1, 0]) < limit_db))
@@ -214,34 +227,40 @@ class MLineTestCase(unittest.TestCase):
                 line.plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'],
                                linestyle = 'none', marker = 'x')
                 ref['n'].plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'])
-                #res.plot_s_db(0, 0, ax = axs[0, 0], linestyle = 'dashed',
-                #              color = ref['color'])
+                res.plot_s_db(0, 0, ax = axs2[0, 0], linestyle = 'dashed',
+                              color = ref['color'])
                 
                 line.plot_s_deg(0, 0, ax = axs[0, 1], color = ref['color'],
                                linestyle = 'none', marker = 'x')
                 ref['n'].plot_s_deg(0, 0, ax = axs[0, 1], color = ref['color'])
-                #res.plot_s_deg(0, 0, ax = axs[0, 1], linestyle = 'dashed',
-                #              color = ref['color'])
+                res.plot_s_deg(0, 0, ax = axs2[0, 1], linestyle = 'dashed',
+                              color = ref['color'])
                 
                 line.plot_s_db(1, 0, ax = axs[1, 0], color = ref['color'],
                                linestyle = 'none', marker = 'x')
                 ref['n'].plot_s_db(1, 0, ax = axs[1, 0], color = ref['color'])
-                #res.plot_s_db(1, 0, ax = axs[1, 0], linestyle = 'dashed',
-                #              color = ref['color'])
+                res.plot_s_db(1, 0, ax = axs2[1, 0], linestyle = 'dashed',
+                              color = ref['color'])
                 
                 line.plot_s_deg(1, 0, ax = axs[1, 1], color = ref['color'],
                                linestyle = 'none', marker = 'x')
                 ref['n'].plot_s_deg(1, 0, ax = axs[1, 1], color = ref['color'])
-                #res.plot_s_deg(1, 0, ax = axs[1, 1], linestyle = 'dashed',
-                #              color = ref['color'])
+                res.plot_s_deg(1, 0, ax = axs2[1, 1], linestyle = 'dashed',
+                              color = ref['color'])
+                
         
         if self.verbose:
-            axs[1, 0].set_ylim((-4, 1))
             axs[1, 0].legend(prop={'size': 6})
             axs[0, 0].get_legend().remove()
             axs[0, 1].get_legend().remove()
             axs[1, 1].get_legend().remove()
-            plt.tight_layout()
+            fig.tight_layout()
+            
+            axs2[1, 0].legend(prop={'size': 6})
+            axs2[0, 0].get_legend().remove()
+            axs2[0, 1].get_legend().remove()
+            axs2[1, 1].get_legend().remove()
+            fig2.tight_layout()
                
     def test_alpha_warning(self):
         """

@@ -161,17 +161,11 @@ class MLine(Media):
             real(self.ep_r_f), self.w, self.h, self.t, self.model)
         
         # analyse dispersion of Zl and Er
-        # qucs use w instead of w_eff here
-        if compatibility_mode == 'qucs':
-            self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
-                self.zl_eff, self.ep_reff, real(self.ep_r_f),
-                self.w, self.h,
-                self.frequency.f, self.disp)
-        else:
-            self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
-                self.zl_eff, self.ep_reff, real(self.ep_r_f),
-                self.w_eff, self.h,
-                self.frequency.f, self.disp)
+        # qucs use w here. Modified Kirschning Jansen will correct w_eff here
+        self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
+            self.zl_eff, self.ep_reff, real(self.ep_r_f),
+            self.w, self.h,
+            self.frequency.f, self.disp)
         
         # analyse losses of line
         # qucs use quasi-static values here, leading to a difference
@@ -416,12 +410,31 @@ class MLine(Media):
              fn = f * h * 1e-6
              e = kirsching_er(u, fn, ep_r, ep_reff)
              z, _ = kirsching_zl(u, fn, ep_r, ep_reff, e, zl_eff)
+                 # Modified Kirschning Jansen
+                 # t = self.t
+                 # delta_w = npy.where(wr / h <= 1. / 2. / pi,
+                 #                     t / pi * (1. + log(4 * pi * wr / t)),
+                 #                     t / pi * (1. + log(2 * h / t)))
+                 # w_eff = wr + delta_w
+                 # a, b = hammerstad_ab(w_eff / h, ep_r)
+                 # ep_reff = hammerstad_er(w_eff / h, ep_r, a, b)
+                 # ep_reff_t = ep_reff - (ep_r - 1.) * (t / h) / \
+                 #     (4.6 * sqrt(w_eff / h))
+                 # f0 = c / (2 * w_eff * sqrt(ep_reff_t))
+                 # w_eff_f = wr + (w_eff - wr) / (1. + (f / f0)**2)
+                 
+                 # e = kirsching_er(w_eff_f / h, fn, ep_r, ep_reff_t)
+                 # z, _ = kirsching_zl(w_eff_f / h, fn, ep_r, ep_reff_t, e, zl_eff)
          elif disp == 'yamashita':
              k = sqrt(ep_r / ep_reff)
              fp = 4 * h * f / c * sqrt(ep_r - 1) * \
                  (0.5 + (1 + 2 * log10(1 + u))**2)
              e = ep_reff * ((1 + k * fp**1.5 / 4) / (1 + fp**1.5 / 4))**2
-             z =  npy.ones(f.shape) * zl_eff
+             if self.compatibility_mode == 'qucs':
+                 z =  npy.ones(f.shape) * zl_eff
+             else:
+                 fn = f * h * 1e-6
+                 z, _ = kirsching_zl(wr / h, fn, ep_r, ep_reff, e, zl_eff)
          elif disp == 'kobayashi':
              fk = c * arctan(ep_r * sqrt((ep_reff - 1) / (ep_r - ep_reff)))/ \
                  (2 * pi * h * sqrt(ep_r - ep_reff))
@@ -432,7 +445,11 @@ class MLine(Media):
                  1)
              n = npy.where(no * nc < 2.32, no * nc, 2.32)
              e =  ep_r - (ep_r - ep_reff) / (1 + (f / fh)**n)
-             z =  npy.ones(f.shape) * zl_eff
+             if self.compatibility_mode == 'qucs':
+                 z =  npy.ones(f.shape) * zl_eff
+             else:
+                 fn = f * h * 1e-6
+                 z, _ = kirsching_zl(wr / h, fn, ep_r, ep_reff, e, zl_eff)
          elif disp == 'none':
              e = ones(f.shape) * ep_reff
              z = ones(f.shape) * zl_eff
@@ -517,7 +534,7 @@ def kirsching_zl(u: NumberLike, fn: NumberLike,
     """
     #fn = f * h * 1e-6 # GHz-mm
     R1 = npy.minimum(0.03891 * ep_r**1.4, 20.)
-    R2 = npy.minimum(0.267 * u**7, 20.)
+    R2 = npy.minimum(0.2671 * u**7, 20.)
     R3 = 4.766 * exp(-3.228 * u**0.641)
     R4 = 0.016 + (0.0514 * ep_r)**4.524
     R5 = (fn / 28.843)**12
