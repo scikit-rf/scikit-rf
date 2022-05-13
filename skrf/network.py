@@ -5093,7 +5093,7 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
     z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
-    s = s.copy()  # to prevent the original array from being altered
+    s = npy.array(s, dtype=complex)
 
     # The following is a vectorized version of a for loop for all frequencies.
     # # Creating Identity matrices of shape (nports,nports) for each nfreqs
@@ -5123,6 +5123,8 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
         sqrtz0 = npy.zeros_like(s)
         npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
         z = sqrtz0 @ npy.linalg.solve(mf.nudge_eig(Id - s), (Id + s) @ sqrtz0)
+    else:
+        raise ValueError('Unknown s_def: {}'.format(s_def))
 
     return z
 
@@ -5183,9 +5185,7 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
     z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
-    s = s.copy()  # to prevent the original array from being altered
-    s[s == -1.] = -1. + 1e-12  # solve numerical singularity
-    s[s == 1.] = 1. + 1e-12  # solve numerical singularity
+    s = npy.array(s, dtype=complex)
 
     # The following is a vectorized version of a for loop for all frequencies.
     # Creating Identity matrices of shape (nports,nports) for each nfreqs
@@ -5196,32 +5196,26 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
         # Power-waves. Inverse of Eq.(19) from [Kurokawa et al.]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
         F, G = npy.zeros_like(s), npy.zeros_like(s)
-        npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
+        npy.einsum('ijj->ij', F)[...] = 1.0/(2*npy.sqrt(z0.real))
         npy.einsum('ijj->ij', G)[...] = z0
-        # y = npy.linalg.inv(F) @ npy.linalg.inv((s @ G + npy.conjugate(G))) @ (Id - s) @ F  # Python > 3.5
-        y = npy.matmul(npy.linalg.inv(F),
-                       npy.matmul(npy.linalg.inv(npy.matmul(s, G) + npy.conjugate(G)),
-                                  npy.matmul((Id - s), F)))
+        y = npy.linalg.solve(mf.nudge_eig((s @ G + npy.conjugate(G)) @ F), (Id - s) @ F)
 
     elif s_def == 'pseudo':
         # pseudo-waves. Inverse of Eq.(74) from [Marks et al.]
         YR, U = npy.zeros_like(s), npy.zeros_like(s)
         npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
         npy.einsum('ijj->ij', YR)[...] = 1/z0
-        # USU = npy.linalg.inv(U) @ s @ U
-        # y = YR @ npy.linalg.inv(Id + USU) @ (Id - USU)
-        USU = npy.matmul(npy.linalg.inv(U), npy.matmul(s, U))
-        y = npy.matmul(YR, npy.matmul(npy.linalg.inv(Id + USU), (Id - USU)))
+        USU = npy.linalg.solve(U, s @ U)
+        y = YR @ npy.linalg.solve(mf.nudge_eig(Id + USU), Id - USU)
 
     elif s_def == 'traveling':
         # Traveling-waves definition. Cf.Wikipedia "Impedance parameters" page.
         # Creating diagonal matrices of shape (nports, nports) for each nfreqs
         sqrty0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
         npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
-        # s -> y
-        y = npy.zeros_like(s)
-        # y = sqrty0 @ (Id - s) @  npy.linalg.inv(Id + s) @ sqrty0  # Python>3.5
-        y = npy.matmul(npy.matmul(npy.matmul(sqrty0, (Id - s)), npy.linalg.inv(Id + s)), sqrty0)
+        y = sqrty0 @ (Id - s) @ npy.linalg.solve(mf.nudge_eig(Id + s), sqrty0)
+    else:
+        raise ValueError('Unknown s_def: {}'.format(s_def))
 
     return y
 
@@ -5349,6 +5343,8 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
     z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
+    z = npy.array(z, dtype=complex)
+
     if s_def == 'power':
         # Power-waves. Eq.(18) from [Kurokawa et al.3]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
@@ -5372,6 +5368,8 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
         npy.einsum('ijj->ij', Id)[...] = 1.0
         npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
         s = mf.rsolve(sqrty0 @ z @ sqrty0 + Id, sqrty0 @ z @ sqrty0 - Id)
+    else:
+        raise ValueError('Unknown s_def: {}'.format(s_def))
 
     return s
 
@@ -5721,6 +5719,8 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
     z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
+    y = npy.array(y, dtype=complex)
+
     # The following is a vectorized version of a for loop for all frequencies.
     # Creating Identity matrices of shape (nports,nports) for each nfreqs
     Id = npy.zeros_like(y)  # (nfreqs, nports, nports)
@@ -5729,12 +5729,9 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
     if s_def == 'power':
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
         F, G = npy.zeros_like(y), npy.zeros_like(y)
-        npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
+        npy.einsum('ijj->ij', F)[...] = 1.0/(2*npy.sqrt(z0.real))
         npy.einsum('ijj->ij', G)[...] = z0
-        # s = F @ (Id - npy.conjugate(G) @ y) @ npy.linalg.inv(Id + G @ y) @ npy.linalg.inv(F)  # Python > 3.5
-        s = npy.matmul(F,
-                       npy.matmul((Id - npy.matmul(npy.conjugate(G), y)),
-                                  npy.matmul(npy.linalg.inv(Id + npy.matmul(G, y)), npy.linalg.inv(F))))
+        s = mf.rsolve(F @ (Id + G @ y), F @ (Id - npy.conjugate(G) @ y))
 
     elif s_def == 'pseudo':
         # Pseudo-waves
@@ -5742,22 +5739,18 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
         ZR, U = npy.zeros_like(y), npy.zeros_like(y)
         npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
         npy.einsum('ijj->ij', ZR)[...] = z0
-        # s = U @ (npy.linalg.inv(y) - ZR) @ npy.linalg.inv(npy.linalg.inv(y) + ZR) @ npy.linalg.inv(U)  # Python > 3.5
-        s = npy.matmul(U,
-                       npy.matmul((npy.linalg.inv(y) - ZR),
-                                  npy.matmul(npy.linalg.inv(npy.linalg.inv(y) + ZR), npy.linalg.inv(U))))
+        # This formulation is not very good numerically
+        UY = mf.rsolve(mf.nudge_eig(y, cond=1e-12), U)
+        s = mf.rsolve(UY + U @ ZR, -2 * U @ ZR) + Id
 
     elif s_def == 'traveling':
         # Traveling-waves definition. Cf.Wikipedia "Impedance parameters" page.
         # Creating diagonal matrices of shape (nports, nports) for each nfreqs
         sqrtz0 = npy.zeros_like(y)  # (nfreqs, nports, nports)
         npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
-        # y -> s
-        s = npy.zeros_like(y)
-        # s = (Id - sqrtz0 @ y @ sqrtz0) @ npy.linalg.inv(Id + sqrtz0 @ y @ sqrtz0)  # Python>3.5
-        s = npy.matmul( Id - npy.matmul(npy.matmul(sqrtz0, y), sqrtz0),
-                       npy.linalg.inv(Id + npy.matmul(npy.matmul(sqrtz0, y), sqrtz0)))
-
+        s = mf.rsolve(Id + sqrtz0 @ y @ sqrtz0, Id - sqrtz0 @ y @ sqrtz0)
+    else:
+        raise ValueError('Unknown s_def: {}'.format(s_def))
 
     return s
 
