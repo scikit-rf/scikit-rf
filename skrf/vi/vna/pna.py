@@ -1,5 +1,4 @@
 import pprint
-from multiprocessing.sharedctypes import Value
 from typing import List, Optional, Sequence, Union
 
 import numpy as np
@@ -15,19 +14,19 @@ class PNA(VNA):
         super().__init__(address, timeout, backend)
 
     def start_freq(self, channel: int = 1) -> float:
-        return float(self.query("sense{channel}:frequency:start?"))
+        return float(self.query(f"sense{channel}:frequency:start?"))
 
     def set_start_freq(self, f: float, channel: int = 1) -> None:
         self.write(f"sense{channel}:frequency:start {f}")
 
     def stop_freq(self, channel: int = 1) -> float:
-        return float(self.query("sense{channel}:frequency:stop?"))
+        return float(self.query(f"sense{channel}:frequency:stop?"))
 
     def set_stop_freq(self, f: float, channel: int = 1) -> None:
         self.write(f"sense{channel}:frequency:stop {f}")
 
     def npoints(self, channel: int = 1) -> int:
-        return int(self.query("sense{channel}:sweep:points?"))
+        return int(self.query(f"sense{channel}:sweep:points?"))
 
     def set_npoints(self, n: int, channel: int = 1) -> None:
         self.write(f"sense{channel}:sweep:points {n}")
@@ -41,53 +40,53 @@ class PNA(VNA):
         self.write(f"sense{channel}:sweep:step {f}")
 
     def sweep_mode(self, channel: int = 1) -> str:
-        return self.query("sense{channel}:sweep:mode?")
+        return self.query(f"sense{channel}:sweep:mode?")
 
     def set_sweep_mode(self, mode: str, channel: int = 1) -> None:
         self.write(f"sense{channel}:sweep:mode {mode}")
 
     def sweep_type(self, channel: int = 1) -> str:
-        return self.query("sense{channel}:sweep:type?")
+        return self.query(f"sense{channel}:sweep:type?")
 
     def set_sweep_type(self, _type: str, channel: int = 1) -> None:
         self.write(f"sense{channel}:sweep:type {_type}")
 
     def sweep_time(self, channel: int = 1) -> float:
-        return float(self.query("sense{channel}:sweep:time?"))
+        return float(self.query(f"sense{channel}:sweep:time?"))
 
     def set_sweep_time(self, time: float, channel: int = 1) -> None:
         self.write(f"sense{channel}:sweep:time {time}")
 
     def if_bandwidth(self, channel: int = 1) -> float:
-        return float(self.query("sense{channel}:bandwidth?"))
+        return float(self.query(f"sense{channel}:bandwidth?"))
 
     def set_if_bandwidth(self, bw: float, channel: int = 1) -> None:
         self.write(f"sense{channel}:bandwidth {bw}")
 
     def averaging_on(self, channel: int = 1) -> bool:
-        avg = self.query("sense{channel}:average?").strip()
+        avg = self.query(f"sense{channel}:average?").strip()
         return avg != "0"
 
     def set_averaging_on(self, onoff: bool, channel: int = 1) -> None:
         self.write(f"sense{channel}:average {int(onoff)}")
 
     def average_count(self, channel: int = 1) -> int:
-        return int(self.query("sense{channel}:average:count?"))
+        return int(self.query(f"sense{channel}:average:count?"))
 
     def set_average_count(self, n: int, channel: int = 1) -> None:
         self.write(f"sense{channel}:average:count {n}")
 
     def average_mode(self, channel: int = 1) -> str:
-        return self.query("sense{channel}:average:mode?")
+        return self.query(f"sense{channel}:average:mode?")
 
     def set_average_mode(self, mode: str, channel: int = 1) -> None:
-        self.write("sense{channel}:average:mode {mode}")
+        self.write(f"sense{channel}:average:mode {mode}")
 
     def clear_averaging(self, channel: int = 1) -> None:
-        self.write("sense{channel}:average:clear")
+        self.write(f"sense{channel}:average:clear")
 
     def num_sweep_groups(self, channel: int = 1) -> int:
-        return int(self.query("sense{channel}:sweep:groups:count?"))
+        return int(self.query(f"sense{channel}:sweep:groups:count?"))
 
     def set_num_sweep_groups(self, n: int, channel: int = 1) -> None:
         self.write(f"sense{channel}:sweep:groups:count {n}")
@@ -96,7 +95,7 @@ class PNA(VNA):
     def channels_in_use(self) -> List[int]:
         response = self.query("system:channels:catalog?")
         response = response.strip().replace('"', "")
-        return [int(c) for c in response]
+        return [int(c) for c in response.split(",")]
 
     @property
     def active_channel(self) -> Optional[int]:
@@ -132,7 +131,7 @@ class PNA(VNA):
             ]
 
     def measurement_numbers(self, channel: int = 1) -> List[int]:
-        ret = self.query(f"system:measurement:catalog? {channel}").strip()
+        ret = self.query(f"system:measurement:catalog? {channel}").strip().strip('"')
         return list(map(int, ret.split(",")))
 
     @property
@@ -149,12 +148,16 @@ class PNA(VNA):
                 raise KeyError(f"Measurement doesn't exist on channel {channel}")
             self.write(f"calculate{channel}:parameter:mnumber {meas},{fast_str}")
         elif isinstance(meas, str):
-            if meas not in self.measurement_numbers(channel):
+            meas_names = [m.name for m in self.measurements_on_channel(channel)]
+            if meas not in meas_names:
                 raise KeyError(f"Measurement doesn't exist on channel {channel}")
             self.write(f"calculate{channel}:parameter:select '{meas}',{fast_str}")
 
     def create_measurement(self, name: str, param: str, channel: int = 1) -> None:
         self.write(f"calculate{channel}:parameter:extended '{name}', '{param}'")
+        next_tr = int(self.query(f"display:window:trace:next?").strip())
+        self.write(f"display:window:trace{next_tr}:feed {name}")
+        self.set_active_measurement(name, channel=channel)
 
     def delete_measurement(self, name: str, channel: int = 1) -> None:
         self.write(f"calculate{channel}:parameter:delete {name}")
@@ -162,7 +165,7 @@ class PNA(VNA):
     def get_measurement(self, meas: Union[int, str], channel: int = 1) -> Network:
         self.set_active_measurement(meas, channel, True)
         raw = np.array(
-            self.query_ascii("calculate{channel}:data? sdata"), dtype=np.complex64
+            self.query_ascii(f"calculate{channel}:data? sdata"), dtype=np.complex64
         )
         ntwk = Network()
         ntwk.frequency = self.frequency(channel)
@@ -171,7 +174,8 @@ class PNA(VNA):
 
     def get_active_trace(self) -> Network:
         assert self.active_channel is not None, "No channel is active"
-        raw = np.array(self.query_ascii("calculate{self.active_channel}:data? sdata"))
+        raw = np.array(self.query_ascii(f"calculate{self.active_channel}:data? sdata"))
+        self.query("*OPC?")
         ntwk = Network()
         ntwk.frequency = self.frequency(self.active_channel)
         ntwk.s = raw[::2] + 1j * raw[1::2]
