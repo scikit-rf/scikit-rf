@@ -181,8 +181,14 @@ class TestUnitConversions(unittest.TestCase):
         cond_A = npy.linalg.cond(A)
         A2 = rf.nudge_eig(A, cond=1e-9, min_eig=1e-12)
 
+        self.assertFalse(A is A2)
         self.assertTrue(npy.all(npy.linalg.cond(A2) < cond_A))
         npy.testing.assert_allclose(A2, A, atol=1e-9)
+
+    def test_nudge_eig2(self):
+        A = npy.diag([1, 1, 1, 1]).reshape(1, 4, 4)
+        A2 = rf.nudge_eig(A, cond=1e-9, min_eig=1e-12)
+        self.assertTrue(A is A2)
 
 if __name__ == "__main__":
     # Launch all tests

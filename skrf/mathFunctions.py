@@ -1264,6 +1264,9 @@ def rsolve(A: npy.ndarray, B: npy.ndarray) -> npy.ndarray:
 
     Calls numpy.linalg.solve with transposed matrices.
 
+    Same as B @ npy.linalg.inv(A) but avoids calculating the inverse and
+    should be numerically slightly more accurate.
+
     Input should have dimension of similar to (nfreqs, nports, nports).
 
     Parameters
@@ -1280,7 +1283,7 @@ def rsolve(A: npy.ndarray, B: npy.ndarray) -> npy.ndarray:
 
 def nudge_eig(mat: npy.ndarray, cond: float = 1e-9, min_eig: float = 1e-12) -> npy.ndarray:
     r"""Nudge eigenvalues with absolute value smaller than
-    min(cond * max(eigenvalue), min_eig) to that value.
+    max(cond * max(eigenvalue), min_eig) to that value.
     Can be used to avoid singularities in solving matrix equations.
 
     Input should have dimension of similar to (nfreqs, nports, nports).
@@ -1304,6 +1307,10 @@ def nudge_eig(mat: npy.ndarray, cond: float = 1e-9, min_eig: float = 1e-12) -> n
     max_eig = npy.amax(npy.abs(eigw), axis=1)
     # Calculate mask for positions where problematic eigenvalues are
     mask = npy.logical_or(npy.abs(eigw) < cond * max_eig[:, None], npy.abs(eigw) < min_eig)
+    if not mask.any():
+        # Nothing to do. Return the original array.
+        return mat
+
     mask_cond = cond * npy.repeat(max_eig[:, None], mat.shape[-1], axis=-1)[mask]
     mask_min = min_eig * npy.ones(mask_cond.shape)
     # Correct the eigenvalues
