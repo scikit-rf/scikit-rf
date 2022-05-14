@@ -652,6 +652,20 @@ class NetworkTestCase(unittest.TestCase):
         ntwk.z0 = z0
         self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
 
+    def test_z0_assign(self):
+        """ Test that z0 getter returns a reference to _z0 so that it can
+        be assigned to with array indexing"""
+        ntwk = rf.Network(s=npy.zeros((3,2,2)), f=[1,2,3])
+        ntwk.z0[0, 0] = 2
+        self.assertTrue(ntwk.z0[0, 0] == 2)
+
+        ntwk = rf.Network(s=npy.zeros((3,2,2)), f=[1,2,3], z0=npy.ones(3))
+        ntwk.z0[0, 0] = 2
+        self.assertTrue(ntwk.z0[0, 0] == 2)
+
+        ntwk = rf.Network(s=npy.zeros((3,2,2)), f=[1,2,3], z0=npy.ones((3,2)))
+        ntwk.z0[0, 0] = 2
+        self.assertTrue(ntwk.z0[0, 0] == 2)
 
     def test_yz(self):
         tinyfloat = 1e-12

@@ -1191,7 +1191,7 @@ class Network(object):
 
         # _z0 is an scalar, so a npy.array with shape fxn is filled with _z0
         if self._z0.ndim == 0:
-            return npy.full(self._s.shape[:2], self._z0)
+            self._z0 = npy.full(self._s.shape[:2], self._z0)
         elif self._z0.ndim == 1:
             # _z0 is a vector, either of length nports or frequency.npoints.
             # Create a npy.array with shape fxn and broadcast vector to array.
@@ -1200,10 +1200,11 @@ class Network(object):
                 z0[:] = self._z0[None, :]
             else:
                 z0[:] = self._z0[:,None]
-            return z0
+            self._z0 = z0
         elif self._z0.ndim == 2:
             # _z0 is a matrix of correct shape, so we can return directly
-            return self._z0
+            pass
+        return self._z0
 
     @z0.setter
     def z0(self, z0: NumberLike) -> None:
