@@ -150,22 +150,37 @@ class MLine(Media):
         self.compatibility_mode = compatibility_mode
         
         # variation of dielectric constant with frequency
-        # implemented by ADS only
-        self.ep_r_f, self.tand_f = self.analyse_dielectric(self.ep_r, self.tand,
+        # implemented by ADS only.
+        # 'frequencyinvariant' will give constant value with real part
+        # compatible with qucs and an imaginary part due to tand
+        self.ep_r_f, self.tand_f = self.analyse_dielectric(
+            self.ep_r, self.tand,
             self.f_low, self.f_high, self.f_epr_tand, self.frequency.f,
             self.diel)
         
         # quasi-static effective dielectric constant of substrate + line and
         # the impedance of the microstrip line
-        self.zl_eff, self.ep_reff, self.w_eff = self.analyse_quasi_static(
-            real(self.ep_r_f), self.w, self.h, self.t, self.model)
+        # qucs use real-valued ep_r giving real-valued impedance
+        if compatibility_mode == 'qucs':
+            self.zl_eff, self.ep_reff, self.w_eff = self.analyse_quasi_static(
+                real(self.ep_r_f), self.w, self.h, self.t, self.model)
+        # ads use complex permittivity giving complex impedance
+        else:
+            self.zl_eff, self.ep_reff, self.w_eff = self.analyse_quasi_static(
+                self.ep_r_f, self.w, self.h, self.t, self.model)
         
         # analyse dispersion of Zl and Er
-        # qucs use w here. Modified Kirschning Jansen will correct w_eff here
-        self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
-            self.zl_eff, self.ep_reff, real(self.ep_r_f),
-            self.w, self.h,
-            self.frequency.f, self.disp)
+        # qucs use w here but use of w_eff seems better
+        if compatibility_mode == 'qucs':
+            self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
+                self.zl_eff, self.ep_reff, real(self.ep_r_f),
+                self.w, self.w_eff, self.h, self.t,
+                self.frequency.f, self.disp)
+        else:
+            self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
+                self.zl_eff, self.ep_reff, self.ep_r_f,
+                self.w_eff, self.w_eff, self.h, self.t,
+                self.frequency.f, self.disp)
         
         # analyse losses of line
         # qucs use quasi-static values here, leading to a difference
@@ -263,12 +278,12 @@ class MLine(Media):
             # get tand
             tand_f = -imag(ep_r_f) / real(ep_r_f)
         elif diel == 'frequencyinvariant':
-            ep_r_f =  ep_r
+            ep_r_f =  ep_r - 1j * ep_r * tand
             tand_f = tand
         else:
             raise ValueError('Unknown dielectric dispersion model')
         
-        return real(ep_r_f), tand_f
+        return ep_r_f, tand_f
     
     def analyse_quasi_static(self, ep_r: NumberLike, 
                            w: NumberLike, h: NumberLike, t: NumberLike,
@@ -387,8 +402,9 @@ class MLine(Media):
         return zl_eff, ep_reff, w_eff
         
     def analyse_dispersion(self, zl_eff: NumberLike, ep_reff: NumberLike,
-                          ep_r: NumberLike, wr: NumberLike, h: NumberLike, 
-                          f: NumberLike, disp: str):
+                          ep_r: NumberLike, wr: NumberLike, w_eff: NumberLike,
+                          h: NumberLike, t: NumberLike, f: NumberLike, 
+                          disp: str):
          """
          Frequency dependent characteristic impedance and dielectric constant
          accounting for microstripline dispersion.
@@ -410,28 +426,15 @@ class MLine(Media):
              fn = f * h * 1e-6
              e = kirsching_er(u, fn, ep_r, ep_reff)
              z, _ = kirsching_zl(u, fn, ep_r, ep_reff, e, zl_eff)
-                 # Modified Kirschning Jansen
-                 # t = self.t
-                 # delta_w = npy.where(wr / h <= 1. / 2. / pi,
-                 #                     t / pi * (1. + log(4 * pi * wr / t)),
-                 #                     t / pi * (1. + log(2 * h / t)))
-                 # w_eff = wr + delta_w
-                 # a, b = hammerstad_ab(w_eff / h, ep_r)
-                 # ep_reff = hammerstad_er(w_eff / h, ep_r, a, b)
-                 # ep_reff_t = ep_reff - (ep_r - 1.) * (t / h) / \
-                 #     (4.6 * sqrt(w_eff / h))
-                 # f0 = c / (2 * w_eff * sqrt(ep_reff_t))
-                 # w_eff_f = wr + (w_eff - wr) / (1. + (f / f0)**2)
-                 
-                 # e = kirsching_er(w_eff_f / h, fn, ep_r, ep_reff_t)
-                 # z, _ = kirsching_zl(w_eff_f / h, fn, ep_r, ep_reff_t, e, zl_eff)
          elif disp == 'yamashita':
              k = sqrt(ep_r / ep_reff)
              fp = 4 * h * f / c * sqrt(ep_r - 1) * \
                  (0.5 + (1 + 2 * log10(1 + u))**2)
              e = ep_reff * ((1 + k * fp**1.5 / 4) / (1 + fp**1.5 / 4))**2
+             # qucs keep quasi-static impedance here
              if self.compatibility_mode == 'qucs':
                  z =  npy.ones(f.shape) * zl_eff
+             # use Kirschning Jansen for impedance dispersion by default 
              else:
                  fn = f * h * 1e-6
                  z, _ = kirsching_zl(wr / h, fn, ep_r, ep_reff, e, zl_eff)
@@ -445,8 +448,10 @@ class MLine(Media):
                  1)
              n = npy.where(no * nc < 2.32, no * nc, 2.32)
              e =  ep_r - (ep_r - ep_reff) / (1 + (f / fh)**n)
+             # qucs keep quasi-static impedance here
              if self.compatibility_mode == 'qucs':
                  z =  npy.ones(f.shape) * zl_eff
+             # use Kirschning Jansen for impedance dispersion by default 
              else:
                  fn = f * h * 1e-6
                  z, _ = kirsching_zl(wr / h, fn, ep_r, ep_reff, e, zl_eff)
