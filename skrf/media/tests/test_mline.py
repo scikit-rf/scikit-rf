@@ -197,8 +197,8 @@ class MLineTestCase(unittest.TestCase):
             fig2.suptitle('ads/skrf residuals')
         
         # todo: restore to smal values
-        limit_db = 10 # 0.1
-        limit_deg = 180. # 1.
+        limit_db = 0.1
+        limit_deg = 1.
         
         for ref in self.ref_ads:
             mline = MLine(frequency = ref['n'].frequency, z0 = 50.,
@@ -216,10 +216,12 @@ class MLineTestCase(unittest.TestCase):
             res.name = 'residuals ' + ref['n'].name
 
             # test if within limit lines
-            # fixme: cannot pass currently because of a unexplained feature
-            # in S11
-            # self.assertTrue(npy.all(npy.abs(res.s_db[:, 0, 0]) < limit_db))
-            # self.assertTrue(npy.all(npy.abs(res.s_deg[:, 0, 0]) <limit_deg))
+            # fixme: still a small deviation of S11 at low frequency
+            #        limit line multiplied by 10 for S11 as for now
+            self.assertTrue(
+                npy.all(npy.abs(res.s_db[:, 0, 0]) < 10. *limit_db))
+            self.assertTrue(
+                npy.all(npy.abs(res.s_deg[:, 0, 0]) < 10. * limit_deg))
             self.assertTrue(npy.all(npy.abs(res.s_db[:, 1, 0]) < limit_db))
             self.assertTrue(npy.all(npy.abs(res.s_deg[:, 1, 0]) < limit_deg))
             
