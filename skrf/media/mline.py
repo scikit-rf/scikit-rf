@@ -1,5 +1,4 @@
-
-
+# -*- coding: utf-8 -*-
 """
 MLine (:mod:`skrf.media.MLine`)
 ========================================
@@ -26,56 +25,67 @@ if TYPE_CHECKING:
 
 class MLine(Media):
     """
-    Microstripline class
+    A microstripline transmission line defined in terms of width, thickness
+    and height on a given relative permittivity substrate. The line has a
+    conductor resistivity and a tangential loss factor.
 
-    This class was made from the technical documentation [#]_ and sources
-    provided by the qucs project [#]_ .
-    The variables  and properties of this class are coincident with
-    their derivations.
+    This class is highly inspired from the technical documentation [#]_
+    and sources provided by the qucs project [#]_ . 
 
     In addition, Djordjevic [#]_ /Svensson [#]_  wideband debye dielectric
     model is considered to provide more realistic modelling of broadband
-    microstrip as well as causal time domain response.
+    microstrip with as causal time domain response.
+    
+    A compatibility mode is provided to mimic the behaviour of QUCS or of
+    Keysight ADS. There is known differences in the output of these
+    simulators.
+    
+    The quasi-static models of chercteristic impedance and effective
+    permittivity give the value at zero frequency. The dispersion models
+    compute a frequency-dependant values of these variables.
 
-    * Quasi-static characteristic impedance and dielectric constant models:
+    * Quasi-static characteristic impedance and effective permittivity models:
 
-        + Hammerstad and Jensen
+        + Hammerstad and Jensen (default)
         + Schneider
         + Wheeler
 
-    * Frequency dispersion of impedance and dielectric constant models:
+    * Frequency dispersion of impedance and effective permittivity models:
 
-        + Kirschning and Jansen
         + Hammerstad and Jensen
-        + Yamashita
+        + Kirschning and Jansen (default)
         + Kobayashi
-        + No dispersion
+        + Schneider
+        + Yamashita
+        + (No dispersion)
 
     * Strip thickness correction model:
-
-        + Hammerstad and Jensen, add a certain amount to W if T > 0.
+        
+        + all quasi-static models add a certain amount to W to accound for
+          non-zero thickness of the strip. Computation with zero  thickness is
+          possible.
 
     Parameters
     ----------
     frequency : :class:`~skrf.frequency.Frequency` object
         frequency band of the media
     z0 : number, array-like, or None
-        the port impedance for media. Only needed if  its different
-        from the characteristic impedance of the transmission
+        the port impedance for media. Only needed if different from the
+        characteristic impedance Z0 of the transmission line. In ohm
     w : number, or array-like
-        width of conductor, in m.
+        width of conductor, in m
     h : number, or array-like
-        height of substrate between ground plane and conductor, in m.
+        height of substrate between ground plane and conductor, in m
     t : number, or array-like or None, optional
-        conductor thickness, in m. Default is None.
+        conductor thickness, in m. Default is None (no width correction
+        to account strip thickness).
     ep_r : number, or array-like
-        relative permittivity of dielectric at frequency f_epr_tand
-    mu_r : number, or array-like
-        relative permeability of dielectric (assumed frequency invariant)
+        relative permittivity of dielectric at frequency f_epr_tand, no unit
+    mu_r : number, array-like
+        relative permeability mof dielectric, no unit
     model : str
         microstripline quasi-static impedance and dielectric model in:
 
-        
         * 'hammerstadjensen' (default)
         * 'schneider'
         * 'wheeler'
@@ -97,40 +107,90 @@ class MLine(Media):
         * 'frequencyinvariant'
         
     rho: number, or array-like, optional
-        resistivity of conductor (None)
+        resistivity of conductor, ohm / m
     tand : number, or array-like
         dielectric loss factor at frequency f_epr_tand
     rough : number, or array-like
-        RMS roughness of conductor in m.
+        RMS roughness of conductor in m
     f_low : number, or array-like
-        lower frequency for wideband Debye Djordjevic/Svensson dielectric model
+        lower frequency for wideband Debye Djordjevic/Svensson dielectric
+        model, in Hz
     f_high : number, or array-like
-        higher frequency for wideband Debye Djordjevic/Svensson dielectric model
+        higher frequency for wideband Debye Djordjevic/Svensson dielectric
+        model, in Hz
     f_epr_tand : number, or array-like
-        measurement frequency for ep_r and tand of dielectric
+        measurement frequency for ep_r and tand of dielectric, in Hz
     compatibility_mode: str
         This switch the behaviour to stick with ADS or Qucs simulator
         implementations of microstriplines.
         
         * 'qucs' (default) follow QUCS behaviour
         * 'ads' : follow ADS behaviour
+        
+    \*args, \*\*kwargs : arguments, keyword arguments
+            passed to :class:`~skrf.media.media.Media`'s constructor
+            (:func:`~skrf.media.media.Media.__init__`
+    
+    Note
+    ----
+    In the case dispersion model only include effective permittivity, no
+    dispersion is used for impedance in QUCS mode and Kirschning Jansen is
+    used in ADS mode. QUCS mode is the default.
+    
+    When the thickness of the strip is smaller than 3 skin depth, the losses
+    model gives over-optimistic results and the media will issue a warning.
+    At DC, the losses of the line could be smaller than its conductor
+    resistance, which is not physical.
 
     References
     ----------
     .. [#] http://qucs.sourceforge.net/docs/technical.pdf
     .. [#] https://github.com/Qucs/qucsator/blob/develop/src/components/microstrip/msline.cpp
+    .. [#] E. Hammerstad and Ø. Jensen,
+        "Accurate Models for Microstrip Computer-Aided Design",
+        Symposium on Microwave Theory and Techniques, pp. 407-409, June 1980.
+    .. [#] M. Kirschning and R. H. Jansen,
+        "Accurate Model for Effective Dielectric Constant of Microstrip with
+        Validity up to Millimeter-Wave Frequencies", Electronics Letters,
+        vol. 8, no. 6, pp. 272-273, Mar. 1982.
+    .. [#] R. H. Jansen and M. Kirschning,
+        "Arguments and an accurate Model for the Power-Current Formulation of
+        Microstrip Characteristic Impedance",
+        Archiv für Elektronik und Übertragungstechnik (AEÜ), vol. 37,
+        pp. 108-112, 1983.
+    .. [#] M. Kobayashi,
+        "A Dispersion Formula Satisfying Recent Requirements in Microstrip
+        CAD", IEEE Trans. on Microwave Theory and Techniques, vol. 36, no. 8,
+        pp. 1246-1250, Aug. 1988.
+    .. [#] M. V. Schneider,
+        "Microstrip Lines for Microwave Integrated Circuits",
+        The Bell System Technical Journal, vol. 48, pp. 1421-1444, May 1969.
+    .. [#] M. V. Schneider, "Microstrip Dispersion", Proceedings of the IEEE,
+        Letters, vol. 60, Jan. 1972, pp. 144-146.
+    .. [#] H. A. Wheeler,
+        "Transmission-Line Properties of a Strip on a Dielectric Sheet on a
+        Plane, IEEE Trans. on Microwave Theory and Techniques, vol. 25, no. 8,
+        pp. 631-647, Aug. 1977.
+    .. [#] H. A. Wheeler, "Formulas for the Skin Effect,"
+        Proceedings of the IRE, vol. 30, no. 9, pp. 412-424, Sept. 1942.
+    .. [#] E. Yamashita, K. Atsuki, and T. Ueda,
+        "An Approximate Dispersion Formula of Microstrip Lines for Computer
+        Aided Design of Microwave Integrated Circuits", IEEE Trans. on
+        Microwave Theory and Techniques, vol. 27, pp. 1036-1038, Dec. 1979.
     .. [#] C. Svensson, G.E. Dermer,
         Time domain modeling of lossy interconnects,
         IEEE Trans. on Advanced Packaging, May 2001, N2, Vol. 24, pp.191-196.
     .. [#] Djordjevic, R.M. Biljic, V.D. Likar-Smiljanic, T.K. Sarkar,
-        Wideband frequency-domain characterization of FR-4 and time-domain causality,
+        Wideband frequency-domain characterization of FR-4 and time-domain
+        causality,
         IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
     """
     def __init__(self, frequency: Union['Frequency', None] = None,
                  z0: Union[NumberLike, None] = None,
                  w: NumberLike = 3, h: NumberLike = 1.6,
                  t: Union[NumberLike, None] = None,
-                 ep_r: NumberLike = 4.5, mu_r: NumberLike = 1,
+                 ep_r: NumberLike = 4.5,
+                 mu_r: NumberLike = 1.0,
                  model: str = 'hammerstadjensen',
                  disp: str = 'kirschningjansen',
                  diel: str = 'djordjevicsvensson',
@@ -140,37 +200,39 @@ class MLine(Media):
                  f_epr_tand: NumberLike = 1e9,
                  compatibility_mode: str = 'qucs',
                  *args, **kwargs):
+        
         Media.__init__(self, frequency = frequency, z0 = z0)
 
         self.w, self.h, self.t = w, h, t
-        self.ep_r, self.mu_r = ep_r, mu_r
+        self.ep_r, self.mu_r  = ep_r, mu_r
         self.model, self.disp, self.diel = model, disp, diel
         self.rho, self.tand, self.rough, self.disp =  rho, tand, rough, disp
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
         self.compatibility_mode = compatibility_mode
         
-        # variation of dielectric constant with frequency
+        # variation ofeffective permittivity with frequency
         # implemented by ADS only.
-        # 'frequencyinvariant' will give constant value with real part
-        # compatible with qucs and an imaginary part due to tand
+        # 'frequencyinvariant' will give a constant complex value whith a real
+        # part compatible with qucs and an imaginary part due to tand
         self.ep_r_f, self.tand_f = self.analyse_dielectric(
             self.ep_r, self.tand,
             self.f_low, self.f_high, self.f_epr_tand, self.frequency.f,
             self.diel)
         
-        # quasi-static effective dielectric constant of substrate + line and
+        # quasi-static effective permittivity of substrate + line and
         # the impedance of the microstrip line
         # qucs use real-valued ep_r giving real-valued impedance
         if compatibility_mode == 'qucs':
             self.zl_eff, self.ep_reff, self.w_eff = self.analyse_quasi_static(
                 real(self.ep_r_f), self.w, self.h, self.t, self.model)
-        # ads use complex permittivity giving complex impedance
+        # ads use complex permittivity giving complex impedance and
+        # effective permittivity
         else:
             self.zl_eff, self.ep_reff, self.w_eff = self.analyse_quasi_static(
                 self.ep_r_f, self.w, self.h, self.t, self.model)
         
-        # analyse dispersion of Zl and Er
-        # qucs use w here but use of w_eff seems better
+        # analyse dispersion of impedance and relatice permittivity
+        # qucs use w here, but w_eff seems better
         if compatibility_mode == 'qucs':
             self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
                 self.zl_eff, self.ep_reff, real(self.ep_r_f),
@@ -215,12 +277,10 @@ class MLine(Media):
     def gamma(self):
         """
         Propagation constant.
-
-        See Also
-        --------
-        alpha_conductor : calculates losses to conductor
-        alpha_dielectric: calculates losses to dielectric
-        beta            : calculates phase parameter
+        
+        Returns
+        -------
+        gamma : :class:`numpy.ndarray`
         """
         ep_reff, f = real(self.ep_reff_f), self.frequency.f
         
@@ -236,6 +296,10 @@ class MLine(Media):
     def Z0(self) -> npy.ndarray:
         """
         Characteristic Impedance.
+        
+        Note
+        ----
+        Beware confusion with z0, the port impedance of media
 
         Returns
         -------
@@ -248,6 +312,10 @@ class MLine(Media):
         """
         Alias fos Characteristic Impedance for backward compatibility.
         Deprecated, do not use.
+        
+        Note
+        ----
+        Beware confusion with z0, the port impedance of media
 
         Returns
         -------
@@ -255,7 +323,7 @@ class MLine(Media):
         """
         warnings.warn(
             "`Z0_f` is deprecated, use `Z0` instead",
-             DeprecationWarning
+             DeprecationWarning, stacklevel = 2
         )
         return self._z_characteristic
     
@@ -264,7 +332,23 @@ class MLine(Media):
                           f_epr_tand: NumberLike, f: NumberLike,
                           diel: str):
         """
-        Frequency dependent relative permittivity of dielectric.
+        This function calculate the frequency dependent relative permittivity
+        of dielectric and and tangeantial loss factor.
+        
+        References
+        ----------
+        .. [#] C. Svensson, G.E. Dermer,
+            Time domain modeling of lossy interconnects,
+            IEEE Trans. on Advanced Packaging, May 2001, N2, Vol. 24, pp.191-196.
+        .. [#] Djordjevic, R.M. Biljic, V.D. Likar-Smiljanic, T.K. Sarkar,
+            Wideband frequency-domain characterization of FR-4 and time-domain
+            causality,
+            IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
+            
+        Returns
+        -------
+        ep_r_f : :class:`numpy.ndarray`
+        tand_f : :class:`numpy.ndarray`
         """
         if diel == 'djordjevicsvensson':
             # compute the slope for a log frequency scale, tanD dependent.
@@ -290,9 +374,27 @@ class MLine(Media):
                            model: str):
         """
         This function calculates the quasi-static impedance of a microstrip
-        line, the value of the effective dielectric constant and the
-        effective width due to the finite conductor thickness for the given
-        microstrip line and substrate properties.
+        line, the value of the effective permittivity as per filling factor
+        and the effective width due to the finite conductor thickness for the
+        given microstrip line and substrate properties.
+        
+        References
+        ----------
+        .. [#] E. Hammerstad and Ø. Jensen,
+            "Accurate Models for Microstrip Computer-Aided Design", Symposium
+            on Microwave Theory and Techniques, pp. 407-409, June 1980.
+        .. [#] H. A. Wheeler,
+            "Transmission-Line Properties of a Strip on a Dielectric Sheet on a
+            Plane, IEEE Trans. on Microwave Theory and Techniques, vol. 25,
+            no. 8, pp. 631-647, Aug. 1977.
+        .. [#] M. V. Schneider,
+            "Microstrip Lines for Microwave Integrated Circuits",
+            The Bell System Technical Journal, vol. 48, pp. 1421-1444, May 1969.
+            
+        Returns
+        -------
+        zl_eff : :class:`numpy.ndarray`
+        ep_reff : :class:`numpy.ndarray`
         """
         Z0 = sqrt(mu_0 / epsilon_0)
         zl_eff = Z0
@@ -406,8 +508,37 @@ class MLine(Media):
                           h: NumberLike, t: NumberLike, f: NumberLike, 
                           disp: str):
          """
-         Frequency dependent characteristic impedance and dielectric constant
-         accounting for microstripline dispersion.
+         This function compute the frequency dependent characteristic
+         impedance and effective permittivity accounting for microstripline
+         frequency dispersion.
+         
+         References
+         ----------
+         .. [#] M. Kobayashi,
+             "A Dispersion Formula Satisfying Recent Requirements in Microstrip
+             CAD", IEEE Trans. on Microwave Theory and Techniques, vol. 36,
+             no. 8, pp. 1246-1250, Aug. 1988.
+         .. [#] M. V. Schneider, "Microstrip Dispersion", Proceedings of the
+             IEEE, Letters, vol. 60, Jan. 1972, pp. 144-146.
+         .. [#] M. Kirschning and R. H. Jansen,
+             "Accurate Model for Effective Dielectric Constant of Microstrip
+             with Validity up to Millimeter-Wave Frequencies", Electronics
+             Letters, vol. 8, no. 6, pp. 272-273, Mar. 1982.
+         .. [#] R. H. Jansen and M. Kirschning,
+             "Arguments and an accurate Model for the Power-Current Formulation of
+             Microstrip Characteristic Impedance",
+             Archiv für Elektronik und Übertragungstechnik (AEÜ), vol. 37,
+             pp. 108-112, 1983.
+         .. [#] E. Yamashita, K. Atsuki, and T. Ueda,
+             "An Approximate Dispersion Formula of Microstrip Lines for
+             Computer Aided Design of Microwave Integrated Circuits",
+             IEEE Trans. on Microwave Theory and Techniques, vol. 27,
+             pp. 1036-1038, Dec. 1979.
+             
+         Returns
+         -------
+         z : :class:`numpy.ndarray`
+         e : :class:`numpy.ndarray`
          """
          u = wr/h
          if disp == 'schneider':
@@ -471,7 +602,17 @@ class MLine(Media):
                     D: NumberLike):
         """
         The function calculates the conductor and dielectric losses of a
-        single microstrip line.
+        single microstrip line using wheeler's incremental inductance rule.
+        
+        References
+        ----------
+        .. [#] H. A. Wheeler, "Formulas for the Skin Effect,"
+            Proceedings of the IRE, vol. 30, no. 9, pp. 412-424, Sept. 1942.
+            
+        Returns
+        -------
+        a_conductor : :class:`numpy.ndarray`
+        a_dielectric : :class:`numpy.ndarray`
         """
         # limited to only Hammerstad and Jensen model
         Z0 = npy.sqrt(mu_0/epsilon_0)
@@ -507,7 +648,7 @@ class MLine(Media):
 
 def hammerstad_ab(u: NumberLike, ep_r: NumberLike) -> NumberLike:
     """
-    Intermediary parameter. see qucs docs on microstrip lines.
+    Hammerstad parameters for relative permittivity dispersion.
     """
     a = 1. + log((u**4 + (u / 52.)**2) / (u**4 + 0.432)) / 49. \
         + log(1 + (u / 18.1)**3) / 18.7
@@ -518,7 +659,7 @@ def hammerstad_ab(u: NumberLike, ep_r: NumberLike) -> NumberLike:
 
 def hammerstad_zl(u: NumberLike) -> NumberLike:
     """
-    intermediary parameter. see qucs docs on microstrip lines.
+    Hammerstad quasi-static impedance.
     """
     fu = 6 + (2 * pi - 6) * exp(-(30.666 / u)**0.7528)
     Z0 = sqrt(mu_0/epsilon_0)
@@ -527,7 +668,7 @@ def hammerstad_zl(u: NumberLike) -> NumberLike:
 def hammerstad_er(u: NumberLike, ep_r: NumberLike, a: NumberLike,
                   b: NumberLike) -> NumberLike:
     """
-    intermediary parameter. see qucs docs on microstrip lines.
+    Hammerstad quasi-static relative permittivity.
     """
     return (ep_r + 1) / 2 + (ep_r - 1) / 2 * (1. + 10. / u)**(-a * b)
 
@@ -535,7 +676,7 @@ def kirsching_zl(u: NumberLike, fn: NumberLike,
                  ep_r: NumberLike, ep_reff: NumberLike, ep_reff_f: NumberLike,
                  zl_eff: NumberLike):
     """
-    intermediary parameter. see qucs docs on microstrip lines.
+    Kirschning Jansen impedance dispersion.
     """
     #fn = f * h * 1e-6 # GHz-mm
     R1 = npy.minimum(0.03891 * ep_r**1.4, 20.)
@@ -564,7 +705,7 @@ def kirsching_zl(u: NumberLike, fn: NumberLike,
 def kirsching_er(u: NumberLike, fn: NumberLike,
                  ep_r: NumberLike, ep_reff: NumberLike):
     """
-    intermediary parameter. see qucs docs on microstrip lines.
+    Kirschning Jansen relative permittivity dispersion.
     """
     # in the paper fn is in GHz-cm while in Qucs it is GHz-mm, thus a factor
     # 10 for all constant that multiply or divide fn
