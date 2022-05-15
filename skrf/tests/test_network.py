@@ -420,12 +420,22 @@ class NetworkTestCase(unittest.TestCase):
         self.ntwk1.plot_s_smith()
 
     def test_zy_singularities(self):
-        open = rf.N(f=[1], s=[1], z0=[50])
-        short = rf.N(f=[1], s=[-1], z0=[50])
-        react = rf.N(f=[1],s=[[0,1],[1,0]],z0=50)
-        z = open.z
-        y = short.y
-        a = react.y
+        networks = [
+            rf.N(f=[1], s=[1], z0=[50]),
+            rf.N(f=[1], s=[-1], z0=[50]),
+            rf.N(f=[1], s=[[0, 1], [1, 0]], z0=[50]),
+            rf.N(f=[1], s=[[1, 0], [0, 1]], z0=50),
+            rf.N(f=[1], s=[[-1, 0], [0, -1]], z0=50),
+            rf.N(f=[1], s=[[0.5, 0.5], [0.5, 0.5]], z0=[50]),
+            rf.N(f=[1], s=[[-0.5, -0.5], [-0.5, -0.5]], z0=[50]),
+        ]
+        # These conversion can be very inaccurate since results are very close
+        # to singular.
+        # Test that they are close with loose accuracy tolerance.
+        for net in networks:
+            for s_def in rf.S_DEFINITIONS:
+                npy.testing.assert_allclose(rf.z2s(rf.s2z(net.s, net.z0, s_def=s_def), net.z0, s_def=s_def), net.s, atol=1e-3)
+                npy.testing.assert_allclose(rf.y2s(rf.s2y(net.s, net.z0, s_def=s_def), net.z0, s_def=s_def), net.s, atol=1e-3)
 
     def test_conversions(self):
         #Converting to other format and back to S-parameters should return the original network
@@ -445,12 +455,45 @@ class NetworkTestCase(unittest.TestCase):
         #Converting to other format and back to S-parameters should return the original network
         for ports in range(3, 6):
             s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
-            ntwk_random = rf.Network(s=s_random, frequency=self.freq)
-            for test_z0 in (50, 20+60j, 90-50j):
-                for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3, ntwk_random):
-                    ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0)
-                    npy.testing.assert_allclose(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0), ntwk.s)
-                    npy.testing.assert_allclose(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0), ntwk.s)
+            test_ntwk = rf.Network(s=s_random, frequency=self.freq)
+            random_z0 = npy.random.uniform(1, 100, (self.freq.npoints, ports)) +\
+            1j * npy.random.uniform(-100, 100, (self.freq.npoints, ports))
+            for test_z0 in (50, random_z0):
+                for s_def in rf.S_DEFINITIONS:
+                    ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0, s_def=s_def)
+                    npy.testing.assert_allclose(rf.z2s(rf.s2z(ntwk.s, test_z0, s_def=s_def), test_z0, s_def=s_def), ntwk.s)
+                    npy.testing.assert_allclose(rf.y2s(rf.s2y(ntwk.s, test_z0, s_def=s_def), test_z0, s_def=s_def), ntwk.s)
+
+    def test_y_z_compatability(self):
+        # Test that npy.linalg.inv(Z) == Y
+        fpoints = 3
+        for p in range(2, 6):
+            s = npy.random.uniform(-1, 1, (fpoints, p, p)) + 1j * npy.random.uniform(-1, 1, (fpoints, p, p))
+            random_z0 = npy.random.uniform(1, 100, (fpoints, p)) + 1j * npy.random.uniform(-100, 100, (fpoints, p))
+            for test_z0 in (50, random_z0):
+                for s_def in rf.S_DEFINITIONS:
+                    z = rf.s2z(s, test_z0, s_def=s_def)
+                    y = npy.linalg.inv(z)
+                    npy.testing.assert_allclose(rf.y2s(y, test_z0, s_def=s_def), s)
+
+    def test_unknown_s_def(self):
+        # Test that Exception is raised when given unknown s_def
+        s = npy.array([0]).reshape(1, 1, 1)
+        z0 = npy.array([50])
+        # These should work
+        # These also test that functions work with dtype=float input
+        rf.s2z(s, z0)
+        rf.z2s(s, z0)
+        rf.s2y(s, z0)
+        rf.y2s(s, z0)
+        with pytest.raises(Exception) as e:
+            rf.s2z(s, z0, s_def='error')
+        with pytest.raises(Exception) as e:
+            rf.z2s(s, z0, s_def='error')
+        with pytest.raises(Exception) as e:
+            rf.y2s(s, z0, s_def='error')
+        with pytest.raises(Exception) as e:
+            rf.s2y(s, z0, s_def='error')
 
     def test_sparam_renormalize(self):
         #Converting to other format and back to S-parameters should return the original network

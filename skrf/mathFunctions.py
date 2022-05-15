@@ -1258,3 +1258,65 @@ def is_positive_semidefinite(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool
     except npy.linalg.LinAlgError:
         return False
     return npy.all(v > -tol)
+
+def rsolve(A: npy.ndarray, B: npy.ndarray) -> npy.ndarray:
+    r"""Solves x @ A = B.
+
+    Calls numpy.linalg.solve with transposed matrices.
+
+    Same as B @ npy.linalg.inv(A) but avoids calculating the inverse and
+    should be numerically slightly more accurate.
+
+    Input should have dimension of similar to (nfreqs, nports, nports).
+
+    Parameters
+    ----------
+    A : npy.ndarray
+    B : npy.ndarray
+
+    Returns
+    -------
+    x : npy.ndarray
+    """
+    return npy.transpose(npy.linalg.solve(npy.transpose(A, (0, 2, 1)).conj(),
+            npy.transpose(B, (0, 2, 1)).conj()), (0, 2, 1)).conj()
+
+def nudge_eig(mat: npy.ndarray, cond: float = 1e-9, min_eig: float = 1e-12) -> npy.ndarray:
+    r"""Nudge eigenvalues with absolute value smaller than
+    max(cond * max(eigenvalue), min_eig) to that value.
+    Can be used to avoid singularities in solving matrix equations.
+
+    Input should have dimension of similar to (nfreqs, nports, nports).
+
+    Parameters
+    ----------
+    mat : npy.ndarray
+        Matrices to nudge
+    cond : float, optional
+        Minimum eigenvalue ratio compared to the maximum eigenvalue
+    min_eig : float, optional
+        Minimum eigenvalue
+    Returns
+    -------
+    res : npy.ndarray
+        Nudged matrices
+    """
+    # Eigenvalues and vectors
+    eigw, eigv = npy.linalg.eig(mat)
+    # Max eigenvalue for each frequency
+    max_eig = npy.amax(npy.abs(eigw), axis=1)
+    # Calculate mask for positions where problematic eigenvalues are
+    mask = npy.logical_or(npy.abs(eigw) < cond * max_eig[:, None], npy.abs(eigw) < min_eig)
+    if not mask.any():
+        # Nothing to do. Return the original array.
+        return mat
+
+    mask_cond = cond * npy.repeat(max_eig[:, None], mat.shape[-1], axis=-1)[mask]
+    mask_min = min_eig * npy.ones(mask_cond.shape)
+    # Correct the eigenvalues
+    eigw[mask] = npy.maximum(mask_cond, mask_min)
+
+    # Now assemble the eigendecomposited matrices back
+    e = npy.zeros_like(mat)
+    npy.einsum('ijj->ij', e)[...] = eigw
+    return rsolve(eigv, eigv @ e)
