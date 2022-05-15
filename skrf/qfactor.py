@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 r"""
 Qfactor (:mod:`skrf.qfactor`)
 ========================================
@@ -401,7 +400,7 @@ class Qfactor(object):
             Q_L0 = mult * f_L0/(self.f[-1] - self.f[0])
         
         if self.verbose:
-            print(f'Initial estimation: {Q_L0 = }, {f_L0 = }')
+            print(f'Initial estimation: Q_L0={Q_L0}, f_L0={f_L0}')
 
         N2 = 2 * N
         M = np.zeros([N2, 5])
@@ -431,7 +430,7 @@ class Qfactor(object):
         self.f_L = f_L0
 
         if self.verbose:
-            print(f'Preliminary estimation: {self.Q_L = }, {self.f_L = }')
+            print(f'Preliminary estimation: Q_L={self.Q_L}, f_L={self.f_L}')
 
 
     def _optimise_fit6(self, N: int):
@@ -537,9 +536,9 @@ class Qfactor(object):
                 RMS_Error = np.sqrt(SumNum / SumDen)
                 if self.verbose:
                     if last_op == "c":
-                        print(f"Iteration {iterations}, {RMS_Error = }")
+                        print(f"Iteration {iterations}, RMS Error: {RMS_Error}")
                     else:
-                        print(f"{op = }, Iteration {iterations}, {RMS_Error = }")
+                        print(f"op {op}, Iteration {iterations}, RMS Error: {RMS_Error}")
                 last_op = op
 
                 if seek_convergence:
@@ -719,9 +718,9 @@ class Qfactor(object):
                 RMS_Error = np.sqrt(SumNum / SumDen)
                 if self.verbose:
                     if last_op == "c":
-                        print(f"Iteration {iterations}, {RMS_Error = }")
+                        print(f"Iteration {iterations}, RMS Error: {RMS_Error}")
                     else:
-                        print(f"{op = }, Iteration {iterations}, {RMS_Error = }")
+                        print(f"op {op}, Iteration {iterations}, RMS Error: {RMS_Error}")
  
                 last_op = op
 
@@ -890,9 +889,9 @@ class Qfactor(object):
                 RMS_Error = np.sqrt(SumNum / SumDen)
                 if self.verbose:
                     if last_op == "c":
-                        print(f"Iteration {iterations}, {RMS_Error = }")
+                        print(f"Iteration {iterations}, RMS Error: {RMS_Error}")
                     else:
-                        print(f"{op = }, Iteration {iterations}, {RMS_Error = }")
+                        print(f"{op}, Iteration {iterations}, RMS Error: {RMS_Error}")
  
                 last_op = op
 
