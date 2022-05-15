@@ -74,17 +74,6 @@ class CPWTestCase(unittest.TestCase):
         # one could do better eventually by extracting values from Qucs directly
         rel_diff = (Z0_qucs-npy.array(Z0))/Z0_qucs
         assert_allclose(rel_diff  - 3/100, 0, atol=0.1)
-        
-    def test_alpha_warning(self):
-        """
-        Test if alpha_conductor warns when t < 3 * skin_depth
-        """
-        # cpw line on 1.5mm FR-4 substrate
-        freq = Frequency(1, 1, 1, 'MHz')
-        with self.assertWarns(RuntimeWarning) as context:
-            cpw = CPW(frequency = freq, z0 = 50., w = 3.0e-3, s = 0.3e-3, t = 35e-6,
-                       ep_r = 4.5, rho = 1.7e-8)
-            line = cpw.line(d = 25e-3, unit = 'm', embed = True, z0 = cpw.Z0)
 
 if __name__ == "__main__":
     # Launch all tests
