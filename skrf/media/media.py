@@ -402,8 +402,7 @@ class Media(ABC):
         """
         result = Network(**kwargs)
         result.frequency = self.frequency
-        result.s = npy.zeros((self.frequency.npoints, nports, nports),\
-                dtype=complex)
+        result.s = npy.zeros((self.frequency.npoints, nports, nports), dtype=complex)
         if z0 is None:
             z0 = self.z0
         elif isinstance(z0, str):
@@ -530,11 +529,12 @@ class Media(ABC):
         inductor
         """
         result = self.match(nports=2, *args, **kwargs)
-        y= npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1./R
-        y[:,1,1] = 1./R
-        y[:,0,1] = -1./R
-        y[:,1,0] = -1./R
+        y = npy.zeros(shape=result.s.shape, dtype=complex)
+        res = npy.array(R)
+        y[:, 0, 0] = 1.0 / res
+        y[:, 1, 1] = 1.0 / res
+        y[:, 0, 1] = -1.0 / res
+        y[:, 1, 0] = -1.0 / res
         result.y = y
         return result
 
@@ -566,11 +566,12 @@ class Media(ABC):
         """
         result = self.match(nports=2, **kwargs)
         w = self.frequency.w
-        y= npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1j*w*C
-        y[:,1,1] = 1j*w*C
-        y[:,0,1] = -1j*w*C
-        y[:,1,0] = -1j*w*C
+        y = npy.zeros(shape=result.s.shape, dtype=complex)
+        cap = npy.array(C)
+        y[:, 0, 0] = 1j * w * cap
+        y[:, 1, 1] = 1j * w * cap
+        y[:, 0, 1] = -1j * w * cap
+        y[:, 1, 0] = -1j * w * cap
         result.y = y
         return result
 
@@ -603,10 +604,11 @@ class Media(ABC):
         result = self.match(nports=2, **kwargs)
         w = self.frequency.w
         y = npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1./(1j*w*L)
-        y[:,1,1] = 1./(1j*w*L)
-        y[:,0,1] = -1./(1j*w*L)
-        y[:,1,0] = -1./(1j*w*L)
+        ind = npy.array(L)
+        y[:, 0, 0] = 1.0 / (1j * w * ind)
+        y[:, 1, 1] = 1.0 / (1j * w * ind)
+        y[:, 0, 1] = -1.0 / (1j * w * ind)
+        y[:, 1, 0] = -1.0 / (1j * w * ind)
         result.y = y
         return result
 
@@ -645,11 +647,11 @@ class Media(ABC):
         resistor
         """
         result = self.match(nports=2, **kwargs)
-        gamma = tf.zl_2_Gamma0(z1,z2)
-        result.s[:,0,0] = gamma
-        result.s[:,1,1] = -gamma
-        result.s[:,1,0] = (1+gamma)*npy.sqrt(1.0*z1/z2)
-        result.s[:,0,1] = (1-gamma)*npy.sqrt(1.0*z2/z1)
+        gamma = tf.zl_2_Gamma0(z1, z2)
+        result.s[:, 0, 0] = gamma
+        result.s[:, 1, 1] = -gamma
+        result.s[:, 1, 0] = (1 + gamma) * npy.sqrt(1.0 * z1 / z2)
+        result.s[:, 0, 1] = (1 - gamma) * npy.sqrt(1.0 * z2 / z1)
         return result
 
 
@@ -674,9 +676,9 @@ class Media(ABC):
         splitter : this just calls splitter(3)
         match : called to create a 'blank' network
         """
-        return self.splitter(3,**kwargs)
+        return self.splitter(3, **kwargs)
 
-    def splitter(self, nports,**kwargs) -> Network:
+    def splitter(self, nports: int, **kwargs) -> Network:
         r"""
         Ideal, lossless n-way splitter.
 
@@ -1053,7 +1055,7 @@ class Media(ABC):
         """
         return self.shunt(self.delay_short(*args, **kwargs))
 
-    def shunt_capacitor(self, C: NumberLike, *args, **kwargs) -> Network:
+    def shunt_capacitor(self, C: NumberLike, **kwargs) -> Network:
         r"""
         Shunted capacitor.
 
@@ -1061,7 +1063,7 @@ class Media(ABC):
         ----------
         C : number, array-like
             Capacitance in Farads.
-        \*args,\*\*kwargs : arguments, keyword arguments
+        \*\*kwargs : arguments, keyword arguments
             passed to func:`delay_open`
 
         Returns
@@ -1083,9 +1085,9 @@ class Media(ABC):
         shunt_delay_short
         shunt_inductor
         """
-        return self.shunt(self.capacitor(C=C,*args,**kwargs)**self.short())
+        return self.shunt(self.capacitor(C=C, **kwargs) ** self.short())
 
-    def shunt_inductor(self, L: NumberLike, *args, **kwargs) -> Network:
+    def shunt_inductor(self, L: NumberLike, **kwargs) -> Network:
         r"""
         Shunted inductor.
 
@@ -1093,8 +1095,8 @@ class Media(ABC):
         ----------
         L : number, array-like
             Inductance in Farads.
-        \*args,\*\*kwargs : arguments, keyword arguments
-            passed to func:`delay_open`
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`inductor`
 
         Returns
         -------
@@ -1115,11 +1117,11 @@ class Media(ABC):
         shunt_delay_short
         shunt_capacitor
         """
-        return self.shunt(self.inductor(L=L,*args,**kwargs)**self.short())
+        return self.shunt(self.inductor(L=L, **kwargs) ** self.short())
 
     def attenuator(self, s21: NumberLike, db: bool = True, d: Number = 0,
                    unit: str = 'deg', name: str = '', **kwargs) -> Network:
-        """
+        r"""
         Ideal matched attenuator of a given length.
 
         Parameters
@@ -1133,6 +1135,10 @@ class Media(ABC):
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
             the units of d.  See :func:`to_meters`, for details. 
             Default is 'deg'
+        name : str
+            Name for the returned attenuator Network
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`line`
 
         Returns
         -------
@@ -1140,18 +1146,20 @@ class Media(ABC):
             2-port attenuator
 
         """
+
+        s21 = npy.array(s21)
         if db:
             s21 = mf.db_2_magnitude(s21)
 
         result = self.match(nports=2)
-        result.s[:,0,1] = s21
-        result.s[:,1,0] = s21
-        result = result**self.line(d=d, unit = unit, **kwargs)
+        result.s[:, 0, 1] = s21
+        result.s[:, 1, 0] = s21
+        result = result ** self.line(d=d, unit=unit, **kwargs)
         result.name = name
         return result
 
     def lossless_mismatch(self, s11: NumberLike, db: bool = True, **kwargs) -> Network:
-        """
+        r"""
         Lossless, symmetric mismatch defined by its return loss.
 
         Parameters
@@ -1162,35 +1170,40 @@ class Media(ABC):
         db : bool, optional
             is s11 in db? otherwise assumes linear. Default is True (dB)
 
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`match`
+
         Returns
         -------
         ntwk : :class:`~skrf.network.Network` object
             2-port lossless mismatch
 
         """
-        result = self.match(nports=2,**kwargs)
+
+        result = self.match(nports=2, **kwargs)
+        s11 = npy.array(s11)
         if db:
             s11 = mf.db_2_magnitude(s11)
 
-        result.s[:,0,0] = s11
-        result.s[:,1,1] = s11
+        result.s[:, 0, 0] = s11
+        result.s[:, 1, 1] = s11
 
-        s21_mag = npy.sqrt(1- npy.abs(s11)**2)
-        s21_phase = (npy.angle(s11) \
-                   + npy.pi/2 *(npy.angle(s11)<=0) \
-                   - npy.pi/2 *(npy.angle(s11)>0))
-        result.s[:,0,1] =  s21_mag* npy.exp(1j*s21_phase)
-        result.s[:,1,0] = result.s[:,0,1]
+        s21_mag = npy.sqrt(1 - npy.abs(s11) ** 2)
+        s21_phase = npy.angle(s11) + npy.pi / 2 * (npy.angle(s11) <= 0) - npy.pi / 2 * (npy.angle(s11) > 0)
+        result.s[:, 0, 1] = s21_mag * npy.exp(1j * s21_phase)
+        result.s[:, 1, 0] = result.s[:, 0, 1]
         return result
 
     def isolator(self, source_port: int = 0, **kwargs) -> Network:
-        """
+        r"""
         Two-port isolator.
 
         Parameters
         -------------
         source_port: int in [0,1], optional
             port at which power can flow from. Default is 0.
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`thru`
 
         Returns
         -------
@@ -1199,10 +1212,10 @@ class Media(ABC):
 
         """
         result = self.thru(**kwargs)
-        if source_port==0:
-            result.s[:,0,1]=0
-        elif source_port==1:
-            result.s[:,1,0]=0
+        if source_port == 0:
+            result.s[:, 0, 1] = 0
+        elif source_port == 1:
+            result.s[:, 1, 0] = 0
         return result
 
 
