@@ -28,6 +28,12 @@ class CPWTestCase(unittest.TestCase):
         # infinite GaAs substrate, finite metal thickness
         # TODO: not used yet
         self.cpw3 = CPW(frequency=self.freq, w=75e-6, s=50e-6, ep_r=12.9, t=1e-6)
+        # coplanar on FR-4 printed circuit board without conductor backing
+        # with zero thickness strip
+        self.cpw4 = CPW(frequency = self.freq, w = 3.0e-3, s = 0.3e-3,
+                        t = None, ep_r = 4.5, rho = None,  z0 = 50.)
+        self.cpw5 = CPW(frequency = self.freq, w = 3.0e-3, s = 0.3e-3,
+                        t = 0., ep_r = 4.5, rho = None, z0 = 50.)
 
     def test_qucs_network(self):
         """
@@ -85,6 +91,13 @@ class CPWTestCase(unittest.TestCase):
             cpw = CPW(frequency = freq, z0 = 50., w = 3.0e-3, s = 0.3e-3, t = 35e-6,
                        ep_r = 4.5, rho = 1.7e-8)
             line = cpw.line(d = 25e-3, unit = 'm', embed = True, z0 = cpw.Z0)
+            
+    def test_zero_thickness(self):
+        """
+        Test if alpha_conductor is nullified when thikness = 0. or None
+        """
+        assert_array_almost_equal(self.cpw4.alpha_conductor, 0.00, decimal=6)
+        assert_array_almost_equal(self.cpw5.alpha_conductor, 0.00, decimal=6)
 
 if __name__ == "__main__":
     # Launch all tests

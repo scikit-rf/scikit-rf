@@ -173,11 +173,6 @@ class CPW(Media):
                      1./b * (pi+log((8*pi*b*(1-k1))/(t*(1+k1))))))
         else:
             a_c = zeros(f.shape)
-            
-        a = self.w/2.
-        b = self.s+self.w/2.
-        K = ellipk      # complete elliptical integral of first kind
-        K_p = lambda x: ellipk(sqrt(1-x**2)) # ellipk's compliment
 
         return a_c
 
