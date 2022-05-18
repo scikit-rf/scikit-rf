@@ -51,7 +51,8 @@ class Touchstone:
     .. [#] https://ibis.org/interconnect_wip/touchstone_spec2_draft.pdf
     .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
-    def __init__(self, file: typing.Union[str, typing.TextIO]):
+    def __init__(self, file: typing.Union[str, typing.TextIO],
+                 encoding: typing.Union[str, None] = None):
         """
         constructor
 
@@ -59,24 +60,35 @@ class Touchstone:
         ----------
         file : str or file-object
             touchstone file to load
+        encoding : str, optional
+            define the file encoding to use. Default value is None, 
+            meaning the encoding is guessed (ANSI, UTF-8 or Latin-1).
 
         Examples
         --------
         From filename
 
         >>> t = rf.Touchstone('network.s2p')
+        
+        File encoding can be specified to help parsing the special characters:
+        
+        >>> t = rf.Touchstone('network.s2p', encoding='ISO-8859-1')
 
         From file-object
 
         >>> file = open('network.s2p')
         >>> t = rf.Touchstone(file)
-        """
-        fid = get_fid(file)
-        filename = fid.name
-        ## file name of the touchstone data file
-        self.filename = filename
+        
+        From a io.StringIO object
+        
+        >>> link = 'https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/examples/basic_touchstone_plotting/horn antenna.s1p'
+        >>> r = requests.get(link)
+        >>> stringio = io.StringIO(r.text)
+        >>> stringio.name = 'horn.s1p'  # must be provided for the Touchstone parser
+        >>> horn = rf.Touchstone(stringio)
 
-        ## file format version.
+        """
+        ## file format version. 
         # Defined by default to 1.0, since version number can be omitted in V1.0 format
         self.version = '1.0'
         ## comments in the file header
@@ -105,7 +117,34 @@ class Touchstone:
         self.port_names = None
 
         self.comment_variables = None
-        self.load_file(fid)
+        
+        # open the file depending on encoding
+        # Guessing the encoding by trial-and-error, unless specified encoding
+        try:
+            if encoding is not None:
+                fid = get_fid(file, encoding=encoding)
+                self.filename = fid.name
+                self.load_file(fid)       
+            else:
+                # Assume default encoding
+                fid = get_fid(file)
+                self.filename = fid.name
+                self.load_file(fid)
+            
+        except UnicodeDecodeError:
+            # Unicode fails -> Force Latin-1
+            fid = get_fid(file, encoding='ISO-8859-1')
+            self.filename = fid.name
+            self.load_file(fid)
+
+        except ValueError:
+            # Assume Microsoft UTF-8 variant encoding with BOM
+            fid = get_fid(file, encoding='utf-8-sig')
+            self.filename = fid.name
+            self.load_file(fid)
+
+        except Exception as e:
+            raise ValueError(f'Something went wrong by the file openning: {e}')
 
         self.gamma = []
         self.z0 = []
@@ -218,7 +257,7 @@ class Touchstone:
                 self.frequency_unit = toks[0]
                 self.parameter = toks[1]
                 self.format = toks[2]
-                self.resistance = toks[4]
+                self.resistance = complex(toks[4])
                 if self.frequency_unit not in ['hz', 'khz', 'mhz', 'ghz']:
                     print('ERROR: illegal frequency_unit [%s]',  self.frequency_unit)
                     # TODO: Raise

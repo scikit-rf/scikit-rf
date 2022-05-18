@@ -37,7 +37,23 @@ class TouchstoneTestCase(unittest.TestCase):
         self.assertTrue((s == s_true).all())
         self.assertTrue((z0 == z0_true))
 
-
+    def test_read_with_special_encoding(self):
+        """
+        Read Touchstone files with various file encoding
+        """
+        filename_utf8_sig = os.path.join(self.test_dir, 'test_encoding_UTF-8-SIG.s2p')
+        filename_latin1 = os.path.join(self.test_dir, 'test_encoding_ISO-8859-1.s2p')
+        filename_unknown = os.path.join(self.test_dir, 'test_encoding_unknown.s2p')
+        
+        # most common situation: try and error guessing the encoding
+        Touchstone(filename_utf8_sig)
+        Touchstone(filename_latin1)
+        Touchstone(filename_unknown)
+                
+        # specify the encoding  
+        Touchstone(filename_latin1, encoding='ISO-8859-1')
+        Touchstone(filename_utf8_sig, encoding='utf_8_sig')
+        
     def test_read_from_fid(self):
         """
         This tests reading touch stone data from a file object as compared with

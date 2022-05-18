@@ -53,6 +53,16 @@ class CircuitTestConstructor(unittest.TestCase):
         _ntwk1.frequency = rf.Frequency(start=1, stop=1, npoints=1)
         self.assertRaises(AttributeError, rf.Circuit, connections)
 
+    def test_no_duplicate_node(self):
+        """
+        Check that a circuit description has no duplicated (network, port)
+        """
+        # (port1, 0) is found twice in the connections description
+        connections = [[(self.port1, 0), (self.ntwk1, 0)],
+                       [(self.ntwk1, 1), (self.ntwk2, 0)],
+                       [(self.ntwk2, 1), (self.port1, 0)]]
+        self.assertRaises(AttributeError, rf.Circuit, connections)        
+
     def test_s_active(self):
         """
         Test the active s-parameter of a 2-ports network
