@@ -91,21 +91,24 @@ class MLineTestCase(unittest.TestCase):
                        w = self.w, h = self.h, t = self.t,
                        ep_r = self.ep_r, rho = self.rho,
                        tand = self.tand, rough = self.d,
-                       diel = 'frequencyinvariant', disp = 'hammerstadjensen')
+                       diel = 'frequencyinvariant', disp = 'hammerstadjensen',
+                       compatibility_mode = 'qucs')
         
         # without t (t = None)
         mline2 = MLine(frequency = freq, z0 = 50.,
                        w = self.w, h = self.h,
                        ep_r = self.ep_r, rho = self.rho,
                        tand = self.tand, rough = self.d,
-                       diel = 'frequencyinvariant', disp = 'hammerstadjensen')
+                       diel = 'frequencyinvariant', disp = 'hammerstadjensen',
+                       compatibility_mode = 'qucs')
         
         # with t = 0
         mline3 = MLine(frequency = freq, z0 = 50.,
                        w = self.w, h = self.h, t = 0,
                        ep_r = self.ep_r, rho = self.rho,
                        tand = self.tand, rough = self.d,
-                       diel = 'frequencyinvariant', disp = 'hammerstadjensen')
+                       diel = 'frequencyinvariant', disp = 'hammerstadjensen',
+                       compatibility_mode = 'qucs')
         
         self.assertTrue(npy.abs((mline1.Z0[0] - 49.142) / 49.142) < 0.01)
         self.assertTrue(npy.abs((mline1.ep_reff_f[0] - 3.324) / 3.324) < 0.01)
@@ -206,8 +209,7 @@ class MLineTestCase(unittest.TestCase):
                             ep_r = self.ep_r, rho = self.rho,
                             tand = self.tand, rough = self.d,
                             model = 'hammerstadjensen', disp = ref['disp'],
-                            diel = ref['diel'],
-                            compatibility_mode = 'ads')
+                            diel = ref['diel'])
             line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
             line.name = 'skrf,ads'
             

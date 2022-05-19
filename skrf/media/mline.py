@@ -120,12 +120,14 @@ class MLine(Media):
         model, in Hz
     f_epr_tand : number, or array-like
         measurement frequency for ep_r and tand of dielectric, in Hz
-    compatibility_mode: str
-        This switch the behaviour to stick with ADS or Qucs simulator
-        implementations of microstriplines.
+    compatibility_mode: str or None (default)
+        If set to 'qucs', following behavious happens :
         
-        * 'qucs' (default) follow QUCS behaviour
-        * 'ads' : follow ADS behaviour
+        * Characteristic impedance will be real (no imaginary part due to tand)
+        * Quasi-static relative permittivity and impedance will by used for
+          loss computation instead of frequency-dispersed values
+        *  Kobayashi and Yamashita models will disperse permittivity but keep
+           quasi-static impedance values
         
     \*args, \*\*kwargs : arguments, keyword arguments
             passed to :class:`~skrf.media.media.Media`'s constructor
@@ -198,7 +200,7 @@ class MLine(Media):
                  rough: NumberLike = 0.15e-6,
                  f_low: NumberLike = 1e3, f_high: NumberLike = 1e12,
                  f_epr_tand: NumberLike = 1e9,
-                 compatibility_mode: str = 'qucs',
+                 compatibility_mode: Union[str, None] = None,
                  *args, **kwargs):
         
         Media.__init__(self, frequency = frequency, z0 = z0)
@@ -211,7 +213,7 @@ class MLine(Media):
         self.compatibility_mode = compatibility_mode
         
         # variation ofeffective permittivity with frequency
-        # implemented by ADS only.
+        # Not implemented on QUCS but implemented on ADS.
         # 'frequencyinvariant' will give a constant complex value whith a real
         # part compatible with qucs and an imaginary part due to tand
         self.ep_r_f, self.tand_f = self.analyse_dielectric(
