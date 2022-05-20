@@ -468,3 +468,17 @@ class NanoVNAv2(abcvna.VNA):
 
     def get_switch_terms(self, ports=(1, 2), **kwargs):
         raise NotImplementedError
+
+    @property
+    def s11(self):
+        traces = self.get_list_of_traces()
+        ntwk = self.get_traces(traces[0])
+        ntwk.name = 'S11'
+        return ntwk
+
+    @property
+    def s21(self):
+        traces = self.get_list_of_traces()
+        ntwk = self.get_traces(traces[1])
+        ntwk.name = 'S21'
+        return ntwk
