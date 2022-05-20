@@ -484,7 +484,7 @@ class NanoVNAv2(abcvna.VNA):
         return ntwk
 
     @property
-    def s21(self):
+    def s21(self) -> skrf.Network:
         """
         Returns :math:`S_{2,1}` as a 1-port Network.
 
