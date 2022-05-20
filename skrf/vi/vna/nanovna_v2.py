@@ -470,7 +470,14 @@ class NanoVNAv2(abcvna.VNA):
         raise NotImplementedError
 
     @property
-    def s11(self):
+    def s11(self) -> skrf.Network:
+        """
+        Returns :math:`S_{1,1}` as a 1-port Network.
+
+        Returns
+        -------
+        skrf.Network
+        """
         traces = self.get_list_of_traces()
         ntwk = self.get_traces(traces[0])
         ntwk.name = 'S11'
@@ -478,6 +485,13 @@ class NanoVNAv2(abcvna.VNA):
 
     @property
     def s21(self):
+        """
+        Returns :math:`S_{2,1}` as a 1-port Network.
+
+        Returns
+        -------
+        skrf.Network
+        """
         traces = self.get_list_of_traces()
         ntwk = self.get_traces(traces[1])
         ntwk.name = 'S21'
