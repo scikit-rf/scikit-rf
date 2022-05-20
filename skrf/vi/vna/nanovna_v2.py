@@ -122,7 +122,7 @@ class NanoVNAv2(abcvna.VNA):
     """
 
     def __init__(self, address: str = 'ASRL/dev/ttyACM0::INSTR'):
-        super().__init__(address=address, kwargs={'visa_library': 'py'})
+        super().__init__(address=address, kwargs={'visa_library': '@py'})
         self._protocol_reset()
         self._frequency = np.linspace(1e6, 10e6, 101)
         self.set_frequency_sweep(1e6, 10e6, 101)
