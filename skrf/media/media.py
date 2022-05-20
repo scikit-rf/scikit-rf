@@ -65,8 +65,8 @@ class Media(ABC):
         Default is None.
 
 
-    Note
-    ----
+    Notes
+    -----
     The `z0` parameter (port impedance) is needed in some cases.
     :class:`~skrf.media.rectangularWaveguide.RectangularWaveguide`
     is an example where you may need this, because the
@@ -187,8 +187,8 @@ class Media(ABC):
         gamma : :class:`numpy.ndarray`
             complex propagation constant for this media
 
-        Note
-        ----
+        Notes
+        -----
         `gamma` must adhere to the following convention:
 
          * positive real(gamma) = attenuation
@@ -233,8 +233,8 @@ class Media(ABC):
         .. math::
             j \cdot \omega / \gamma
 
-        Note
-        ----
+        Notes
+        -----
         The `j` is used so that real phase velocity corresponds to
         propagation
 
@@ -270,8 +270,8 @@ class Media(ABC):
         * :math:`\omega` is angular frequency (rad/s),
         * :math:`\gamma` is complex propagation constant (rad/m)
 
-        Note
-        ----
+        Notes
+        -----
         the `j` is used to make propagation real, this is needed because
         skrf defined the gamma as :math:`\gamma= \alpha +j\beta`.
 
@@ -402,8 +402,7 @@ class Media(ABC):
         """
         result = Network(**kwargs)
         result.frequency = self.frequency
-        result.s = npy.zeros((self.frequency.npoints, nports, nports),\
-                dtype=complex)
+        result.s = npy.zeros((self.frequency.npoints, nports, nports), dtype=complex)
         if z0 is None:
             z0 = self.z0
         elif isinstance(z0, str):
@@ -460,14 +459,18 @@ class Media(ABC):
         ----------
         nports : int
             number of ports
-        \*\*kwargs : key word arguments
-            passed to :func:`match`, which is called initially to create a
-            'blank' network.
+        \*\*kwargs : key word arguments passed to :func:`load`.
 
         Returns
         -------
         match : :class:`~skrf.network.Network` object
             a n-port short circuit
+
+        Notes
+        -----
+        This calls ::
+
+            load(-1.0, nports, **kwargs)
 
         See Also
         --------
@@ -475,7 +478,7 @@ class Media(ABC):
         open
         load
         """
-        return self.load(-1., nports, **kwargs)
+        return self.load(-1.0, nports, **kwargs)
 
     def open(self, nports: int = 1, **kwargs) -> Network:
         r"""
@@ -485,14 +488,18 @@ class Media(ABC):
         ----------
         nports : int
             number of ports
-        \*\*kwargs : key word arguments
-            passed to :func:`match`, which is called initially to create a
-            'blank' network.
+        \*\*kwargs : key word arguments passed to :func:`load`
 
         Returns
         -------
         match : :class:`~skrf.network.Network` object
             a n-port open circuit
+
+        Notes
+        -----
+        This calls ::
+
+            load(1.0, nports, **kwargs)
 
         See Also
         --------
@@ -501,7 +508,7 @@ class Media(ABC):
         short
         """
 
-        return self.load(1., nports, **kwargs)
+        return self.load(1.0, nports, **kwargs)
 
     def resistor(self, R: NumberLike, *args, **kwargs) -> Network:
         r"""
@@ -530,11 +537,12 @@ class Media(ABC):
         inductor
         """
         result = self.match(nports=2, *args, **kwargs)
-        y= npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1./R
-        y[:,1,1] = 1./R
-        y[:,0,1] = -1./R
-        y[:,1,0] = -1./R
+        y = npy.zeros(shape=result.s.shape, dtype=complex)
+        R = npy.array(R)
+        y[:, 0, 0] = 1.0 / R
+        y[:, 1, 1] = 1.0 / R
+        y[:, 0, 1] = -1.0 / R
+        y[:, 1, 0] = -1.0 / R
         result.y = y
         return result
 
@@ -566,11 +574,12 @@ class Media(ABC):
         """
         result = self.match(nports=2, **kwargs)
         w = self.frequency.w
-        y= npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1j*w*C
-        y[:,1,1] = 1j*w*C
-        y[:,0,1] = -1j*w*C
-        y[:,1,0] = -1j*w*C
+        y = npy.zeros(shape=result.s.shape, dtype=complex)
+        C = npy.array(C)
+        y[:, 0, 0] = 1j * w * C
+        y[:, 1, 1] = 1j * w * C
+        y[:, 0, 1] = -1j * w * C
+        y[:, 1, 0] = -1j * w * C
         result.y = y
         return result
 
@@ -603,10 +612,11 @@ class Media(ABC):
         result = self.match(nports=2, **kwargs)
         w = self.frequency.w
         y = npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1./(1j*w*L)
-        y[:,1,1] = 1./(1j*w*L)
-        y[:,0,1] = -1./(1j*w*L)
-        y[:,1,0] = -1./(1j*w*L)
+        L = npy.array(L)
+        y[:, 0, 0] = 1.0 / (1j * w * L)
+        y[:, 1, 1] = 1.0 / (1j * w * L)
+        y[:, 0, 1] = -1.0 / (1j * w * L)
+        y[:, 1, 0] = -1.0 / (1j * w * L)
         result.y = y
         return result
 
@@ -645,11 +655,13 @@ class Media(ABC):
         resistor
         """
         result = self.match(nports=2, **kwargs)
-        gamma = tf.zl_2_Gamma0(z1,z2)
-        result.s[:,0,0] = gamma
-        result.s[:,1,1] = -gamma
-        result.s[:,1,0] = (1+gamma)*npy.sqrt(1.0*z1/z2)
-        result.s[:,0,1] = (1-gamma)*npy.sqrt(1.0*z2/z1)
+        gamma = tf.zl_2_Gamma0(z1, z2)
+        z1 = npy.array(z1)
+        z2 = npy.array(z2)
+        result.s[:, 0, 0] = gamma
+        result.s[:, 1, 1] = -gamma
+        result.s[:, 1, 0] = (1 + gamma) * npy.sqrt(1.0 * z1 / z2)
+        result.s[:, 0, 1] = (1 - gamma) * npy.sqrt(1.0 * z2 / z1)
         return result
 
 
@@ -674,9 +686,9 @@ class Media(ABC):
         splitter : this just calls splitter(3)
         match : called to create a 'blank' network
         """
-        return self.splitter(3,**kwargs)
+        return self.splitter(3, **kwargs)
 
-    def splitter(self, nports,**kwargs) -> Network:
+    def splitter(self, nports: int, **kwargs) -> Network:
         r"""
         Ideal, lossless n-way splitter.
 
@@ -852,8 +864,7 @@ class Media(ABC):
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
             the units of d.  See :func:`to_meters`, for details
         \*\*kwargs : key word arguments
-            passed to :func:`match`, which is called initially to create a
-            'blank' network.
+            passed to :func:`line` and :func:`load`
 
         Returns
         -------
@@ -864,8 +875,8 @@ class Media(ABC):
         ----------
         >>> my_media.delay_load(-.5, 90, 'deg', Z0=50)
 
-        Note
-        ----
+        Notes
+        -----
         This calls ::
 
             line(d, unit, **kwargs) ** load(Gamma0, **kwargs)
@@ -877,8 +888,7 @@ class Media(ABC):
         delay_short
         delay_open
         """
-        return self.line(d=d, unit=unit,**kwargs)**\
-                self.load(Gamma0=Gamma0,**kwargs)
+        return self.line(d=d, unit=unit, **kwargs) ** self.load(Gamma0=Gamma0, **kwargs)
 
     def delay_short(self, d: Number, unit: str = 'deg', **kwargs) -> Network:
         r"""
@@ -892,21 +902,25 @@ class Media(ABC):
             the length of transmission line (see unit argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
             the units of d.  See :func:`to_meters`, for details
-        \*\*kwargs : key word arguments
-            passed to :func:`match`, which is called initially to create a
-            'blank' network.
+        \*\*kwargs : key word arguments passed to :func:`delay_load`.
 
         Returns
         -------
         delay_short : :class:`~skrf.network.Network` object
                 a delayed short
 
+        Notes
+        -----
+        This calls::
+
+                delay_load(Gamma0=-1.0, d=d, unit=unit, **kwargs)
+
         See Also
         --------
         delay_load
         delay_open
         """
-        return self.delay_load(Gamma0=-1., d=d, unit=unit, **kwargs)
+        return self.delay_load(Gamma0=-1.0, d=d, unit=unit, **kwargs)
 
     def delay_open(self, d: Number, unit: str = 'deg', **kwargs) -> Network:
         r"""
@@ -918,21 +932,25 @@ class Media(ABC):
             the length of transmission line (see unit argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
             the units of d.  See :func:`to_meters`, for details
-        \*\*kwargs : key word arguments
-            passed to :func:`match`, which is called initially to create a
-            'blank' network.
+        \*\*kwargs : key word arguments passed to :func:`delay_load`
 
         Returns
         -------
         delay_open : :class:`~skrf.network.Network` object
             a delayed open
 
+        Notes
+        -----
+        This calls::
+
+                delay_load(Gamma0=1.0, d=d, unit=unit, **kwargs)
+
         See Also
         --------
         delay_load
         delay_short
         """
-        return self.delay_load(Gamma0=1., d=d, unit=unit,**kwargs)
+        return self.delay_load(Gamma0=1.0, d=d, unit=unit, **kwargs)
 
     def shunt(self, ntwk: Network, **kwargs) -> Network:
         r"""
@@ -944,8 +962,7 @@ class Media(ABC):
         Parameters
         ----------
         ntwk : :class:`~skrf.network.Network` object
-        \*\*kwargs : keyword arguments
-            passed to :func:`tee`
+        \*\*kwargs : keyword arguments passed to :func:`tee`
 
         Returns
         -------
@@ -961,7 +978,7 @@ class Media(ABC):
         shunt_capacitor
         shunt_inductor
         """
-        return connect(self.tee(**kwargs),1,ntwk,0)
+        return connect(self.tee(**kwargs), 1, ntwk, 0)
 
     def shunt_delay_load(self, *args, **kwargs) -> Network:
         r"""
@@ -1030,7 +1047,7 @@ class Media(ABC):
         Parameters
         ----------
         \*args,\*\*kwargs : arguments, keyword arguments
-                passed to func:`delay_open`
+                passed to func:`delay_short`
 
         Returns
         -------
@@ -1053,7 +1070,7 @@ class Media(ABC):
         """
         return self.shunt(self.delay_short(*args, **kwargs))
 
-    def shunt_capacitor(self, C: NumberLike, *args, **kwargs) -> Network:
+    def shunt_capacitor(self, C: NumberLike, **kwargs) -> Network:
         r"""
         Shunted capacitor.
 
@@ -1061,8 +1078,8 @@ class Media(ABC):
         ----------
         C : number, array-like
             Capacitance in Farads.
-        \*args,\*\*kwargs : arguments, keyword arguments
-            passed to func:`delay_open`
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`capacitor`
 
         Returns
         -------
@@ -1073,7 +1090,7 @@ class Media(ABC):
         -----
         This calls::
 
-                shunt(capacitor(C,*args, **kwargs))
+                shunt(capacitor(C, **kwargs) ** short())
 
         See Also
         --------
@@ -1083,9 +1100,9 @@ class Media(ABC):
         shunt_delay_short
         shunt_inductor
         """
-        return self.shunt(self.capacitor(C=C,*args,**kwargs)**self.short())
+        return self.shunt(self.capacitor(C=C, **kwargs) ** self.short())
 
-    def shunt_inductor(self, L: NumberLike, *args, **kwargs) -> Network:
+    def shunt_inductor(self, L: NumberLike, **kwargs) -> Network:
         r"""
         Shunted inductor.
 
@@ -1093,8 +1110,8 @@ class Media(ABC):
         ----------
         L : number, array-like
             Inductance in Farads.
-        \*args,\*\*kwargs : arguments, keyword arguments
-            passed to func:`delay_open`
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`inductor`
 
         Returns
         -------
@@ -1105,7 +1122,7 @@ class Media(ABC):
         -----
         This calls::
 
-                shunt(inductor(C,*args, **kwargs))
+                shunt(inductor(L, **kwargs) ** short())
 
         See Also
         --------
@@ -1115,11 +1132,11 @@ class Media(ABC):
         shunt_delay_short
         shunt_capacitor
         """
-        return self.shunt(self.inductor(L=L,*args,**kwargs)**self.short())
+        return self.shunt(self.inductor(L=L, **kwargs) ** self.short())
 
     def attenuator(self, s21: NumberLike, db: bool = True, d: Number = 0,
                    unit: str = 'deg', name: str = '', **kwargs) -> Network:
-        """
+        r"""
         Ideal matched attenuator of a given length.
 
         Parameters
@@ -1133,6 +1150,10 @@ class Media(ABC):
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
             the units of d.  See :func:`to_meters`, for details. 
             Default is 'deg'
+        name : str
+            Name for the returned attenuator Network
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`line`
 
         Returns
         -------
@@ -1140,18 +1161,20 @@ class Media(ABC):
             2-port attenuator
 
         """
+
+        s21 = npy.array(s21)
         if db:
             s21 = mf.db_2_magnitude(s21)
 
         result = self.match(nports=2)
-        result.s[:,0,1] = s21
-        result.s[:,1,0] = s21
-        result = result**self.line(d=d, unit = unit, **kwargs)
+        result.s[:, 0, 1] = s21
+        result.s[:, 1, 0] = s21
+        result = result ** self.line(d=d, unit=unit, **kwargs)
         result.name = name
         return result
 
     def lossless_mismatch(self, s11: NumberLike, db: bool = True, **kwargs) -> Network:
-        """
+        r"""
         Lossless, symmetric mismatch defined by its return loss.
 
         Parameters
@@ -1162,35 +1185,40 @@ class Media(ABC):
         db : bool, optional
             is s11 in db? otherwise assumes linear. Default is True (dB)
 
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`match`
+
         Returns
         -------
         ntwk : :class:`~skrf.network.Network` object
             2-port lossless mismatch
 
         """
-        result = self.match(nports=2,**kwargs)
+
+        result = self.match(nports=2, **kwargs)
+        s11 = npy.array(s11)
         if db:
             s11 = mf.db_2_magnitude(s11)
 
-        result.s[:,0,0] = s11
-        result.s[:,1,1] = s11
+        result.s[:, 0, 0] = s11
+        result.s[:, 1, 1] = s11
 
-        s21_mag = npy.sqrt(1- npy.abs(s11)**2)
-        s21_phase = (npy.angle(s11) \
-                   + npy.pi/2 *(npy.angle(s11)<=0) \
-                   - npy.pi/2 *(npy.angle(s11)>0))
-        result.s[:,0,1] =  s21_mag* npy.exp(1j*s21_phase)
-        result.s[:,1,0] = result.s[:,0,1]
+        s21_mag = npy.sqrt(1 - npy.abs(s11) ** 2)
+        s21_phase = npy.angle(s11) + npy.pi / 2 * (npy.angle(s11) <= 0) - npy.pi / 2 * (npy.angle(s11) > 0)
+        result.s[:, 0, 1] = s21_mag * npy.exp(1j * s21_phase)
+        result.s[:, 1, 0] = result.s[:, 0, 1]
         return result
 
     def isolator(self, source_port: int = 0, **kwargs) -> Network:
-        """
+        r"""
         Two-port isolator.
 
         Parameters
         -------------
         source_port: int in [0,1], optional
             port at which power can flow from. Default is 0.
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`thru`
 
         Returns
         -------
@@ -1199,10 +1227,10 @@ class Media(ABC):
 
         """
         result = self.thru(**kwargs)
-        if source_port==0:
-            result.s[:,0,1]=0
-        elif source_port==1:
-            result.s[:,1,0]=0
+        if source_port == 0:
+            result.s[:, 0, 1] = 0
+        elif source_port == 1:
+            result.s[:, 1, 0] = 0
         return result
 
 
@@ -1301,8 +1329,8 @@ class Media(ABC):
         physical distance is estimated at each frequency point based on
         the scattering parameter phase of the ntwk and propagation constant.
 
-        Note
-        ----
+        Notes
+        -----
         If the Network is a reflect measurement, the returned distance will
         be twice the physical distance.
 
