@@ -472,7 +472,7 @@ class NanoVNAv2(abcvna.VNA):
     @property
     def s11(self) -> skrf.Network:
         """
-        Returns :math:`S_{1,1}` as a 1-port Network.
+        Measures :math:`S_{1,1}` and returns it as a 1-port Network.
 
         Returns
         -------
@@ -486,7 +486,7 @@ class NanoVNAv2(abcvna.VNA):
     @property
     def s21(self) -> skrf.Network:
         """
-        Returns :math:`S_{2,1}` as a 1-port Network.
+        Measures :math:`S_{2,1}` and returns it as a 1-port Network.
 
         Returns
         -------
