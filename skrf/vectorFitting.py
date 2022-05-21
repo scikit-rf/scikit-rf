@@ -1235,8 +1235,10 @@ class VectorFitting:
                 self.proportional_coeff = proportional_coeff
                 self.constant_coeff = constant_coeff
             else:
-                raise ValueError('Length of the provided parameters does not match the network size. Please initialize '
-                                 'VectorFitting with a suited Network first.')
+                raise ValueError('The shapes of the provided parameters are not compatible. The coefficient file needs '
+                                 'to contain NumPy arrays labled `poles`, `residues`, `proportionals`, and '
+                                 '`constants`. Their shapes must match the number of network ports and the number of '
+                                 'frequencies.')
 
     def get_model_response(self, i: int, j: int, freqs: Any = None) -> np.ndarray:
         """
