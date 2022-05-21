@@ -76,15 +76,4 @@ class SweepPlan:
         if len(hz)!=len(plan_hz):
             print(f'{len(plan_hz)=} {len(hz)=}')
             good = False
-        for h in hz:
-            if not np.any(np.isclose(h,plan_hz)):
-                print(f'In original list but not plan: {h}')
-                good = False
-        for ph in plan_hz:
-            if not np.any(np.isclose(ph,hz)):
-                print(f'In plan but not in original list: {h}')
-                good = False
-        if not np.allclose(hz, plan_hz):
-            print("All were not close.")
-            good = False
         return good
