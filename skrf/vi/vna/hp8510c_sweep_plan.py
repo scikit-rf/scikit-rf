@@ -72,4 +72,4 @@ class SweepPlan:
         True if the frequencies sweepned by self equal those in the list hz.
         """
         plan_hz = np.array(sorted(self.get_hz()))
-        return good
+        return True
