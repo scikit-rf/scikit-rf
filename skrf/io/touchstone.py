@@ -118,6 +118,9 @@ class Touchstone:
 
         self.comment_variables = None
 
+        # Does the input file have HFSS per frequency port impedances
+        self.hfss_port_impedances = False
+
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
         try:
@@ -149,7 +152,7 @@ class Touchstone:
         self.gamma = []
         self.z0 = []
 
-        if self.is_from_hfss:
+        if self.hfss_port_impedances:
             self.get_gamma_z0_from_fid(fid)
 
         fid.close()
@@ -207,6 +210,8 @@ class Touchstone:
                             self.port_names[index - 1] = name
                     except ValueError as e:
                         print("Error extracting port names from line: {0}".format(line))
+                elif line[1].strip().lower().startswith('port impedance'):
+                    self.hfss_port_impedances = True
 
             # remove the comment (if any) so rest of line can be processed.
             # touchstone files are case-insensitive
@@ -504,24 +509,6 @@ class Touchstone:
         # noise_source_phase = noise_values[:,3]
         # noise_normalized_resistance = noise_values[:,4]
         raise NotImplementedError('not yet implemented')
-
-    def is_from_hfss(self):
-        """
-        Check if the Touchstone might have complex port impedances for each frequency.
-
-        Returns
-        -------
-        status : boolean
-            True if the Touchstone file might have complex port impedances for each frequency.
-            False otherwise
-        """
-        if self.comments is None:
-            return False
-
-        if 'hfss' in str.lower(self.comments) or 'not renormalized' in str.lower(self.comments):
-            return True
-
-        return False
 
     def get_gamma_z0_from_fid(self, fid):
         """
