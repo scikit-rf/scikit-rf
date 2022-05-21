@@ -117,20 +117,20 @@ class Touchstone:
         self.port_names = None
 
         self.comment_variables = None
-        
+
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
         try:
             if encoding is not None:
                 fid = get_fid(file, encoding=encoding)
                 self.filename = fid.name
-                self.load_file(fid)       
+                self.load_file(fid)
             else:
                 # Assume default encoding
                 fid = get_fid(file)
                 self.filename = fid.name
                 self.load_file(fid)
-            
+
         except UnicodeDecodeError:
             # Unicode fails -> Force Latin-1
             fid = get_fid(file, encoding='ISO-8859-1')
@@ -144,7 +144,7 @@ class Touchstone:
             self.load_file(fid)
 
         except Exception as e:
-            raise ValueError(f'Something went wrong by the file openning: {e}')
+            raise ValueError(f'Something went wrong by the file opening: {e}')
 
         self.gamma = []
         self.z0 = []
@@ -507,18 +507,18 @@ class Touchstone:
 
     def is_from_hfss(self):
         """
-        Check if the Touchstone file has been produced by HFSS.
+        Check if the Touchstone might have complex port impedances for each frequency.
 
         Returns
         -------
         status : boolean
-            True if the Touchstone file has been produced by HFSS
+            True if the Touchstone file might have complex port impedances for each frequency.
             False otherwise
         """
         if self.comments is None:
             return False
 
-        if 'exported from hfss' in str.lower(self.comments):
+        if 'hfss' in str.lower(self.comments) or 'not renormalized' in str.lower(self.comments):
             return True
 
         return False

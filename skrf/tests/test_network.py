@@ -264,6 +264,68 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(self.ntwk1, ntwk1Saved)
         os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
 
+    def test_write_touchstone(self):
+        ports = 2
+        s_random = npy.random.uniform(-1, 1, (self.freq.npoints, ports, ports)) +\
+                1j * npy.random.uniform(-1, 1, (self.freq.npoints, ports, ports))
+        random_z0 = npy.random.uniform(1, 100, (self.freq.npoints, ports)) +\
+                    1j * npy.random.uniform(-100, 100, (self.freq.npoints, ports))
+        ntwk = rf.Network(s=s_random, frequency=self.freq, z0=random_z0, name='test_ntwk', s_def='traveling')
+
+        # Writing a network with non-constant z0 should raise
+        with pytest.raises(ValueError) as e_info:
+            snp = ntwk.write_touchstone(return_string=True)
+
+        ntwk.s_def = 'power'
+        # Should raise warning when write_z0 and s_def != 'traveling'.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            snp = ntwk.write_touchstone(return_string=True, write_z0=True)
+            self.assertTrue(len(w) == 1)
+
+        ntwk.s_def = 'traveling'
+        # Ok if write_z0 specified
+        snp = ntwk.write_touchstone(return_string=True, write_z0=True)
+
+        # Test reading it back
+        strio = io.StringIO(snp)
+        # Required for reading touchstone file
+        strio.name = 'StringIO.s{}p'.format(ports)
+        ntwk2 = rf.Network(strio)
+
+        npy.testing.assert_allclose(ntwk2.s, s_random)
+        npy.testing.assert_allclose(ntwk2.z0, random_z0)
+
+        # Renormalize output to 50 ohms
+        snp = ntwk.write_touchstone(return_string=True, r_ref=50)
+
+        # Network should not have been modified
+        self.assertTrue(npy.all(ntwk.s == s_random))
+        self.assertTrue(npy.all(ntwk.z0 == random_z0))
+
+        # Read back the written touchstone
+        strio = io.StringIO(snp)
+        strio.name = 'StringIO.s{}p'.format(ports)
+        ntwk2 = rf.Network(strio)
+
+        # Renormalize original network to match the written one
+        ntwk.renormalize(50)
+
+        npy.testing.assert_allclose(ntwk.s, ntwk2.s)
+        npy.testing.assert_allclose(ntwk.z0, ntwk2.z0)
+
+        ntwk.z0[0, 0] = 1
+        # Writing network with non-constant real z0 should fail without r_ref
+        with pytest.raises(ValueError) as e_info:
+            snp = ntwk.write_touchstone(return_string=True)
+        ntwk.z0[0, 0] = 50
+
+        ntwk.renormalize(50 + 1j)
+
+        # Writing complex characteristic impedance should fail
+        with pytest.raises(ValueError) as e_info:
+            snp = ntwk.write_touchstone(return_string=True)
+
     def test_pickling(self):
         original_ntwk = self.ntwk1
         with tempfile.NamedTemporaryFile(dir=self.test_dir, suffix='ntwk') as fid:
