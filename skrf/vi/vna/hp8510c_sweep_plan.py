@@ -67,28 +67,3 @@ class SweepPlan:
             ret.extend(s.get_hz())
         return ret
 
-    def matches_f_list(self, hz):
-        """
-        True if the frequencies sweepned by self equal those in the list hz.
-        """
-        plan_hz = np.array(sorted(self.get_hz()))
-        good = True
-        if len(hz)!=len(plan_hz):
-            print(f'{len(plan_hz)=} {len(hz)=}')
-            good = False
-        for h in hz:
-            if not np.any(np.isclose(h,plan_hz)):
-                print(f'In original list but not plan: {h}')
-                good = False
-        for ph in plan_hz:
-            if not np.any(np.isclose(ph,hz)):
-                print(f'In plan but not in original list: {h}')
-                good = False
-        if not np.allclose(hz, plan_hz):
-            print("All were not close.")
-            good = False
-        return good
-    
-    @classmethod
-    def from_ssn(cls, hz_start, hz_stop, n):
-        return cls.from_hz(np.linspace(hz_start,hz_stop,n))
