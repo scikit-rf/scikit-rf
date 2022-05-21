@@ -20,6 +20,7 @@ ipython `notebook <http://ipython.org/notebook.html>`_
     Circuit
     Calibration
     Deembedding
+    Q-Factor
     Media
     VectorFitting
     VirtualInstruments
