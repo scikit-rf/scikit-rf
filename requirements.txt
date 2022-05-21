@@ -6,4 +6,3 @@ nbsphinx
 networkx
 xlwt
 openpyxl
-dataclasses
