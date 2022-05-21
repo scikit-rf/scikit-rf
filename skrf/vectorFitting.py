@@ -1317,7 +1317,7 @@ class VectorFitting:
 
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
+            :attr:`network` are used. This only works if :attr:`network` is not `None`.
 
         ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
@@ -1327,15 +1327,26 @@ class VectorFitting:
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
-        """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        Raises
+        ------
+        ValueError
+            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+        """
 
         if ax is None:
             ax = mplt.gca()
 
-        ax.scatter(self.network.f, 20 * np.log10(np.abs(self.network.s[:, i, j])), color='r', label='Samples')
+        if self.network is not None:
+            ax.scatter(self.network.f, 20 * np.log10(np.abs(self.network.s[:, i, j])), color='r', label='Samples')
+            if freqs is None:
+                # get frequency array from the network
+                freqs = self.network.f
+
+        if freqs is None:
+            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
+                             'frequency information.')
+
         ax.plot(freqs, 20 * np.log10(np.abs(self.get_model_response(i, j, freqs))), color='k', label='Fit')
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Magnitude (dB)')
@@ -1358,7 +1369,7 @@ class VectorFitting:
 
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
+            :attr:`network` are used. This only works if :attr:`network` is not `None`.
 
         ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
@@ -1368,15 +1379,26 @@ class VectorFitting:
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
-        """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        Raises
+        ------
+        ValueError
+            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+        """
 
         if ax is None:
             ax = mplt.gca()
 
-        ax.scatter(self.network.f, np.abs(self.network.s[:, i, j]), color='r', label='Samples')
+        if self.network is not None:
+            ax.scatter(self.network.f, np.abs(self.network.s[:, i, j]), color='r', label='Samples')
+            if freqs is None:
+                # get frequency array from the network
+                freqs = self.network.f
+
+        if freqs is None:
+            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
+                             'frequency information.')
+
         ax.plot(freqs, np.abs(self.get_model_response(i, j, freqs)), color='k', label='Fit')
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Magnitude')
@@ -1399,7 +1421,7 @@ class VectorFitting:
 
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
+            :attr:`network` are used. This only works if :attr:`network` is not `None`.
 
         ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
@@ -1409,15 +1431,26 @@ class VectorFitting:
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
-        """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        Raises
+        ------
+        ValueError
+            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+        """
 
         if ax is None:
             ax = mplt.gca()
 
-        ax.scatter(self.network.f, np.rad2deg(np.angle(self.network.s[:, i, j])), color='r', label='Samples')
+        if self.network is not None:
+            ax.scatter(self.network.f, np.rad2deg(np.angle(self.network.s[:, i, j])), color='r', label='Samples')
+            if freqs is None:
+                # get frequency array from the network
+                freqs = self.network.f
+
+        if freqs is None:
+            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
+                             'frequency information.')
+
         ax.plot(freqs, np.rad2deg(np.angle(self.get_model_response(i, j, freqs))), color='k', label='Fit')
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Phase (Degrees)')
@@ -1440,7 +1473,7 @@ class VectorFitting:
 
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
+            :attr:`network` are used. This only works if :attr:`network` is not `None`.
 
         ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
@@ -1450,15 +1483,26 @@ class VectorFitting:
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
-        """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        Raises
+        ------
+        ValueError
+            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+        """
 
         if ax is None:
             ax = mplt.gca()
 
-        ax.scatter(self.network.f, np.rad2deg(np.unwrap(np.angle(self.network.s[:, i, j]))), color='r', label='Samples')
+        if self.network is not None:
+            ax.scatter(self.network.f, np.rad2deg(np.unwrap(np.angle(self.network.s[:, i, j]))), color='r', label='Samples')
+            if freqs is None:
+                # get frequency array from the network
+                freqs = self.network.f
+
+        if freqs is None:
+            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
+                             'frequency information.')
+
         ax.plot(freqs, np.rad2deg(np.unwrap(np.angle(self.get_model_response(i, j, freqs)))), color='k', label='Fit')
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Phase (Degrees)')
@@ -1481,7 +1525,7 @@ class VectorFitting:
 
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
+            :attr:`network` are used. This only works if :attr:`network` is not `None`.
 
         ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
@@ -1491,15 +1535,26 @@ class VectorFitting:
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
-        """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        Raises
+        ------
+        ValueError
+            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+        """
 
         if ax is None:
             ax = mplt.gca()
 
-        ax.scatter(self.network.f, np.real(self.network.s[:, i, j]), color='r', label='Samples')
+        if self.network is not None:
+            ax.scatter(self.network.f, np.real(self.network.s[:, i, j]), color='r', label='Samples')
+            if freqs is None:
+                # get frequency array from the network
+                freqs = self.network.f
+
+        if freqs is None:
+            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
+                             'frequency information.')
+
         ax.plot(freqs, np.real(self.get_model_response(i, j, freqs)), color='k', label='Fit')
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Real Part')
@@ -1522,7 +1577,7 @@ class VectorFitting:
 
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
+            :attr:`network` are used. This only works if :attr:`network` is not `None`.
 
         ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
@@ -1532,15 +1587,26 @@ class VectorFitting:
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
-        """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        Raises
+        ------
+        ValueError
+            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+        """
 
         if ax is None:
             ax = mplt.gca()
 
-        ax.scatter(self.network.f, np.imag(self.network.s[:, i, j]), color='r', label='Samples')
+        if self.network is not None:
+            ax.scatter(self.network.f, np.imag(self.network.s[:, i, j]), color='r', label='Samples')
+            if freqs is None:
+                # get frequency array from the network
+                freqs = self.network.f
+
+        if freqs is None:
+            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
+                             'frequency information.')
+
         ax.plot(freqs, np.imag(self.get_model_response(i, j, freqs)), color='k', label='Fit')
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Imaginary Part')
@@ -1557,7 +1623,7 @@ class VectorFitting:
         ----------
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
+            :attr:`network` are used. This only works if :attr:`network` is not `None`.
 
         ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
@@ -1567,10 +1633,20 @@ class VectorFitting:
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
+
+        Raises
+        ------
+        ValueError
+            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
         """
 
         if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+            if self.network is None:
+                raise ValueError(
+                    'Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
+                    'frequency information.')
+            else:
+                freqs = self.network.f
 
         if ax is None:
             ax = mplt.gca()
