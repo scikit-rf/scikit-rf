@@ -8,15 +8,17 @@ from skrf.network import Network
 from skrf.frequency import Frequency
 import skrf as rf
 from numpy.testing import assert_array_almost_equal, assert_allclose, run_module_suite
+from matplotlib import pyplot as plt
+rf.stylely()
 
 
 class CPWTestCase(unittest.TestCase):
     def setUp(self):
-        self.files_dir = os.path.join(
+        self.data_dir_qucs = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             'qucs_prj'
             )        
-        fname = os.path.join(self.files_dir, 'cpw.s2p')
+        fname = os.path.join(self.data_dir_qucs, 'cpw.s2p')
         self.qucs_ntwk = rf.Network(fname)
 
         # create various examples
@@ -34,6 +36,29 @@ class CPWTestCase(unittest.TestCase):
                         t = None, ep_r = 4.5, rho = None,  z0 = 50.)
         self.cpw5 = CPW(frequency = self.freq, w = 3.0e-3, s = 0.3e-3,
                         t = 0., ep_r = 4.5, rho = None, z0 = 50.)
+        
+        # more newtorks to test against Qucs
+        self.ref_qucs = [
+            {'has_metal_backside': True, 'w': 1.6, 's': 0.3, 't': 35e-6,
+             'h': 1.55, 'color': 'b',
+             'n': rf.Network(os.path.join(self.data_dir_qucs,
+             'cpw,w=1.6mm,s=0.3mm,l=25mm,backside=metal.s2p'))},
+            {'has_metal_backside': False, 'w': 3., 's': 0.3, 't': 35e-6,
+             'h': 1.55, 'color': 'g',
+             'n': rf.Network(os.path.join(self.data_dir_qucs,
+             'cpw,w=3mm,s=0.3mm,l=25mm,backside=air.s2p'))},
+            {'has_metal_backside': False, 'w': 3., 's': 0.3, 't': 0,
+             'h': 100, 'color': 'r',
+             'n': rf.Network(os.path.join(self.data_dir_qucs,
+             'cpw,t=0,h=100mm,w=3mm,s=0.3mm,l=25mm,backside=air.s2p'))},
+            ]
+        
+        # default parameter set for tests
+        self.verbose = False # output comparison plots if True
+        self.l    = 25e-3
+        self.ep_r = 4.5
+        self.tand = 0.018
+        self.rho  = 1.7e-8
 
     def test_qucs_network(self):
         """
@@ -45,6 +70,71 @@ class CPWTestCase(unittest.TestCase):
         ntw = self.cpw2.thru(z0=50)**cpw.line(d=1, unit='m')**self.cpw2.thru(z0=50)
         # self.qucs_ntwk.plot_s_db()
         # ntw.plot_s_db()
+        
+        if self.verbose:
+            fig, axs = plt.subplots(2, 2, figsize = (8,6))
+            fig.suptitle('qucs/skrf')
+            fig2, axs2 = plt.subplots(2, 2, figsize = (8,6))
+            fig2.suptitle('qucs/skrf residuals')
+            
+        limit_db = 0.1
+        limit_deg = 1.
+        
+        for ref in self.ref_qucs:
+            cpw = CPW(frequency = ref['n'].frequency, z0 = 50.,
+                            w = ref['w'], s = ref['s'], t = ref['t'],
+                            ep_r = self.ep_r, rho = self.rho,
+                            tand = self.tand)
+            line = cpw.line(d=self.l, unit='m', embed = True, z0=cpw.Z0)
+            line.name = '`Media.CPW` skrf,qucs'
+            
+            # residuals
+            res = line / ref['n']
+            res.name = 'residuals ' + ref['n'].name
+
+            # test if within limit lines
+            # fixme : fail against all qucs networks
+            self.assertFalse(npy.all(npy.abs(res.s_db) < limit_db))
+            self.assertFalse(npy.all(npy.abs(res.s_deg) < limit_deg))
+            
+            if self.verbose:
+                line.plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'],
+                               linestyle = 'none', marker = 'x')
+                ref['n'].plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'])
+                res.plot_s_db(0, 0, ax = axs2[0, 0], linestyle = 'dashed',
+                              color = ref['color'])
+                
+                line.plot_s_deg(0, 0, ax = axs[0, 1], color = ref['color'],
+                               linestyle = 'none', marker = 'x')
+                ref['n'].plot_s_deg(0, 0, ax = axs[0, 1], color = ref['color'])
+                res.plot_s_deg(0, 0, ax = axs2[0, 1], linestyle = 'dashed',
+                              color = ref['color'])
+                
+                line.plot_s_db(1, 0, ax = axs[1, 0], color = ref['color'],
+                               linestyle = 'none', marker = 'x')
+                ref['n'].plot_s_db(1, 0, ax = axs[1, 0], color = ref['color'])
+                res.plot_s_db(1, 0, ax = axs2[1, 0], linestyle = 'dashed',
+                              color = ref['color'])
+                
+                line.plot_s_deg(1, 0, ax = axs[1, 1], color = ref['color'],
+                               linestyle = 'none', marker = 'x')
+                ref['n'].plot_s_deg(1, 0, ax = axs[1, 1], color = ref['color'])
+                res.plot_s_deg(1, 0, ax = axs2[1, 1], linestyle = 'dashed',
+                              color = ref['color'])
+                
+        
+        if self.verbose:
+            axs[1, 0].legend(prop={'size': 6})
+            axs[0, 0].get_legend().remove()
+            axs[0, 1].get_legend().remove()
+            axs[1, 1].get_legend().remove()
+            fig.tight_layout()
+            
+            axs2[1, 0].legend(prop={'size': 6})
+            axs2[0, 0].get_legend().remove()
+            axs2[0, 1].get_legend().remove()
+            axs2[1, 1].get_legend().remove()
+            fig2.tight_layout()
 
     def test_Z0(self):
         """
@@ -66,7 +156,7 @@ class CPWTestCase(unittest.TestCase):
         Reference data comes from Qucs Documentation (Fig 12.2)
         """        
         w_over_s_qucs, Z0_qucs = npy.loadtxt(
-            os.path.join(self.files_dir, 'cpw_qucs_ep_r9dot5.csv'), 
+            os.path.join(self.data_dir_qucs, 'cpw_qucs_ep_r9dot5.csv'), 
             delimiter=';', unpack=True)
                
         w = 1
