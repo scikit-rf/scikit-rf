@@ -12,12 +12,11 @@ cpw (:mod:`skrf.media.cpw`)
 """
 from scipy.constants import  epsilon_0, mu_0
 from scipy.special import ellipk
-from numpy import pi, sqrt, log, zeros, ones, any
+from numpy import pi, sqrt, log, zeros, ones
 from .media import Media
-from ..tlineFunctions import surface_resistivity, skin_depth
+from ..tlineFunctions import surface_resistivity
 from ..constants import NumberLike
 from typing import Union, TYPE_CHECKING
-import warnings
 
 if TYPE_CHECKING:
     from .. frequency import Frequency
@@ -130,9 +129,6 @@ class CPW(Media):
         elif (1/sqrt(2) < k1 <= 1):
             return (log(2*(1 + sqrt(k_p))/(1 - sqrt(k_p)) ))/pi
 
-
-
-
     @property
     def alpha_conductor(self) -> NumberLike:
         """
@@ -176,8 +172,6 @@ class CPW(Media):
 
         return a_c
 
-
-
     @property
     def Z0(self) -> NumberLike:
         """
@@ -196,7 +190,7 @@ class CPW(Media):
         """
         beta = 1j*2*pi*self.frequency.f*sqrt(self.ep_re*epsilon_0*mu_0)
         alpha = zeros(len(beta))
-        if self.rho is not None:
+        if self.rho is not None and self.t is not None:
             alpha = self.alpha_conductor
 
         return beta+alpha
