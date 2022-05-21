@@ -119,7 +119,7 @@ class Touchstone:
         self.comment_variables = None
 
         # Does the input file have HFSS per frequency port impedances
-        self.hfss_port_impedances = False
+        self.has_hfss_port_impedances = False
 
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
@@ -152,7 +152,7 @@ class Touchstone:
         self.gamma = []
         self.z0 = []
 
-        if self.hfss_port_impedances:
+        if self.has_hfss_port_impedances:
             self.get_gamma_z0_from_fid(fid)
 
         fid.close()
@@ -211,7 +211,7 @@ class Touchstone:
                     except ValueError as e:
                         print("Error extracting port names from line: {0}".format(line))
                 elif line[1].strip().lower().startswith('port impedance'):
-                    self.hfss_port_impedances = True
+                    self.has_hfss_port_impedances = True
 
             # remove the comment (if any) so rest of line can be processed.
             # touchstone files are case-insensitive

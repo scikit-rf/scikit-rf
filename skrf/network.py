@@ -1975,7 +1975,7 @@ class Network(object):
         self.port_names = touchstoneFile.port_names
 
         # set z0 before s so that y and z can be computed
-        if touchstoneFile.hfss_port_impedances:
+        if touchstoneFile.has_hfss_port_impedances:
             self.gamma, self.z0 = touchstoneFile.get_gamma_z0()
             # This is the s_def that HFSS uses
             self.s_def = 'traveling'
