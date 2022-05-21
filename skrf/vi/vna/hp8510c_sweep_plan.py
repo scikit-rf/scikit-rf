@@ -1,4 +1,4 @@
-import dataclasses
+from dataclasses import dataclass
 import numpy as np
 from typing import List,Union
 
@@ -10,7 +10,7 @@ class SweepSection:
     def mask_8510(self, network):
         return network
 
-@dataclasses.dataclass
+@dataclass
 class LinearBuiltinSweepSection(SweepSection):
     hz_min : float
     hz_max : float
@@ -20,7 +20,7 @@ class LinearBuiltinSweepSection(SweepSection):
     def apply_8510(self, hp8510c):
         hp8510c._set_instrument_step_state(self.hz_min, self.hz_max, self.n_points)
 
-@dataclasses.dataclass
+@dataclass
 class LinearMaskedSweepSection(SweepSection):
     hz_min : float
     hz_max : float
@@ -33,7 +33,7 @@ class LinearMaskedSweepSection(SweepSection):
     def mask_8510(self, network):
         return network[self.mask]
 
-@dataclasses.dataclass
+@dataclass
 class LinearCustomSweepSection(SweepSection):
     hz_min : float
     hz_max : float
@@ -44,13 +44,13 @@ class LinearCustomSweepSection(SweepSection):
         assert self.n_points <= 792
         hp8510c._set_instrument_step_state(self.hz_min, self.hz_max, self.n_points)
 
-@dataclasses.dataclass
+@dataclass
 class RandomSweepSection(SweepSection):
     hz_list : List[float]
     def get_hz(self):
         return self.hz_list
 
-@dataclasses.dataclass
+@dataclass
 class SweepPlan:
     """
     The user requests a big sweep with different spacings in different frequency blocks,
