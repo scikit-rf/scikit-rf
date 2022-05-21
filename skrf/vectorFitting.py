@@ -1187,7 +1187,7 @@ class VectorFitting:
         Raises
         ------
         ValueError
-            If the length of the parameters from the file does not match the size of the Network in :attr:`network`.
+            If the shapes of the coefficient arrays in the provided file are not compatible.
 
         Notes
         -----
