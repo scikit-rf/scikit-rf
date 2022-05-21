@@ -479,8 +479,8 @@ class NanoVNAv2(abcvna.VNA):
         skrf.Network
         """
         traces = self.get_list_of_traces()
-        ntwk = self.get_traces(traces[0])
-        ntwk.name = 'S11'
+        ntwk = self.get_traces([traces[0]])[0]
+        ntwk.name = 'NanoVNA_S11'
         return ntwk
 
     @property
@@ -493,6 +493,6 @@ class NanoVNAv2(abcvna.VNA):
         skrf.Network
         """
         traces = self.get_list_of_traces()
-        ntwk = self.get_traces(traces[1])
-        ntwk.name = 'S21'
+        ntwk = self.get_traces([traces[1]])[0]
+        ntwk.name = 'NanoVNA_S21'
         return ntwk
