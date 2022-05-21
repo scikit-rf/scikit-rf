@@ -16,4 +16,3 @@ tox
 tox-gh-actions
 matplotlib
 coveralls
-dataclasses
