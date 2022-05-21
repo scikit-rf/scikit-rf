@@ -823,6 +823,15 @@ class VectorFitting:
         is_passive : Query the model passivity as a boolean value.
         passivity_enforce : Enforces the passivity of the vector fitted model, if required.
 
+        Examples
+        --------
+        Load and fit the `Network`, then evaluate the model passivity:
+
+        >>> nw_3port = skrf.Network('my3port.s3p')
+        >>> vf = skrf.VectorFitting(nw_3port)
+        >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+        >>> violations = vf.passivity_test()
+
         References
         ----------
         .. [#] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
@@ -918,6 +927,15 @@ class VectorFitting:
         --------
         passivity_test : Verbose passivity evaluation routine.
         passivity_enforce : Enforces the passivity of the vector fitted model, if required.
+
+        Examples
+        --------
+        Load and fit the `Network`, then check whether or not the model is passive:
+
+        >>> nw_3port = skrf.Network('my3port.s3p')
+        >>> vf = skrf.VectorFitting(nw_3port)
+        >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+        >>> vf.is_passive() # returns True or False
         """
 
         viol_bands = self.passivity_test(parameter_type)
@@ -959,6 +977,15 @@ class VectorFitting:
         is_passive : Returns the passivity status of the model as a boolean value.
         passivity_test : Verbose passivity evaluation routine.
         plot_passivation : Convergence plot for passivity enforcement iterations.
+
+        Examples
+        --------
+        Load and fit the `Network`, then enforce the passivity of the model:
+
+        >>> nw_3port = skrf.Network('my3port.s3p')
+        >>> vf = skrf.VectorFitting(nw_3port)
+        >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+        >>> vf.passivity_enforce()  # won't do anything if model is already passive
 
         References
         ----------
@@ -1099,6 +1126,27 @@ class VectorFitting:
         See Also
         --------
         read_npz : Reads all model parameters from a .npz file
+
+        Examples
+        --------
+        Load and fit the `Network`, then export the model parameters to a .npz file:
+
+        >>> nw_3port = skrf.Network('my3port.s3p')
+        >>> vf = skrf.VectorFitting(nw_3port)
+        >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+        >>> vf.write_npz('./data/')
+
+        The filename depends on the network name stored in `nw_3port.name` and will have the prefix `coefficients_`, for
+        example `coefficients_my3port.npz`. The coefficients can then be read using NumPy's load() function:
+
+        >>> coeffs = numpy.load('./data/coefficients_my3port.npz')
+        >>> poles = coeffs['poles']
+        >>> residues = coeffs['residues']
+        >>> prop_coeffs = coeffs['proportionals']
+        >>> constants = coeffs['constants']
+
+        Alternatively, the coefficients can be read directly into a new instance of `VectorFitting`, see
+        :func:`read_npz`.
         """
 
         if self.poles is None:
@@ -1151,6 +1199,18 @@ class VectorFitting:
         See Also
         --------
         write_npz : Writes all model parameters to a .npz file
+
+        Examples
+        --------
+        Create an empty `VectorFitting` instance (with or without the fitted `Network`) and load the model parameters:
+
+        >>> vf = skrf.VectorFitting(None)
+        >>> vf.read_npz('./data/coefficients_my3port.npz')
+
+        This can be useful to analyze or process a previous vector fit instead of fitting it again, which sometimes
+        takes a long time. For example, the model passivity can be evaluated and enforced:
+
+        >>> vf.passivity_enforce()
         """
 
         with np.load(file) as data:
