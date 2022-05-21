@@ -74,7 +74,6 @@ class SweepPlan:
         plan_hz = np.array(sorted(self.get_hz()))
         good = True
         if len(hz)!=len(plan_hz):
-            print(f'{len(plan_hz)=} {len(hz)=}')
             good = False
         for h in hz:
             if not np.any(np.isclose(h,plan_hz)):
