@@ -1975,8 +1975,10 @@ class Network(object):
         self.port_names = touchstoneFile.port_names
 
         # set z0 before s so that y and z can be computed
-        if touchstoneFile.is_from_hfss():
+        if touchstoneFile.has_hfss_port_impedances:
             self.gamma, self.z0 = touchstoneFile.get_gamma_z0()
+            # This is the s_def that HFSS uses
+            self.s_def = 'traveling'
         else:
             self.z0 = complex(touchstoneFile.resistance)
         f, self.s = touchstoneFile.get_sparameter_arrays()  # note: freq in Hz
@@ -2051,7 +2053,7 @@ class Network(object):
                          write_z0: bool = False, skrf_comment: bool = True,
                          return_string: bool = False, to_archive: bool = None,
                          form: str = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
-                         format_spec_freq : str = '{}') -> Optional[str]:
+                         format_spec_freq : str = '{}', r_ref : float = None) -> Optional[str]:
         """
         Write a contents of the :class:`Network` to a touchstone file.
 
@@ -2085,7 +2087,11 @@ class Network(object):
         format_spec_freq : string, optional
             Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
             This specifies the formatting in the resulting touchstone file for the frequency.
-
+        r_ref : float
+            Reference impedance to renormalize the network.
+            If None network port impedance is used if possible. If None and
+            network port impedance is complex and not equal at all ports and
+            frequency points raises ValueError.
 
         Note
         ----
@@ -2102,14 +2108,36 @@ class Network(object):
         # according to Touchstone 2.0 spec
         # [no tab, max. 4 coeffs per line, etc.]
 
+        have_complex_ports = npy.any(self.z0.imag != 0)
+        equal_z0 = npy.all(self.z0 == self.z0[0, 0])
+
+        ntwk = self.copy()
+
+        if r_ref is None and write_z0 == False:
+            if not equal_z0:
+                raise ValueError("Network has unequal port impedances but reference impedance for renormalization 'r_ref' is not specified.")
+            if have_complex_ports:
+                raise ValueError("Network port impedances are complex but reference impedance for renormalization 'r_ref' is not specified.")
+            r_ref = ntwk.z0[0, 0]
+        elif r_ref is not None:
+            if not npy.isscalar(r_ref):
+                raise ValueError('r_ref must be scalar')
+            if r_ref.imag != 0:
+                raise ValueError('r_ref must be real')
+            ntwk.renormalize(r_ref)
+
+        if write_z0 and have_complex_ports and ntwk.s_def != 'traveling':
+            warnings.warn("Network s_def will be changed from {} to traveling to be compatible with HFSS. To silence this warning manually use Network.renormalize to change the s_def.".format(ntwk.s_def), UserWarning)
+            ntwk.renormalize(ntwk.z0, s_def='traveling')
+
         if filename is None:
-            if self.name is not None:
-                filename = self.name
+            if ntwk.name is not None:
+                filename = ntwk.name
             else:
                 raise ValueError('No filename given. Network must have a name, or you must provide a filename')
 
         if get_extn(filename) is None:
-            filename = filename + '.s%ip' % self.number_of_ports
+            filename = filename + '.s%ip' % ntwk.number_of_ports
 
         if dir is not None:
             filename = os.path.join(dir, filename)
@@ -2149,11 +2177,11 @@ class Network(object):
             return buf
 
         with get_buffer() as output:
-            # Add '!' Touchstone comment delimiters to the start of every line in self.comments
+            # Add '!' Touchstone comment delimiters to the start of every line in ntwk.comments
             commented_header = ''
             try:
-                if self.comments:
-                    for comment_line in self.comments.split('\n'):
+                if ntwk.comments:
+                    for comment_line in ntwk.comments.split('\n'):
                         commented_header += '!{}\n'.format(comment_line)
             except AttributeError:
                 pass
@@ -2166,36 +2194,40 @@ class Network(object):
             # the '#'  line is NOT a comment it is essential and it must be
             # exactly this format, to work
             # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-            output.write('# {} S {} R {} \n'.format(self.frequency.unit, form, str(abs(self.z0[0, 0]))))
+            if write_z0:
+                output.write('!Data is not renormalized\n')
+                output.write('# {} S {} R\n'.format(ntwk.frequency.unit, form))
+            else:
+                output.write('# {} S {} R {} \n'.format(ntwk.frequency.unit, form, r_ref))
 
             # write ports
             try:
-                if self.port_names and len(self.port_names) == self.number_of_ports:
+                if ntwk.port_names and len(ntwk.port_names) == ntwk.number_of_ports:
                     ports = ''
-                    for port_idx, port_name in enumerate(self.port_names):
+                    for port_idx, port_name in enumerate(ntwk.port_names):
                         ports += '! Port[{}] = {}\n'.format(port_idx+1, port_name)
                     output.write(ports)
             except AttributeError:
                 pass
 
-            scaled_freq = self.frequency.f_scaled
+            scaled_freq = ntwk.frequency.f_scaled
 
-            if self.number_of_ports == 1:
+            if ntwk.number_of_ports == 1:
                 # write comment line for users (optional)
                 output.write('!freq {labelA}S11 {labelB}S11\n'.format(**formatDic))
                 # write out data
-                for f in range(len(self.f)):
+                for f in range(len(ntwk.f)):
                     output.write(format_spec_freq.format(scaled_freq[f]) + ' ' \
-                                 + c2str_A(self.s[f, 0, 0]) + ' ' \
-                                 + c2str_B(self.s[f, 0, 0]) + '\n')
+                                 + c2str_A(ntwk.s[f, 0, 0]) + ' ' \
+                                 + c2str_B(ntwk.s[f, 0, 0]) + '\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
                         output.write('! Port Impedance ')
-                        for n in range(self.number_of_ports):
-                            output.write('%.14f %.14f ' % (self.z0[f, n].real, self.z0[f, n].imag))
+                        for n in range(ntwk.number_of_ports):
+                            output.write('%.14f %.14f ' % (ntwk.z0[f, n].real, ntwk.z0[f, n].imag))
                         output.write('\n')
 
-            elif self.number_of_ports == 2:
+            elif ntwk.number_of_ports == 2:
                 # 2-port is a special case with
                 # - single line, and
                 # - S21,S12 in reverse order: legacy ?
@@ -2205,24 +2237,24 @@ class Network(object):
                     '!freq {labelA}S11 {labelB}S11 {labelA}S21 {labelB}S21 {labelA}S12 {labelB}S12 {labelA}S22 {labelB}S22\n'.format(
                         **formatDic))
                 # write out data
-                for f in range(len(self.f)):
+                for f in range(len(ntwk.f)):
                     output.write(format_spec_freq.format(scaled_freq[f]) + ' ' \
-                                 + c2str_A(self.s[f, 0, 0]) + ' ' \
-                                 + c2str_B(self.s[f, 0, 0]) + ' ' \
-                                 + c2str_A(self.s[f, 1, 0]) + ' ' \
-                                 + c2str_B(self.s[f, 1, 0]) + ' ' \
-                                 + c2str_A(self.s[f, 0, 1]) + ' ' \
-                                 + c2str_B(self.s[f, 0, 1]) + ' ' \
-                                 + c2str_A(self.s[f, 1, 1]) + ' ' \
-                                 + c2str_B(self.s[f, 1, 1]) + '\n')
+                                 + c2str_A(ntwk.s[f, 0, 0]) + ' ' \
+                                 + c2str_B(ntwk.s[f, 0, 0]) + ' ' \
+                                 + c2str_A(ntwk.s[f, 1, 0]) + ' ' \
+                                 + c2str_B(ntwk.s[f, 1, 0]) + ' ' \
+                                 + c2str_A(ntwk.s[f, 0, 1]) + ' ' \
+                                 + c2str_B(ntwk.s[f, 0, 1]) + ' ' \
+                                 + c2str_A(ntwk.s[f, 1, 1]) + ' ' \
+                                 + c2str_B(ntwk.s[f, 1, 1]) + '\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
                         output.write('! Port Impedance')
                         for n in range(2):
-                            output.write(' %.14f %.14f' % (self.z0[f, n].real, self.z0[f, n].imag))
+                            output.write(' %.14f %.14f' % (ntwk.z0[f, n].real, ntwk.z0[f, n].imag))
                         output.write('\n')
 
-            elif self.number_of_ports == 3:
+            elif ntwk.number_of_ports == 3:
                 # 3-port is written over 3 lines / matrix order
 
                 # write comment line for users (optional)
@@ -2233,21 +2265,21 @@ class Network(object):
                     output.write('\n!')
                 output.write('\n')
                 # write out data
-                for f in range(len(self.f)):
+                for f in range(len(ntwk.f)):
                     output.write(format_spec_freq.format(scaled_freq[f]))
                     for m in range(3):
                         for n in range(3):
-                            output.write(' ' + c2str_A(self.s[f, m, n]) + ' ' \
-                                         + c2str_B(self.s[f, m, n]))
+                            output.write(' ' + c2str_A(ntwk.s[f, m, n]) + ' ' \
+                                         + c2str_B(ntwk.s[f, m, n]))
                         output.write('\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
                         output.write('! Port Impedance')
                         for n in range(3):
-                            output.write(' %.14f %.14f' % (self.z0[f, n].real, self.z0[f, n].imag))
+                            output.write(' %.14f %.14f' % (ntwk.z0[f, n].real, ntwk.z0[f, n].imag))
                         output.write('\n')
 
-            elif self.number_of_ports >= 4:
+            elif ntwk.number_of_ports >= 4:
                 # general n-port
                 # - matrix is written line by line
                 # - 4 complex numbers / 8 real numbers max. for a single line
@@ -2257,29 +2289,29 @@ class Network(object):
 
                 # write comment line for users (optional)
                 output.write('!freq')
-                for m in range(1, 1 + self.number_of_ports):
-                    for n in range(1, 1 + self.number_of_ports):
+                for m in range(1, 1 + ntwk.number_of_ports):
+                    for n in range(1, 1 + ntwk.number_of_ports):
                         if (n > 0 and (n % 4) == 0):
                             output.write('\n!')
                         output.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
                     output.write('\n!')
                 output.write('\n')
                 # write out data
-                for f in range(len(self.f)):
+                for f in range(len(ntwk.f)):
                     output.write(format_spec_freq.format(scaled_freq[f]))
-                    for m in range(self.number_of_ports):
-                        for n in range(self.number_of_ports):
+                    for m in range(ntwk.number_of_ports):
+                        for n in range(ntwk.number_of_ports):
                             if (n > 0 and (n % 4) == 0):
                                 output.write('\n')
-                            output.write(' ' + c2str_A(self.s[f, m, n]) + ' ' \
-                                         + c2str_B(self.s[f, m, n]))
+                            output.write(' ' + c2str_A(ntwk.s[f, m, n]) + ' ' \
+                                         + c2str_B(ntwk.s[f, m, n]))
                         output.write('\n')
 
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
                         output.write('! Port Impedance')
-                        for n in range(self.number_of_ports):
-                            output.write(' %.14f %.14f' % (self.z0[f, n].real, self.z0[f, n].imag))
+                        for n in range(ntwk.number_of_ports):
+                            output.write(' %.14f %.14f' % (ntwk.z0[f, n].real, ntwk.z0[f, n].imag))
                         output.write('\n')
 
             if type(to_archive) is zipfile.ZipFile:
