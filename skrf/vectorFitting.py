@@ -577,6 +577,12 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished in {} seconds.\n'.format(self.wall_clock_time))
 
+        # raise a warning if the fitted Network is passive but the fit is not:
+        if self.network.is_passive() and not self.is_passive():
+            warnings.warn('The fitted network is passive, but the vector fit is not passive. Consider running '
+                          '`passivity_enforce()` to enforce passivity before using this model.',
+                          UserWarning, stacklevel=2)
+
     def get_rms_error(self, i=-1, j=-1, parameter_type: str = 's'):
         r"""
         Returns the root-mean-square (rms) error magnitude of the fit, i.e.
