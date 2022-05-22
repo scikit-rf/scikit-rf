@@ -926,7 +926,7 @@ class VectorFitting:
         else:
             return False
 
-    def passivity_enforce(self, n_samples: int = 100, parameter_type: str = 's') -> None:
+    def passivity_enforce(self, n_samples: int = 100, f_max: float = None, parameter_type: str = 's') -> None:
         """
         Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
         presented in [#]_.
@@ -936,6 +936,12 @@ class VectorFitting:
         n_samples : int, optional
             Number of linearly spaced frequency samples at which passivity will be evaluated and enforced.
             (Default: 100)
+
+        f_max : float or None, optional
+            Highest frequency of interest for the passivity enforcement (in Hz, not rad/s). This limit usually
+            equals the highest sample frequency of the fitted Network. If None, the highest frequency in
+            :attr:`self.network` is used, which must not be None is this case. If `f_max` is not None, it overrides the
+            highest frequency in :attr:`self.network`.
 
         parameter_type : str, optional
             Representation type of the fitted frequency responses. Either *scattering* (:attr:`s` or :attr:`S`),
@@ -952,7 +958,8 @@ class VectorFitting:
             If the function is called for `parameter_type` different than `S` (scattering).
 
         ValueError
-            If the function is used with a model containing nonzero proportional coefficients.
+            If the function is used with a model containing nonzero proportional coefficients. Or if both `f_max` and
+            :attr:`self.network` are None.
 
         See Also
         --------
@@ -981,12 +988,20 @@ class VectorFitting:
             return
 
         # find the highest relevant frequency; either
-        # 1) the highest frequency of passivity violation
+        # 1) the highest frequency of passivity violation (f_viol_max)
         # or
-        # 2) the highest fitting frequency
+        # 2) the highest fitting frequency (f_samples_max)
         violation_bands = self.passivity_test()
         f_viol_max = violation_bands[-1, -1]
-        f_samples_max = self.network.f[-1]
+
+        if f_max is None:
+            if self.network is None:
+                raise RuntimeError('Both `self.network` and parameter `f_max` are None. One of them is required to '
+                                   'specify the frequency band of interest for the passivity enforcement.')
+            else:
+                f_samples_max = self.network.f[-1]
+        else:
+            f_samples_max = f_max
 
         # the frequency band for the passivity evaluation is from dc to 20% above the highest relevant frequency
         if f_viol_max < f_samples_max:
