@@ -1093,6 +1093,13 @@ class VectorFitting:
                         k += 2
                     z += 1
 
+        # run final passivity test to make sure passivation was successful
+        violation_bands = self.passivity_test()
+        if len(violation_bands) > 0:
+            warnings.warn('Passivity enforcement was not successful.\nModel is still non-passive in these frequency '
+                          'bands: {}.\nTry running this routine again with a larger number of samples (parameter '
+                          '`n_samples`).'.format(violation_bands), RuntimeWarning, stacklevel=2)
+
     def write_npz(self, path: str) -> None:
         """
         Writes the model parameters in :attr:`poles`, :attr:`residues`,
