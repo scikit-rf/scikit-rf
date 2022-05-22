@@ -62,7 +62,7 @@ class CPW(Media):
                  z0: Union[NumberLike, None] = None,
                  w: NumberLike = 3e-3, s: NumberLike = 0.3e-3,
                  h: NumberLike = 1.55,
-                 ep_r: NumberLike = 3, t: Union[NumberLike, None] = None,
+                 ep_r: NumberLike = 4.5, t: Union[NumberLike, None] = None,
                  rho: Union[NumberLike, None] = 1.68e-8, tand: NumberLike = 0,
                  has_metal_backside: bool = False,
                  *args, **kwargs):
@@ -146,12 +146,14 @@ class CPW(Media):
         k1 = w / (w + s + s)
         kk1 = ellipk(k1)
         kpk1 = ellipk(sqrt(1. - k1 * k1))
-        q1 = kk1 / kpk1
+        #q1 = kk1 / kpk1
+        q1 = ellipa(k1)
         
         # backside is metal
         if(has_metal_backside):
             k3 = tanh((pi / 4.) * (w / h)) / tanh((pi / 4.) * (w + s + s) / h)
-            q3 = ellipk(k3) / ellipk(sqrt(1. - k3 * k3))
+            # q3 = ellipk(k3) / ellipk(sqrt(1. - k3 * k3))
+            q3 = ellipa(k3)
             qz = 1. / (q1 + q3)
             e = 1. + q3 * qz * (ep_r - 1.)
             zr = Z0 / 2. * qz
@@ -159,15 +161,18 @@ class CPW(Media):
         # backside is air
         else:
             k2 = sinh((pi / 4.) * (w / h)) / sinh((pi / 4.) * (w + s + s) / h)
-            q2 = ellipk(k2) / ellipk(sqrt(1. - k2 * k2))
+            # q2 = ellipk(k2) / ellipk(sqrt(1. - k2 * k2))
+            q2 = ellipa(k2)
             e = 1. + (ep_r - 1.) / 2. * q2 / q1
             zr = Z0 / 4. / q1
             
         # effect of strip thickness
         if t is not None and t > 0.:
             d = (t * 1.25 / pi) * (1. + log(4. * pi * w / t))
+            # ke = (w + d) / (w + d + 2 * (s - d))
             ke = k1 + (1. - k1 * k1) * d / 2. / s
-            qe = ellipk(ke) / ellipk(sqrt(1. - ke * ke))
+            # qe = ellipk(ke) / ellipk(sqrt(1. - ke * ke))
+            qe = ellipa(ke)
             
             # backside is metal
             if(has_metal_backside):
@@ -268,3 +273,24 @@ class CPW(Media):
             sqrt(ep_reff) * tand / l0
             
         return a_conductor, a_dielectric
+    
+def ellipa(k: NumberLike):
+    """
+    Approximation of K(k)/K'(k).
+    First appeared in
+    Hilberg, W., "From Approximations to Exact Relations for Characteristic
+    Impedances," IEEE Trans. MTT, May 1969.
+    More accurate expressions can be found in the above article and in
+    Abbott, J. T., "Modeling the Capacitive Behavior of Coplanar Striplines
+    and Coplanar Waveguides using Simple Functions", Rochester Institute of
+    Technology, Rochester, New York, June 2011.
+    The maximum relative error of the approximation implemented here is
+    about 2 ppm, so good enough for any practical purpose.
+    """
+    if k < sqrt(1. / 2.):
+        kp = sqrt(1 - k * k)
+        r = pi / log(2. * (1. + sqrt(kp)) / (1. - sqrt(kp)))
+    else:
+        r = log(2. * (1. + sqrt(k)) / (1. - sqrt(k))) / pi
+    
+    return r
