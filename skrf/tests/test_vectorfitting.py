@@ -100,7 +100,7 @@ class VectorFittingTestCase(unittest.TestCase):
         self.assertFalse(vf.is_passive())
 
         # enforce passivity with default settings
-        vf.passivity_enforce(f_max=10)
+        vf.passivity_enforce(f_max=2)
 
         # check if model is now passive
         self.assertTrue(vf.is_passive())
