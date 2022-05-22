@@ -975,14 +975,11 @@ class VectorFitting:
                              'first.')
 
         # always run passivity test first; this will write 'self.violation_bands'
-        violation_bands = self.passivity_test()
-
-        if len(violation_bands) == 0:
+        if self.is_passive():
             # model is already passive; do nothing and return
             logging.info('Passivity enforcement: The model is already passive. Nothing to do.')
             return
 
-        freqs_eval = np.linspace(0, 1.2 * violation_bands[-1, -1], n_samples)
         A, B, C, D, E = self._get_ABCDE()
         dim_A = np.shape(A)[0]
         C_t = C
@@ -997,6 +994,21 @@ class VectorFitting:
             A_matrix = []
             b_vector = []
             sigma_max = 0
+
+            # find the highest relevant frequency; either
+            # 1) the highest frequency of passivity violation
+            # or
+            # 2) the highest fitting frequency
+            violation_bands = self.passivity_test()
+            f_viol_max = violation_bands[-1, -1]
+            f_samples_max = self.network.f[-1]
+
+            # the frequency band for the passivity evaluation is from dc to 20% above the highest relevant frequency
+            if f_viol_max < f_samples_max:
+                f_eval_max = 1.2 * f_samples_max
+            else:
+                f_eval_max = 1.2 * f_viol_max
+            freqs_eval = np.linspace(0, f_eval_max, n_samples)
 
             # sweep through evaluation frequencies
             for i_eval, freq_eval in enumerate(freqs_eval):
