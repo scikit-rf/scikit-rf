@@ -198,6 +198,61 @@ class NetworkTestCase(unittest.TestCase):
             sio.name = os.path.basename(filename) # hack a bug to touchstone reader
             rf.Network(sio)
 
+    def test_constructor_from_parameters(self):
+        """Test creating Network from all supported parameters
+        with default z0 and specified z0.
+        """
+        random_z0 = npy.random.uniform(0.1, 1, (1, 2)) + \
+                1j*npy.random.uniform(0.1, 1, (1, 2))
+        for z0 in [None, random_z0]:
+            for param in rf.Network.PRIMARY_PROPERTIES:
+                params = npy.random.uniform(0.1, 1, (1, 2, 2)) + \
+                        1j*npy.random.uniform(0.1, 1, (1, 2, 2))
+                kwargs = {param:params}
+                if z0 is not None:
+                    kwargs['z0'] = z0
+                net = rf.Network(**kwargs)
+                if z0 is not None:
+                    npy.testing.assert_allclose(net.z0, z0)
+                npy.testing.assert_allclose(getattr(net, param), params)
+
+    def test_constructor_from_parameters2(self):
+        """Test creating Network from all supported parameters
+        with default z0 and specified z0.
+        Multiple frequency points and z0 broadcasted
+        """
+        random_z0 = npy.random.uniform(0.1, 1, 2) + \
+                1j*npy.random.uniform(0.1, 1, 2)
+        for z0 in [None, random_z0]:
+            for param in rf.Network.PRIMARY_PROPERTIES:
+                params = npy.random.uniform(0.1, 1, (5, 2, 2)) + \
+                        1j*npy.random.uniform(0.1, 1, (5, 2, 2))
+                kwargs = {param:params}
+                if z0 is not None:
+                    kwargs['z0'] = z0
+                net = rf.Network(**kwargs)
+                if z0 is not None:
+                    # Network z0 is broadcasted
+                    npy.testing.assert_allclose(net.z0[0,:], z0)
+                npy.testing.assert_allclose(getattr(net, param), params)
+
+    def test_constructor_invalid_networks(self):
+        with pytest.raises(Exception) as e_info:
+            # z0 size doesn't match
+            rf.Network(s=npy.zeros((2,2,2)), z0=[1,2,3])
+        with pytest.raises(Exception) as e_info:
+            # z0 size doesn't match, Z-parameters
+            rf.Network(z=npy.zeros((2,2,2)), z0=[1,2,3])
+        with pytest.raises(Exception) as e_info:
+            # Invalid s shape, non-square matrix
+            rf.Network(s=npy.zeros((2,2,1)))
+        with pytest.raises(Exception) as e_info:
+            # invalid s shape, too many dimensions
+            rf.network(s=npy.zeros((1,2,2,2)))
+        with pytest.raises(Exception) as e_info:
+            # Multiple input parameters
+            rf.network(s=1, z=1)
+
     def test_zipped_touchstone(self):
         zippath = os.path.join(self.test_dir, 'ntwks.zip')
         fname = 'ntwk1.s2p'
@@ -208,6 +263,68 @@ class NetworkTestCase(unittest.TestCase):
         ntwk1Saved = rf.Network(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
         self.assertEqual(self.ntwk1, ntwk1Saved)
         os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
+
+    def test_write_touchstone(self):
+        ports = 2
+        s_random = npy.random.uniform(-1, 1, (self.freq.npoints, ports, ports)) +\
+                1j * npy.random.uniform(-1, 1, (self.freq.npoints, ports, ports))
+        random_z0 = npy.random.uniform(1, 100, (self.freq.npoints, ports)) +\
+                    1j * npy.random.uniform(-100, 100, (self.freq.npoints, ports))
+        ntwk = rf.Network(s=s_random, frequency=self.freq, z0=random_z0, name='test_ntwk', s_def='traveling')
+
+        # Writing a network with non-constant z0 should raise
+        with pytest.raises(ValueError) as e_info:
+            snp = ntwk.write_touchstone(return_string=True)
+
+        ntwk.s_def = 'power'
+        # Should raise warning when write_z0 and s_def != 'traveling'.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            snp = ntwk.write_touchstone(return_string=True, write_z0=True)
+            self.assertTrue(len(w) == 1)
+
+        ntwk.s_def = 'traveling'
+        # Ok if write_z0 specified
+        snp = ntwk.write_touchstone(return_string=True, write_z0=True)
+
+        # Test reading it back
+        strio = io.StringIO(snp)
+        # Required for reading touchstone file
+        strio.name = 'StringIO.s{}p'.format(ports)
+        ntwk2 = rf.Network(strio)
+
+        npy.testing.assert_allclose(ntwk2.s, s_random)
+        npy.testing.assert_allclose(ntwk2.z0, random_z0)
+
+        # Renormalize output to 50 ohms
+        snp = ntwk.write_touchstone(return_string=True, r_ref=50)
+
+        # Network should not have been modified
+        self.assertTrue(npy.all(ntwk.s == s_random))
+        self.assertTrue(npy.all(ntwk.z0 == random_z0))
+
+        # Read back the written touchstone
+        strio = io.StringIO(snp)
+        strio.name = 'StringIO.s{}p'.format(ports)
+        ntwk2 = rf.Network(strio)
+
+        # Renormalize original network to match the written one
+        ntwk.renormalize(50)
+
+        npy.testing.assert_allclose(ntwk.s, ntwk2.s)
+        npy.testing.assert_allclose(ntwk.z0, ntwk2.z0)
+
+        ntwk.z0[0, 0] = 1
+        # Writing network with non-constant real z0 should fail without r_ref
+        with pytest.raises(ValueError) as e_info:
+            snp = ntwk.write_touchstone(return_string=True)
+        ntwk.z0[0, 0] = 50
+
+        ntwk.renormalize(50 + 1j)
+
+        # Writing complex characteristic impedance should fail
+        with pytest.raises(ValueError) as e_info:
+            snp = ntwk.write_touchstone(return_string=True)
 
     def test_pickling(self):
         original_ntwk = self.ntwk1
@@ -478,12 +595,22 @@ class NetworkTestCase(unittest.TestCase):
         self.ntwk1.plot_s_smith()
 
     def test_zy_singularities(self):
-        open = rf.N(f=[1], s=[1], z0=[50])
-        short = rf.N(f=[1], s=[-1], z0=[50])
-        react = rf.N(f=[1],s=[[0,1],[1,0]],z0=50)
-        z = open.z
-        y = short.y
-        a = react.y
+        networks = [
+            rf.N(f=[1], s=[1], z0=[50]),
+            rf.N(f=[1], s=[-1], z0=[50]),
+            rf.N(f=[1], s=[[0, 1], [1, 0]], z0=[50]),
+            rf.N(f=[1], s=[[1, 0], [0, 1]], z0=50),
+            rf.N(f=[1], s=[[-1, 0], [0, -1]], z0=50),
+            rf.N(f=[1], s=[[0.5, 0.5], [0.5, 0.5]], z0=[50]),
+            rf.N(f=[1], s=[[-0.5, -0.5], [-0.5, -0.5]], z0=[50]),
+        ]
+        # These conversion can be very inaccurate since results are very close
+        # to singular.
+        # Test that they are close with loose accuracy tolerance.
+        for net in networks:
+            for s_def in rf.S_DEFINITIONS:
+                npy.testing.assert_allclose(rf.z2s(rf.s2z(net.s, net.z0, s_def=s_def), net.z0, s_def=s_def), net.s, atol=1e-3)
+                npy.testing.assert_allclose(rf.y2s(rf.s2y(net.s, net.z0, s_def=s_def), net.z0, s_def=s_def), net.s, atol=1e-3)
 
     def test_conversions(self):
         #Converting to other format and back to S-parameters should return the original network
@@ -503,12 +630,45 @@ class NetworkTestCase(unittest.TestCase):
         #Converting to other format and back to S-parameters should return the original network
         for ports in range(3, 6):
             s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
-            ntwk_random = rf.Network(s=s_random, frequency=self.freq)
-            for test_z0 in (50, 20+60j, 90-50j):
-                for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3, ntwk_random):
-                    ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0)
-                    npy.testing.assert_allclose(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0), ntwk.s)
-                    npy.testing.assert_allclose(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0), ntwk.s)
+            test_ntwk = rf.Network(s=s_random, frequency=self.freq)
+            random_z0 = npy.random.uniform(1, 100, (self.freq.npoints, ports)) +\
+            1j * npy.random.uniform(-100, 100, (self.freq.npoints, ports))
+            for test_z0 in (50, random_z0):
+                for s_def in rf.S_DEFINITIONS:
+                    ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0, s_def=s_def)
+                    npy.testing.assert_allclose(rf.z2s(rf.s2z(ntwk.s, test_z0, s_def=s_def), test_z0, s_def=s_def), ntwk.s)
+                    npy.testing.assert_allclose(rf.y2s(rf.s2y(ntwk.s, test_z0, s_def=s_def), test_z0, s_def=s_def), ntwk.s)
+
+    def test_y_z_compatability(self):
+        # Test that npy.linalg.inv(Z) == Y
+        fpoints = 3
+        for p in range(2, 6):
+            s = npy.random.uniform(-1, 1, (fpoints, p, p)) + 1j * npy.random.uniform(-1, 1, (fpoints, p, p))
+            random_z0 = npy.random.uniform(1, 100, (fpoints, p)) + 1j * npy.random.uniform(-100, 100, (fpoints, p))
+            for test_z0 in (50, random_z0):
+                for s_def in rf.S_DEFINITIONS:
+                    z = rf.s2z(s, test_z0, s_def=s_def)
+                    y = npy.linalg.inv(z)
+                    npy.testing.assert_allclose(rf.y2s(y, test_z0, s_def=s_def), s)
+
+    def test_unknown_s_def(self):
+        # Test that Exception is raised when given unknown s_def
+        s = npy.array([0]).reshape(1, 1, 1)
+        z0 = npy.array([50])
+        # These should work
+        # These also test that functions work with dtype=float input
+        rf.s2z(s, z0)
+        rf.z2s(s, z0)
+        rf.s2y(s, z0)
+        rf.y2s(s, z0)
+        with pytest.raises(Exception) as e:
+            rf.s2z(s, z0, s_def='error')
+        with pytest.raises(Exception) as e:
+            rf.z2s(s, z0, s_def='error')
+        with pytest.raises(Exception) as e:
+            rf.y2s(s, z0, s_def='error')
+        with pytest.raises(Exception) as e:
+            rf.s2y(s, z0, s_def='error')
 
     def test_sparam_renormalize(self):
         #Converting to other format and back to S-parameters should return the original network
@@ -775,6 +935,20 @@ class NetworkTestCase(unittest.TestCase):
         ntwk.z0 = z0
         self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
 
+    def test_z0_assign(self):
+        """ Test that z0 getter returns a reference to _z0 so that it can
+        be assigned to with array indexing"""
+        ntwk = rf.Network(s=npy.zeros((3,2,2)), f=[1,2,3])
+        ntwk.z0[0, 0] = 2
+        self.assertTrue(ntwk.z0[0, 0] == 2)
+
+        ntwk = rf.Network(s=npy.zeros((3,2,2)), f=[1,2,3], z0=npy.ones(3))
+        ntwk.z0[0, 0] = 2
+        self.assertTrue(ntwk.z0[0, 0] == 2)
+
+        ntwk = rf.Network(s=npy.zeros((3,2,2)), f=[1,2,3], z0=npy.ones((3,2)))
+        ntwk.z0[0, 0] = 2
+        self.assertTrue(ntwk.z0[0, 0] == 2)
 
     def test_yz(self):
         tinyfloat = 1e-12

@@ -34,12 +34,6 @@ class CircuitTestConstructor(unittest.TestCase):
         _ntwk1.name = ''
         self.assertRaises(AttributeError, rf.Circuit, connections)
 
-    def test_port_has_correct_name(self):
-        """
-        Port object should have the string 'port' in its name.
-        """
-        self.assertRaises(ValueError, rf.Circuit.Port, self.freq, name='test')
-
     def test_all_networks_have_same_frequency(self):
         """
         Check that a Network with a different frequency than the other

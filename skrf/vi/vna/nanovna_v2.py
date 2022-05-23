@@ -122,7 +122,7 @@ class NanoVNAv2(abcvna.VNA):
     """
 
     def __init__(self, address: str = 'ASRL/dev/ttyACM0::INSTR'):
-        super().__init__(address=address, kwargs={'visa_library': 'py'})
+        super().__init__(address=address, visa_library='@py')
         self._protocol_reset()
         self._frequency = np.linspace(1e6, 10e6, 101)
         self.set_frequency_sweep(1e6, 10e6, 101)
@@ -468,3 +468,31 @@ class NanoVNAv2(abcvna.VNA):
 
     def get_switch_terms(self, ports=(1, 2), **kwargs):
         raise NotImplementedError
+
+    @property
+    def s11(self) -> skrf.Network:
+        """
+        Measures :math:`S_{1,1}` and returns it as a 1-port Network.
+
+        Returns
+        -------
+        skrf.Network
+        """
+        traces = self.get_list_of_traces()
+        ntwk = self.get_traces([traces[0]])[0]
+        ntwk.name = 'NanoVNA_S11'
+        return ntwk
+
+    @property
+    def s21(self) -> skrf.Network:
+        """
+        Measures :math:`S_{2,1}` and returns it as a 1-port Network.
+
+        Returns
+        -------
+        skrf.Network
+        """
+        traces = self.get_list_of_traces()
+        ntwk = self.get_traces([traces[1]])[0]
+        ntwk.name = 'NanoVNA_S21'
+        return ntwk
