@@ -52,7 +52,7 @@ class CPWTestCase(unittest.TestCase):
             ]
         
         # default parameter set for tests
-        self.verbose = True # output comparison plots if True
+        self.verbose = False # output comparison plots if True
         self.l    = 25e-3
         self.ep_r = 4.5
         self.tand = 0.018
