@@ -83,9 +83,9 @@ Graph representation
    Circuit.edge_labels
 
 """
-from . network import Network, a2s
+from . network import Network, a2s, s2s
 from . media import media
-from . constants import INF, NumberLike
+from . constants import INF, NumberLike, S_DEF_DEFAULT
 
 import numpy as np
 
@@ -786,7 +786,7 @@ class Circuit:
             #print(ntw_name, from_port, to_port)
             for (_from, _to) in zip(from_port, to_port):
                 #print(f'{_from} --> {_to}')
-                S[:, _to[0], _to[1]] = ntws[ntw_name].s[:, _from[0], _from[1]]
+                S[:, _to[0], _to[1]] = ntws[ntw_name].s_traveling[:, _from[0], _from[1]]
 
         return S  # shape (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
 
@@ -875,6 +875,7 @@ class Circuit:
         port_indexes = self.port_indexes
         a, b = np.meshgrid(port_indexes, port_indexes)
         S_ext = self.s[:, a, b]
+        S_ext = s2s(S_ext, self.port_z0, S_DEF_DEFAULT, 'traveling')
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
 
     @property
