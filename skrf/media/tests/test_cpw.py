@@ -77,7 +77,9 @@ class CPWTestCase(unittest.TestCase):
                             h = ref['h'],
                             has_metal_backside = ref['has_metal_backside'],
                             ep_r = self.ep_r, rho = self.rho,
-                            tand = self.tand)
+                            tand = self.tand,
+                            compatibility_mode = 'qucs',
+                            diel = 'frequencyinvariant')
             line = cpw.line(d=self.l, unit='m', embed = True, z0=cpw.Z0)
             line.name = '`Media.CPW` skrf,qucs'
             

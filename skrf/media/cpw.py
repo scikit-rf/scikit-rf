@@ -1,5 +1,4 @@
-
-
+# -*- coding: utf-8 -*-
 """
 cpw (:mod:`skrf.media.cpw`)
 ========================================
@@ -10,9 +9,9 @@ cpw (:mod:`skrf.media.cpw`)
    CPW
 
 """
+from numpy import sqrt, log, zeros, ones, any, tanh, sinh, exp, real, imag
 from scipy.constants import  epsilon_0, mu_0, c, pi
 from scipy.special import ellipk
-from numpy import sqrt, log, zeros, ones, any, tanh, sinh, exp, real
 from .media import Media
 from ..tlineFunctions import surface_resistivity, skin_depth
 from ..constants import INF, NumberLike
@@ -25,37 +24,130 @@ if TYPE_CHECKING:
 
 class CPW(Media):
     """
-    A Coplanar Waveguide.
+    A coplanar waveguide transmission line defined in terms of width,
+    spacing, thickness on a given relative permittivity substrate of a
+    certain height. The line has a conductor resistivity and a tangential loss
+    factor. The backside of the strip can be made of air or metal (grounded 
+    coplanar waveguide).
 
-    This class was made from the technical documentation [#]_ provided
-    by the qucs project [#]_ .
-    The variables  and properties of this class are coincident with
-    their derivations.
+    This class is highly inspired from the technical documentation [QUCSa]_
+    and sources provided by the qucs project [QUCSb]_ .
+    
+    In addition, Djordjevic [DBLS01]_ /Svensson [SvDe01]_  wideband debye dielectric
+    model is considered to provide more realistic modelling of broadband
+    microstrip with as causal time domain response.
+    
+    A compatibility mode is provided to mimic the behaviour of QUCS or of
+    Keysight ADS. There is known differences in the output of these
+    simulators.
+    
+    The quasi-static models of chercteristic impedance and effective
+    permittivity give the value at zero frequency. The dispersion models
+    compute a frequency-dependant values of these variables.
+    
+    * Quasi-static characteristic impedance and effective permittivity model
+      use [GhNa84]_ and [GhNa83]_. The models are corrected to account for
+      strip thickness using a first-order approach described in [GGBB96].
+    
+    * Frequency dispersion of impedance and effective permittivity model use
+      [FGVM91]_ and [GMDK97]_.
+    
+    * Loss model is computed using Wheeler's incremental inductance rule
+      [Whee42]_ applied to coplanar waveguide by [OwWu58]_ and [Ghio93]_.
+    
+    * Strip thickness correction model
 
     Parameters
     ----------
     frequency : :class:`~skrf.frequency.Frequency` object, optional
-        frequency band of the media. The default is None.
-    z0 : number, array-like, optional
-        the port impedance for media. The default is None.
-        Only needed if  its different from the characteristic impedance
-        of the transmission.
-    w : number, or array-like, optional
-        width of center conductor, in m. Default is 70.
+        frequency band of the media
+    z0 : number, array-like, or None (default None)
+        the port impedance for media. Only needed if different from the
+        characteristic impedance Z0 of the transmission line. In ohm
+    w : number, or array-like
+        width of center conductor, in m
     s : number, or array-like
-        width of gap, in m. Default is 4.
-    ep_r : number, or array-like, optional
-        relative permativity of substrate. Default is 3.
+        spacing (width of the gap), in m
+    h : number, or array-like
+        height of substrate between backside and conductor, in m
     t : number, or array-like, optional
-        conductor thickness, in m.
-        Default is None (metalization thickness neglected)
-    rho : number, or array-like, optional
-        resistivity of conductor. Default is None
+        conductor thickness, in m. Default is None (no width correction
+        to account strip thickness).
+    has_metal_backside : bool, default False
+        If the backside is air (False) or metal (True)
+    ep_r : number, or array-like, optional
+        relative permativity of substrate at frequency f_epr_tand, no unit
+    diel : str
+        dielectric frequency dispersion model in:
+        
+        * 'djordjevicsvensson' (default)
+        * 'frequencyinvariant'
+        
+    rho : number, or array-like, or None
+        resistivity of conductor, ohm / m
+    tand : number, or array-like
+        dielectric loss factor at frequency f_epr_tand
+    f_low : number, or array-like
+        lower frequency for wideband Debye Djordjevic/Svensson dielectric
+        model, in Hz
+    f_high : number, or array-like
+        higher frequency for wideband Debye Djordjevic/Svensson dielectric
+        model, in Hz
+    f_epr_tand : number, or array-like
+        measurement frequency for ep_r and tand of dielectric, in Hz
+    compatibility_mode: str or None (default)
+        If set to 'qucs', following behavious happens :
+        
+        * Characteristic impedance will be real (no imaginary part due to tand)
+        
+    \*args, \*\*kwargs : arguments, keyword arguments
+            passed to :class:`~skrf.media.media.Media`'s constructor
+            (:func:`~skrf.media.media.Media.__init__`
+             
+    Note
+    ----
+    When the thickness of the strip is smaller than 3 skin depth, the losses
+    model gives over-optimistic results and the media will issue a warning.
+    At DC, the losses of the line could be smaller than its conductor
+    resistance, which is not physical.
 
     References
     ----------
-    .. [#] http://qucs.sourceforge.net/docs/technical.pdf
-    .. [#] http://www.qucs.sourceforge.net/
+    .. [QUCSa] http://qucs.sourceforge.net/docs/technical.pdf
+    .. [QUCSb] http://www.qucs.sourceforge.net/
+    .. [DBLS01] Djordjevic, R.M. Biljic, V.D. Likar-Smiljanic, T.K. Sarkar,
+        Wideband frequency-domain characterization of FR-4 and time-domain
+        causality,
+        IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
+    .. [SvDe01] C. Svensson, G.E. Dermer,
+        Time domain modeling of lossy interconnects,
+        IEEE Trans. on Advanced Packaging, May 2001, N2, Vol. 24, pp.191-196.
+    .. [GhNa84] G. Ghione and C. Naldi. "Analytical Formulas for Coplanar Lines
+       in Hybrid and Monolithic MICs", Electronics Letters,
+       Vol. 20, No. 4, February 16, 1984, pp. 179-181.
+    .. [GhNa83] G. Ghione and C. Naldi. "Parameters of Coplanar Waveguides with
+        Lower Common Planes", Electronics Letters,
+        Vol. 19, No. 18, September 1, 1983, pp. 734-735.
+    .. [GGBB96] K. C. Gupta, R. Garg, I. J. Bahl, and P. Bhartia, Microstrip
+       Lines and Slotlines, 2nd ed.Artech House, Inc., 1996.
+    .. [FGVM91] M. Y. Frankel, S. Gupta, J. A. Valdmanis, and G. A. Mourou,
+       "Terahertz Attenuation and Dispersion Characteristics of Coplanar
+       Transmission Lines" IEEE Trans. on Microwave Theory and Techniques,
+       vol. 39, no. 6, pp. 910-916, June 1991.
+    .. [GMDK97] S. Gevorgian, T. Martinsson, A. Deleniv, E. Kollberg, and
+       I. Vendik, "Simple and accurate dispersion expression for the
+       effective dielectric constant of coplanar waveguides" in
+       Proceedings of Microwaves, Antennas and Propagation,
+       vol. 144, no. 2.IEE, Apr. 1997, pp. 145-148. 
+    .. [Whee42] H. A. Wheeler, "Formulas for the Skin Effect,"
+        Proceedings of the IRE, vol. 30, no. 9, pp. 412-424, Sept. 1942.
+    .. [OwWu58] G. H. Owyang and T. T. Wu, "The Approximate Parameters of Slot
+        Lines and Their Complement" IRE Transactions on Antennas and
+        Propagation, pp. 49-55, Jan. 1958.
+    .. [Ghio93] G. Ghione, "A CAD-Oriented Analytical Model for the Losses of
+        General Asymmetric Coplanar Lines in Hybrid and Monolithic MICs"
+        IEEE Trans. on Microwave Theory and Techniques,
+        vol. 41, no. 9, pp. 1499-1510, Sept. 1993. 
 
     """
     def __init__(self, frequency: Union['Frequency', None] = None,
@@ -63,26 +155,56 @@ class CPW(Media):
                  w: NumberLike = 3e-3, s: NumberLike = 0.3e-3,
                  h: NumberLike = 1.55,
                  ep_r: NumberLike = 4.5, t: Union[NumberLike, None] = None,
+                 diel: str = 'djordjevicsvensson',
                  rho: Union[NumberLike, None] = 1.68e-8, tand: NumberLike = 0,
+                 f_low: NumberLike = 1e3, f_high: NumberLike = 1e12,
+                 f_epr_tand: NumberLike = 1e9,
                  has_metal_backside: bool = False,
+                 compatibility_mode: Union[str, None] = None,
                  *args, **kwargs):
         Media.__init__(self, frequency=frequency,z0=z0)
 
         self.w, self.s, self.h, self.t, self.ep_r, self.tand, self.rho =\
                 w, s, h, t, ep_r, tand, rho
+        self.diel = diel
+        self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
         self.has_metal_backside = has_metal_backside
         
+        # variation ofeffective permittivity with frequency
+        # Not implemented on QUCS but implemented on ADS.
+        # 'frequencyinvariant' will give a constant complex value whith a real
+        # part compatible with qucs and an imaginary part due to tand
+        self.ep_r_f, self.tand_f = self.analyse_dielectric(
+            self.ep_r, self.tand,
+            self.f_low, self.f_high, self.f_epr_tand, self.frequency.f,
+            self.diel)
+        
         # quasi-static effective permittivity of substrate + line and
-        # the impedance of the microstrip line
-        self.zl_eff, self.ep_reff, k1, kk1, kpk1 = self.analyse_quasi_static(
-            ep_r, w, s, h, t, has_metal_backside)
+        # the impedance of the coplanar waveguide
+        # qucs use real-valued ep_r giving real-valued impedance
+        if compatibility_mode == 'qucs':
+            self.zl_eff, self.ep_reff, k1, kk1, kpk1 = \
+                self.analyse_quasi_static(
+                real(self.ep_r_f), w, s, h, t, has_metal_backside)
+        else:
+            self.zl_eff, self.ep_reff, k1, kk1, kpk1 = \
+                self.analyse_quasi_static(
+                self.ep_r_f, w, s, h, t, has_metal_backside)
         
         # analyse dispersion of impedance and relatice permittivity
-        self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
-            self.zl_eff, self.ep_reff, ep_r, w, s, h, self.frequency.f)
+        if compatibility_mode == 'qucs':
+            self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
+                self.zl_eff, self.ep_reff, real(self.ep_r_f), w, s, h,
+                self.frequency.f)
+        else:
+            self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
+                self.zl_eff, self.ep_reff, self.ep_r_f, w, s, h,
+                self.frequency.f)
         
+        # analyse losses of line
         self.alpha_conductor, self.alpha_dielectric = self.analyse_loss(
-            ep_r, real(self.ep_reff_f), tand, rho, 1., self.frequency.f,
+            real(self.ep_r_f), real(self.ep_reff_f), self.tand_f, rho, 1.,
+            self.frequency.f,
             w, t, s, k1, kk1, kpk1)
 
     def __str__(self) -> str:
@@ -123,19 +245,71 @@ class CPW(Media):
 
         return alpha + 1j * beta
     
+    def analyse_dielectric(self, ep_r: NumberLike, tand: NumberLike,
+                          f_low: NumberLike, f_high: NumberLike,
+                          f_epr_tand: NumberLike, f: NumberLike,
+                          diel: str):
+        """
+        This function calculate the frequency dependent relative permittivity
+        of dielectric and and tangeantial loss factor.
+        
+        References
+        ----------
+        .. [#] C. Svensson, G.E. Dermer,
+            Time domain modeling of lossy interconnects,
+            IEEE Trans. on Advanced Packaging, May 2001, N2, Vol. 24, pp.191-196.
+        .. [#] Djordjevic, R.M. Biljic, V.D. Likar-Smiljanic, T.K. Sarkar,
+            Wideband frequency-domain characterization of FR-4 and time-domain
+            causality,
+            IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
+            
+        Returns
+        -------
+        ep_r_f : :class:`numpy.ndarray`
+        tand_f : :class:`numpy.ndarray`
+        """
+        if diel == 'djordjevicsvensson':
+            # compute the slope for a log frequency scale, tanD dependent.
+            k = log((f_high + 1j * f_epr_tand) / (f_low + 1j * f_epr_tand))
+            fd = log((f_high + 1j * f) / (f_low + 1j * f))
+            ep_d = -tand * ep_r  / imag(k)
+            # value for frequency above f_high
+            ep_inf = ep_r * (1. + tand * real(k) / imag(k))
+            # compute complex permitivity
+            ep_r_f = ep_inf + ep_d * fd
+            # get tand
+            tand_f = -imag(ep_r_f) / real(ep_r_f)
+        elif diel == 'frequencyinvariant':
+            ep_r_f =  ep_r - 1j * ep_r * tand
+            tand_f = tand
+        else:
+            raise ValueError('Unknown dielectric dispersion model')
+        
+        return ep_r_f, tand_f
+    
     def analyse_quasi_static(self, ep_r: NumberLike, 
                            w: NumberLike, s: NumberLike,
                            h: NumberLike, t: NumberLike,
                            has_metal_backside: bool):
         """
-        This function calculates the quasi-static impedance of a CPW
-        line, the value of the effective permittivity as per filling factor
-        and the effective width due to the finite conductor thickness for the
-        given CPW line and substrate properties.
+        This function calculates the quasi-static impedance of a coplanar
+        waveguide line, the value of the effective permittivity as per filling
+        factor and the effective width due to the finite conductor thickness
+        for the given coplanar waveguide line and substrate properties.
+        Model from [#]_ with air backside and [#]_ with metal backside.
+        The models are corrected to account for
+        strip thickness using a first-order approach described in [GGBB96]_.
         
         References
         ----------
-        .. [#] Ghione ...
+        .. [#] G. Ghione and C. Naldi. "Analytical Formulas for Coplanar Lines
+           in Hybrid and Monolithic MICs", Electronics Letters,
+           Vol. 20, No. 4, February 16, 1984, pp. 179-181.
+        .. [#] G. Ghione and C. Naldi. "Parameters of Coplanar Waveguides with
+            Lower Common Planes", Electronics Letters,
+            Vol. 19, No. 18, September 1, 1983, pp. 734-735.
+        .. [GGBB96] K. C. Gupta, R. Garg, I. J. Bahl, and P. Bhartia, Microstrip
+           Lines and Slotlines, 2nd ed.Artech House, Inc., 1996.
             
         Returns
         -------
@@ -196,12 +370,20 @@ class CPW(Media):
                           h: NumberLike, f: NumberLike):
          """
          This function compute the frequency dependent characteristic
-         impedance and effective permittivity accounting for microstripline
+         impedance and effective permittivity accounting for coplanar waveguide
          frequency dispersion.
          
          References
          ----------
-         .. [#] Ghione...
+         .. [#] M. Y. Frankel, S. Gupta, J. A. Valdmanis, and G. A. Mourou,
+            "Terahertz Attenuation and Dispersion Characteristics of Coplanar
+            Transmission Lines" IEEE Trans. on Microwave Theory and Techniques,
+            vol. 39, no. 6, pp. 910-916, June 1991.
+         .. [#] S. Gevorgian, T. Martinsson, A. Deleniv, E. Kollberg, and
+            I. Vendik, "Simple and accurate dispersion expression for the
+            effective dielectric constant of coplanar waveguides" in
+            Proceedings of Microwaves, Antennas and Propagation,
+            vol. 144, no. 2.IEE, Apr. 1997, pp. 145-148. 
              
          Returns
          -------
@@ -234,12 +416,19 @@ class CPW(Media):
                     k1: NumberLike, kk1: NumberLike, kpk1: NumberLike):
         """
         The function calculates the conductor and dielectric losses of a
-        single microstrip line using wheeler's incremental inductance rule.
+        complanar waveguide line using wheeler's incremental inductance rule.
         
         References
         ----------
         .. [#] H. A. Wheeler, "Formulas for the Skin Effect,"
             Proceedings of the IRE, vol. 30, no. 9, pp. 412-424, Sept. 1942.
+        .. [#] G. H. Owyang and T. T. Wu, "The Approximate Parameters of Slot
+            Lines and Their Complement" IRE Transactions on Antennas and
+            Propagation, pp. 49-55, Jan. 1958.
+        .. [#] G. Ghione, "A CAD-Oriented Analytical Model for the Losses of
+            General Asymmetric Coplanar Lines in Hybrid and Monolithic MICs"
+            IEEE Trans. on Microwave Theory and Techniques,
+            vol. 41, no. 9, pp. 1499-1510, Sept. 1993. 
             
         Returns
         -------
@@ -277,15 +466,19 @@ class CPW(Media):
 def ellipa(k: NumberLike):
     """
     Approximation of K(k)/K'(k).
-    First appeared in
-    Hilberg, W., "From Approximations to Exact Relations for Characteristic
-    Impedances," IEEE Trans. MTT, May 1969.
-    More accurate expressions can be found in the above article and in
-    Abbott, J. T., "Modeling the Capacitive Behavior of Coplanar Striplines
-    and Coplanar Waveguides using Simple Functions", Rochester Institute of
-    Technology, Rochester, New York, June 2011.
+    First appeared in [#]_
+    More accurate expressions can be found in the above article and in [#]_.
+    
     The maximum relative error of the approximation implemented here is
     about 2 ppm, so good enough for any practical purpose.
+    
+    References
+    ==========
+    .. [#] Hilberg, W., "From Approximations to Exact Relations for
+       Characteristic Impedances," IEEE Trans. MTT, May 1969.
+    .. [#] Abbott, J. T., "Modeling the Capacitive Behavior of Coplanar
+       Striplines and Coplanar Waveguides using Simple Functions",
+       Rochester Institute of Technology, Rochester, New York, June 2011.
     """
     if k < sqrt(1. / 2.):
         kp = sqrt(1 - k * k)
