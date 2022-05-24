@@ -264,6 +264,68 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(self.ntwk1, ntwk1Saved)
         os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
 
+    def test_write_touchstone(self):
+        ports = 2
+        s_random = npy.random.uniform(-1, 1, (self.freq.npoints, ports, ports)) +\
+                1j * npy.random.uniform(-1, 1, (self.freq.npoints, ports, ports))
+        random_z0 = npy.random.uniform(1, 100, (self.freq.npoints, ports)) +\
+                    1j * npy.random.uniform(-100, 100, (self.freq.npoints, ports))
+        ntwk = rf.Network(s=s_random, frequency=self.freq, z0=random_z0, name='test_ntwk', s_def='traveling')
+
+        # Writing a network with non-constant z0 should raise
+        with pytest.raises(ValueError) as e_info:
+            snp = ntwk.write_touchstone(return_string=True)
+
+        ntwk.s_def = 'power'
+        # Should raise warning when write_z0 and s_def != 'traveling'.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            snp = ntwk.write_touchstone(return_string=True, write_z0=True)
+            self.assertTrue(len(w) == 1)
+
+        ntwk.s_def = 'traveling'
+        # Ok if write_z0 specified
+        snp = ntwk.write_touchstone(return_string=True, write_z0=True)
+
+        # Test reading it back
+        strio = io.StringIO(snp)
+        # Required for reading touchstone file
+        strio.name = 'StringIO.s{}p'.format(ports)
+        ntwk2 = rf.Network(strio)
+
+        npy.testing.assert_allclose(ntwk2.s, s_random)
+        npy.testing.assert_allclose(ntwk2.z0, random_z0)
+
+        # Renormalize output to 50 ohms
+        snp = ntwk.write_touchstone(return_string=True, r_ref=50)
+
+        # Network should not have been modified
+        self.assertTrue(npy.all(ntwk.s == s_random))
+        self.assertTrue(npy.all(ntwk.z0 == random_z0))
+
+        # Read back the written touchstone
+        strio = io.StringIO(snp)
+        strio.name = 'StringIO.s{}p'.format(ports)
+        ntwk2 = rf.Network(strio)
+
+        # Renormalize original network to match the written one
+        ntwk.renormalize(50)
+
+        npy.testing.assert_allclose(ntwk.s, ntwk2.s)
+        npy.testing.assert_allclose(ntwk.z0, ntwk2.z0)
+
+        ntwk.z0[0, 0] = 1
+        # Writing network with non-constant real z0 should fail without r_ref
+        with pytest.raises(ValueError) as e_info:
+            snp = ntwk.write_touchstone(return_string=True)
+        ntwk.z0[0, 0] = 50
+
+        ntwk.renormalize(50 + 1j)
+
+        # Writing complex characteristic impedance should fail
+        with pytest.raises(ValueError) as e_info:
+            snp = ntwk.write_touchstone(return_string=True)
+
     def test_pickling(self):
         original_ntwk = self.ntwk1
         with tempfile.NamedTemporaryFile(dir=self.test_dir, suffix='ntwk') as fid:
@@ -328,6 +390,119 @@ class NetworkTestCase(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             ntwk1**ntwk2
+
+    def test_connect_complex_ports(self):
+        """ Test that connecting two networks gives the same resulting network
+        (same Z-parameters) with all s_def when using complex port impedances.
+        """
+
+        # Generate random Z-parameters for two networks
+        z1 = npy.random.uniform(1, 100, size=(1, 2, 2)) +\
+                1j*npy.random.uniform(-100, 100, size=(1, 2, 2))
+        z2 = npy.random.uniform(1, 100, size=(1, 2, 2)) +\
+                1j*npy.random.uniform(-100, 100, size=(1, 2, 2))
+
+        # Port impedances
+        z0_1 = npy.random.uniform(1, 100, size=2) +\
+                1j*npy.random.uniform(-100, 100, size=2)
+        z0_2 = npy.random.uniform(1, 100, size=2) +\
+                1j*npy.random.uniform(-100, 100, size=2)
+        z0_3 = npy.random.uniform(1, 100, size=2) +\
+                1j*npy.random.uniform(-100, 100, size=2)
+
+        # Cascade Z-parameters calculated with ABCD parameters
+        net3_z = rf.a2z(rf.z2a(z1) @ rf.z2a(z2))
+
+        for s_def in rf.S_DEFINITIONS:
+            net3_ref = rf.Network(s=[[0,0],[0,0]], f=1, z0=z0_3, s_def=s_def)
+            net3_ref.z = net3_z
+
+            net1 = rf.Network(s=[[0,0],[0,0]], f=1, z0=z0_1, s_def=s_def)
+            net2 = rf.Network(s=[[0,0],[0,0]], f=1, z0=z0_2, s_def=s_def)
+            net1.z = z1
+            net2.z = z2
+
+            # Cascade calculated with S-parameters
+            net12 = net1 ** net2
+            net12.renormalize(z0_3)
+            self.assertTrue(net12.s_def == s_def)
+            self.assertTrue(net3_ref.s_def == s_def)
+            npy.testing.assert_almost_equal(net3_ref.z0, net12.z0)
+            npy.testing.assert_almost_equal(net12.s, net3_ref.s)
+            npy.testing.assert_almost_equal(net3_z, net3_ref.z)
+
+    def test_connect_different_s_def(self):
+        """ Test that connecting two networks gives the same resulting
+        network (same Z-parameters) with all s_def when using complex port
+        impedances.
+        """
+
+        # Generate random Z-parameters for two networks
+        z1 = npy.random.uniform(1, 100, size=(1, 2, 2)) +\
+                1j*npy.random.uniform(-100, 100, size=(1, 2, 2))
+        z2 = npy.random.uniform(1, 100, size=(1, 2, 2)) +\
+                1j*npy.random.uniform(-100, 100, size=(1, 2, 2))
+
+        # Port impedances
+        z0_1 = npy.random.uniform(1, 100, size=2) +\
+                1j*npy.random.uniform(-100, 100, size=2)
+        z0_2 = npy.random.uniform(1, 100, size=2) +\
+                1j*npy.random.uniform(-100, 100, size=2)
+        z0_3 = npy.random.uniform(1, 100, size=2) +\
+                1j*npy.random.uniform(-100, 100, size=2)
+
+        # Cascade Z-parameters calculated with ABCD parameters
+        net3_z = rf.a2z(rf.z2a(z1) @ rf.z2a(z2))
+
+        for s_def1 in rf.S_DEFINITIONS:
+            net3_ref = rf.Network(s=[[0,0],[0,0]], f=1, z0=z0_3, s_def=s_def1)
+            net3_ref.z = net3_z
+            net1 = rf.Network(s=[[0,0],[0,0]], f=1, z0=z0_1, s_def=s_def1)
+            net1.z = z1
+
+            for s_def2 in rf.S_DEFINITIONS:
+                net2 = rf.Network(s=[[0,0],[0,0]], f=1, z0=z0_2, s_def=s_def2)
+                net2.z = z2
+
+                # Cascade calculated with S-parameters
+                with warnings.catch_warnings(record=True) as w:
+                    # Trigger all warnings
+                    warnings.simplefilter("always")
+                    net12 = net1 ** net2
+                    # Check that method warns about connecting networks with
+                    # different s_def.
+                    if net1.s_def != net2.s_def:
+                        self.assertTrue(len(w) == 1)
+                    else:
+                        self.assertTrue(len(w) == 0)
+                net12.renormalize(z0_3)
+                self.assertTrue(net12.s_def == s_def1)
+                self.assertTrue(net3_ref.s_def == s_def1)
+                npy.testing.assert_almost_equal(net3_ref.z0, net12.z0)
+                npy.testing.assert_almost_equal(net12.s, net3_ref.s)
+                npy.testing.assert_almost_equal(net3_z, net3_ref.z)
+
+    def test_interconnect_complex_ports(self):
+        """ Test that connecting two complex ports in a network
+        gives the same S-parameters with all s_def when the rest of
+        the ports are real
+        """
+        for p in range(3, 5):
+            z = npy.random.uniform(1, 100, size=(1, p, p)) +\
+                    1j*npy.random.uniform(-100, 100, size=(1, p, p))
+            z0 = npy.random.uniform(1, 100, size=(1, p)) + 1j*0
+            z0[:, -2:] += 1j*npy.random.uniform(-100, 100, size=(1, 2))
+            nets = []
+            for s_def in rf.S_DEFINITIONS:
+                net = rf.Network(s=npy.zeros((p,p)), f=1, z0=z0, s_def=s_def)
+                net.z = z
+                # Connect the last two complex ports together
+                rf.innerconnect(net, p - 2, 2)
+                nets.append(net)
+            for net in nets[1:]:
+                npy.testing.assert_almost_equal(net.s, net[0].s)
+                self.assertTrue((net.z0 == net[0].z0).all())
+                self.assertTrue(net.s_def != net[0].s_def)
 
     def test_delay(self):
         ntwk1_delayed = self.ntwk1.delay(1,'ns',port=0)
@@ -500,13 +675,57 @@ class NetworkTestCase(unittest.TestCase):
         for ports in range(2, 6):
             s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
             test_ntwk = rf.Network(s=s_random, frequency=self.freq)
-            for test_z0 in (50, 20+60j, 70-30j):
+            random_z0 = npy.random.uniform(1, 100, size=(self.freq.npoints, ports)) +\
+                        1j*npy.random.uniform(-100, 100, size=(self.freq.npoints, ports))
+            for test_z0 in (50, 20+60j, random_z0):
                 for method in rf.S_DEFINITIONS:
                     ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=50)
                     ntwk_renorm = ntwk.copy()
                     ntwk_renorm.renormalize(test_z0, method)
                     ntwk_renorm.renormalize(50, method)
                     npy.testing.assert_allclose(ntwk_renorm.s, ntwk.s)
+
+    def test_sparam_renorm_s2s(self):
+        """
+        Test changing S-parameter definition with complex ports
+        """
+        for ports in range(2, 6):
+            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
+            test_ntwk = rf.Network(s=s_random, frequency=self.freq)
+            random_z0 = npy.random.uniform(1, 100, size=(self.freq.npoints, ports)) +\
+                        1j*npy.random.uniform(-100, 100, size=(self.freq.npoints, ports))
+            for def1 in rf.S_DEFINITIONS:
+                for def2 in rf.S_DEFINITIONS:
+                    ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=random_z0, s_def=def1)
+                    ntwk_renorm = ntwk.copy()
+                    ntwk_renorm.renormalize(ntwk.z0, s_def=def2)
+                    npy.testing.assert_allclose(ntwk_renorm.z, ntwk.z)
+                    ntwk_renorm.renormalize(ntwk.z0, s_def=def1)
+                    npy.testing.assert_allclose(ntwk_renorm.s, ntwk.s)
+                    npy.testing.assert_allclose(ntwk_renorm.z0, ntwk.z0)
+
+    def test_sparam_renorm_different_z0(self):
+        """
+        Test changing S-parameter definition with complex ports.
+        renormalize handles cases with same z0 and different z0 before and
+        after conversion with different method.
+        """
+        for ports in range(2, 6):
+            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
+            test_ntwk = rf.Network(s=s_random, frequency=self.freq)
+            random_z0 = npy.random.uniform(1, 100, size=(self.freq.npoints, ports)) +\
+                        1j*npy.random.uniform(-100, 100, size=(self.freq.npoints, ports))
+            random_z0_2 = npy.random.uniform(1, 100, size=(self.freq.npoints, ports)) +\
+                        1j*npy.random.uniform(-100, 100, size=(self.freq.npoints, ports))
+            for def1 in rf.S_DEFINITIONS:
+                for def2 in rf.S_DEFINITIONS:
+                    ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=random_z0, s_def=def1)
+                    ntwk_renorm = ntwk.copy()
+                    ntwk_renorm.renormalize(random_z0_2, s_def=def2)
+                    npy.testing.assert_allclose(ntwk_renorm.z, ntwk.z)
+                    ntwk_renorm.renormalize(ntwk.z0, s_def=def1)
+                    npy.testing.assert_allclose(ntwk_renorm.s, ntwk.s)
+                    npy.testing.assert_allclose(ntwk_renorm.z0, ntwk.z0)
 
     def test_setters(self):
         s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
@@ -524,6 +743,27 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_allclose(ntwk.s, s_random)
         ntwk.h = ntwk.h
         npy.testing.assert_allclose(ntwk.s, s_random)
+
+    def test_s_def_setters(self):
+        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
+        ntwk = rf.Network(s=s_random, frequency=self.freq)
+        ntwk.z0 = npy.random.uniform(1, 100, len(ntwk.z0)) + 1j*npy.random.uniform(-100, 100, len(ntwk.z0))
+        ntwk.s = ntwk.s
+
+        s_traveling = rf.s2s(s_random, ntwk.z0, 'traveling', ntwk.s_def)
+        s_power = rf.s2s(s_random, ntwk.z0, 'power', ntwk.s_def)
+        s_pseudo = rf.s2s(s_random, ntwk.z0, 'pseudo', ntwk.s_def)
+
+        ntwk.s_traveling = s_traveling
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.s_power = s_power
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.s_pseudo = s_pseudo
+        npy.testing.assert_allclose(ntwk.s, s_random)
+
+        npy.testing.assert_allclose(ntwk.s_traveling, s_traveling)
+        npy.testing.assert_allclose(ntwk.s_power, s_power)
+        npy.testing.assert_allclose(ntwk.s_pseudo, s_pseudo)
 
     def test_sparam_conversion_with_complex_char_impedance(self):
         """
