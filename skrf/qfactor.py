@@ -12,7 +12,7 @@ This class implements methods for determining loaded and unloaded Q-factor
 from frequency-domain S-parameters, that can be applied to measurements
 of transmission or reflection.
 
-Documentation and implementation are adapted from [#]_
+Documentation and implementation are adapted from [MAT58]_
 
 Q-factor
 --------
@@ -37,7 +37,7 @@ The Quality factor (Q-factor) of a resonator is defined by:
 
 where :math:`U` is the average energy stored by the resonator and
 :math:`\Delta U` is the decrease in the average stored energy per wave cycle
-at the resonant frequency [#]_.
+at the resonant frequency [Pozar]_.
 
 The loaded Q-factor, :math:`Q_L`, describes energy dissipation within the
 entire resonant system comprising of the resonator itself and the instrument
@@ -91,7 +91,8 @@ Q-factor determination through equivalent-circuit models
 Characterisation of resonances from measurements in the frequency-domain
 can be achieved through equivalent-circuit models. A high Q-factor resonator
 (in practice, :math:`Q_L` > 100), the S-parameter response of a resonator
-measured in a calibrated system with reference planes at the resonator couplings is:
+measured in a calibrated system with reference planes at the resonator
+couplings is [MAT58]_, [Galwas]_ :
 
 .. math::
 
@@ -99,35 +100,33 @@ measured in a calibrated system with reference planes at the resonator couplings
 
 
 where :math:`S_D` is the detuned S-parameter measured at frequencies far above or below
-resonance, :math:`d` is The diameter of the Q-circle, :math:``delta` is a
+resonance, :math:`d` is The diameter of the Q-circle, :math:`\delta` is a
 real-valued constant that defines the orientation of the Q-circle, and :math:`t`
 is the fractional offset frequency given by:
 
 .. math::
-    t = 2 \frac{f − f_L}{f_0} \approx 2 \frac{f − f_L}{f_L}
+    t = \frac{f}{f_L} - \frac{f_L}{f}  \approx 2 \frac{f − f_L}{f_L}
 
 
-where :math:`f_L` is the loaded resonant frequency, :math:`f_0` The unloaded
-resonant frequency and :math:`f` the frequency at which S is measured.
-This equation can be applied to measurements by transmission (S21 or S12) or
-reflection (S11 or S22).
+where :math:`f_L` is the loaded resonant frequency and :math:`f` the frequency
+at which S is measured. This equation can be applied to measurements
+by transmission (S21 or S12) or reflection (S11 or S22).
 
-
+The S-parameters are fitted against the above equations to deduce the resonant
+frequency, loaded and unloaded Q-factors and other properties.
 
 
 References
 ----------
-.. [#] "Q-factor Measurement by using a Vector Network Analyser",
+.. [MAT58] "Q-factor Measurement by using a Vector Network Analyser",
     A. P. Gregory, National Physical Laboratory Report MAT 58 (2021)
     https://eprintspublications.npl.co.uk/9304/
 
-.. [#] D. M. Pozar, Microwave engineering, 4th ed. J. Wiley, 2012.
+.. [Pozar] D. M. Pozar, Microwave engineering, 4th ed. J. Wiley, 2012.
 
-.. [#] M. Sucher and J. Fox. Handbook of microwave measurements; Vol. 2, 3rd Ed. New York: Polytechnic Press, 1963.
-
-.. [#] B. A. Galwas, ‘Scattering Matrix Description of Microwave Resonators’, IEEE Trans. Microwave Theory Techn., vol. 31, no. 8, pp. 669–671, Aug. 1983, doi: 10.1109/TMTT.1983.1131566.
-
-
+.. [Galwas] B. A. Galwas, ‘Scattering Matrix Description of Microwave
+   Resonators’, IEEE Trans. Microwave Theory Techn., vol. 31, no. 8,
+   pp. 669–671, Aug. 1983, doi: 10.1109/TMTT.1983.1131566.
 
 """
 import numpy as np
@@ -156,7 +155,7 @@ class OptimizedResult(dict):
     method: str
         Fitting method used.
     m1, m2, m3, ...: float
-        Coefficients described in [#]_
+        Coefficients described in [MAT58]_
     number_iterations: int
         Number of iterations performed.
 
@@ -169,7 +168,7 @@ class OptimizedResult(dict):
 
     References
     ----------
-    .. [#] "Q-factor Measurement by using a Vector Network Analyser",
+    .. [MAT58] "Q-factor Measurement by using a Vector Network Analyser",
         A. P. Gregory, National Physical Laboratory Report MAT 58 (2021)
         https://eprintspublications.npl.co.uk/9304/
 
@@ -203,12 +202,14 @@ class Qfactor(object):
     Parameters
     ----------
     ntwk : :class:`~skrf.network.Network` object
-        scikit-rf Network
+        A 1-port scikit-rf Network.
+        If your device is a N-port, pass the desired sub-S-parameters to fit
+        the data from, like `ntwk.s21`.
     res_type : str
         Specifies the resonance type: 'reflection', 'transmission',
-        'reflection_method2' or 'absorption'.
+        'reflection_method2' or 'absorption':
         'reflection' is generally suited for undercoupled resonators,
-        while 'reflection_method2' is favoured for coupling with large loop. 
+        while 'reflection_method2' is favoured for coupling with large loop.
     Q_L0 : float, optional. Default is None.
         Estimated loaded Q-factor, used to improve fitting.
     f_L0 : float, optional. Default is None.
@@ -217,6 +218,11 @@ class Qfactor(object):
         depending on the resonance type defined by `res_type`.
     verbose : bool, optional. Default is False.
         Boolean flag controlling output of information to the console.
+
+    Raises
+    ------
+    ValueError
+        If the passed Network is not 1-port or if the resonance type is unknown.
 
     Notes
     -----
@@ -253,7 +259,10 @@ class Qfactor(object):
         self._initial_fit(self.N, Q_L0, f_L0)
 
 
-    def fit(self, method: str="NLQFIT6", loop_plan: str = 'fwfwc'):
+    def fit(self,
+            method: str = "NLQFIT6",
+            loop_plan: str = 'fwfwc'
+            ) -> OptimizedResult:
         """Fit Q-factor from S-parameter data.
 
         Fitting overwrites the parameters `Q_L` and `f_L`.
@@ -262,29 +271,31 @@ class Qfactor(object):
         ----------
         method : str, optional
             Fitting method : 'NLQFIT6' (default), 'NLQFIT7', 'NLQFIT8':
-            'NLQFIT6': Least Square Minimum of Eq.21 [#]_ with 6 coeffcients.
-            'NLQFIT7': Least Square Minimum of Eq.26 [#]_ with 7 coeffcients,
-                       including one that characterize the trans. line length.
-            'NLQFIT8': Least Square Minimum of Eq.43 [#]_ with 8 coeffcients,
-                       A model for frequency-dependent leakage.
+
+            - 'NLQFIT6': Least Square Minimum of Eq.21 [MAT58]_ with 6 coeffcients.
+            - 'NLQFIT7': Least Square Minimum of Eq.26 [MAT58]_ with 7 coeffcients,
+              including one that characterize the trans. line length.
+            - 'NLQFIT8': Least Square Minimum of Eq.43 [MAT58]_ with 8 coeffcients,
+              A model for frequency-dependent leakage.
         loop_plan : str, optional
             Defines order of steps used by the fitting process.
             The convergence algorithm uses a number of steps set by loop_plan,
             a string of characters as follows:
-              f - fit once without testing for convergence
-              c - repeated fit, iterating until convergence is obtained
-              w - re-calculate weighting factors on basis of previous fit
-                  Initially the weighting factors are all unity.
-              The first character in loop_plan must not be w.
+
+            - 'f': fit once without testing for convergence
+            - 'c': repeated fit, iterating until convergence is obtained
+            - 'w': re-calculate weighting factors on basis of previous fit
+            - Initially the weighting factors are all unity.
+            - The first character in `loop_plan` must not be 'w'.
             e.g.: 'fwfwc' (default).
 
         Returns
         -------
-        optimized_results : OptimisedResult
+        result : :class:`~skrf.qfactor.OptimizedResult` 
 
         References
         ----------
-        .. [#] "Q-factor Measurement by using a Vector Network Analyser",
+        .. [MAT58] "Q-factor Measurement by using a Vector Network Analyser",
             A. P. Gregory, National Physical Laboratory Report MAT 58 (2021)
             https://eprintspublications.npl.co.uk/9304/
 
@@ -305,20 +316,23 @@ class Qfactor(object):
 
         # step 2: least square fitting
         if method == 'NLQFIT6':
-            res = self._optimise_fit6(self.N)
+            result = self._optimise_fit6(self.N)
         elif method == 'NLQFIT7':
-            res = self._optimise_fit7(self.N)
+            result = self._optimise_fit7(self.N)
         elif method == 'NLQFIT8':
-            res = self._optimise_fit8(self.N)
+            result = self._optimise_fit8(self.N)
 
-        # overwrite results
-        self.Q_L = res.Q_L
-        self.f_L = res.f_L
+        # overwrite results in self
+        self.Q_L = result.Q_L
+        self.f_L = result.f_L
 
-        return res
+        return result
 
     @staticmethod
-    def angular_weights(f, f_L, Q_L):
+    def angular_weights(f: NumberLike, 
+                        f_L: NumberLike, 
+                        Q_L: NumberLike
+                        ) -> NumberLike:
         r"""Diagonal elements W_i of weights matrix.
 
         .. math::
@@ -328,7 +342,7 @@ class Qfactor(object):
 
         The weights are needed when frequencies are equally-spaced
         (rather than points equally spaced around the Q-circle), and help
-        reducing systematic error [#]_.
+        reducing systematic error [MAT58]_.
 
         Parameters
         ----------
@@ -347,7 +361,7 @@ class Qfactor(object):
 
         References
         ----------
-        .. [#] "Q-factor Measurement by using a Vector Network Analyser",
+        .. [MAT58] "Q-factor Measurement by using a Vector Network Analyser",
             A. P. Gregory, National Physical Laboratory Report MAT 58 (2021)
             https://eprintspublications.npl.co.uk/9304/
             section 2.4, eqn. (28).
@@ -370,7 +384,7 @@ class Qfactor(object):
         for the resonant frequency should be supplied is multiple resonances
         are present.
 
-        Also calculate the internal parameters a, b and QL from ([#]_, eqn. 17)
+        Also calculate the internal parameters a, b and QL from ([MAT58]_, eqn. 17)
 
         Parameters
         ----------
@@ -387,7 +401,7 @@ class Qfactor(object):
 
         References
         ----------
-        .. [#] "Q-factor Measurement by using a Vector Network Analyser",
+        .. [MAT58] "Q-factor Measurement by using a Vector Network Analyser",
             A. P. Gregory, National Physical Laboratory Report MAT 58 (2021)
             https://eprintspublications.npl.co.uk/9304/
             section 2.1, eqn. (17).
@@ -450,7 +464,7 @@ class Qfactor(object):
         """Iterative non-linear fit, NLQFIT6 Step (2).
 
         Optimised fit of Q-factor (Q_L) and resonant frequency (f_L)
-        by the gradient-descent method [#]_.
+        by the gradient-descent method [MAT58]_.
 
         Uses the results of the initial fit as the starting
         values for the iteration.
@@ -467,7 +481,7 @@ class Qfactor(object):
 
         References
         ----------
-        .. [#] MAT 58, section 2.2, eqn. (22).
+        .. [MAT58] MAT 58, section 2.2, eqn. (22).
 
         """
         N2 = N * 2
@@ -600,13 +614,14 @@ class Qfactor(object):
         loop_plan : str
             Characters which defines order of steps used by the fitting process
             e.g. 'fwfwc':
-                'f' - fit once without testing for convergence.
-                'c' - repeated fit, iterating until convergence is obtained.
-                'w' - re-calculate weighting factors on basis of previous fit.
+
+            - 'f': fit once without testing for convergence.
+            - 'c': repeated fit, iterating until convergence is obtained.
+            - 'w': re-calculate weighting factors on basis of previous fit.
         Tol : float
             Criterion for the convergence test.
-                    Recommend using 1.0E-5 for reflection or max(abs(S))*1.0E-5
-                    for transmission.
+            Recommend using 1.0E-5 for reflection or max(abs(S))*1.0E-5
+            for transmission.
         quiet : bool
             Boolean flag controlling output of information to the console.
 
@@ -620,7 +635,7 @@ class Qfactor(object):
 
         References
         ----------
-        .. [#] MAT 58, section 2.3, eqn. (26).
+        .. [MAT58] MAT 58, section 2.3, eqn. (26).
 
         """
         N2 = N * 2
@@ -734,7 +749,7 @@ class Qfactor(object):
                         print(f"Iteration {iterations}, RMS Error: {RMS_Error}")
                     else:
                         print(f"op {op}, Iteration {iterations}, RMS Error: {RMS_Error}")
- 
+
                 last_op = op
 
                 if seek_convergence:
@@ -803,7 +818,7 @@ class Qfactor(object):
 
         References
         ----------
-        .. [#] MAT 58, sec 4.5, eqn. (43).
+        .. [MAT58] MAT 58, sec 4.5, eqn. (43).
 
         """
         N2 = N * 2
@@ -905,7 +920,7 @@ class Qfactor(object):
                         print(f"Iteration {iterations}, RMS Error: {RMS_Error}")
                     else:
                         print(f"{op}, Iteration {iterations}, RMS Error: {RMS_Error}")
- 
+
                 last_op = op
 
                 if seek_convergence:
@@ -929,10 +944,13 @@ class Qfactor(object):
             'method': self.method,
             })
 
-    def Q_circle(self, opt_res: OptimizedResult, A: Union[str, float]) -> list:
+    def Q_circle(self, 
+                 opt_res: OptimizedResult, 
+                 A: Union[None, float] = None
+                 ) -> list:
         """Q-circle diameter.
 
-        Defined as [#]_:
+        Defined as [MAT58]_:
 
         .. math::
 
@@ -940,12 +958,12 @@ class Qfactor(object):
 
         Parameters
         ----------
-        opt_res : OptimizedResult
-            solution produced by the `fit` method.
-        A : float or str
-            Scaling factor as defined in MAT 58 [#]_.
-            For `reflection` resonance type, can be set as 'AUTO'
-            to use the magnitude of the fitted detuned reflection coefficient (gamma_V)
+        opt_res : :class:`~skrf.qfactor.OptimizedResult` 
+            solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
+        A : None of float.
+            Scaling factor as defined in MAT 58 [MAT58]_.
+            For `reflection` resonance type, can be set as None (default)
+            to use the magnitude of the fitted detuned reflection coefficient S_V
 
         Returns
         -------
@@ -958,7 +976,7 @@ class Qfactor(object):
 
         References
         ----------
-        .. [#] "Q-factor Measurement by using a Vector Network Analyser",
+        .. [MAT58] "Q-factor Measurement by using a Vector Network Analyser",
             A. P. Gregory, National Physical Laboratory Report MAT 58 (2021)
             https://eprintspublications.npl.co.uk/9304/,
             section 2.5, eqn. (31).
@@ -970,10 +988,10 @@ class Qfactor(object):
         # m4 : imag part of b + j a/Q_L
         m1, m2, m3, m4 = [opt_res[key] for key in ['m1', 'm2', 'm3', 'm4']]
 
-        if isinstance(A, str) and A.upper() == 'AUTO':
-            A = 1.0 / abs(complex(m1, m2))  # scale to gammaV if 'AUTO'
+        if A is None:
+            A = 1.0 / abs(complex(m1, m2))  # scale to S_V
         elif not isinstance(A, (int, float)):
-            raise ValueError("A should be a float or 'AUTO'")
+            raise ValueError("A should be a float or None")
 
         aqratio = complex(m1, m2)
         b = complex(m1 + m3, m2 + m4)
@@ -983,7 +1001,10 @@ class Qfactor(object):
         return diam, S_V, S_T
 
 
-    def Q_unloaded(self, opt_res: OptimizedResult, A: float) -> float:
+    def Q_unloaded(self, 
+                   opt_res: OptimizedResult, 
+                   A: Union[None, float] = None
+                   ) -> float:
         """Unloaded Q-factor Q0.
 
         The value of the unloaded Q-factor Q0 cannot be measured directly but
@@ -991,12 +1012,12 @@ class Qfactor(object):
 
         Parameters
         ----------
-        opt_res : OptimizedResult
-            solution produced by the `fit` method.
-        A : float or str
-            Scaling factor as defined in MAT 58 [#]_.
-            For `reflection` resonance type, can be set as 'AUTO'
-            to use the magnitude of the fitted detuned reflection coefficient (gamma_V)
+        opt_res : :class:`~skrf.qfactor.OptimizedResult` 
+            solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
+        A : float or None
+            Scaling factor as defined in MAT 58 [MAT58]_.
+            For `reflection` resonance type, can be set as None (default)
+            to use the magnitude of the fitted detuned reflection coefficient S_V
 
         Returns
         -------
@@ -1005,38 +1026,38 @@ class Qfactor(object):
 
         References
         ----------
-        .. [#] "Q-factor Measurement by using a Vector Network Analyser",
+        .. [MAT58] "Q-factor Measurement by using a Vector Network Analyser",
             A. P. Gregory, National Physical Laboratory Report MAT 58 (2021)
             https://eprintspublications.npl.co.uk/9304/
-        .. [#] "The Physics of Superconducting Microwave Resonators"
+        .. [Gao] "The Physics of Superconducting Microwave Resonators"
             Gao, Jiansong (2008), doi:10.7907/RAT0-VM75.
             https://resolver.caltech.edu/CaltechETD:etd-06092008-235549
 
         """
-        if isinstance(A, str) and A.upper() == "AUTO":
+        if A is None:
             auto_flag = True
         elif isinstance(A, (int, float)):
             auto_flag = False
         else:
-            raise ValueError("Illegal Scaling factor; should be a float or 'AUTO'")
+            raise ValueError("Illegal Scaling factor; should be a float or  None")
 
         m1, m2, m3, m4, m5 = [opt_res[key] for key in ['m1', 'm2', 'm3', 'm4', 'Q_L']]
         FL = opt_res['f_L']
 
         if self.res_type == "transmission":
             if auto_flag:
-                raise ValueError('Scaling factor must not be "Auto" for transmission case')
+                raise ValueError('Scaling factor must be defined for transmission case')
             cal_diam, cal_gamma_V, cal_gamma_T = self.Q_circle(opt_res, A)
             if cal_diam == 1.0:
-                raise ZeroDivisionError("Divide by zero forestalled in calculation of Qo")
+                raise ZeroDivisionError("Divide by zero forestalled in calculation of Q0")
             Q0 = m5 / (1.0 - cal_diam)
 
         elif self.res_type == "reflection":
             if auto_flag:
                 if self.verbose:
-                    print('A is "Auto": using fitted data to estimate it')
-                A = 1.0 / abs(complex(m1, m2))  # scale to gammaV if 'AUTO'
-            cal_diam, cal_gamma_V, cal_gamma_T = self.Q_circle(opt_res, A)
+                    print('A is undefined: using fitted data to estimate it')
+                A = 1.0 / abs(complex(m1, m2))  # scale to S_V if A not defined
+            cal_diam, S_V, S_T = self.Q_circle(opt_res, A)
             cal_touching_circle_diam = 2.0
             if self.verbose:
                 print(f"Q-circle diam = {cal_diam}, touching_circle_diam = {cal_touching_circle_diam}")
@@ -1045,11 +1066,11 @@ class Qfactor(object):
 
         elif self.res_type == "reflection_method2":
             if auto_flag:
-                raise ValueError('Scaling factor must not be "Auto" for Method 2')
-            cal_diam, cal_gamma_V, cal_gamma_T = self.Q_circle(opt_res, A)
-            gv = abs(cal_gamma_V)
+                raise ValueError('Scaling factor must be defined for Method 2')
+            cal_diam, S_V, S_T = self.Q_circle(opt_res, A)
+            gv = abs(S_V)
             gv2 = gv * gv
-            mb = abs(cal_gamma_T)
+            mb = abs(S_T)
             cosphi = (gv2 + cal_diam * cal_diam - mb * mb) / (
                 2.0 * gv * cal_diam
             )  # Cosine rule
@@ -1063,11 +1084,11 @@ class Qfactor(object):
             if auto_flag:
                 if self.verbose:
                     print(
-                        'Notch/absorption Qo calculation: Supplied A is "Auto", so using fitted data to estimate it'
+                        'Notch/absorption Qo calculation: using fitted data to estimate scaling factor'
                     )
-                # scale to gammaV if 'AUTO'
+                # scale to S_V if A is undefined
                 A = 1.0 / abs(complex(m1, m2))
-            cal_diam, cal_gamma_V, cal_gamma_T = self.Q_circle(opt_res, A)
+            cal_diam, S_V, S_T = self.Q_circle(opt_res, A)
             if self.verbose:
                 print(f"Q-circle diam = {cal_diam}")
             if cal_diam == 1.0:
@@ -1085,15 +1106,16 @@ class Qfactor(object):
     @staticmethod
     def s_model(f, f_L, Q_L, d, delta, s_D):
         """
-        S-parameter response of an equivalent circuit model resonator. 
+        S-parameter response of an equivalent circuit model resonator.
 
         Characterisation of resonances from measurements in the frequency-domain
         can be achieved through equivalent-circuit models. For high Q-factor resonator
         (in practice, :math:`Q_L` > 100), the S-parameter response of a resonator
-        measured in a calibrated system with reference planes at the resonator couplings is [#]_:
-        
+        measured in a calibrated system with reference planes at
+        the resonator couplings is [MAT58]_:
+
         .. math::
-        
+
             S = S_D + d \frac{e^{−2j\delta}}{1 + j Q_L t}
 
         Parameters
@@ -1110,7 +1132,7 @@ class Qfactor(object):
             constant that defines the orientation of the Q-Circle
         s_D : complex
             Detuned S-parameter, measured far above of below the resonant freq
-            
+
         Returns
         -------
         s : np.ndarray
@@ -1118,7 +1140,7 @@ class Qfactor(object):
 
         References
         ----------
-        .. [#] "Q-factor Measurement by using a Vector Network Analyser",
+        .. [MAT58] "Q-factor Measurement by using a Vector Network Analyser",
             A. P. Gregory, National Physical Laboratory Report MAT 58 (2021)
             https://eprintspublications.npl.co.uk/9304/,
             section 1.1, eqn. (1).

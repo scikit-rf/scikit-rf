@@ -140,8 +140,8 @@ class QfactorTests(unittest.TestCase):
         assert_allclose(Q.Q_L, res.Q_L)
         assert_allclose(Q.f_L, res.f_L)
         
-        Q0 = Q.Q_unloaded(res, A="AUTO")
-        cal_diam, cal_gamma_V, cal_gamma_T = Q.Q_circle(res, A="AUTO")
+        Q0 = Q.Q_unloaded(res)
+        cal_diam, cal_gamma_V, cal_gamma_T = Q.Q_circle(res)
 
         assert_allclose(Q0, 1846782, rtol=1/100)
         assert_allclose(cal_diam, 0.970, rtol=1/100)
@@ -177,8 +177,8 @@ class QfactorTests(unittest.TestCase):
         # Unloaded Q-factor and some other useful quantities.
         print("Q-factor of unloaded one-port resonator by Method 1:")
         print("Assumes attenuating uncalibrated line")
-        Q0 = Q.Q_unloaded(res, A="AUTO")
-        cal_diam, cal_gamma_V, cal_gamma_T = Q.Q_circle(res, A="AUTO")
+        Q0 = Q.Q_unloaded(res)
+        cal_diam, cal_gamma_V, cal_gamma_T = Q.Q_circle(res)
         
         # Test against expected solutions
         assert_almost_equal(Q0, 862, decimal=0)
