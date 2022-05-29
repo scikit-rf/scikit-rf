@@ -131,9 +131,12 @@ References
 """
 import numpy as np
 from .network import Network, a2s
+from .frequency import Frequency
 from .media import media
 from .constants import INF, NumberLike
 from typing import List, TYPE_CHECKING, Tuple, Union
+from warnings import warn
+
 
 # Available resonance types
 RESONANCE_TYPES = ['reflection', 'reflection_method2',
@@ -248,16 +251,30 @@ class Qfactor(object):
         self.s = ntwk.s
         self.f = ntwk.f
         self.f_scaled = ntwk.frequency.f_scaled
+        self.f_multiplier = ntwk.frequency.multiplier
+        self.f_unit = ntwk.frequency.unit
         self._ntwk = ntwk
         self.res_type = res_type
         self.tol = 1.0e-5
         self.verbose = verbose
+        self.fitted = False
 
         self.N = len(self.f)
 
         # step 1: initial_fit. Deduce premilinary values for Q_L and f_L.
         self._initial_fit(self.N, Q_L0, f_L0)
 
+    def __str__(self) -> str:
+        if self.fitted:
+            status = f"fitted: f_L={float(self.f_L/self.f_multiplier):.3f}{self.f_unit}, Q_L={float(self.Q_L):.3f}"
+        else:
+            status = 'not fitted'
+        
+        _str = f"Q-factor of Network {self._ntwk.name}. ({status})"
+        return _str
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
     def fit(self,
             method: str = "NLQFIT6",
@@ -291,7 +308,7 @@ class Qfactor(object):
 
         Returns
         -------
-        result : :class:`~skrf.qfactor.OptimizedResult` 
+        result : :class:`~skrf.qfactor.OptimizedResult`
 
         References
         ----------
@@ -309,7 +326,7 @@ class Qfactor(object):
         if loop_plan[0] == "w":
             raise ValueError("First item in loop_plan must not be w (weight calculation)")
         if loop_plan[-1] != "c":
-            raise Warning("Warning: Last item in loop_plan is not c so convergence not tested!")
+            warn("Last item in loop_plan is not c so convergence not tested!")
 
         self.method = method
         self.loop_plan = loop_plan
@@ -325,12 +342,16 @@ class Qfactor(object):
         # overwrite results in self
         self.Q_L = result.Q_L
         self.f_L = result.f_L
+        self.fitted = True
+        
+        if result.Q_L < 0:
+            warn('Negative Q_L, fitting may be inaccurate.')
 
         return result
 
     @staticmethod
-    def angular_weights(f: NumberLike, 
-                        f_L: NumberLike, 
+    def angular_weights(f: NumberLike,
+                        f_L: NumberLike,
                         Q_L: NumberLike
                         ) -> NumberLike:
         r"""Diagonal elements W_i of weights matrix.
@@ -944,8 +965,8 @@ class Qfactor(object):
             'method': self.method,
             })
 
-    def Q_circle(self, 
-                 opt_res: OptimizedResult, 
+    def Q_circle(self,
+                 opt_res: OptimizedResult,
                  A: Union[None, float] = None
                  ) -> list:
         """Q-circle diameter.
@@ -958,7 +979,7 @@ class Qfactor(object):
 
         Parameters
         ----------
-        opt_res : :class:`~skrf.qfactor.OptimizedResult` 
+        opt_res : :class:`~skrf.qfactor.OptimizedResult`
             solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
         A : None of float.
             Scaling factor as defined in MAT 58 [MAT58]_.
@@ -1001,8 +1022,8 @@ class Qfactor(object):
         return diam, S_V, S_T
 
 
-    def Q_unloaded(self, 
-                   opt_res: OptimizedResult, 
+    def Q_unloaded(self,
+                   opt_res: OptimizedResult,
                    A: Union[None, float] = None
                    ) -> float:
         """Unloaded Q-factor Q0.
@@ -1012,7 +1033,7 @@ class Qfactor(object):
 
         Parameters
         ----------
-        opt_res : :class:`~skrf.qfactor.OptimizedResult` 
+        opt_res : :class:`~skrf.qfactor.OptimizedResult`
             solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
         A : float or None
             Scaling factor as defined in MAT 58 [MAT58]_.
@@ -1103,35 +1124,27 @@ class Qfactor(object):
 
         return Q0
 
-    @staticmethod
-    def s_model(f, f_L, Q_L, d, delta, s_D):
+    def fitted_s(self,
+                 opt_res: OptimizedResult,
+                 f: Union[None, np.ndarray] = None
+                 ) -> np.ndarray:
         """
         S-parameter response of an equivalent circuit model resonator.
-
-        Characterisation of resonances from measurements in the frequency-domain
-        can be achieved through equivalent-circuit models. For high Q-factor resonator
-        (in practice, :math:`Q_L` > 100), the S-parameter response of a resonator
-        measured in a calibrated system with reference planes at
-        the resonator couplings is [MAT58]_:
+        
+        The approximate solution and estimated is obtained from [MAT58]_:
 
         .. math::
 
-            S = S_D + d \frac{e^{−2j\delta}}{1 + j Q_L t}
+            S = m1 + j m2 + \frac{m3 + j m4}{1 + j Q_L t}
+
+        where the m coefficients come from the fitting step.
 
         Parameters
         ----------
-        f : np.ndarray
-            frequency array [Hz]
-        f_L : float
-            Resonant frequency [Hz]
-        Q_L : float
-            Loaded Q-factor
-        d : float
-            Diameter of the Q-Circle
-        delta : float
-            constant that defines the orientation of the Q-Circle
-        s_D : complex
-            Detuned S-parameter, measured far above of below the resonant freq
+       opt_res : :class:`~skrf.qfactor.OptimizedResult`
+           solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.        
+        f : None or np.ndarray
+            frequency array [Hz]. If None (default), use the self frequencies.
 
         Returns
         -------
@@ -1147,8 +1160,90 @@ class Qfactor(object):
 
         """
         # fractional offet frequency
-        t = f/f_L - f_L/f
-
-        s = s_D + d/(1 + 1j*Q_L*t)*np.exp(-1j*2*delta)
-
+        if f is None:
+            f = self.f
+        t = f/opt_res.f_L - opt_res.f_L/f
+        y = 1/(1 + 1j*opt_res.Q_L*t)
+        s = opt_res.m1 +1j*opt_res.m2 + (opt_res.m3 + 1j*opt_res.m4) * y
         return s
+
+    def fitted_network(self,
+                       opt_res: OptimizedResult,
+                       frequency: Union[None, Frequency] = None,
+                       A: Union[None, float] = None
+                       ) -> Network:
+        """ Fitted Network.
+
+        Return the Network corresponding to the fitted response for the given
+        Frequency.
+
+
+        Parameters
+        ----------
+        opt_res : :class:`~skrf.qfactor.OptimizedResult`
+            solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.        
+        frequency : None or :class:`~skrf.frequency.Frequency`
+            Frequency for the fitted Network. If None (default), use the same
+            Frequency than the one used to create the QFactor.
+        A : None of float.
+            Scaling factor as defined in MAT 58 [MAT58]_.
+            If None, use magnitude of the fitted detuned reflection coefficient 
+            S_V for `reflection` or 1.0 for `transmission` resonance type.
+
+        Returns
+        -------
+        ntwk : :class:`~skrf.network.Network`
+            Fitted Network for the passed Frequency.
+
+        """
+        if frequency is None:
+            frequency = self._ntwk.frequency
+        if A is None and self.res_type == 'transmission':
+            A = 1
+
+        diam, S_V, S_T = self.Q_circle(opt_res, A=A)
+            
+        
+        if self.res_type in ['reflection', 'reflection_method2']:
+            s = self.fitted_s(opt_res, f=frequency.f)
+        else:
+            s = self.fitted_s(opt_res, f=frequency.f)
+
+        ntwk = Network(s=s, frequency=frequency)
+        return ntwk
+
+    @property
+    def BW(self) -> float:
+        r"""3-dB Bandwidth.
+        
+        Return the half-power fractional bandwidth (aka 3-dB bandwidth)
+        defined as:
+        
+        .. math::
+            
+            BW = \frac{f_L}{Q_L}
+
+
+        Returns
+        -------
+        float
+            3-dB Bandwidth in Hz.
+
+        """
+        return self.f_L/self.Q_L
+    
+    @property
+    def BW_scaled(self) -> float:
+        r"""3-dB Bandwidth scaled to the frequency unit.
+
+        Returns
+        -------
+        float
+            3-dB Bandwidth in the frequency unit.
+
+        See Also
+        --------
+        BW : 3-dB Bandwidth in Hz.
+
+        """
+        return self.BW/self.f_multiplier
