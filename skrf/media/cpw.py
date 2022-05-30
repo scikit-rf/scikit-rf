@@ -47,7 +47,7 @@ class CPW(Media):
     
     * Quasi-static characteristic impedance and effective permittivity model
       use [GhNa84]_ and [GhNa83]_. The models are corrected to account for
-      strip thickness using a first-order approach described in [GGBB96].
+      strip thickness using a first-order approach described in [Cohn60].
     
     * Frequency dispersion of impedance and effective permittivity model use
       [FGVM91]_ and [GMDK97]_.
@@ -128,8 +128,9 @@ class CPW(Media):
     .. [GhNa83] G. Ghione and C. Naldi. "Parameters of Coplanar Waveguides with
         Lower Common Planes", Electronics Letters,
         Vol. 19, No. 18, September 1, 1983, pp. 734-735.
-    .. [GGBB96] K. C. Gupta, R. Garg, I. J. Bahl, and P. Bhartia, Microstrip
-       Lines and Slotlines, 2nd ed.Artech House, Inc., 1996.
+    .. [Cohn60] S. B. Cohn, "Thickness Corrections for Capacitive obstacles and
+       Strip Conductors", IRE Trans. on Microwave Theory and Techniques,
+       Vol. MTT-8, November 1960, pp. 638-644.
     .. [FGVM91] M. Y. Frankel, S. Gupta, J. A. Valdmanis, and G. A. Mourou,
        "Terahertz Attenuation and Dispersion Characteristics of Coplanar
        Transmission Lines" IEEE Trans. on Microwave Theory and Techniques,
@@ -298,7 +299,7 @@ class CPW(Media):
         for the given coplanar waveguide line and substrate properties.
         Model from [#]_ with air backside and [#]_ with metal backside.
         The models are corrected to account for
-        strip thickness using a first-order approach described in [GGBB96]_.
+        strip thickness using a first-order approach described in [Cohn60]_.
         
         References
         ----------
@@ -308,8 +309,9 @@ class CPW(Media):
         .. [#] G. Ghione and C. Naldi. "Parameters of Coplanar Waveguides with
             Lower Common Planes", Electronics Letters,
             Vol. 19, No. 18, September 1, 1983, pp. 734-735.
-        .. [GGBB96] K. C. Gupta, R. Garg, I. J. Bahl, and P. Bhartia, Microstrip
-           Lines and Slotlines, 2nd ed.Artech House, Inc., 1996.
+        .. [Cohn60] S. B. Cohn, "Thickness Corrections for Capacitive obstacles and
+           Strip Conductors", IRE Trans. on Microwave Theory and Techniques,
+           Vol. MTT-8, November 1960, pp. 638-644.
             
         Returns
         -------
