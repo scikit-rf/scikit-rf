@@ -3809,7 +3809,6 @@ class LRRM(EightTerm):
         self.match_port = 0
 
         self.match_fit = match_fit
-        self.lc_fit_iters = kwargs.get('lc_fit_iters', 5)
         if self.match_port not in [0, 1]:
             raise ValueError('match_port must be either 0 or 1.')
 
@@ -3865,8 +3864,8 @@ class LRRM(EightTerm):
         c1 = -tl[:, 1, 0] - tl[:, 0, 1]
         c0 = wl[:, 1, 1] * xyz2
 
-        z0 = -c1 + npy.sqrt(c1**2 - 4*c2*c0)/(2*c2)
-        z1 = -c1 - npy.sqrt(c1**2 - 4*c2*c0)/(2*c2)
+        z0 = (-c1 + npy.sqrt(c1**2 - 4*c2*c0))/(2*c2)
+        z1 = (-c1 - npy.sqrt(c1**2 - 4*c2*c0))/(2*c2)
         zs = npy.stack([z0, z1])
 
         # wm and solve_gr equations are different if match is on the second port.
@@ -4011,54 +4010,46 @@ class LRRM(EightTerm):
             match_c = -1/(npy.choose(root, wL)*w)
             c0 = npy.sum(w * match_c) / npy.sum(w)
 
-            for iteration in range(self.lc_fit_iters):
+            def min_lc(x):
+                l, c = x
+                gm = calc_gm(R, l, c)
+                # Calculate open reflection coefficient from gm
+                gr2 = -(f0 - e0 * gm) / (f1 - e1 * gm)
+
                 # Fit capacitance to gr2
                 cgr2 = (1j*(-1 + gr2))/((1 + gr2)*w*self.z0)
-                # Weight lower frequencies as there the match is probably more
-                # accurate. Slight offset to avoid problems if frequency is
-                # very low.
-                cw = w[-1]/(w + 2*npy.pi*100e6)
-                cgr2 = npy.sum(cw * cgr2.real) / npy.sum(cw)
+                cgr2 = npy.mean(cgr2.real)
                 gr2_c = (1j + cgr2*w*self.z0)/(1j - cgr2*w*self.z0)
 
-                def min_lc(x):
-                    l, c = x
-                    gm = calc_gm(R, l, c)
-                    e = gr2_c + (f0 - e0 * gm) / (f1 - e1 * gm)
-                    r = list(e.real)
-                    r.extend(e.imag)
-                    return npy.array(r)
+                # Error between fitted open capacitor and calculated open
+                # capacitance
+                e = gr2_c + (f0 - e0 * gm) / (f1 - e1 * gm)
+                r = list(e.real)
+                r.extend(e.imag)
+                return npy.array(r)
 
-                if iteration == 0 or l0 < 0 or c0 < 0:
-                    # Biggest capacitance value assuming given gm matching.
-                    worst_match = 0.4 # -7 dB
-                    max_init_c = (2*worst_match)/(npy.sqrt(1 - worst_match**2)*w[-1]*self.z0)
+            # Biggest capacitance value assuming given gm matching.
+            worst_match = 0.4 # -7 dB
+            max_init_c = (2*worst_match)/(npy.sqrt(1 - worst_match**2)*w[-1]*self.z0)
 
-                    # Initial reactance guess, try to find positive L, C.
-                    init_x = npy.linspace(0, 20, 10)
-                    init_l = init_x / (w[-1])
-                    init_c = npy.linspace(0, max_init_c, 10)
-                    init_lc = [(l, c) for l in init_l for c in init_c]
-                    if l0 > 0:
-                        init_lc.append((l0, 0))
-                    if c0 > 0:
-                        init_lc.append((0, c0))
-                    init_guess = [npy.mean(min_lc(x)**2) for x in init_lc]
-                    best_guess = init_lc[npy.argmin(init_guess)]
+            # Initial reactance guess, try to find positive L, C.
+            init_x = npy.linspace(0, 20, 10)
+            init_l = init_x / (w[-1])
+            init_c = npy.linspace(0, max_init_c, 10)
+            init_lc = [(l, c) for l in init_l for c in init_c]
+            if l0 > 0:
+                init_lc.append((l0, 0))
+            if c0 > 0:
+                init_lc.append((0, c0))
+            init_guess = [npy.mean(min_lc(x)**2) for x in init_lc]
+            best_guess = init_lc[npy.argmin(init_guess)]
 
-                    l0 = best_guess[0]
-                    c0 = best_guess[1]
-                else:
-                    init_lc.append((match_l[0], match_c[0]))
+            l0 = best_guess[0]
+            c0 = best_guess[1]
 
-                sol = least_squares(min_lc, [l0, c0], method='lm')
-                match_l = sol.x[0] * npy.ones(match_l.shape)
-                match_c = sol.x[1] * npy.ones(match_l.shape)
-
-                # Recalculate gr2 if not the last iteration.
-                if iteration != self.lc_fit_iters - 1:
-                    gamma_m = calc_gm(R, match_l, match_c)
-                    gr1, gr2, x, y, z, _ = solve_gr(gamma_m)
+            sol = least_squares(min_lc, [l0, c0], method='lm')
+            match_l = sol.x[0] * npy.ones(match_l.shape)
+            match_c = sol.x[1] * npy.ones(match_l.shape)
 
         elif self.match_fit == 'none' or self.match_fit is None:
             pass
@@ -4070,11 +4061,12 @@ class LRRM(EightTerm):
         # Solve finally reflects and calibration parameters using the solved match
         gr1, gr2, x, y, z, _ = solve_gr(gamma_m)
 
+        freq = self.measured[0].frequency
         self._solved_l = match_l
         self._solved_c = match_c
-        self._solved_m = Network(s=gamma_m, frequency=self.measured[0].frequency)
-        self._solved_r1 = Network(s=gr1, frequency=self.measured[0].frequency)
-        self._solved_r2 = Network(s=gr2, frequency=self.measured[0].frequency)
+        self._solved_m = Network(s=gamma_m, frequency=freq, name='LRRM match')
+        self._solved_r1 = Network(s=gr1, frequency=freq, name='LRRM reflect 1')
+        self._solved_r2 = Network(s=gr2, frequency=freq, name='LRRM reflect 2')
 
         # Calculate error matrices
         t10 = npy.transpose(npy.array([[ones, x], [gr1, gr2*x]]), [2,0,1]) \
