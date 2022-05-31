@@ -52,19 +52,26 @@ class QfactorTests(unittest.TestCase):
     def test_constructor(self):
         """
         Test the Qfactor() constructor.
-        """
+        """       
+        # constructor tests
+        _Q1 = rf.Qfactor(self.ntwk_1port, res_type='reflection')
+        _Q2 = rf.Qfactor(self.ntwk_1port, res_type='reflection', Q_L0=3)
+        _Q3 = rf.Qfactor(self.ntwk_1port, res_type='reflection', f_L0=85e9)
+        _Q3 = rf.Qfactor(self.ntwk_1port, res_type='reflection', Q_L0=3, f_L0=85e9)
+
+    def test_exceptions(self):
+        "Test the raised exceptions."
+        
         # Passing a 2-port Network raises a ValueError
         self.assertRaises(ValueError, rf.Qfactor, self.ntwk_2port, 'reflection')
         
         # Uncorrect resonance type raises a ValueError
         self.assertRaises(ValueError, rf.Qfactor, self.ntwk_1port, 'dummy')
         
-        # constructor tests
-        _Q1 = rf.Qfactor(self.ntwk_1port, res_type='reflection')
-        _Q2 = rf.Qfactor(self.ntwk_1port, res_type='reflection', Q_L0=3)
-        _Q3 = rf.Qfactor(self.ntwk_1port, res_type='reflection', f_L0=85e9)
-        _Q3 = rf.Qfactor(self.ntwk_1port, res_type='reflection', Q_L0=3, f_L0=85e9)
-        
+        # Asking for fitted S-param and Network without prior fit raises a ValueError
+        _Q = rf.Qfactor(self.ntwk_1port, res_type='reflection')
+        self.assertRaises(ValueError, _Q.fitted_s)
+        self.assertRaises(ValueError, _Q.fitted_network)        
 
     def test_NLQFIT6(self):
         """
@@ -255,7 +262,7 @@ class QfactorTests(unittest.TestCase):
         scaling_factor_A = 1 / 0.949  # 1/|S21_thru|
         Q0 = Q.Q_unloaded(res, scaling_factor_A)
         cal_diam, cal_gamma_V, cal_gamma_T = Q.Q_circle(res, scaling_factor_A)
-        
+
         # Test against expected solutions
         assert_allclose(Q.f_L, 9.76015571e9)
         assert_almost_equal(Q.Q_L, 4760.04, decimal=0)
@@ -268,16 +275,54 @@ class QfactorTests(unittest.TestCase):
         """Test unloaded Q factor method."""
         Q = rf.Qfactor(self.ntwk_1port, res_type='reflection')
         res = Q.fit()
+        self.assertRaises(ValueError, Q.Q_unloaded, A='dummy')
+        self.assertRaises(ValueError, Q.Q_unloaded, A=1j)
         self.assertRaises(ValueError, Q.Q_unloaded, res, A='dummy')
         self.assertRaises(ValueError, Q.Q_unloaded, res, A=1j)
+
+        # passing of not the fitted results after fit should be the same
+        self.assertEqual(Q.Q_unloaded(res), Q.Q_unloaded())
+        # passing a different solution should lead to different values
+        res2 = Q.fit(method="NLQFIT7")
+        self.assertNotEqual(Q.Q_unloaded(res), Q.Q_unloaded(res2))
 
     def test_Q_circle(self):
         """Test Q-circle method."""
         Q = rf.Qfactor(self.ntwk_1port, res_type='reflection')
-        res = Q.fit()
+        res = Q.fit(method="NLQFIT6")
+        self.assertRaises(ValueError, Q.Q_circle, A='dummy')
+        self.assertRaises(ValueError, Q.Q_circle, A=1j)   
         self.assertRaises(ValueError, Q.Q_circle, res, A='dummy')
         self.assertRaises(ValueError, Q.Q_circle, res, A=1j)        
         
+        # passing of not the fitted results after fit should be the same
+        self.assertEqual(Q.Q_circle(res), Q.Q_circle())
+        # passing a different solution should lead to different values
+        res2 = Q.fit(method="NLQFIT7")
+        self.assertNotEqual(Q.Q_circle(res), Q.Q_circle(res2))
+
+    def test_f_L(self):
+        "Test resonant frequency values."
+        # expected values
+        f_L_expected = self.ntwk_2port.f[np.argmin(self.ntwk_2port.s11.s_mag)]
+        f_L_expected_scaled = f_L_expected/self.ntwk_2port.frequency.multiplier
+        # fitted values
+        Q = rf.Qfactor(self.ntwk_2port.s11, res_type='reflection')
+        # before the fit, warnings should be raised
+        with self.assertWarns(Warning):
+            # the resonance frequency corresponds to min value before fitting
+            assert_almost_equal(Q.f_L, f_L_expected)
+            assert_almost_equal(Q.f_L_scaled, f_L_expected_scaled)
+        # NB: after the fit this should not be the case anymore (slight deviation)      
+            
+    def test_BW(self):
+        "Test bandwidth values."
+        Q = rf.Qfactor(self.ntwk_2port.s11, res_type='reflection')
+        # before the fit, warnings should be raised
+        with self.assertWarns(Warning):
+            BW = Q.BW
+            BW_scaled = Q.BW_scaled
+    
 
 if __name__ == "__main__":
     # Launch all tests

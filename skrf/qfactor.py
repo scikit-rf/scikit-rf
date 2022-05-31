@@ -1,14 +1,9 @@
 r"""
 Qfactor (:mod:`skrf.qfactor`)
 ========================================
-Module for fitting Quality (Q) factor(s) from S-parameters.
+Module for estimating the Quality (Q) factor(s) from S-parameters.
 
-Measurements of the Quality factor (Q-factor) is straightforward,
-but to obtain uncertainty below 1%
-(which is considered to be low for Q-factor measurement) requires attention
-to several aspects of the experimental procedure.
-
-This class implements methods for determining loaded and unloaded Q-factor
+This class implements methods for determining *loaded* and *unloaded* Q-factor
 from frequency-domain S-parameters, that can be applied to measurements
 of transmission or reflection.
 
@@ -28,7 +23,7 @@ Q-factor
 
 Loaded and Unloaded Q-factor
 ----------------------------
-The Quality factor (Q-factor) of a resonator is defined by:
+The Quality factor (Q-factor) of a resonator is defined by [Pozar]_:
 
 .. math::
 
@@ -37,9 +32,9 @@ The Quality factor (Q-factor) of a resonator is defined by:
 
 where :math:`U` is the average energy stored by the resonator and
 :math:`\Delta U` is the decrease in the average stored energy per wave cycle
-at the resonant frequency [Pozar]_.
+at the resonant frequency, that is, the average power loss.
 
-The loaded Q-factor, :math:`Q_L`, describes energy dissipation within the
+The *loaded* Q-factor, :math:`Q_L`, describes energy dissipation within the
 entire resonant system comprising of the resonator itself and the instrument
 used for observing resonances. The term loading refers to the effect that the
 external circuit has on measured quantities.
@@ -49,9 +44,9 @@ but not the couplings of microwave resonators. Loading by an instrument that
 has 50 Ohm impedance, such as a VNA, causes :math:`Q_L` to be reduced substantially
 if strong coupling is used.
 
-For most applications the quantity that is desired is the unloaded Q-factor :math:`Q_0`,
+For many applications the quantity that is desired is the *unloaded* Q-factor :math:`Q_0`,
 which is determined by energy dissipation associated with the resonator only
-and therefore gives the best description of the resonant mode.
+and therefore gives the best description of the resonant mode(s).
 
 In other words, :math:`Q_0` is the Q-factor of the uncoupled resonator. The value of
 :math:`Q_0` can be estimated from measurements of :math:`Q_L`, but cannot be measured directly.
@@ -60,39 +55,43 @@ in the metal conductors (walls and loop couplings), and from dielectric loss
 in any insulating materials that may be present.
 
 
-
-Energy dissipation in the external circuit is characterised by the external Q-factor,
+Relationships between Loaded and Unloaded Q-factors
+---------------------------------------------------
+Energy dissipation in the external circuit is characterised by the *external* Q-factor,
 :math:`Q_e`. For both series and parallel equivalent circuits, the three
-Q-factors are related by:
+Q-factors are related by [Pozar]_:
 
 .. math::
 
     \frac{1}{Q_L} = \frac{1}{Q_0} + \frac{1}{Q_e}
 
 
-The coupling factor :math:`\beta` is defined by:
+The coupling factor :math:`\beta` is defined for each port as:
 
 .. math::
 
     \beta = \frac{Q_0}{Q_e}
 
-where a a coupling factor is defined for each port.
 
-The diameter of the Q-circle displayed by the VNA provides a visual
-indication of whether the coupling is strong or weak. :math:`Q_0` can be
-calculated from the measured :math:`Q_L` when coupling factor(s) are known.
-Hence, coupling factors can be calculated from calibrated Q-circle diameters.
+Finding the unloaded Q from measured S-parameters consists in first finding
+the coupling factor, then measure :math:`Q_L` from the 3 dB bandwidth
+and using the relationships above.
 
-This class offers methods to
-determine the uncoupled (unloaded) Q-factor :math:`Q_0` from advanced fittings.
+Fortunately, scikit-rf implements methods for determining loaded and
+unloaded Q-factors from frequency-domain S-parameters. The implemented methods 
+are described in detail in [MAT58]_, and can be applied to measurements of 
+transmission or reflection.
 
 Q-factor determination through equivalent-circuit models
 --------------------------------------------------------
 Characterisation of resonances from measurements in the frequency-domain
-can be achieved through equivalent-circuit models. A high Q-factor resonator
-(in practice, :math:`Q_L` > 100), the S-parameter response of a resonator
-measured in a calibrated system with reference planes at the resonator
-couplings is [MAT58]_, [Galwas]_ :
+can be achieved through equivalent-circuit models [MAT58]_. Resonators can be
+modelled as an ideal RLC resonator connected to an external circuit, 
+incorporating elements to account for a lossy coupling and coupling reactances.
+
+For high Q-factor resonators (in practice, :math:`Q_L` > 100), the S-parameter 
+response of a resonator measured in a calibrated system with reference planes 
+at the resonator couplings can be expressed like [MAT58]_, [Galwas]_ :
 
 .. math::
 
@@ -105,6 +104,7 @@ real-valued constant that defines the orientation of the Q-circle, and :math:`t`
 is the fractional offset frequency given by:
 
 .. math::
+
     t = \frac{f}{f_L} - \frac{f_L}{f}  \approx 2 \frac{f − f_L}{f_L}
 
 
@@ -112,9 +112,8 @@ where :math:`f_L` is the loaded resonant frequency and :math:`f` the frequency
 at which S is measured. This equation can be applied to measurements
 by transmission (S21 or S12) or reflection (S11 or S22).
 
-The S-parameters are fitted against the above equations to deduce the resonant
-frequency, loaded and unloaded Q-factors and other properties.
-
+The S-parameters are fitted against a modified expression of the above equations
+to deduce the resonant frequency, loaded and unloaded Q-factors and other properties.
 
 References
 ----------
@@ -130,11 +129,10 @@ References
 
 """
 import numpy as np
-from .network import Network, a2s
+from .network import Network
 from .frequency import Frequency
-from .media import media
-from .constants import INF, NumberLike
-from typing import List, TYPE_CHECKING, Tuple, Union
+from .constants import NumberLike
+from typing import Union
 from warnings import warn
 
 
@@ -143,9 +141,8 @@ RESONANCE_TYPES = ['reflection', 'reflection_method2',
                    'transmission', 'absorption']
 
 
-
 class OptimizedResult(dict):
-    """ Represent Q-factor optimisation result.
+    """Represent Q-factor optimisation result.
 
     Attributes
     ----------
@@ -200,7 +197,11 @@ class OptimizedResult(dict):
 
 class Qfactor(object):
     """
-    Q-factor calculation.
+    Q-factor calculation class.
+
+    This class implements methods for determining *loaded* and *unloaded* Q-factor
+    from frequency-domain S-parameters, that can be applied to measurements
+    of transmission or reflection.
 
     Parameters
     ----------
@@ -258,6 +259,7 @@ class Qfactor(object):
         self.tol = 1.0e-5
         self.verbose = verbose
         self.fitted = False
+        self.opt_res = None
 
         self.N = len(self.f)
 
@@ -269,7 +271,7 @@ class Qfactor(object):
             status = f"fitted: f_L={float(self.f_L/self.f_multiplier):.3f}{self.f_unit}, Q_L={float(self.Q_L):.3f}"
         else:
             status = 'not fitted'
-        
+
         _str = f"Q-factor of Network {self._ntwk.name}. ({status})"
         return _str
 
@@ -343,7 +345,8 @@ class Qfactor(object):
         self.Q_L = result.Q_L
         self.f_L = result.f_L
         self.fitted = True
-        
+        self.opt_res = result
+
         if result.Q_L < 0:
             warn('Negative Q_L, fitting may be inaccurate.')
 
@@ -966,24 +969,22 @@ class Qfactor(object):
             })
 
     def Q_circle(self,
-                 opt_res: OptimizedResult,
+                 opt_res: Union[None, OptimizedResult] = None,
                  A: Union[None, float] = None
                  ) -> list:
-        """Q-circle diameter.
+        r"""Q-circle diameter.
 
-        Defined as [MAT58]_:
-
-        .. math::
-
-            d = A|b + j a/Q_L|
+        The diameter of the Q-circle (as displayed in a VNA) provides a visual
+        indication of whether the coupling is strong or weak [MAT58]_.
 
         Parameters
         ----------
-        opt_res : :class:`~skrf.qfactor.OptimizedResult`
-            solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
-        A : None of float.
+       opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
+           Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
+           If None, uses the solution previously calculated, if performed. 
+        A : None of float. Default is None.
             Scaling factor as defined in MAT 58 [MAT58]_.
-            For `reflection` resonance type, can be set as None (default)
+            For `reflection` resonance type, can be set as None
             to use the magnitude of the fitted detuned reflection coefficient S_V
 
         Returns
@@ -1003,6 +1004,13 @@ class Qfactor(object):
             section 2.5, eqn. (31).
 
         """
+        # if no solution passed, use internal solution if exist
+        if opt_res is None: 
+            if self.opt_res is None:
+                raise ValueError('No solution found or passed.')
+            else:
+                opt_res = self.opt_res
+
         # m1 : real part of cal_gamma_V
         # m2 : imag part of cal_gamma_V
         # m3 : real part of b + j a/Q_L
@@ -1023,21 +1031,22 @@ class Qfactor(object):
 
 
     def Q_unloaded(self,
-                   opt_res: OptimizedResult,
+                   opt_res: Union[None, OptimizedResult] = None,
                    A: Union[None, float] = None
                    ) -> float:
         """Unloaded Q-factor Q0.
 
         The value of the unloaded Q-factor Q0 cannot be measured directly but
-        can be estimated from the measurement of the loaded Q-factor Q_L.
+        can be estimated from the measurement of the loaded Q-factor Q_L [MAT58]_ .
 
         Parameters
         ----------
-        opt_res : :class:`~skrf.qfactor.OptimizedResult`
-            solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
-        A : float or None
+       opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
+           Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
+           If None, uses the solution previously calculated, if performed. 
+        A : float or None. Default is None.
             Scaling factor as defined in MAT 58 [MAT58]_.
-            For `reflection` resonance type, can be set as None (default)
+            For `reflection` resonance type, can be set as None
             to use the magnitude of the fitted detuned reflection coefficient S_V
 
         Returns
@@ -1050,11 +1059,15 @@ class Qfactor(object):
         .. [MAT58] "Q-factor Measurement by using a Vector Network Analyser",
             A. P. Gregory, National Physical Laboratory Report MAT 58 (2021)
             https://eprintspublications.npl.co.uk/9304/
-        .. [Gao] "The Physics of Superconducting Microwave Resonators"
-            Gao, Jiansong (2008), doi:10.7907/RAT0-VM75.
-            https://resolver.caltech.edu/CaltechETD:etd-06092008-235549
 
         """
+        # if no solution passed, use internal solution if exist
+        if opt_res is None: 
+            if self.opt_res is None:
+                raise ValueError('No solution found or passed.')
+            else:
+                opt_res = self.opt_res
+
         if A is None:
             auto_flag = True
         elif isinstance(A, (int, float)):
@@ -1125,26 +1138,31 @@ class Qfactor(object):
         return Q0
 
     def fitted_s(self,
-                 opt_res: OptimizedResult,
+                 opt_res: Union[None, OptimizedResult] = None,
                  f: Union[None, np.ndarray] = None
                  ) -> np.ndarray:
-        """
-        S-parameter response of an equivalent circuit model resonator.
-        
+        r"""S-parameter response of an equivalent circuit model resonator.
+
         The approximate solution and estimated is obtained from [MAT58]_:
 
         .. math::
 
-            S = m1 + j m2 + \frac{m3 + j m4}{1 + j Q_L t}
+            S = m_1 + j m_2 + \frac{m_3 + j m_4}{1 + j Q_L t}
 
-        where the m coefficients come from the fitting step.
+        where the m coefficients come from the fitted solution and
+
+        .. math::
+
+            t = \frac{f}{f_L} - \frac{f_L}{f}  \approx 2 \frac{f − f_L}{f_L}
+
 
         Parameters
         ----------
-       opt_res : :class:`~skrf.qfactor.OptimizedResult`
-           solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.        
-        f : None or np.ndarray
-            frequency array [Hz]. If None (default), use the self frequencies.
+       opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
+           Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
+           If None, uses the solution previously calculated, if performed. 
+        f : None or np.ndarray. Default is None.
+            frequency array [Hz]. If None, use the self frequencies.
 
         Returns
         -------
@@ -1156,39 +1174,42 @@ class Qfactor(object):
         .. [MAT58] "Q-factor Measurement by using a Vector Network Analyser",
             A. P. Gregory, National Physical Laboratory Report MAT 58 (2021)
             https://eprintspublications.npl.co.uk/9304/,
-            section 1.1, eqn. (1).
+            section 2.2, eqn. (21).
 
         """
-        # fractional offet frequency
+        # if no solution passed, use internal solution if exist
+        if opt_res is None: 
+            if self.opt_res is None:
+                raise ValueError('No solution found or passed.')
+            else:
+                opt_res = self.opt_res
+
         if f is None:
             f = self.f
+
+        # fractional offset frequency
         t = f/opt_res.f_L - opt_res.f_L/f
+
         y = 1/(1 + 1j*opt_res.Q_L*t)
         s = opt_res.m1 +1j*opt_res.m2 + (opt_res.m3 + 1j*opt_res.m4) * y
         return s
 
     def fitted_network(self,
-                       opt_res: OptimizedResult,
+                       opt_res: Union[None, OptimizedResult] = None,
                        frequency: Union[None, Frequency] = None,
-                       A: Union[None, float] = None
                        ) -> Network:
-        """ Fitted Network.
+        """Fitted Network.
 
-        Return the Network corresponding to the fitted response for the given
-        Frequency.
-
+        Return the Network corresponding to the fitted response.
 
         Parameters
         ----------
-        opt_res : :class:`~skrf.qfactor.OptimizedResult`
-            solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.        
-        frequency : None or :class:`~skrf.frequency.Frequency`
-            Frequency for the fitted Network. If None (default), use the same
+        opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
+            Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
+            If None, uses the solution previously calculated, if performed. 
+        frequency : None or :class:`~skrf.frequency.Frequency`. Default is None.
+            Frequency for the fitted Network. If None, use the same
             Frequency than the one used to create the QFactor.
-        A : None of float.
-            Scaling factor as defined in MAT 58 [MAT58]_.
-            If None, use magnitude of the fitted detuned reflection coefficient 
-            S_V for `reflection` or 1.0 for `transmission` resonance type.
 
         Returns
         -------
@@ -1196,31 +1217,49 @@ class Qfactor(object):
             Fitted Network for the passed Frequency.
 
         """
+        # if no solution passed, use internal solution if exist
+        if opt_res is None: 
+            if self.opt_res is None:
+                raise ValueError('No solution found or passed.')
+            else:
+                opt_res = self.opt_res
+
         if frequency is None:
             frequency = self._ntwk.frequency
-        if A is None and self.res_type == 'transmission':
-            A = 1
 
-        diam, S_V, S_T = self.Q_circle(opt_res, A=A)
-            
-        
-        if self.res_type in ['reflection', 'reflection_method2']:
-            s = self.fitted_s(opt_res, f=frequency.f)
-        else:
-            s = self.fitted_s(opt_res, f=frequency.f)
+        s = self.fitted_s(opt_res, f=frequency.f)
 
         ntwk = Network(s=s, frequency=frequency)
         return ntwk
 
     @property
+    def f_L_scaled(self) -> float:
+        """
+        Resonant Frequency in the frequency unit..
+
+        Returns
+        -------
+        float
+            Resonant frequency in the frequency unit.
+            
+        See Also
+        --------
+        f_L : Resonant Frequency in Hz.
+
+        """
+        if not self.fitted:
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
+        return self.f_L/self.f_multiplier
+
+    @property
     def BW(self) -> float:
         r"""3-dB Bandwidth.
-        
+
         Return the half-power fractional bandwidth (aka 3-dB bandwidth)
         defined as:
-        
+
         .. math::
-            
+
             BW = \frac{f_L}{Q_L}
 
 
@@ -1229,9 +1268,15 @@ class Qfactor(object):
         float
             3-dB Bandwidth in Hz.
 
+        See Also
+        --------
+        BW_scaled : 3-dB Bandwidth scaled to the frequency unit.
+
         """
+        if not self.fitted:
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
         return self.f_L/self.Q_L
-    
+
     @property
     def BW_scaled(self) -> float:
         r"""3-dB Bandwidth scaled to the frequency unit.
@@ -1246,4 +1291,6 @@ class Qfactor(object):
         BW : 3-dB Bandwidth in Hz.
 
         """
+        if not self.fitted:
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
         return self.BW/self.f_multiplier
