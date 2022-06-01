@@ -3741,7 +3741,10 @@ class LRRM(EightTerm):
 
     If match_fit == 'lc' then the second reflect is assumed to be a lossless
     capacitor. Measurements should then include low frequencies for accurate
-    open capacitance determination.
+    open capacitance determination. 'lc_fit_c_freq' argument can be given to
+    specify the maximum frequency in Hz where open looks like an ideal
+    capacitor, above this frequency open is assumed to only have known absolute
+    value similar to 'l' fit.  Default is infinity.
 
     Implementation is based on papers [1]_ and [2]_. 'lc' match_fit based on
     [3]_.
@@ -3771,7 +3774,7 @@ class LRRM(EightTerm):
             z0=50, match_fit='l', *args, **kwargs):
         """
         LRRM Initializer.
-        
+
         Parameters
         ----------
         measured : list of :class:`~skrf.network.Network` objects
@@ -3793,20 +3796,25 @@ class LRRM(EightTerm):
 
         z0 : int
             Calibration reference impedance. Only affects the solved match
-            inductance. Has no effect to the solved calibration parameters.
+            inductance. Has no effect on the solved calibration parameters.
 
         match_fit : string or None
-            Match model. Valid choices are 'l' to fit a single inductance over
-            all frequencies. 'none' to not fit inductance and let it be
-            different for each frequency. 'lc' to fit match with series
-            inductor and parallel capacitor and assuming that the second
-            reflect is open with unknown capacitance. Fitting is recommended as
-            individual inductance estimates can be noisy.
+            Match model. Valid choices are:
+            'l' to fit a single inductance over all frequencies.
+            'lc' to fit match with series inductor and parallel capacitor and
+            assuming that the second reflect is open with unknown capacitance.
+            'none' to not fit inductance and let it be different for each
+            frequency point.
+
+            'l' or 'lc' is recommended for normal use.
         """
 
         self.z0 = z0
         # TODO: Second port not implemented.
         self.match_port = 0
+        # Maximum frequency to assume that open behaves like ideal capacitor when
+        # using match_fit == 'lc'.
+        self.lc_fit_c_freq = kwargs.get('lc_fit_c_freq', float('inf'))
 
         self.match_fit = match_fit
         if self.match_port not in [0, 1]:
@@ -3934,16 +3942,16 @@ class LRRM(EightTerm):
             return (self.z0 + R*(-1 + 1j*c*w*self.z0) - l*w*(1j + c*w*self.z0)) \
                  /(-self.z0 + R*(-1 - 1j*c*w*self.z0) + l*w*(-1j + c*w*self.z0))
 
-        # Solve first reflects assuming gm = 0
-        gr1, gr2, x, y, z, efs = solve_gr(zeros)
+        # First, solve reflects assuming ideal gm
+        gmi = self.ideals[3].s[:, self.match_port, self.match_port]
+        gr1, gr2, x, y, z, efs = solve_gr(gmi)
 
         # Next solve for match inductance
-        gmi = self.ideals[3].s[:, self.match_port, self.match_port]
         R = (self.z0 * (1 + gmi)/(1 - gmi)).real # Resistance of the match
 
         a = 2*gr2.real + npy.abs(gr2)**2 - \
             2*(gr2*thru_s21**(-2)).real - npy.abs(gr2*thru_s21**(-2))**2
-        b = 4*R*(gr2.imag + (gr2*thru_s21**(-2)).imag )
+        b = 4*R*(gr2.imag + (gr2*thru_s21**(-2)).imag)
         c = 4*R**2*(npy.abs(gr2)**2 - 1)
 
         det = b**2 - 4*a*c
@@ -3974,9 +3982,9 @@ class LRRM(EightTerm):
         f1 = efs[2, :]
         f0 = efs[3, :]
 
-        if self.match_fit == 'l':
+        gr2_abs = npy.abs(self.ideals[2].s[:,0,0])
 
-            gr2_abs = npy.abs(self.ideals[2].s[:,0,0])
+        if self.match_fit == 'l':
 
             def min_l(l):
                 """
@@ -4010,6 +4018,9 @@ class LRRM(EightTerm):
             match_c = -1/(npy.choose(root, wL)*w)
             c0 = npy.sum(w * match_c) / npy.sum(w)
 
+            cw = w < 2 * npy.pi * self.lc_fit_c_freq
+            cw = cw.astype(float)
+
             def min_lc(x):
                 l, c = x
                 gm = calc_gm(R, l, c)
@@ -4023,10 +4034,10 @@ class LRRM(EightTerm):
 
                 # Error between fitted open capacitor and calculated open
                 # capacitance
-                e = gr2_c + (f0 - e0 * gm) / (f1 - e1 * gm)
-                r = list(e.real)
-                r.extend(e.imag)
-                return npy.array(r)
+                e_c = gr2_c + (f0 - e0 * gm) / (f1 - e1 * gm)
+                e_abs = gr2_abs - npy.abs((f0 - e0 * gm) / (f1 - e1 * gm))
+                e = e_c * cw + (1 - cw) * e_abs
+                return npy.abs(e)
 
             # Biggest capacitance value assuming given gm matching.
             worst_match = 0.4 # -7 dB
