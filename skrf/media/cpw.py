@@ -170,6 +170,7 @@ class CPW(Media):
         self.diel = diel
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
         self.has_metal_backside = has_metal_backside
+        self.compatibility_mode = compatibility_mode
         
         # variation ofeffective permittivity with frequency
         # Not implemented on QUCS but implemented on ADS.
@@ -198,9 +199,12 @@ class CPW(Media):
                 self.zl_eff, self.ep_reff, real(self.ep_r_f), w, s, h,
                 self.frequency.f)
         else:
-            self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
-                self.zl_eff, self.ep_reff, self.ep_r_f, w, s, h,
-                self.frequency.f)
+            # ads does not use frequency for cpw/cpwg
+            self._z_characteristic = self.zl_eff
+            self.ep_reff_f = self.ep_reff
+            #self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
+            #    self.zl_eff, self.ep_reff, self.ep_r_f, w, s, h,
+            #    self.frequency.f)
         
         # analyse losses of line
         self.alpha_conductor, self.alpha_dielectric = self.analyse_loss(
@@ -322,13 +326,11 @@ class CPW(Media):
         k1 = w / (w + s + s)
         kk1 = ellipk(k1)
         kpk1 = ellipk(sqrt(1. - k1 * k1))
-        #q1 = kk1 / kpk1
         q1 = ellipa(k1)
         
         # backside is metal
         if(has_metal_backside):
             k3 = tanh((pi / 4.) * (w / h)) / tanh((pi / 4.) * (w + s + s) / h)
-            # q3 = ellipk(k3) / ellipk(sqrt(1. - k3 * k3))
             q3 = ellipa(k3)
             qz = 1. / (q1 + q3)
             e = 1. + q3 * qz * (ep_r - 1.)
@@ -337,17 +339,19 @@ class CPW(Media):
         # backside is air
         else:
             k2 = sinh((pi / 4.) * (w / h)) / sinh((pi / 4.) * (w + s + s) / h)
-            # q2 = ellipk(k2) / ellipk(sqrt(1. - k2 * k2))
             q2 = ellipa(k2)
             e = 1. + (ep_r - 1.) / 2. * q2 / q1
             zr = Z0 / 4. / q1
             
         # effect of strip thickness
         if t is not None and t > 0.:
-            d = (t * 1.25 / pi) * (1. + log(4. * pi * w / t))
+            if self.compatibility_mode == 'qucs':
+                d = (t * 1.25 / pi) * (1. + log(4. * pi * w / t))  
+            else:
+                d = (t / 2./ pi / ep_r[0]) * (1. + log(8. * pi * s / t))
+
             # ke = (w + d) / (w + d + 2 * (s - d))
             ke = k1 + (1. - k1 * k1) * d / 2. / s
-            # qe = ellipk(ke) / ellipk(sqrt(1. - ke * ke))
             qe = ellipa(ke)
             
             # backside is metal
@@ -359,7 +363,8 @@ class CPW(Media):
                 zr = Z0 / 4. / qe
                 
             # modifies ep_re
-            e = e - (0.7 * (e - 1.) * t / s) / (q1 + (0.7 * t / s))
+            if self.compatibility_mode == 'qucs':
+                e = e - (0.7 * (e - 1.) * t / s) / (q1 + (0.7 * t / s))
             
         
         ep_reff = e
