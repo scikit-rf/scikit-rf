@@ -9,7 +9,8 @@ cpw (:mod:`skrf.media.cpw`)
    CPW
 
 """
-from numpy import sqrt, log, zeros, ones, any, tanh, sinh, exp, real, imag
+from numpy import sqrt, log, zeros, ones, any, tanh, sinh, exp, real, imag, \
+        vectorize
 from scipy.constants import  epsilon_0, mu_0, c, pi
 from scipy.special import ellipk
 from .media import Media
@@ -198,13 +199,15 @@ class CPW(Media):
             self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
                 self.zl_eff, self.ep_reff, real(self.ep_r_f), w, s, h,
                 self.frequency.f)
-        else:
-            # ads does not use frequency for cpw/cpwg
+        # ads does not use frequency dispersion for cpw/cpwg (so sad)
+        elif compatibility_mode == 'ads':
             self._z_characteristic = self.zl_eff
             self.ep_reff_f = self.ep_reff
-            #self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
-            #    self.zl_eff, self.ep_reff, self.ep_r_f, w, s, h,
-            #    self.frequency.f)
+        # use frequency dispersion and complex permittivity by default
+        else:
+            self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
+                self.zl_eff, self.ep_reff, self.ep_r_f, w, s, h,
+                self.frequency.f)
         
         # analyse losses of line
         self.alpha_conductor, self.alpha_dielectric = self.analyse_loss(
@@ -345,27 +348,31 @@ class CPW(Media):
             
         # effect of strip thickness
         if t is not None and t > 0.:
-            if self.compatibility_mode == 'qucs':
-                d = (t * 1.25 / pi) * (1. + log(4. * pi * w / t))  
+            if self.compatibility_mode == 'ads':
+                # fixme : this is probably wrong (but used only in ads mode)
+                d = t * 1.25 / ep_r * (1. + log(8. * pi * s / t))
+                #d = t * 1.25 / pi * (1. + log(2. * h / t)) 
             else:
-                d = (t / 2./ pi / ep_r[0]) * (1. + log(8. * pi * s / t))
-
-            # ke = (w + d) / (w + d + 2 * (s - d))
+                d = (t * 1.25 / pi) * (1. + log(4. * pi * w / t)) 
+                #d = t * 1.25 / pi * (1. + log(2. * h / t))
+            #ke = (w + d) / (w + d + 2 * (s - d))
             ke = k1 + (1. - k1 * k1) * d / 2. / s
-            qe = ellipa(ke)
+            vectorized_ellipa = vectorize(ellipa)
+            qe = vectorized_ellipa(ke)
             
             # backside is metal
             if(has_metal_backside):
-                qz = 1. / (qe + q3)
-                zr = Z0 / 2. * qz
+                if self.compatibility_mode == 'ads':
+                    zr = Z0 / 4. / qe
+                else:
+                    qz = 1. / (qe + q3)
+                    zr = Z0 / 2. * qz
             # backside is air
             else:
                 zr = Z0 / 4. / qe
-                
-            # modifies ep_re
-            if self.compatibility_mode == 'qucs':
-                e = e - (0.7 * (e - 1.) * t / s) / (q1 + (0.7 * t / s))
             
+            # modifies ep_re
+            e = e - (0.7 * (e - 1.) * t / s) / (q1 + (0.7 * t / s))
         
         ep_reff = e
         zl_eff = zr / sqrt(ep_reff)
