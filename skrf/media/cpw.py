@@ -173,7 +173,7 @@ class CPW(Media):
         self.has_metal_backside = has_metal_backside
         self.compatibility_mode = compatibility_mode
         
-        # variation ofeffective permittivity with frequency
+        # variation of effective permittivity with frequency
         # Not implemented on QUCS but implemented on ADS.
         # 'frequencyinvariant' will give a constant complex value whith a real
         # part compatible with qucs and an imaginary part due to tand
@@ -306,19 +306,22 @@ class CPW(Media):
         for the given coplanar waveguide line and substrate properties.
         Model from [#]_ with air backside and [#]_ with metal backside.
         The models are corrected to account for
-        strip thickness using a first-order approach described in [Cohn60]_.
+        strip thickness using a first-order approach described in [GGBB96]_.
+        ADS simulator report to use a custom correction based on [Cohn60]_.
         
         References
         ----------
-        .. [#] G. Ghione and C. Naldi. "Analytical Formulas for Coplanar Lines
+        .. [GhNa84] G. Ghione and C. Naldi. "Analytical Formulas for Coplanar Lines
            in Hybrid and Monolithic MICs", Electronics Letters,
            Vol. 20, No. 4, February 16, 1984, pp. 179-181.
-        .. [#] G. Ghione and C. Naldi. "Parameters of Coplanar Waveguides with
+        .. [GhNa83] G. Ghione and C. Naldi. "Parameters of Coplanar Waveguides with
             Lower Common Planes", Electronics Letters,
             Vol. 19, No. 18, September 1, 1983, pp. 734-735.
         .. [Cohn60] S. B. Cohn, "Thickness Corrections for Capacitive obstacles and
            Strip Conductors", IRE Trans. on Microwave Theory and Techniques,
            Vol. MTT-8, November 1960, pp. 638-644.
+        .. [GGBB96] K. C. Gupta, R. Garg, I. J. Bahl, and P. Bhartia, Microstrip
+           Lines and Slotlines, 2nd ed.Artech House, Inc., 1996.
             
         Returns
         -------
@@ -326,55 +329,64 @@ class CPW(Media):
         ep_reff : :class:`numpy.ndarray`
         """
         Z0 = sqrt(mu_0 / epsilon_0)
-        k1 = w / (w + s + s)
+        a = w
+        b = w + 2 * s
+        # equation (3a) from [GhNa84] or (6) from [GhNa83]
+        k1 = a / b
         kk1 = ellipk(k1)
         kpk1 = ellipk(sqrt(1. - k1 * k1))
         q1 = ellipa(k1)
         
         # backside is metal
         if(has_metal_backside):
-            k3 = tanh((pi / 4.) * (w / h)) / tanh((pi / 4.) * (w + s + s) / h)
+            # equation (4) from [GhNa83]
+            # in qucs the 2 coefficient turn to 4 and fit better with ads
+            k3 = tanh(pi * a / 4. / h) / tanh(pi * b / 4. / h)
             q3 = ellipa(k3)
             qz = 1. / (q1 + q3)
+            # equation (7) from [GhNa83]
+            # equivalent to e = (q1 + ep_r * q3) / (q1 + q3) and paper
             e = 1. + q3 * qz * (ep_r - 1.)
+            # equation (8) from [GhNa83] with later division by sqrt(e)
             zr = Z0 / 2. * qz
             
         # backside is air
         else:
-            k2 = sinh((pi / 4.) * (w / h)) / sinh((pi / 4.) * (w + s + s) / h)
+            # equation (3b) from [GhNa84]
+            k2 = sinh((pi / 4.) * a / h) / sinh((pi / 4.) * b / h)
             q2 = ellipa(k2)
+            # equation (2) from [GhNa84]
             e = 1. + (ep_r - 1.) / 2. * q2 / q1
+            # equation (1) from [GhNa84] with later division by sqrt(e)
             zr = Z0 / 4. / q1
             
         # effect of strip thickness
         if t is not None and t > 0.:
-            if self.compatibility_mode == 'ads':
-                # fixme : this is probably wrong (but used only in ads mode)
-                d = t * 1.25 / ep_r * (1. + log(8. * pi * s / t))
-                #d = t * 1.25 / pi * (1. + log(2. * h / t)) 
-            else:
-                d = (t * 1.25 / pi) * (1. + log(4. * pi * w / t)) 
-                #d = t * 1.25 / pi * (1. + log(2. * h / t))
-            #ke = (w + d) / (w + d + 2 * (s - d))
+            # equation (7.98) from [GGBB96]
+            d = 1.25 * t / pi * (1. + log(4. * pi * w / t)) 
+            # equation between (7.99) and (7.100) from [GGBB96]
+            #approx. equal to ke = (w + d) / (w + d + 2 * (s - d))
             ke = k1 + (1. - k1 * k1) * d / 2. / s
             vectorized_ellipa = vectorize(ellipa)
             qe = vectorized_ellipa(ke)
             
             # backside is metal
             if(has_metal_backside):
-                if self.compatibility_mode == 'ads':
-                    zr = Z0 / 4. / qe
-                else:
-                    qz = 1. / (qe + q3)
-                    zr = Z0 / 2. * qz
+                # equation (8) from [GhNa83] with k1 -> ke
+                # but keep q3 unchanged ? (not in papers)
+                qz = 1. / (qe + q3)
+                zr = Z0 / 2. * qz
             # backside is air
             else:
+                # equation (7.99) from [GGBB96] with later division by sqrt(e)
                 zr = Z0 / 4. / qe
             
             # modifies ep_re
+            # equation (7.100) of [GGBB96]
             e = e - (0.7 * (e - 1.) * t / s) / (q1 + (0.7 * t / s))
         
         ep_reff = e
+        # final division of (1) from [GhNa84] and (8) from [GhNa83]
         zl_eff = zr / sqrt(ep_reff)
         
         return zl_eff, ep_reff, k1, kk1, kpk1
