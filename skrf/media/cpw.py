@@ -10,7 +10,7 @@ cpw (:mod:`skrf.media.cpw`)
 
 """
 from numpy import sqrt, log, zeros, ones, any, tanh, sinh, exp, real, imag, \
-        vectorize
+        vectorize, where
 from scipy.constants import  epsilon_0, mu_0, c, pi
 from scipy.special import ellipk
 from .media import Media
@@ -331,11 +331,26 @@ class CPW(Media):
         Z0 = sqrt(mu_0 / epsilon_0)
         a = w
         b = w + 2 * s
+        
+         # a priori effect of strip thickness (non qucs)
+        if self.compatibility_mode != 'qucs' and t is not None and t > 0.:
+            # empirical first order approximation of thickness correction
+            #» based on equation (7.98) from [GGBB96]
+            if(has_metal_backside):
+                d = 1.55 * t / pi * (1. + log(8. * pi * s / t))
+            else:
+                d = 1.55 * t / pi * (1. + log(pi * s / t / 2.))
+            at = a + d
+            bt = b - d
+        else:
+            at = a
+            bt = b
         # equation (3a) from [GhNa84] or (6) from [GhNa83]
-        k1 = a / b
+        k1 = at / bt
         kk1 = ellipk(k1)
         kpk1 = ellipk(sqrt(1. - k1 * k1))
-        q1 = ellipa(k1)
+        vectorized_ellipa = vectorize(ellipa)
+        q1 = vectorized_ellipa(k1)
         
         # backside is metal
         if(has_metal_backside):
@@ -360,14 +375,13 @@ class CPW(Media):
             # equation (1) from [GhNa84] with later division by sqrt(e)
             zr = Z0 / 4. / q1
             
-        # effect of strip thickness
-        if t is not None and t > 0.:
+        # a posteriori effect of strip thickness (qucs)
+        if self.compatibility_mode == 'qucs' and t is not None and t > 0.:
             # equation (7.98) from [GGBB96]
             d = 1.25 * t / pi * (1. + log(4. * pi * w / t)) 
             # equation between (7.99) and (7.100) from [GGBB96]
             #approx. equal to ke = (w + d) / (w + d + 2 * (s - d))
             ke = k1 + (1. - k1 * k1) * d / 2. / s
-            vectorized_ellipa = vectorize(ellipa)
             qe = vectorized_ellipa(ke)
             
             # backside is metal
