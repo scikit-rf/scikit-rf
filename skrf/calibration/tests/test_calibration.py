@@ -1231,7 +1231,9 @@ class LRRMTest(EightTermTest):
         o_i = wg.load(1, nports=1, name='open')
         s_i = wg.short(nports=1, name='short')
         m_i = wg.load(0.1, nports=1, name='load')
-        thru = wg.line(d=50, unit='um', name='thru')
+        thru = wg.line(d=50, z0=75, unit='um', name='thru', embed=True)
+        # Make sure calibration works with non-symmetric thru
+        thru.s[:,1,1] += 0.02 + 0.05j
 
         # Actual reflects with parasitics
         s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
