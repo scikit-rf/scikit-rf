@@ -9,13 +9,12 @@ cpw (:mod:`skrf.media.cpw`)
    CPW
 
 """
-from numpy import sqrt, log, zeros, ones, any, tanh, sinh, exp, real, imag, \
-        vectorize, where
+from numpy import sqrt, log, zeros, any, tanh, sinh, exp, real, imag
 from scipy.constants import  epsilon_0, mu_0, c, pi
 from scipy.special import ellipk
 from .media import Media
 from ..tlineFunctions import surface_resistivity, skin_depth
-from ..constants import INF, NumberLike
+from ..constants import NumberLike
 from typing import Union, TYPE_CHECKING
 import warnings
 
@@ -48,7 +47,10 @@ class CPW(Media):
     
     * Quasi-static characteristic impedance and effective permittivity model
       use [GhNa84]_ and [GhNa83]_. The models are corrected to account for
-      strip thickness using a first-order approach described in [Cohn60].
+      strip thickness using a first-order approach described in [GGBB96].
+      Comparison shows that ADS simulator use another thickness correction
+      method that is according to ADS doc based on [Cohn60]. This second method
+      is not implemented in skrf.
     
     * Frequency dispersion of impedance and effective permittivity model use
       [FGVM91]_ and [GMDK97]_.
@@ -132,6 +134,8 @@ class CPW(Media):
     .. [Cohn60] S. B. Cohn, "Thickness Corrections for Capacitive obstacles and
        Strip Conductors", IRE Trans. on Microwave Theory and Techniques,
        Vol. MTT-8, November 1960, pp. 638-644.
+    .. [GGBB96] K. C. Gupta, R. Garg, I. J. Bahl, and P. Bhartia, Microstrip
+       Lines and Slotlines, 2nd ed.Artech House, Inc., 1996.
     .. [FGVM91] M. Y. Frankel, S. Gupta, J. A. Valdmanis, and G. A. Mourou,
        "Terahertz Attenuation and Dispersion Characteristics of Coplanar
        Transmission Lines" IEEE Trans. on Microwave Theory and Techniques,
@@ -308,6 +312,7 @@ class CPW(Media):
         The models are corrected to account for
         strip thickness using a first-order approach described in [GGBB96]_.
         ADS simulator report to use a custom correction based on [Cohn60]_.
+        This second method is not implemented in skrf.
         
         References
         ----------
@@ -330,27 +335,13 @@ class CPW(Media):
         """
         Z0 = sqrt(mu_0 / epsilon_0)
         a = w
-        b = w + 2 * s
+        b = w + 2. * s
         
-         # a priori effect of strip thickness (non qucs)
-        if self.compatibility_mode != 'qucs' and t is not None and t > 0.:
-            # empirical first order approximation of thickness correction
-            #» based on equation (7.98) from [GGBB96]
-            if(has_metal_backside):
-                d = 1.55 * t / pi * (1. + log(8. * pi * s / t))
-            else:
-                d = 1.55 * t / pi * (1. + log(pi * s / t / 2.))
-            at = a + d
-            bt = b - d
-        else:
-            at = a
-            bt = b
         # equation (3a) from [GhNa84] or (6) from [GhNa83]
-        k1 = at / bt
+        k1 = a / b
         kk1 = ellipk(k1)
         kpk1 = ellipk(sqrt(1. - k1 * k1))
-        vectorized_ellipa = vectorize(ellipa)
-        q1 = vectorized_ellipa(k1)
+        q1 = ellipa(k1)
         
         # backside is metal
         if(has_metal_backside):
@@ -375,14 +366,14 @@ class CPW(Media):
             # equation (1) from [GhNa84] with later division by sqrt(e)
             zr = Z0 / 4. / q1
             
-        # a posteriori effect of strip thickness (qucs)
-        if self.compatibility_mode == 'qucs' and t is not None and t > 0.:
+        # a posteriori effect of strip thickness
+        if t is not None and t > 0.:
             # equation (7.98) from [GGBB96]
             d = 1.25 * t / pi * (1. + log(4. * pi * w / t)) 
             # equation between (7.99) and (7.100) from [GGBB96]
             #approx. equal to ke = (w + d) / (w + d + 2 * (s - d))
             ke = k1 + (1. - k1 * k1) * d / 2. / s
-            qe = vectorized_ellipa(ke)
+            qe = ellipa(ke)
             
             # backside is metal
             if(has_metal_backside):

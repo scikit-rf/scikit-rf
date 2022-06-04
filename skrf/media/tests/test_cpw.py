@@ -43,28 +43,37 @@ class CPWTestCase(unittest.TestCase):
             {'has_metal_backside': True, 'w': 1.6e-3, 's': 0.3e-3, 't': 35e-6,
              'h': 1.55e-3, 'color': 'b',
              'n': rf.Network(os.path.join(self.data_dir_qucs,
-             'cpw,w=1.6mm,s=0.3mm,l=25mm,backside=metal.s2p'))},
+             'cpw,t=35um,w=1.6mm,s=0.3mm,l=25mm,backside=metal.s2p'))},
             {'has_metal_backside': False, 'w': 3.0e-3, 's': 0.3e-3, 't': 35e-6,
              'h': 1.55e-3, 'color': 'g',
              'n': rf.Network(os.path.join(self.data_dir_qucs,
-             'cpw,w=3mm,s=0.3mm,l=25mm,backside=air.s2p'))},
+             'cpw,t=35um,w=3mm,s=0.3mm,l=25mm,backside=air.s2p'))},
             {'has_metal_backside': False, 'w': 3.0e-3, 's': 0.3e-3, 't': 0,
-             'h': 100e-3, 'color': 'r',
-             'n': rf.Network(os.path.join(self.data_dir_qucs,
-             'cpw,t=0,h=100mm,w=3mm,s=0.3mm,l=25mm,backside=air.s2p'))},
+              'h': 100e-3, 'color': 'r',
+              'n': rf.Network(os.path.join(self.data_dir_qucs,
+              'cpw,t=0,h=100mm,w=3mm,s=0.3mm,l=25mm,backside=air.s2p'))},
             ]
         
         self.ref_ads = [
             {'has_metal_backside': False, 'w': 3.0e-3, 's': 0.3e-3, 't': 0.,
-             'h': 1.55e-3, 'color': 'C0',
-             'n': rf.Network(os.path.join(self.data_dir_ads,
-                           'cpw,t=0um.s2p'))},
+              'h': 1.55e-3, 'color': 'C0',
+              'n': rf.Network(os.path.join(self.data_dir_ads,
+                            'cpw,t=0um.s2p'))},
+            {'has_metal_backside': True, 'w': 1.6e-3, 's': 0.3e-3, 't': 0.,
+              'h': 1.55e-3, 'color': 'C1',
+              'n': rf.Network(os.path.join(self.data_dir_ads,
+                            'cpwg,t=0um.s2p'))},
+            ]
+        
+        # these would fail comparison because ADS use another strip thickness
+        # correction. Kept for reference in case of future work.
+        self.ref_ads_failling = [
             {'has_metal_backside': False, 'w': 3.0e-3, 's': 0.3e-3, 't': 35e-6,
-             'h': 1.55e-3, 'color': 'C1',
+             'h': 1.55e-3, 'color': 'C2',
              'n': rf.Network(os.path.join(self.data_dir_ads,
                            'cpw,t=35um.s2p'))},
             {'has_metal_backside': True, 'w': 1.6e-3, 's': 0.3e-3, 't': 35e-6,
-             'h': 1.55e-3, 'color': 'C2',
+             'h': 1.55e-3, 'color': 'C3',
              'n': rf.Network(os.path.join(self.data_dir_ads,
                            'cpwg,t=35um.s2p'))},
             ]
@@ -158,7 +167,7 @@ class CPWTestCase(unittest.TestCase):
             fig2, axs2 = plt.subplots(2, 2, figsize = (8,6))
             fig2.suptitle('ads/skrf residuals')
             
-        limit_db = 0.3
+        limit_db = 0.1
         limit_deg = 1.
         
         for ref in self.ref_ads:
@@ -178,14 +187,12 @@ class CPWTestCase(unittest.TestCase):
             res.name = 'residuals ' + ref['n'].name
 
             # test if within limit lines
-            # fixme: still a small deviation of S11 at low frequency
-            #        limit line multiplied by 10 for S11 as for now
-            #self.assertTrue(
-            #    npy.all(npy.abs(res.s_db[:, 0, 0]) < limit_db))
-            #self.assertTrue(
-            #    npy.all(npy.abs(res.s_deg[:, 0, 0]) < 15. * limit_deg))
-            #self.assertTrue(npy.all(npy.abs(res.s_db[:, 1, 0]) < limit_db))
-            #self.assertTrue(npy.all(npy.abs(res.s_deg[:, 1, 0]) < limit_deg))
+            self.assertTrue(
+                npy.all(npy.abs(res.s_db[:, 0, 0]) < 10. * limit_db))
+            self.assertTrue(
+                npy.all(npy.abs(res.s_deg[:, 0, 0]) < 10. * limit_deg))
+            self.assertTrue(npy.all(npy.abs(res.s_db[:, 1, 0]) < limit_db))
+            self.assertTrue(npy.all(npy.abs(res.s_deg[:, 1, 0]) < limit_deg))
             
             if self.verbose:
                 line.plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'],
