@@ -1303,12 +1303,21 @@ class VectorFitting:
         return resp
 
     @check_plotting
-    def plot_s_db(self, i: int = -1, j: int = -1, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
         """
-        Plots the magnitude in dB of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the specified component of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
 
         Parameters
         ----------
+        component : str
+            The component to be plotted. Must be one of the following items:
+            `db` for magnitude in decibels,
+            `mag` for magnitude in linear scale,
+            `deg` for phase in degrees (wrapped),
+            `deg_unwrap` for phase in degrees (unwrapped/continuous),
+            `re` for real part in linear scale,
+            `im` for imaginary part in linear scale.
+
         i : int, optional
             Row index of the response. `-1` to plot all rows.
 
@@ -1332,87 +1341,126 @@ class VectorFitting:
         ------
         ValueError
             If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+            Also if `component` is not valid.
         """
 
-        if ax is None:
-            ax = mplt.gca()
+        components = ['db', 'mag', 'deg', 'deg_unwrap', 're', 'im']
+        if component.lower() in components:
+            if ax is None:
+                ax = mplt.gca()
 
-        if self.residues is None or self.poles is None:
-            raise RuntimeError('Poles and/or residues have not been fitted. Cannot plot the model response.')
+            if self.residues is None or self.poles is None:
+                raise RuntimeError('Poles and/or residues have not been fitted. Cannot plot the model response.')
 
-        n_ports = int(np.sqrt(np.shape(self.residues)[0]))
+            n_ports = int(np.sqrt(np.shape(self.residues)[0]))
 
-        if i == -1:
-            list_i = range(n_ports)
-        elif isinstance(i, int):
-            list_i = [i]
-        else:
-            list_i = i
+            if i == -1:
+                list_i = range(n_ports)
+            elif isinstance(i, int):
+                list_i = [i]
+            else:
+                list_i = i
 
-        if j == -1:
-            list_j = range(n_ports)
-        elif isinstance(j, int):
-            list_j = [j]
-        else:
-            list_j = j
+            if j == -1:
+                list_j = range(n_ports)
+            elif isinstance(j, int):
+                list_j = [j]
+            else:
+                list_j = j
 
-        if self.network is not None:
-            i_samples = 0
+            if self.network is not None:
+                # plot the original network response at each sample frequency (scatter plot)
+                i_samples = 0
+                for i in list_i:
+                    for j in list_j:
+                        if i_samples == 0:
+                            label = 'Samples'
+                        else:
+                            label = '_nolegend_'
+                        i_samples += 1
+
+                        y_vals = None
+                        if component.lower() == 'db':
+                            y_vals = 20 * np.log10(np.abs(self.network.s[:, i, j]))
+                        elif component.lower() == 'mag':
+                            y_vals = np.abs(self.network.s[:, i, j])
+                        elif component.lower() == 'deg':
+                            y_vals = np.rad2deg(np.angle(self.network.s[:, i, j]))
+                        elif component.lower() == 'deg_unwrap':
+                            y_vals = np.rad2deg(np.unwrap(np.angle(self.network.s[:, i, j])))
+                        elif component.lower() == 're':
+                            y_vals = np.real(self.network.s[:, i, j])
+                        elif component.lower() == 'im':
+                            y_vals = np.imag(self.network.s[:, i, j])
+
+                        ax.scatter(self.network.f, y_vals, color='r', label=label)
+
+                if freqs is None:
+                    # get frequency array from the network
+                    freqs = self.network.f
+
+            if freqs is None:
+                raise ValueError(
+                    'Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
+                    'frequency information.')
+
+            # plot the fitted responses
+            y_label = ''
+            i_fit = 0
             for i in list_i:
                 for j in list_j:
-                    if i_samples == 0:
-                        label = 'Samples'
+                    if i_fit == 0:
+                        label = 'Fit'
                     else:
                         label = '_nolegend_'
-                    i_samples += 1
-                    ax.scatter(self.network.f, 20 * np.log10(np.abs(self.network.s[:, i, j])), color='r', label=label)
-            if freqs is None:
-                # get frequency array from the network
-                freqs = self.network.f
+                    i_fit += 1
 
-        if freqs is None:
-            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
-                             'frequency information.')
+                    y_model = self.get_model_response(i, j, freqs)
+                    y_vals = None
+                    if component.lower() == 'db':
+                        y_vals = 20 * np.log10(np.abs(y_model))
+                        y_label = 'Magnitude (dB)'
+                    elif component.lower() == 'mag':
+                        y_vals = np.abs(y_model)
+                        y_label = 'Magnitude'
+                    elif component.lower() == 'deg':
+                        y_vals = np.rad2deg(np.angle(y_model))
+                        y_label = 'Phase (Degrees)'
+                    elif component.lower() == 'deg_unwrap':
+                        y_vals = np.rad2deg(np.unwrap(np.angle(y_model)))
+                        y_label = 'Phase (Degrees)'
+                    elif component.lower() == 're':
+                        y_vals = np.real(y_model)
+                        y_label = 'Real Part'
+                    elif component.lower() == 'im':
+                        y_vals = np.imag(y_model)
+                        y_label = 'Imaginary Part'
 
-        i_fit = 0
-        for i in list_i:
-            for j in list_j:
-                if i_fit == 0:
-                    label = 'Fit'
-                else:
-                    label = '_nolegend_'
-                i_fit += 1
-                ax.plot(freqs, 20 * np.log10(np.abs(self.get_model_response(i, j, freqs))), color='k', label=label)
+                    ax.plot(freqs, y_vals, color='k', label=label)
 
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Magnitude (dB)')
-        ax.legend(loc='best')
+            ax.set_xlabel('Frequency (Hz)')
+            ax.set_ylabel(y_label)
+            ax.legend(loc='best')
 
-        # only print title if a single response is shown
-        if i_fit == 1:
-            ax.set_title('Response i={}, j={}'.format(i, j))
+            # only print title if a single response is shown
+            if i_fit == 1:
+                ax.set_title('Response i={}, j={}'.format(i, j))
 
-        return ax
+            return ax
+        else:
+            raise ValueError('The specified component ("{}") is not valid. Must be in {}.'.format(component, components))
 
-    @check_plotting
-    def plot_s_mag(self, i: int = -1, j: int = -1, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot_s_db(self, *args, **kwargs) -> mplt.Axes:
         """
-        Plots the magnitude in linear scale of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the magnitude in dB of the scattering parameter response(s) in the fit.
 
         Parameters
         ----------
-        i : int
-            Row index of the response. `-1` to plot all rows.
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
 
-        j : int
-            Column index of the response. `-1` to plot all columns.
-
-        freqs : list of float or ndarray or None, optional
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used. This only works if :attr:`network` is not `None`.
-
-        ax : :class:`matplotlib.Axes` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
@@ -1420,91 +1468,24 @@ class VectorFitting:
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
 
-        Raises
-        ------
-        ValueError
-            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+        Notes
+        -----
+        This simply calls ``plot('db', *args, **kwargs)``.
         """
 
-        if ax is None:
-            ax = mplt.gca()
+        return self.plot('db', *args, **kwargs)
 
-        if self.residues is None or self.poles is None:
-            raise RuntimeError('Poles and/or residues have not been fitted. Cannot plot the model response.')
-
-        n_ports = int(np.sqrt(np.shape(self.residues)[0]))
-
-        if i == -1:
-            list_i = range(n_ports)
-        elif isinstance(i, int):
-            list_i = [i]
-        else:
-            list_i = i
-
-        if j == -1:
-            list_j = range(n_ports)
-        elif isinstance(j, int):
-            list_j = [j]
-        else:
-            list_j = j
-
-        if self.network is not None:
-            i_samples = 0
-            for i in list_i:
-                for j in list_j:
-                    if i_samples == 0:
-                        label = 'Samples'
-                    else:
-                        label = '_nolegend_'
-                    i_samples += 1
-                    ax.scatter(self.network.f, np.abs(self.network.s[:, i, j]), color='r', label=label)
-            if freqs is None:
-                # get frequency array from the network
-                freqs = self.network.f
-
-        if freqs is None:
-            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
-                             'frequency information.')
-
-        i_fit = 0
-        for i in list_i:
-            for j in list_j:
-                if i_fit == 0:
-                    label = 'Fit'
-                else:
-                    label = '_nolegend_'
-                i_fit += 1
-                ax.plot(freqs, np.abs(self.get_model_response(i, j, freqs)), color='k', label=label)
-
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Magnitude')
-        ax.legend(loc='best')
-
-        # only print title if a single response is shown
-        if i_fit == 1:
-            ax.set_title('Response i={}, j={}'.format(i, j))
-
-        return ax
-
-    @check_plotting
-    def plot_s_deg(self, i : int = -1, j: int = -1, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot_s_mag(self, *args, **kwargs) -> mplt.Axes:
         """
-        Plots the phase in degrees of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the magnitude in linear scale of the scattering parameter response(s) in the fit.
 
         Parameters
         ----------
-        i : int
-            Row index of the response. `-1` to plot all rows.
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
 
-        j : int
-            Column index of the response. `-1` to plot all columns.
-
-        freqs : list of float or ndarray or None, optional
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used. This only works if :attr:`network` is not `None`.
-
-        ax : :class:`matplotlib.Axes` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
@@ -1512,91 +1493,24 @@ class VectorFitting:
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
 
-        Raises
-        ------
-        ValueError
-            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+        Notes
+        -----
+        This simply calls ``plot('mag', *args, **kwargs)``.
         """
 
-        if ax is None:
-            ax = mplt.gca()
+        return self.plot('mag', *args, **kwargs)
 
-        if self.residues is None or self.poles is None:
-            raise RuntimeError('Poles and/or residues have not been fitted. Cannot plot the model response.')
-
-        n_ports = int(np.sqrt(np.shape(self.residues)[0]))
-
-        if i == -1:
-            list_i = range(n_ports)
-        elif isinstance(i, int):
-            list_i = [i]
-        else:
-            list_i = i
-
-        if j == -1:
-            list_j = range(n_ports)
-        elif isinstance(j, int):
-            list_j = [j]
-        else:
-            list_j = j
-
-        if self.network is not None:
-            i_samples = 0
-            for i in list_i:
-                for j in list_j:
-                    if i_samples == 0:
-                        label = 'Samples'
-                    else:
-                        label = '_nolegend_'
-                    i_samples += 1
-                    ax.scatter(self.network.f, np.rad2deg(np.angle(self.network.s[:, i, j])), color='r', label=label)
-            if freqs is None:
-                # get frequency array from the network
-                freqs = self.network.f
-
-        if freqs is None:
-            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
-                             'frequency information.')
-
-        i_fit = 0
-        for i in list_i:
-            for j in list_j:
-                if i_fit == 0:
-                    label = 'Fit'
-                else:
-                    label = '_nolegend_'
-                i_fit += 1
-                ax.plot(freqs, np.rad2deg(np.angle(self.get_model_response(i, j, freqs))), color='k', label=label)
-
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Phase (Degrees)')
-        ax.legend(loc='best')
-
-        # only print title if a single response is shown
-        if i_fit == 1:
-            ax.set_title('Response i={}, j={}'.format(i, j))
-
-        return ax
-
-    @check_plotting
-    def plot_s_deg_unwrap(self, i : int = -1, j: int = -1, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot_s_deg(self, *args, **kwargs) -> mplt.Axes:
         """
-        Plots the unwrapped phase in degrees of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the phase in degrees of the scattering parameter response(s) in the fit.
 
         Parameters
         ----------
-        i : int
-            Row index of the response. `-1` to plot all rows.
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
 
-        j : int
-            Column index of the response. `-1` to plot all columns.
-
-        freqs : list of float or ndarray or None, optional
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used. This only works if :attr:`network` is not `None`.
-
-        ax : :class:`matplotlib.Axes` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
@@ -1604,92 +1518,24 @@ class VectorFitting:
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
 
-        Raises
-        ------
-        ValueError
-            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+        Notes
+        -----
+        This simply calls ``plot('deg', *args, **kwargs)``.
         """
 
-        if ax is None:
-            ax = mplt.gca()
+        return self.plot('deg', *args, **kwargs)
 
-        if self.residues is None or self.poles is None:
-            raise RuntimeError('Poles and/or residues have not been fitted. Cannot plot the model response.')
-
-        n_ports = int(np.sqrt(np.shape(self.residues)[0]))
-
-        if i == -1:
-            list_i = range(n_ports)
-        elif isinstance(i, int):
-            list_i = [i]
-        else:
-            list_i = i
-
-        if j == -1:
-            list_j = range(n_ports)
-        elif isinstance(j, int):
-            list_j = [j]
-        else:
-            list_j = j
-
-        if self.network is not None:
-            i_samples = 0
-            for i in list_i:
-                for j in list_j:
-                    if i_samples == 0:
-                        label = 'Samples'
-                    else:
-                        label = '_nolegend_'
-                    i_samples += 1
-                    ax.scatter(self.network.f, np.rad2deg(np.unwrap(np.angle(self.network.s[:, i, j]))),
-                               color='r', label=label)
-            if freqs is None:
-                # get frequency array from the network
-                freqs = self.network.f
-
-        if freqs is None:
-            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
-                             'frequency information.')
-
-        i_fit = 0
-        for i in list_i:
-            for j in list_j:
-                if i_fit == 0:
-                    label = 'Fit'
-                else:
-                    label = '_nolegend_'
-                i_fit += 1
-                ax.plot(freqs, np.rad2deg(np.unwrap(np.angle(self.get_model_response(i, j, freqs)))),
-                        color='k', label=label)
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Phase (Degrees)')
-        ax.legend(loc='best')
-
-        # only print title if a single response is shown
-        if i_fit == 1:
-            ax.set_title('Response i={}, j={}'.format(i, j))
-
-        return ax
-
-    @check_plotting
-    def plot_s_re(self, i : int = -1, j: int = -1, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot_s_deg_unwrap(self, *args, **kwargs) -> mplt.Axes:
         """
-        Plots the real part of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the unwrapped phase in degrees of the scattering parameter response(s) in the fit.
 
         Parameters
         ----------
-        i : int
-            Row index of the response. `-1` to plot all rows.
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
 
-        j : int
-            Column index of the response. `-1` to plot all columns.
-
-        freqs : list of float or ndarray or None, optional
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used. This only works if :attr:`network` is not `None`.
-
-        ax : :class:`matplotlib.Axes` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
@@ -1697,91 +1543,24 @@ class VectorFitting:
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
 
-        Raises
-        ------
-        ValueError
-            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+        Notes
+        -----
+        This simply calls ``plot('deg_unwrap', *args, **kwargs)``.
         """
 
-        if ax is None:
-            ax = mplt.gca()
+        return self.plot('deg_unwrap', *args, **kwargs)
 
-        if self.residues is None or self.poles is None:
-            raise RuntimeError('Poles and/or residues have not been fitted. Cannot plot the model response.')
-
-        n_ports = int(np.sqrt(np.shape(self.residues)[0]))
-
-        if i == -1:
-            list_i = range(n_ports)
-        elif isinstance(i, int):
-            list_i = [i]
-        else:
-            list_i = i
-
-        if j == -1:
-            list_j = range(n_ports)
-        elif isinstance(j, int):
-            list_j = [j]
-        else:
-            list_j = j
-
-        if self.network is not None:
-            i_samples = 0
-            for i in list_i:
-                for j in list_j:
-                    if i_samples == 0:
-                        label = 'Samples'
-                    else:
-                        label = '_nolegend_'
-                    i_samples += 1
-                    ax.scatter(self.network.f, np.real(self.network.s[:, i, j]), color='r', label=label)
-            if freqs is None:
-                # get frequency array from the network
-                freqs = self.network.f
-
-        if freqs is None:
-            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
-                             'frequency information.')
-
-        i_fit = 0
-        for i in list_i:
-            for j in list_j:
-                if i_fit == 0:
-                    label = 'Fit'
-                else:
-                    label = '_nolegend_'
-                i_fit += 1
-                ax.plot(freqs, np.real(self.get_model_response(i, j, freqs)), color='k', label=label)
-
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Real Part')
-        ax.legend(loc='best')
-
-        # only print title if a single response is shown
-        if i_fit == 1:
-            ax.set_title('Response i={}, j={}'.format(i, j))
-
-        return ax
-
-    @check_plotting
-    def plot_s_im(self, i : int = -1, j: int = -1, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot_s_re(self, *args, **kwargs) -> mplt.Axes:
         """
-        Plots the imaginary part of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the real part of the scattering parameter response(s) in the fit.
 
         Parameters
         ----------
-        i : int
-            Row index of the response. `-1` to plot all rows.
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
 
-        j : int
-            Column index of the response. `-1` to plot all columns.
-
-        freqs : list of float or ndarray or None, optional
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used. This only works if :attr:`network` is not `None`.
-
-        ax : :class:`matplotlib.Axes` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
@@ -1789,71 +1568,37 @@ class VectorFitting:
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
 
-        Raises
-        ------
-        ValueError
-            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+        Notes
+        -----
+        This simply calls ``plot('re', *args, **kwargs)``.
         """
 
-        if ax is None:
-            ax = mplt.gca()
+        return self.plot('re', *args, **kwargs)
 
-        if self.residues is None or self.poles is None:
-            raise RuntimeError('Poles and/or residues have not been fitted. Cannot plot the model response.')
+    def plot_s_im(self, *args, **kwargs) -> mplt.Axes:
+        """
+        Plots the imaginary part of the scattering parameter response(s) in the fit.
 
-        n_ports = int(np.sqrt(np.shape(self.residues)[0]))
+        Parameters
+        ----------
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
 
-        if i == -1:
-            list_i = range(n_ports)
-        elif isinstance(i, int):
-            list_i = [i]
-        else:
-            list_i = i
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
 
-        if j == -1:
-            list_j = range(n_ports)
-        elif isinstance(j, int):
-            list_j = [j]
-        else:
-            list_j = j
+        Returns
+        -------
+        :class:`matplotlib.Axes`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
 
-        if self.network is not None:
-            i_samples = 0
-            for i in list_i:
-                for j in list_j:
-                    if i_samples == 0:
-                        label = 'Samples'
-                    else:
-                        label = '_nolegend_'
-                    i_samples += 1
-                    ax.scatter(self.network.f, np.imag(self.network.s[:, i, j]), color='r', label=label)
-            if freqs is None:
-                # get frequency array from the network
-                freqs = self.network.f
+        Notes
+        -----
+        This simply calls ``plot('im', *args, **kwargs)``.
+        """
 
-        if freqs is None:
-            raise ValueError('Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
-                             'frequency information.')
-
-        i_fit = 0
-        for i in list_i:
-            for j in list_j:
-                if i_fit == 0:
-                    label = 'Fit'
-                else:
-                    label = '_nolegend_'
-                i_fit += 1
-                ax.plot(freqs, np.imag(self.get_model_response(i, j, freqs)), color='k', label=label)
-
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Imaginary Part')
-        ax.legend(loc='best')
-
-        # only print title if a single response is shown
-        if i_fit == 1:
-            ax.set_title('Response i={}, j={}'.format(i, j))
-
-        return ax
+        return self.plot('im', *args, **kwargs)
 
     @check_plotting
     def plot_s_singular(self, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
