@@ -94,9 +94,9 @@ class CPWTestCase(unittest.TestCase):
             fig.suptitle('qucs/skrf')
             fig2, axs2 = plt.subplots(2, 2, figsize = (8,6))
             fig2.suptitle('qucs/skrf residuals')
+            fig3, ax3 = plt.subplots(1, 1, figsize = (8,3))
             
-        limit_db = 0.3
-        limit_deg = 1.
+        limit = 2e-3
         
         for ref in self.ref_qucs:
             cpw = CPW(frequency = ref['n'].frequency, z0 = 50.,
@@ -111,14 +111,18 @@ class CPWTestCase(unittest.TestCase):
             line.name = '`Media.CPW` skrf,qucs'
             
             # residuals
-            res = line / ref['n']
-            res.name = 'residuals ' + ref['n'].name
+            res = line - ref['n']
 
-            # test if within limit lines
-            self.assertTrue(npy.all(npy.abs(res.s_db) < limit_db))
-            self.assertTrue(npy.all(npy.abs(res.s_deg) < limit_deg))
+            # test if within limit
+            self.assertTrue(npy.all(npy.abs(res.s) < limit))
             
             if self.verbose:
+                ax3.plot(npy.abs(res.s[0,0]))
+                ax3.plot(npy.abs(res.s[0,1]))
+                ax3.plot(npy.abs(res.s[1,0]))
+                ax3.plot(npy.abs(res.s[1,1]))
+                res = line / ref['n']
+                res.name = 'residuals ' + ref['n'].name
                 line.plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'],
                                linestyle = 'none', marker = 'x')
                 ref['n'].plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'])
@@ -166,9 +170,9 @@ class CPWTestCase(unittest.TestCase):
             fig.suptitle('ads/skrf')
             fig2, axs2 = plt.subplots(2, 2, figsize = (8,6))
             fig2.suptitle('ads/skrf residuals')
+            fig3, ax3 = plt.subplots(1, 1, figsize = (8,3))
             
-        limit_db = 0.1
-        limit_deg = 1.
+        limit = 1e-3
         
         for ref in self.ref_ads:
             cpw = CPW(frequency = ref['n'].frequency, z0 = 50.,
@@ -183,18 +187,18 @@ class CPWTestCase(unittest.TestCase):
             line.name = '`Media.CPW` skrf,ads'
             
             # residuals
-            res = line / ref['n']
-            res.name = 'residuals ' + ref['n'].name
+            res = line - ref['n']
 
-            # test if within limit lines
-            self.assertTrue(
-                npy.all(npy.abs(res.s_db[:, 0, 0]) < 10. * limit_db))
-            self.assertTrue(
-                npy.all(npy.abs(res.s_deg[:, 0, 0]) < 10. * limit_deg))
-            self.assertTrue(npy.all(npy.abs(res.s_db[:, 1, 0]) < limit_db))
-            self.assertTrue(npy.all(npy.abs(res.s_deg[:, 1, 0]) < limit_deg))
+            # test if within limit
+            self.assertTrue(npy.all(npy.abs(res.s) < limit))
             
             if self.verbose:
+                ax3.plot(npy.abs(res.s[0,0]))
+                ax3.plot(npy.abs(res.s[0,1]))
+                ax3.plot(npy.abs(res.s[1,0]))
+                ax3.plot(npy.abs(res.s[1,1]))
+                res = line / ref['n']
+                res.name = 'residuals ' + ref['n'].name
                 line.plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'],
                                linestyle = 'none', marker = 'x')
                 ref['n'].plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'])
