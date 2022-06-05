@@ -41,7 +41,7 @@ class CPW(Media):
     Keysight ADS. There is known differences in the output of these
     simulators.
     
-    The quasi-static models of charcteristic impedance and effective
+    The quasi-static models of characteristic impedance and effective
     permittivity give the value at zero frequency. The dispersion models
     compute frequency-dependant values of these variables.
     
