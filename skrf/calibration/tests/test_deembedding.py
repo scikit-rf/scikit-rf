@@ -176,12 +176,6 @@ class DeembeddingTestCase(unittest.TestCase):
         # for spot frequency checking
         self.raw6_1f = self.raw6['10GHz'] 
         self.thru6_1f = self.thru6['10GHz']
-        
-        # for IEEEP370 NZC and ZC de-embedding checking
-        self.s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
-        self.fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
-        self.nzc_ref = rf.Network(os.path.join(self.test_dir, 'deembedded_SE_NZC_fdf.s2p'))
-        self.zc_ref = rf.Network(os.path.join(self.test_dir, 'deembedded_SE_ZC_fdf.s2p'))
 
         # create de-embedding objects
         self.dm = rf.OpenShort(self.open, self.short)
@@ -293,7 +287,6 @@ class DeembeddingTestCase(unittest.TestCase):
         """
         self.s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
         self.fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
-        self.nzc_ref = rf.Network(os.path.join(self.test_dir, 'deembedded_SE_NZC_fdf.s2p'))
         self.dm_nzc = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru, 
                                         name = '2xthru')
         residuals = self.dm_nzc.s_side1.inv ** self.s2xthru ** self.dm_nzc.s_side2.inv
@@ -362,6 +355,8 @@ class DeembeddingTestCase(unittest.TestCase):
         Test if IEEEP370 methods fails when interpolation is required.
         TODO: add interpolation handling
         """
+        self.s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
+        self.fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
         # with non-uniform frequencies
         nonuniform_freq = rf.Frequency(self.s2xthru.f[0], self.s2xthru.f[-1], 
                                        npoints=len(self.s2xthru), unit='Hz', 
