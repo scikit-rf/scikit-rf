@@ -24,31 +24,31 @@ if TYPE_CHECKING:
 
 class CPW(Media):
     """
-    A coplanar waveguide transmission line defined in terms of width,
-    spacing, thickness on a given relative permittivity substrate of a
+    A coplanar waveguide transmission line is defined in terms of width,
+    spacing, and thickness on a given relative permittivity substrate of a
     certain height. The line has a conductor resistivity and a tangential loss
     factor. The backside of the strip can be made of air or metal (grounded 
     coplanar waveguide).
 
-    This class is highly inspired from the technical documentation [QUCSa]_
+    This class is highly inspired by the technical documentation [QUCSa]_
     and sources provided by the qucs project [QUCSb]_ .
     
     In addition, Djordjevic [DBLS01]_ /Svensson [SvDe01]_  wideband debye dielectric
-    model is considered to provide more realistic modelling of broadband
-    microstrip with as causal time domain response.
+    model is considered to provide a more realistic modelling of broadband
+    microstrip with causal time domain response.
     
     A compatibility mode is provided to mimic the behaviour of QUCS or of
     Keysight ADS. There is known differences in the output of these
     simulators.
     
-    The quasi-static models of chercteristic impedance and effective
+    The quasi-static models of charcteristic impedance and effective
     permittivity give the value at zero frequency. The dispersion models
-    compute a frequency-dependant values of these variables.
+    compute frequency-dependant values of these variables.
     
     * Quasi-static characteristic impedance and effective permittivity model
       use [GhNa84]_ and [GhNa83]_. The models are corrected to account for
       strip thickness using a first-order approach described in [GGBB96].
-      Comparison shows that ADS simulator use another thickness correction
+      A comparison shows that ADS simulator uses another thickness correction
       method that is according to ADS doc based on [Cohn60]. This second method
       is not implemented in skrf.
     
@@ -57,8 +57,6 @@ class CPW(Media):
     
     * Loss model is computed using Wheeler's incremental inductance rule
       [Whee42]_ applied to coplanar waveguide by [OwWu58]_ and [Ghio93]_.
-    
-    * Strip thickness correction model
 
     Parameters
     ----------
@@ -68,18 +66,18 @@ class CPW(Media):
         the port impedance for media. Only needed if different from the
         characteristic impedance Z0 of the transmission line. In ohm
     w : number, or array-like
-        width of center conductor, in m
+        width of the center conductor, in m
     s : number, or array-like
         spacing (width of the gap), in m
     h : number, or array-like
-        height of substrate between backside and conductor, in m
+        height of the substrate between backside and conductor, in m
     t : number, or array-like, optional
         conductor thickness, in m. Default is None (no width correction
-        to account strip thickness).
+        to account for strip thickness).
     has_metal_backside : bool, default False
         If the backside is air (False) or metal (True)
     ep_r : number, or array-like, optional
-        relative permativity of substrate at frequency f_epr_tand, no unit
+        relative permittivity of the substrate at frequency f_epr_tand, no unit
     diel : str
         dielectric frequency dispersion model in:
         
@@ -99,7 +97,7 @@ class CPW(Media):
     f_epr_tand : number, or array-like
         measurement frequency for ep_r and tand of dielectric, in Hz
     compatibility_mode: str or None (default)
-        If set to 'qucs', following behavious happens :
+        If set to 'qucs', following behaviour happens :
         
         * Characteristic impedance will be real (no imaginary part due to tand)
         
@@ -178,7 +176,7 @@ class CPW(Media):
         self.compatibility_mode = compatibility_mode
         
         # variation of effective permittivity with frequency
-        # Not implemented on QUCS but implemented on ADS.
+        # Not implemented in QUCS but implemented in ADS.
         # 'frequencyinvariant' will give a constant complex value whith a real
         # part compatible with qucs and an imaginary part due to tand
         self.ep_r_f, self.tand_f = self.analyse_dielectric(
@@ -262,8 +260,8 @@ class CPW(Media):
                           f_epr_tand: NumberLike, f: NumberLike,
                           diel: str):
         """
-        This function calculate the frequency dependent relative permittivity
-        of dielectric and and tangeantial loss factor.
+        This function calculate the frequency-dependent relative permittivity
+        of dielectric and tangential loss factor.
         
         References
         ----------
@@ -306,9 +304,9 @@ class CPW(Media):
         """
         This function calculates the quasi-static impedance of a coplanar
         waveguide line, the value of the effective permittivity as per filling
-        factor and the effective width due to the finite conductor thickness
+        factor, and the effective width due to the finite conductor thickness
         for the given coplanar waveguide line and substrate properties.
-        Model from [#]_ with air backside and [#]_ with metal backside.
+        Model from [#]_ with air backside and [#]_ with a metal backside.
         The models are corrected to account for
         strip thickness using a first-order approach described in [GGBB96]_.
         ADS simulator report to use a custom correction based on [Cohn60]_.
@@ -344,7 +342,7 @@ class CPW(Media):
         q1 = ellipa(k1)
         
         # backside is metal
-        if(has_metal_backside):
+        if has_metal_backside:
             # equation (4) from [GhNa83]
             # in qucs the 2 coefficient turn to 4 and fit better with ads
             k3 = tanh(pi * a / 4. / h) / tanh(pi * b / 4. / h)
@@ -376,7 +374,7 @@ class CPW(Media):
             qe = ellipa(ke)
             
             # backside is metal
-            if(has_metal_backside):
+            if has_metal_backside:
                 # equation (8) from [GhNa83] with k1 -> ke
                 # but keep q3 unchanged ? (not in papers)
                 qz = 1. / (qe + q3)
@@ -400,7 +398,7 @@ class CPW(Media):
                           ep_r: NumberLike, w: NumberLike, s: NumberLike,
                           h: NumberLike, f: NumberLike):
          """
-         This function compute the frequency dependent characteristic
+         This function computes the frequency-dependent characteristic
          impedance and effective permittivity accounting for coplanar waveguide
          frequency dispersion.
          
@@ -473,7 +471,7 @@ class CPW(Media):
             r_s = surface_resistivity(f=f, rho=rho, \
                     mu_r=1)
             ds = skin_depth(f = f, rho = rho, mu_r = 1.)
-            if(any(t < 3 * ds)):
+            if any(t < 3 * ds):
                 warnings.warn(
                     'Conductor loss calculation invalid for line'
                     'height t ({})  < 3 * skin depth ({})'.format(t, ds[0]),
