@@ -182,6 +182,12 @@ class DeembeddingTestCase(unittest.TestCase):
         self.fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
         self.nzc_ref = rf.Network(os.path.join(self.test_dir, 'deembedded_SE_NZC_fdf.s2p'))
         self.zc_ref = rf.Network(os.path.join(self.test_dir, 'deembedded_SE_ZC_fdf.s2p'))
+        # with phase noise
+        # add enough phase noise to trigger phase jumps with original
+        # implementation, but small enough to keep within 1° limit line
+        self.s2xthru_pn = self.s2xthru.copy()
+        self.s2xthru_pn.add_noise_polar(0.0002, 0.2)
+        # with non-uniform frequencies
         nonuniform_freq = rf.Frequency(self.s2xthru.f[0], self.s2xthru.f[-1], 
                                        npoints=len(self.s2xthru), unit='Hz', 
                                        sweep_type='log')
@@ -209,6 +215,8 @@ class DeembeddingTestCase(unittest.TestCase):
                                        leadin = 0,
                                        NRP_enable = False,
                                        name = 'zc2xthru')
+        self.dm_nzc_pn = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru_pn, 
+                                        name = '2xthru')
         
         with self.assertRaises(NotImplementedError) as context:
             self.dm_nzc_nu = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru_nu, 
@@ -341,6 +349,24 @@ class DeembeddingTestCase(unittest.TestCase):
         # too much tolerance here allowed as for now
         il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
         self.assertTrue(np.max(np.abs(il_phase)) <= 2.0, 'residual IL Phase')
+        
+    def test_IEEEP370_SE_NZC_2xThru_no_180deg_phase_jumps(self):
+        """
+        Test test_IEEEP370_SE_NZC_2xThru.
+
+        After de-embedding fixtures model from 2xtru, the network is a perfect
+        thru.
+        If there is noise on the 2xthru phase, incorrect computation of e01 and
+        e10 could lead to 180° jumps into the side models s21 phase.
+        Check this not happens.
+        """
+        residuals = self.dm_nzc_pn.s_side1.inv ** self.s2xthru_pn ** self.dm_nzc_pn.s_side2.inv
+        # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
+        il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
+        self.assertTrue(np.max(np.abs(il_mag)) <= 0.1, 'residual IL magnitude')
+        # insertion loss phase deviate from 0 degree from less than 1 degree
+        il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
+        self.assertTrue(np.max(np.abs(il_phase)) <= 1.0, 'residual IL Phase')
 
 if __name__ == "__main__":
     # Launch all tests
