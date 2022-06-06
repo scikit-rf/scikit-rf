@@ -21,7 +21,7 @@ from scipy import stats
 from scipy.constants import  c, inch, mil
 
 from ..frequency import Frequency
-from ..network import Network, connect
+from ..network import Network, connect, impedance_mismatch
 
 from .. import tlineFunctions as tf
 from .. import mathFunctions as mf
@@ -32,6 +32,7 @@ from typing import Union
 from abc import ABC, abstractmethod
 import re
 from copy import deepcopy as copy
+from ..constants import S_DEF_DEFAULT
 
 class Media(ABC):
     """
@@ -445,15 +446,13 @@ class Media(ABC):
         result.s = npy.array(Gamma0).reshape(-1, 1, 1) * \
             npy.eye(nports, dtype=complex).reshape((-1, nports, nports)).\
             repeat(self.frequency.npoints, 0)
-        #except(ValueError):
-        #    for f in range(self.frequency.npoints):
-        #        result.s[f,:,:] = Gamma0[f]*npy.eye(nports, dtype=complex)
-
         return result
 
     def short(self, nports: int = 1, **kwargs) -> Network:
         r"""
         Short (:math:`\Gamma_0 = -1`)
+
+        For s_def = 'power' (:math:`-Z_{ref}^*/Z_{ref}`)
 
         Parameters
         ----------
@@ -478,7 +477,12 @@ class Media(ABC):
         open
         load
         """
-        return self.load(-1.0, nports, **kwargs)
+        s_short = -1
+        # Powerwave short is not necessarily -1
+        if kwargs.get('s_def', S_DEF_DEFAULT) == 'power':
+            z0 = kwargs.get('z0', self.z0)
+            s_short = -npy.conjugate(z0) / z0
+        return self.load(s_short, nports, **kwargs)
 
     def open(self, nports: int = 1, **kwargs) -> Network:
         r"""
@@ -655,13 +659,11 @@ class Media(ABC):
         resistor
         """
         result = self.match(nports=2, **kwargs)
-        gamma = tf.zl_2_Gamma0(z1, z2)
+        s_def = kwargs.get('s_def', S_DEF_DEFAULT)
         z1 = npy.array(z1)
         z2 = npy.array(z2)
-        result.s[:, 0, 0] = gamma
-        result.s[:, 1, 1] = -gamma
-        result.s[:, 1, 0] = (1 + gamma) * npy.sqrt(1.0 * z1 / z2)
-        result.s[:, 0, 1] = (1 - gamma) * npy.sqrt(1.0 * z2 / z1)
+        mismatch = npy.broadcast_to(impedance_mismatch(z1, z2, s_def), result.s.shape)
+        result.s = mismatch
         return result
 
 
@@ -833,7 +835,10 @@ class Media(ABC):
             z0 = parse_z0(z0)* self.z0
 
         kwargs.update({'z0':z0})
-        result = self.match(nports=2,**kwargs)
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+        # Need to use either traveling or pseudo definition here
+        # for the network to match traveling waves.
+        result = self.match(nports=2, s_def='traveling', **kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
 
@@ -842,8 +847,11 @@ class Media(ABC):
         result.s = \
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 
-        if  embed:
-            result = self.thru()**result**self.thru()
+        if embed:
+            # Use the same s_def here as the line to avoid changing it during
+            # cascade.
+            result = self.thru(s_def='traveling')**result**self.thru(s_def='traveling')
+        result.renormalize(result.z0, s_def=s_def)
 
         return result
 
