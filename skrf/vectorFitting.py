@@ -770,7 +770,7 @@ class VectorFitting:
         return A, B, C, D, E
 
     @staticmethod
-    def _get_s_from_ABCDE(freq: float,
+    def _get_s_from_ABCDE(freqs: np.ndarray,
                           A: np.ndarray, B: np.ndarray, C: np.ndarray, D: np.ndarray, E: np.ndarray) -> np.ndarray:
         """
         Private method.
@@ -779,8 +779,8 @@ class VectorFitting:
 
         Parameters
         ----------
-        freq : float
-            Frequency (in Hz) at which to calculate the S-matrix.
+        freqs : ndarray
+            Frequencies (in Hz) at which to calculate the S-matrices.
         A : ndarray
         B : ndarray
         C : ndarray
@@ -790,13 +790,13 @@ class VectorFitting:
         Returns
         -------
         ndarray
-            Complex-valued S-matrix (NxN) calculated at frequency `freq`.
+            Complex-valued S-matrices (fxNxN) calculated at frequencies `freqs`.
         """
 
         dim_A = np.shape(A)[0]
-        stsp_poles = np.linalg.inv(2j * np.pi * freq * np.identity(dim_A) - A)
+        stsp_poles = np.linalg.inv(2j * np.pi * freqs[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
         stsp_S = np.matmul(np.matmul(C, stsp_poles), B)
-        stsp_S += D + 2j * np.pi * freq * E
+        stsp_S += D + 2j * np.pi * freqs[:, None, None] * E
         return stsp_S
 
     def passivity_test(self, parameter_type: str = 's') -> np.ndarray:
@@ -898,8 +898,8 @@ class VectorFitting:
 
             # calculate singular values at the center frequency between crossover frequencies to identify violations
             f_center = 0.5 * (f_start + f_stop)
-            s_center = self._get_s_from_ABCDE(f_center, A, B, C, D, E)
-            u, sigma, vh = np.linalg.svd(s_center)
+            s_center = self._get_s_from_ABCDE(np.array([f_center]), A, B, C, D, E)
+            u, sigma, vh = np.linalg.svd(s_center[0])
             passive = True
             for singval in sigma:
                 if singval > 1:
@@ -1057,24 +1057,22 @@ class VectorFitting:
 
             A_matrix = []
             b_vector = []
-            sigma_max = 0
+
+            # calculate S-matrix at this frequency
+            s_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D, E)
+
+            # singular value decomposition
+            u, sigma, vh = np.linalg.svd(s_eval)
+
+            # keep track of the greatest singular value in every iteration step
+            sigma_max = np.amax(sigma)
 
             # sweep through evaluation frequencies
             for i_eval, freq_eval in enumerate(freqs_eval):
-                # calculate S-matrix at this frequency
-                s_eval = self._get_s_from_ABCDE(freq_eval, A, B, C_t, D, E)
-
-                # singular value decomposition
-                u, sigma, vh = np.linalg.svd(s_eval)
-
-                # keep track of the greatest singular value in every iteration step
-                if np.amax(sigma) > sigma_max:
-                    sigma_max = np.amax(sigma)
-
                 # prepare and fill the square matrices 'gamma' and 'psi' marking passivity violations
-                gamma = np.diag(sigma)
-                psi = np.diag(sigma)
-                for i, sigma_i in enumerate(sigma):
+                gamma = np.diag(sigma[i_eval])
+                psi = np.diag(sigma[i_eval])
+                for i, sigma_i in enumerate(sigma[i_eval]):
                     if sigma_i <= delta:
                         gamma[i, i] = 0
                         psi[i, i] = 0
@@ -1084,8 +1082,8 @@ class VectorFitting:
 
                 # calculate violation S-matrix
                 # s_viol is again a complex NxN S-matrix (N: number of network ports)
-                sigma_viol = np.matmul(np.diag(sigma), gamma) - psi
-                s_viol = np.matmul(np.matmul(u, sigma_viol), vh)
+                sigma_viol = np.matmul(np.diag(sigma[i_eval]), gamma) - psi
+                s_viol = np.matmul(np.matmul(u[i_eval], sigma_viol), vh[i_eval])
 
                 # Laplace frequency of this sample in the sweep
                 s_k = 2j * np.pi * freq_eval
@@ -1685,13 +1683,11 @@ class VectorFitting:
         singvals = np.zeros((n_ports, len(freqs)))
 
         # calculate and save singular values for each frequency
-        for i, f in enumerate(freqs):
-            u, sigma, vh = np.linalg.svd(self._get_s_from_ABCDE(f, A, B, C, D, E))
-            singvals[:, i] = sigma
+        u, sigma, vh = np.linalg.svd(self._get_s_from_ABCDE(freqs, A, B, C, D, E))
 
         # plot the frequency response of each singular value
         for n in range(n_ports):
-            ax.plot(freqs, singvals[n, :], label=r'$\sigma_{}$'.format(n + 1))
+            ax.plot(freqs, sigma[:, n], label=r'$\sigma_{}$'.format(n + 1))
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Magnitude')
         ax.legend(loc='best')
