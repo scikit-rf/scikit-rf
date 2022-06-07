@@ -41,6 +41,9 @@ class NetworkSetTestCase(unittest.TestCase):
                 {'a':1, 'X':20, 'c':'A'},
                 {'a':0, 'X':20, 'c':'A'},
             ]
+        # for write_mdif
+        self.params_datatypes = {'a': 'int', 'X': 'double', 'c': 'string'}
+        
         # create M dummy networks
         self.ntwks_params = [rf.Network(frequency=self.freq1, 
                                         s=np.random.rand(len(self.freq1),2,2), 
@@ -340,12 +343,57 @@ class NetworkSetTestCase(unittest.TestCase):
         ns2 = rf.NetworkSet([ntwk0, ntwk1])
         self.assertTrue(np.all(ns2.interpolate_from_params('s', 0.3).s == 0.3))
 
+    def test_params_values(self):
+        """Test the dictionnary containing all parameters names and values"""
+        # returns None when no parameters are defined in a NetworkSet
+        self.assertEqual(self.ns.params_values, None)
+        # return a dict when parameters have been defined
+        self.assertIsInstance(self.ns_params.params_values, dict)
+
+        values = self.ns_params.params_values
+        for idx, ntwk in enumerate(self.ns_params):
+            for key in ntwk.params:
+                self.assertEqual(values[key][idx], ntwk.params[key])
+
     def test_from_mdif(self):
         """ Create NetworkSets from MDIF files """
         mdif_files = glob.glob(self.test_dir+'../io/tests/MDIF_CITI_MDL/test_*.mdf')
         for mdif_file in mdif_files:
             print(mdif_file)
             self.assertIsInstance(rf.NetworkSet.from_mdif(mdif_file), rf.NetworkSet)
+
+    def test_to_mdif(self):
+        """ Test is NetworkSet are equal after writing and reading to MDIF """
+        test_file = '_test.mdif'
+        
+        # without parameters 
+        self.ns.write_mdif(test_file)   
+        ns = rf.NetworkSet.from_mdif(test_file)
+        self.assertEqual(ns, self.ns)
+                
+        # with parameters but without passing explicitly the values
+        self.ns_params.write_mdif(test_file)
+        ns_params = rf.NetworkSet.from_mdif(test_file)
+        self.assertEqual(ns_params, self.ns_params)
+
+        # with parameters and passing explicitly values but not types
+        self.ns_params.write_mdif(test_file,
+                                  values=self.ns_params.params_values)
+        ns_params = rf.NetworkSet.from_mdif(test_file)
+        self.assertEqual(ns_params, self.ns_params)        
+
+        # with parameters and passing explicitly types but not values
+        self.ns_params.write_mdif(test_file,
+                                  data_types=self.ns_params.params_types)
+        ns_params = rf.NetworkSet.from_mdif(test_file)
+        self.assertEqual(ns_params, self.ns_params)  
+
+        # with parameters and passing explicitly values and types
+        self.ns_params.write_mdif(test_file,
+                                  values=self.ns_params.params_values, 
+                                  data_types=self.ns_params.params_types)
+        ns_params = rf.NetworkSet.from_mdif(test_file)
+        self.assertEqual(ns_params, self.ns_params)     
         
     def test_from_citi(self):
         """ Create NetworkSets from CITI files """

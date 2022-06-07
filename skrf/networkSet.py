@@ -330,7 +330,8 @@ class NetworkSet(object):
         
         See Also
         --------
-        Mdif
+        Mdif : MDIF Object
+        write_mdif : Convert a NetworkSet to a Generalized MDIF file.
 
         """
         from . io import Mdif
@@ -521,42 +522,6 @@ class NetworkSet(object):
         setattr(self.__class__,'plot_mm_'+\
                 network_property_name,plot_func)
 
-    @staticmethod
-    def __create_optionstring(nports):
-        """create the options string based on the number of ports. Used in the Touchstone and MDIF formats"""
-
-        if nports > 9:
-            corestring = "n{}_{}x n{}_{}y "
-        else:
-            corestring = "n{}{}x n{}{}y "
-
-        optionstring = "%F "
-
-        if nports == 2:
-            optionstring += "n11x n11y n21x n21y n12x n12y n22x n22y"
-
-        else:
-            # parse the option string for nports not equal to 2
-
-            for i in product(list(range(1, nports + 1)), list(range(1, nports + 1))):
-
-                optionstring += corestring.format(i[0], i[1], i[0], i[1])
-
-                # special case for nports = 3
-                if nports == 3:
-                    # 3 ports
-                    if not (npy.remainder(i[1], 3)):
-                        optionstring += "\n"
-
-                # touchstone spec allows only 4 data pairs per line
-                if nports >= 4:
-                    if npy.remainder(i[1], 4) == 0:
-                        optionstring += "\n"
-                    # NOTE: not sure if this is needed. Doesn't seem to be required by Microwave Office
-                    if i[1] == nports:
-                        optionstring += "\n"
-
-        return optionstring
 
     def to_dict(self) -> dict:
         """
@@ -971,80 +936,39 @@ class NetworkSet(object):
         from . io.general import networkset_2_spreadsheet
         networkset_2_spreadsheet(self, *args, **kwargs)
 
-    def write_mdif(self, filename: str, values=None, datatypes=None, comments=[]):
-        """Convert a scikit-rf NetworkSet object to a Generatized MDIF file
+    def write_mdif(self,
+                   filename: str,
+                   values: Union[dict, None] = None,
+                   data_types: Union[dict, None] = None,
+                   comments = []):
+        """Convert a scikit-rf NetworkSet object to a Generalized MDIF file.
 
         Parameters
         ----------
-        networkset : NetworkSet
-            network set to export
-
-        output_file : string
-            specifies the output file name
-
-        values : dictionary
-            the keys are MDIF variables and the values are the
-            if values is None, then the values will be set to the networkset names
+        filename : string
+            Output MDIF file name.
+        values : dictionary or None. Default is None.
+            The keys of the dictionnary are MDIF variables and its values are 
+            a list of the parameter values.
+            If None, then the values will be set to the NetworkSet names
             and the datatypes will be set to "string".
-
-        datatypes: dictionary
-            the keys are MDIF variables and the value are datatypes
+        data_types: dictionary or None. Default is None.
+            The keys are MDIF variables and the value are datatypes
             specified by the following strings: "int", "double", and "string"
-
         comments: list of strings
-            comments to add to output_file. Each list items is a separate comment line
+            Comments to add to output_file.
+            Each list items is a separate comment line
+
+        See Also
+        --------
+        from_mdif : Create a NetworkSet from a MDIF file.
+        params_values : parameters values
+        params_types : parameters types
 
         """
-
-        if values == None:
-            v = list()
-            for ns in self:
-                v.append(ns.name)
-
-            values = {"name": v}
-            datatypes = {"name": "string"}
-
-        # VAR datatypes
-        dict_types = dict({"int": "0", "double": "1", "string": "2"})
-
-        # open output_file
-        mdif = open(filename, "w")
-
-        # write comments
-        for c in comments:
-            mdif.write(f"! {c}\n")
-
-        nports = self[0].nports
-
-        optionstring = self.__create_optionstring(nports)
-
-        for filenumber, ntwk in enumerate(self):
-
-            mdif.write("!" + "-" * 79 + "\n! network name: " + ntwk.name + "\n\n")
-
-            for p in values:
-                # assign double as the datatype if none is specified
-                if p not in datatypes:
-                    datatypes[p] = "double"
-
-                if datatypes[p] == "string":
-                    var_def_str = 'VAR {}({}) = "{}"'.format(
-                        p, dict_types[datatypes[p]], values[p][filenumber]
-                    )
-                else:
-                    var_def_str = "VAR {}({}) = {}".format(
-                        p, dict_types[datatypes[p]], values[p][filenumber]
-                    )
-
-                mdif.write(var_def_str + "\n")
-
-            mdif.write("\nBEGIN ACDATA\n")
-            mdif.write(optionstring + "\n")
-            data = ntwk.write_touchstone(return_string=True)
-            mdif.write(data)
-            mdif.write("END\n\n")
-
-        mdif.close()
+        from . io import Mdif
+        Mdif.from_networkset(ns=self, filename=filename, values=values, 
+                             data_types=data_types, comments=comments)
 
     def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):
         """
@@ -1149,17 +1073,72 @@ class NetworkSet(object):
     @property
     def params(self) -> list:
         """
-        Return the list of parameters stored in the Network of the NetworkSet.
+        Return the list of parameter names stored in the Network of the NetworkSet.
 
         Similar to the `dims` property, except it returns a list instead of a view.
 
         Returns
         -------
         list: list
-            list of the parameters if any. Empty list if no parameter found.
+            list of the parameter names if any. Empty list if no parameter found.
 
         """
         return list(self.dims)
+    
+    @property
+    def params_values(self) -> Union[dict, None]:
+        """
+        Return a dictionnary containing all parameters and their values.
+
+        Returns
+        -------
+        values : dict or None.
+            Dictionnary of all parameters names and their values (into a list). 
+            Return None if no parameters are defined in the NetworkSet.
+
+        """
+        if self.has_params():
+            # creating a dict of empty lists for each of the param keys
+            values = {key: [] for key in self.dims}
+            for ntwk in self.ntwk_set:
+                for key, value in ntwk.params.items():
+                    values[key].append(value)
+            return values
+        else:
+            return None
+
+    @property
+    def params_types(self) -> Union[dict, None]:
+        """
+        Return a dictionnary describing the data type of each parameters.
+
+        Returns
+        -------
+        data_types : dict or None.
+            Dictionnary of the (guessed) type of each parameters. 
+            Return None if no parameters are defined in the NetworkSet.
+
+        """
+        # for each parameter, scan all the value and try to guess the type
+        # If is not a int, and not a float (double), then it's a string
+        if self.has_params():
+            data_types = {}
+            values = self.params_values
+            for key in values:
+                try:
+                    _ = [int(v) for v in values[key]]
+                    data_types[key] = 'int'
+                except ValueError as e:  # not an int
+                    try:
+                        _ = [float(v) for v in values[key]]
+                        data_types[key] = 'double'
+                    except ValueError as e:  # not a float -> then a string
+                        data_types[key] = 'string'
+                        
+            return data_types
+        else:
+            return None
+            
 
     def sel(self, indexers: Mapping[Any, Any] = None) -> 'NetworkSet':
         """
