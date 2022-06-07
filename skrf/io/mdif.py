@@ -21,6 +21,7 @@ from ..frequency import Frequency
 from ..network import Network, z2s, y2s
 from ..networkSet import NetworkSet
 from ..mathFunctions import magdeg_2_reim
+from itertools import product
 
 class Mdif():
     """
@@ -243,8 +244,8 @@ class Mdif():
         elif (parameter == 's') and all(k in kinds for k in ['n11x', 'n11y']):
             rank = round(np.sqrt(sum('n' in s for s in kinds)/2))                 
             s = values[:,:rank**2].reshape(len(f), rank, rank)
-            # if rank is 2, swap S21 and S12 to match the classic ordering
-            if rank == 2:
+            # if rank is 2 and S21 before S12, swap S21 and S12 
+            if rank == 2 and (kinds.index('n21x') < kinds.index('n12x')):
                 s[:, 1, 0], s[:, 0, 1] =  s[:, 0, 1].copy(), s[:, 1, 0].copy()
 
         # no S-parameter are found. Maybe Z-param instead?
@@ -349,7 +350,7 @@ class Mdif():
 
         Returns
         -------
-        NetworkSet
+        ns : :class:`~skrf.networkSet.NetworkSet`
         
         See Also
         --------
@@ -361,17 +362,17 @@ class Mdif():
         return ns
 
     @staticmethod
-    def from_networkset(ns : NetworkSet,
-                        filename : str,
-                        values: Union[dict, None] = None,
-                        data_types: Union[dict, None] = None,
-                        comments = []):
+    def write(ns : NetworkSet,
+              filename : str,
+              values: Union[dict, None] = None,
+              data_types: Union[dict, None] = None,
+              comments = []):
         """
         Write a MDIF file from a NetworkSet.
 
         Parameters
         ----------
-        ns : NetworkSet
+        ns : :class:`~skrf.networkSet.NetworkSet`
             NetworkSet to get the data from.
         filename : string
             Output MDIF file name.
@@ -389,7 +390,7 @@ class Mdif():
             
         See Also
         --------
-        Mdif : MDIF file class
+        io.mdif.Mdif : MDIF file class
         to_networkset : Return the MDIF data as a NetworkSet
         
         """
@@ -460,7 +461,7 @@ class Mdif():
 
         Parameters
         ----------
-        other : `skrf.io.mdif.Mdif` object
+        other : :class:`~skrf.io.mdif.Mdif` object
             Mdif object to compare with.
 
         Returns
@@ -494,12 +495,12 @@ class Mdif():
                 # special case for nports = 3
                 if nports == 3:
                     # 3 ports
-                    if not (npy.remainder(i[1], 3)):
+                    if not (np.remainder(i[1], 3)):
                         optionstring += "\n"
 
                 # touchstone spec allows only 4 data pairs per line
                 if nports >= 4:
-                    if npy.remainder(i[1], 4) == 0:
+                    if np.remainder(i[1], 4) == 0:
                         optionstring += "\n"
                     # NOTE: not sure if this is needed. Doesn't seem to be required by Microwave Office
                     if i[1] == nports:

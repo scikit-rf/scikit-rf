@@ -49,7 +49,6 @@ import numpy as npy
 from numbers import Number
 from typing import Union, Any, Mapping, TextIO
 from io import BytesIO
-from itertools import product
 from scipy.interpolate import interp1d
 from . network import Network, Frequency, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
 from . import mathFunctions as mf
@@ -967,7 +966,7 @@ class NetworkSet(object):
 
         """
         from . io import Mdif
-        Mdif.from_networkset(ns=self, filename=filename, values=values, 
+        Mdif.write(ns=self, filename=filename, values=values, 
                              data_types=data_types, comments=comments)
 
     def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):
