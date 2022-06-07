@@ -2,6 +2,8 @@ import skrf as rf
 import unittest
 import os
 import numpy as np
+from numpy.testing import assert_equal, run_module_suite, assert_almost_equal
+
 
 class DeembeddingTestCase(unittest.TestCase):
     """
@@ -180,6 +182,13 @@ class DeembeddingTestCase(unittest.TestCase):
         self.fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
         self.nzc_ref = rf.Network(os.path.join(self.test_dir, 'deembedded_SE_NZC_fdf.s2p'))
         self.zc_ref = rf.Network(os.path.join(self.test_dir, 'deembedded_SE_ZC_fdf.s2p'))
+        nonuniform_freq = rf.Frequency(self.s2xthru.f[0], self.s2xthru.f[-1], 
+                                       npoints=len(self.s2xthru), unit='Hz', 
+                                       sweep_type='log')
+        self.s2xthru_nu = self.s2xthru.interpolate(nonuniform_freq)
+        self.fdf_nu = self.fdf.interpolate(nonuniform_freq)
+        self.nzc_ref_nu = self.nzc_ref.interpolate(nonuniform_freq)
+        self.zc_ref = self.zc_ref.interpolate(nonuniform_freq)
 
         # create de-embedding objects
         self.dm = rf.OpenShort(self.open, self.short)
@@ -200,7 +209,17 @@ class DeembeddingTestCase(unittest.TestCase):
                                        leadin = 0,
                                        NRP_enable = False,
                                        name = 'zc2xthru')
-
+        
+        with self.assertRaises(NotImplementedError) as context:
+            self.dm_nzc_nu = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru_nu, 
+                                            name = '2xthru')
+            self.dm_zc_nu  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = self.s2xthru_nu, 
+                                           dummy_fix_dut_fix = self.fdf_nu, 
+                                           bandwidth_limit = 10e9, 
+                                           pullback1 = 0, pullback2 = 0,
+                                           leadin = 0,
+                                           NRP_enable = False,
+                                           name = 'zc2xthru')
         # relative tolerance for comparisons
         self.rtol = 1e-3
 
@@ -292,6 +311,8 @@ class DeembeddingTestCase(unittest.TestCase):
         
     def test_IEEEP370_SE_NZC_2xThru(self):
         """
+        Test test_IEEEP370_SE_NZC_2xThru.
+
         After de-embedding fixtures model from 2xtru, the network is a perfect
         thru.
         Test that this thru has S21 amplitude and phase smaller than a limit. 
@@ -303,9 +324,11 @@ class DeembeddingTestCase(unittest.TestCase):
         # insertion loss phase deviate from 0 degree from less than 1 degree
         il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
         self.assertTrue(np.max(np.abs(il_phase)) <= 1.0, 'residual IL Phase')
-        
+
     def test_IEEEP370_SE_ZC_2xThru(self):
         """
+        Test test_IEEEP370_SE_ZC_2xThru.
+
         After de-embedding fixtures model from 2xtru, the network is a perfect
         thru.
         Test that this thru has S21 amplitude and phase smaller than a limit. 
@@ -318,4 +341,7 @@ class DeembeddingTestCase(unittest.TestCase):
         # too much tolerance here allowed as for now
         il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
         self.assertTrue(np.max(np.abs(il_phase)) <= 2.0, 'residual IL Phase')
-        
+
+if __name__ == "__main__":
+    # Launch all tests
+    run_module_suite()

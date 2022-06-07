@@ -12,11 +12,12 @@ cpw (:mod:`skrf.media.cpw`)
 """
 from scipy.constants import  epsilon_0, mu_0
 from scipy.special import ellipk
-from numpy import pi, sqrt, log, zeros, ones
+from numpy import pi, sqrt, log, zeros, ones, any
 from .media import Media
-from ..tlineFunctions import surface_resistivity
+from ..tlineFunctions import surface_resistivity, skin_depth
 from ..constants import NumberLike
 from typing import Union, TYPE_CHECKING
+import warnings
 
 if TYPE_CHECKING:
     from .. frequency import Frequency
@@ -129,9 +130,6 @@ class CPW(Media):
         elif (1/sqrt(2) < k1 <= 1):
             return (log(2*(1 + sqrt(k_p))/(1 - sqrt(k_p)) ))/pi
 
-
-
-
     @property
     def alpha_conductor(self) -> NumberLike:
         """
@@ -146,22 +144,34 @@ class CPW(Media):
         --------
         surface_resistivity : calculates surface resistivity
         """
-        if self.rho is None or self.t is None:
-            raise(AttributeError('must provide values conductivity and conductor thickness to calculate this. see initializer help'))
+        t, k1, ep_re, f = self.t, self.k1,self.ep_re, self.frequency.f
+        rho = self.rho
+        
+        if t is not None and t > 0:
+            if rho is None:
+                raise(AttributeError('must provide values conductivity and conductor thickness to calculate this. see initializer help'))
+            
+            r_s = surface_resistivity(f=f, rho=rho, \
+                    mu_r=1)
+            ds = skin_depth(f = f, rho = rho, mu_r = 1.)
+            if(any(t < 3 * ds)):
+                warnings.warn(
+                    'Conductor loss calculation invalid for line'
+                    'height t ({})  < 3 * skin depth ({})'.format(t, ds[0]),
+                    RuntimeWarning
+                    )
+                
+            a = self.w/2.
+            b = self.s+self.w/2.
+            K = ellipk      # complete elliptical integral of first kind
+            K_p = lambda x: ellipk(sqrt(1-x**2)) # ellipk's compliment
+            a_c = ((r_s * sqrt(ep_re)/(480*pi*K(k1)*K_p(k1)*(1-k1**2) ))*\
+                    (1./a * (pi+log((8*pi*a*(1-k1))/(t*(1+k1)))) +\
+                     1./b * (pi+log((8*pi*b*(1-k1))/(t*(1+k1))))))
+        else:
+            a_c = zeros(f.shape)
 
-        t, k1, ep_re = self.t, self.k1,self.ep_re
-        r_s = surface_resistivity(f=self.frequency.f, rho=self.rho, \
-                mu_r=1)
-        a = self.w/2.
-        b = self.s+self.w/2.
-        K = ellipk      # complete elliptical integral of first kind
-        K_p = lambda x: ellipk(sqrt(1-x**2)) # ellipk's compliment
-
-        return ((r_s * sqrt(ep_re)/(480*pi*K(k1)*K_p(k1)*(1-k1**2) ))*\
-                (1./a * (pi+log((8*pi*a*(1-k1))/(t*(1+k1)))) +\
-                 1./b * (pi+log((8*pi*b*(1-k1))/(t*(1+k1))))))
-
-
+        return a_c
 
     @property
     def Z0(self) -> NumberLike:
@@ -181,7 +191,7 @@ class CPW(Media):
         """
         beta = 1j*2*pi*self.frequency.f*sqrt(self.ep_re*epsilon_0*mu_0)
         alpha = zeros(len(beta))
-        if self.rho is not None and self.t is not None:
+        if self.rho is not None:
             alpha = self.alpha_conductor
 
         return beta+alpha

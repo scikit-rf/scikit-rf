@@ -1,6 +1,6 @@
 import re
 import copy
-from collections import Iterable
+from collections.abc import Iterable
 import zipfile
 
 import numpy as np
