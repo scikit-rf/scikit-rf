@@ -342,8 +342,8 @@ class Qfactor(object):
             result = self._optimise_fit8(self.N)
 
         # overwrite results in self
-        self.Q_L = result.Q_L
-        self.f_L = result.f_L
+        self.Q_L = float(result.Q_L)
+        self.f_L = float(result.f_L)
         self.fitted = True
         self.opt_res = result
 
