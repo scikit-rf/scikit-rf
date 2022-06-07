@@ -24,6 +24,9 @@ if TYPE_CHECKING:
 
 class CPW(Media):
     """
+    Coplanar waveguide.
+    
+    
     A coplanar waveguide transmission line is defined in terms of width,
     spacing, and thickness on a given relative permittivity substrate of a
     certain height. The line has a conductor resistivity and a tangential loss
@@ -47,9 +50,9 @@ class CPW(Media):
     
     * Quasi-static characteristic impedance and effective permittivity model
       use [GhNa84]_ and [GhNa83]_. The models are corrected to account for
-      strip thickness using a first-order approach described in [GGBB96].
+      strip thickness using a first-order approach described in [GGBB96]_.
       A comparison shows that ADS simulator uses another thickness correction
-      method that is according to ADS doc based on [Cohn60]. This second method
+      method that is according to ADS doc based on [Cohn60]_. This second method
       is not implemented in skrf.
     
     * Frequency dispersion of impedance and effective permittivity model use
@@ -61,23 +64,25 @@ class CPW(Media):
     Parameters
     ----------
     frequency : :class:`~skrf.frequency.Frequency` object, optional
-        frequency band of the media
+        frequency band of the media. The default is None.
     z0 : number, array-like, or None (default None)
         the port impedance for media. Only needed if different from the
         characteristic impedance Z0 of the transmission line. In ohm
     w : number, or array-like
-        width of the center conductor, in m
+        width of the center conductor, in m. Default is 3e-3 m.
     s : number, or array-like
-        spacing (width of the gap), in m
+        spacing (width of the gap), in m. Default is 0.3e-3 m.
     h : number, or array-like
-        height of the substrate between backside and conductor, in m
+        height of the substrate between backside and conductor, in m.
+        Default is 1.55 m (equivalent to infinite height for default w and s).
     t : number, or array-like, optional
         conductor thickness, in m. Default is None (no width correction
         to account for strip thickness).
     has_metal_backside : bool, default False
         If the backside is air (False) or metal (True)
     ep_r : number, or array-like, optional
-        relative permittivity of the substrate at frequency f_epr_tand, no unit
+        relative permittivity of the substrate at frequency f_epr_tand,
+        no unit. Default is 4.5.
     diel : str
         dielectric frequency dispersion model in:
         
@@ -85,17 +90,18 @@ class CPW(Media):
         * 'frequencyinvariant'
         
     rho : number, or array-like, or None
-        resistivity of conductor, ohm / m
+        resistivity of conductor, ohm / m. Default is 1.68e-8 ohm /m (copper).
     tand : number, or array-like
-        dielectric loss factor at frequency f_epr_tand
+        dielectric loss factor at frequency f_epr_tand. Default is 0.
     f_low : number, or array-like
         lower frequency for wideband Debye Djordjevic/Svensson dielectric
-        model, in Hz
+        model, in Hz. Default is 1 kHz.
     f_high : number, or array-like
         higher frequency for wideband Debye Djordjevic/Svensson dielectric
-        model, in Hz
+        model, in Hz. Default is 1 THz.
     f_epr_tand : number, or array-like
-        measurement frequency for ep_r and tand of dielectric, in Hz
+        measurement frequency for ep_r and tand of dielectric, in Hz.
+        Default is 1 GHz.
     compatibility_mode: str or None (default)
         If set to 'qucs', following behaviour happens :
         
