@@ -46,6 +46,10 @@ De-embedding Methods
    SplitTee
    AdmittanceCancel
    ImpedanceCancel
+   IEEEP370_SE_NZC_2xThru
+   IEEEP370_MM_NZC_2xThru
+   IEEEP370_SE_ZC_2xThru
+   IEEEP370_MM_ZC_2xThru
 
 """
 
