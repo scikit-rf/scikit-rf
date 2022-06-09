@@ -46,6 +46,10 @@ De-embedding Methods
    SplitTee
    AdmittanceCancel
    ImpedanceCancel
+   IEEEP370_SE_NZC_2xThru
+   IEEEP370_MM_NZC_2xThru
+   IEEEP370_SE_ZC_2xThru
+   IEEEP370_MM_ZC_2xThru
 
 """
 
@@ -920,7 +924,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
     """
     Creates error boxes from a test fixture 2x thru.
     
-    Based on https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP3702xThru.m
+    Based on [ElSA20]_ and https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP3702xThru.m
     commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
 
     A deembedding object is created with one 2x thru measurement,
@@ -948,6 +952,12 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
     Remove parasitics to get the actual device network
 
     >>> dut = dm.deembed(fdf)
+    
+    References
+    ----------
+    .. [ElSA20] Ellison J, Smith SB, Agili S., "Using a 2x-thru standard to achieve
+        accurate de-embedding of measurements", Microwave Optical Technology
+        Letter, 2020, https://doi.org/10.1002/mop.32098
     """
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, *args, **kwargs):
@@ -1149,27 +1159,39 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         e111 = (s22r - e002) / s12r
         e112 = (s11r - e001) / s21r
         
-        # calc e01
-        k = 1
-        test = k * np.sqrt(s21r * (1 - e111 * e112))
-        e01 = zeros((n), dtype = complex)
-        for i, value in enumerate(test):
-            if(i>0):
-                if(angle(test[i]) - angle(test[i-1]) > 0):
-                    k = -1 * k
-            # mhuser : is it a problem with complex value cast to real here ?
-            e01[i] = k * np.sqrt(s21r[i] * (1 - e111[i] * e112[i]))
+        # original implementation, 180° phase jumps in case of phase noise
+        # # calc e01
+        # k = 1
+        # test = k * np.sqrt(s21r * (1 - e111 * e112))
+        # e01 = zeros((n), dtype = complex)
+        # for i, value in enumerate(test):
+        #     if(i>0):
+        #         if(angle(test[i]) - angle(test[i-1]) > 0):
+        #             k = -1 * k
+        #     # mhuser : is it a problem with complex value cast to real here ?
+        #     e01[i] = k * np.sqrt(s21r[i] * (1 - e111[i] * e112[i]))
                 
-        # calc e10
-        k = 1
-        test = k * np.sqrt(s12r * (1 - e111 * e112))
-        e10 = zeros((n), dtype = complex)
-        for i, value in enumerate(test):
-            if(i>0):
-                if(angle(test[i]) - angle(test[i-1]) > 0):
-                    k = -1 * k
-            # mhuser : is it a problem with complex value cast to real here ?
-            e10[i] = k * np.sqrt(s12r[i] * (1 - e111[i] * e112[i]))
+        # # calc e10
+        # k = 1
+        # test = k * np.sqrt(s12r * (1 - e111 * e112))
+        # e10 = zeros((n), dtype = complex)
+        # for i, value in enumerate(test):
+        #     if(i>0):
+        #         if(angle(test[i]) - angle(test[i-1]) > 0):
+        #             k = -1 * k
+        #     # mhuser : is it a problem with complex value cast to real here ?
+        #     e10[i] = k * np.sqrt(s12r[i] * (1 - e111[i] * e112[i]))
+        
+        # elegant way to avoid 180° phase jumps in case of phase noise
+        # calc e01 and e10
+        e10e01 = 0.5 * (s12r + s21r) * (1 - e111 * e112)
+        e01 = np.sqrt(e10e01)
+        e10 = zeros(n, dtype = complex)
+        for i in range(n):
+            if i > 0:
+                if npy.abs(-e01[i] - e01[i-1]) < npy.abs(e01[i] - e01[i-1]):
+                    e01[i] *= -1
+            e10[i] = e10e01[i] / e01[i]
         
         # S-parameters are setup correctly
         if not flag_DC and not flag_df:
