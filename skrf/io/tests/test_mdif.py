@@ -84,6 +84,14 @@ class MdifTestCase(unittest.TestCase):
         np.testing.assert_almost_equal(ntwk.s_deg[0,1,0], 150.35237)
         np.testing.assert_equal(ntwk.f[0], 1e9)
 
+    def test_comment_after_BEGIN(self):
+        """Test reading a MDIF file which has comments after BEGIN ACDATA. """
+        file = self.test_dir + 'test_comment_after_BEGIN.mdf'
+        # Mdif Object Init
+        mdif = rf.Mdif(file)
+        # to Networkset Init
+        ns = rf.NetworkSet.from_mdif(file)
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(MdifTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
