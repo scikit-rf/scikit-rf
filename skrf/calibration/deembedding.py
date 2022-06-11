@@ -972,7 +972,8 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
     def __init__(self, dummy_2xthru, name=None,
-                 z0 = 50, verbose = False, *args, **kwargs):
+                 z0 = 50, use_z_instead_ifft = False, verbose = False,
+                 *args, **kwargs):
         """
         IEEEP370_SE_NZC_2xThru De-embedding Initializer
 
@@ -987,6 +988,14 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         name : string
             optional name of de-embedding object
+            
+        use_z_instead_ifft:
+            use z-transform instead ifft. This method is not documented in
+            the paper but exists in the IEEE repo. It is intended to be
+            used only if the length of the 2x-Thru is so short that there is
+            not enough point in time domain to determine length and impedance
+            of midpoint. Parameter `verbose` could be used for diagnostic in
+            ifft mode (default: False)
         
         verbose :
             view the process (default: False)
@@ -1002,6 +1011,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         self.s2xthru = dummy_2xthru.copy()
         self.z0 = z0
         dummies = [self.s2xthru]
+        self.use_z_instead_ifft = use_z_instead_ifft
         self.verbose = verbose
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
@@ -1097,169 +1107,189 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         f = s2xthru.frequency.f
         s = s2xthru.s
         
-        # strip DC point if one exists
-        if(f[0] == 0):
-            warnings.warn(
-                "DC point detected. An interpolated DC point will be included in the errorboxes.",
-                RuntimeWarning
-                )
-            flag_DC = True
-            fold = f
-            f = f[1:]
-            s = s[:, :, 1:]
-        else:
-            flag_DC = False
-        
-        # interpolate S-parameters if the frequency vector is not acceptable
-        if(f[1] - f[0] != f[0]):
-            warnings.warn(
-               "Non-uniform frequency vector detected. An interpolated S-parameter matrix will be created for this calculation. The output results will be re-interpolated to the original vector.",
-               RuntimeWarning
-               )
-            flag_df = True
-            df = f[1] - f[0]
-            projected_n = round(f[-1]/f[0])
-            if(projected_n < 10000):
-                fnew = f[0] * (np.arange(0, projected_n) + 1)
+        if not self.use_z_instead_ifft:
+            # strip DC point if one exists
+            if(f[0] == 0):
+                warnings.warn(
+                    "DC point detected. An interpolated DC point will be included in the errorboxes.",
+                    RuntimeWarning
+                    )
+                flag_DC = True
+                fold = f
+                f = f[1:]
+                s = s[:, :, 1:]
             else:
-                dfnew = f[-1]/10000
-                fnew = dfnew * (np.arange(0, 10000) + 1)
-            stemp = Network(frequency = Frequency.from_f(f), s = s)
-            stemp.interpolate(fnew)
-            f = fnew
-            s = stemp.s
-            del stemp
-                     
-        else:
-            flag_df = False
-        
-        n = len(f)
-        s11 = s[:, 0, 0]
-        
-        # get e001 and e002
-        # e001
-        s21 = s[:, 1, 0]
-        dcs21 = self.dc_interp(s21, f)
-        t21 = fftshift(irfft(concatenate(([dcs21], s21)), axis=0), axes=0)
-        x = np.argmax(t21)
-        
-        dcs11 = self.DC(s11,f)
-        t11 = fftshift(irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
-        step11 = self.makeStep(t11)
-        z11 = -self.z0 * (step11 + 1) / (step11 - 1)
-        z11x = z11[x]
-        
-        if self.verbose:
-            fig = plt.figure()
-            fig.suptitle('Midpoint length and impedance determination')
-            ax1 = plt.subplot(2, 1, 1)
-            ax1.plot(t21, label = 't21')
-            ax1.plot([x], [t21[x]], marker = 'o', linestyle = 'none',
-                        label = 't21x')
-            ax1.grid()
-            ax1.legend()
-            ax2 = plt.subplot(2, 1, 2, sharex = ax1)
-            ax2.plot(z11, label = 'z11')
-            ax2.plot([x], [z11[x]], marker = 'o', linestyle = 'none',
-                        label = 'z11x')
-            ax2.set_xlabel('t-samples')
-            ax2.set_xlim((x - 50, x + 50))
-            ax2.grid()
-            ax2.legend()
-        
-        temp = Network(frequency = self.s2xthru.frequency, s = s, z0 = self.z0)
-        temp.renormalize(z11x)
-        sr = temp.s
-        del temp
-        
-        s11r = sr[:, 0, 0]
-        s21r = sr[:, 1, 0]
-        s12r = sr[:, 0, 1]
-        s22r = sr[:, 1, 1]
-        
-        dcs11r = self.DC(s11r, f)
-        # irfft is equivalent to ifft(makeSymmetric(x))
-        t11r = fftshift(irfft(concatenate(([dcs11r], s11r)), axis=0), axes=0)
-        t11r[x:] = 0
-        e001 = fft(ifftshift(t11r))
-        e001 = e001[1:n+1]
-        
-        dcs22r = self.DC(s22r, f)
-        t22r = fftshift(irfft(concatenate(([dcs22r], s22r)), axis=0), axes=0)
-        t22r[x:] = 0
-        e002 = fft(ifftshift(t22r))
-        e002 = e002[1:n+1]
-        
-        # calc e111 and e112
-        e111 = (s22r - e002) / s12r
-        e112 = (s11r - e001) / s21r
-        
-        # original implementation, 180° phase jumps in case of phase noise
-        # # calc e01
-        # k = 1
-        # test = k * np.sqrt(s21r * (1 - e111 * e112))
-        # e01 = zeros((n), dtype = complex)
-        # for i, value in enumerate(test):
-        #     if(i>0):
-        #         if(angle(test[i]) - angle(test[i-1]) > 0):
-        #             k = -1 * k
-        #     # mhuser : is it a problem with complex value cast to real here ?
-        #     e01[i] = k * np.sqrt(s21r[i] * (1 - e111[i] * e112[i]))
+                flag_DC = False
+            
+            # interpolate S-parameters if the frequency vector is not acceptable
+            if(f[1] - f[0] != f[0]):
+                warnings.warn(
+                   "Non-uniform frequency vector detected. An interpolated S-parameter matrix will be created for this calculation. The output results will be re-interpolated to the original vector.",
+                   RuntimeWarning
+                   )
+                flag_df = True
+                df = f[1] - f[0]
+                projected_n = round(f[-1]/f[0])
+                if(projected_n < 10000):
+                    fnew = f[0] * (np.arange(0, projected_n) + 1)
+                else:
+                    dfnew = f[-1]/10000
+                    fnew = dfnew * (np.arange(0, 10000) + 1)
+                stemp = Network(frequency = Frequency.from_f(f), s = s)
+                stemp.interpolate(fnew)
+                f = fnew
+                s = stemp.s
+                del stemp
+                         
+            else:
+                flag_df = False
+            
+            n = len(f)
+            s11 = s[:, 0, 0]
+            
+            # get e001 and e002
+            # e001
+            s21 = s[:, 1, 0]
+            dcs21 = self.dc_interp(s21, f)
+            t21 = fftshift(irfft(concatenate(([dcs21], s21)), axis=0), axes=0)
+            x = np.argmax(t21)
+            
+            dcs11 = self.DC(s11,f)
+            t11 = fftshift(irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
+            step11 = self.makeStep(t11)
+            z11 = -self.z0 * (step11 + 1) / (step11 - 1)
+            z11x = z11[x]
+            
+            if self.verbose:
+                fig = plt.figure()
+                fig.suptitle('Midpoint length and impedance determination')
+                ax1 = plt.subplot(2, 1, 1)
+                ax1.plot(t21, label = 't21')
+                ax1.plot([x], [t21[x]], marker = 'o', linestyle = 'none',
+                            label = 't21x')
+                ax1.grid()
+                ax1.legend()
+                ax2 = plt.subplot(2, 1, 2, sharex = ax1)
+                ax2.plot(z11, label = 'z11')
+                ax2.plot([x], [z11[x]], marker = 'o', linestyle = 'none',
+                            label = 'z11x')
+                ax2.set_xlabel('t-samples')
+                ax2.set_xlim((x - 50, x + 50))
+                ax2.grid()
+                ax2.legend()
+            
+            temp = Network(frequency = self.s2xthru.frequency, s = s, z0 = self.z0)
+            temp.renormalize(z11x)
+            sr = temp.s
+            del temp
+            
+            s11r = sr[:, 0, 0]
+            s21r = sr[:, 1, 0]
+            s12r = sr[:, 0, 1]
+            s22r = sr[:, 1, 1]
+            
+            dcs11r = self.DC(s11r, f)
+            # irfft is equivalent to ifft(makeSymmetric(x))
+            t11r = fftshift(irfft(concatenate(([dcs11r], s11r)), axis=0), axes=0)
+            t11r[x:] = 0
+            e001 = fft(ifftshift(t11r))
+            e001 = e001[1:n+1]
+            
+            dcs22r = self.DC(s22r, f)
+            t22r = fftshift(irfft(concatenate(([dcs22r], s22r)), axis=0), axes=0)
+            t22r[x:] = 0
+            e002 = fft(ifftshift(t22r))
+            e002 = e002[1:n+1]
+            
+            # calc e111 and e112
+            e111 = (s22r - e002) / s12r
+            e112 = (s11r - e001) / s21r
+            
+            # original implementation, 180° phase jumps in case of phase noise
+            # # calc e01
+            # k = 1
+            # test = k * np.sqrt(s21r * (1 - e111 * e112))
+            # e01 = zeros((n), dtype = complex)
+            # for i, value in enumerate(test):
+            #     if(i>0):
+            #         if(angle(test[i]) - angle(test[i-1]) > 0):
+            #             k = -1 * k
+            #     # mhuser : is it a problem with complex value cast to real here ?
+            #     e01[i] = k * np.sqrt(s21r[i] * (1 - e111[i] * e112[i]))
+                    
+            # # calc e10
+            # k = 1
+            # test = k * np.sqrt(s12r * (1 - e111 * e112))
+            # e10 = zeros((n), dtype = complex)
+            # for i, value in enumerate(test):
+            #     if(i>0):
+            #         if(angle(test[i]) - angle(test[i-1]) > 0):
+            #             k = -1 * k
+            #     # mhuser : is it a problem with complex value cast to real here ?
+            #     e10[i] = k * np.sqrt(s12r[i] * (1 - e111[i] * e112[i]))
+            
+            # elegant way to avoid 180° phase jumps in case of phase noise
+            # calc e01 and e10
+            e10e01 = 0.5 * (s12r + s21r) * (1 - e111 * e112)
+            e01 = np.sqrt(e10e01)
+            e10 = zeros(n, dtype = complex)
+            for i in range(n):
+                if i > 0:
+                    if npy.abs(-e01[i] - e01[i-1]) < npy.abs(e01[i] - e01[i-1]):
+                        e01[i] *= -1
+                e10[i] = e10e01[i] / e01[i]
+            
+            # S-parameters are setup correctly
+            if not flag_DC and not flag_df:
+                fixture_model_1r = zeros((n, 2, 2), dtype = complex)
+                fixture_model_1r[:, 0, 0] = e001
+                fixture_model_1r[:, 1, 0] = e01
+                fixture_model_1r[:, 0, 1] = e01
+                fixture_model_1r[:, 1, 1] = e111
                 
-        # # calc e10
-        # k = 1
-        # test = k * np.sqrt(s12r * (1 - e111 * e112))
-        # e10 = zeros((n), dtype = complex)
-        # for i, value in enumerate(test):
-        #     if(i>0):
-        #         if(angle(test[i]) - angle(test[i-1]) > 0):
-        #             k = -1 * k
-        #     # mhuser : is it a problem with complex value cast to real here ?
-        #     e10[i] = k * np.sqrt(s12r[i] * (1 - e111[i] * e112[i]))
-        
-        # elegant way to avoid 180° phase jumps in case of phase noise
-        # calc e01 and e10
-        e10e01 = 0.5 * (s12r + s21r) * (1 - e111 * e112)
-        e01 = np.sqrt(e10e01)
-        e10 = zeros(n, dtype = complex)
-        for i in range(n):
-            if i > 0:
-                if npy.abs(-e01[i] - e01[i-1]) < npy.abs(e01[i] - e01[i-1]):
-                    e01[i] *= -1
-            e10[i] = e10e01[i] / e01[i]
-        
-        # S-parameters are setup correctly
-        if not flag_DC and not flag_df:
-            fixture_model_1r = zeros((n, 2, 2), dtype = complex)
-            fixture_model_1r[:, 0, 0] = e001
-            fixture_model_1r[:, 1, 0] = e01
-            fixture_model_1r[:, 0, 1] = e01
-            fixture_model_1r[:, 1, 1] = e111
+                fixture_model_2r = zeros((n, 2, 2), dtype = complex)
+                fixture_model_2r[:, 1, 1] = e002
+                fixture_model_2r[:, 0, 1] = e10
+                fixture_model_2r[:, 1, 0] = e10
+                fixture_model_2r[:, 0, 0] = e112
             
-            fixture_model_2r = zeros((n, 2, 2), dtype = complex)
-            fixture_model_2r[:, 1, 1] = e002
-            fixture_model_2r[:, 0, 1] = e10
-            fixture_model_2r[:, 1, 0] = e10
-            fixture_model_2r[:, 0, 0] = e112
-        
-        
-        # S-parameters are not setup correctly
+            
+            # S-parameters are not setup correctly
+            else:
+                # todo implement using Network.interpolate to revert to initial freq axis
+                if flag_DC:
+                    raise ValueError("TODO : handle DC point already existing.")
+                if flag_df:
+                    raise NotImplementedError("TODO : handle interpolation.")
+            
+            # create the S-parameter objects for the errorboxes
+            s_fixture_model_r1  = Network(frequency = s2xthru.frequency, s = fixture_model_1r, z0 = z11x)
+            s_fixture_model_r2  = Network(frequency = s2xthru.frequency, s = fixture_model_2r, z0 = z11x)
+                
+            # renormalize the S-parameter errorboxes to the original reference impedance
+            s_fixture_model_r1.renormalize(self.z0)
+            s_fixture_model_r2.renormalize(self.z0)
+            s_side1 = s_fixture_model_r1
+            s_side2 = s_fixture_model_r2.flipped() # FIX-2 is flipped in skrf
+            
         else:
-            # todo implement using Network.interpolate to revert to initial freq axis
-            if flag_DC:
-                raise ValueError("TODO : handle DC point already existing.")
-            if flag_df:
-                raise NotImplementedError("TODO : handle interpolation.")
-        
-        # create the S-parameter objects for the errorboxes
-        s_fixture_model_r1  = Network(frequency = s2xthru.frequency, s = fixture_model_1r, z0 = z11x)
-        s_fixture_model_r2  = Network(frequency = s2xthru.frequency, s = fixture_model_2r, z0 = z11x)
+            z = s2xthru.z
+            ZL = zeros(z.shape, dtype = complex)
+            ZR = zeros(z.shape, dtype = complex)
             
-        # renormalize the S-parameter errorboxes to the original reference impedance
-        s_fixture_model_r1.renormalize(self.z0)
-        s_fixture_model_r2.renormalize(self.z0)
-        s_side1 = s_fixture_model_r1
-        s_side2 = s_fixture_model_r2.flipped() # FIX-2 is flipped in skrf
+            for i in range(len(f)):
+                ZL[i, :, :] = [
+                    [z[i, 0, 0] + z[i, 1, 0], 2. * z[i, 1, 0]],
+                    [2. * z[i, 1, 0], 2. * z[i, 1, 0]]
+                              ]
+                ZL[i, :, :] = [
+                    [2. * z[i, 0, 1], 2. * z[i, 0, 1]],
+                    [2. * z[i, 0, 1], z[i, 1, 1] + z[i, 0, 1]]
+                              ]
+                
+                s_side1 = Network(frequency = s2xthru.frequency, z = ZL, z0 = self.z0)
+                s_side2 = Network(frequency = s2xthru.frequency, z = ZR, z0 = self.z0)
+                s_side2.flip() # FIX-2 is flipped in skrf
         
         return (s_side1, s_side2)
 
@@ -1348,7 +1378,8 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
     def __init__(self, dummy_2xthru, name=None,
-                 z0 = 50, port_order: str = 'second', verbose = False,
+                 z0 = 50, port_order: str = 'second',
+                 use_z_instead_ifft = False, verbose = False,
                  *args, **kwargs):
         """
         IEEEP370_MM_NZC_2xThru De-embedding Initializer
@@ -1367,6 +1398,14 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
 
         name : string
             optional name of de-embedding object
+            
+        use_z_instead_ifft:
+            use z-transform instead ifft. This method is not documented in
+            the paper but exists in the IEEE repo. It is intended to be
+            used only if the length of the 2x-Thru is so short that there is
+            not enough point in time domain to determine length and impedance
+            of midpoint. Parameter `verbose` could be used for diagnostic in
+            ifft mode (default: False)
         
         verbose :
             view the process (default: False)
@@ -1383,6 +1422,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         self.z0 = z0
         self.port_order = port_order
         dummies = [self.s2xthru]
+        self.use_z_instead_ifft = use_z_instead_ifft
         self.verbose = verbose
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
@@ -1456,9 +1496,11 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         sdd = subnetwork(mm_2xthru, [0, 1])
         scc = subnetwork(mm_2xthru, [2, 3])
         dm_dd  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = sdd, z0 = self.z0 * 2,
-                                        verbose = self.verbose)
+                                use_z_instead_ifft = self.use_z_instead_ifft,
+                                verbose = self.verbose)
         dm_cc  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = scc, z0 = self.z0 / 2,
-                                        verbose = self.verbose)
+                                use_z_instead_ifft = self.use_z_instead_ifft,
+                                verbose = self.verbose)
         
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
