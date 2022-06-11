@@ -951,7 +951,7 @@ class VectorFitting:
         else:
             return False
 
-    def passivity_enforce(self, n_samples: int = 100, f_max: float = None, parameter_type: str = 's') -> None:
+    def passivity_enforce(self, n_samples: int = 200, f_max: float = None, parameter_type: str = 's') -> None:
         """
         Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
         presented in [#]_.
@@ -1058,7 +1058,7 @@ class VectorFitting:
             A_matrix = []
             b_vector = []
 
-            # calculate S-matrix at this frequency
+            # calculate S-matrix at this frequency (shape fxNxN)
             s_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D, E)
 
             # singular value decomposition
@@ -1067,47 +1067,42 @@ class VectorFitting:
             # keep track of the greatest singular value in every iteration step
             sigma_max = np.amax(sigma)
 
-            # sweep through evaluation frequencies
-            for i_eval, freq_eval in enumerate(freqs_eval):
-                # prepare and fill the square matrices 'gamma' and 'psi' marking passivity violations
-                gamma = np.diag(sigma[i_eval])
-                psi = np.diag(sigma[i_eval])
-                for i, sigma_i in enumerate(sigma[i_eval]):
-                    if sigma_i <= delta:
-                        gamma[i, i] = 0
-                        psi[i, i] = 0
-                    else:
-                        gamma[i, i] = 1
-                        psi[i, i] = delta
+            # find and perturb singular values that cause passivity violations
+            idx_viol = np.nonzero(sigma > delta)
+            sigma_viol = np.zeros_like(sigma)
+            sigma_viol[idx_viol] = sigma[idx_viol] - delta
 
-                # calculate violation S-matrix
-                # s_viol is again a complex NxN S-matrix (N: number of network ports)
-                sigma_viol = np.matmul(np.diag(sigma[i_eval]), gamma) - psi
-                s_viol = np.matmul(np.matmul(u[i_eval], sigma_viol), vh[i_eval])
+            # construct a stack of diagonal matrices with the perturbed singular values on the diagonal
+            sigma_viol_diag = np.zeros_like(u, dtype=float)
+            idx_diag = np.arange(np.shape(sigma)[1])
+            sigma_viol_diag[:, idx_diag, idx_diag] = sigma_viol
 
-                # Laplace frequency of this sample in the sweep
-                s_k = 2j * np.pi * freq_eval
+            # calculate violation S-responses
+            s_viol = np.matmul(np.matmul(u, sigma_viol_diag), vh)
 
-                # build matrix system for least-squares fitting of new set of violation residues C_viol
-                # using rule for transpose of matrix products: transpose(A * B) = transpose(B) * transpose(A)
-                # hence, S = C * coeffs <===> transpose(S) = transpose(coeffs) * transpose(C)
-                coeffs = np.transpose(np.matmul(np.linalg.inv(s_k * np.identity(dim_A) - A), B))
-                if i_eval == 0:
-                    A_matrix = np.vstack([np.real(coeffs), np.imag(coeffs)])
-                    b_vector = np.vstack([np.real(np.transpose(s_viol)), np.imag(np.transpose(s_viol))])
-                else:
-                    A_matrix = np.concatenate((A_matrix, np.vstack([np.real(coeffs),
-                                                                    np.imag(coeffs)])), axis=0)
-                    b_vector = np.concatenate((b_vector, np.vstack([np.real(np.transpose(s_viol)),
-                                                                    np.imag(np.transpose(s_viol))])), axis=0)
+            # calculate coefficient matrix
+            A_freq = np.linalg.inv(2j * np.pi * freqs_eval[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
+            coeffs = np.matmul(A_freq, B[None, :, :])
 
-            # solve least squares
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=None)
+            # fit perturbed residues C_t for each response S_{i,j}
+            for i in range(np.shape(s_viol)[1]):
+                for j in range(np.shape(s_viol)[2]):
+                    # mind the transpose of the system to compensate for the exchanged order of matrix multiplication:
+                    # wanting to solve S = C_t * coeffs
+                    # but actually solving S = coeffs * C_t
+                    # S = C_t * coeffs <==> transpose(S) = transpose(coeffs) * transpose(C_t)
 
-            C_viol = np.transpose(x)
+                    # solve least squares (real-valued)
+                    x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((np.real(coeffs[:, :, i]),
+                                                                                   np.imag(coeffs[:, :, i]))),
+                                                                        np.hstack((np.real(s_viol[:, j, i]),
+                                                                                   np.imag(s_viol[:, j, i]))),
+                                                                        rcond=None)
 
-            # calculate and update C_t for next iteration
-            C_t = C_t - C_viol
+                    # perturbe residues by subtracting respective row and column in C_t
+                    # one half of the solution will always be 0 due to construction of A and B
+                    C_t[j, :] = C_t[j, :] - x
+
             t += 1
             self.history_max_sigma.append(sigma_max)
 
