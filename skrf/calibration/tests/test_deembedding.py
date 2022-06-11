@@ -176,19 +176,6 @@ class DeembeddingTestCase(unittest.TestCase):
         # for spot frequency checking
         self.raw6_1f = self.raw6['10GHz'] 
         self.thru6_1f = self.thru6['10GHz']
-        
-        # for IEEEP370 NZC and ZC de-embedding checking
-        self.s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
-        self.fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
-        self.nzc_ref = rf.Network(os.path.join(self.test_dir, 'deembedded_SE_NZC_fdf.s2p'))
-        self.zc_ref = rf.Network(os.path.join(self.test_dir, 'deembedded_SE_ZC_fdf.s2p'))
-        nonuniform_freq = rf.Frequency(self.s2xthru.f[0], self.s2xthru.f[-1], 
-                                       npoints=len(self.s2xthru), unit='Hz', 
-                                       sweep_type='log')
-        self.s2xthru_nu = self.s2xthru.interpolate(nonuniform_freq)
-        self.fdf_nu = self.fdf.interpolate(nonuniform_freq)
-        self.nzc_ref_nu = self.nzc_ref.interpolate(nonuniform_freq)
-        self.zc_ref = self.zc_ref.interpolate(nonuniform_freq)
 
         # create de-embedding objects
         self.dm = rf.OpenShort(self.open, self.short)
@@ -200,26 +187,7 @@ class DeembeddingTestCase(unittest.TestCase):
         self.dm_tee = rf.SplitTee(self.thru4_1f)
         self.dm_ac = rf.AdmittanceCancel(self.thru5_1f)
         self.dm_ic = rf.ImpedanceCancel(self.thru6_1f)
-        self.dm_nzc = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru, 
-                                        name = '2xthru')
-        self.dm_zc  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = self.s2xthru, 
-                                       dummy_fix_dut_fix = self.fdf, 
-                                       bandwidth_limit = 10e9, 
-                                       pullback1 = 0, pullback2 = 0,
-                                       leadin = 0,
-                                       NRP_enable = False,
-                                       name = 'zc2xthru')
         
-        with self.assertRaises(NotImplementedError) as context:
-            self.dm_nzc_nu = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru_nu, 
-                                            name = '2xthru')
-            self.dm_zc_nu  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = self.s2xthru_nu, 
-                                           dummy_fix_dut_fix = self.fdf_nu, 
-                                           bandwidth_limit = 10e9, 
-                                           pullback1 = 0, pullback2 = 0,
-                                           leadin = 0,
-                                           NRP_enable = False,
-                                           name = 'zc2xthru')
         # relative tolerance for comparisons
         self.rtol = 1e-3
 
@@ -317,6 +285,10 @@ class DeembeddingTestCase(unittest.TestCase):
         thru.
         Test that this thru has S21 amplitude and phase smaller than a limit. 
         """
+        self.s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
+        self.fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
+        self.dm_nzc = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru, 
+                                        name = '2xthru')
         residuals = self.dm_nzc.s_side1.inv ** self.s2xthru ** self.dm_nzc.s_side2.inv
         # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
         il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
@@ -333,6 +305,15 @@ class DeembeddingTestCase(unittest.TestCase):
         thru.
         Test that this thru has S21 amplitude and phase smaller than a limit. 
         """
+        self.s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
+        self.fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
+        self.dm_zc  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = self.s2xthru, 
+                                       dummy_fix_dut_fix = self.fdf, 
+                                       bandwidth_limit = 10e9, 
+                                       pullback1 = 0, pullback2 = 0,
+                                       leadin = 0,
+                                       NRP_enable = False,
+                                       name = 'zc2xthru')
         residuals = self.dm_zc.s_side1.inv ** self.s2xthru ** self.dm_zc.s_side2.inv
         # insertion loss magnitude deviate from 1.0 from less than 0.2 dB
         il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
@@ -341,6 +322,57 @@ class DeembeddingTestCase(unittest.TestCase):
         # too much tolerance here allowed as for now
         il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
         self.assertTrue(np.max(np.abs(il_phase)) <= 2.0, 'residual IL Phase')
+        
+    def test_IEEEP370_SE_NZC_2xThru_no_180deg_phase_jumps(self):
+        """
+        Test test_IEEEP370_SE_NZC_2xThru.
+
+        After de-embedding fixtures model from 2xtru, the network is a perfect
+        thru.
+        If there is noise on the 2xthru phase, incorrect computation of e01 and
+        e10 could lead to 180° jumps into the side models s21 phase.
+        Check this not happens.
+        """
+        self.s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
+        self.fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
+        # with phase noise
+        # add enough phase noise to trigger phase jumps with original
+        # implementation, but small enough to keep within 1° limit line
+        self.s2xthru_pn = self.s2xthru.copy()
+        self.s2xthru_pn.add_noise_polar(0.0002, 0.2)
+        self.dm_nzc_pn = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru_pn, 
+                                        name = '2xthru')
+        residuals = self.dm_nzc_pn.s_side1.inv ** self.s2xthru_pn ** self.dm_nzc_pn.s_side2.inv
+        # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
+        il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
+        self.assertTrue(np.max(np.abs(il_mag)) <= 0.1, 'residual IL magnitude')
+        # insertion loss phase deviate from 0 degree from less than 1 degree
+        il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
+        self.assertTrue(np.max(np.abs(il_phase)) <= 1.0, 'residual IL Phase')
+        
+    def test_IEEEP370_interpolation_not_implemented(self):
+        """
+        Test if IEEEP370 methods fails when interpolation is required.
+        TODO: add interpolation handling
+        """
+        self.s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
+        self.fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
+        # with non-uniform frequencies
+        nonuniform_freq = rf.Frequency(self.s2xthru.f[0], self.s2xthru.f[-1], 
+                                       npoints=len(self.s2xthru), unit='Hz', 
+                                       sweep_type='log')
+        self.s2xthru_nu = self.s2xthru.interpolate(nonuniform_freq)
+        self.fdf_nu = self.fdf.interpolate(nonuniform_freq)
+        with self.assertRaises(NotImplementedError) as context:
+            self.dm_nzc_nu = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru_nu, 
+                                            name = '2xthru')
+            self.dm_zc_nu  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = self.s2xthru_nu, 
+                                           dummy_fix_dut_fix = self.fdf_nu, 
+                                           bandwidth_limit = 10e9, 
+                                           pullback1 = 0, pullback2 = 0,
+                                           leadin = 0,
+                                           NRP_enable = False,
+                                           name = 'zc2xthru')
 
 if __name__ == "__main__":
     # Launch all tests
