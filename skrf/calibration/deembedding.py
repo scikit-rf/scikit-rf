@@ -972,7 +972,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
     def __init__(self, dummy_2xthru, name=None,
-                 z0 = 50, *args, **kwargs):
+                 z0 = 50, verbose = False, *args, **kwargs):
         """
         IEEEP370_SE_NZC_2xThru De-embedding Initializer
 
@@ -987,6 +987,9 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         name : string
             optional name of de-embedding object
+        
+        verbose :
+            view the process (default: False)
 
         args, kwargs:
             passed to :func:`Deembedding.__init__`
@@ -999,6 +1002,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         self.s2xthru = dummy_2xthru.copy()
         self.z0 = z0
         dummies = [self.s2xthru]
+        self.verbose = verbose
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
         self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru)
@@ -1144,6 +1148,24 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         step11 = self.makeStep(t11)
         z11 = -self.z0 * (step11 + 1) / (step11 - 1)
         z11x = z11[x]
+        
+        if self.verbose:
+            fig = plt.figure()
+            fig.suptitle('Midpoint length and impedance determination')
+            ax1 = plt.subplot(2, 1, 1)
+            ax1.plot(t21, label = 't21')
+            ax1.plot([x], [t21[x]], marker = 'o', linestyle = 'none',
+                        label = 't21x')
+            ax1.grid()
+            ax1.legend()
+            ax2 = plt.subplot(2, 1, 2, sharex = ax1)
+            ax2.plot(z11, label = 'z11')
+            ax2.plot([x], [z11[x]], marker = 'o', linestyle = 'none',
+                        label = 'z11x')
+            ax2.set_xlabel('t-samples')
+            ax2.set_xlim((x - 50, x + 50))
+            ax2.grid()
+            ax2.legend()
         
         temp = Network(frequency = self.s2xthru.frequency, s = s, z0 = self.z0)
         temp.renormalize(z11x)
@@ -1326,7 +1348,8 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
     def __init__(self, dummy_2xthru, name=None,
-                 z0 = 50, port_order: str = 'second', *args, **kwargs):
+                 z0 = 50, port_order: str = 'second', verbose = False,
+                 *args, **kwargs):
         """
         IEEEP370_MM_NZC_2xThru De-embedding Initializer
 
@@ -1344,6 +1367,9 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
 
         name : string
             optional name of de-embedding object
+        
+        verbose :
+            view the process (default: False)
 
         args, kwargs:
             passed to :func:`Deembedding.__init__`
@@ -1357,6 +1383,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         self.z0 = z0
         self.port_order = port_order
         dummies = [self.s2xthru]
+        self.verbose = verbose
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
         self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru)
@@ -1428,8 +1455,10 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         #extract common and differential mode and model fixtures for each
         sdd = subnetwork(mm_2xthru, [0, 1])
         scc = subnetwork(mm_2xthru, [2, 3])
-        dm_dd  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = sdd, z0 = self.z0 * 2)
-        dm_cc  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = scc, z0 = self.z0 / 2)
+        dm_dd  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = sdd, z0 = self.z0 * 2,
+                                        verbose = self.verbose)
+        dm_cc  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = scc, z0 = self.z0 / 2,
+                                        verbose = self.verbose)
         
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
@@ -1565,7 +1594,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         self.flag_df = False
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
-        self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru, self.sfix_dut_fix)
+        self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru,
+                                                      self.sfix_dut_fix)
 
     def deembed(self, ntwk):
         """
@@ -2178,7 +2208,8 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         self.flag_df = False
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
-        self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru, self.sfix_dut_fix)
+        self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru,
+                                                        self.sfix_dut_fix)
 
     def deembed(self, ntwk):
         """
