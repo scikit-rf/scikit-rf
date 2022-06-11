@@ -34,12 +34,6 @@ class CircuitTestConstructor(unittest.TestCase):
         _ntwk1.name = ''
         self.assertRaises(AttributeError, rf.Circuit, connections)
 
-    def test_port_has_correct_name(self):
-        """
-        Port object should have the string 'port' in its name.
-        """
-        self.assertRaises(ValueError, rf.Circuit.Port, self.freq, name='test')
-
     def test_all_networks_have_same_frequency(self):
         """
         Check that a Network with a different frequency than the other
@@ -52,6 +46,16 @@ class CircuitTestConstructor(unittest.TestCase):
 
         _ntwk1.frequency = rf.Frequency(start=1, stop=1, npoints=1)
         self.assertRaises(AttributeError, rf.Circuit, connections)
+
+    def test_no_duplicate_node(self):
+        """
+        Check that a circuit description has no duplicated (network, port)
+        """
+        # (port1, 0) is found twice in the connections description
+        connections = [[(self.port1, 0), (self.ntwk1, 0)],
+                       [(self.ntwk1, 1), (self.ntwk2, 0)],
+                       [(self.ntwk2, 1), (self.port1, 0)]]
+        self.assertRaises(AttributeError, rf.Circuit, connections)        
 
     def test_s_active(self):
         """
@@ -883,7 +887,7 @@ class CircuitTestComplexCharacteristicImpedance(unittest.TestCase):
         # Creating equivalent reference circuit
         port1 = rf.Circuit.Port(self.f0, z0=50, name='port1')
         port2 = rf.Circuit.Port(self.f0, z0=50, name='port2')
-        ntw0 = rf.Network(frequency=self.f0, z0=50, s=self.s0, name='dut')
+        ntw0 = self.ntw0
 
         cnx = [  # z0=[50,50]
             [(port1, 0), (ntw0, 0)],
@@ -929,18 +933,26 @@ class CircuitTestComplexCharacteristicImpedance(unittest.TestCase):
         ' Check real z0 circuit '
         np.testing.assert_allclose(self.cir_real.network.s, self.s_real, atol=1e-4)
 
+    def test_real_z_params(self):
+        ' Check Z-parameters match'
+        np.testing.assert_allclose(self.cir.network.z, self.cir_real.network.z, atol=1e-4)
+
+    def test_complex_z_params(self):
+        ' Check Z-parameters match'
+        np.testing.assert_allclose(self.cir_complex.network.z, self.cir_real.network.z, atol=1e-4)
+
+    @unittest.expectedFailure
     def test_complexz0_s_vs_legacy(self):
         ' Check complex z0 circuit vs legacy renormalization '
         np.testing.assert_allclose(self.cir_complex.network.s, self.s_legacy, atol=1e-4)
 
-    @unittest.expectedFailure
     def test_complexz0_s_vs_powerwaves(self):
         ' Check complex z0 circuit vs power-waves renormalization '
         np.testing.assert_allclose(self.cir_complex.network.s, self.s_ref, atol=1e-4)
         np.testing.assert_allclose(self.cir_complex.network.s, self.s_power, atol=1e-4)
 
     @unittest.expectedFailure
-    def test_complexz0_s_vs_powerwaves(self):
+    def test_complexz0_s_vs_pseudo(self):
         ' Check complex z0 circuit vs pseudo-waves renormalization '
         np.testing.assert_allclose(self.cir_complex.network.s, self.s_pseudo, atol=1e-4)
 

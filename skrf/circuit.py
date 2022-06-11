@@ -83,9 +83,9 @@ Graph representation
    Circuit.edge_labels
 
 """
-from . network import Network, a2s
+from . network import Network, a2s, s2s
 from . media import media
-from . constants import INF, NumberLike
+from . constants import INF, NumberLike, S_DEF_DEFAULT
 
 import numpy as np
 
@@ -160,7 +160,7 @@ class Circuit:
                 [(port3, 0), (ntw, 2)]
             ]
 
-        NB1: Creating 1-port network to be used a port can be made with :func:`Port`
+        NB1: Creating 1-port network to be used as a port should be made with :func:`Port`
 
         NB2: The external ports indexing is defined by the order of appearance of
         the ports in the connections list. Thus, the first network identified
@@ -188,6 +188,12 @@ class Circuit:
                 raise AttributeError('All Networks must have same frequencies')
         # All frequencies are the same, Circuit frequency can be any of the ntw
         self.frequency = ntws[0].frequency
+        
+        # Check that a (ntwk, port) combination appears only once in the connexion map
+        nodes = [(ntwk.name, port) for (con_idx, (ntwk, port)) in [con for con in self.connections_list]]
+        if len(nodes) > len(set(nodes)):
+            raise AttributeError('A (network, port) node appears twice in the connection description.')
+        
 
     def _is_named(self, ntw):
         """
@@ -203,16 +209,12 @@ class Circuit:
         """
         Return a 1-port Network to be used as a Circuit port.
 
-        Passing the frequency and name is mandatory. Port name must include
-        the word 'port' inside. (ex: 'Port1' or 'port_3')
-
         Parameters
         ----------
         frequency : :class:`~skrf.frequency.Frequency`
             Frequency common to all other networks in the circuit
         name : string
             Name of the port.
-            Must include the word 'port' inside. (ex: 'Port1' or 'port_3')
         z0 : real, optional
             Characteristic impedance of the port. Default is 50 Ohm.
 
@@ -233,10 +235,9 @@ class Circuit:
             In [18]: port1 = rf.Circuit.Port(freq, name='Port1')
         """
         _media = media.DefinedGammaZ0(frequency, z0=z0)
-        if not 'port' in name.lower():
-            raise ValueError("Port name should contain the string 'port',"
-                             " like 'Port1' or 'port_3'")
-        return _media.match(name=name)
+        port = _media.match(name=name)
+        port._is_circuit_port = True
+        return port
 
     @classmethod
     def SeriesImpedance(cls, frequency: 'Frequency', Z: NumberLike, name: str, z0: float = 50) -> 'Network':
@@ -763,8 +764,7 @@ class Circuit:
             Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
         """
         # list all networks which are not considered as "ports",
-        # that is which do not contain "port" in their network name
-        ntws = {k:v for k,v in self.networks_dict().items() if 'port' not in k.lower()}
+        ntws = {k:v for k,v in self.networks_dict().items() if not getattr(v, '_is_circuit_port', False)}
 
         # generate the port reordering indexes from each connections
         ntws_ports_reordering = {ntw:[] for ntw in ntws}
@@ -786,7 +786,7 @@ class Circuit:
             #print(ntw_name, from_port, to_port)
             for (_from, _to) in zip(from_port, to_port):
                 #print(f'{_from} --> {_to}')
-                S[:, _to[0], _to[1]] = ntws[ntw_name].s[:, _from[0], _from[1]]
+                S[:, _to[0], _to[1]] = ntws[ntw_name].s_traveling[:, _from[0], _from[1]]
 
         return S  # shape (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
 
@@ -811,7 +811,7 @@ class Circuit:
     @property
     def port_indexes(self) -> list:
         """
-        Return the indexes of the "external" ports. These must be labelled "port".
+        Return the indexes of the "external" ports.
 
         Returns
         -------
@@ -820,7 +820,7 @@ class Circuit:
         port_indexes = []
         for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections)):
             ntw, ntw_port = cnx
-            if 'port' in str.lower(ntw.name):
+            if getattr(ntw, '_is_circuit_port', False):
                 port_indexes.append(idx_cnx)
         return port_indexes
 
@@ -875,6 +875,7 @@ class Circuit:
         port_indexes = self.port_indexes
         a, b = np.meshgrid(port_indexes, port_indexes)
         S_ext = self.s[:, a, b]
+        S_ext = s2s(S_ext, self.port_z0, S_DEF_DEFAULT, 'traveling')
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
 
     @property

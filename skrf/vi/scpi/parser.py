@@ -298,7 +298,7 @@ def parse_yaml_file(driver_yaml_file):
 
     driver_template = None
     with open(driver_yaml_file, 'r', encoding='utf-8') as yaml_file:
-        driver_template = yaml.load(yaml_file)
+        driver_template = yaml.load(yaml_file, Loader=yaml.Loader)
 
     sets, queries = parse_branch(driver_template["COMMAND_TREE"])
 

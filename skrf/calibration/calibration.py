@@ -1779,7 +1779,7 @@ class TwoPortOnePath(TwelveTerm):
     """
     family = 'TwoPortOnePath'
 
-    def __init__(self, measured, ideals,n_thrus=None,  source_port=1,
+    def __init__(self, measured, ideals, n_thrus=None, source_port=1,
                  *args, **kwargs):
         """
         Two Port One Path Calibration initializer.
@@ -1817,11 +1817,18 @@ class TwoPortOnePath(TwelveTerm):
         TwelveTerm.__init__
         """
 
-
+        if source_port not in [1, 2]:
+            raise ValueError("Invalid source_port value. Expected 1 or 2.")
 
         self.sp = source_port-1
         self.rp = 1 if self.sp == 0 else 0
-        kwargs.update({'measured':measured,
+        # Make S12 = S21 and S22 = S11 for numerical reasons
+        measured_sym = [m.copy() for m in measured]
+        for m in measured_sym:
+            m.s[:,self.sp, self.rp] = m.s[:,self.rp, self.sp]
+            m.s[:,self.rp, self.rp] = m.s[:,self.sp, self.sp]
+
+        kwargs.update({'measured':measured_sym,
                        'ideals':ideals,
                        'n_thrus':n_thrus})
         TwelveTerm.__init__(self,*args, **kwargs)
@@ -1829,34 +1836,7 @@ class TwoPortOnePath(TwelveTerm):
 
     def run(self):
         """
-        run
         """
-        """
-        if self.sp !=0:
-            raise NotImplementedError('not implemented yet. you can just flip() all your data though. ')
-        n_thrus = self.n_thrus
-        p1_m = [k.s11 for k in self.measured[:-n_thrus]]
-        p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
-        thru = NetworkSet(self.measured[-n_thrus:]).mean_s
-
-        # create one port calibration for reflective standards
-        port1_cal = OnePort(measured = p1_m, ideals = p1_i)
-
-        # cal coefficient pdictionaries
-        p1_coefs = port1_cal.coefs
-
-        if self.kwargs.get('isolation',None) is not None:
-            raise NotImplementedError()
-            p1_coefs['isolation'] = isolation.s21.s.flatten()
-        else:
-            p1_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
-
-        p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
-        p1_coefs['transmission tracking'] = \
-            (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
-            (1. - p1_coefs['source match']*p1_coefs['load match'])
-
-        coefs = {}"""
 
         # run a full twelve term then just copy all forward error terms
         # over reverse error terms
@@ -3761,7 +3741,10 @@ class LRRM(EightTerm):
 
     If match_fit == 'lc' then the second reflect is assumed to be a lossless
     capacitor. Measurements should then include low frequencies for accurate
-    open capacitance determination.
+    open capacitance determination. 'lc_fit_c_freq' argument can be given to
+    specify the maximum frequency in Hz where open looks like an ideal
+    capacitor, above this frequency open is assumed to only have known absolute
+    value similar to 'l' fit.  Default is infinity.
 
     Implementation is based on papers [1]_ and [2]_. 'lc' match_fit based on
     [3]_.
@@ -3791,7 +3774,7 @@ class LRRM(EightTerm):
             z0=50, match_fit='l', *args, **kwargs):
         """
         LRRM Initializer.
-        
+
         Parameters
         ----------
         measured : list of :class:`~skrf.network.Network` objects
@@ -3813,23 +3796,27 @@ class LRRM(EightTerm):
 
         z0 : int
             Calibration reference impedance. Only affects the solved match
-            inductance. Has no effect to the solved calibration parameters.
+            inductance. Has no effect on the solved calibration parameters.
 
         match_fit : string or None
-            Match model. Valid choices are 'l' to fit a single inductance over
-            all frequencies. 'none' to not fit inductance and let it be
-            different for each frequency. 'lc' to fit match with series
-            inductor and parallel capacitor and assuming that the second
-            reflect is open with unknown capacitance. Fitting is recommended as
-            individual inductance estimates can be noisy.
+            Match model. Valid choices are:
+            'l' to fit a single inductance over all frequencies.
+            'lc' to fit match with series inductor and parallel capacitor and
+            assuming that the second reflect is open with unknown capacitance.
+            'none' to not fit inductance and let it be different for each
+            frequency point.
+
+            'l' or 'lc' is recommended for normal use.
         """
 
         self.z0 = z0
         # TODO: Second port not implemented.
         self.match_port = 0
+        # Maximum frequency to assume that open behaves like ideal capacitor when
+        # using match_fit == 'lc'.
+        self.lc_fit_c_freq = kwargs.get('lc_fit_c_freq', float('inf'))
 
         self.match_fit = match_fit
-        self.lc_fit_iters = kwargs.get('lc_fit_iters', 5)
         if self.match_port not in [0, 1]:
             raise ValueError('match_port must be either 0 or 1.')
 
@@ -3885,8 +3872,8 @@ class LRRM(EightTerm):
         c1 = -tl[:, 1, 0] - tl[:, 0, 1]
         c0 = wl[:, 1, 1] * xyz2
 
-        z0 = -c1 + npy.sqrt(c1**2 - 4*c2*c0)/(2*c2)
-        z1 = -c1 - npy.sqrt(c1**2 - 4*c2*c0)/(2*c2)
+        z0 = (-c1 + npy.sqrt(c1**2 - 4*c2*c0))/(2*c2)
+        z1 = (-c1 - npy.sqrt(c1**2 - 4*c2*c0))/(2*c2)
         zs = npy.stack([z0, z1])
 
         # wm and solve_gr equations are different if match is on the second port.
@@ -3955,16 +3942,16 @@ class LRRM(EightTerm):
             return (self.z0 + R*(-1 + 1j*c*w*self.z0) - l*w*(1j + c*w*self.z0)) \
                  /(-self.z0 + R*(-1 - 1j*c*w*self.z0) + l*w*(-1j + c*w*self.z0))
 
-        # Solve first reflects assuming gm = 0
-        gr1, gr2, x, y, z, efs = solve_gr(zeros)
+        # First, solve reflects assuming ideal gm
+        gmi = self.ideals[3].s[:, self.match_port, self.match_port]
+        gr1, gr2, x, y, z, efs = solve_gr(gmi)
 
         # Next solve for match inductance
-        gmi = self.ideals[3].s[:, self.match_port, self.match_port]
         R = (self.z0 * (1 + gmi)/(1 - gmi)).real # Resistance of the match
 
         a = 2*gr2.real + npy.abs(gr2)**2 - \
             2*(gr2*thru_s21**(-2)).real - npy.abs(gr2*thru_s21**(-2))**2
-        b = 4*R*(gr2.imag + (gr2*thru_s21**(-2)).imag )
+        b = 4*R*(gr2.imag + (gr2*thru_s21**(-2)).imag)
         c = 4*R**2*(npy.abs(gr2)**2 - 1)
 
         det = b**2 - 4*a*c
@@ -3995,9 +3982,9 @@ class LRRM(EightTerm):
         f1 = efs[2, :]
         f0 = efs[3, :]
 
-        if self.match_fit == 'l':
+        gr2_abs = npy.abs(self.ideals[2].s[:,0,0])
 
-            gr2_abs = npy.abs(self.ideals[2].s[:,0,0])
+        if self.match_fit == 'l':
 
             def min_l(l):
                 """
@@ -4031,54 +4018,49 @@ class LRRM(EightTerm):
             match_c = -1/(npy.choose(root, wL)*w)
             c0 = npy.sum(w * match_c) / npy.sum(w)
 
-            for iteration in range(self.lc_fit_iters):
+            cw = w < 2 * npy.pi * self.lc_fit_c_freq
+            cw = cw.astype(float)
+
+            def min_lc(x):
+                l, c = x
+                gm = calc_gm(R, l, c)
+                # Calculate open reflection coefficient from gm
+                gr2 = -(f0 - e0 * gm) / (f1 - e1 * gm)
+
                 # Fit capacitance to gr2
                 cgr2 = (1j*(-1 + gr2))/((1 + gr2)*w*self.z0)
-                # Weight lower frequencies as there the match is probably more
-                # accurate. Slight offset to avoid problems if frequency is
-                # very low.
-                cw = w[-1]/(w + 2*npy.pi*100e6)
-                cgr2 = npy.sum(cw * cgr2.real) / npy.sum(cw)
+                cgr2 = npy.mean(cgr2.real)
                 gr2_c = (1j + cgr2*w*self.z0)/(1j - cgr2*w*self.z0)
 
-                def min_lc(x):
-                    l, c = x
-                    gm = calc_gm(R, l, c)
-                    e = gr2_c + (f0 - e0 * gm) / (f1 - e1 * gm)
-                    r = list(e.real)
-                    r.extend(e.imag)
-                    return npy.array(r)
+                # Error between fitted open capacitor and calculated open
+                # capacitance
+                e_c = gr2_c + (f0 - e0 * gm) / (f1 - e1 * gm)
+                e_abs = gr2_abs - npy.abs((f0 - e0 * gm) / (f1 - e1 * gm))
+                e = e_c * cw + (1 - cw) * e_abs
+                return npy.abs(e)
 
-                if iteration == 0 or l0 < 0 or c0 < 0:
-                    # Biggest capacitance value assuming given gm matching.
-                    worst_match = 0.4 # -7 dB
-                    max_init_c = (2*worst_match)/(npy.sqrt(1 - worst_match**2)*w[-1]*self.z0)
+            # Biggest capacitance value assuming given gm matching.
+            worst_match = 0.4 # -7 dB
+            max_init_c = (2*worst_match)/(npy.sqrt(1 - worst_match**2)*w[-1]*self.z0)
 
-                    # Initial reactance guess, try to find positive L, C.
-                    init_x = npy.linspace(0, 20, 10)
-                    init_l = init_x / (w[-1])
-                    init_c = npy.linspace(0, max_init_c, 10)
-                    init_lc = [(l, c) for l in init_l for c in init_c]
-                    if l0 > 0:
-                        init_lc.append((l0, 0))
-                    if c0 > 0:
-                        init_lc.append((0, c0))
-                    init_guess = [npy.mean(min_lc(x)**2) for x in init_lc]
-                    best_guess = init_lc[npy.argmin(init_guess)]
+            # Initial reactance guess, try to find positive L, C.
+            init_x = npy.linspace(0, 20, 10)
+            init_l = init_x / (w[-1])
+            init_c = npy.linspace(0, max_init_c, 10)
+            init_lc = [(l, c) for l in init_l for c in init_c]
+            if l0 > 0:
+                init_lc.append((l0, 0))
+            if c0 > 0:
+                init_lc.append((0, c0))
+            init_guess = [npy.mean(min_lc(x)**2) for x in init_lc]
+            best_guess = init_lc[npy.argmin(init_guess)]
 
-                    l0 = best_guess[0]
-                    c0 = best_guess[1]
-                else:
-                    init_lc.append((match_l[0], match_c[0]))
+            l0 = best_guess[0]
+            c0 = best_guess[1]
 
-                sol = least_squares(min_lc, [l0, c0], method='lm')
-                match_l = sol.x[0] * npy.ones(match_l.shape)
-                match_c = sol.x[1] * npy.ones(match_l.shape)
-
-                # Recalculate gr2 if not the last iteration.
-                if iteration != self.lc_fit_iters - 1:
-                    gamma_m = calc_gm(R, match_l, match_c)
-                    gr1, gr2, x, y, z, _ = solve_gr(gamma_m)
+            sol = least_squares(min_lc, [l0, c0], method='lm')
+            match_l = sol.x[0] * npy.ones(match_l.shape)
+            match_c = sol.x[1] * npy.ones(match_l.shape)
 
         elif self.match_fit == 'none' or self.match_fit is None:
             pass
@@ -4090,11 +4072,12 @@ class LRRM(EightTerm):
         # Solve finally reflects and calibration parameters using the solved match
         gr1, gr2, x, y, z, _ = solve_gr(gamma_m)
 
+        freq = self.measured[0].frequency
         self._solved_l = match_l
         self._solved_c = match_c
-        self._solved_m = Network(s=gamma_m, frequency=self.measured[0].frequency)
-        self._solved_r1 = Network(s=gr1, frequency=self.measured[0].frequency)
-        self._solved_r2 = Network(s=gr2, frequency=self.measured[0].frequency)
+        self._solved_m = Network(s=gamma_m, frequency=freq, name='LRRM match')
+        self._solved_r1 = Network(s=gr1, frequency=freq, name='LRRM reflect 1')
+        self._solved_r2 = Network(s=gr2, frequency=freq, name='LRRM reflect 2')
 
         # Calculate error matrices
         t10 = npy.transpose(npy.array([[ones, x], [gr1, gr2*x]]), [2,0,1]) \

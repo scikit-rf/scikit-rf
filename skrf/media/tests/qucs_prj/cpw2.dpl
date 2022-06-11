@@ -1,0 +1,37 @@
+<Qucs Schematic 0.0.19>
+<Properties>
+  <View=0,0,800,800,1,0,0>
+  <Grid=10,10,0>
+  <DataSet=cpw2.dat>
+  <DataDisplay=cpw2.sch>
+  <OpenDisplay=1>
+  <Script=cpw2.m>
+  <RunScript=0>
+  <showFrame=0>
+  <FrameText0=Title>
+  <FrameText1=Drawn By:>
+  <FrameText2=Date:>
+  <FrameText3=Revision:>
+</Properties>
+<Symbol>
+</Symbol>
+<Components>
+</Components>
+<Wires>
+</Wires>
+<Diagrams>
+  <Rect 110 250 240 160 3 #c0c0c0 1 00 1 0 1e+10 4e+10 1 -79.5395 50 7.21314 1 -1 1 1 315 0 225 "" "" "">
+	<"S11_dB" #ff0000 0 3 0 0 0>
+  </Rect>
+  <Rect 110 480 240 160 3 #c0c0c0 1 00 1 0 1e+10 4e+10 1 -79.5395 50 7.21314 1 -1 1 1 315 0 225 "" "" "">
+	<"S21_dB" #ff00ff 0 3 0 0 0>
+  </Rect>
+  <Rect 410 480 240 160 3 #c0c0c0 1 00 1 0 1e+10 4e+10 1 -5 5 5 1 -1 1 1 315 0 225 "" "" "">
+	<"S21_phi" #ff0000 0 3 0 0 0>
+  </Rect>
+  <Rect 410 250 240 160 3 #c0c0c0 1 00 1 0 1e+10 4e+10 1 -5 5 5 1 -1 1 1 315 0 225 "" "" "">
+	<"S11_phi" #0000ff 0 3 0 0 0>
+  </Rect>
+</Diagrams>
+<Paintings>
+</Paintings>

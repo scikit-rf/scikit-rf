@@ -1045,8 +1045,7 @@ class TwoPortOnePathTest(TwelveTermTest):
         #No leakage
         self.If = wg.match(n_ports =1, name='If')
         self.Ir = wg.match(n_ports =1, name='Ir')
-        
-        
+
         ideals = [
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
@@ -1054,8 +1053,7 @@ class TwoPortOnePathTest(TwelveTermTest):
             wg.random(2,name='rand1'),
             wg.random(2,name='rand2'),
             ]
-        
-    
+
         measured = [ self.measure(k) for k in ideals]
         self.cal = TwoPortOnePath(
             ideals = ideals,
@@ -1065,10 +1063,10 @@ class TwoPortOnePathTest(TwelveTermTest):
             )
 
     def measure(self,ntwk):
-        r= self.wg.random(2)
+        r = self.wg.match(2)
         m = ntwk.copy()
         mf = self.Xf**ntwk**self.Yf
-        
+
         m.s[:,1,0] = mf.s[:,1,0]
         m.s[:,0,0] = mf.s[:,0,0]
         m.s[:,1,1] = r.s[:,1,1]
@@ -1080,15 +1078,15 @@ class TwoPortOnePathTest(TwelveTermTest):
         f = self.measure(a)
         r = self.measure(a.flipped())
         c = self.cal.apply_cal((f,r))
-        c.name = 'corrected'   
+        c.name = 'corrected'
         self.assertEqual(c,a)
-        
+
     def test_embed_then_apply_cal(self):
         a = self.wg.random(n_ports=self.n_ports)
         f = self.cal.embed(a)
         r = self.cal.embed(a.flipped())
         self.assertEqual(self.cal.apply_cal((f,r)),a)
-    
+
     @pytest.mark.skip(reason='measurement procedure is different so this test doesnt apply')
     def test_embed_equal_measure(self):
         pass
@@ -1097,7 +1095,7 @@ class TwoPortOnePathTest(TwelveTermTest):
     def test_from_coefs(self):
         cal_from_coefs = self.cal.from_coefs(self.cal.frequency, self.cal.coefs)
         ntwk = self.wg.random(n_ports=self.n_ports)
-    
+
     @suppress_warning_decorator("n_thrus is None")
     def test_from_coefs_ntwks(self):
         cal_from_coefs = self.cal.from_coefs_ntwks(self.cal.coefs_ntwks)
@@ -1105,22 +1103,22 @@ class TwoPortOnePathTest(TwelveTermTest):
     @pytest.mark.skip()
     def test_reverse_source_match_accuracy(self):
         pass
-    
+
     @pytest.mark.skip()
     def test_reverse_directivity_accuracy(self):
         pass
 
     @pytest.mark.skip()
     def test_reverse_load_match_accuracy(self):
-        pass  
-    
+        pass
+
     @pytest.mark.skip()
     def test_reverse_reflection_tracking_accuracy(self):
-        pass  
-    
+        pass
+
     @pytest.mark.skip()
     def test_reverse_transmission_tracking_accuracy(self):
-        pass  
+        pass
 
     @pytest.mark.skip()
     def test_convert_12term_2_8term_correction_accuracy(self):
@@ -1233,7 +1231,9 @@ class LRRMTest(EightTermTest):
         o_i = wg.load(1, nports=1, name='open')
         s_i = wg.short(nports=1, name='short')
         m_i = wg.load(0.1, nports=1, name='load')
-        thru = wg.line(d=50, unit='um', name='thru')
+        thru = wg.line(d=50, z0=75, unit='um', name='thru', embed=True)
+        # Make sure calibration works with non-symmetric thru
+        thru.s[:,1,1] += 0.02 + 0.05j
 
         # Actual reflects with parasitics
         s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')

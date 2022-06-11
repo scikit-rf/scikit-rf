@@ -131,38 +131,6 @@ class VectorFitting:
         warnings.warn('Attribute `zeros` is deprecated and will be removed in a future version. Please use the new '
                       'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
         self.residues = value
-
-    def _get_pole_idx(self, poles: np.ndarray, real: bool) -> np.ndarray:
-        """Returns the indices for addressing the A matrix.
-
-        A matrix contains one column for a real pole and two columns for complex poles.
-        Return the appropriate indizes, by checking the imaginary part of the specified poles.
-
-        Parameters
-        ----------
-        poles: np.ndarray
-            The complex array of poles
-        real: bool
-            Return the indices for real values poles if True, the indices of complex valued poles otherwise
-        """
-        A_sub_real_mask = []
-        for rm in poles.imag == 0:
-            if rm:
-                A_sub_real_mask += [True]
-            else:
-                A_sub_real_mask += [False, False]
-
-        A_sub_real_mask = np.array(A_sub_real_mask)
-
-        if not real:
-            A_sub_real_mask = ~A_sub_real_mask
-
-        idx = np.nonzero(A_sub_real_mask)[0]
-
-        if not real:
-            idx = idx[::2]
-        
-        return idx
     
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
@@ -251,23 +219,43 @@ class VectorFitting:
 
         logging.info('### Starting pole relocation process.\n')
 
+        n_responses = self.network.nports ** 2
+        n_freqs = len(freqs_norm)
+        n_samples = n_responses * n_freqs
+
+        # select network representation type
+        if parameter_type.lower() == 's':
+            nw_responses = self.network.s
+        elif parameter_type.lower() == 'z':
+            nw_responses = self.network.z
+        elif parameter_type.lower() == 'y':
+            nw_responses = self.network.y
+        else:
+            warnings.warn('Invalid choice of matrix parameter type (S, Z, or Y); proceeding with scattering '
+                          'representation.', UserWarning, stacklevel=2)
+            nw_responses = self.network.s
+
         # stack frequency responses as a single vector
         # stacking order (row-major):
         # s11, s12, s13, ..., s21, s22, s23, ...
         freq_responses = []
         for i in range(self.network.nports):
             for j in range(self.network.nports):
-                if parameter_type.lower() == 's':
-                    freq_responses.append(self.network.s[:, i, j])
-                elif parameter_type.lower() == 'z':
-                    freq_responses.append(self.network.z[:, i, j])
-                elif parameter_type.lower() == 'y':
-                    freq_responses.append(self.network.y[:, i, j])
-                else:
-                    warnings.warn('Invalid choice of matrix parameter type (S, Z, or Y); proceeding with scattering '
-                                  'representation.', UserWarning, stacklevel=2)
-                    freq_responses.append(self.network.s[:, i, j])
+                freq_responses.append(nw_responses[:, i, j])
         freq_responses = np.array(freq_responses)
+
+        # responses will be weighted according to their norm;
+        # alternative: equal weights with weight_response = 1.0
+        # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
+        weights_responses = np.linalg.norm(freq_responses, axis=1)
+        #weights_responses = np.ones(self.network.nports ** 2)
+
+        # weight of extra equation to avoid trivial solution
+        weight_extra = np.linalg.norm(weights_responses[:, None] * freq_responses) / n_samples
+
+        # weights w are applied directly to the samples, which get squared during least-squares fitting; hence sqrt(w)
+        weights_responses = np.sqrt(weights_responses)
+        weight_extra = np.sqrt(weight_extra)
 
         # ITERATIVE FITTING OF POLES to the provided frequency responses
         # initial set of poles will be replaced with new poles after every iteration
@@ -279,7 +267,6 @@ class VectorFitting:
 
         omega = 2 * np.pi * freqs_norm
         s = 1j * omega
-        
 
         while iterations > 0:
             logging.info('Iteration {}'.format(self.max_iterations - iterations + 1))
@@ -294,130 +281,110 @@ class VectorFitting:
 
             n_cols_used = n_cols_unused
             n_cols_used += 1
+            idx_constant = []
+            idx_proportional = []
             if fit_constant:
+                idx_constant = [n_cols_unused]
                 n_cols_unused += 1
             if fit_proportional:
+                idx_proportional = [n_cols_unused]
                 n_cols_unused += 1
-            n_rows_A = n_cols_used * len(freq_responses)
 
-            # generate coefficients of approximation function for each target frequency response
-            # responses will be reduced independently using QR decomposition
-            # simplified coeff. matrices of all responses will be stacked in matrix A for least-squares solver
-            A = np.empty((n_rows_A, n_cols_used))
-            b = np.zeros(n_rows_A)
+            real_mask = poles.imag == 0
+            # list of indices in 'poles' with real values
+            idx_poles_real = np.nonzero(real_mask)[0]
+            # list of indices in 'poles' with complex values
+            idx_poles_complex = np.nonzero(~real_mask)[0]
 
-            for i_response, freq_response in enumerate(freq_responses):
-                # calculate coefficients for each frequency response
-                # A_sub which will be reduced first (QR decomposition) and then filled into the main
-                # coefficient matrix A
+            # positions (columns) of coefficients for real and complex-conjugate terms in the rows of A determine the
+            # respective positions of the calculated residues in the results vector.
+            # to have them ordered properly for the subsequent assembly of the test matrix H for eigenvalue extraction,
+            # place real poles first, then complex-conjugate poles with their respective real and imaginary parts:
+            # [r1', r2', ..., (r3', r3''), (r4', r4''), ...]
+            n_real = len(idx_poles_real)
+            n_cmplx = len(idx_poles_complex)
+            idx_res_real = np.arange(n_real)
+            idx_res_complex_re = n_real + 2 * np.arange(n_cmplx)
+            idx_res_complex_im = idx_res_complex_re + 1
 
-                # layout of this row in A_sub:
-                # [pole1, pole2, ..., (constant), (proportional), pole1, pole2, ..., constant]
-                A_sub = np.empty((len(freqs_norm), n_cols_unused + n_cols_used), dtype=complex)
+            # complex coefficient matrix of shape [N_responses, N_freqs, n_cols_unused + n_cols_used]
+            # layout of each row:
+            # [pole1, pole2, ..., (constant), (proportional), pole1, pole2, ..., constant]
+            A = np.empty((n_responses, n_freqs, n_cols_unused + n_cols_used), dtype=complex)
 
-                A_row_extra = np.empty(n_cols_used)
+            # calculate coefficients for real and complex residues in the solution vector
+            #
+            # real pole-residue term (r = r', p = p'):
+            # fractional term is r' / (s - p')
+            # coefficient for r' is 1 / (s - p')
+            coeff_real = 1 / (s[:, None] - poles[None, idx_poles_real])
 
-                # responses will be weighted according to their norm;
-                # alternative: equal weights with weight_response = 1.0
-                # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
-                weight_response = np.linalg.norm(freq_response)
+            # complex-conjugate pole-residue pair (r = r' + j r'', p = p' + j p''):
+            # fractional term is r / (s - p) + conj(r) / (s - conj(p))
+            #                   = [1 / (s - p) + 1 / (s - conj(p))] * r' + [1j / (s - p) - 1j / (s - conj(p))] * r''
+            # coefficient for r' is 1 / (s - p) + 1 / (s - conj(p))
+            # coefficient for r'' is 1j / (s - p) - 1j / (s - conj(p))
+            coeff_complex_re = (1 / (s[:, None] - poles[None, idx_poles_complex]) +
+                                1 / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
+            coeff_complex_im = (1j / (s[:, None] - poles[None, idx_poles_complex]) -
+                                1j / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
 
-                # Split up real and complex poles and store the correspondend column from A_sub
-                real_mask = poles.imag == 0
-                poles_real = poles[np.nonzero(real_mask)]
-                poles_cplx = poles[np.nonzero(~real_mask)]
+            # part 1: first sum of rational functions (variable c)
+            A[:, :, idx_res_real] = coeff_real
+            A[:, :, idx_res_complex_re] = coeff_complex_re
+            A[:, :, idx_res_complex_im] = coeff_complex_im
 
-                A_sub_real_idx = self._get_pole_idx(poles, real=True)
-                A_sub_cplx_idx = self._get_pole_idx(poles, real=False)
+            # part 2: constant (variable d) and proportional term (variable e)
+            A[:, :, idx_constant] = 1
+            A[:, :, idx_proportional] = s[:, None]
 
-                # add coefficients for a pair of complex conjugate poles
-                # part 1: first sum of rational functions (residue variable c)
-                # merged with
-                # part 3: second sum of rational functions (variable c_res)
+            # part 3: second sum of rational functions multiplied with frequency response (variable c_res)
+            A[:, :, n_cols_unused + idx_res_real] = -1 * freq_responses[:, :, None] * coeff_real
+            A[:, :, n_cols_unused + idx_res_complex_re] = -1 * freq_responses[:, :, None] * coeff_complex_re
+            A[:, :, n_cols_unused + idx_res_complex_im] = -1 * freq_responses[:, :, None] * coeff_complex_im
 
-                # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
-                coeff = 1 / (s[:, None] - poles_real)
-                A_sub[:, A_sub_real_idx] = coeff
+            # part 4: constant (variable d_res)
+            A[:, :, -1] = -1 * freq_responses
 
-                # part 3: coeff = -1 * H(s_k) / (s_k - pole)
-                A_sub[:, A_sub_real_idx + n_cols_unused] = - coeff * freq_response[:, None]
+            # QR decomposition
+            #R = np.linalg.qr(np.hstack((A.real, A.imag)), 'r')
 
-                # extra equation to avoid trivial solution:
-                # coeff += Re(1 / (s_k - pole)) = coeff_re
-                A_row_extra[A_sub_real_idx] = np.sum(coeff.real, axis=0)
+            # direct QR of stacked matrices for linalg.qr() only works with numpy>=1.22.0
+            # workaround for old numpy:
+            R = np.empty((n_responses, n_cols_unused + n_cols_used, n_cols_unused + n_cols_used))
+            A_ri = np.hstack((A.real, A.imag))
+            for i in range(n_responses):
+                R[i] = np.linalg.qr(A_ri[i], mode='r')
 
-                # row 1: add coefficient for real part of residue
-                # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
-                coeff = 1 / (s[:, None] - poles_cplx) + 1 / (s[:, None] - np.conj(poles_cplx))
-                A_sub[:, A_sub_cplx_idx] = coeff
+            # only R22 is required to solve for c_res and d_res
+            R22 = R[:, n_cols_unused:, n_cols_unused:]
 
-                # extra equation to avoid trivial solution:
-                # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
-                A_row_extra[A_sub_cplx_idx] = np.sum(coeff.real, axis=0)
+            # weighting
+            R22 = weights_responses[:, None, None] * R22
 
-                # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
-                A_sub[:, A_sub_cplx_idx + n_cols_unused] = - coeff * freq_response[:, None]
+            # assemble compressed coefficient matrix A_fast by row-stacking individual upper triangular matrices R22
+            A_fast = np.empty((n_responses * n_cols_used + 1, n_cols_used))
+            A_fast[:-1, :] = R22.reshape((n_responses * n_cols_used, n_cols_used))
 
-                # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
-                coeff = 1j / (s[:, None] - poles_cplx) - 1j / (s[:, None] - np.conj(poles_cplx))
-                A_sub[:, A_sub_cplx_idx + 1] = coeff
+            # extra equation to avoid trivial solution
+            A_fast[-1, idx_res_real] = np.sum(coeff_real.real, axis=0)
+            A_fast[-1, idx_res_complex_re] = np.sum(coeff_complex_re.real, axis=0)
+            A_fast[-1, idx_res_complex_im] = np.sum(coeff_complex_im.real, axis=0)
+            A_fast[-1, -1] = n_freqs
 
-                # extra equation to avoid trivial solution:
-                # coeff = sum(Re(1j / (s_k - pole) - 1j / (s_k - conj(pole))))
-                A_row_extra[A_sub_cplx_idx + 1] = np.sum(coeff.real, axis=0)
+            # weighting
+            A_fast[-1, :] = weight_extra * A_fast[-1, :]
 
-                # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
-                A_sub[:, A_sub_cplx_idx + 1 + n_cols_unused] = -coeff * freq_response[:, None]
+            # right hand side vector (weighted)
+            b = np.zeros(n_responses * n_cols_used + 1)
+            b[-1] = weight_extra * n_samples
 
-                # part 4: constant (variable d_res)
-                # coeff = -1 * H(s_k)
-                A_sub[:,-1] = - freq_response
-
-                # part 2: constant (variable d) and proportional term (variable e)
-                offset = n_cols_unused - 1
-                if fit_constant:
-                    # coeff = 1 + j0
-                    A_sub[:, offset] = 1
-                    offset -=1
-                    
-                if fit_proportional:
-                    # coeff = s_k = j omega_k
-                    A_sub[:, offset] = s
-                    
-                A_row_extra[-1] = len(freqs_norm)
-
-                # (view) View complex array (rows,cols) as float (rows,cols * 2)
-                # (reshape) Put complex tuples in an own dimension (rows,cols,2)
-                # (transpose) Swap last two dimensions (rows, 2, cols)
-                # (reshape) Merge rows and second dimension (rows * 2, cols)
-                # This results in rows with alternating real/imaginary content
-                A_ri = A_sub.view(np.float64) \
-                    .reshape(-1, A_sub.shape[1], 2) \
-                    .transpose(0,2,1) \
-                    .reshape((-1, A_sub.shape[1]))
-
-                # QR decomposition
-                R = np.linalg.qr(A_ri, 'r')
-
-                # only R22 is required to solve for c_res and d_res
-                R22 = R[n_cols_unused:, n_cols_unused:]
-
-                # apply weight of this response and add coefficients to the system matrix
-                A[i_response * n_cols_used:(i_response + 1) * n_cols_used, :] = np.sqrt(weight_response) * R22
-                # multiplication of Q2 by rhs=0 omitted; right-hand side would also require weighting
-                # b[i_response * n_cols_used:(i_response + 1) * n_cols_used] = np.matmul(np.transpose(Q2), rhs)
-
-                # add extra equation to avoid trivial solution
-                weight_extra = np.linalg.norm(weight_response * freq_response) / len(freq_response)
-                A[(i_response + 1) * n_cols_used - 1, :] = np.sqrt(weight_extra) * A_row_extra
-                b[(i_response + 1) * n_cols_used - 1] = np.sqrt(weight_extra) * len(freq_response)
-
-            cond_A = np.linalg.cond(A)
-            logging.info('Condition number of coeff. matrix A = {}'.format(cond_A))
+            cond_A = np.linalg.cond(A_fast)
+            logging.info('Condition number of coeff. matrix A = {}'.format(int(cond_A)))
             self.history_cond_A.append(cond_A)
 
             # solve least squares for real parts
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A, b, rcond=None)
+            x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
 
             # assemble individual result vectors from single LS result x
             c_res = x[:-1]
@@ -436,24 +403,19 @@ class VectorFitting:
 
             # build test matrix H, which will hold the new poles as eigenvalues
             H = np.zeros((len(c_res), len(c_res)))
-            i = 0
-            for i_pole in range(len(poles)):
-                # fill diagonal with previous poles
-                pole_re = poles.real[i_pole]
-                pole_im = poles.imag[i_pole]
-                if pole_im == 0.0:
-                    # one row for a real pole
-                    H[i, i] = pole_re
-                    H[i] -= c_res / d_res
-                    i += 1
-                else:
-                    # two rows for a complex pole of a conjugated pair
-                    H[i, i] = pole_re
-                    H[i, i + 1] = pole_im
-                    H[i + 1, i] = -1 * pole_im
-                    H[i + 1, i + 1] = pole_re
-                    H[i] -= 2 * c_res / d_res
-                    i += 2
+
+            poles_real = poles[np.nonzero(real_mask)]
+            poles_cplx = poles[np.nonzero(~real_mask)]
+
+            H[idx_res_real, idx_res_real] = poles_real.real
+            H[idx_res_real] -= c_res / d_res
+
+            H[idx_res_complex_re, idx_res_complex_re] = poles_cplx.real
+            H[idx_res_complex_re, idx_res_complex_im] = poles_cplx.imag
+            H[idx_res_complex_im, idx_res_complex_re] = -1 * poles_cplx.imag
+            H[idx_res_complex_im, idx_res_complex_im] = poles_cplx.real
+            H[idx_res_complex_re] -= 2 * c_res / d_res
+
             poles_new = np.linalg.eigvals(H)
 
             # replace poles for next iteration
@@ -462,7 +424,6 @@ class VectorFitting:
 
             # flip real part of unstable poles (real part needs to be negative for stability)
             poles.real = -1 * np.abs(poles.real)
-
 
             # calculate relative changes in the singular values; stop iteration loop once poles have converged
             new_max_singular = np.amax(singular_vals)
@@ -519,83 +480,91 @@ class VectorFitting:
         logging.info('\n### Starting residues calculation process.\n')
 
         # finally, solve for the residues with the previously calculated poles
-        residues = []
-        constant_coeff = []
-        proportional_coeff = []
 
-        for freq_response in freq_responses:
-            # calculate coefficients (row A_k in matrix) for each frequency sample s_k of the target response
-            # row will be appended to submatrix A_sub of complete coeff matrix A_matrix
-            # 2 rows per pole in result vector (1st for real part, 2nd for imaginary part)
-            # --> 2 columns per pole in coeff matrix
-            n_cols = np.sum((poles.imag != 0) + 1)
+        # We need two columns for complex poles and one column for real poles in A matrix.
+        # poles.imag != 0 is True(1) for complex poles, False (0) for real poles.
+        # Adding one to each element gives 2 columns for complex and 1 column for real poles.
+        n_cols = np.sum((poles.imag != 0) + 1)
 
-            if fit_constant:
-                n_cols += 1
-            if fit_proportional:
-                n_cols += 1
-            A_matrix = np.empty((len(freqs_norm), n_cols), dtype=complex)
+        idx_constant = []
+        idx_proportional = []
+        if fit_constant:
+            idx_constant = [n_cols]
+            n_cols += 1
+        if fit_proportional:
+            idx_proportional = [n_cols]
+            n_cols += 1
 
-            # Split up real and complex poles and store the correspondend column from A_sub
-            real_mask = poles.imag == 0
-            poles_real = poles[np.nonzero(real_mask)]
-            poles_cplx = poles[np.nonzero(~real_mask)]
+        # list of indices in 'poles' with real and with complex values
+        real_mask = poles.imag == 0
+        idx_poles_real = np.nonzero(real_mask)[0]
+        idx_poles_complex = np.nonzero(~real_mask)[0]
 
-            A_sub_real_idx = self._get_pole_idx(poles, real=True)
-            A_sub_cplx_idx = self._get_pole_idx(poles, real=False)
-
-            # add coefficients for a pair of complex conjugate poles
-            # part 1: first sum of rational functions (residue variable c)
-
-            A_matrix[:, A_sub_real_idx] = 1 / (s[:, None] - poles_real)
-
-            # coefficient for real part of residue
-            A_matrix[:, A_sub_cplx_idx] = (1 / (s[:, None] - poles_cplx) + 
-                1 / (s[:, None] - np.conj(poles_cplx)))
-
-            # coefficient for imaginary part of residue
-            A_matrix[:, A_sub_cplx_idx + 1] = (1j / (s[:, None] - poles_cplx) 
-                - 1j / (s[:, None] - np.conj(poles_cplx)))
-
-            offset = np.sum((poles.imag != 0) + 1)
-            if fit_constant:
-                A_matrix[:, offset] = 1
-                offset += 1
-            if fit_proportional:
-                A_matrix[:, offset] = s
-
-            logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
-
-            # solve least squares and obtain results as stack of real part vector and imaginary part vector
-            x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((A_matrix.real, A_matrix.imag)), np.hstack((freq_response.real, freq_response.imag)), rcond=None)
-
-            i = 0
-            residues_response = []
-            for pole_im in poles.imag:
-                if pole_im == 0.0:
-                    residues_response.append(x[i] + 0j)
-                    i += 1
-                else:
-                    residues_response.append(x[i] + 1j * x[i + 1])
-                    i += 2
-            residues.append(residues_response)
-
-            if fit_constant and fit_proportional:
-                # both constant d and proportional e were fitted
-                constant_coeff.append(x[-2])
-                proportional_coeff.append(x[-1])
-            elif fit_constant:
-                # only constant d was fitted
-                constant_coeff.append(x[-1])
-                proportional_coeff.append(0.0)
-            elif fit_proportional:
-                # only proportional e was fitted
-                constant_coeff.append(0.0)
-                proportional_coeff.append(x[-1])
+        # find and save indices of real and complex poles in the poles list
+        i = 0
+        idx_res_real = []
+        idx_res_complex_re = []
+        idx_res_complex_im = []
+        for pole in poles:
+            if pole.imag == 0:
+                idx_res_real.append(i)
+                i += 1
             else:
-                # neither constant d nor proportional e was fitted
-                constant_coeff.append(0.0)
-                proportional_coeff.append(0.0)
+                idx_res_complex_re.append(i)
+                idx_res_complex_im.append(i + 1)
+                i += 2
+
+        # complex coefficient matrix of shape [N_freqs, n_cols]
+        # layout of each row:
+        # [pole1, pole2, ..., (constant), (proportional)]
+        A = np.empty((n_freqs, n_cols), dtype=complex)
+
+        # calculate coefficients for real and complex residues in the solution vector
+        #
+        # real pole-residue term (r = r', p = p'):
+        # fractional term is r' / (s - p')
+        # coefficient for r' is 1 / (s - p')
+        coeff_real = 1 / (s[:, None] - poles[None, idx_poles_real])
+
+        # complex-conjugate pole-residue pair (r = r' + j r'', p = p' + j p''):
+        # fractional term is r / (s - p) + conj(r) / (s - conj(p))
+        #                   = [1 / (s - p) + 1 / (s - conj(p))] * r' + [1j / (s - p) - 1j / (s - conj(p))] * r''
+        # coefficient for r' is 1 / (s - p) + 1 / (s - conj(p))
+        # coefficient for r'' is 1j / (s - p) - 1j / (s - conj(p))
+        coeff_complex_re = (1 / (s[:, None] - poles[None, idx_poles_complex]) +
+                            1 / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
+        coeff_complex_im = (1j / (s[:, None] - poles[None, idx_poles_complex]) -
+                            1j / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
+
+        # part 1: first sum of rational functions (variable c)
+        A[:, idx_res_real] = coeff_real
+        A[:, idx_res_complex_re] = coeff_complex_re
+        A[:, idx_res_complex_im] = coeff_complex_im
+
+        # part 2: constant (variable d) and proportional term (variable e)
+        A[:, idx_constant] = 1
+        A[:, idx_proportional] = s[:, None]
+
+        logging.info('Condition number of coefficient matrix = {}'.format(int(np.linalg.cond(A))))
+
+        # solve least squares and obtain results as stack of real part vector and imaginary part vector
+        x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((A.real, A.imag)),
+                                                            np.hstack((freq_responses.real, freq_responses.imag)).transpose(),
+                                                            rcond=None)
+
+        # align poles and residues arrays to get matching pole-residue pairs
+        poles = np.concatenate((poles[idx_poles_real], poles[idx_poles_complex]))
+        residues = np.concatenate((x[idx_res_real], x[idx_res_complex_re] + 1j * x[idx_res_complex_im]), axis=0).transpose()
+
+        if fit_constant:
+            constant_coeff = x[idx_constant][0]
+        else:
+            constant_coeff = np.zeros(n_responses)
+
+        if fit_proportional:
+            proportional_coeff = x[idx_proportional][0]
+        else:
+            proportional_coeff = np.zeros(n_responses)
 
         # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
@@ -854,6 +823,15 @@ class VectorFitting:
         is_passive : Query the model passivity as a boolean value.
         passivity_enforce : Enforces the passivity of the vector fitted model, if required.
 
+        Examples
+        --------
+        Load and fit the `Network`, then evaluate the model passivity:
+
+        >>> nw_3port = skrf.Network('my3port.s3p')
+        >>> vf = skrf.VectorFitting(nw_3port)
+        >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+        >>> violations = vf.passivity_test()
+
         References
         ----------
         .. [#] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
@@ -949,6 +927,15 @@ class VectorFitting:
         --------
         passivity_test : Verbose passivity evaluation routine.
         passivity_enforce : Enforces the passivity of the vector fitted model, if required.
+
+        Examples
+        --------
+        Load and fit the `Network`, then check whether or not the model is passive:
+
+        >>> nw_3port = skrf.Network('my3port.s3p')
+        >>> vf = skrf.VectorFitting(nw_3port)
+        >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+        >>> vf.is_passive() # returns True or False
         """
 
         viol_bands = self.passivity_test(parameter_type)
@@ -990,6 +977,15 @@ class VectorFitting:
         is_passive : Returns the passivity status of the model as a boolean value.
         passivity_test : Verbose passivity evaluation routine.
         plot_passivation : Convergence plot for passivity enforcement iterations.
+
+        Examples
+        --------
+        Load and fit the `Network`, then enforce the passivity of the model:
+
+        >>> nw_3port = skrf.Network('my3port.s3p')
+        >>> vf = skrf.VectorFitting(nw_3port)
+        >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+        >>> vf.passivity_enforce()  # won't do anything if model is already passive
 
         References
         ----------
@@ -1130,6 +1126,27 @@ class VectorFitting:
         See Also
         --------
         read_npz : Reads all model parameters from a .npz file
+
+        Examples
+        --------
+        Load and fit the `Network`, then export the model parameters to a .npz file:
+
+        >>> nw_3port = skrf.Network('my3port.s3p')
+        >>> vf = skrf.VectorFitting(nw_3port)
+        >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+        >>> vf.write_npz('./data/')
+
+        The filename depends on the network name stored in `nw_3port.name` and will have the prefix `coefficients_`, for
+        example `coefficients_my3port.npz`. The coefficients can then be read using NumPy's load() function:
+
+        >>> coeffs = numpy.load('./data/coefficients_my3port.npz')
+        >>> poles = coeffs['poles']
+        >>> residues = coeffs['residues']
+        >>> prop_coeffs = coeffs['proportionals']
+        >>> constants = coeffs['constants']
+
+        Alternatively, the coefficients can be read directly into a new instance of `VectorFitting`, see
+        :func:`read_npz`.
         """
 
         if self.poles is None:
@@ -1170,7 +1187,7 @@ class VectorFitting:
         Raises
         ------
         ValueError
-            If the length of the parameters from the file does not match the size of the Network in :attr:`network`.
+            If the shapes of the coefficient arrays in the provided file are not compatible.
 
         Notes
         -----
@@ -1182,6 +1199,18 @@ class VectorFitting:
         See Also
         --------
         write_npz : Writes all model parameters to a .npz file
+
+        Examples
+        --------
+        Create an empty `VectorFitting` instance (with or without the fitted `Network`) and load the model parameters:
+
+        >>> vf = skrf.VectorFitting(None)
+        >>> vf.read_npz('./data/coefficients_my3port.npz')
+
+        This can be useful to analyze or process a previous vector fit instead of fitting it again, which sometimes
+        takes a long time. For example, the model passivity can be evaluated and enforced:
+
+        >>> vf.passivity_enforce()
         """
 
         with np.load(file) as data:
@@ -1206,8 +1235,10 @@ class VectorFitting:
                 self.proportional_coeff = proportional_coeff
                 self.constant_coeff = constant_coeff
             else:
-                raise ValueError('Length of the provided parameters does not match the network size. Please initialize '
-                                 'VectorFitting with a suited Network first.')
+                raise ValueError('The shapes of the provided parameters are not compatible. The coefficient file needs '
+                                 'to contain NumPy arrays labled `poles`, `residues`, `proportionals`, and '
+                                 '`constants`. Their shapes must match the number of network ports and the number of '
+                                 'frequencies.')
 
     def get_model_response(self, i: int, j: int, freqs: Any = None) -> np.ndarray:
         """
@@ -1272,21 +1303,30 @@ class VectorFitting:
         return resp
 
     @check_plotting
-    def plot_s_db(self, i: int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
         """
-        Plots the magnitude in dB of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the specified component of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
 
         Parameters
         ----------
-        i : int
-            Row index of the response.
+        component : str
+            The component to be plotted. Must be one of the following items:
+            `db` for magnitude in decibels,
+            `mag` for magnitude in linear scale,
+            `deg` for phase in degrees (wrapped),
+            `deg_unwrap` for phase in degrees (unwrapped/continuous),
+            `re` for real part in linear scale,
+            `im` for imaginary part in linear scale.
 
-        j : int
-            Column index of the response.
+        i : int, optional
+            Row index of the response. `-1` to plot all rows.
+
+        j : int, optional
+            Column index of the response. `-1` to plot all columns.
 
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
+            :attr:`network` are used. This only works if :attr:`network` is not `None`.
 
         ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
@@ -1296,226 +1336,269 @@ class VectorFitting:
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
+
+        Raises
+        ------
+        ValueError
+            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
+            Also if `component` is not valid.
         """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        components = ['db', 'mag', 'deg', 'deg_unwrap', 're', 'im']
+        if component.lower() in components:
+            if ax is None:
+                ax = mplt.gca()
 
-        if ax is None:
-            ax = mplt.gca()
+            if self.residues is None or self.poles is None:
+                raise RuntimeError('Poles and/or residues have not been fitted. Cannot plot the model response.')
 
-        ax.scatter(self.network.f, 20 * np.log10(np.abs(self.network.s[:, i, j])), color='r', label='Samples')
-        ax.plot(freqs, 20 * np.log10(np.abs(self.get_model_response(i, j, freqs))), color='k', label='Fit')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Magnitude (dB)')
-        ax.legend(loc='best')
-        ax.set_title('Response i={}, j={}'.format(i, j))
-        return ax
+            n_ports = int(np.sqrt(np.shape(self.residues)[0]))
 
-    @check_plotting
-    def plot_s_mag(self, i: int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+            if i == -1:
+                list_i = range(n_ports)
+            elif isinstance(i, int):
+                list_i = [i]
+            else:
+                list_i = i
+
+            if j == -1:
+                list_j = range(n_ports)
+            elif isinstance(j, int):
+                list_j = [j]
+            else:
+                list_j = j
+
+            if self.network is not None:
+                # plot the original network response at each sample frequency (scatter plot)
+                i_samples = 0
+                for i in list_i:
+                    for j in list_j:
+                        if i_samples == 0:
+                            label = 'Samples'
+                        else:
+                            label = '_nolegend_'
+                        i_samples += 1
+
+                        y_vals = None
+                        if component.lower() == 'db':
+                            y_vals = 20 * np.log10(np.abs(self.network.s[:, i, j]))
+                        elif component.lower() == 'mag':
+                            y_vals = np.abs(self.network.s[:, i, j])
+                        elif component.lower() == 'deg':
+                            y_vals = np.rad2deg(np.angle(self.network.s[:, i, j]))
+                        elif component.lower() == 'deg_unwrap':
+                            y_vals = np.rad2deg(np.unwrap(np.angle(self.network.s[:, i, j])))
+                        elif component.lower() == 're':
+                            y_vals = np.real(self.network.s[:, i, j])
+                        elif component.lower() == 'im':
+                            y_vals = np.imag(self.network.s[:, i, j])
+
+                        ax.scatter(self.network.f, y_vals, color='r', label=label)
+
+                if freqs is None:
+                    # get frequency array from the network
+                    freqs = self.network.f
+
+            if freqs is None:
+                raise ValueError(
+                    'Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
+                    'frequency information.')
+
+            # plot the fitted responses
+            y_label = ''
+            i_fit = 0
+            for i in list_i:
+                for j in list_j:
+                    if i_fit == 0:
+                        label = 'Fit'
+                    else:
+                        label = '_nolegend_'
+                    i_fit += 1
+
+                    y_model = self.get_model_response(i, j, freqs)
+                    y_vals = None
+                    if component.lower() == 'db':
+                        y_vals = 20 * np.log10(np.abs(y_model))
+                        y_label = 'Magnitude (dB)'
+                    elif component.lower() == 'mag':
+                        y_vals = np.abs(y_model)
+                        y_label = 'Magnitude'
+                    elif component.lower() == 'deg':
+                        y_vals = np.rad2deg(np.angle(y_model))
+                        y_label = 'Phase (Degrees)'
+                    elif component.lower() == 'deg_unwrap':
+                        y_vals = np.rad2deg(np.unwrap(np.angle(y_model)))
+                        y_label = 'Phase (Degrees)'
+                    elif component.lower() == 're':
+                        y_vals = np.real(y_model)
+                        y_label = 'Real Part'
+                    elif component.lower() == 'im':
+                        y_vals = np.imag(y_model)
+                        y_label = 'Imaginary Part'
+
+                    ax.plot(freqs, y_vals, color='k', label=label)
+
+            ax.set_xlabel('Frequency (Hz)')
+            ax.set_ylabel(y_label)
+            ax.legend(loc='best')
+
+            # only print title if a single response is shown
+            if i_fit == 1:
+                ax.set_title('Response i={}, j={}'.format(i, j))
+
+            return ax
+        else:
+            raise ValueError('The specified component ("{}") is not valid. Must be in {}.'.format(component, components))
+
+    def plot_s_db(self, *args, **kwargs) -> mplt.Axes:
         """
-        Plots the magnitude in linear scale of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the magnitude in dB of the scattering parameter response(s) in the fit.
 
         Parameters
         ----------
-        i : int
-            Row index of the response.
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
 
-        j : int
-            Column index of the response.
-
-        freqs : list of float or ndarray or None, optional
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
-
-        ax : :class:`matplotlib.Axes` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
+
+        Notes
+        -----
+        This simply calls ``plot('db', *args, **kwargs)``.
         """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        return self.plot('db', *args, **kwargs)
 
-        if ax is None:
-            ax = mplt.gca()
-
-        ax.scatter(self.network.f, np.abs(self.network.s[:, i, j]), color='r', label='Samples')
-        ax.plot(freqs, np.abs(self.get_model_response(i, j, freqs)), color='k', label='Fit')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Magnitude')
-        ax.legend(loc='best')
-        ax.set_title('Response i={}, j={}'.format(i, j))
-        return ax
-
-    @check_plotting
-    def plot_s_deg(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot_s_mag(self, *args, **kwargs) -> mplt.Axes:
         """
-        Plots the phase in degrees of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the magnitude in linear scale of the scattering parameter response(s) in the fit.
 
         Parameters
         ----------
-        i : int
-            Row index of the response.
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
 
-        j : int
-            Column index of the response.
-
-        freqs : list of float or ndarray or None, optional
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
-
-        ax : :class:`matplotlib.Axes` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
+
+        Notes
+        -----
+        This simply calls ``plot('mag', *args, **kwargs)``.
         """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        return self.plot('mag', *args, **kwargs)
 
-        if ax is None:
-            ax = mplt.gca()
-
-        ax.scatter(self.network.f, np.rad2deg(np.angle(self.network.s[:, i, j])), color='r', label='Samples')
-        ax.plot(freqs, np.rad2deg(np.angle(self.get_model_response(i, j, freqs))), color='k', label='Fit')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Phase (Degrees)')
-        ax.legend(loc='best')
-        ax.set_title('Response i={}, j={}'.format(i, j))
-        return ax
-
-    @check_plotting
-    def plot_s_deg_unwrap(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot_s_deg(self, *args, **kwargs) -> mplt.Axes:
         """
-        Plots the unwrapped phase in degrees of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the phase in degrees of the scattering parameter response(s) in the fit.
 
         Parameters
         ----------
-        i : int
-            Row index of the response.
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
 
-        j : int
-            Column index of the response.
-
-        freqs : list of float or ndarray or None, optional
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
-
-        ax : :class:`matplotlib.Axes` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
+
+        Notes
+        -----
+        This simply calls ``plot('deg', *args, **kwargs)``.
         """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        return self.plot('deg', *args, **kwargs)
 
-        if ax is None:
-            ax = mplt.gca()
-
-        ax.scatter(self.network.f, np.rad2deg(np.unwrap(np.angle(self.network.s[:, i, j]))), color='r', label='Samples')
-        ax.plot(freqs, np.rad2deg(np.unwrap(np.angle(self.get_model_response(i, j, freqs)))), color='k', label='Fit')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Phase (Degrees)')
-        ax.legend(loc='best')
-        ax.set_title('Response i={}, j={}'.format(i, j))
-        return ax
-
-    @check_plotting
-    def plot_s_re(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot_s_deg_unwrap(self, *args, **kwargs) -> mplt.Axes:
         """
-        Plots the real part of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the unwrapped phase in degrees of the scattering parameter response(s) in the fit.
 
         Parameters
         ----------
-        i : int
-            Row index of the response.
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
 
-        j : int
-            Column index of the response.
-
-        freqs : list of float or ndarray or None, optional
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
-
-        ax : :class:`matplotlib.Axes` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
+
+        Notes
+        -----
+        This simply calls ``plot('deg_unwrap', *args, **kwargs)``.
         """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        return self.plot('deg_unwrap', *args, **kwargs)
 
-        if ax is None:
-            ax = mplt.gca()
-
-        ax.scatter(self.network.f, np.real(self.network.s[:, i, j]), color='r', label='Samples')
-        ax.plot(freqs, np.real(self.get_model_response(i, j, freqs)), color='k', label='Fit')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Real Part')
-        ax.legend(loc='best')
-        ax.set_title('Response i={}, j={}'.format(i, j))
-        return ax
-
-    @check_plotting
-    def plot_s_im(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot_s_re(self, *args, **kwargs) -> mplt.Axes:
         """
-        Plots the imaginary part of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the real part of the scattering parameter response(s) in the fit.
 
         Parameters
         ----------
-        i : int
-            Row index of the response.
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
 
-        j : int
-            Column index of the response.
-
-        freqs : list of float or ndarray or None, optional
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
-
-        ax : :class:`matplotlib.Axes` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
+
+        Notes
+        -----
+        This simply calls ``plot('re', *args, **kwargs)``.
         """
 
-        if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+        return self.plot('re', *args, **kwargs)
 
-        if ax is None:
-            ax = mplt.gca()
+    def plot_s_im(self, *args, **kwargs) -> mplt.Axes:
+        """
+        Plots the imaginary part of the scattering parameter response(s) in the fit.
 
-        ax.scatter(self.network.f, np.imag(self.network.s[:, i, j]), color='r', label='Samples')
-        ax.plot(freqs, np.imag(self.get_model_response(i, j, freqs)), color='k', label='Fit')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Imaginary Part')
-        ax.legend(loc='best')
-        ax.set_title('Response i={}, j={}'.format(i, j))
-        return ax
+        Parameters
+        ----------
+        *args : any, optional
+            Additonal arguments to be passed to :func:`plot`.
+
+        **kwargs : dict, optional
+            Additonal keyword arguments to be passed to :func:`plot`.
+
+        Returns
+        -------
+        :class:`matplotlib.Axes`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
+
+        Notes
+        -----
+        This simply calls ``plot('im', *args, **kwargs)``.
+        """
+
+        return self.plot('im', *args, **kwargs)
 
     @check_plotting
     def plot_s_singular(self, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
@@ -1526,7 +1609,7 @@ class VectorFitting:
         ----------
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-            :attr:`network` are used.
+            :attr:`network` are used. This only works if :attr:`network` is not `None`.
 
         ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
@@ -1536,10 +1619,20 @@ class VectorFitting:
         :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
+
+        Raises
+        ------
+        ValueError
+            If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
         """
 
         if freqs is None:
-            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+            if self.network is None:
+                raise ValueError(
+                    'Neither `freqs` nor `self.network` is specified. Cannot plot model response without any '
+                    'frequency information.')
+            else:
+                freqs = self.network.f
 
         if ax is None:
             ax = mplt.gca()

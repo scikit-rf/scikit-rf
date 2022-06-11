@@ -117,20 +117,23 @@ class Touchstone:
         self.port_names = None
 
         self.comment_variables = None
-        
+
+        # Does the input file have HFSS per frequency port impedances
+        self.has_hfss_port_impedances = False
+
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
         try:
             if encoding is not None:
                 fid = get_fid(file, encoding=encoding)
                 self.filename = fid.name
-                self.load_file(fid)       
+                self.load_file(fid)
             else:
                 # Assume default encoding
                 fid = get_fid(file)
                 self.filename = fid.name
                 self.load_file(fid)
-            
+
         except UnicodeDecodeError:
             # Unicode fails -> Force Latin-1
             fid = get_fid(file, encoding='ISO-8859-1')
@@ -144,12 +147,12 @@ class Touchstone:
             self.load_file(fid)
 
         except Exception as e:
-            raise ValueError(f'Something went wrong by the file openning: {e}')
+            raise ValueError(f'Something went wrong by the file opening: {e}')
 
         self.gamma = []
         self.z0 = []
 
-        if self.is_from_hfss:
+        if self.has_hfss_port_impedances:
             self.get_gamma_z0_from_fid(fid)
 
         fid.close()
@@ -207,6 +210,8 @@ class Touchstone:
                             self.port_names[index - 1] = name
                     except ValueError as e:
                         print("Error extracting port names from line: {0}".format(line))
+                elif line[1].strip().lower().startswith('port impedance'):
+                    self.has_hfss_port_impedances = True
 
             # remove the comment (if any) so rest of line can be processed.
             # touchstone files are case-insensitive
@@ -504,24 +509,6 @@ class Touchstone:
         # noise_source_phase = noise_values[:,3]
         # noise_normalized_resistance = noise_values[:,4]
         raise NotImplementedError('not yet implemented')
-
-    def is_from_hfss(self):
-        """
-        Check if the Touchstone file has been produced by HFSS.
-
-        Returns
-        -------
-        status : boolean
-            True if the Touchstone file has been produced by HFSS
-            False otherwise
-        """
-        if self.comments is None:
-            return False
-
-        if 'exported from hfss' in str.lower(self.comments):
-            return True
-
-        return False
 
     def get_gamma_z0_from_fid(self, fid):
         """
