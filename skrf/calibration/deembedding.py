@@ -59,6 +59,7 @@ from ..network import *
 import warnings
 import numpy as np
 from numpy import concatenate, conj, flip, real, angle, exp, zeros
+from numpy.fft import fft, fftshift, irfft, ifftshift
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
@@ -1025,7 +1026,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         # TODO: attempt to interpolate if frequencies do not match
 
-        return self.s_side1.inv ** ntwk ** self.s_side2.inv
+        return self.s_side1.inv ** ntwk ** self.s_side2.flipped().inv
     
     def dc_interp(self, s, f):
         """
@@ -1078,8 +1079,8 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         ts = np.argmin(np.abs(t - (-3e-9)))
         Hr = self.COM_receiver_noise_filter(f, f[-1]/2)
         while(err > allowedError):
-            h1 = self.makeStep(np.fft.fftshift(np.fft.irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
-            h2 = self.makeStep(np.fft.fftshift(np.fft.irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
+            h1 = self.makeStep(fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
+            h2 = self.makeStep(fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
             m = (h2[ts] - h1[ts]) / 0.001
             b = h1[ts] - m * DCpoint
             DCpoint = (0 - b) / m
@@ -1135,11 +1136,11 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         # e001
         s21 = s[:, 1, 0]
         dcs21 = self.dc_interp(s21, f)
-        t21 = np.fft.fftshift(np.fft.irfft(concatenate(([dcs21], s21)), axis=0), axes=0)
+        t21 = fftshift(irfft(concatenate(([dcs21], s21)), axis=0), axes=0)
         x = np.argmax(t21)
         
         dcs11 = self.DC(s11,f)
-        t11 = np.fft.fftshift(np.fft.irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
+        t11 = fftshift(irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
         step11 = self.makeStep(t11)
         z11 = -self.z0 * (step11 + 1) / (step11 - 1)
         z11x = z11[x]
@@ -1155,15 +1156,16 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         s22r = sr[:, 1, 1]
         
         dcs11r = self.DC(s11r, f)
-        t11r = np.fft.fftshift(np.fft.ifft(self.makeSymmetric(concatenate(([dcs11r], s11r))), axis=0), axes=0)
+        # irfft is equivalent to ifft(makeSymmetric(x))
+        t11r = fftshift(irfft(concatenate(([dcs11r], s11r)), axis=0), axes=0)
         t11r[x:] = 0
-        e001 = np.fft.fft(np.fft.ifftshift(t11r))
+        e001 = fft(ifftshift(t11r))
         e001 = e001[1:n+1]
         
         dcs22r = self.DC(s22r, f)
-        t22r = np.fft.fftshift(np.fft.ifft(self.makeSymmetric(concatenate(([dcs22r], s22r))), axis=0), axes=0)
+        t22r = fftshift(irfft(concatenate(([dcs22r], s22r)), axis=0), axes=0)
         t22r[x:] = 0
-        e002 = np.fft.fft(np.fft.ifftshift(t22r))
+        e002 = fft(ifftshift(t22r))
         e002 = e002[1:n+1]
         
         # calc e111 and e112
@@ -1235,7 +1237,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         s_fixture_model_r1.renormalize(self.z0)
         s_fixture_model_r2.renormalize(self.z0)
         s_side1 = s_fixture_model_r1
-        s_side2 = s_fixture_model_r2
+        s_side2 = s_fixture_model_r2.flipped() # FIX-2 is flipped in skrf
         
         return (s_side1, s_side2)
 
@@ -1397,7 +1399,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
             ntwk.renumber(old_order, new_order)
 
-        deembedded = self.se_side1.inv ** ntwk ** self.se_side2.inv
+        deembedded = self.se_side1.inv ** ntwk ** self.se_side2.flipped().inv
         #renumber back if required
         if self.port_order != 'second':
             deembedded.renumber(new_order, old_order)
@@ -1588,7 +1590,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         # TODO: attempt to interpolate if frequencies do not match
 
-        return self.s_side1.inv ** ntwk ** self.s_side2.inv
+        return self.s_side1.inv ** ntwk ** self.s_side2.flipped().inv
     
     def thru(self, n):
         out = n.copy();
@@ -1654,8 +1656,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         ts = np.argmin(np.abs(t - (-3e-9)))
         Hr = self.COM_receiver_noise_filter(f, f[-1]/2)
         while(err > allowedError):
-            h1 = self.makeStep(np.fft.fftshift(np.fft.irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
-            h2 = self.makeStep(np.fft.fftshift(np.fft.irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
+            h1 = self.makeStep(fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
+            h2 = self.makeStep(fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
             m = (h2[ts] - h1[ts]) / 0.001
             b = h1[ts] - m * DCpoint
             DCpoint = (0 - b) / m
@@ -1665,16 +1667,17 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
     
     def getz(self, s, f, z0):
         DC11 = self.DC2(s, f)
-        t112x = np.fft.irfft(concatenate(([DC11], s)))
+        t112x = irfft(concatenate(([DC11], s)))
         #get the step response of t112x. Shift is needed for makeStep to
-        #work prpoerly.
-        t112xStep = self.makeStep(np.fft.fftshift(t112x))
+        #work properly.
+        t112xStep = self.makeStep(fftshift(t112x))
         #construct the transmission line
         z = -z0 * (t112xStep + 1) / (t112xStep - 1)
-        z = np.fft.ifftshift(z) #impedance. Shift again to get the first point
+        z = ifftshift(z) #impedance. Shift again to get the first point
         return z[0], z
     
     def makeTL(self, zline, z0, gamma, l):
+        # todo: use DefinedGammaZ0 media instead
         n = len(gamma)
         TL = np.zeros((n, 2, 2), dtype = complex)
         TL[:, 0, 0] = ((zline**2 - z0**2) * np.sinh(gamma * l)) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
@@ -1823,7 +1826,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             sTL2 = nin.copy()
             sTL2.s = TL2
             #remove the errorboxes
-            out = sTL1.inv ** out ** sTL2.flipped().inv
+            # no need to flip sTL2 because it is symmetrical
+            out = sTL1.inv ** out ** sTL2.inv
             #capture the errorboxes from side 1 and 2
             if i == 0:
                 eb1 = sTL1.copy()
@@ -1839,7 +1843,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         n = len(f)
         s212x = s2x.s[:, 1, 0]
         DC21 = self.dc_interp(s212x, f)
-        x = np.argmax(np.fft.irfft(concatenate(([DC21], s212x))))
+        x = np.argmax(irfft(concatenate(([DC21], s212x))))
         #define relative length
         #python first index is 0, thus 1 should be added to get the length
         l = 1. / (2 * (x + 1))
@@ -1865,7 +1869,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             else:
                 errorbox1 = errorbox1 ** sTL1
                 errorbox2 = errorbox2 ** sTL2
-            s_dut = sTL1.inv ** s_dut ** sTL2.flipped().inv
+            # no need to flip sTL2 because it is symmetrical
+            s_dut = sTL1.inv ** s_dut ** sTL2.inv
             #IEEE abcd implementation
             # abcd_TL1 = sTL1.a
             # abcd_TL2 = sTL2.a
@@ -1890,8 +1895,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 _, zdut2 = self.getz(s22dut, f, z0)
                 axs[0, 0].plot(zeb1)
                 axs[0, 1].plot(zeb2)
-                axs[1, 0].plot(np.fft.ifftshift(zdut1))
-                axs[1, 1].plot(np.fft.ifftshift(zdut2))
+                axs[1, 0].plot(ifftshift(zdut1))
         return errorbox1, errorbox2.flipped()
     
     
@@ -2039,6 +2043,8 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
     
     The `scikit-rf` cascade ** 2N-port operator use second scheme. This is very
     convenient to write compact deembedding and other expressions.
+    
+    numbering diagram::
 
       port_order = 'first'
            +---------+ 
@@ -2057,7 +2063,6 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
           -|0       3|-
           -|1       2|-
            +---------+ 
-
 
     use `Network.renumber` to change port ordering.
 
@@ -2213,7 +2218,7 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
             new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
             ntwk.renumber(old_order, new_order)
 
-        deembedded = self.se_side1.inv ** ntwk ** self.se_side2.inv
+        deembedded = self.se_side1.inv ** ntwk ** self.se_side2.flipped().inv
         #renumber back if required
         if self.port_order != 'second':
             deembedded.renumber(new_order, old_order)
