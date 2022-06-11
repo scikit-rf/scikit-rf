@@ -847,7 +847,14 @@ class Media(ABC):
         result.s = \
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 
+        # todo: some magic here to make embed emmit a warning but keep
+        # `media.line(line_l, 'm', embed=True, z0=media.Z0)` working for
+        # backward compatibility
         if embed:
+            warnings.warn('In a future version,`embed` will be deprecated.\n'
+                          'Port impedance of the line network will be media or line Z0 embedded into media or line z0.\n'
+                          'Line Z0 or z0 will have priority on media if not set to None.',
+              FutureWarning, stacklevel = 2)
             # Use the same s_def here as the line to avoid changing it during
             # cascade.
             result = self.thru(s_def='traveling')**result**self.thru(s_def='traveling')
