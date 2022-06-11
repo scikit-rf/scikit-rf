@@ -1049,14 +1049,15 @@ class VectorFitting:
         C_t = C
         delta = 0.999   # predefined tolerance parameter (users should not need to change this)
 
+        # calculate coefficient matrix
+        A_freq = np.linalg.inv(2j * np.pi * freqs_eval[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
+        coeffs = np.matmul(A_freq, B[None, :, :])
+
         # iterative compensation of passivity violations
         t = 0
         self.history_max_sigma = []
         while t < self.max_iterations:
             logging.info('Passivity enforcement; Iteration {}'.format(t + 1))
-
-            A_matrix = []
-            b_vector = []
 
             # calculate S-matrix at this frequency (shape fxNxN)
             s_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D, E)
@@ -1079,10 +1080,6 @@ class VectorFitting:
 
             # calculate violation S-responses
             s_viol = np.matmul(np.matmul(u, sigma_viol_diag), vh)
-
-            # calculate coefficient matrix
-            A_freq = np.linalg.inv(2j * np.pi * freqs_eval[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
-            coeffs = np.matmul(A_freq, B[None, :, :])
 
             # fit perturbed residues C_t for each response S_{i,j}
             for i in range(np.shape(s_viol)[1]):
