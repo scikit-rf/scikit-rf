@@ -922,25 +922,25 @@ class ImpedanceCancel(Deembedding):
 
 class IEEEP370_SE_NZC_2xThru(Deembedding):
     """
-    Creates error boxes from a test fixture 2x thru.
+    Creates error boxes from a test fixture 2xThru network.
     
-    Based on [ElSA20]_ and https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP3702xThru.m
-    commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    Based on [ElSA20]_ and [I3E370]_.
 
-    A deembedding object is created with one 2x thru measurement,
-    `dummy_2xthru` which is split into left and right fixtures with IEEEP370
-    2xThru method. When :func:`Deembedding.deembed` is applied,
-    the s-parameters of the left and right fixture are deembedded from
-    fixture-dut-fixture measurement.
+    A deembedding object is created with a single 2xThru (FIX-FIX) network,
+    which is split into left (FIX-1) and right (FIX-2) fixtures with IEEEP370
+    2xThru method.
+    
+    When :func:`Deembedding.deembed` is applied, the s-parameters of FIX-1 and
+    FIX-2 are deembedded from the FIX_DUT_FIX network.
 
-    This method is applicable only when there is a 2xthru measurement.
+    This method is applicable only when there is a 2x-Thru network.
 
     Example
     --------
     >>> import skrf as rf
     >>> from skrf.calibration import IEEEP370_SE_NZC_2xThru
 
-    Create network objects for dummy structure and dut
+    Create network objects for 2x-Thru and FIX_DUT_FIX
 
     >>> s2xthru = rf.Network('2xthru.s2p')
     >>> fdf = rf.Network('f-dut-f.s2p')
@@ -949,15 +949,26 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
     >>> dm = IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru, name = '2xthru')
 
-    Remove parasitics to get the actual device network
+    Apply deembedding to get the actual DUT network
 
     >>> dut = dm.deembed(fdf)
     
+    Note
+    ----
+    numbering diagram::
+        
+         FIX-1    DUT      FIX-2
+         +----+   +----+   +----+
+        -|1  2|---|1  2|---|2  1|-
+         +----+   +----+   +----+
+         
     References
     ----------
     .. [ElSA20] Ellison J, Smith SB, Agili S., "Using a 2x-thru standard to achieve
         accurate de-embedding of measurements", Microwave Optical Technology
         Letter, 2020, https://doi.org/10.1002/mop.32098
+    .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP3702xThru.m,
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, *args, **kwargs):
@@ -968,16 +979,16 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         -----------
 
         dummy_2xthru : :class:`~skrf.network.Network` object
-            Measurement of the 2x thru.
+            2xThru (FIX-FIX) network.
             
         z0 :
             reference impedance of the S-parameters (default: 50)
 
         name : string
-            Optional name of de-embedding object
+            optional name of de-embedding object
 
         args, kwargs:
-            Passed to :func:`Deembedding.__init__`
+            passed to :func:`Deembedding.__init__`
 
         See Also
         ---------
@@ -998,8 +1009,8 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         Parameters
         ----------
         ntwk : :class:`~skrf.network.Network` object
-            Network data of device measurement from which
-            thru fixtures needs to be removed via de-embedding
+            FIX-DUT-FIX network from which FIX-1 AND FIX-2 fixtures needs to be
+            removed via de-embedding
 
         Returns
         -------
@@ -1230,18 +1241,18 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
 class IEEEP370_MM_NZC_2xThru(Deembedding):
     """
-    Creates error boxes from a 4-port test fixture 2x thru.
+    Creates error boxes from a 4-port test fixture 2xThru.
     
-    Based on https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
-    commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    Based on [ElSA20]_ and [I3E370]_.
 
-    A deembedding object is created with one 2x thru measurement,
-    `dummy_2xthru` which is split into left and right fixtures with IEEEP370
-    2xThru method. When :func:`Deembedding.deembed` is applied,
-    the s-parameters of the left and right fixture are deembedded from
-    fixture-dut-fixture measurement.
+    A deembedding object is created with a single 2xThru (FIX-FIX) network,
+    which is split into left (FIX-1_2) and right (FIX-3_4) fixtures with
+    IEEEP370 2xThru method.
+    
+    When :func:`Deembedding.deembed` is applied, the s-parameters of FIX-1 and
+    FIX-2 are deembedded from the FIX_DUT_FIX network.
 
-    This method is applicable only when there is a 2xthru measurement.
+    This method is applicable only when there is a 2x-Thru measurement.
     
     Note
     ----
@@ -1249,9 +1260,12 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
     while `port_order`='second' means left-to-right also known as sequential.
     `port_order`='third' means yet another numbering method.
     Next figure show example of port numbering with 4-port networks.
+    
     The `scikit-rf` cascade ** 2N-port operator use second scheme. This is very
     convenient to write compact deembedding and other expressions.
 
+    numbering diagram::
+        
       port_order = 'first'
            +---------+ 
           -|0       1|-
@@ -1278,7 +1292,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
     >>> import skrf as rf
     >>> from skrf.calibration import IEEEP370_MM_NZC_2xThru
 
-    Create network objects for dummy structure and dut
+    Create network objects for 2xThru and FIX-DUT-FIX
 
     >>> s2xthru = rf.Network('2xthru.s4p')
     >>> fdf = rf.Network('f-dut-f.s4p')
@@ -1287,9 +1301,27 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
 
     >>> dm = IEEEP370_MM_NZC_2xThru(dummy_2xthru = s2xthru, name = '2xthru')
 
-    Remove parasitics to get the actual device network
+    Apply deembedding to get the actual DUT network
 
     >>> dut = dm.deembed(fdf)
+    
+    Note
+    ----
+    numbering diagram::
+        
+         FIX-1_2  DUT      FIX-3_4
+         +----+   +----+   +----+
+        -|1  3|---|1  3|---|3  1|-
+        -|2  4|---|2  4|---|4  2|-
+         +----+   +----+   +----+
+    
+    References
+    ----------
+    .. [ElSA20] Ellison J, Smith SB, Agili S., "Using a 2x-thru standard to achieve
+        accurate de-embedding of measurements", Microwave Optical Technology
+        Letter, 2020, https://doi.org/10.1002/mop.32098
+    .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, port_order: str = 'second', *args, **kwargs):
@@ -1300,7 +1332,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         -----------
 
         dummy_2xthru : :class:`~skrf.network.Network` object
-            Measurement of the 2x thru.
+            2xThru (FIX-FIX) network.
             
         z0 :
             reference impedance of the S-parameters (default: 50)
@@ -1309,10 +1341,10 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             specify what numbering scheme to use. See above. (default: second)
 
         name : string
-            Optional name of de-embedding object
+            optional name of de-embedding object
 
         args, kwargs:
-            Passed to :func:`Deembedding.__init__`
+            passed to :func:`Deembedding.__init__`
 
         See Also
         ---------
@@ -1334,8 +1366,8 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         Parameters
         ----------
         ntwk : :class:`~skrf.network.Network` object
-            Network data of device measurement from which
-            thru fixtures needs to be removed via de-embedding
+            FIX-DUT-FIX network from which FIX-1_2 and FIX-3_4 fixtures needs
+            to be removed via de-embedding
 
         Returns
         -------
@@ -1410,22 +1442,21 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
 
 class IEEEP370_SE_ZC_2xThru(Deembedding):
     """
-    Creates error boxes from a test fixture 2x thru and the
-    fixture-dut-fixture S-parameters.
+    Creates error boxes from 2x-Thru and FIX-DUT-FIX networks.
     
-    Based on https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370Zc2xThru.m
-    commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    Based on [I3E370]_.
 
-    A deembedding object is created with 2x thru and fixture-dut-fixture
-    measurements, which is split into left and right fixtures with IEEEP370
-    Zc2xThru method. When :func:`Deembedding.deembed` is applied,
-    the s-parameters of the left and right fixture are deembedded from
-    fixture-dut-fixture measurement.
-
-    This method is applicable only when there is a 2xthru measurement and a 
-    fixture-dut-fixture measurement.
+    A deembedding object is created with 2x-Thru (FIX-FIX) and FIX-DUT-FIX
+    measurements, which are split into left (FIX-1) and right (FIX-2) fixtures
+    with IEEEP370 Zc2xThru method.
     
-    The possible difference of impedance between 2xthru and fixture-dut-fixture
+    When :func:`Deembedding.deembed` is applied, the s-parameters of FIX-1 and
+    FIX-2 are deembedded from FIX_DUT_FIX network.
+
+    This method is applicable only when there is 2xThru and FIX_DUT_FIX
+    networks.
+    
+    The possible difference of impedance between 2x-Thru and FIX-DUT-FIX
     is corrected.
 
     Example
@@ -1433,7 +1464,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
     >>> import skrf as rf
     >>> from skrf.calibration import IEEEP370_SE_ZC_2xThru
 
-    Create network objects for dummy structure and dut
+    Create network objects for 2xThru and FIX-DUT-FIX
 
     >>> s2xthru = rf.Network('2xthru.s2p')
     >>> fdf = rf.Network('f-dut-f.s2p')
@@ -1446,9 +1477,23 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                              leadin = 0,
                              name = 'zc2xthru')
 
-    Remove parasitics to get the actual device network
+    Apply deembedding to get the DUT
 
     >>> dut = dm.deembed(fdf)
+    
+    Note
+    ----
+    numbering diagram::
+        
+         FIX-1    DUT      FIX-2
+         +----+   +----+   +----+
+        -|1  2|---|1  2|---|2  1|-
+         +----+   +----+   +----+
+         
+    References
+    ----------
+    .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370Zc2xThru.m
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
     def __init__(self, dummy_2xthru, dummy_fix_dut_fix, name=None, 
                  z0 = 50, bandwidth_limit = 0,
@@ -1464,10 +1509,10 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         -----------
 
         dummy_2xthru : :class:`~skrf.network.Network` object
-            Measurement of the 2x thru.
+            2xThru (FIX-FIX) network.
 
         name : string
-            Optional name of de-embedding object
+            optional name of de-embedding object
         
         z0 :
             reference impedance of the S-parameters (default: 50)
@@ -1495,7 +1540,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             view the process (default: False)
 
         args, kwargs:
-            Passed to :func:`Deembedding.__init__`
+            passed to :func:`Deembedding.__init__`
 
         See Also
         ---------
@@ -1527,8 +1572,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         Parameters
         ----------
         ntwk : :class:`~skrf.network.Network` object
-            Network data of device measurement from which
-            thru fixtures needs to be removed via de-embedding
+            FIX-DUT-FIX network from which FIX-1 and FIX-2 fixtures needs to
+            be removed via de-embedding
 
         Returns
         -------
@@ -1968,22 +2013,21 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
     
 class IEEEP370_MM_ZC_2xThru(Deembedding):
     """
-    Creates error boxes from a 4-port test fixture 2x thru and the
-    fixture-dut-fixture S-parameters.
+    Creates error boxes from a 4-port from 2x-Thru and FIX-DUT-FIX networks.
     
-    Based on https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
-    commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    Based on [I3E370]_.
 
-    A deembedding object is created with 2x thru and fixture-dut-fixture
-    measurements, which is split into left and right fixtures with IEEEP370
-    Zc2xThru method. When :func:`Deembedding.deembed` is applied,
-    the s-parameters of the left and right fixture are deembedded from
-    fixture-dut-fixture measurement.
-
-    This method is applicable only when there is a 2xthru measurement and a 
-    fixture-dut-fixture measurement.
+    A deembedding object is created with 2x-Thru (FIX-FIX) and FIX-DUT-FIX
+    measurements, which are split into left (FIX-1_2) and right (FIX-3_4)
+    fixtures with IEEEP370 Zc2xThru method.
     
-    The possible difference of impedance between 2xthru and fixture-dut-fixture
+    When :func:`Deembedding.deembed` is applied, the s-parameters of FIX-1_2
+    and FIX-3_4 are deembedded from FIX_DUT_FIX network.
+
+    This method is applicable only when there is 2xThru and FIX_DUT_FIX
+    networks.
+    
+    The possible difference of impedance between 2x-Thru and FIX-DUT-FIX
     is corrected.
     
     Note
@@ -1992,6 +2036,7 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
     while `port_order`='second' means left-to-right also known as sequential.
     `port_order`='third' means yet another numbering method.
     Next figure show example of port numbering with 4-port networks.
+    
     The `scikit-rf` cascade ** 2N-port operator use second scheme. This is very
     convenient to write compact deembedding and other expressions.
 
@@ -2021,22 +2066,38 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
     >>> import skrf as rf
     >>> from skrf.calibration import IEEEP370_MM_ZC_2xThru
 
-    Create network objects for dummy structure and dut
+    Create network objects for 2xThru and FIX-DUT-FIX
 
     >>> s2xthru = rf.Network('2xthru.s4p')
     >>> fdf = rf.Network('f-dut-f.s4p')
 
     Create de-embedding object
 
-    >>> dm = IEEEP370_MM_ZC_2xThru(dummy_2xthru = s2xthru, dummy_fix_dut_fix = fdf,
+    >>> dm = IEEEP370_MM_ZC_2xThru(dummy_2xthru = s2xthru,
+                             dummy_fix_dut_fix = fdf,
                              bandwidth_limit = 10e9,
                              pullback1 = 0, pullback2 = 0,
                              leadin = 0,
                              name = 'zc2xthru')
     
-    Remove parasitics to get the actual device network
+    Apply deembedding to get the DUT
 
     >>> dut = dm.deembed(fdf)
+    
+    Note
+    ----
+    numbering diagram::
+        
+         FIX-1_2  DUT      FIX-3_4
+         +----+   +----+   +----+
+        -|1  3|---|1  3|---|3  1|-
+        -|2  4|---|2  4|---|4  2|-
+         +----+   +----+   +----+
+    
+    References
+    ----------
+    .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
         
     """
     def __init__(self, dummy_2xthru, dummy_fix_dut_fix, name=None, 
@@ -2054,10 +2115,10 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         -----------
 
         dummy_2xthru : :class:`~skrf.network.Network` object
-            Measurement of the 2x thru.
+            2xThru (FIX-FIX) network.
 
         name : string
-            Optional name of de-embedding object
+            optional name of de-embedding object
         
         z0 :
             reference impedance of the S-parameters (default: 50)
@@ -2088,7 +2149,7 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
             view the process (default: False)
 
         args, kwargs:
-            Passed to :func:`Deembedding.__init__`
+            passed to :func:`Deembedding.__init__`
 
         See Also
         ---------
@@ -2121,8 +2182,8 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         Parameters
         ----------
         ntwk : :class:`~skrf.network.Network` object
-            Network data of device measurement from which
-            thru fixtures needs to be removed via de-embedding
+            FIX-DUT-FIX network from which FIX-1_2 and FIX-3_4 fixtures needs
+            to be removed via de-embedding
 
         Returns
         -------
