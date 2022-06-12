@@ -2645,8 +2645,11 @@ class Network(object):
         else:
             dim = len(shape(freq_or_n))
             if dim == 0:
-                # input is a number
-                new_frequency = self.frequency.copy()
+                # input is a number 
+                new_frequency = Frequency(start=self.frequency.start_scaled, 
+                                          stop=self.frequency.stop_scaled,
+                                          unit=self.frequency.unit,
+                                          npoints=freq_or_n)
             elif dim == 1:
                 # input is a array, or list
                 new_frequency = Frequency.from_f(freq_or_n, **f_kwargs)

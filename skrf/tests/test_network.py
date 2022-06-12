@@ -998,6 +998,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue( ((a+2+2j).s == npy.array([[[3+4j]],[[5+6j]]])).all())
         # operating on list
         self.assertTrue( ((a+[1+1j,2+2j]).s == npy.array([[[2+3j]],[[5+6j]]])).all())
+     
 
     def test_interpolate(self):
         a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
@@ -1033,8 +1034,13 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(b.z0[-1] == a.z0[-1])
 
     def test_interpolate_self(self):
+        """Test resample."""
         a = rf.N(f=[1,2], s=[1+2j, 3+4j], z0=1)
         a.interpolate_self(4)
+        self.assertEqual(len(a), 4)
+        # also test the alias name
+        a.resample(6)
+        self.assertEqual(len(a), 6)
         # TODO: numerically test for correct interpolation
 
     def test_slicer(self):
