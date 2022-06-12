@@ -881,6 +881,10 @@ class VectorFitting:
             if np.real(sqrt_eigenval) == 0.0:
                 freqs_violation.append(np.imag(sqrt_eigenval) / 2 / np.pi)
 
+        # include dc (0) unless it's already included
+        if len(np.nonzero(np.array(freqs_violation) == 0.0)[0]) == 0:
+            freqs_violation.append(0.0)
+
         # sort the output from lower to higher frequencies
         freqs_violation = np.sort(freqs_violation)
 
@@ -889,17 +893,20 @@ class VectorFitting:
         # sweep the bands between crossover frequencies and identify bands of passivity violations
         violation_bands = []
         for i, freq in enumerate(freqs_violation):
-            if i == 0:
-                f_start = 0
-                f_stop = freq
+            if i == len(freqs_violation) - 1:
+                # last band stops always at infinity
+                f_start = freq
+                f_stop = np.inf
+                f_center = 1.1 * f_start # 1.1 is chosen arbitrarily to have any frequency for evaluation
             else:
-                f_start = freqs_violation[i - 1]
-                f_stop = freq
+                # intermediate band between this frequency and the previous one
+                f_start = freq
+                f_stop = freqs_violation[i + 1]
+                f_center = 0.5 * (f_start + f_stop)
 
             # calculate singular values at the center frequency between crossover frequencies to identify violations
-            f_center = 0.5 * (f_start + f_stop)
             s_center = self._get_s_from_ABCDE(np.array([f_center]), A, B, C, D, E)
-            u, sigma, vh = np.linalg.svd(s_center[0])
+            sigma = np.linalg.svd(s_center[0], compute_uv=False)
             passive = True
             for singval in sigma:
                 if singval > 1:
