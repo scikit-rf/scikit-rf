@@ -1075,7 +1075,7 @@ class VectorFitting:
             s_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D_t, E)
 
             # singular value decomposition
-            u, sigma, vh = np.linalg.svd(s_eval)
+            u, sigma, vh = np.linalg.svd(s_eval, full_matrices=False)
 
             # keep track of the greatest singular value in every iteration step
             sigma_max = np.amax(sigma)
