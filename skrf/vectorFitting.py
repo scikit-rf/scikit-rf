@@ -1062,7 +1062,12 @@ class VectorFitting:
         A, B, C, D, E = self._get_ABCDE()
         dim_A = np.shape(A)[0]
         C_t = C
-        D_t = D
+
+        # only include constant if it has been fitted (not zero)
+        if len(np.nonzero(D)[0]) == 0:
+            D_t = None
+        else:
+            D_t = D
 
         if self.network is not None:
             # find highest singular value among all frequencies and responses to use as target for the perturbation
@@ -1077,10 +1082,13 @@ class VectorFitting:
         # calculate coefficient matrix
         A_freq = np.linalg.inv(2j * np.pi * freqs_eval[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
 
-        # construct coefficient matrix with an extra column for the constants
-        coeffs = np.empty((len(freqs_eval), np.shape(B)[0] + 1, np.shape(B)[1]), dtype=complex)
-        coeffs[:, :-1, :] = np.matmul(A_freq, B[None, :, :])
-        coeffs[:, -1, :] = 1
+        # construct coefficient matrix with an extra column for the constants (if present)
+        if D_t is not None:
+            coeffs = np.empty((len(freqs_eval), np.shape(B)[0] + 1, np.shape(B)[1]), dtype=complex)
+            coeffs[:, :-1, :] = np.matmul(A_freq, B[None, :, :])
+            coeffs[:, -1, :] = 1
+        else:
+            coeffs = np.matmul(A_freq, B[None, :, :])
 
         # iterative compensation of passivity violations
         t = 0
@@ -1089,7 +1097,10 @@ class VectorFitting:
             logging.info('Passivity enforcement; Iteration {}'.format(t + 1))
 
             # calculate S-matrix at this frequency (shape fxNxN)
-            s_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D_t, E)
+            if D_t is not None:
+                s_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D_t, E)
+            else:
+                s_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D, E)
 
             # singular value decomposition
             u, sigma, vh = np.linalg.svd(s_eval, full_matrices=False)
@@ -1127,10 +1138,12 @@ class VectorFitting:
 
                     # perturb residues by subtracting respective row and column in C_t
                     # one half of the solution will always be 0 due to construction of A and B
-                    C_t[j, :] = C_t[j, :] - x[:-1]
-
-                    # also perturb constants
-                    D_t[j, i] = D_t[j, i] - x[-1]
+                    # also perturb constants (if present)
+                    if D_t is not None:
+                        C_t[j, :] = C_t[j, :] - x[:-1]
+                        D_t[j, i] = D_t[j, i] - x[-1]
+                    else:
+                        C_t[j, :] = C_t[j, :] - x
 
             t += 1
             self.history_max_sigma.append(sigma_max)
@@ -1163,7 +1176,8 @@ class VectorFitting:
                         self.residues[i_response, z] = C_t[i, k] + 1j * C_t[i, k + 1]
                         k += 2
                     z += 1
-                self.constant_coeff[i_response] = D_t[i, j]
+                if D_t is not None:
+                    self.constant_coeff[i_response] = D_t[i, j]
 
         # run final passivity test to make sure passivation was successful
         violation_bands = self.passivity_test()
