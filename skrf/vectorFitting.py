@@ -1056,7 +1056,6 @@ class VectorFitting:
             delta = np.amax(sigma)
         else:
             delta = 0.999  # predefined tolerance parameter (users should not need to change this)
-        print('using delta={}'.format(delta))
 
         # calculate coefficient matrix
         A_freq = np.linalg.inv(2j * np.pi * freqs_eval[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
