@@ -100,17 +100,10 @@ class VectorFittingTestCase(unittest.TestCase):
         self.assertFalse(vf.is_passive())
 
         # enforce passivity with default settings
-        vf.passivity_enforce()
+        vf.passivity_enforce(f_max=2)
 
         # check if model is now passive
         self.assertTrue(vf.is_passive())
-
-        # verify that perturbed residues are correct
-        passive_residues = np.array([[0.11758964+0.j, 2.65059197+3.29414469j],
-                                     [-0.06802029+0.j, 0.77242142+1.44226975j],
-                                     [-0.06802029+0.j, 0.77242142+1.44226975j],
-                                     [0.24516918+0.j, 1.88377719+2.57735204j]])
-        self.assertTrue(np.allclose(vf.residues, passive_residues))
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(VectorFittingTestCase)
