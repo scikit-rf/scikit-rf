@@ -1033,7 +1033,7 @@ class VectorFitting:
         # or
         # 2) the highest fitting frequency (f_samples_max)
         violation_bands = self.passivity_test()
-        f_viol_max = violation_bands[-1, -1]
+        f_viol_max = violation_bands[-1, 1]
 
         if f_max is None:
             if self.network is None:
@@ -1043,6 +1043,14 @@ class VectorFitting:
                 f_samples_max = self.network.f[-1]
         else:
             f_samples_max = f_max
+
+        # deal with unbounded violation interval (f_viol_max == np.inf)
+        if np.isinf(f_viol_max):
+            f_viol_max = 1.5 * violation_bands[-1, 0]
+            warnings.warn('Passivity enforcement: The passivity violations of this model are unbounded. Passivity '
+                          'enforcement might still work, but consider re-fitting with a lower number of poles and/or '
+                          'without the constants (`fit_constant=False`) if the results are not satisfactory.',
+                          UserWarning, stacklevel=2)
 
         # the frequency band for the passivity evaluation is from dc to 20% above the highest relevant frequency
         if f_viol_max < f_samples_max:
@@ -1061,6 +1069,8 @@ class VectorFitting:
             # singular value decomposition
             sigma = np.linalg.svd(self.network.s, compute_uv=False)
             delta = np.amax(sigma)
+            if delta > 0.999:
+                delta = 0.999
         else:
             delta = 0.999  # predefined tolerance parameter (users should not need to change this)
 
