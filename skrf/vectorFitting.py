@@ -1048,7 +1048,15 @@ class VectorFitting:
         dim_A = np.shape(A)[0]
         C_t = C
         D_t = D
-        delta = 0.999   # predefined tolerance parameter (users should not need to change this)
+
+        if self.network is not None:
+            # find highest singular value among all frequencies and responses to use as target for the perturbation
+            # singular value decomposition
+            sigma = np.linalg.svd(self.network.s, compute_uv=False)
+            delta = np.amax(sigma)
+        else:
+            delta = 0.999  # predefined tolerance parameter (users should not need to change this)
+        print('using delta={}'.format(delta))
 
         # calculate coefficient matrix
         A_freq = np.linalg.inv(2j * np.pi * freqs_eval[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
