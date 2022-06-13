@@ -1381,20 +1381,29 @@ class VectorFitting:
         return resp
 
     @check_plotting
-    def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot(self, component: str, parameter: str = 's', i: int = -1, j: int = -1, freqs: Any = None,
+             ax: mplt.Axes = None) -> mplt.Axes:
         """
-        Plots the specified component of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the specified component of the parameter :math:`H_{i+1,j+1}` in the fit, where :math:`H` is
+        either the scattering (:math:`S`), the impedance (:math:`Z`), or the admittance (:math:`H`) response specified
+        in `parameter`.
 
         Parameters
         ----------
         component : str
             The component to be plotted. Must be one of the following items:
+            ['db', 'mag', 'deg', 'deg_unwrap', 're', 'im'].
             `db` for magnitude in decibels,
             `mag` for magnitude in linear scale,
             `deg` for phase in degrees (wrapped),
             `deg_unwrap` for phase in degrees (unwrapped/continuous),
             `re` for real part in linear scale,
             `im` for imaginary part in linear scale.
+
+        parameter : str, optional
+            The network representation to be used. This is only relevant for the plot of the original sampled response
+            in :attr:`network` that is used for comparison with the fit. Must be one of the following items unless
+            :attr:`network` is `None`: ['s', 'z', 'y'] for *scattering* (default), *impedance*, or *admittance*.
 
         i : int, optional
             Row index of the response. `-1` to plot all rows.
@@ -1419,7 +1428,7 @@ class VectorFitting:
         ------
         ValueError
             If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
-            Also if `component` is not valid.
+            Also if `component` and/or `parameter` are not valid.
         """
 
         components = ['db', 'mag', 'deg', 'deg_unwrap', 're', 'im']
@@ -1448,6 +1457,16 @@ class VectorFitting:
 
             if self.network is not None:
                 # plot the original network response at each sample frequency (scatter plot)
+                if parameter.lower() == 's':
+                    responses = self.network.s
+                elif parameter.lower() == 'z':
+                    responses = self.network.z
+                elif parameter.lower() == 'y':
+                    responses = self.network.y
+                else:
+                    raise ValueError('The network parameter type is not valid, must be `s`, `z`, or `y`, '
+                                     'got `{}`.'.format(parameter))
+
                 i_samples = 0
                 for i in list_i:
                     for j in list_j:
@@ -1459,17 +1478,17 @@ class VectorFitting:
 
                         y_vals = None
                         if component.lower() == 'db':
-                            y_vals = 20 * np.log10(np.abs(self.network.s[:, i, j]))
+                            y_vals = 20 * np.log10(np.abs(responses[:, i, j]))
                         elif component.lower() == 'mag':
-                            y_vals = np.abs(self.network.s[:, i, j])
+                            y_vals = np.abs(responses[:, i, j])
                         elif component.lower() == 'deg':
-                            y_vals = np.rad2deg(np.angle(self.network.s[:, i, j]))
+                            y_vals = np.rad2deg(np.angle(responses[:, i, j]))
                         elif component.lower() == 'deg_unwrap':
-                            y_vals = np.rad2deg(np.unwrap(np.angle(self.network.s[:, i, j])))
+                            y_vals = np.rad2deg(np.unwrap(np.angle(responses[:, i, j])))
                         elif component.lower() == 're':
-                            y_vals = np.real(self.network.s[:, i, j])
+                            y_vals = np.real(responses[:, i, j])
                         elif component.lower() == 'im':
-                            y_vals = np.imag(self.network.s[:, i, j])
+                            y_vals = np.imag(responses[:, i, j])
 
                         ax.scatter(self.network.f, y_vals, color='r', label=label)
 
