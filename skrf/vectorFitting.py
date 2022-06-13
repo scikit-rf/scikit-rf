@@ -1383,8 +1383,8 @@ class VectorFitting:
         return resp
 
     @check_plotting
-    def plot(self, component: str, parameter: str = 's', i: int = -1, j: int = -1, freqs: Any = None,
-             ax: mplt.Axes = None) -> mplt.Axes:
+    def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None,
+             parameter: str = 's', ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the specified component of the parameter :math:`H_{i+1,j+1}` in the fit, where :math:`H` is
         either the scattering (:math:`S`), the impedance (:math:`Z`), or the admittance (:math:`H`) response specified
@@ -1402,11 +1402,6 @@ class VectorFitting:
             `re` for real part in linear scale,
             `im` for imaginary part in linear scale.
 
-        parameter : str, optional
-            The network representation to be used. This is only relevant for the plot of the original sampled response
-            in :attr:`network` that is used for comparison with the fit. Must be one of the following items unless
-            :attr:`network` is `None`: ['s', 'z', 'y'] for *scattering* (default), *impedance*, or *admittance*.
-
         i : int, optional
             Row index of the response. `-1` to plot all rows.
 
@@ -1416,6 +1411,11 @@ class VectorFitting:
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
             :attr:`network` are used. This only works if :attr:`network` is not `None`.
+
+        parameter : str, optional
+            The network representation to be used. This is only relevant for the plot of the original sampled response
+            in :attr:`network` that is used for comparison with the fit. Must be one of the following items unless
+            :attr:`network` is `None`: ['s', 'z', 'y'] for *scattering* (default), *impedance*, or *admittance*.
 
         ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
