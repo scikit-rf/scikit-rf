@@ -85,6 +85,8 @@ class VectorFitting:
 
     def __init__(self, network: 'Network'):
         self.network = network
+        """ Instance variable holding the Network to be fitted. This is the Network passed during initialization, 
+        which may be changed or set to *None*. """
 
         self.poles = None
         """ Instance variable holding the list of fitted poles. Will be initialized by :func:`vector_fit`. """
