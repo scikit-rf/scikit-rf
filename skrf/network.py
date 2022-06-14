@@ -1980,16 +1980,16 @@ class Network(object):
         """
         npoints = self.frequency.npoints
         idx = self.frequency.drop_non_monotonic_increasing()
-        self.s = npy.delete(self.s, idx, axis=0)
 
-        # z0 is broadcasted automatically if set to an single scalar like 50 Ohm
-        # Deleting the value is not necessary in this case.
-        if self._z0.shape[0] == npoints:
-            self._z0 = npy.delete(self._z0, idx)
+        # z0 getter and setter depend on s.shape matching z0.shape.
+        # Call z0 getter and setter only when s and z0 shapes match.
+        z0_new = npy.delete(self.z0, idx, axis=0)
+        self.s = npy.delete(self.s, idx, axis=0)
+        self.z0 = z0_new
 
         if self.noisy:
             idx = self.noise_freq.drop_non_monotonic_increasing()
-            self.noise = npy.delete(self.noise, idx)
+            self.noise = npy.delete(self.noise, idx, axis=0)
 
 
     def set_noise_a(self, noise_freq: Frequency = None, nfmin_db: float = 0,
