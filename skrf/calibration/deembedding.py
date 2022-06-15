@@ -1184,7 +1184,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 ax1.legend()
                 ax2 = plt.subplot(2, 1, 2, sharex = ax1)
                 ax2.plot(z11, label = 'z11')
-                ax2.plot([x], [z11[x]], marker = 'o', linestyle = 'none',
+                ax2.plot([x], [z11x], marker = 'o', linestyle = 'none',
                             label = 'z11x')
                 ax2.set_xlabel('t-samples')
                 ax2.set_xlim((x - 50, x + 50))
