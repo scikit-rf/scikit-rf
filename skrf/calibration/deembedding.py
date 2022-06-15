@@ -1422,7 +1422,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             
         forced_z11x_dd:
             If a value is specified, manually force this value for the midpoint
-            impedance z11x for diffrential-mode.
+            impedance z11x for differential-mode.
             This is only usefull in the case where the midpoint impedance is
             non-uniform and the x length ± 1 sample error caused by the delay
             not being an integer multiple of sampling time make the z11x choice
