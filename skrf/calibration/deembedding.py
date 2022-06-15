@@ -973,7 +973,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
     """
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, use_z_instead_ifft = False, verbose = False,
-                 *args, **kwargs):
+                 forced_z11x = None, *args, **kwargs):
         """
         IEEEP370_SE_NZC_2xThru De-embedding Initializer
 
@@ -996,6 +996,14 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             not enough point in time domain to determine length and impedance
             of midpoint. Parameter `verbose` could be used for diagnostic in
             ifft mode (default: False)
+            
+        forced_z11x:
+            If a value is specified, manually force this value for the midpoint
+            impedance z11x.
+            This is only usefull in the case where the midpoint impedance is
+            non-uniform and the x length ± 1 sample error caused by the delay
+            not being an integer multiple of sampling time make the z11x choice
+            incorrect. (Default: None)
         
         verbose :
             view the process (default: False)
@@ -1012,6 +1020,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         self.z0 = z0
         dummies = [self.s2xthru]
         self.use_z_instead_ifft = use_z_instead_ifft
+        self.forced_z11x = forced_z11x
         self.verbose = verbose
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
@@ -1158,7 +1167,11 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             t11 = fftshift(irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
             step11 = self.makeStep(t11)
             z11 = -self.z0 * (step11 + 1) / (step11 - 1)
-            z11x = z11[x]
+            
+            if self.forced_z11x:
+                z11x = self.forced_z11x
+            else:
+                z11x = z11[x]
             
             if self.verbose:
                 fig = plt.figure()
@@ -1282,14 +1295,14 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                     [z[i, 0, 0] + z[i, 1, 0], 2. * z[i, 1, 0]],
                     [2. * z[i, 1, 0], 2. * z[i, 1, 0]]
                               ]
-                ZL[i, :, :] = [
+                ZR[i, :, :] = [
                     [2. * z[i, 0, 1], 2. * z[i, 0, 1]],
                     [2. * z[i, 0, 1], z[i, 1, 1] + z[i, 0, 1]]
                               ]
                 
-                s_side1 = Network(frequency = s2xthru.frequency, z = ZL, z0 = self.z0)
-                s_side2 = Network(frequency = s2xthru.frequency, z = ZR, z0 = self.z0)
-                s_side2.flip() # FIX-2 is flipped in skrf
+            s_side1 = Network(frequency = s2xthru.frequency, z = ZL, z0 = self.z0)
+            s_side2 = Network(frequency = s2xthru.frequency, z = ZR, z0 = self.z0)
+            s_side2.flip() # FIX-2 is flipped in skrf
         
         return (s_side1, s_side2)
 
@@ -1380,7 +1393,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, port_order: str = 'second',
                  use_z_instead_ifft = False, verbose = False,
-                 *args, **kwargs):
+                 forced_z11x_dd = None, forced_z11x_cc = None, *args, **kwargs):
         """
         IEEEP370_MM_NZC_2xThru De-embedding Initializer
 
@@ -1406,6 +1419,22 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             not enough point in time domain to determine length and impedance
             of midpoint. Parameter `verbose` could be used for diagnostic in
             ifft mode (default: False)
+            
+        forced_z11x_dd:
+            If a value is specified, manually force this value for the midpoint
+            impedance z11x for diffrential-mode.
+            This is only usefull in the case where the midpoint impedance is
+            non-uniform and the x length ± 1 sample error caused by the delay
+            not being an integer multiple of sampling time make the z11x choice
+            incorrect. (Default: None)
+            
+        forced_z11x_cc:
+            If a value is specified, manually force this value for the midpoint
+            impedance z11x for common-mode.
+            This is only usefull in the case where the midpoint impedance is
+            non-uniform and the x length ± 1 sample error caused by the delay
+            not being an integer multiple of sampling time make the z11x choice
+            incorrect. (Default: None)
         
         verbose :
             view the process (default: False)
@@ -1423,6 +1452,8 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         self.port_order = port_order
         dummies = [self.s2xthru]
         self.use_z_instead_ifft = use_z_instead_ifft
+        self.forced_z11x_dd = forced_z11x_dd
+        self.forced_z11x_cc = forced_z11x_cc
         self.verbose = verbose
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
@@ -1497,10 +1528,12 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         scc = subnetwork(mm_2xthru, [2, 3])
         dm_dd  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = sdd, z0 = self.z0 * 2,
                                 use_z_instead_ifft = self.use_z_instead_ifft,
-                                verbose = self.verbose)
+                                verbose = self.verbose,
+                                forced_z11x = self.forced_z11x_dd)
         dm_cc  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = scc, z0 = self.z0 / 2,
                                 use_z_instead_ifft = self.use_z_instead_ifft,
-                                verbose = self.verbose)
+                                verbose = self.verbose,
+                                forced_z11x = self.forced_z11x_cc)
         
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
