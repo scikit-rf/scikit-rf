@@ -3527,7 +3527,8 @@ class Network(object):
             1-|s1   | =se2gmm=> 1-|c0   |
             2-|s2   |           2-|s2   |
               +-----+             +-----+
-            Note: s2 remain single-mode
+              
+        Note: The port s2 remain in single-mode.
         
         4-Port diagram::
               
@@ -3544,7 +3545,8 @@ class Network(object):
             1-|s1==s3|-3 =se2gmm=> 2-|c0==c1|-3
               |    s4|-4             |    s4|-4
               +------+               +------+
-            Note: s4 remain single-mode
+              
+        Note: The port s4 remain in single-mode.
         
         8-Port diagram::
             
@@ -3566,7 +3568,9 @@ class Network(object):
             2N-4-|s2N-4==s2N-2|-2N-2           2N-4-|cN-4===cN-3|-2N-3
             2N-3-|s2N-3==s2N-1|-2N-1           2N-2-|cN-2===cN-1|-2N-1
                  +------------+                     +-----------+
-            Note: A not cascadable with ** operator along transmission path
+                 
+            Note: The network `A` is not cascadable with the `**` operator
+            along transmission path.
 
         References
         ----------
