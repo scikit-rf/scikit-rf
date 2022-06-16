@@ -3569,8 +3569,8 @@ class Network(object):
             2N-3-|s2N-3==s2N-1|-2N-1           2N-2-|cN-2===cN-1|-2N-1
                  +------------+                     +-----------+
                  
-            Note: The network `A` is not cascadable with the `**` operator
-            along transmission path.
+        Note: The network `A` is not cascadable with the `**` operator
+        along transmission path.
 
         References
         ----------
@@ -3697,8 +3697,8 @@ class Network(object):
             2N-3-|s2N-3==s2N-1|-2N-1           2N-2-|cN-2===cN-1|-2N-1
                  +------------+                     +-----------+
                  
-            Note: The network `A` is not cascadable with the `**` operator
-            along transmission path.
+        Note: The network `A` is not cascadable with the `**` operator
+        along transmission path.
 
         References
         ----------
