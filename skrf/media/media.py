@@ -842,31 +842,60 @@ class Media(ABC):
         # priority given to line impedances on media impedances.
         z_port = z0 if z0 else self.z0
         z_char = Z0 if Z0 else self.Z0
-
-        kwargs.update({'z0' : z_char})
+        
+        if z_port:
+            if z_char:
+                z_match = z_char
+                z_renormalize = z_port
+            else:
+                z_match = z_port
+                z_renormalize = None
+        else:
+            if z_char:
+                z_match = z_char
+                z_renormalize = None
+            else:
+                raise ValueError('Neither port or characteristic impedance specified')
+            
+        # match
+        kwargs.update({'z0' : z_match})
         s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
         # Need to use either traveling or pseudo definition here
         # for the network to match traveling waves.
         result = self.match(nports=2, s_def='traveling', **kwargs)
 
+        # transmission line
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
-
         s11 = npy.zeros(self.frequency.npoints, dtype=complex)
         s21 = npy.exp(-1*theta)
         result.s = \
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
+                
+        if z_renormalize:
+            result = self.thru(z0=z_renormalize, s_def='traveling') ** \
+                result ** \
+                self.thru(z0=z_renormalize, s_def='traveling')
 
-        # todo: some magic here to make embed emmit a warning but keep
+        # fixme: some magic here to make embed emmit a warning but keep
         # `media.line(line_l, 'm', embed=True, z0=media.Z0)` working for
         # backward compatibility
         if embed:
             warnings.warn('In a future version,`embed` will be deprecated.\n'
-                          'Port impedance of the line network will be media or line Z0 embedded into media or line z0.\n'
-                          'Line Z0 or z0 will have priority on media if not set to None.',
+                          'Use line and media port impedance z0 and'
+                          'characteristic impedance Z0 instead.',
               FutureWarning, stacklevel = 2)
             # Use the same s_def here as the line to avoid changing it during
             # cascade.
-            result = self.thru(s_def='traveling')**result**self.thru(s_def='traveling')
+            if z0 and self.z0:
+                kwargs.update({'z0' : z0})
+                s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+                result = self.match(nports=2, s_def='traveling', **kwargs)
+                result.s = \
+                        npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
+                result = self.thru(z0=self.z0, s_def='traveling') ** \
+                    result ** self.thru(z0=self.z0, s_def='traveling')
+                
+        # return to proper s_def
         result.renormalize(result.z0, s_def=s_def)
 
         return result
