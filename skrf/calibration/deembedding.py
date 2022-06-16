@@ -973,7 +973,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
     """
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, use_z_instead_ifft = False, verbose = False,
-                 forced_z11x = None, *args, **kwargs):
+                 forced_z0_line = None, *args, **kwargs):
         """
         IEEEP370_SE_NZC_2xThru De-embedding Initializer
 
@@ -997,9 +997,9 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             of midpoint. Parameter `verbose` could be used for diagnostic in
             ifft mode (default: False)
             
-        forced_z11x:
+        forced_z0_line:
             If a value is specified, manually force this value for the midpoint
-            impedance z11x.
+            impedance z0_line. The fixtures are renormalized with this value.
             This is only usefull in the case where the midpoint impedance is
             non-uniform and the x length ± 1 sample error caused by the delay
             not being an integer multiple of sampling time make the z11x choice
@@ -1020,7 +1020,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         self.z0 = z0
         dummies = [self.s2xthru]
         self.use_z_instead_ifft = use_z_instead_ifft
-        self.forced_z11x = forced_z11x
+        self.forced_z0_line = forced_z0_line
         self.verbose = verbose
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
@@ -1168,8 +1168,8 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             step11 = self.makeStep(t11)
             z11 = -self.z0 * (step11 + 1) / (step11 - 1)
             
-            if self.forced_z11x:
-                z11x = self.forced_z11x
+            if self.forced_z0_line:
+                z11x = self.forced_z0_line
             else:
                 z11x = z11[x]
             
@@ -1393,7 +1393,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, port_order: str = 'second',
                  use_z_instead_ifft = False, verbose = False,
-                 forced_z11x_dd = None, forced_z11x_cc = None, *args, **kwargs):
+                 forced_z0_line_dd = None, forced_z0_line_cc = None, *args, **kwargs):
         """
         IEEEP370_MM_NZC_2xThru De-embedding Initializer
 
@@ -1420,17 +1420,19 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             of midpoint. Parameter `verbose` could be used for diagnostic in
             ifft mode (default: False)
             
-        forced_z11x_dd:
+        forced_z0_line_dd:
             If a value is specified, manually force this value for the midpoint
-            impedance z11x for differential-mode.
+            impedance z0_line for differential-mode. The fixtures are
+            renormalized with this value.
             This is only usefull in the case where the midpoint impedance is
             non-uniform and the x length ± 1 sample error caused by the delay
             not being an integer multiple of sampling time make the z11x choice
             incorrect. (Default: None)
             
-        forced_z11x_cc:
+        forced_z0_line_cc:
             If a value is specified, manually force this value for the midpoint
-            impedance z11x for common-mode.
+            impedance z0_line for common-mode. The fixtures are
+            renormalized with this value.
             This is only usefull in the case where the midpoint impedance is
             non-uniform and the x length ± 1 sample error caused by the delay
             not being an integer multiple of sampling time make the z11x choice
@@ -1452,8 +1454,8 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         self.port_order = port_order
         dummies = [self.s2xthru]
         self.use_z_instead_ifft = use_z_instead_ifft
-        self.forced_z11x_dd = forced_z11x_dd
-        self.forced_z11x_cc = forced_z11x_cc
+        self.forced_z0_line_dd = forced_z0_line_dd
+        self.forced_z0_line_cc = forced_z0_line_cc
         self.verbose = verbose
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
@@ -1529,11 +1531,11 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         dm_dd  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = sdd, z0 = self.z0 * 2,
                                 use_z_instead_ifft = self.use_z_instead_ifft,
                                 verbose = self.verbose,
-                                forced_z11x = self.forced_z11x_dd)
+                                forced_z0_line = self.forced_z0_line_dd)
         dm_cc  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = scc, z0 = self.z0 / 2,
                                 use_z_instead_ifft = self.use_z_instead_ifft,
                                 verbose = self.verbose,
-                                forced_z11x = self.forced_z11x_cc)
+                                forced_z0_line = self.forced_z0_line_cc)
         
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
