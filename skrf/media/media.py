@@ -792,7 +792,9 @@ class Media(ABC):
         return self.line(0, **kwargs)
 
     def line(self, d: NumberLike, unit: str = 'deg',
-             z0: Union[NumberLike, str, None] = None, embed: bool = False, **kwargs) -> Network:
+             z0: Union[NumberLike, str, None] = None,
+             Z0: Union[NumberLike, str, None] = None,
+             embed: bool = False, **kwargs) -> Network:
         r"""
         Transmission line of a given length and impedance.
 
@@ -808,9 +810,12 @@ class Media(ABC):
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
                 the units of d.  See :func:`to_meters`, for details
         z0 : number, string, or array-like or None
-            the characteristic impedance of the line, if different
+            the port impedance of the line, if different
             from self.z0. To set z0 in terms of normalized impedance,
-            pass a string, like `z0='1+.2j'`
+            pass a string, like `z0='1+.2j'`. (Default: None)
+        Z0 : number, string, or array-like or None
+            the characteristic impedance of the line, if different
+            from self.Z0. (Default: None)
         embed : bool
             if `Z0` is given, should the line be embedded in z0
             environment? or left in a `z` environment. if embedded,
@@ -834,7 +839,11 @@ class Media(ABC):
         if isinstance(z0,str):
             z0 = parse_z0(z0)* self.z0
 
-        kwargs.update({'z0':z0})
+        # priority given to line impedances on media impedances.
+        z_port = z0 if z0 else self.z0
+        z_char = Z0 if Z0 else self.Z0
+
+        kwargs.update({'z0' : z_char})
         s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
         # Need to use either traveling or pseudo definition here
         # for the network to match traveling waves.
