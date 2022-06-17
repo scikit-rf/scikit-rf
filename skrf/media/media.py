@@ -840,22 +840,22 @@ class Media(ABC):
             z0 = parse_z0(z0)* self.z0
 
         # priority given to line impedances on media impedances.
-        z_port = z0 if z0 else self.z0
-        z_char = Z0 if Z0 else self.Z0
+        z_port = self.z0 if z0 is None else z0
+        z_char = self.Z0 if Z0 is None else Z0
         
-        if z_port:
-            if z_char:
-                z_match = z_char
-                z_renormalize = z_port
+        if z_port is None:
+            if z_char is None:
+                raise ValueError('Neither port or characteristic impedance specified')
             else:
+                z_match = z_char
+                z_renormalize = None     
+        else:
+            if z_char is None:
                 z_match = z_port
                 z_renormalize = None
-        else:
-            if z_char:
-                z_match = z_char
-                z_renormalize = None
             else:
-                raise ValueError('Neither port or characteristic impedance specified')
+                z_match = z_char
+                z_renormalize = z_port
             
         # match
         kwargs.update({'z0' : z_match})
@@ -870,11 +870,8 @@ class Media(ABC):
         s21 = npy.exp(-1*theta)
         result.s = \
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
-                
-        if z_renormalize:
-            result.result.renormalize(z_renormalize, s_def='traveling')
-
-        # fixme: some magic here to make embed emmit a warning but keep
+        
+                # fixme: some magic here to make embed emmit a warning but keep
         # `media.line(line_l, 'm', embed=True, z0=media.Z0)` working for
         # backward compatibility
         if embed:
@@ -884,7 +881,7 @@ class Media(ABC):
               FutureWarning, stacklevel = 2)
             # Use the same s_def here as the line to avoid changing it during
             # cascade.
-            if z0 and self.z0:
+            if not (z0 is None) and not (self.z0 is None):
                 kwargs.update({'z0' : z0})
                 s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
                 result = self.match(nports=2, s_def='traveling', **kwargs)
@@ -892,6 +889,9 @@ class Media(ABC):
                         npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
                 result.renormalize(self.z0, s_def='traveling')
                 
+        elif not (z_renormalize is None):
+            result.renormalize(z_renormalize, s_def='traveling')
+
         # return to proper s_def
         result.renormalize(result.z0, s_def=s_def)
 
