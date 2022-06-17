@@ -872,9 +872,7 @@ class Media(ABC):
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
                 
         if z_renormalize:
-            result = self.thru(z0=z_renormalize, s_def='traveling') ** \
-                result ** \
-                self.thru(z0=z_renormalize, s_def='traveling')
+            result.result.renormalize(z_renormalize, s_def='traveling')
 
         # fixme: some magic here to make embed emmit a warning but keep
         # `media.line(line_l, 'm', embed=True, z0=media.Z0)` working for
@@ -892,8 +890,7 @@ class Media(ABC):
                 result = self.match(nports=2, s_def='traveling', **kwargs)
                 result.s = \
                         npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
-                result = self.thru(z0=self.z0, s_def='traveling') ** \
-                    result ** self.thru(z0=self.z0, s_def='traveling')
+                result.renormalize(self.z0, s_def='traveling')
                 
         # return to proper s_def
         result.renormalize(result.z0, s_def=s_def)
