@@ -1,0 +1,53 @@
+Python & Matlab scripts and data to accompany National Physical Laboratory (NPL) Report MAT 58 (2021)
+=====================================================================================================
+
+Note: You may need to rename files to replace underscores. E.g. qfitmod6_py --> qfitmod6.py
+
+
+Matlab/ Octave files:
+    OptimiseFit6.m, OptimiseFit7.m,  OptimiseFit8.m, InitialFit.m and AngularWts.m (for leastsqs fits)
+    test_qfit6.m, test_qfit6_abs.m, test_qfit7.m and test_qfit8.m (test scripts).
+
+
+Python files:
+    qfitmod6.py, qfitmod7 and qfitmod8.py (for leastsqs fits and calculating unloaded Q)
+    test_qfit6.py, test_qfit6_abs.py, test_qfit7.py and test_qfit8.py (test scripts).
+
+
+Data files:
+    File Figure6b.txt contains uncalibrated S21 data for Figure 6(b) in the report (Qo=7546 is determined
+    for A=1/0.874).
+
+    File Table6c27.txt contains calibrated S11 data used in Table 6(c) for 27 MHz span. The value of
+    Qo (862) can be determined by Method 2 assuming that the uncalibrated line is lossless (A=1.0).
+    The 'touching circle' diameter D = 1.990 is calculated using eqn. (35)).
+
+    File Figure23.txt contains uncalibrated S21 data for Figure 23.
+
+    File Figure27.txt contains uncalibrated S21 data for Figure 27 (absorption/notch resonator).
+
+
+The code examples do not include the checks or exception handling described in
+MAT58 Section 2.6.1.
+
+If you make use of any of the supplied files, please cite NPL report  MAT 58.
+
+
+
+Creative Commons CC0 Public Domain Dedication
+=============================================
+
+   All of the supplied data files, Python and Matlab scripts are released under the Creative
+   Commons Licence CC0 Public Domain Dedication.
+
+   To the extent possible under law, the author(s) have dedicated all copyright and related and
+   neighbouring rights to this software to the public domain worldwide. This software is distributed
+   without any warranty.
+
+   You should have received a copy of the CC0 Public Domain Dedication along with this software.
+   If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+
+
+Andrew Gregory,
+NPL,
+October 2021

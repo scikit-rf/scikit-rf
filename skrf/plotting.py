@@ -60,6 +60,7 @@ from typing import Callable, Tuple, Union, List
 import os
 import sys
 import getpass
+import warnings
 
 import matplotlib as mpl
 # if running on remote mode on a linux server which does not have a display (like Docker images for CI)
@@ -442,6 +443,16 @@ def plot_polar(theta: NumberLike, r: NumberLike,
     """
     if ax is None:
         ax = plt.gca(polar=True)
+    else:
+        if ax.name != 'polar':
+            # The projection of an existing axes can't be changed,
+            # since specifying a projection when creating an axes determines the
+            # axes class you get, which is different for each projection type.
+            # So, passing a axe projection not polar is probably undesired
+            warnings.warn(
+                f"Axe projection is not defined as 'polar' but as {ax.name}."+
+                "See Matplotlib documentation to create polar plot axe."
+            )
 
     ax.plot(theta, r, *args, **kwargs)
 

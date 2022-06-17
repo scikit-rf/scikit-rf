@@ -79,6 +79,15 @@ Vector Fitting
 
     vectorfitting/*
 
+Q-factor
+------------------
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    qfactor/*
+
 Taper
 ------------------
 .. toctree::

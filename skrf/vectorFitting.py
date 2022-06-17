@@ -85,6 +85,8 @@ class VectorFitting:
 
     def __init__(self, network: 'Network'):
         self.network = network
+        """ Instance variable holding the Network to be fitted. This is the Network passed during initialization, 
+        which may be changed or set to *None*. """
 
         self.poles = None
         """ Instance variable holding the list of fitted poles. Will be initialized by :func:`vector_fit`. """
@@ -577,6 +579,13 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished in {} seconds.\n'.format(self.wall_clock_time))
 
+        # raise a warning if the fitted Network is passive but the fit is not (only without proportional_coeff):
+        if self.network.is_passive() and not fit_proportional:
+            if not self.is_passive():
+                warnings.warn('The fitted network is passive, but the vector fit is not passive. Consider running '
+                              '`passivity_enforce()` to enforce passivity before using this model.',
+                              UserWarning, stacklevel=2)
+
     def get_rms_error(self, i=-1, j=-1, parameter_type: str = 's'):
         r"""
         Returns the root-mean-square (rms) error magnitude of the fit, i.e.
@@ -763,7 +772,7 @@ class VectorFitting:
         return A, B, C, D, E
 
     @staticmethod
-    def _get_s_from_ABCDE(freq: float,
+    def _get_s_from_ABCDE(freqs: np.ndarray,
                           A: np.ndarray, B: np.ndarray, C: np.ndarray, D: np.ndarray, E: np.ndarray) -> np.ndarray:
         """
         Private method.
@@ -772,8 +781,8 @@ class VectorFitting:
 
         Parameters
         ----------
-        freq : float
-            Frequency (in Hz) at which to calculate the S-matrix.
+        freqs : ndarray
+            Frequencies (in Hz) at which to calculate the S-matrices.
         A : ndarray
         B : ndarray
         C : ndarray
@@ -783,13 +792,13 @@ class VectorFitting:
         Returns
         -------
         ndarray
-            Complex-valued S-matrix (NxN) calculated at frequency `freq`.
+            Complex-valued S-matrices (fxNxN) calculated at frequencies `freqs`.
         """
 
         dim_A = np.shape(A)[0]
-        stsp_poles = np.linalg.inv(2j * np.pi * freq * np.identity(dim_A) - A)
+        stsp_poles = np.linalg.inv(2j * np.pi * freqs[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
         stsp_S = np.matmul(np.matmul(C, stsp_poles), B)
-        stsp_S += D + 2j * np.pi * freq * E
+        stsp_S += D + 2j * np.pi * freqs[:, None, None] * E
         return stsp_S
 
     def passivity_test(self, parameter_type: str = 's') -> np.ndarray:
@@ -874,6 +883,10 @@ class VectorFitting:
             if np.real(sqrt_eigenval) == 0.0:
                 freqs_violation.append(np.imag(sqrt_eigenval) / 2 / np.pi)
 
+        # include dc (0) unless it's already included
+        if len(np.nonzero(np.array(freqs_violation) == 0.0)[0]) == 0:
+            freqs_violation.append(0.0)
+
         # sort the output from lower to higher frequencies
         freqs_violation = np.sort(freqs_violation)
 
@@ -882,17 +895,20 @@ class VectorFitting:
         # sweep the bands between crossover frequencies and identify bands of passivity violations
         violation_bands = []
         for i, freq in enumerate(freqs_violation):
-            if i == 0:
-                f_start = 0
-                f_stop = freq
+            if i == len(freqs_violation) - 1:
+                # last band stops always at infinity
+                f_start = freq
+                f_stop = np.inf
+                f_center = 1.1 * f_start # 1.1 is chosen arbitrarily to have any frequency for evaluation
             else:
-                f_start = freqs_violation[i - 1]
-                f_stop = freq
+                # intermediate band between this frequency and the previous one
+                f_start = freq
+                f_stop = freqs_violation[i + 1]
+                f_center = 0.5 * (f_start + f_stop)
 
             # calculate singular values at the center frequency between crossover frequencies to identify violations
-            f_center = 0.5 * (f_start + f_stop)
-            s_center = self._get_s_from_ABCDE(f_center, A, B, C, D, E)
-            u, sigma, vh = np.linalg.svd(s_center)
+            s_center = self._get_s_from_ABCDE(np.array([f_center]), A, B, C, D, E)
+            sigma = np.linalg.svd(s_center[0], compute_uv=False)
             passive = True
             for singval in sigma:
                 if singval > 1:
@@ -944,16 +960,22 @@ class VectorFitting:
         else:
             return False
 
-    def passivity_enforce(self, n_samples: int = 100, parameter_type: str = 's') -> None:
+    def passivity_enforce(self, n_samples: int = 200, f_max: float = None, parameter_type: str = 's') -> None:
         """
         Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
-        presented in [#]_.
+        presented in [#]_. Passivity is achieved by updating the residues and the constants.
 
         Parameters
         ----------
         n_samples : int, optional
             Number of linearly spaced frequency samples at which passivity will be evaluated and enforced.
             (Default: 100)
+
+        f_max : float or None, optional
+            Highest frequency of interest for the passivity enforcement (in Hz, not rad/s). This limit usually
+            equals the highest sample frequency of the fitted Network. If None, the highest frequency in
+            :attr:`self.network` is used, which must not be None is this case. If `f_max` is not None, it overrides the
+            highest frequency in :attr:`self.network`.
 
         parameter_type : str, optional
             Representation type of the fitted frequency responses. Either *scattering* (:attr:`s` or :attr:`S`),
@@ -970,7 +992,8 @@ class VectorFitting:
             If the function is called for `parameter_type` different than `S` (scattering).
 
         ValueError
-            If the function is used with a model containing nonzero proportional coefficients.
+            If the function is used with a model containing nonzero proportional coefficients. Or if both `f_max` and
+            :attr:`self.network` are None.
 
         See Also
         --------
@@ -1002,18 +1025,72 @@ class VectorFitting:
                              'first.')
 
         # always run passivity test first; this will write 'self.violation_bands'
-        violation_bands = self.passivity_test()
-
-        if len(violation_bands) == 0:
+        if self.is_passive():
             # model is already passive; do nothing and return
             logging.info('Passivity enforcement: The model is already passive. Nothing to do.')
             return
 
-        freqs_eval = np.linspace(0, 1.2 * violation_bands[-1, -1], n_samples)
+        # find the highest relevant frequency; either
+        # 1) the highest frequency of passivity violation (f_viol_max)
+        # or
+        # 2) the highest fitting frequency (f_samples_max)
+        violation_bands = self.passivity_test()
+        f_viol_max = violation_bands[-1, 1]
+
+        if f_max is None:
+            if self.network is None:
+                raise RuntimeError('Both `self.network` and parameter `f_max` are None. One of them is required to '
+                                   'specify the frequency band of interest for the passivity enforcement.')
+            else:
+                f_samples_max = self.network.f[-1]
+        else:
+            f_samples_max = f_max
+
+        # deal with unbounded violation interval (f_viol_max == np.inf)
+        if np.isinf(f_viol_max):
+            f_viol_max = 1.5 * violation_bands[-1, 0]
+            warnings.warn('Passivity enforcement: The passivity violations of this model are unbounded. Passivity '
+                          'enforcement might still work, but consider re-fitting with a lower number of poles and/or '
+                          'without the constants (`fit_constant=False`) if the results are not satisfactory.',
+                          UserWarning, stacklevel=2)
+
+        # the frequency band for the passivity evaluation is from dc to 20% above the highest relevant frequency
+        if f_viol_max < f_samples_max:
+            f_eval_max = 1.2 * f_samples_max
+        else:
+            f_eval_max = 1.2 * f_viol_max
+        freqs_eval = np.linspace(0, f_eval_max, n_samples)
+
         A, B, C, D, E = self._get_ABCDE()
         dim_A = np.shape(A)[0]
         C_t = C
-        delta = 0.999   # predefined tolerance parameter (users should not need to change this)
+
+        # only include constant if it has been fitted (not zero)
+        if len(np.nonzero(D)[0]) == 0:
+            D_t = None
+        else:
+            D_t = D
+
+        if self.network is not None:
+            # find highest singular value among all frequencies and responses to use as target for the perturbation
+            # singular value decomposition
+            sigma = np.linalg.svd(self.network.s, compute_uv=False)
+            delta = np.amax(sigma)
+            if delta > 0.999:
+                delta = 0.999
+        else:
+            delta = 0.999  # predefined tolerance parameter (users should not need to change this)
+
+        # calculate coefficient matrix
+        A_freq = np.linalg.inv(2j * np.pi * freqs_eval[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
+
+        # construct coefficient matrix with an extra column for the constants (if present)
+        if D_t is not None:
+            coeffs = np.empty((len(freqs_eval), np.shape(B)[0] + 1, np.shape(B)[1]), dtype=complex)
+            coeffs[:, :-1, :] = np.matmul(A_freq, B[None, :, :])
+            coeffs[:, -1, :] = 1
+        else:
+            coeffs = np.matmul(A_freq, B[None, :, :])
 
         # iterative compensation of passivity violations
         t = 0
@@ -1021,61 +1098,55 @@ class VectorFitting:
         while t < self.max_iterations:
             logging.info('Passivity enforcement; Iteration {}'.format(t + 1))
 
-            A_matrix = []
-            b_vector = []
-            sigma_max = 0
+            # calculate S-matrix at this frequency (shape fxNxN)
+            if D_t is not None:
+                s_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D_t, E)
+            else:
+                s_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D, E)
 
-            # sweep through evaluation frequencies
-            for i_eval, freq_eval in enumerate(freqs_eval):
-                # calculate S-matrix at this frequency
-                s_eval = self._get_s_from_ABCDE(freq_eval, A, B, C_t, D, E)
+            # singular value decomposition
+            u, sigma, vh = np.linalg.svd(s_eval, full_matrices=False)
 
-                # singular value decomposition
-                u, sigma, vh = np.linalg.svd(s_eval)
+            # keep track of the greatest singular value in every iteration step
+            sigma_max = np.amax(sigma)
 
-                # keep track of the greatest singular value in every iteration step
-                if np.amax(sigma) > sigma_max:
-                    sigma_max = np.amax(sigma)
+            # find and perturb singular values that cause passivity violations
+            idx_viol = np.nonzero(sigma > delta)
+            sigma_viol = np.zeros_like(sigma)
+            sigma_viol[idx_viol] = sigma[idx_viol] - delta
 
-                # prepare and fill the square matrices 'gamma' and 'psi' marking passivity violations
-                gamma = np.diag(sigma)
-                psi = np.diag(sigma)
-                for i, sigma_i in enumerate(sigma):
-                    if sigma_i <= delta:
-                        gamma[i, i] = 0
-                        psi[i, i] = 0
+            # construct a stack of diagonal matrices with the perturbed singular values on the diagonal
+            sigma_viol_diag = np.zeros_like(u, dtype=float)
+            idx_diag = np.arange(np.shape(sigma)[1])
+            sigma_viol_diag[:, idx_diag, idx_diag] = sigma_viol
+
+            # calculate violation S-responses
+            s_viol = np.matmul(np.matmul(u, sigma_viol_diag), vh)
+
+            # fit perturbed residues C_t for each response S_{i,j}
+            for i in range(np.shape(s_viol)[1]):
+                for j in range(np.shape(s_viol)[2]):
+                    # mind the transpose of the system to compensate for the exchanged order of matrix multiplication:
+                    # wanting to solve S = C_t * coeffs
+                    # but actually solving S = coeffs * C_t
+                    # S = C_t * coeffs <==> transpose(S) = transpose(coeffs) * transpose(C_t)
+
+                    # solve least squares (real-valued)
+                    x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((np.real(coeffs[:, :, i]),
+                                                                                   np.imag(coeffs[:, :, i]))),
+                                                                        np.hstack((np.real(s_viol[:, j, i]),
+                                                                                   np.imag(s_viol[:, j, i]))),
+                                                                        rcond=None)
+
+                    # perturb residues by subtracting respective row and column in C_t
+                    # one half of the solution will always be 0 due to construction of A and B
+                    # also perturb constants (if present)
+                    if D_t is not None:
+                        C_t[j, :] = C_t[j, :] - x[:-1]
+                        D_t[j, i] = D_t[j, i] - x[-1]
                     else:
-                        gamma[i, i] = 1
-                        psi[i, i] = delta
+                        C_t[j, :] = C_t[j, :] - x
 
-                # calculate violation S-matrix
-                # s_viol is again a complex NxN S-matrix (N: number of network ports)
-                sigma_viol = np.matmul(np.diag(sigma), gamma) - psi
-                s_viol = np.matmul(np.matmul(u, sigma_viol), vh)
-
-                # Laplace frequency of this sample in the sweep
-                s_k = 2j * np.pi * freq_eval
-
-                # build matrix system for least-squares fitting of new set of violation residues C_viol
-                # using rule for transpose of matrix products: transpose(A * B) = transpose(B) * transpose(A)
-                # hence, S = C * coeffs <===> transpose(S) = transpose(coeffs) * transpose(C)
-                coeffs = np.transpose(np.matmul(np.linalg.inv(s_k * np.identity(dim_A) - A), B))
-                if i_eval == 0:
-                    A_matrix = np.vstack([np.real(coeffs), np.imag(coeffs)])
-                    b_vector = np.vstack([np.real(np.transpose(s_viol)), np.imag(np.transpose(s_viol))])
-                else:
-                    A_matrix = np.concatenate((A_matrix, np.vstack([np.real(coeffs),
-                                                                    np.imag(coeffs)])), axis=0)
-                    b_vector = np.concatenate((b_vector, np.vstack([np.real(np.transpose(s_viol)),
-                                                                    np.imag(np.transpose(s_viol))])), axis=0)
-
-            # solve least squares
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=None)
-
-            C_viol = np.transpose(x)
-
-            # calculate and update C_t for next iteration
-            C_t = C_t - C_viol
             t += 1
             self.history_max_sigma.append(sigma_max)
 
@@ -1107,6 +1178,15 @@ class VectorFitting:
                         self.residues[i_response, z] = C_t[i, k] + 1j * C_t[i, k + 1]
                         k += 2
                     z += 1
+                if D_t is not None:
+                    self.constant_coeff[i_response] = D_t[i, j]
+
+        # run final passivity test to make sure passivation was successful
+        violation_bands = self.passivity_test()
+        if len(violation_bands) > 0:
+            warnings.warn('Passivity enforcement was not successful.\nModel is still non-passive in these frequency '
+                          'bands: {}.\nTry running this routine again with a larger number of samples (parameter '
+                          '`n_samples`).'.format(violation_bands), RuntimeWarning, stacklevel=2)
 
     def write_npz(self, path: str) -> None:
         """
@@ -1303,14 +1383,18 @@ class VectorFitting:
         return resp
 
     @check_plotting
-    def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None,
+             parameter: str = 's', ax: mplt.Axes = None) -> mplt.Axes:
         """
-        Plots the specified component of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+        Plots the specified component of the parameter :math:`H_{i+1,j+1}` in the fit, where :math:`H` is
+        either the scattering (:math:`S`), the impedance (:math:`Z`), or the admittance (:math:`H`) response specified
+        in `parameter`.
 
         Parameters
         ----------
         component : str
             The component to be plotted. Must be one of the following items:
+            ['db', 'mag', 'deg', 'deg_unwrap', 're', 'im'].
             `db` for magnitude in decibels,
             `mag` for magnitude in linear scale,
             `deg` for phase in degrees (wrapped),
@@ -1328,6 +1412,11 @@ class VectorFitting:
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
             :attr:`network` are used. This only works if :attr:`network` is not `None`.
 
+        parameter : str, optional
+            The network representation to be used. This is only relevant for the plot of the original sampled response
+            in :attr:`network` that is used for comparison with the fit. Must be one of the following items unless
+            :attr:`network` is `None`: ['s', 'z', 'y'] for *scattering* (default), *impedance*, or *admittance*.
+
         ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
@@ -1341,7 +1430,7 @@ class VectorFitting:
         ------
         ValueError
             If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
-            Also if `component` is not valid.
+            Also if `component` and/or `parameter` are not valid.
         """
 
         components = ['db', 'mag', 'deg', 'deg_unwrap', 're', 'im']
@@ -1370,6 +1459,16 @@ class VectorFitting:
 
             if self.network is not None:
                 # plot the original network response at each sample frequency (scatter plot)
+                if parameter.lower() == 's':
+                    responses = self.network.s
+                elif parameter.lower() == 'z':
+                    responses = self.network.z
+                elif parameter.lower() == 'y':
+                    responses = self.network.y
+                else:
+                    raise ValueError('The network parameter type is not valid, must be `s`, `z`, or `y`, '
+                                     'got `{}`.'.format(parameter))
+
                 i_samples = 0
                 for i in list_i:
                     for j in list_j:
@@ -1381,17 +1480,17 @@ class VectorFitting:
 
                         y_vals = None
                         if component.lower() == 'db':
-                            y_vals = 20 * np.log10(np.abs(self.network.s[:, i, j]))
+                            y_vals = 20 * np.log10(np.abs(responses[:, i, j]))
                         elif component.lower() == 'mag':
-                            y_vals = np.abs(self.network.s[:, i, j])
+                            y_vals = np.abs(responses[:, i, j])
                         elif component.lower() == 'deg':
-                            y_vals = np.rad2deg(np.angle(self.network.s[:, i, j]))
+                            y_vals = np.rad2deg(np.angle(responses[:, i, j]))
                         elif component.lower() == 'deg_unwrap':
-                            y_vals = np.rad2deg(np.unwrap(np.angle(self.network.s[:, i, j])))
+                            y_vals = np.rad2deg(np.unwrap(np.angle(responses[:, i, j])))
                         elif component.lower() == 're':
-                            y_vals = np.real(self.network.s[:, i, j])
+                            y_vals = np.real(responses[:, i, j])
                         elif component.lower() == 'im':
-                            y_vals = np.imag(self.network.s[:, i, j])
+                            y_vals = np.imag(responses[:, i, j])
 
                         ax.scatter(self.network.f, y_vals, color='r', label=label)
 
@@ -1644,13 +1743,11 @@ class VectorFitting:
         singvals = np.zeros((n_ports, len(freqs)))
 
         # calculate and save singular values for each frequency
-        for i, f in enumerate(freqs):
-            u, sigma, vh = np.linalg.svd(self._get_s_from_ABCDE(f, A, B, C, D, E))
-            singvals[:, i] = sigma
+        u, sigma, vh = np.linalg.svd(self._get_s_from_ABCDE(freqs, A, B, C, D, E))
 
         # plot the frequency response of each singular value
         for n in range(n_ports):
-            ax.plot(freqs, singvals[n, :], label=r'$\sigma_{}$'.format(n + 1))
+            ax.plot(freqs, sigma[:, n], label=r'$\sigma_{}$'.format(n + 1))
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Magnitude')
         ax.legend(loc='best')
