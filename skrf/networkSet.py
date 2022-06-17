@@ -329,7 +329,8 @@ class NetworkSet(object):
         
         See Also
         --------
-        Mdif
+        Mdif : MDIF Object
+        write_mdif : Convert a NetworkSet to a Generalized MDIF file.
 
         """
         from . io import Mdif
@@ -519,6 +520,7 @@ class NetworkSet(object):
 
         setattr(self.__class__,'plot_mm_'+\
                 network_property_name,plot_func)
+
 
     def to_dict(self) -> dict:
         """
@@ -933,6 +935,40 @@ class NetworkSet(object):
         from . io.general import networkset_2_spreadsheet
         networkset_2_spreadsheet(self, *args, **kwargs)
 
+    def write_mdif(self,
+                   filename: str,
+                   values: Union[dict, None] = None,
+                   data_types: Union[dict, None] = None,
+                   comments = []):
+        """Convert a scikit-rf NetworkSet object to a Generalized MDIF file.
+
+        Parameters
+        ----------
+        filename : string
+            Output MDIF file name.
+        values : dictionary or None. Default is None.
+            The keys of the dictionnary are MDIF variables and its values are 
+            a list of the parameter values.
+            If None, then the values will be set to the NetworkSet names
+            and the datatypes will be set to "string".
+        data_types: dictionary or None. Default is None.
+            The keys are MDIF variables and the value are datatypes
+            specified by the following strings: "int", "double", and "string"
+        comments: list of strings
+            Comments to add to output_file.
+            Each list items is a separate comment line
+
+        See Also
+        --------
+        from_mdif : Create a NetworkSet from a MDIF file.
+        params_values : parameters values
+        params_types : parameters types
+
+        """
+        from . io import Mdif
+        Mdif.write(ns=self, filename=filename, values=values, 
+                             data_types=data_types, comments=comments)
+
     def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):
         """
         Converts an attributes of the Networks within a NetworkSet to a Pandas DataFrame.
@@ -1036,17 +1072,72 @@ class NetworkSet(object):
     @property
     def params(self) -> list:
         """
-        Return the list of parameters stored in the Network of the NetworkSet.
+        Return the list of parameter names stored in the Network of the NetworkSet.
 
         Similar to the `dims` property, except it returns a list instead of a view.
 
         Returns
         -------
         list: list
-            list of the parameters if any. Empty list if no parameter found.
+            list of the parameter names if any. Empty list if no parameter found.
 
         """
         return list(self.dims)
+    
+    @property
+    def params_values(self) -> Union[dict, None]:
+        """
+        Return a dictionnary containing all parameters and their values.
+
+        Returns
+        -------
+        values : dict or None.
+            Dictionnary of all parameters names and their values (into a list). 
+            Return None if no parameters are defined in the NetworkSet.
+
+        """
+        if self.has_params():
+            # creating a dict of empty lists for each of the param keys
+            values = {key: [] for key in self.dims}
+            for ntwk in self.ntwk_set:
+                for key, value in ntwk.params.items():
+                    values[key].append(value)
+            return values
+        else:
+            return None
+
+    @property
+    def params_types(self) -> Union[dict, None]:
+        """
+        Return a dictionnary describing the data type of each parameters.
+
+        Returns
+        -------
+        data_types : dict or None.
+            Dictionnary of the (guessed) type of each parameters. 
+            Return None if no parameters are defined in the NetworkSet.
+
+        """
+        # for each parameter, scan all the value and try to guess the type
+        # If is not a int, and not a float (double), then it's a string
+        if self.has_params():
+            data_types = {}
+            values = self.params_values
+            for key in values:
+                try:
+                    _ = [int(v) for v in values[key]]
+                    data_types[key] = 'int'
+                except ValueError as e:  # not an int
+                    try:
+                        _ = [float(v) for v in values[key]]
+                        data_types[key] = 'double'
+                    except ValueError as e:  # not a float -> then a string
+                        data_types[key] = 'string'
+                        
+            return data_types
+        else:
+            return None
+            
 
     def sel(self, indexers: Mapping[Any, Any] = None) -> 'NetworkSet':
         """
