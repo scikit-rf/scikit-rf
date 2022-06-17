@@ -289,7 +289,8 @@ class DeembeddingTestCase(unittest.TestCase):
         self.fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
         self.dm_nzc = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru, 
                                         name = '2xthru')
-        residuals = self.dm_nzc.s_side1.inv ** self.s2xthru ** self.dm_nzc.s_side2.inv
+        residuals = self.dm_nzc.s_side1.inv ** \
+            self.s2xthru ** self.dm_nzc.s_side2.flipped().inv
         # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
         il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
         self.assertTrue(np.max(np.abs(il_mag)) <= 0.1, 'residual IL magnitude')
@@ -314,7 +315,8 @@ class DeembeddingTestCase(unittest.TestCase):
                                        leadin = 0,
                                        NRP_enable = False,
                                        name = 'zc2xthru')
-        residuals = self.dm_zc.s_side1.inv ** self.s2xthru ** self.dm_zc.s_side2.inv
+        residuals = self.dm_zc.s_side1.inv ** \
+            self.s2xthru ** self.dm_zc.s_side2.flipped().inv
         # insertion loss magnitude deviate from 1.0 from less than 0.2 dB
         il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
         self.assertTrue(np.max(np.abs(il_mag)) <= 0.2, 'residual IL magnitude')
@@ -342,7 +344,8 @@ class DeembeddingTestCase(unittest.TestCase):
         self.s2xthru_pn.add_noise_polar(0.0002, 0.2)
         self.dm_nzc_pn = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = self.s2xthru_pn, 
                                         name = '2xthru')
-        residuals = self.dm_nzc_pn.s_side1.inv ** self.s2xthru_pn ** self.dm_nzc_pn.s_side2.inv
+        residuals = self.dm_nzc_pn.s_side1.inv ** \
+            self.s2xthru_pn ** self.dm_nzc_pn.s_side2.flipped().inv
         # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
         il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
         self.assertTrue(np.max(np.abs(il_mag)) <= 0.1, 'residual IL magnitude')
