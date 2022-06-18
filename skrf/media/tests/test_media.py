@@ -8,6 +8,7 @@ from skrf.media import DefinedGammaZ0, Media
 from skrf.network import Network
 from skrf.frequency import Frequency
 import skrf
+from numpy.testing import run_module_suite
 
 
 class DefinedGammaZ0TestCase(unittest.TestCase):
@@ -19,7 +20,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media = DefinedGammaZ0(
             frequency = Frequency(1,100,21,'ghz'),
             gamma=1j,
-            z0 = 50 ,
+            Z0 = 50 ,
             )
 
     def test_impedance_mismatch(self):
@@ -174,15 +175,15 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
 
         """
         l = 5.0
-        z1 = 30.0
-        z0 = self.dummy_media.z0
+        Z1 = 30.0
+        Z0 = self.dummy_media.z0
 
-        ntw = self.dummy_media.line(d=0, unit='m', z0=z0) \
-            ** self.dummy_media.line(d=l, unit='m', z0=z1) \
-            ** self.dummy_media.line(d=0, unit='m', z0=z0)
+        ntw = self.dummy_media.line(d=0, unit='m', Z0=Z0) \
+            ** self.dummy_media.line(d=l, unit='m', Z0=Z1) \
+            ** self.dummy_media.line(d=0, unit='m', Z0=Z0)
 
         beta = self.dummy_media.beta
-        _z1 = z1/z0
+        _z1 = Z1/Z0
         S11 = 1j*(_z1**2 - 1)*npy.sin(beta*l) / \
             (2*_z1*npy.cos(beta*l) + 1j*(_z1**2 + 1)*npy.sin(beta*l))
         S21 = 2*_z1 / \
@@ -312,12 +313,12 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         [ j/Z0 sin(beta l)  cos(beta l) ]
         """
         l = 5
-        z0 = 80
-        ntw = self.dummy_media.line(d=l, unit='m', z0=z0)
+        Z0 = 80
+        ntw = self.dummy_media.line(d=l, unit='m', Z0=Z0)
         beta = self.dummy_media.beta
         npy.testing.assert_array_almost_equal(ntw.a[:,0,0], npy.cos(beta*l))
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,1], 1j*z0*npy.sin(beta*l))
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,0], 1j/z0*npy.sin(beta*l))
+        npy.testing.assert_array_almost_equal(ntw.a[:,0,1], 1j*Z0*npy.sin(beta*l))
+        npy.testing.assert_array_almost_equal(ntw.a[:,1,0], 1j/Z0*npy.sin(beta*l))
         npy.testing.assert_array_almost_equal(ntw.a[:,1,1], npy.cos(beta*l))
 
     def test_abcd_lossy_line(self):
@@ -335,19 +336,19 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         [ 1/Z0 sinh(gamma l)  cosh(gamma l) ]
         """
         l = 5.0
-        z0 = 30.0
+        Z0 = 30.0
         alpha = 0.5
         beta = 2.0
         lossy_media = DefinedGammaZ0(
             frequency=Frequency(1, 100, 21, 'GHz'),
             gamma=alpha + 1j*beta,
-            z0=z0
+            Z0=Z0
             )
-        ntw = lossy_media.line(d=l, unit='m', z0=z0)
+        ntw = lossy_media.line(d=l, unit='m')
         gamma = lossy_media.gamma
         npy.testing.assert_array_almost_equal(ntw.a[:,0,0], npy.cosh(gamma*l))
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,1], z0*npy.sinh(gamma*l))
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,0], 1.0/z0*npy.sinh(gamma*l))
+        npy.testing.assert_array_almost_equal(ntw.a[:,0,1], Z0*npy.sinh(gamma*l))
+        npy.testing.assert_array_almost_equal(ntw.a[:,1,0], 1.0/Z0*npy.sinh(gamma*l))
         npy.testing.assert_array_almost_equal(ntw.a[:,1,1], npy.cosh(gamma*l))
 
 class DefinedGammaZ0_s_def(unittest.TestCase):
@@ -399,3 +400,8 @@ class DefinedGammaZ0_s_def(unittest.TestCase):
         npy.testing.assert_allclose(thru_traveling.s, mismatch_traveling.s, rtol=1e-3)
         npy.testing.assert_allclose(thru_pseudo.s, mismatch_pseudo.s, rtol=1e-3)
         npy.testing.assert_allclose(thru_power.s, mismatch_power.s, rtol=1e-3)
+        
+        
+if __name__ == "__main__":
+    # Launch all tests
+    run_module_suite()

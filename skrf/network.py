@@ -3217,7 +3217,7 @@ class Network(object):
         d=d/2.
         if media is None:
             from .media import Freespace
-            media = Freespace(frequency=self.frequency,z0=self.z0[:,port])
+            media = Freespace(frequency=self.frequency,Z0=self.z0[:,port])
 
         l =media.line(d=d, unit=unit,**kw)
         return connect(self, port, l, 0)

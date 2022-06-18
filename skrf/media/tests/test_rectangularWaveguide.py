@@ -3,6 +3,7 @@ import os
 from skrf.media.rectangularWaveguide import RectangularWaveguide
 from skrf.network import Network
 from skrf.constants import mil
+from numpy.testing import run_module_suite
 
 class MediaTestCase(unittest.TestCase):
     """
@@ -46,7 +47,6 @@ class MediaTestCase(unittest.TestCase):
         wg = RectangularWaveguide(
             frequency = ntwk.frequency,
             a=15*mil,
-            z0=50,
             rho = 1/(3.8e7),
             )
         self.assertTrue(
@@ -62,9 +62,13 @@ class MediaTestCase(unittest.TestCase):
         wg = RectangularWaveguide(
             ntwk.frequency,
             a=15*mil,
-            z0=50,
             rho = 1/(3.8e7),
             roughness = 100e-9,
             )
         self.assertTrue(
             max(abs(wg.line(1,'in').s_mag[:,1,0] - ntwk.s_mag[:,1,0]))<1e-3 )
+
+
+if __name__ == "__main__":
+    # Launch all tests
+    run_module_suite()

@@ -964,7 +964,7 @@ class CircuitTestVoltagesCurrents(unittest.TestCase):
         self.Z = np.random.rand()  # source internal impedance, line characteristic impedance and load impedance
         self.L = np.random.rand()  # line length in [m]
         self.freq = rf.Frequency(1, 10, 10, unit='GHz')
-        self.line_media = rf.media.DefinedGammaZ0(self.freq, z0=self.Z)  # lossless line medium
+        self.line_media = rf.media.DefinedGammaZ0(self.freq, Z0=self.Z)  # lossless line medium
         self.line = self.line_media.line(d=self.L, unit='m', name='line')  # transmission line Network
 
         # forward voltages and currents at the input of the test line
