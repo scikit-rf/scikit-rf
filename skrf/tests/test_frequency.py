@@ -40,9 +40,9 @@ class FrequencyTestCase(unittest.TestCase):
         freq = rf.Frequency.from_f(f,unit='khz')
         self.assertTrue((freq.f ==f*1e3).all())
         self.assertTrue((freq.f_scaled== f).all())
-        self.assertTrue((freq.sweep_type == 'unknown'))
         
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AttributeError):
+            # number of point is a property and can't be set
             freq.npoints = 10
 
     def test_rando_sweep_from_touchstone(self):
@@ -52,7 +52,6 @@ class FrequencyTestCase(unittest.TestCase):
         rando_sweep_ntwk = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))
         self.assertTrue((rando_sweep_ntwk.f == \
             npy.array([1,4,10,20])).all())
-        self.assertTrue((rando_sweep_ntwk.frequency.sweep_type == 'unknown'))
 
     def test_slicer(self):
         a = rf.Frequency.from_f([1,2,4,5,6])
@@ -81,8 +80,20 @@ class FrequencyTestCase(unittest.TestCase):
             
             self.assertTrue(npy.allclose(freq.f, [1,2]))
 
-
-
-
+    def test_immutability(self):
+        """
+        To avoid corner cases, it is not be possible to change the 
+        frequency points directly.
+        """
+        a = rf.Frequency.from_f([1,2,4,5,6])
+        with self.assertRaises(AttributeError):
+            a.f = 0
+        with self.assertRaises(AttributeError):
+            a.start = 2
+        with self.assertRaises(AttributeError):
+            a.stop = 10            
+        with self.assertRaises(AttributeError):
+            a.npoints = 10  
+            
 suite = unittest.TestLoader().loadTestsFromTestCase(FrequencyTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

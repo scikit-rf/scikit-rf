@@ -3,6 +3,7 @@ import numpy as np
 import skrf
 import pyvisa
 from collections import OrderedDict
+from collections.abc import Iterable
 
 from . import abcvna
 from . import keysight_pna_scpi
