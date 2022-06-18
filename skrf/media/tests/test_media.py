@@ -69,16 +69,12 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
     def test_scalar_gamma_z0_media(self):
         """
         test ability to create a Media from scalar quantities for gamma/z0
-        and change frequency resolution
         """
-        a = DefinedGammaZ0 (Frequency(1,10,101),gamma=1j,z0 = 50)
-        self.assertEqual(a.line(1),a.line(1))
-
-        # we should be able to re-sample the media
-        a.npoints = 21
-        self.assertEqual(len(a.gamma), len(a))
-        self.assertEqual(len(a.z0), len(a))
-        self.assertEqual(len(a.z0), len(a))
+        freq = Frequency(1,10,101)
+        a = DefinedGammaZ0(freq, gamma=1j, z0=50)
+        self.assertEqual(len(freq), len(a))
+        self.assertEqual(len(freq), len(a.gamma))
+        self.assertEqual(len(freq), len(a.z0))
 
 
     def test_vector_gamma_z0_media(self):
@@ -90,12 +86,10 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
                            gamma = 1j*npy.ones(len(freq)) ,
                            z0 =  50*npy.ones(len(freq)),
                             )
-
-
-        self.assertEqual(a.line(1),a.line(1))
-        with self.assertRaises(NotImplementedError):
-            a.npoints=4
-
+        self.assertEqual(len(freq), len(a))
+        self.assertEqual(len(freq), len(a.gamma))
+        self.assertEqual(len(freq), len(a.z0))
+        
     def test_write_csv(self):
         fname = os.path.join(self.files_dir,\
                 'out.csv')

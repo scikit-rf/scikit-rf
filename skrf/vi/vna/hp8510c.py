@@ -4,6 +4,7 @@ import time
 from .abcvna import VNA
 from ...frequency import *
 from ...network import *
+from .hp8510c_sweep_plan import SweepPlan, SweepSection
 
 class HP8510C(VNA):
     '''
@@ -26,16 +27,21 @@ class HP8510C(VNA):
         # 8510s are slow. The above check ensures we won't wait 60s for connection error.
         self.resource.set_visa_attribute(pyvisa.constants.ResourceAttribute.timeout_value, 60000)
         self.resource.read_termination = False # Binary mode doesn't work if we allow premature termination on \n
-        self.chunked_sweep_params = None
+        self.sweep_plan = None
+        #self.chunked_sweep_params = None
         self.read_raw = self.resource.read_raw
-        if kwargs.get("initial_reset",True):
-            self.reset()
+        self.reset()
+        min_hz,  max_hz, default_npt = self.get_ssn() # The official way to get the limits is to reset and look at the bounds. Ugh.
+        self.min_hz = min_hz
+        self.max_hz = max_hz
 
     @property
     def idn(self):
+        ''' Instrument ID string '''
         return self.query("OUTPIDEN;")
 
     def reset(self):
+        ''' Preset instrument. '''
         self.write("FACTPRES;")
         self.wait_until_finished()
     
@@ -89,29 +95,15 @@ class HP8510C(VNA):
         else:
             hz_start, hz_stop = f_start, f_stop
         self.set_frequency_step(hz_start, hz_stop, f_npoints)
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     @property
     def error(self):
+        ''' Error from OUTPERRO '''
         return self.query('OUTPERRO')
 
     @property
     def continuous(self):
+        ''' True iff sweep mode is continuous. Can be set. '''
         answer_dict={'\"HOLD\"':False,'\"CONTINUAL\"':True}
         return answer_dict[self.query('GROU?')]
 
@@ -123,11 +115,10 @@ class HP8510C(VNA):
             self.write('SING;')
         else:
             raise(ValueError('takes a boolean'))
+
     @property
     def averaging(self):
-        '''
-        averaging factor
-        '''
+        ''' Averaging factor for AVERON '''
         raise NotImplementedError
 
     @averaging.setter
@@ -140,6 +131,14 @@ class HP8510C(VNA):
                 int(float(self.query('poin;outpacti;'))),'hz')
         freq.unit = unit
         return freq
+    
+    def get_ssn(self):
+        ''' Get (start_hz, stop_hz, n_points) tuple '''
+        return (
+            float(self.query('star;outpacti;')),
+            float(self.query('stop;outpacti;')),
+            int(float(self.query('poin;outpacti;')))
+        )
     
     def set_frequency_ramp(self, hz_start, hz_stop, npoint=801):
         ''' Ramp (fast, not synthesized) sweep. Must have standard npoint. '''
@@ -174,14 +173,23 @@ class HP8510C(VNA):
             self.write('SADD;')
             self.write('STAR %f; STOP %f; POIN %i;'%(hz_start,hz_stop,npoint))
             self.write('SDON; EDITDONE; LISFREQ;')
+    
+    def set_hz(self, hz):
+        ''' List sweep using hz, an array of frequencies. If hz is too long, multiple sweeps will automatically be performed.'''
+        hz = npy.array(hz)
+        valid = (self.min_hz<=hz) & (hz<=self.max_hz)
+        if not npy.all(valid):
+            print("set_hz called with %i/%i points out of VNA frequency range. Dropping them."%(npy.sum(valid),len(valid)))
+            hz = hz[valid]
+        self.sweep_plan = SweepPlan.from_hz(hz)
 
     def set_frequency_step(self, hz_start, hz_stop, npoint=801):
         ''' Step (slow, synthesized) sweep + logic to handle lots of npoint. '''
         if (self._instrument_natively_supports_steps(npoint)):
-            self.chunked_sweep_params = None
+            self.sweep_plan = None
             self._set_instrument_step_state(hz_start, hz_stop, npoint)
         else:
-            self.chunked_sweep_params = (hz_start, hz_stop, npoint)
+            self.sweep_plan = SweepPlan.from_ssn(hz_start, hz_stop, npoint)
 
     def ask_for_cmplx(self, outp_cmd):
         """Like ask_for_values, but use FORM2 binary transfer, much faster than ASCII."""
@@ -201,22 +209,6 @@ class HP8510C(VNA):
             raise(e)
         cmplxs = (floats[:,0] + 1j*floats[:,1]).flatten()
         return cmplxs
-    
-    def _chunked_sweep_chunks(self):
-        hz_start, hz_stop, npoints = self.chunked_sweep_params
-        freqs = npy.linspace(hz_start, hz_stop, npoints)
-        i = 0
-        while i<npoints:
-            pts_remaining = npoints - i
-            if pts_remaining >= 801:
-                chnk_size = 801
-            elif pts_remaining <=792:
-                chnk_size = pts_remaining
-            else:
-                chnk_size = 401
-            freq_chnk = freqs[i:(i+chnk_size)]
-            yield (freq_chnk[0],freq_chnk[-1],chnk_size)
-            i += chnk_size
 
     def _one_port(self, fresh_sweep=True):
         ''' Perform a single sweep and return Network data. '''
@@ -230,12 +222,13 @@ class HP8510C(VNA):
 
     def one_port(self, **kwargs):
         ''' Performs one or more sweeps as per set_frequency_*, returns network. '''
-        if self.chunked_sweep_params is None:
+        if self.sweep_plan is None:
             return self._one_port()
         stitched_network = None
-        for (hz_start,hz_end,chnk_size) in self._chunked_sweep_chunks():
-            self._set_instrument_step_state(hz_start,hz_end,chnk_size)
-            chunk_net = self._one_port()
+        for sweep_section in self.sweep_plan.sections:
+            sweep_section.apply_8510(self)
+            chunk_net_nomask = self._one_port()
+            chunk_net = sweep_section.mask_8510(chunk_net_nomask)
             stitched_network = chunk_net if stitched_network is None else stitch(stitched_network,chunk_net)
         return stitched_network
 
@@ -276,12 +269,13 @@ class HP8510C(VNA):
     
     def two_port(self, **kwargs):
         ''' Performs one or more sweeps per set_frequency_*, returns network. '''
-        if self.chunked_sweep_params is None:
+        if self.sweep_plan is None:
             return self._two_port()
         stitched_network = None
-        for (hz_start,hz_end,chnk_size) in self._chunked_sweep_chunks():
-            self._set_instrument_step_state(hz_start,hz_end,chnk_size)
-            chunk_net = self._two_port()
+        for sweep_chunk in self.sweep_plan.sections:
+            sweep_chunk.apply_8510(self)
+            chunk_net_nomask = self._two_port()
+            chunk_net = sweep_chunk.mask_8510(chunk_net_nomask)
             stitched_network = chunk_net if stitched_network is None else stitch(stitched_network,chunk_net)
         return stitched_network
 
