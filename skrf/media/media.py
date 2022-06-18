@@ -848,6 +848,12 @@ class Media(ABC):
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 
         if embed:
+            # warns of future deprecation
+            warnings.warn('In a future version,`embed` will be deprecated.\n'
+                          'The line and media port impedance z0 and '
+                          'characteristic impedance Z0 will be used instead '
+                          'to determine if the line has to be renormalized.',
+              FutureWarning, stacklevel = 2)
             # Use the same s_def here as the line to avoid changing it during
             # cascade.
             result = self.thru(s_def='traveling')**result**self.thru(s_def='traveling')
