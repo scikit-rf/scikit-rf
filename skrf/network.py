@@ -1411,6 +1411,9 @@ class Network(object):
 
     @f.setter
     def f(self, f: Union[NumberLike, Frequency]) -> None:
+        warnings.warn('frequency.f parameter will be immutable in the next release.',
+             DeprecationWarning, stacklevel=2)
+
         if isinstance(f, Frequency):
             self.frequency = f
         else:
