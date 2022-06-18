@@ -168,12 +168,8 @@ class Media(ABC):
         z0 : :class:`numpy.ndarray`
         """
         if self._z0 is None:
-            z0 = self.Z0
-        else:
-            # media is 2-port or should redefine this
-            z0 = fix_z0_shape(self._z0, len(self), 2)
-
-        return z0
+            return self.Z0
+        return self._z0*ones(len(self))
 
     @z0.setter
     def z0(self, val):
@@ -864,7 +860,8 @@ class Media(ABC):
                 s21 = npy.exp(-1*theta)
                 result.s = \
                         npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
-                result.renormalize(self.z0, s_def='traveling')
+                z_renormalize = fix_z0_shape(self.z0, self.npoints, 2)
+                result.renormalize(z_renormalize, s_def='traveling')
             else:
                 raise ValueError('Missing z0 or Z0 impedance specification')
         
