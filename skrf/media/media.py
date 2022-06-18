@@ -169,7 +169,11 @@ class Media(ABC):
         """
         if self._z0 is None:
             return self.Z0
-        return self._z0*ones(len(self))
+        # media is 2-port or should redefine this
+        z0 = npy.zeros((len(self), 2), dtype = complex)
+        z0[:, 0] = self._z0 * ones(len(self), dtype = complex)
+        z0[:, 1] = self._z0 * ones(len(self), dtype = complex)
+        return z0
 
     @z0.setter
     def z0(self, val):
@@ -838,46 +842,15 @@ class Media(ABC):
 
         if isinstance(z0,str):
             z0 = parse_z0(z0)* self.z0
-
-        # priority given to line impedances on media impedances.
-        z_port = self.z0 if z0 is None else z0
-        z_char = self.Z0 if Z0 is None else Z0
-        
-        if z_port is None:
-            if z_char is None:
-                raise ValueError('Neither port or characteristic impedance specified')
-            else:
-                z_match = z_char
-                z_renormalize = None     
-        else:
-            if z_char is None:
-                z_match = z_port
-                z_renormalize = None
-            else:
-                z_match = z_char
-                z_renormalize = z_port
             
-        # match
-        kwargs.update({'z0' : z_match})
-        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
-        # Need to use either traveling or pseudo definition here
-        # for the network to match traveling waves.
-        result = self.match(nports=2, s_def='traveling', **kwargs)
-
-        # transmission line
-        theta = self.electrical_length(self.to_meters(d=d, unit=unit))
-        s11 = npy.zeros(self.frequency.npoints, dtype=complex)
-        s21 = npy.exp(-1*theta)
-        result.s = \
-                npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
-        
-                # fixme: some magic here to make embed emmit a warning but keep
-        # `media.line(line_l, 'm', embed=True, z0=media.Z0)` working for
+        # fixme: legacy behaviour kept temporarily for deprecation warning.
+        # `media.line(line_l, 'm', embed=True, z0=media.Z0)` still working for
         # backward compatibility
         if embed:
             warnings.warn('In a future version,`embed` will be deprecated.\n'
-                          'Use line and media port impedance z0 and'
-                          'characteristic impedance Z0 instead.',
+                          'The line and media port impedance z0 and '
+                          'characteristic impedance Z0 will be used instead '
+                          'to determine if the line has to be renormalized.',
               FutureWarning, stacklevel = 2)
             # Use the same s_def here as the line to avoid changing it during
             # cascade.
@@ -885,12 +858,50 @@ class Media(ABC):
                 kwargs.update({'z0' : z0})
                 s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
                 result = self.match(nports=2, s_def='traveling', **kwargs)
+                theta = self.electrical_length(self.to_meters(d=d, unit=unit))
+                s11 = npy.zeros(self.frequency.npoints, dtype=complex)
+                s21 = npy.exp(-1*theta)
                 result.s = \
                         npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
                 result.renormalize(self.z0, s_def='traveling')
+            else:
+                raise ValueError('Missing z0 or Z0 impedance specification')
+        
+        else:
+            # priority given to line impedances on media impedances.
+            z_port = self.z0 if z0 is None else z0
+            z_char = self.Z0 if Z0 is None else Z0
+            
+            if z_port is None:
+                if z_char is None:
+                    raise ValueError('Neither port or characteristic impedance specified')
+                else:
+                    z_match = z_char
+                    z_renormalize = None     
+            else:
+                if z_char is None:
+                    z_match = z_port
+                    z_renormalize = None
+                else:
+                    z_match = z_char
+                    z_renormalize = z_port
                 
-        elif not (z_renormalize is None):
-            result.renormalize(z_renormalize, s_def='traveling')
+            # match
+            kwargs.update({'z0' : z_match})
+            s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+            # Need to use either traveling or pseudo definition here
+            # for the network to match traveling waves.
+            result = self.match(nports=2, s_def='traveling', **kwargs)
+    
+            # transmission line
+            theta = self.electrical_length(self.to_meters(d=d, unit=unit))
+            s11 = npy.zeros(self.frequency.npoints, dtype=complex)
+            s21 = npy.exp(-1*theta)
+            result.s = \
+                npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
+            
+            if not (z_renormalize is None):
+                result.renormalize(z_renormalize, s_def='traveling')
 
         # return to proper s_def
         result.renormalize(result.z0, s_def=s_def)
