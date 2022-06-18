@@ -1,10 +1,7 @@
 import warnings
-from collections import OrderedDict
-from collections.abc import Iterable
-
 import numpy as np
 import skrf
-import pyvisa
+from collections import OrderedDict
 
 from . import abcvna
 from . import keysight_fieldfox_scpi

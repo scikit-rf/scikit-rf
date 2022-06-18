@@ -1,54 +1,72 @@
 import dataclasses
 import numpy as np
-from typing import List,Union
+from typing import List, Union
+from abc import ABC, abstractmethod
 
-class SweepSection:
+
+class SweepSection(ABC):
+    @abstractmethod
     def get_hz(self):
-        raise NotImplementedError()
+        pass
+
     def apply_8510(self, hp8510c):
-        raise NotImplementedError()
+        pass
+
     def mask_8510(self, network):
         return network
 
+
 @dataclasses.dataclass
 class LinearBuiltinSweepSection(SweepSection):
-    hz_min : float
-    hz_max : float
-    n_points : int
+    hz_min: float
+    hz_max: float
+    n_points: int
+
     def get_hz(self):
         return np.linspace(self.hz_min, self.hz_max, self.n_points)
+
     def apply_8510(self, hp8510c):
         hp8510c._set_instrument_step_state(self.hz_min, self.hz_max, self.n_points)
+
 
 @dataclasses.dataclass
 class LinearMaskedSweepSection(SweepSection):
-    hz_min : float
-    hz_max : float
-    n_points : int
-    mask : object
+    hz_min: float
+    hz_max: float
+    n_points: int
+    mask: object
+
     def get_hz(self):
         return np.linspace(self.hz_min, self.hz_max, self.n_points)
+
     def apply_8510(self, hp8510c):
         hp8510c._set_instrument_step_state(self.hz_min, self.hz_max, self.n_points)
+
     def mask_8510(self, network):
         return network[self.mask]
 
+
 @dataclasses.dataclass
 class LinearCustomSweepSection(SweepSection):
-    hz_min : float
-    hz_max : float
-    n_points : int
+    hz_min: float
+    hz_max: float
+    n_points: int
+
     def get_hz(self):
         return np.linspace(self.hz_min, self.hz_max, self.n_points)
+
     def apply_8510(self, hp8510c):
         assert self.n_points <= 792
         hp8510c._set_instrument_step_state(self.hz_min, self.hz_max, self.n_points)
 
+
 @dataclasses.dataclass
 class RandomSweepSection(SweepSection):
-    hz_list : List[float]
+    hz_list: List[float]
+
     def get_hz(self):
         return self.hz_list
+
 
 @dataclasses.dataclass
 class SweepPlan:
@@ -59,7 +77,9 @@ class SweepPlan:
     Each SweepSection represents a sweep the instrument can actually perform.
     Together, the SweepSections in a SweepPlan satisfy the user's request.
     """
-    sections : List[SweepSection]
+
+    sections: List[SweepSection]
+
     def get_hz(self):
         """Get a list of all frequency points in the entire sweep plan."""
         ret = []
@@ -73,24 +93,24 @@ class SweepPlan:
         """
         plan_hz = np.array(sorted(self.get_hz()))
         good = True
-        if len(hz)!=len(plan_hz):
+        if len(hz) != len(plan_hz):
             good = False
         for h in hz:
-            if not np.any(np.isclose(h,plan_hz)):
-                print(f'In original list but not plan: {h}')
+            if not np.any(np.isclose(h, plan_hz)):
+                print(f"In original list but not plan: {h}")
                 good = False
         for ph in plan_hz:
-            if not np.any(np.isclose(ph,hz)):
-                print(f'In plan but not in original list: {h}')
+            if not np.any(np.isclose(ph, hz)):
+                print(f"In plan but not in original list: {h}")
                 good = False
         if not np.allclose(hz, plan_hz):
             print("All were not close.")
             good = False
         return good
-    
+
     @classmethod
     def from_ssn(cls, hz_start, hz_stop, n):
-        return cls.from_hz(np.linspace(hz_start,hz_stop,n))
+        return cls.from_hz(np.linspace(hz_start, hz_stop, n))
 
     @classmethod
     def from_hz(cls, hz):
@@ -100,8 +120,8 @@ class SweepPlan:
         Limitations: No overlapping linear sweeps. No log sweeps.
         """
         hz = np.array(sorted(hz))
-        n  = len(hz)
-        misfits = [] # hz that don't fit into a linear sweep
+        n = len(hz)
+        misfits = []  # hz that don't fit into a linear sweep
         growing_window = []
         growing_window_d = -1
         sweep_sections = []
@@ -109,52 +129,49 @@ class SweepPlan:
         def finalize_window(growing_window, misfits, sweep_sections):
             """ When a growing_window has grown as far as it can, finalize_window is called to turn it into a sweep section + misfits"""
             # Runt windows aren't really linear sweeps -- we should just add their points to the misfit pile
-            if len(growing_window)<=2:
+            if len(growing_window) <= 2:
                 misfits.extend(growing_window)
                 growing_window.clear()
                 return
-            
             # Certain window lengths are preferred. Try to use these as much as possible
             def try_builtin_window_len(builtin_len):
-                while len(growing_window)>=builtin_len:
+                while len(growing_window) >= builtin_len:
                     chunk = growing_window[0:builtin_len]
                     del growing_window[0:builtin_len]
                     ns = LinearBuiltinSweepSection(
-                            hz_min=chunk[0],
-                            hz_max=chunk[-1],
-                            n_points=len(chunk)
-                        )
+                        hz_min=chunk[0], hz_max=chunk[-1], n_points=len(chunk)
+                    )
                     sweep_sections.append(ns)
-            
+
             try_builtin_window_len(801)
             try_builtin_window_len(401)
             try_builtin_window_len(201)
             try_builtin_window_len(101)
             try_builtin_window_len(51)
-            
+
             # Remainder get a custom linear window:
             while len(growing_window):
                 chunk = growing_window[0:792]
                 del growing_window[0:792]
                 ns = LinearCustomSweepSection(
-                        hz_min=chunk[0],
-                        hz_max=chunk[-1],
-                        n_points=len(chunk)
-                    )
-                assert len(chunk)==len(ns.get_hz())
-                assert np.allclose(chunk,ns.get_hz())
+                    hz_min=chunk[0], hz_max=chunk[-1], n_points=len(chunk)
+                )
+                assert len(chunk) == len(ns.get_hz())
+                assert np.allclose(chunk, ns.get_hz())
                 sweep_sections.append(ns)
 
         # Start growing windows!
         for i in range(n):
             wl = len(growing_window)
-            if wl==0:
+            if wl == 0:
                 growing_window.append(hz[i])
-            if wl==1:
+            if wl == 1:
                 growing_window.append(hz[i])
-                growing_window_d = hz[i]-hz[i-1]
-            if wl>=2:
-                i_fits_in_growing_window = abs((hz[i]-hz[i-1]) - growing_window_d) < .5 # Hz tolerance
+                growing_window_d = hz[i] - hz[i - 1]
+            if wl >= 2:
+                i_fits_in_growing_window = (
+                    abs((hz[i] - hz[i - 1]) - growing_window_d) < 0.5
+                )  # Hz tolerance
                 if i_fits_in_growing_window:
                     growing_window.append(hz[i])
                 else:
@@ -162,25 +179,7 @@ class SweepPlan:
                     growing_window.append(hz[i])
         finalize_window(growing_window, misfits, sweep_sections)
         if len(misfits):
-            sweep_sections.append(
-                RandomSweepSection(hz_list=misfits)
-            )
+            sweep_sections.append(RandomSweepSection(hz_list=misfits))
         plan = SweepPlan(sections=sweep_sections)
         assert plan.matches_f_list(hz)
         return plan
-
-# test_hz_0 = np.linspace(100,1000,801)
-# test_sp_0 = SweepPlan.from_hz(test_hz_0)
-# assert test_sp_0.matches_f_list(test_hz_0)
-# 
-# test_hz_1 = np.linspace(100,1000,1001)
-# test_sp_1 = SweepPlan.from_hz(test_hz_1)
-# assert test_sp_1.matches_f_list(test_hz_1)
-# 
-# test_hz_2 = np.concatenate(([1,2,3], np.linspace(100,1000,1001), [9999]))
-# test_sp_2 = SweepPlan.from_hz(test_hz_2)
-# assert test_sp_2.matches_f_list(test_hz_2)
-# 
-# test_hz_3 = np.concatenate(([1,2,3], np.linspace(100,1000,1001), [9999]))
-# test_sp_3 = SweepPlan.from_hz(test_hz_3)
-# assert test_sp_3.matches_f_list(test_hz_3)
