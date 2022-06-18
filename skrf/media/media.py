@@ -21,7 +21,7 @@ from scipy import stats
 from scipy.constants import  c, inch, mil
 
 from ..frequency import Frequency
-from ..network import Network, connect, impedance_mismatch
+from ..network import Network, connect, impedance_mismatch, fix_z0_shape
 
 from .. import tlineFunctions as tf
 from .. import mathFunctions as mf
@@ -168,11 +168,11 @@ class Media(ABC):
         z0 : :class:`numpy.ndarray`
         """
         if self._z0 is None:
-            return self.Z0
-        # media is 2-port or should redefine this
-        z0 = npy.zeros((len(self), 2), dtype = complex)
-        z0[:, 0] = self._z0 * ones(len(self), dtype = complex)
-        z0[:, 1] = self._z0 * ones(len(self), dtype = complex)
+            z0 = self.Z0
+        else:
+            # media is 2-port or should redefine this
+            z0 = fix_z0_shape(self._z0, len(self), 2)
+
         return z0
 
     @z0.setter
@@ -842,6 +842,7 @@ class Media(ABC):
 
         if isinstance(z0,str):
             z0 = parse_z0(z0)* self.z0
+            z0 = fix_z0_shape(z0, self.npoints, 2)
             
         # fixme: legacy behaviour kept temporarily for deprecation warning.
         # `media.line(line_l, 'm', embed=True, z0=media.Z0)` still working for
@@ -872,19 +873,23 @@ class Media(ABC):
             z_port = self.z0 if z0 is None else z0
             z_char = self.Z0 if Z0 is None else Z0
             
+            # z shape has to be fixed for renormalize to works properly
+            # or it will trigger
+            # AttributeError: 'bool' object has no attribute 'any'
+            # because of `if (self.z0 != z_new).any():` on line 3033
             if z_port is None:
                 if z_char is None:
                     raise ValueError('Neither port or characteristic impedance specified')
                 else:
-                    z_match = z_char
+                    z_match = fix_z0_shape(z_char, self.npoints, 2)
                     z_renormalize = None     
             else:
                 if z_char is None:
-                    z_match = z_port
+                    z_match = fix_z0_shape(z_port, self.npoints, 2)
                     z_renormalize = None
                 else:
-                    z_match = z_char
-                    z_renormalize = z_port
+                    z_match = fix_z0_shape(z_char, self.npoints, 2)
+                    z_renormalize = fix_z0_shape(z_port, self.npoints, 2)
                 
             # match
             kwargs.update({'z0' : z_match})
