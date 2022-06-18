@@ -34,16 +34,16 @@ class DetermineTest(unittest.TestCase):
         
         
         #thru
-        self.T = wg.thru()
+        self.T = wg.thru(Z0=50)
         self.T_m = self.embed(self.T)
         
         #line
-        self.L = wg.line(80,'deg')
-        self.L_approx = self.wg.line(90,'deg')
+        self.L = wg.line(80,'deg', Z0=50)
+        self.L_approx = self.wg.line(90,'deg', Z0=50)
         self.L_m = self.embed(self.L)
         
         # reflect
-        self.r = [ wg.delay_load(p,k,'deg') \
+        self.r = [ wg.delay_load(p,k,'deg', Z0=50) \
                     for k in [-10,10,88,92] \
                     for p in [-.9,-1]]
         
@@ -336,14 +336,14 @@ class PHNTest(OnePortTest):
         #known2 = wg.load(rand() + rand()*1j) 
         
         ideals = [
-                wg.delay_short( 45.,'deg',name='ideal ew'),
-                wg.delay_short( 90.,'deg',name='ideal qw'),
+                wg.delay_short( 45.,'deg',name='ideal ew', Z0=50),
+                wg.delay_short( 90.,'deg',name='ideal qw', Z0=50),
                 known1,
                 known2,
                 ]
         actuals = [
-                wg.delay_short( 33.,'deg',name='true ew'),
-                wg.delay_short( 110.,'deg',name='true qw'),
+                wg.delay_short( 33.,'deg',name='true ew', Z0=50),
+                wg.delay_short( 110.,'deg',name='true qw', Z0=50),
                 known1,
                 known2,
                 ]
@@ -390,7 +390,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='load'),
-            wg.thru(name='thru'),
+            wg.thru(name='thru', Z0=50),
             ]
 
         measured = [self.measure(k) for k in ideals]
@@ -506,14 +506,14 @@ class TRLTest(EightTermTest):
         self.Y.s[:,1,1] *=1e-1 
         
         actuals = [
-            wg.thru( name='thru'),
+            wg.thru( name='thru', Z0=50),
             rf.two_port_reflect(wg.load(-.9-.1j),wg.load(-.9-.1j)),
-            wg.attenuator(-3,True, 45,'deg')
+            wg.attenuator(-3,True, 45,'deg', Z0=50)
             #wg.line(45,'deg',name='line'),
             ]
         self.actuals=actuals
         ideals = [
-            wg.thru( name='thru'),
+            wg.thru( name='thru', Z0=50),
             wg.short(nports=2, name='short'),
             wg.line(90,'deg',name='line'),
             ]
@@ -557,11 +557,11 @@ class TRLWithNoIdealsTest(EightTermTest):
         
         ideals =  None
         
-        r = wg.delay_short(20,'deg')
+        r = wg.delay_short(20,'deg', Z0=50)
 
-        self.actuals=[wg.thru( name='thru'),
+        self.actuals=[wg.thru( name='thru', Z0=50),
                       rf.two_port_reflect(r,r),\
-                      wg.attenuator(-3,True, 45,'deg')]
+                      wg.attenuator(-3,True, 45,'deg', Z0=50)]
 
         measured = [self.measure(k) for k in self.actuals]
         
@@ -603,12 +603,12 @@ class TRLMultiline(EightTermTest):
         ideals =  None
         
         actuals = [
-            wg.thru( name='thru'),
+            wg.thru( name='thru', Z0=50),
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
-            wg.attenuator(-3,True, 45,'deg'),
-            wg.attenuator(-6,True, 90,'deg'),
-            wg.attenuator(-8,True, 145,'deg'),
+            wg.attenuator(-3,True, 45,'deg', Z0=50),
+            wg.attenuator(-6,True, 90,'deg', Z0=50),
+            wg.attenuator(-8,True, 145,'deg', Z0=50),
             ]
         self.actuals=actuals
 
@@ -646,9 +646,9 @@ class NISTMultilineTRLTest(EightTermTest):
             wg.thru(),
             rf.two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
             rf.two_port_reflect(wg.load(.99+0.05j),wg.load(.99+0.05j)),
-            wg.line(100,'um'),
-            wg.line(200,'um'),
-            wg.line(900,'um'),
+            wg.line(100,'um', Z0=50),
+            wg.line(200,'um', Z0=50),
+            wg.line(900,'um', Z0=50),
             ]
 
         self.actuals=actuals
@@ -758,7 +758,7 @@ class TREightTermTest(unittest.TestCase, CalibrationTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='load'),
-            wg.thru(name='thru'),
+            wg.thru(name='thru', Z0=50),
             ]
             
         measured = [self.measure_std(k) for k in ideals]
@@ -973,8 +973,8 @@ class TwelveTermSloppyInitTest(TwelveTermTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='load'),
-            wg.attenuator(-20,name='atten'),
-            wg.line(45,'deg',name = 'line') ,          
+            wg.attenuator(-20,name='atten', Z0=50),
+            wg.line(45,'deg',name = 'line', Z0=50) ,          
             ]
         
     
@@ -1019,7 +1019,7 @@ class SOLTTest(TwelveTermTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='load'),
-            wg.thru(),            
+            wg.thru(Z0=50),            
             ]
     
         measured = [ self.measure(k) for k in actuals]
@@ -1152,7 +1152,7 @@ class UnknownThruTest(EightTermTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='match'),
-            wg.thru(name='thru'),
+            wg.thru(name='thru', Z0=50),
             ]
             
         measured = [self.measure(k) for k in actuals]
@@ -1178,7 +1178,7 @@ class LRMTest(EightTermTest):
 
         # Our guess of the standards
         ss_i = wg.short(nports=2, name='short')
-        thru = wg.line(d=50, unit='um', name='thru')
+        thru = wg.line(d=50, unit='um', name='thru', Z0=50)
 
         # Actual reflects with parasitics
         s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
@@ -1309,7 +1309,7 @@ class LRRMTestNoFit(LRRMTest):
         s_i = wg.short(nports=1, name='short')
         # Doesn't work correctly for non-50 ohm match.
         m_i = wg.load(0, nports=1, name='load')
-        thru = wg.line(d=50, unit='um', name='thru')
+        thru = wg.line(d=50, unit='um', name='thru', Z0=50)
 
         # Actual reflects with parasitics
         s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
@@ -1391,7 +1391,7 @@ class MRCTest(EightTermTest):
             delay_shorts(45,90),
             delay_shorts(90,45),
             wg.load(.2+.2j,nports=2, name='match'),
-            wg.thru(name='thru'),
+            wg.thru(name='thru', Z0=50),
             ]
             
         measured = [self.measure(k) for k in actuals]
@@ -1428,7 +1428,7 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='load'),
-            wg.thru(name='thru'),
+            wg.thru(name='thru', Z0=50),
             ]
 
         measured = [ self.measure(k) for k in ideals]
@@ -1530,7 +1530,7 @@ class SixteenTermTest(unittest.TestCase, CalibrationTest):
         mo = rf.two_port_reflect(m, o)
         oo = rf.two_port_reflect(o, o)
         ss = rf.two_port_reflect(s, s)
-        thru = wg.thru(name='thru')
+        thru = wg.thru(name='thru', Z0=50)
 
         ideals = [
             thru,
@@ -1657,7 +1657,7 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
         mo = rf.two_port_reflect(m, o)
         oo = rf.two_port_reflect(o, o)
         ss = rf.two_port_reflect(s, s)
-        thru = wg.thru(name='thru')
+        thru = wg.thru(name='thru', Z0=50)
 
         ideals = [
             thru,
@@ -1766,7 +1766,7 @@ class LMR16Test(SixteenTermTest):
         rr = rf.two_port_reflect(r, r)
 
         thru_length = uniform(0,10)
-        thru = wg.line(thru_length,'deg',name='line')
+        thru = wg.line(thru_length,'deg',name='line', Z0=50)
 
         self.thru = thru
 
