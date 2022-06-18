@@ -1,0 +1,11 @@
+!Single parameter MDIF Datafile
+!Shows .S2P-style option line syntax
+VAR Vg = -1
+BEGIN ACDATA
+! a comment here
+# GHz           S          DB          R         50
+    %F 	n11x 	n11y 	n21x 	n21y 	n12x 	n12y 	n22x 	n22y
+    10  -0.091484   60.432  24.417   -117.09   -77.086  66.176   -2.9307    73.43      
+    15  -0.10407   -91.037  24.933     63.704  -76.552 -111.41   -3.749    -155.06     
+    20  -0.096309   49.786  23.801   -118.37   -77.66   68.134   -3.9473    88.734 
+END

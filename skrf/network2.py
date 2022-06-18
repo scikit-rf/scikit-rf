@@ -488,7 +488,7 @@ class Network(object):
         try:
 
             output = self.copy()
-            output.frequency.f = npy.array(output.frequency.f[key]).reshape(-1)
+            output.frequency._f = npy.array(output.frequency.f[key]).reshape(-1)
             output.z0 = output.z0[key,:]
             output.s = output.s[key,:,:]
             return output

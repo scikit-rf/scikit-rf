@@ -2645,10 +2645,11 @@ class Network(object):
         else:
             dim = len(shape(freq_or_n))
             if dim == 0:
-                # input is a number
-                n = int(freq_or_n)
-                new_frequency = self.frequency.copy()
-                new_frequency.npoints = n
+                # input is a number 
+                new_frequency = Frequency(start=self.frequency.start_scaled, 
+                                          stop=self.frequency.stop_scaled,
+                                          unit=self.frequency.unit,
+                                          npoints=freq_or_n)
             elif dim == 1:
                 # input is a array, or list
                 new_frequency = Frequency.from_f(freq_or_n, **f_kwargs)
@@ -2811,12 +2812,12 @@ class Network(object):
             dc_sparam = npy.array(dc_sparam)
 
         result.s = npy.insert(result.s, 0, dc_sparam, axis=0)
-        result.frequency.f = npy.insert(result.frequency.f, 0, 0)
+        result.frequency._f = npy.insert(result.frequency.f, 0, 0)
         result.z0 = npy.insert(result.z0, 0, result.z0[0], axis=0)
 
         if result.noisy:
             result.noise = npy.insert(result.noise, 0, 0, axis=0)
-            result.noise_freq.f = npy.insert(result.noise_freq.f, 0, 0)
+            result.noise_freq._f = npy.insert(result.noise_freq.f, 0, 0)
 
         new_f = Frequency(0, result.frequency.f_scaled[-1], points,
                 unit=result.frequency.unit)

@@ -15,12 +15,13 @@ Mdif class and utilities
 
 """
 import numpy as np
-import typing
+from typing import Union, TextIO
 from ..util import get_fid
 from ..frequency import Frequency
 from ..network import Network, z2s, y2s
 from ..networkSet import NetworkSet
 from ..mathFunctions import magdeg_2_reim
+from itertools import product
 
 class Mdif():
     """
@@ -64,7 +65,7 @@ class Mdif():
 
     """
     
-    def __init__(self, file: typing.Union[str, typing.TextIO]):
+    def __init__(self, file: Union[str, TextIO]):
         """
         Constructor
         
@@ -169,6 +170,7 @@ class Mdif():
         formt = 'ri'
         z0 = 50
         nb_lines_per_freq = 1
+        ntwk_name = ''
 
         # Extract and group parameter informations and values
         for line in block_data:
@@ -188,6 +190,10 @@ class Mdif():
                 if formt not in ['ma', 'db', 'ri']:
                     raise NotImplementedError(f'ERROR: illegal format value {formt}')
 
+            elif line.startswith('!'):
+                if line[1:].startswith(' network name:'):
+                    ntwk_name = line.split(':')[-1].strip()
+                    
 
             # Parameter kinds (s11, z21, ...) are described as
             #
@@ -236,8 +242,11 @@ class Mdif():
 
         # Nport as in AWR MDIF file-format description
         elif (parameter == 's') and all(k in kinds for k in ['n11x', 'n11y']):
-            rank = round(np.sqrt(sum('n' in s for s in kinds)/2))
+            rank = round(np.sqrt(sum('n' in s for s in kinds)/2))                 
             s = values[:,:rank**2].reshape(len(f), rank, rank)
+            # if rank is 2 and S21 before S12, swap S21 and S12 
+            if rank == 2 and (kinds.index('n21x') < kinds.index('n12x')):
+                s[:, 1, 0], s[:, 0, 1] =  s[:, 0, 1].copy(), s[:, 1, 0].copy()
 
         # no S-parameter are found. Maybe Z-param instead?
         elif ('z[1,1]') in kinds:
@@ -264,7 +273,7 @@ class Mdif():
 
         # building the Network
         freq = Frequency.from_f(f, unit=frequency_unit)
-        ntwk = Network(frequency=freq, s=s, z0=z0)
+        ntwk = Network(frequency=freq, s=s, z0=z0, name=ntwk_name)
 
         return ntwk
 
@@ -301,12 +310,14 @@ class Mdif():
                 in_a_block = True
                 # current parameter
                 param_name, param_value = [s.strip() for s in line[3:].split('=')]
+                # remove the datatype "(blah)" in "varname(blah)" if any
+                param_name = param_name.split('(')[0]
                 # try to convert the value as a number
                 self._params.append(param_name) if param_name not in self.params else self.params
                 try:
                     params[param_name] = float(param_value)
                 except ValueError:
-                    params[param_name] = param_value
+                    params[param_name] = param_value.replace('"', '')
 
             # parse numerical data:
             #
@@ -335,17 +346,113 @@ class Mdif():
 
     def to_networkset(self) -> NetworkSet:
         """
-        Return the MDIF data as a NetworkSet
+        Return the MDIF data as a NetworkSet.
 
         Returns
         -------
-        NetworkSet
+        ns : :class:`~skrf.networkSet.NetworkSet`
+        
+        See Also
+        --------
+        from_networkset : Write a MDIF file from a NetworkSet.
 
         """
         ns = NetworkSet(self.networks)
         ns.comments = self.comments
         return ns
-    
+
+    @staticmethod
+    def write(ns : NetworkSet,
+              filename : str,
+              values: Union[dict, None] = None,
+              data_types: Union[dict, None] = None,
+              comments = []):
+        """
+        Write a MDIF file from a NetworkSet.
+
+        Parameters
+        ----------
+        ns : :class:`~skrf.networkSet.NetworkSet`
+            NetworkSet to get the data from.
+        filename : string
+            Output MDIF file name.
+        values : dictionary or None. Default is None.
+            The keys of the dictionnary are MDIF variables and its values are
+            a list of the parameter values.
+            If None, then the values will be set to the NetworkSet names
+            and the datatypes will be set to "string".
+        data_types: dictionary or None. Default is None.
+            The keys are MDIF variables and the value are datatypes
+            specified by the following strings: "int", "double", and "string"
+        comments: list of strings
+            Comments to add to output_file.
+            Each list items is a separate comment line
+            
+        See Also
+        --------
+        io.mdif.Mdif : MDIF file class
+        to_networkset : Return the MDIF data as a NetworkSet
+        
+        """
+
+        if values is None:
+            if ns.has_params():
+                values = ns.params_values
+            else:
+                # using Network names as values
+                v = list()
+                for ntwk in ns:
+                    v.append(ntwk.name)
+
+                values = {"name": v}
+
+        if data_types is None:
+            if ns.has_params():
+                data_types = ns.params_types
+            else:
+                # using Network names (->string)
+                data_types = {"name": "string"}
+
+        # VAR datatypes
+        dict_types = dict({"int": "0", "double": "1", "string": "2"})
+
+        # open output_file
+        with open(filename, "w") as mdif:
+
+            # write comments
+            for c in comments:
+                mdif.write(f"! {c}\n")
+
+            nports = ns[0].nports
+
+            optionstring = Mdif.__create_optionstring(nports)
+
+            for filenumber, ntwk in enumerate(ns):
+
+                mdif.write("!" + "-" * 79 + "\n")
+
+                for p in values:
+                    # assign double as the datatype if none is specified
+                    if p not in data_types:
+                        data_types[p] = "double"
+
+                    if data_types[p] == "string":
+                        var_def_str = 'VAR {}({}) = "{}"'.format(
+                            p, dict_types[data_types[p]], values[p][filenumber]
+                        )
+                    else:
+                        var_def_str = "VAR {}({}) = {}".format(
+                            p, dict_types[data_types[p]], values[p][filenumber]
+                        )
+                    mdif.write(var_def_str + "\n")
+
+                mdif.write("\nBEGIN ACDATA\n")
+                mdif.write(optionstring + "\n")
+                mdif.write("! network name: " + ntwk.name + "\n")
+                data = ntwk.write_touchstone(return_string=True)
+                mdif.write(data)
+                mdif.write("END\n\n")
+
     def __eq__(self, other) -> bool:
         """
         Test if two Mdif objects are equals.
@@ -354,7 +461,7 @@ class Mdif():
 
         Parameters
         ----------
-        other : `skrf.io.mdif.Mdif` object
+        other : :class:`~skrf.io.mdif.Mdif` object
             Mdif object to compare with.
 
         Returns
@@ -363,3 +470,40 @@ class Mdif():
 
         """
         return self.to_networkset() == other.to_networkset()
+    
+    @staticmethod
+    def __create_optionstring(nports):
+        """create the options string based on the number of ports. Used in the Touchstone and MDIF formats"""
+
+        if nports > 9:
+            corestring = "n{}_{}x n{}_{}y "
+        else:
+            corestring = "n{}{}x n{}{}y "
+
+        optionstring = "%F "
+
+        if nports == 2:
+            optionstring += "n11x n11y n21x n21y n12x n12y n22x n22y"
+
+        else:
+            # parse the option string for nports not equal to 2
+
+            for i in product(list(range(1, nports + 1)), list(range(1, nports + 1))):
+
+                optionstring += corestring.format(i[0], i[1], i[0], i[1])
+
+                # special case for nports = 3
+                if nports == 3:
+                    # 3 ports
+                    if not (np.remainder(i[1], 3)):
+                        optionstring += "\n"
+
+                # touchstone spec allows only 4 data pairs per line
+                if nports >= 4:
+                    if np.remainder(i[1], 4) == 0:
+                        optionstring += "\n"
+                    # NOTE: not sure if this is needed. Doesn't seem to be required by Microwave Office
+                    if i[1] == nports:
+                        optionstring += "\n"
+
+        return optionstring    
