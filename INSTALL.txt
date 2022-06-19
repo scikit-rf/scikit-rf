@@ -1,12 +1,12 @@
-How To Install skrf
-======================
+How To Install scikit-rf
+========================
 
-skrf uses Python Distutils for installation. Installers are available for 
-some platforms. See the Installation page, which can be found in docs/skrf.html
+If you have installed Python, you can install scikit-rf from pip via
 
-you can install from a source distribution (.tar.gz or .zip) by:
+python -m pip install scikit-rf
 
-1. Unpack the archive file.
+If you have installed Anaconda, then you can also get scikit-rf from
 
-2. run 'python setup.py install' (without the quotes)
+conda install -c conda-forge scikit-rf 
 
+For more information, please refer to the official website: http://scikit-rf.org/
