@@ -3508,6 +3508,70 @@ class Network(object):
 
         In the resulting network, port 0 is single-ended, port 1 is
         differential mode, and port 2 is common mode.
+        
+        In following examples, sx is single-mode port x, dy is
+        differential-mode port y, and cz is common-mode port z. The low
+        insertion loss path of a transmission line is symbolized by ==.
+        
+        2-Port diagram::
+            
+              +-----+             +-----+
+            0-|s0   |           0-|d0   |
+              |     | =se2gmm=>   |     |
+            1-|s1   |           1-|c0   |
+              +-----+             +-----+
+        
+        3-Port diagram::
+            
+              +-----+             +-----+
+            0-|s0   |           0-|d0   |
+            1-|s1   | =se2gmm=> 1-|c0   |
+            2-|s2   |           2-|s2   |
+              +-----+             +-----+
+              
+        Note: The port s2 remain in single-mode.
+        
+        4-Port diagram::
+              
+              +------+               +------+
+            0-|s0==s2|-2           0-|d0==d1|-1
+              |      |   =se2gmm=>   |      |
+            1-|s1==s3|-3           2-|c0==c1|-3
+              +------+               +------+
+        
+        5-Port diagram::
+            
+              +------+               +------+
+            0-|s0==s2|-2           0-|d0==d1|-1
+            1-|s1==s3|-3 =se2gmm=> 2-|c0==c1|-3
+              |    s4|-4             |    s4|-4
+              +------+               +------+
+              
+        Note: The port s4 remain in single-mode.
+        
+        8-Port diagram::
+            
+              +------+               +------+
+            0-|s0==s2|-2           0-|d0==d1|-1
+            1-|s1==s3|-3           2-|d2==d3|-3
+              |      |   =se2gmm=>   |      |
+            4-|s4==s6|-6           4-|c0==c1|-5
+            5-|s5==s7|-7           6-|c2==c3|-7
+              +------+               +------+
+        
+        2N-Port diagram::
+            
+                 A                                  B
+                 +------------+                     +-----------+ 
+               0-|s0========s2|-2                 0-|d0=======d1|-1
+               1-|s1========s3|-3                 2-|d2=======d3|-3
+                ...          ...     =se2gmm=>     ...         ...
+            2N-4-|s2N-4==s2N-2|-2N-2           2N-4-|cN-4===cN-3|-2N-3
+            2N-3-|s2N-3==s2N-1|-2N-1           2N-2-|cN-2===cN-1|-2N-1
+                 +------------+                     +-----------+
+                 
+        Note: The network `A` is not cascadable with the `**` operator
+        along transmission path.
 
         References
         ----------
@@ -3569,6 +3633,73 @@ class Network(object):
             'power' for power-waves definition [#Kurokawa]_,
             'pseudo' for pseudo-waves definition [#Marks]_.
             All the definitions give the same result if z0 is real valued.
+            
+        Examples
+        --------
+        
+        In following examples, sx is single-mode port x, dy is
+        differential-mode port y, and cz is common-mode port z. The low
+        insertion loss path of a transmission line is symbolized by ==.
+        
+        2-Port diagram::
+            
+              +-----+             +-----+
+            0-|s0   |           0-|d0   |
+              |     | <=gmm2se=   |     |
+            1-|s1   |           1-|c0   |
+              +-----+             +-----+
+        
+        3-Port diagram::
+            
+              +-----+             +-----+
+            0-|s0   |           0-|d0   |
+            1-|s1   | <=gmm2se= 1-|c0   |
+            2-|s2   |           2-|s2   |
+              +-----+             +-----+
+              
+        Note: The port s2 remain in single-mode.
+        
+        4-Port diagram::
+              
+              +------+               +------+
+            0-|s0==s2|-2           0-|d0==d1|-1
+              |      |   <=gmm2se=   |      |
+            1-|s1==s3|-3           2-|c0==c1|-3
+              +------+               +------+
+        
+        5-Port diagram::
+            
+              +------+               +------+
+            0-|s0==s2|-2           0-|d0==d1|-1
+            1-|s1==s3|-3 <=gmm2se= 2-|c0==c1|-3
+              |    s4|-4             |    s4|-4
+              +------+               +------+
+              
+        Note: The port s4 remain in single-mode.
+        
+        8-Port diagram::
+            
+              +------+               +------+
+            0-|s0==s2|-2           0-|d0==d1|-1
+            1-|s1==s3|-3           2-|d2==d3|-3
+              |      |   <=gmm2se=   |      |
+            4-|s4==s6|-6           4-|c0==c1|-5
+            5-|s5==s7|-7           6-|c2==c3|-7
+              +------+               +------+
+        
+        2N-Port diagram::
+            
+                 A                                  B
+                 +------------+                     +-----------+ 
+               0-|s0========s2|-2                 0-|d0=======d1|-1
+               1-|s1========s3|-3                 2-|d2=======d3|-3
+                ...          ...    <=gmm2se=     ...         ...
+            2N-4-|s2N-4==s2N-2|-2N-2           2N-4-|cN-4===cN-3|-2N-3
+            2N-3-|s2N-3==s2N-1|-2N-1           2N-2-|cN-2===cN-1|-2N-1
+                 +------------+                     +-----------+
+                 
+        Note: The network `A` is not cascadable with the `**` operator
+        along transmission path.
 
         References
         ----------
