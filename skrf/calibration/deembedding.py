@@ -973,7 +973,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
     """
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, use_z_instead_ifft = False, verbose = False,
-                 *args, **kwargs):
+                 forced_z0_line = None, *args, **kwargs):
         """
         IEEEP370_SE_NZC_2xThru De-embedding Initializer
 
@@ -991,11 +991,29 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             
         use_z_instead_ifft:
             use z-transform instead ifft. This method is not documented in
-            the paper but exists in the IEEE repo. It is intended to be
-            used only if the length of the 2x-Thru is so short that there is
-            not enough point in time domain to determine length and impedance
-            of midpoint. Parameter `verbose` could be used for diagnostic in
-            ifft mode (default: False)
+            the paper but exists in the IEEE repo. It could be used if the
+            2x-Thru is so short that there is not enough points in time domain
+            to determine the length of half fixtures from the s21 impulse
+            response and the the impedance at split plane from the s11 step
+            response.
+            Parameter `verbose` could be used for diagnostic in
+            ifft mode. (default: False)
+            
+        forced_z0_line:
+            If specified, the value for the split plane impedance is forced to
+            `forced_z0_line`.
+            The IEEEP370 standard recommends the 2x-Thru being at least three
+            wavelengths at the highest measured frequency. This ensures that
+            the split plane impedance measured in the S11 step response is free
+            of reflections from the launches.
+            If the 2x-Thru is too short, any point in the s11 step response
+            contain reflections from the lanches and split plane impedance
+            cannot be determined accurately by this method.
+            In this case, setting the impedance manually can improve the
+            results. However, it should be noted that each fixture model will
+            still include some reflections from the opposite side launch
+            because there is not enough time resolution to separate them.
+            (Default: None)
         
         verbose :
             view the process (default: False)
@@ -1012,6 +1030,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         self.z0 = z0
         dummies = [self.s2xthru]
         self.use_z_instead_ifft = use_z_instead_ifft
+        self.forced_z0_line = forced_z0_line
         self.verbose = verbose
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
@@ -1158,7 +1177,11 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             t11 = fftshift(irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
             step11 = self.makeStep(t11)
             z11 = -self.z0 * (step11 + 1) / (step11 - 1)
-            z11x = z11[x]
+            
+            if self.forced_z0_line:
+                z11x = self.forced_z0_line
+            else:
+                z11x = z11[x]
             
             if self.verbose:
                 fig = plt.figure()
@@ -1171,7 +1194,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 ax1.legend()
                 ax2 = plt.subplot(2, 1, 2, sharex = ax1)
                 ax2.plot(z11, label = 'z11')
-                ax2.plot([x], [z11[x]], marker = 'o', linestyle = 'none',
+                ax2.plot([x], [z11x], marker = 'o', linestyle = 'none',
                             label = 'z11x')
                 ax2.set_xlabel('t-samples')
                 ax2.set_xlim((x - 50, x + 50))
@@ -1282,14 +1305,14 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                     [z[i, 0, 0] + z[i, 1, 0], 2. * z[i, 1, 0]],
                     [2. * z[i, 1, 0], 2. * z[i, 1, 0]]
                               ]
-                ZL[i, :, :] = [
+                ZR[i, :, :] = [
                     [2. * z[i, 0, 1], 2. * z[i, 0, 1]],
                     [2. * z[i, 0, 1], z[i, 1, 1] + z[i, 0, 1]]
                               ]
                 
-                s_side1 = Network(frequency = s2xthru.frequency, z = ZL, z0 = self.z0)
-                s_side2 = Network(frequency = s2xthru.frequency, z = ZR, z0 = self.z0)
-                s_side2.flip() # FIX-2 is flipped in skrf
+            s_side1 = Network(frequency = s2xthru.frequency, z = ZL, z0 = self.z0)
+            s_side2 = Network(frequency = s2xthru.frequency, z = ZR, z0 = self.z0)
+            s_side2.flip() # FIX-2 is flipped in skrf
         
         return (s_side1, s_side2)
 
@@ -1380,7 +1403,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
     def __init__(self, dummy_2xthru, name=None,
                  z0 = 50, port_order: str = 'second',
                  use_z_instead_ifft = False, verbose = False,
-                 *args, **kwargs):
+                 forced_z0_line_dd = None, forced_z0_line_cc = None, *args, **kwargs):
         """
         IEEEP370_MM_NZC_2xThru De-embedding Initializer
 
@@ -1401,11 +1424,34 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             
         use_z_instead_ifft:
             use z-transform instead ifft. This method is not documented in
-            the paper but exists in the IEEE repo. It is intended to be
-            used only if the length of the 2x-Thru is so short that there is
-            not enough point in time domain to determine length and impedance
-            of midpoint. Parameter `verbose` could be used for diagnostic in
-            ifft mode (default: False)
+            the paper but exists in the IEEE repo. It could be used if the
+            2x-Thru is so short that there is not enough points in time domain
+            to determine the length of half fixtures from the s21 impulse
+            response and the the impedance at split plane from the s11 step
+            response.
+            Parameter `verbose` could be used for diagnostic in
+            ifft mode. (default: False)
+            
+        forced_z0_line_dd:
+            If specified, the value for the split plane impedance is forced to
+            `forced_z0_line` for differential-mode.
+            The IEEEP370 standard recommends the 2x-Thru being at least three
+            wavelengths at the highest measured frequency. This ensures that
+            the split plane impedance measured in the S11 step response is free
+            of reflections from the launches.
+            If the 2x-Thru is too short, any point in the s11 step response
+            contain reflections from the lanches and split plane impedance
+            cannot be determined accurately by this method.
+            In this case, setting the impedance manually can improve the
+            results. However, it should be noted that each fixture model will
+            still include some reflections from the opposite side launch
+            because there is not enough time resolution to separate them.
+            (Default: None)
+            
+        forced_z0_line_cc:
+            Same behaviour as `forced_z0_line_dd`, but for the common-mode
+            split plane impedance.
+            (Default: None)
         
         verbose :
             view the process (default: False)
@@ -1423,6 +1469,8 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         self.port_order = port_order
         dummies = [self.s2xthru]
         self.use_z_instead_ifft = use_z_instead_ifft
+        self.forced_z0_line_dd = forced_z0_line_dd
+        self.forced_z0_line_cc = forced_z0_line_cc
         self.verbose = verbose
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
@@ -1497,10 +1545,12 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         scc = subnetwork(mm_2xthru, [2, 3])
         dm_dd  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = sdd, z0 = self.z0 * 2,
                                 use_z_instead_ifft = self.use_z_instead_ifft,
-                                verbose = self.verbose)
+                                verbose = self.verbose,
+                                forced_z0_line = self.forced_z0_line_dd)
         dm_cc  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = scc, z0 = self.z0 / 2,
                                 use_z_instead_ifft = self.use_z_instead_ifft,
-                                verbose = self.verbose)
+                                verbose = self.verbose,
+                                forced_z0_line = self.forced_z0_line_cc)
         
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
