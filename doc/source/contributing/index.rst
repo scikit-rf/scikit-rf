@@ -35,7 +35,7 @@ Basically, you will:
 3. Then send a `pull request (PR) <https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_ for your additions to be merged into the main scikit-rf repository. Your proposal will be reviewed or discussed and you may receive some comments which only aim to make your contribution as great as possible!
 
 
-.. tip:: When making your modification locally, you may need to work into a dedicated development environment in order to not interfere with the scikit-rf package that you have `already installed <https://scikit-rf.readthedocs.io/en/latest/tutorials/Installation.html>`_. You can use for example `anaconda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_. In order for the anaconda environment to find your local scikit-rf repo, use the convenient `conda-develop <https://docs.conda.io/projects/conda-build/en/latest/resources/commands/conda-develop.html>`_ command.
+.. tip:: When making your modification locally, you may need to work into a dedicated development environment in order to not interfere with the scikit-rf package that you have `already installed <../tutorials/Installation.html>`_. You can use for example `anaconda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_. In order for the anaconda environment to find your local scikit-rf repo, use the convenient `conda-develop <https://docs.conda.io/projects/conda-build/en/latest/resources/commands/conda-develop.html>`_ command.
 
 
 Basic git command-line workflow
