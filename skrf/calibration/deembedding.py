@@ -1991,6 +1991,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             else:
                 errorbox1 = errorbox1 ** sTL1
                 errorbox2 = errorbox2 ** sTL2
+            # equivalent to function removeTL(in,TL1,TL2,z0)
             # no need to flip sTL2 because it is symmetrical
             s_dut = sTL1.inv ** s_dut ** sTL2.inv
             #IEEE abcd implementation
@@ -2018,7 +2019,47 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 axs[0, 0].plot(zeb1)
                 axs[0, 1].plot(zeb2)
                 axs[1, 0].plot(ifftshift(zdut1))
+                axs[1, 1].plot(ifftshift(zdut2))
         return errorbox1, errorbox2.flipped()
+    
+    def makeErrorBox_v8(self, s_dut, s2x, gamma, z0, pullback):
+        f = s2x.frequency.f
+        n = len(f)
+        s212x = s2x.s[:, 1, 0]
+        # extract midpoint of 2x-thru
+        DC21 = self.dc_interp(s212x, f)
+        x = np.argmax(irfft(concatenate(([DC21], s212x))))
+        #define relative length
+        #python first index is 0, thus 1 should be added to get the length
+        l = 1. / (2 * (x + 1))
+        #define the reflections to be mimicked
+        s11dut = s_dut.s[:, 0, 0]
+        #peel the fixture away and create the fixture model
+        #python range to n-1, thus 1 to be added to have proper iteration number
+        for i in range(x + 1 - pullback):
+            zline1 = self.getz(s11dut, f, z0)[0]
+            TL1 = self.makeTL(zline1,z0,gamma,l)
+            sTL1 = s_dut.copy()
+            sTL1.s = TL1
+            if i == 0:
+                errorbox1 = sTL1
+                _, z1 = self.getz(s11dut, f, z0)
+            else:
+                errorbox1 = errorbox1 ** sTL1
+            # equivalent to function removeTL_side1(in,TL,z0)
+            s_dut = sTL1.inv ** s_dut
+            s11dut = s_dut.s[:, 0, 0]
+            if self.verbose:
+                if i == 0:
+                    fig, axs = plt.subplots(1, 2)
+                    axs[0].plot(z1, color = 'k')
+                    axs[0].set_xlim((0, x))
+                    axs[1].set_xlim((n-100, n+x*2+10))
+                _, zeb1 = self.getz(errorbox1.s[:, 0, 0], f, z0)
+                _, zdut1 = self.getz(s11dut, f, z0)
+                axs[0].plot(zeb1)
+                axs[1].plot(ifftshift(zdut1))
+        return errorbox1
     
     
     def split2xthru(self, s2xthru, sfix_dut_fix):
@@ -2101,12 +2142,21 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         s_side2 = self.thru(sfix_dut_fix)
         
         if self.pullback1 == self.pullback2 and self.side1 and self.side2:
-            (s_side1, s_side2) = self.makeErrorBox_v7(sfix_dut_fix, s2xthru, gamma, self.z0, self.pullback1)
+            (s_side1, s_side2) = self.makeErrorBox_v7(sfix_dut_fix, s2xthru,
+                                              gamma, self.z0, self.pullback1)
+        elif self.side1 and self.side2:
+            s_side1 = self.makeErrorBox_v8(sfix_dut_fix, s2xthru,
+                                              gamma, self.z0, self.pullback1)
+            s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru, 
+                                              gamma, self.z0, self.pullback2)
+            # no need to flip FIX-2 as per IEEEP370 numbering recommandation 
+        elif self.side1:
+            s_side1 = self.makeErrorBox_v8(sfix_dut_fix, s2xthru,
+                                              gamma, self.z0, self.pullback1)
+        elif self.side2:
+            s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru, 
+                                              gamma, self.z0, self.pullback2)
         else:
-            warnings.warn(
-               "todo : extract error boxes for asymetric pullbacks or only one side",
-               RuntimeWarning
-               )
             warnings.warn(
                "no output because no output was requested",
                RuntimeWarning
