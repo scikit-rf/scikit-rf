@@ -1271,26 +1271,6 @@ class Network(object):
 
         """
         return self._z0
-        # if we are unable to determine the s-matrix shape we return an scalar
-        if not hasattr(self, '_s'):
-            return self._z0
-
-        # _z0 is an scalar, so a npy.array with shape fxn is filled with _z0
-        if self._z0.ndim == 0:
-            self._z0 = npy.full(self._s.shape[:2], self._z0)
-        elif self._z0.ndim == 1:
-            # _z0 is a vector, either of length nports or frequency.npoints.
-            # Create a npy.array with shape fxn and broadcast vector to array.
-            z0 = npy.zeros(self._s.shape[:2], dtype=complex)
-            if len(self._z0) == self.nports:
-                z0[:] = self._z0[None, :]
-            else:
-                z0[:] = self._z0[:,None]
-            self._z0 = z0
-        elif self._z0.ndim == 2:
-            # _z0 is a matrix of correct shape, so we can return directly
-            pass
-        return self._z0
 
     @z0.setter
     def z0(self, z0: NumberLike) -> None:
@@ -1322,7 +1302,6 @@ class Network(object):
         elif z0.shape == self.s.shape[:2]:
             self._z0 = z0
         else:
-
             raise AttributeError('Unable to broadcast z0 shape (', z0.shape ,') to s shape', self.s.shape, self.nports, self.frequency.npoints)
 
     @property
