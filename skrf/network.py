@@ -469,17 +469,16 @@ class Network(object):
 
         # When initializing Network from different parameters than s
         # we need to make sure that z0 has been set first because it will be
-        # needed in conversion to S-parameters.
-        s_shape = [npy.array(kwargs[attr]).shape for attr in params]
-        if s_shape:
-            self.s = npy.zeros(s_shape[0], dtype=complex)
+        # needed in conversion to S-parameters. s is initialized with zeros here,
+        # to determine the correct z0 shape afterwards.
+
+        if params:
+            s_shape = npy.array(kwargs[params[0]]).shape
+            self.s = npy.zeros(s_shape, dtype=complex)
 
         self.z0 = kwargs.get('z0', self._z0)
 
-        # z0 might be set here again, but it's on purpose as z0.setter will
-        # fix the _z0 shape if s has been assigned or raise Exception if
-        # z0 and s shapes are not compatible.
-        for attr in PRIMARY_PROPERTIES + ['frequency', 'f', 'z0', 'noise', 'noise_freq']:
+        for attr in PRIMARY_PROPERTIES + ['frequency', 'f', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
