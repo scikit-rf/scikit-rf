@@ -474,7 +474,7 @@ class Network(object):
         if s_shape:
             self.s = npy.zeros(s_shape[0], dtype=complex)
 
-        self.z0 = kwargs.get('z0', 50)
+        self.z0 = kwargs.get('z0', self._z0)
 
         # z0 might be set here again, but it's on purpose as z0.setter will
         # fix the _z0 shape if s has been assigned or raise Exception if
