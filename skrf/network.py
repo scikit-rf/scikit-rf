@@ -1304,7 +1304,7 @@ class Network(object):
         elif z0.shape == self.s.shape[:2]:
             self._z0 = z0
         else:
-            raise AttributeError(f'Unable to broadcast z0 shape (', z0.shape ,') to s shape', self.s.shape, self.nports, self.frequency.npoints)
+            raise AttributeError(f'Unable to broadcast z0 shape {z0.shape} to s shape {self.s.shape}.')
 
     @property
     def frequency(self) -> Frequency:
