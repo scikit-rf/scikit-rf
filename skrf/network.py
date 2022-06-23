@@ -962,6 +962,9 @@ class Network(object):
         self._s = fix_param_shape(s)
         self.__generate_secondary_properties()
         self.__generate_subnetworks()
+        
+        if self.z0.ndim == 0:
+            self.z0 = self.z0
 
     @property
     def s_traveling(self) -> npy.ndarray:
@@ -1302,7 +1305,7 @@ class Network(object):
         elif z0.shape == self.s.shape[:2]:
             self._z0 = z0
         else:
-            raise AttributeError('Unable to broadcast z0 shape (', z0.shape ,') to s shape', self.s.shape, self.nports, self.frequency.npoints)
+            raise AttributeError(f'Unable to broadcast z0 shape (', z0.shape ,') to s shape', self.s.shape, self.nports, self.frequency.npoints)
 
     @property
     def frequency(self) -> Frequency:
