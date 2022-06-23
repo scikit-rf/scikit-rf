@@ -3029,7 +3029,6 @@ class Network(object):
                 self.s = renormalize_s(self.s, self.z0, z_new, s_def, self.s_def)
         # Update s_def if it was changed
         self.s_def = s_def
-        x = fix_z0_shape(z_new, self.frequency.npoints, self.nports)
         self.z0 = z_new
 
 
