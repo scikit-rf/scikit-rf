@@ -1968,7 +1968,6 @@ class Network(object):
         # Call z0 getter and setter only when s and z0 shapes match.
         z0_new = npy.delete(self.z0, idx, axis=0)
         self.s = npy.delete(self.s, idx, axis=0)
-        print("23", self.s.shape, z0_new.shape, self.z0.shape)
         self.z0 = z0_new
 
         if self.noisy:
