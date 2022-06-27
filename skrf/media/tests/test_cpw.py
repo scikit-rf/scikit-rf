@@ -34,9 +34,9 @@ class CPWTestCase(unittest.TestCase):
         # coplanar on FR-4 printed circuit board without conductor backing
         # with zero thickness strip
         self.cpw4 = CPW(frequency = self.freq, w = 3.0e-3, s = 0.3e-3,
-                        t = None, ep_r = 4.5, rho = None,  z0 = 50.)
+                        t = None, ep_r = 4.5, rho = None,  z0_port = 50.)
         self.cpw5 = CPW(frequency = self.freq, w = 3.0e-3, s = 0.3e-3,
-                        t = 0., ep_r = 4.5, rho = None, z0 = 50.)
+                        t = 0., ep_r = 4.5, rho = None, z0_port = 50.)
         
         # more newtorks to test against Qucs with air or metal backing
         self.ref_qucs = [
@@ -99,7 +99,7 @@ class CPWTestCase(unittest.TestCase):
         limit = 2e-3
         
         for ref in self.ref_qucs:
-            cpw = CPW(frequency = ref['n'].frequency, z0 = 50.,
+            cpw = CPW(frequency = ref['n'].frequency, z0_port = 50.,
                             w = ref['w'], s = ref['s'], t = ref['t'],
                             h = ref['h'],
                             has_metal_backside = ref['has_metal_backside'],
@@ -107,7 +107,7 @@ class CPWTestCase(unittest.TestCase):
                             tand = self.tand,
                             compatibility_mode = 'qucs',
                             diel = 'frequencyinvariant')
-            line = cpw.line(d=self.l, unit='m', embed = True, z0=cpw.Z0)
+            line = cpw.line(d=self.l, unit='m')
             line.name = '`Media.CPW` skrf,qucs'
             
             # residuals
@@ -175,7 +175,7 @@ class CPWTestCase(unittest.TestCase):
         limit = 1e-3
         
         for ref in self.ref_ads:
-            cpw = CPW(frequency = ref['n'].frequency, z0 = 50.,
+            cpw = CPW(frequency = ref['n'].frequency, z0_port = 50.,
                             w = ref['w'], s = ref['s'], t = ref['t'],
                             h = ref['h'],
                             has_metal_backside = ref['has_metal_backside'],
@@ -183,7 +183,7 @@ class CPWTestCase(unittest.TestCase):
                             tand = self.tand,
                             compatibility_mode = 'ads',
                             diel = 'djordjevicsvensson')
-            line = cpw.line(d=self.l, unit='m', embed = True, z0=cpw.Z0)
+            line = cpw.line(d=self.l, unit='m')
             line.name = '`Media.CPW` skrf,ads'
             
             # residuals

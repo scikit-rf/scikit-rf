@@ -87,7 +87,7 @@ class MLineTestCase(unittest.TestCase):
         http://web.mit.edu/~geda/arch/i386_rhel3/versions/20050830/html/mcalc-1.5/
         """
         freq = Frequency(1, 1, 1, 'GHz')
-        mline1 = MLine(frequency = freq, z0 = 50.,
+        mline1 = MLine(frequency = freq, z0_port = 50.,
                        w = self.w, h = self.h, t = self.t,
                        ep_r = self.ep_r, rho = self.rho,
                        tand = self.tand, rough = self.d,
@@ -95,7 +95,7 @@ class MLineTestCase(unittest.TestCase):
                        compatibility_mode = 'qucs')
         
         # without t (t = None)
-        mline2 = MLine(frequency = freq, z0 = 50.,
+        mline2 = MLine(frequency = freq, z0_port = 50.,
                        w = self.w, h = self.h,
                        ep_r = self.ep_r, rho = self.rho,
                        tand = self.tand, rough = self.d,
@@ -103,7 +103,7 @@ class MLineTestCase(unittest.TestCase):
                        compatibility_mode = 'qucs')
         
         # with t = 0
-        mline3 = MLine(frequency = freq, z0 = 50.,
+        mline3 = MLine(frequency = freq, z0_port = 50.,
                        w = self.w, h = self.h, t = 0,
                        ep_r = self.ep_r, rho = self.rho,
                        tand = self.tand, rough = self.d,
@@ -132,14 +132,14 @@ class MLineTestCase(unittest.TestCase):
         limit_deg = 1.
             
         for ref in self.ref_qucs:
-            mline = MLine(frequency = ref['n'].frequency, z0 = 50.,
+            mline = MLine(frequency = ref['n'].frequency, z0_port = 50.,
                             w = self.w, h = self.h, t = self.t,
                             ep_r = self.ep_r, rho = self.rho,
                             tand = self.tand, rough = self.d,
                             model = ref['model'], disp = ref['disp'],
                             diel = 'frequencyinvariant',
                             compatibility_mode = 'qucs')
-            line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
+            line = mline.line(d=self.l, unit='m')
             line.name = 'skrf,qucs'
             
             # residuals
@@ -204,13 +204,13 @@ class MLineTestCase(unittest.TestCase):
         limit_deg = 1.
         
         for ref in self.ref_ads:
-            mline = MLine(frequency = ref['n'].frequency, z0 = 50.,
+            mline = MLine(frequency = ref['n'].frequency, z0_port = 50.,
                             w = self.w, h = self.h, t = self.t,
                             ep_r = self.ep_r, rho = self.rho,
                             tand = self.tand, rough = self.d,
                             model = 'hammerstadjensen', disp = ref['disp'],
                             diel = ref['diel'])
-            line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
+            line = mline.line(d=self.l, unit='m')
             line.name = 'skrf,ads'
             
             # residuals
