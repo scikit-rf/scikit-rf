@@ -3026,6 +3026,10 @@ class Network(object):
         renormalize_s
         fix_z0_shape
         """
+        # cast any array like type (tuple, list) to a npy.array
+        z_new = npy.array(z_new, dtype=complex)
+        # make sure the z_new shape can be compared with self.z0
+        z_new = fix_z0_shape(z_new, self.frequency.npoints, self.nports)
         if s_def is None:
             s_def = self.s_def
         # Try to avoid renormalization if possible since it goes through
@@ -3033,7 +3037,7 @@ class Network(object):
         # We need to renormalize if z_new is different from z0
         # or s_def is different and there is at least one complex port.
         need_to_renorm = False
-        if (self.z0 != z_new).any():
+        if npy.any(self.z0 != z_new):
             need_to_renorm = True
         if s_def != self.s_def and (self.z0.imag != 0).any():
             need_to_renorm = True
@@ -3046,7 +3050,7 @@ class Network(object):
                 self.s = renormalize_s(self.s, self.z0, z_new, s_def, self.s_def)
         # Update s_def if it was changed
         self.s_def = s_def
-        self.z0 = fix_z0_shape(z_new, self.frequency.npoints, self.nports)
+        self.z0 = z_new
 
     def renumber(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> None:
         """
