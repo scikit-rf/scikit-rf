@@ -413,17 +413,20 @@ class Media(ABC):
         result.frequency = self.frequency
         result.s = npy.zeros((self.frequency.npoints, nports, nports), dtype=complex)
         if z0 is None:
-            z0 = self.z0
-        elif isinstance(z0, str):
-            z0 = parse_z0(z0)*self.z0
-
-        if z0_norm:
-            z0 = z0*self.z0
-
+            if self.z0_port is None:
+                z0 = self.z0
+            else:
+                z0 = self.z0_port
+        else:
+            if isinstance(z0, str):
+                z0 = parse_z0(z0)*self.z0
+            if z0_norm:
+                z0 = z0*self.z0
         result.z0 = z0
         return result
 
-    def load(self, Gamma0: NumberLike, nports: int = 1, **kwargs) -> Network:
+    def load(self, Gamma0: NumberLike, nports: int = 1,
+             z0: Union[NumberLike, None] = None, **kwargs) -> Network:
         r"""
         Load of given reflection coefficient.
 
@@ -435,6 +438,11 @@ class Media(ABC):
             points in media, and n is `nports`
         nports : int
             number of ports
+        z0 : number, or array-like or None
+            port impedance. Default is
+            None, in which case the Media's :attr:`z0` is used.
+            This sets the resultant Network's
+            :attr:`~skrf.network.Network.z0`.
         \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
@@ -450,13 +458,14 @@ class Media(ABC):
         open
         short
         """
-        result = self.match(nports, **kwargs)
+        result = self.match(nports, z0 = z0, **kwargs)
         result.s = npy.array(Gamma0).reshape(-1, 1, 1) * \
             npy.eye(nports, dtype=complex).reshape((-1, nports, nports)).\
             repeat(self.frequency.npoints, 0)
         return result
 
-    def short(self, nports: int = 1, **kwargs) -> Network:
+    def short(self, nports: int = 1,
+              z0: Union[NumberLike, None] = None, **kwargs) -> Network:
         r"""
         Short (:math:`\Gamma_0 = -1`)
 
@@ -467,7 +476,11 @@ class Media(ABC):
         nports : int
             number of ports
         \*\*kwargs : key word arguments passed to :func:`load`.
-
+        z0 : number, or array-like or None
+            port impedance. Default is
+            None, in which case the Media's :attr:`z0` is used.
+            This sets the resultant Network's
+            :attr:`~skrf.network.Network.z0`.
         Returns
         -------
         match : :class:`~skrf.network.Network` object
@@ -485,12 +498,16 @@ class Media(ABC):
         open
         load
         """
+        if z0 is None:
+            if self.z0_port is None:
+                z0 = self.z0
+            else:
+                z0 = self.z0_port
         s_short = -1
         # Powerwave short is not necessarily -1
         if kwargs.get('s_def', S_DEF_DEFAULT) == 'power':
-            z0 = kwargs.get('z0', self.z0)
             s_short = -npy.conjugate(z0) / z0
-        return self.load(s_short, nports, **kwargs)
+        return self.load(s_short, nports, z0 = z0, **kwargs)
 
     def open(self, nports: int = 1, **kwargs) -> Network:
         r"""
@@ -777,12 +794,19 @@ class Media(ABC):
                 v_g = c
             return to_meters(d=d,unit=unit, v_g=v_g)
 
-    def thru(self, **kwargs) -> Network:
+    def thru(self,
+             z0: Union[NumberLike, None] = None,
+             **kwargs) -> Network:
         r"""
         Matched transmission line of length 0.
 
         Parameters
         ----------
+        z0 : number, or array-like or None
+            port impedance. Default is
+            None, in which case the Media's :attr:`z0` is used.
+            This sets the resultant Network's
+            :attr:`~skrf.network.Network.z0`.
         \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
@@ -797,7 +821,12 @@ class Media(ABC):
         line : this just calls line(0)
         open, short, match
         """
-        return self.line(0, **kwargs)
+        if z0 is None:
+            if self.z0_port is None:
+                z0 = self.z0
+            else:
+                z0 = self.z0_port
+        return self.line(0, z0 = z0, **kwargs)
 
     def line(self, d: NumberLike, unit: str = 'deg',
              z0: Union[NumberLike, str, None] = None, embed: bool = False, **kwargs) -> Network:
@@ -846,12 +875,14 @@ class Media(ABC):
             
         if isinstance(z0,str):
             z0 = parse_z0(z0)* self.z0
+            
+        if z0 is None:
+            z0 = self.z0
 
-        kwargs.update({'z0':z0})
         s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
         # Need to use either traveling or pseudo definition here
         # for the network to match traveling waves.
-        result = self.match(nports=2, s_def='traveling', **kwargs)
+        result = self.match(nports=2, z0 = z0, s_def='traveling', **kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
 
