@@ -163,12 +163,12 @@ class CircuitTestWilkinson(unittest.TestCase):
 
         # resistor
         self.R = 100
-        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, Z0=self.R)
+        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, z0=self.R)
         self.resistor = self.line_resistor.resistor(self.R, name='resistor')
 
         # branches
         Z0_branches = np.sqrt(2)*Z0_ports
-        self.line_branches = rf.media.DefinedGammaZ0(frequency=self.freq, Z0=Z0_branches)
+        self.line_branches = rf.media.DefinedGammaZ0(frequency=self.freq, z0=Z0_branches)
         self.branch1 = self.line_branches.line(90, unit='deg', name='branch1')
         self.branch2 = self.line_branches.line(90, unit='deg', name='branch2')
 
@@ -824,7 +824,7 @@ class CircuitTestGraph(unittest.TestCase):
 
         # dummy components
         self.R = 100
-        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, Z0=self.R)
+        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, z0=self.R)
         resistor1 = self.line_resistor.resistor(self.R, name='resistor1')
         resistor2 = self.line_resistor.resistor(self.R, name='resistor2')
         resistor3 = self.line_resistor.resistor(self.R, name='resistor3')

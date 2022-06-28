@@ -21,9 +21,11 @@ from skrf.media import DistributedCircuit
 global NPTS  
 NPTS = 1
 
-WG_lossless =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,
+# WR10/WG27/R900 75 to 110 GHz, 0.1x0.05 inch (2.54x1.27 mm)
+# z0 from 610 to 446 ohm
+WG_lossless = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,
                                        z0_port=50.)
-WG =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil, rho='gold',
+WG = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil, rho='gold',
                                        z0_port=50.)
 
 
@@ -54,7 +56,7 @@ class DetermineTest(unittest.TestCase):
         
         short= wg.short()
         open = wg.open()
-        self.r_estimate = [short, short,short, short, open ,open, open ,open]
+        self.r_estimate = [short, short, short, short, open, open, open ,open]
         self.R_m = [self.embed(k) for k in self.R]
 
     def embed(self,x):
