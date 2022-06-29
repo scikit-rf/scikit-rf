@@ -1136,7 +1136,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 flag_DC = True
                 fold = f
                 f = f[1:]
-                s = s[:, :, 1:]
+                s = s[1:]
             else:
                 flag_DC = False
             
@@ -1146,19 +1146,20 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                    "Non-uniform frequency vector detected. An interpolated S-parameter matrix will be created for this calculation. The output results will be re-interpolated to the original vector.",
                    RuntimeWarning
                    )
-                flag_df = True
-                df = f[1] - f[0]
-                projected_n = round(f[-1]/f[0])
-                if(projected_n < 10000):
-                    fnew = f[0] * (np.arange(0, projected_n) + 1)
-                else:
-                    dfnew = f[-1]/10000
-                    fnew = dfnew * (np.arange(0, 10000) + 1)
-                stemp = Network(frequency = Frequency.from_f(f), s = s)
-                stemp.interpolate(fnew)
-                f = fnew
-                s = stemp.s
-                del stemp
+                raise NotImplementedError("TODO : handle interpolation.")
+                # flag_df = True
+                # df = f[1] - f[0]
+                # projected_n = round(f[-1]/f[0])
+                # if(projected_n < 10000):
+                #     fnew = f[0] * (np.arange(0, projected_n) + 1)
+                # else:
+                #     dfnew = f[-1]/10000
+                #     fnew = dfnew * (np.arange(0, 10000) + 1)
+                # stemp = Network(frequency = Frequency.from_f(f, 'Hz'), s = s)
+                # stemp.interpolate_self(fnew)
+                # f = fnew
+                # s = stemp.s
+                # del stemp
                          
             else:
                 flag_df = False
@@ -1201,7 +1202,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 ax2.grid()
                 ax2.legend()
             
-            temp = Network(frequency = self.s2xthru.frequency, s = s, z0 = self.z0)
+            temp = Network(frequency = Frequency.from_f(f, 'Hz'), s = s, z0 = self.z0)
             temp.renormalize(z11x)
             sr = temp.s
             del temp
@@ -1279,15 +1280,36 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             
             # S-parameters are not setup correctly
             else:
-                # todo implement using Network.interpolate to revert to initial freq axis
+                # dc point was included in the original file
                 if flag_DC:
-                    raise ValueError("TODO : handle DC point already existing.")
+                    fixture_model_1r = zeros((n + 1, 2, 2), dtype = complex)
+                    fixture_model_1r[:, 0, 0] = concatenate((
+                        [self.dc_interp(e001, f)], e001))
+                    fixture_model_1r[:, 1, 0] = concatenate((
+                        [self.dc_interp(e01, f)], e01))
+                    fixture_model_1r[:, 0, 1] = concatenate((
+                        [self.dc_interp(e01, f)], e01))
+                    fixture_model_1r[:, 1, 1] = concatenate((
+                        [self.dc_interp(e111, f)], e111))
+                        
+                    fixture_model_2r = zeros((n + 1, 2, 2), dtype = complex)
+                    fixture_model_2r[:, 0, 0] = concatenate((
+                        [self.dc_interp(e002, f)], e002))
+                    fixture_model_2r[:, 1, 0] = concatenate((
+                        [self.dc_interp(e10, f)], e10))
+                    fixture_model_2r[:, 0, 1] = concatenate((
+                        [self.dc_interp(e10, f)], e10))
+                    fixture_model_2r[:, 1, 1] = concatenate((
+                        [self.dc_interp(e112, f)], e112))
+                        
+                    f = concatenate(([0], f))
+                # todo implement using Network.interpolate to revert to initial freq axis
                 if flag_df:
                     raise NotImplementedError("TODO : handle interpolation.")
             
             # create the S-parameter objects for the errorboxes
-            s_fixture_model_r1  = Network(frequency = s2xthru.frequency, s = fixture_model_1r, z0 = z11x)
-            s_fixture_model_r2  = Network(frequency = s2xthru.frequency, s = fixture_model_2r, z0 = z11x)
+            s_fixture_model_r1  = Network(frequency = Frequency.from_f(f, 'Hz'), s = fixture_model_1r, z0 = z11x)
+            s_fixture_model_r2  = Network(frequency = Frequency.from_f(f, 'Hz'), s = fixture_model_2r, z0 = z11x)
                 
             # renormalize the S-parameter errorboxes to the original reference impedance
             s_fixture_model_r1.renormalize(self.z0)
@@ -1686,7 +1708,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         self.flag_df = False
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
-        self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru,
+        self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru.copy(),
                                                       self.sfix_dut_fix)
 
     def deembed(self, ntwk):
@@ -1735,7 +1757,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         snew[0, 1, 1] = self.dc_interp(s[:, 1, 1], f)
         
         f = concatenate(([0], f))
-        return Network(frequency = Frequency.from_f(f), s = snew)
+        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew)
     
     def dc_interp(self, s, f):
         """
@@ -2035,8 +2057,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 )
             self.flag_DC = True
             f = f[1:]
-            s = s[:, :, 1:]
-            sfix_dut_fix = Network(frequency = Frequency.from_f(f), s = s)
+            s = s[1:]
+            sfix_dut_fix = Network(frequency = Frequency.from_f(f, 'Hz'), s = s)
+            s2xthru.interpolate_self(Frequency.from_f(f, 'Hz'))
         
         # check for bad frequency vector
         df = f[1] - f[0]
@@ -2046,15 +2069,13 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                "Non-uniform frequency vector detected. An interpolated S-parameter matrix will be created for this calculation. The output results will be re-interpolated to the original vector.",
                RuntimeWarning
                )
-            self.flag_df = True
-            forg = f
-            projected_n = np.floor(f[-1]/f[0])
-            fnew = f[0] * (np.arange(0, projected_n) + 1)
-            sfix_dut_fix.interpolate(Frequency.from_f(fnew))
-        
-        # if the frequency vector needed to change, adjust the 2x-thru
-        if self.flag_DC or self.flag_df:
-            s2xthru.interpolate(Frequency.from_f(fnew))
+            raise NotImplementedError("TODO : handle interpolation.")
+            # self.flag_df = True
+            # forg = f
+            # projected_n = np.floor(f[-1]/f[0])
+            # fnew = f[0] * (np.arange(0, projected_n) + 1)
+            # sfix_dut_fix.interpolate_self(Frequency.from_f(fnew, 'Hz'))
+            # s2xthru.interpolate_self(Frequency.from_f(fnew, 'Hz'))   
             
         # check if 2x-thru is not the same frequency vector as the
         # fixture-dut-fixture
@@ -2116,8 +2137,10 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         # interpolate to original frequency if needed
         # revert back to original frequency vector
         if self.flag_df:
-            s_side1.interpolate(Frequency.from_f(forg))
-            s_side2.interpolate(Frequency.from_f(forg))
+            raise NotImplementedError("TODO : handle interpolation.")
+            # cannot extrapolate outside f bounds
+            # s_side1.interpolate_self(Frequency.from_f(forg, 'Hz'))
+            # s_side2.interpolate_self(Frequency.from_f(forg, 'Hz'))
         
         # add DC back in
         if self.flag_DC:

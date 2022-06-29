@@ -298,7 +298,7 @@ class DeembeddingTestCase(unittest.TestCase):
         
     def test_IEEEP370_SE_NZC_2xThru_with_dc(self):
         """
-        Test test_IEEEP370_SE_NZC_2xThru.
+        Test test_IEEEP370_SE_NZC_2xThru_with_dc.
 
         After de-embedding fixtures model from 2xtru, the network is a perfect
         thru.
@@ -345,7 +345,7 @@ class DeembeddingTestCase(unittest.TestCase):
         
     def test_IEEEP370_SE_ZC_2xThru_with_dc(self):
         """
-        Test test_IEEEP370_SE_ZC_2xThru.
+        Test test_IEEEP370_SE_ZC_2xThru_with_dc.
 
         After de-embedding fixtures model from 2xtru, the network is a perfect
         thru.
@@ -362,6 +362,9 @@ class DeembeddingTestCase(unittest.TestCase):
                                        leadin = 0,
                                        NRP_enable = False,
                                        name = 'zc2xthru')
+        print(s2xthru_dc.frequency.f[0])
+        print(fdf_dc.frequency.f[0])
+        print(dm_zc.s_side1.frequency.f[0])
         residuals = dm_zc.deembed(s2xthru_dc)
         # insertion loss magnitude deviate from 1.0 from less than 0.2 dB
         il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
@@ -373,7 +376,7 @@ class DeembeddingTestCase(unittest.TestCase):
         
     def test_IEEEP370_SE_NZC_2xThru_no_180deg_phase_jumps(self):
         """
-        Test test_IEEEP370_SE_NZC_2xThru.
+        Test test_IEEEP370_SE_NZC_2xThru_no_180deg_phase_jumps.
 
         After de-embedding fixtures model from 2xtru, the network is a perfect
         thru.
