@@ -24,9 +24,9 @@ NPTS = 1
 # WR10/WG27/R900 75 to 110 GHz, 0.1x0.05 inch (2.54x1.27 mm)
 # z0 from 610 to 446 ohm
 WG_lossless = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,
-                                       z0_port=50.)
+                                       z0_transition=50)
 WG = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil, rho='gold',
-                                       z0_port=50.)
+                                       z0_transition=50)
 
 
 class DetermineTest(unittest.TestCase):
@@ -1236,7 +1236,7 @@ class LRRMTest(EightTermTest):
         s_i = wg.short(nports=1, name='short')
         m_i = wg.load(0.1, nports=1, name='load')
         thru = wg.line(d=50, z0=75, unit='um', name='thru')
-        thru.renormalize(wg.z0_port)
+        thru.renormalize(wg.z0)
         # Make sure calibration works with non-symmetric thru
         thru.s[:,1,1] += 0.02 + 0.05j
 

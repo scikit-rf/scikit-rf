@@ -98,6 +98,7 @@ class RectangularWaveguide(Media):
 
     def __init__(self, frequency: Union['Frequency', None] = None,
                  z0_port: Union[NumberLike, None] = None,
+                 z0_transition: Union[NumberLike, None] = None,
                  a: float = 1, b: Union[float, None] = None,
                  mode_type: str = 'te', m: int = 1, n: int = 0,
                  ep_r: Union[None, NumberLike] = 1, mu_r: Union[None, NumberLike] = 1,
@@ -113,6 +114,7 @@ class RectangularWaveguide(Media):
             raise ValueError('mode_type must be either \'te\' or \'tm\'')
 
 
+        self.z0_transition = z0_transition        
         self.a = a
         self.b = b
         self.mode_type = mode_type.lower()
@@ -455,7 +457,7 @@ class RectangularWaveguide(Media):
             sqrt(1-(1/f_n)**2)
 
     @property
-    def z0(self) -> NumberLike:
+    def z0_waveguide(self) -> NumberLike:
         """
         The characteristic impedance.
 
@@ -467,5 +469,22 @@ class RectangularWaveguide(Media):
                          }
 
         return impedance_dict[self.mode_type]
+    
+    @property
+    def z0(self) -> NumberLike:
+        """
+        The characteristic impedance.
+
+        The characteristic impedance depends of the mode ('te' or 'tm').
+        """
+        if self.z0_transition is None:
+            omega = self.frequency.w
+            impedance_dict = {'te':   1j*omega*self.mu/(self.gamma),
+                              'tm':   -1j*self.gamma/(omega*self.ep),\
+                             }
+    
+            return impedance_dict[self.mode_type]
+        else:
+            return self.z0_transition
 
 
