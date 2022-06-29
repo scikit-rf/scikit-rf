@@ -325,8 +325,8 @@ class Coaxial(DistributedCircuit, Media):
                 (self.Dint*1e3, self.Dout*1e3) +\
                 '\nCharacteristic Impedance z0=(%.1f,%.1fj)-(%.1f,%.1fj) Ohm'% \
                 (real(self.z0[0]), imag(self.z0[0]), real(self.z0[-1]), imag(self.z0[-1])) +\
-                '\nPort impedance z0_port=(%.1f,%.1fj)-(%.1f,%.1fj) Ohm'% \
-                (real(self.z0_port[0]), imag(self.z0_port[0]), real(self.z0_port[-1]), imag(self.z0_port[-1]))
+                '\nPort impedance z0_port=%.1s Ohm'% \
+                (self.z0_port)
         except(TypeError):
             output =  \
                 'Coaxial Transmission Line.  %i-%i %s.  %i points'%\
@@ -335,6 +335,6 @@ class Coaxial(DistributedCircuit, Media):
                 (self.Dint[0]*1e3, self.Dout[0]*1e3) +\
                 '\nCharacteristic Impedance z0=(%.1f,%.1fj)-(%.1f,%.1fj) Ohm'% \
                 (real(self.z0[0]), imag(self.z0[0]), real(self.z0[-1]), imag(self.z0[-1])) +\
-                '\nPort impedance z0_port=(%.1f,%.1fj)-(%.1f,%.1fj) Ohm'% \
-                (real(self.z0_port[0]), imag(self.z0_port[0]), real(self.z0_port[-1]), imag(self.z0_port[-1]))
+                '\nPort impedance z0_port=%.1s Ohm'% \
+                (self.z0_port)
         return output
