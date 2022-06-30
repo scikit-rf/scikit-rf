@@ -405,8 +405,6 @@ class Media(ABC):
         result.frequency = self.frequency
         result.s = npy.zeros((self.frequency.npoints, nports, nports), dtype=complex)
         if z0 is None:
-            # z0 = npy.zeros(result.s.shape[:2])
-            # z0[:] = self.z0[:, None]
             z0 = self.z0
         elif isinstance(z0, str):
             z0 = npy.ones(result.s.shape[:2]) * parse_z0(z0)
