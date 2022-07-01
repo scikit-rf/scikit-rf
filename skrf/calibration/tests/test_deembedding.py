@@ -316,6 +316,31 @@ class DeembeddingTestCase(unittest.TestCase):
         # insertion loss phase deviate from 0 degree from less than 1 degree
         il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
         self.assertTrue(np.max(np.abs(il_phase)) <= 1.0, 'residual IL Phase')
+        
+    def test_IEEEP370_SE_NZC_2xThru_with_interpolation(self):
+        """
+        Test test_IEEEP370_SE_NZC_2xThru_with_interpolation.
+        While interpolation should be avoided, it keep usefull in some cases,
+        e.g. when the measurement frequency axis was not well formated but
+        a result is still needed and some deviation acceptable.
+        After de-embedding fixtures model from 2xtru, the network is a perfect
+        thru.
+        Test that this thru has S21 amplitude and phase smaller than a limit.
+        """
+        s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
+        # with non-hormonic sweep
+        nonuniform_freq = rf.Frequency(s2xthru.f[0], s2xthru.f[-1], 
+                                       npoints=len(s2xthru)-10, unit='Hz')
+        s2xthru_nu = s2xthru.interpolate(nonuniform_freq)
+        dm_nzc_nu = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_nu, 
+                                            name = '2xthru')
+        residuals = dm_nzc_nu.deembed(s2xthru_nu)
+        # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
+        il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
+        self.assertTrue(np.max(np.abs(il_mag)) <= 0.1, 'residual IL magnitude')
+        # insertion loss phase deviate from 0 degree from less than 1 degree
+        il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
+        self.assertTrue(np.max(np.abs(il_phase)) <= 1.0, 'residual IL Phase')
 
     def test_IEEEP370_SE_ZC_2xThru(self):
         """
@@ -362,10 +387,40 @@ class DeembeddingTestCase(unittest.TestCase):
                                        leadin = 0,
                                        NRP_enable = False,
                                        name = 'zc2xthru')
-        print(s2xthru_dc.frequency.f[0])
-        print(fdf_dc.frequency.f[0])
-        print(dm_zc.s_side1.frequency.f[0])
         residuals = dm_zc.deembed(s2xthru_dc)
+        # insertion loss magnitude deviate from 1.0 from less than 0.2 dB
+        il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
+        self.assertTrue(np.max(np.abs(il_mag)) <= 0.2, 'residual IL magnitude')
+        # insertion loss phase deviate from 0 degree from less than 45 degree
+        # too much tolerance here allowed as for now
+        il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
+        self.assertTrue(np.max(np.abs(il_phase)) <= 2.0, 'residual IL Phase')
+        
+    def test_IEEEP370_SE_ZC_2xThru_with_interpolation(self):
+        """
+        Test test_IEEEP370_SE_ZC_2xThru_with_interpolation.
+        While interpolation should be avoided, it keep usefull in some cases,
+        e.g. when the measurement frequency axis was not well formated but
+        a result is still needed and some deviation acceptable.
+        After de-embedding fixtures model from 2xtru, the network is a perfect
+        thru.
+        Test that this thru has S21 amplitude and phase smaller than a limit.
+        """
+        s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
+        fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
+        # with non-hormonic sweep
+        nonuniform_freq = rf.Frequency(s2xthru.f[0], s2xthru.f[-1], 
+                                       npoints=len(s2xthru)-10, unit='Hz')
+        s2xthru_nu = s2xthru.interpolate(nonuniform_freq)
+        fdf_nu = fdf.interpolate(nonuniform_freq)
+        dm_zc_nu  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru_nu, 
+                                       dummy_fix_dut_fix = fdf_nu, 
+                                       bandwidth_limit = 10e9, 
+                                       pullback1 = 0, pullback2 = 0,
+                                       leadin = 0,
+                                       NRP_enable = False,
+                                       name = 'zc2xthru')
+        residuals = dm_zc_nu.deembed(s2xthru_nu)
         # insertion loss magnitude deviate from 1.0 from less than 0.2 dB
         il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
         self.assertTrue(np.max(np.abs(il_mag)) <= 0.2, 'residual IL magnitude')
@@ -399,30 +454,6 @@ class DeembeddingTestCase(unittest.TestCase):
         # insertion loss phase deviate from 0 degree from less than 1 degree
         il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
         self.assertTrue(np.max(np.abs(il_phase)) <= 1.0, 'residual IL Phase')
-        
-    def test_IEEEP370_interpolation_not_implemented(self):
-        """
-        Test if IEEEP370 methods fails when interpolation is required.
-        TODO: add interpolation handling
-        """
-        s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
-        fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
-        # with non-uniform frequencies
-        nonuniform_freq = rf.Frequency(s2xthru.f[0], s2xthru.f[-1], 
-                                       npoints=len(s2xthru), unit='Hz', 
-                                       sweep_type='log')
-        s2xthru_nu = s2xthru.interpolate(nonuniform_freq)
-        fdf_nu = fdf.interpolate(nonuniform_freq)
-        with self.assertRaises(NotImplementedError) as context:
-            dm_nzc_nu = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_nu, 
-                                            name = '2xthru')
-            dm_zc_nu  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru_nu, 
-                                           dummy_fix_dut_fix = fdf_nu, 
-                                           bandwidth_limit = 10e9, 
-                                           pullback1 = 0, pullback2 = 0,
-                                           leadin = 0,
-                                           NRP_enable = False,
-                                           name = 'zc2xthru')
 
 if __name__ == "__main__":
     # Launch all tests
