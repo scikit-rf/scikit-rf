@@ -2263,7 +2263,14 @@ class Network(object):
                 output.write('!Data is not renormalized\n')
                 output.write('# {} S {} R\n'.format(ntwk.frequency.unit, form))
             else:
-                output.write('# {} S {} R {} \n'.format(ntwk.frequency.unit, form, r_ref))
+                # Write "r_ref.real" instead of "r_ref", so we get a real number "a" instead
+                # of a complex number "(a+0j)", which is unsupported by the standard Touchstone
+                # format (non-HFSS). We already checked in the beginning that "r_ref" must be
+                # real in this case (write_z0 == False).
+                assert r_ref.imag == 0, "Complex reference impedance is encountered when " \
+                                        "generating a standard Touchstone (non-HFSS), this " \
+                                        "should never happen in scikit-rf."
+                output.write('# {} S {} R {} \n'.format(ntwk.frequency.unit, form, r_ref.real))
 
             # write ports
             try:
