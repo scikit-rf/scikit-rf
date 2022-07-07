@@ -847,7 +847,7 @@ class Media(ABC):
         result.s = \
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 
-        if embed:
+        if embed and self.z0 is not None:
             # warns of future deprecation
             warnings.warn('In a future version,`embed` will be deprecated.\n'
                           'The line and media port impedance z0 and '
