@@ -856,8 +856,9 @@ class Media(ABC):
               FutureWarning, stacklevel = 2)
             # Use the same s_def here as the line to avoid changing it during
             # cascade.
-            result = self.thru(s_def='traveling')**result**self.thru(s_def='traveling')
-        result.renormalize(result.z0, s_def=s_def)
+            result = result.renormalize(self.z0, s_def=s_def)
+        else:
+            result.renormalize(result.z0, s_def=s_def)
 
         return result
 
@@ -1022,7 +1023,7 @@ class Media(ABC):
         shunt_capacitor
         shunt_inductor
         """
-        return self.shunt(self.delay_load(*args, **kwargs))
+        return self.shunt(self.delay_load(*args, **kwargs), **kwargs)
 
     def shunt_delay_open(self,*args,**kwargs) -> Network:
         r"""
@@ -1052,7 +1053,7 @@ class Media(ABC):
         shunt_capacitor
         shunt_inductor
         """
-        return self.shunt(self.delay_open(*args, **kwargs))
+        return self.shunt(self.delay_open(*args, **kwargs), **kwargs)
 
     def shunt_delay_short(self, *args, **kwargs) -> Network:
         r"""
@@ -1082,7 +1083,7 @@ class Media(ABC):
         shunt_capacitor
         shunt_inductor
         """
-        return self.shunt(self.delay_short(*args, **kwargs))
+        return self.shunt(self.delay_short(*args, **kwargs), **kwargs)
 
     def shunt_capacitor(self, C: NumberLike, **kwargs) -> Network:
         r"""
@@ -1114,7 +1115,8 @@ class Media(ABC):
         shunt_delay_short
         shunt_inductor
         """
-        return self.shunt(self.capacitor(C=C, **kwargs) ** self.short())
+        return self.shunt(self.capacitor(C=C, **kwargs) ** self.short(),
+                          **kwargs)
 
     def shunt_inductor(self, L: NumberLike, **kwargs) -> Network:
         r"""
@@ -1146,7 +1148,8 @@ class Media(ABC):
         shunt_delay_short
         shunt_capacitor
         """
-        return self.shunt(self.inductor(L=L, **kwargs) ** self.short())
+        return self.shunt(self.inductor(L=L, **kwargs) ** self.short(),
+                          **kwargs)
 
     def attenuator(self, s21: NumberLike, db: bool = True, d: Number = 0,
                    unit: str = 'deg', name: str = '', **kwargs) -> Network:
