@@ -838,6 +838,8 @@ class Media(ABC):
         s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
         # Need to use either traveling or pseudo definition here
         # for the network to match traveling waves.
+        # the definition of the line trough a match and a delay would not
+        # works for complex characteristic impedances otherwise.
         result = self.match(nports=2, s_def='traveling', **kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
@@ -854,8 +856,6 @@ class Media(ABC):
                           'characteristic impedance Z0 will be used instead '
                           'to determine if the line has to be renormalized.',
               FutureWarning, stacklevel = 2)
-            # Use the same s_def here as the line to avoid changing it during
-            # cascade.
             result.renormalize(self.z0, s_def=s_def)
         else:
             result.renormalize(result.z0, s_def=s_def)
