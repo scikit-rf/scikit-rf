@@ -856,7 +856,7 @@ class Media(ABC):
               FutureWarning, stacklevel = 2)
             # Use the same s_def here as the line to avoid changing it during
             # cascade.
-            result = result.renormalize(self.z0, s_def=s_def)
+            result.renormalize(self.z0, s_def=s_def)
         else:
             result.renormalize(result.z0, s_def=s_def)
 
