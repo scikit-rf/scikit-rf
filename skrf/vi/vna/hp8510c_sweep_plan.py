@@ -71,46 +71,25 @@ class RandomSweepSection(SweepSection):
 @dataclasses.dataclass
 class SweepPlan:
     """
-    The user requests a big sweep with different spacings in different frequency blocks,
-    but the instrument only supports smaller sweeps with fixed spacing. What to do?
-    Break up the big sweep, naturally.
+    The user requests a big sweep with different spacings in different frequency
+    blocks, but the HP8510 instrument only supports smaller sweeps with fixed
+    spacing. What to do? Break up the big sweep, naturally.
+
+    SweepPlan.from_hz(array_of_hz)
+      ->
+        SweepPlan
+            SweepSection
+            SweepSection
+            SweepSection
+
     Each SweepSection represents a sweep the instrument can actually perform.
     Together, the SweepSections in a SweepPlan satisfy the user's request.
+
+    There is room for cleverness: conducting an 800 point sweep by running an
+    801 point sweep and discarding a point saved 15 minutes in a recent script.
     """
 
     sections: List[SweepSection]
-
-    def get_hz(self):
-        """Get a list of all frequency points in the entire sweep plan."""
-        ret = []
-        for s in self.sections:
-            ret.extend(s.get_hz())
-        return ret
-
-    def matches_f_list(self, hz):
-        """
-        True if the frequencies sweepned by self equal those in the list hz.
-        """
-        plan_hz = np.array(sorted(self.get_hz()))
-        good = True
-        if len(hz) != len(plan_hz):
-            good = False
-        for h in hz:
-            if not np.any(np.isclose(h, plan_hz)):
-                print(f"In original list but not plan: {h}")
-                good = False
-        for ph in plan_hz:
-            if not np.any(np.isclose(ph, hz)):
-                print(f"In plan but not in original list: {h}")
-                good = False
-        if not np.allclose(hz, plan_hz):
-            print("All were not close.")
-            good = False
-        return good
-
-    @classmethod
-    def from_ssn(cls, hz_start, hz_stop, n):
-        return cls.from_hz(np.linspace(hz_start, hz_stop, n))
 
     @classmethod
     def from_hz(cls, hz):
@@ -181,5 +160,39 @@ class SweepPlan:
         if len(misfits):
             sweep_sections.append(RandomSweepSection(hz_list=misfits))
         plan = SweepPlan(sections=sweep_sections)
-        assert plan.matches_f_list(hz)
+        assert plan._matches_f_list(hz)
         return plan
+
+    def get_hz(self):
+        """Get a list of all frequency points in the entire sweep plan."""
+        ret = []
+        for s in self.sections:
+            ret.extend(s.get_hz())
+        return ret
+
+    def _matches_f_list(self, golden_hz):
+        """
+        Returns True iff the frequencies this SweepPlan intends to sweep
+        equal those in the list golden_hz.
+        """
+        plan_hz = np.array(sorted(self.get_hz()))
+        if len(golden_hz) != len(plan_hz):
+            print(f"Planner output has different length.")
+            return False
+        good = True
+        for h in golden_hz:
+            if not np.any(np.isclose(h, plan_hz)):
+                print(f"In original list but not plan: {h}")
+                good = False
+        for ph in plan_hz:
+            if not np.any(np.isclose(ph, golden_hz)):
+                print(f"In plan but not in original list: {h}")
+                good = False
+        if not np.allclose(golden_hz, plan_hz):
+            print("All were not close.")
+            good = False
+        return good
+
+    @classmethod
+    def from_ssn(cls, hz_start, hz_stop, n):
+        return cls.from_hz(np.linspace(hz_start, hz_stop, n))
