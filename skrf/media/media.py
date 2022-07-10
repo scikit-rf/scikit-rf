@@ -407,7 +407,7 @@ class Media(ABC):
         if z0 is None:
             z0 = self.z0
         elif isinstance(z0, str):
-            z0 = parse_z0(z0)*self.z0
+            z0 = npy.ones(result.s.shape[:2]) * parse_z0(z0)
 
         if z0_norm:
             z0 = z0*self.z0

@@ -913,11 +913,9 @@ class NetworkTestCase(unittest.TestCase):
         # Unfortunately the frequency vector and the s shape can distinguish
         z0 = [1,2,3]
         ntwk.s = npy.random.rand(3,2,2)
-        with self.assertRaises(AttributeError):
-            ntwk.z0 = z0
+        ntwk.z0 = z0[::-1]
 
         ntwk.f = [1,2,3]
-        ntwk.z0 = z0[::-1]
         self.assertTrue(npy.allclose(ntwk.z0, npy.array([z0[::-1], z0[::-1]], dtype=complex).T))
 
     def test_z0_matrix(self):

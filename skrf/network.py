@@ -469,13 +469,16 @@ class Network(object):
 
         # When initializing Network from different parameters than s
         # we need to make sure that z0 has been set first because it will be
-        # needed in conversion to S-parameters.
+        # needed in conversion to S-parameters. s is initialized with zeros here,
+        # to determine the correct z0 shape afterwards.
+
+        if params:
+            s_shape = npy.array(kwargs[params[0]]).shape
+            self.s = npy.zeros(s_shape, dtype=complex)
+
         self.z0 = kwargs.get('z0', self._z0)
 
-        # z0 might be set here again, but it's on purpose as z0.setter will
-        # fix the _z0 shape if s has been assigned or raise Exception if
-        # z0 and s shapes are not compatible.
-        for attr in PRIMARY_PROPERTIES + ['frequency', 'f', 'z0', 'noise', 'noise_freq']:
+        for attr in PRIMARY_PROPERTIES + ['frequency', 'f', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
@@ -958,6 +961,9 @@ class Network(object):
         self._s = fix_param_shape(s)
         self.__generate_secondary_properties()
         self.__generate_subnetworks()
+        
+        if self.z0.ndim == 0:
+            self.z0 = self.z0
 
     @property
     def s_traveling(self) -> npy.ndarray:
@@ -1266,25 +1272,6 @@ class Network(object):
                 characteristic impedance for network
 
         """
-        # if we are unable to determine the s-matrix shape we return an scalar
-        if not hasattr(self, '_s'):
-            return self._z0
-
-        # _z0 is an scalar, so a npy.array with shape fxn is filled with _z0
-        if self._z0.ndim == 0:
-            self._z0 = npy.full(self._s.shape[:2], self._z0)
-        elif self._z0.ndim == 1:
-            # _z0 is a vector, either of length nports or frequency.npoints.
-            # Create a npy.array with shape fxn and broadcast vector to array.
-            z0 = npy.zeros(self._s.shape[:2], dtype=complex)
-            if len(self._z0) == self.nports:
-                z0[:] = self._z0[None, :]
-            else:
-                z0[:] = self._z0[:,None]
-            self._z0 = z0
-        elif self._z0.ndim == 2:
-            # _z0 is a matrix of correct shape, so we can return directly
-            pass
         return self._z0
 
     @z0.setter
@@ -1292,38 +1279,32 @@ class Network(object):
         # cast any array like type (tuple, list) to a npy.array
         z0 = npy.array(z0, dtype=complex)
 
-        # assign _z0 directly if z0 is a scalar
-        if z0.ndim == 0:
-            self._z0 = z0
-            return
-
         # if _z0 is a vector or matrix, we check if _s is already assigned.
         # If not, we cannot proof the correct dimensions and silently accept
         # any vector or fxn array
         if not hasattr(self, '_s'):
-            if 1 <= z0.ndim <= 2:
-                self._z0 = z0
-                return
+            self._z0 = z0
+            return
 
+        # if _z0 is a scalar, we broadcast to the correct shape.
+        # 
         # if _z0 is a vector, we check if the dimension matches with either
         # nports or frequency.npoints. If yes, we accept the value.
         # Note that there can be an ambiguity in theory, if nports == npoints
         #
         # if _z0 is a matrix, we check if the shape matches with _s
         # In any other case raise an Exception
-        if z0.ndim == 1:
-            if len(z0) in (self.frequency.npoints, self.nports):
-                self._z0 = z0
-                return
-        elif z0.ndim == 2:
-            if z0.shape == (self.frequency.npoints, self.nports):
-                self._z0 = z0
-                return
-            # Matches _s shape. Can be reached if there is no frequency.
-            if z0.shape[1] == npy.shape(self._s)[1] and z0.shape[0] == 1:
-                self._z0 = z0
-                return
-        raise AttributeError('Unable to broadcast z0 to s shape')
+        self._z0 = npy.empty(self.s.shape[:2], dtype=complex)
+        if z0.ndim == 0:
+            self._z0[:] = z0 
+        elif z0.ndim == 1 and z0.shape[0] == self.s.shape[0]:
+            self._z0[:] = z0[:, None]
+        elif z0.ndim == 1 and z0.shape[0] == self.s.shape[1]:
+            self._z0[:] = z0[None, :]
+        elif z0.shape == self.s.shape[:2]:
+            self._z0 = z0
+        else:
+            raise AttributeError(f'Unable to broadcast z0 shape {z0.shape} to s shape {self.s.shape}.')
 
     @property
     def frequency(self) -> Frequency:
@@ -1981,7 +1962,6 @@ class Network(object):
         >>>         net.drop_non_monotonic_increasing()
 
         """
-        npoints = self.frequency.npoints
         idx = self.frequency.drop_non_monotonic_increasing()
 
         # z0 getter and setter depend on s.shape matching z0.shape.
@@ -2058,16 +2038,17 @@ class Network(object):
 
         self.port_names = touchstoneFile.port_names
 
-        # set z0 before s so that y and z can be computed
+        f, self.s = touchstoneFile.get_sparameter_arrays()  # note: freq in Hz
+        self.frequency = Frequency.from_f(f, unit='hz')
+        self.frequency.unit = touchstoneFile.frequency_unit
+
         if touchstoneFile.has_hfss_port_impedances:
             self.gamma, self.z0 = touchstoneFile.get_gamma_z0()
             # This is the s_def that HFSS uses
             self.s_def = 'traveling'
         else:
-            self.z0 = complex(touchstoneFile.resistance)
-        f, self.s = touchstoneFile.get_sparameter_arrays()  # note: freq in Hz
-        self.frequency = Frequency.from_f(f, unit='hz')
-        self.frequency.unit = touchstoneFile.frequency_unit
+            self.z0 = touchstoneFile.resistance
+        
 
         if touchstoneFile.noise is not None:
           noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult
@@ -2282,7 +2263,14 @@ class Network(object):
                 output.write('!Data is not renormalized\n')
                 output.write('# {} S {} R\n'.format(ntwk.frequency.unit, form))
             else:
-                output.write('# {} S {} R {} \n'.format(ntwk.frequency.unit, form, r_ref))
+                # Write "r_ref.real" instead of "r_ref", so we get a real number "a" instead
+                # of a complex number "(a+0j)", which is unsupported by the standard Touchstone
+                # format (non-HFSS). We already checked in the beginning that "r_ref" must be
+                # real in this case (write_z0 == False).
+                assert r_ref.imag == 0, "Complex reference impedance is encountered when " \
+                                        "generating a standard Touchstone (non-HFSS), this " \
+                                        "should never happen in scikit-rf."
+                output.write('# {} S {} R {} \n'.format(ntwk.frequency.unit, form, r_ref.real))
 
             # write ports
             try:
@@ -2668,9 +2656,9 @@ class Network(object):
             # If z0 is constant we don't need to interpolate it
             z0_shape = list(self.z0.shape)
             z0_shape[0] = len(f_new)
-            result.z0 = npy.ones(z0_shape) * self.z0[0]
+            result._z0 = npy.ones(z0_shape) * self.z0[0]
         else:
-            result.z0 = f_interp(f, self.z0, axis=0, **kwargs)(f_new)
+            result._z0 = f_interp(f, self.z0, axis=0, **kwargs)(f_new)
 
         # interpolate  parameter for a given basis
         x = self.__getattribute__(basis)
@@ -3026,6 +3014,10 @@ class Network(object):
         renormalize_s
         fix_z0_shape
         """
+        # cast any array like type (tuple, list) to a npy.array
+        z_new = npy.array(z_new, dtype=complex)
+        # make sure the z_new shape can be compared with self.z0
+        z_new = fix_z0_shape(z_new, self.frequency.npoints, self.nports)
         if s_def is None:
             s_def = self.s_def
         # Try to avoid renormalization if possible since it goes through
@@ -3033,7 +3025,7 @@ class Network(object):
         # We need to renormalize if z_new is different from z0
         # or s_def is different and there is at least one complex port.
         need_to_renorm = False
-        if (self.z0 != z_new).any():
+        if npy.any(self.z0 != z_new):
             need_to_renorm = True
         if s_def != self.s_def and (self.z0.imag != 0).any():
             need_to_renorm = True
@@ -3046,7 +3038,7 @@ class Network(object):
                 self.s = renormalize_s(self.s, self.z0, z_new, s_def, self.s_def)
         # Update s_def if it was changed
         self.s_def = s_def
-        self.z0 = fix_z0_shape(z_new, self.frequency.npoints, self.nports)
+        self.z0 = z_new
 
     def renumber(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> None:
         """
