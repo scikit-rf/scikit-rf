@@ -836,10 +836,12 @@ class Media(ABC):
 
         kwargs.update({'z0':z0})
         s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
-        # Need to use either traveling or pseudo definition here
-        # for the network to match traveling waves.
-        # the definition of the line trough a match and a delay would not
-        # works for complex characteristic impedances otherwise.
+        # The use of either traveling or pseudo waves s-parameters definition
+        # is required here.
+        # A line with a complex characteristic impedance equal to port
+        # impedance does not have zero reflection coefficients with the power
+        # waves definition.
+        # Instead, reflection coefficients will have conjugation. 
         result = self.match(nports=2, s_def='traveling', **kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
@@ -903,7 +905,8 @@ class Media(ABC):
         delay_short
         delay_open
         """
-        return self.line(d=d, unit=unit, **kwargs) ** self.load(Gamma0=Gamma0, **kwargs)
+        return self.line(d=d, unit=unit, **kwargs) ** self.load(Gamma0=Gamma0,
+                                                                **kwargs)
 
     def delay_short(self, d: Number, unit: str = 'deg', **kwargs) -> Network:
         r"""
@@ -1115,8 +1118,8 @@ class Media(ABC):
         shunt_delay_short
         shunt_inductor
         """
-        return self.shunt(self.capacitor(C=C, **kwargs) ** self.short(),
-                          **kwargs)
+        return self.shunt(self.capacitor(C=C, **kwargs) ** 
+                          self.short(**kwargs), **kwargs)
 
     def shunt_inductor(self, L: NumberLike, **kwargs) -> Network:
         r"""
@@ -1148,8 +1151,8 @@ class Media(ABC):
         shunt_delay_short
         shunt_capacitor
         """
-        return self.shunt(self.inductor(L=L, **kwargs) ** self.short(),
-                          **kwargs)
+        return self.shunt(self.inductor(L=L, **kwargs) **
+                          self.short(**kwargs), **kwargs)
 
     def attenuator(self, s21: NumberLike, db: bool = True, d: Number = 0,
                    unit: str = 'deg', name: str = '', **kwargs) -> Network:
