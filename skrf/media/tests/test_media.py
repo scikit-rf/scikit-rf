@@ -210,7 +210,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
                                                 name = name)
         self.assertEqual(name, skrf_ntwk.name)
         
-    def test_lossless_mismatchh(self):
+    def test_lossless_mismatch(self):
         """
         Test the naming of the network. When circuit is used to connect a
         topology of networks, they should have unique names.

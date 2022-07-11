@@ -838,10 +838,8 @@ class Media(ABC):
         s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
         # The use of either traveling or pseudo waves s-parameters definition
         # is required here.
-        # A line with a complex characteristic impedance equal to port
-        # impedance does not have zero reflection coefficients with the power
-        # waves definition.
-        # Instead, reflection coefficients will have conjugation. 
+        # The definition of the reflection coefficient for power waves has
+        # conjugation. 
         result = self.match(nports=2, s_def='traveling', **kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
