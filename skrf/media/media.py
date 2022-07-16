@@ -836,8 +836,10 @@ class Media(ABC):
 
         kwargs.update({'z0':z0})
         s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
-        # Need to use either traveling or pseudo definition here
-        # for the network to match traveling waves.
+        # The use of either traveling or pseudo waves s-parameters definition
+        # is required here.
+        # The definition of the reflection coefficient for power waves has
+        # conjugation. 
         result = self.match(nports=2, s_def='traveling', **kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
@@ -847,17 +849,16 @@ class Media(ABC):
         result.s = \
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 
-        if embed:
+        if embed and self.z0 is not None:
             # warns of future deprecation
             warnings.warn('In a future version,`embed` will be deprecated.\n'
                           'The line and media port impedance z0 and '
                           'characteristic impedance Z0 will be used instead '
                           'to determine if the line has to be renormalized.',
               FutureWarning, stacklevel = 2)
-            # Use the same s_def here as the line to avoid changing it during
-            # cascade.
-            result = self.thru(s_def='traveling')**result**self.thru(s_def='traveling')
-        result.renormalize(result.z0, s_def=s_def)
+            result.renormalize(self.z0, s_def=s_def)
+        else:
+            result.renormalize(result.z0, s_def=s_def)
 
         return result
 
@@ -902,7 +903,8 @@ class Media(ABC):
         delay_short
         delay_open
         """
-        return self.line(d=d, unit=unit, **kwargs) ** self.load(Gamma0=Gamma0, **kwargs)
+        return self.line(d=d, unit=unit, **kwargs) ** self.load(Gamma0=Gamma0,
+                                                                **kwargs)
 
     def delay_short(self, d: Number, unit: str = 'deg', **kwargs) -> Network:
         r"""
@@ -1022,7 +1024,7 @@ class Media(ABC):
         shunt_capacitor
         shunt_inductor
         """
-        return self.shunt(self.delay_load(*args, **kwargs))
+        return self.shunt(self.delay_load(*args, **kwargs), **kwargs)
 
     def shunt_delay_open(self,*args,**kwargs) -> Network:
         r"""
@@ -1052,7 +1054,7 @@ class Media(ABC):
         shunt_capacitor
         shunt_inductor
         """
-        return self.shunt(self.delay_open(*args, **kwargs))
+        return self.shunt(self.delay_open(*args, **kwargs), **kwargs)
 
     def shunt_delay_short(self, *args, **kwargs) -> Network:
         r"""
@@ -1082,7 +1084,7 @@ class Media(ABC):
         shunt_capacitor
         shunt_inductor
         """
-        return self.shunt(self.delay_short(*args, **kwargs))
+        return self.shunt(self.delay_short(*args, **kwargs), **kwargs)
 
     def shunt_capacitor(self, C: NumberLike, **kwargs) -> Network:
         r"""
@@ -1114,7 +1116,8 @@ class Media(ABC):
         shunt_delay_short
         shunt_inductor
         """
-        return self.shunt(self.capacitor(C=C, **kwargs) ** self.short())
+        return self.shunt(self.capacitor(C=C, **kwargs) ** 
+                          self.short(**kwargs), **kwargs)
 
     def shunt_inductor(self, L: NumberLike, **kwargs) -> Network:
         r"""
@@ -1146,7 +1149,8 @@ class Media(ABC):
         shunt_delay_short
         shunt_capacitor
         """
-        return self.shunt(self.inductor(L=L, **kwargs) ** self.short())
+        return self.shunt(self.inductor(L=L, **kwargs) **
+                          self.short(**kwargs), **kwargs)
 
     def attenuator(self, s21: NumberLike, db: bool = True, d: Number = 0,
                    unit: str = 'deg', name: str = '', **kwargs) -> Network:
