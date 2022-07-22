@@ -16,13 +16,10 @@ Time domain functions
    indexes
 
 """
-import skrf
-
 from .util import find_nearest_index
-from scipy.ndimage import convolve1d
 from scipy import signal
 import numpy as npy
-from numpy import fft
+
 # imports for type hinting
 from typing import List, TYPE_CHECKING
 if TYPE_CHECKING:
