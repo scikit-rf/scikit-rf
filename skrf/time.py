@@ -302,10 +302,8 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
 
     if return_all:
         # compute and return frequency response of time gate
-        gate_ntwk = nw_gated.copy()
-        gate_ntwk.s = npy.fft.ifftshift(npy.fft.fft(npy.fft.fftshift(gate), norm='forward'))
-
-        return {'gated_ntwk': nw_gated,
-                'gate': gate_ntwk}
+        nw_gate = nw_gated.copy()
+        nw_gate.s = npy.fft.ifftshift(npy.fft.fft(npy.fft.fftshift(gate), norm='forward'))
+        return nw_gated, nw_gate
     else:
         return nw_gated
