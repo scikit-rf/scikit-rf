@@ -223,12 +223,12 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     span : number, or None
         span of time gate, (ns).  If None span will be half of the
         distance to the second tallest peak
-    mode: ['bandpass','bandstop']
+    mode : ['bandpass', 'bandstop']
         mode of gate
-    boundary:  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'},
-        passed to `scipy.ndimage.filters.convolve1d`
     window : string, float, or tuple
         passed to `window` arg of `scipy.signal.get_window()`
+    return_all : bool
+        whether or not the response of the normalized time gate is returned together with the gated Network as a Tuple.
 
     Note
     ----
@@ -303,7 +303,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     if return_all:
         # compute and return frequency response of time gate
         nw_gate = nw_gated.copy()
-        nw_gate.s = npy.fft.ifftshift(npy.fft.fft(npy.fft.fftshift(gate), norm='forward'))
+        nw_gate.s = npy.fft.ifftshift(npy.fft.fft(npy.fft.fftshift(gate)))
         return nw_gated, nw_gate
     else:
         return nw_gated
