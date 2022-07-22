@@ -23,7 +23,10 @@ from scipy.ndimage import convolve1d
 from scipy import signal
 import numpy as npy
 from numpy import fft
-from typing import List
+# imports for type hinting
+from typing import List, TYPE_CHECKING
+if TYPE_CHECKING:
+    from .network import Network
 
 
 def indexes(y: npy.ndarray, thres: float = 0.3, min_dist: int = 1) -> npy.ndarray:
@@ -190,8 +193,8 @@ def detect_span(ntwk) -> float:
     return span
 
 
-def time_gate(ntwk: skrf.Network, start: float = None, stop: float = None, center: float = None, span: float = None,
-              mode: str = 'bandpass', window=('kaiser', 6), return_all: bool = False) -> skrf.Network:
+def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
+              mode: str = 'bandpass', window=('kaiser', 6), return_all: bool = False) -> 'Network':
     """
     Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
