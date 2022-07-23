@@ -287,9 +287,9 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     gate[start_idx:stop_idx] = window
 
     # time-domain gating
-    s_td = ifftshift(ifft(nw_gated.s[:, 0, 0]))
+    s_td = fftshift(ifft(nw_gated.s[:, 0, 0]))
     s_td_g = s_td * gate
-    nw_gated.s[:, 0, 0] = fft(fftshift(s_td_g))
+    nw_gated.s[:, 0, 0] = fft(ifftshift(s_td_g))
 
     if mode == 'bandstop':
         nw_gated = ntwk - nw_gated
