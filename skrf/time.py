@@ -19,6 +19,7 @@ Time domain functions
 from .util import find_nearest_index
 from scipy import signal
 import numpy as npy
+from numpy.fft import fft, fftshift, ifft, ifftshift
 
 # imports for type hinting
 from typing import List, TYPE_CHECKING
@@ -286,9 +287,9 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     gate[start_idx:stop_idx] = window
 
     # time-domain gating
-    s_td = npy.fft.ifftshift(npy.fft.ifft(nw_gated.s[:, 0, 0]))
+    s_td = ifftshift(ifft(nw_gated.s[:, 0, 0]))
     s_td_g = s_td * gate
-    nw_gated.s[:, 0, 0] = npy.fft.fft(npy.fft.fftshift(s_td_g))
+    nw_gated.s[:, 0, 0] = fft(fftshift(s_td_g))
 
     if mode == 'bandstop':
         nw_gated = ntwk - nw_gated
@@ -300,7 +301,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     if return_all:
         # compute and return frequency response of time gate
         nw_gate = nw_gated.copy()
-        nw_gate.s = npy.fft.ifftshift(npy.fft.fft(npy.fft.fftshift(gate)))
+        nw_gate.s = ifftshift(fft(fftshift(gate)))
         nw_gate.name = 'gate'
         return nw_gated, nw_gate
     else:
