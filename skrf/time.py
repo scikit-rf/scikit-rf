@@ -192,7 +192,7 @@ def detect_span(ntwk) -> float:
 
 
 def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
-              mode: str = 'bandpass', window=('kaiser', 6), return_all: bool = False) -> 'Network':
+              mode: str = 'bandpass', window=('kaiser', 6)) -> 'Network':
     """
     Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
@@ -225,8 +225,6 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         mode of gate
     window : string, float, or tuple
         passed to `window` arg of `scipy.signal.get_window()`
-    return_all : bool
-        whether or not the response of the normalized time gate is returned together with the gated Network as a Tuple.
 
     Note
     ----
@@ -298,11 +296,4 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     else:
         raise ValueError('mode should be \'bandpass\' or \'bandstop\'')
 
-    if return_all:
-        # compute and return frequency response of time gate
-        nw_gate = nw_gated.copy()
-        nw_gate.s = ifftshift(fft(fftshift(gate)))
-        nw_gate.name = 'gate'
-        return nw_gated, nw_gate
-    else:
-        return nw_gated
+    return nw_gated
