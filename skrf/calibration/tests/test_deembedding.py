@@ -231,7 +231,7 @@ class DeembeddingTestCase(unittest.TestCase):
         self.dm_ic = rf.ImpedanceCancel(self.thru6_1f)
         
         # relative tolerance for comparisons
-        self.rtol = 1e-3
+        self.rtol = 1e-6
 
     def test_freqmismatch(self):
         """
