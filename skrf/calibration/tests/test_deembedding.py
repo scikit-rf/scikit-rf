@@ -169,7 +169,7 @@ class DeembeddingTestCase(unittest.TestCase):
         self.raw7_1f = self.raw7['10GHz'] 
         self.open7_1f = self.open7['10GHz'] 
 
-        # for short-open and short testing
+        # for short-open testing
         self.raw2 = rf.Network(os.path.join(self.test_dir, 'deemb_ind2.s2p'))
         self.open2 = rf.Network(os.path.join(self.test_dir, 'deemb_open2.s2p'))
         self.short2 = rf.Network(os.path.join(self.test_dir, 'deemb_short2.s2p'))
