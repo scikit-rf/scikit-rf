@@ -147,9 +147,11 @@ class OpenShort(Deembedding):
     This is a commonly used de-embedding method for on-wafer applications.
 
     A deembedding object is created with two dummy measurements: `dummy_open` 
-    and `dummy_short`. When :func:`Deembedding.deembed` is applied, the 
-    Y-parameters of the dummy_open are subtracted from the DUT measurement, 
-    followed by subtraction of Z-parameters of dummy-short.
+    and `dummy_short`. When :func:`Deembedding.deembed` is applied, 
+    Open de-embedding is applied to the short dummy 
+    because the measurement results for the short dummy contains parallel parasitics.
+    Then the Y-parameters of the dummy_open are subtracted from the DUT measurement, 
+    followed by subtraction of Z-parameters of dummy-short which is previously de-embedded.
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
@@ -240,10 +242,13 @@ class OpenShort(Deembedding):
 
         caled = ntwk.copy()
 
-        # remove open parasitics
+        # remove parallel parasitics from the short dummy
+        deembeded_short = self.short.copy()
+        deembeded_short.y = self.short.y - self.open.y
+        # remove parallel parasitics from the dut
         caled.y = ntwk.y - self.open.y
-        # remove short parasitics
-        caled.z = caled.z - self.short.z
+        # remove series parasitics from the dut
+        caled.z = caled.z - deembeded_short.z
 
         return caled
 
@@ -342,9 +347,11 @@ class ShortOpen(Deembedding):
     Remove short parasitics followed by open parasitics.
 
     A deembedding object is created with two dummy measurements: `dummy_open` 
-    and `dummy_short`. When :func:`Deembedding.deembed` is applied, the 
-    Z-parameters of the dummy_short are subtracted from the DUT measurement, 
-    followed by subtraction of Y-parameters of dummy_open.
+    and `dummy_short`. When :func:`Deembedding.deembed` is applied, 
+    short de-embedding is applied to the open dummy 
+    because the measurement results for the open dummy contains series parasitics.
+    the Z-parameters of the dummy_short are subtracted from the DUT measurement, 
+    followed by subtraction of Y-parameters of dummy_open which is previously de-embedded.
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
@@ -427,10 +434,13 @@ class ShortOpen(Deembedding):
 
         caled = ntwk.copy()
 
-        # remove short parasitics
+        # remove series parasitics from the open dummy
+        deembeded_open = self.open.copy()
+        deembeded_open.z = self.open.z - self.short.z
+        # remove parallel parasitics from the dut
         caled.z = ntwk.z - self.short.z
-        # remove open parasitics
-        caled.y = caled.y - self.open.y
+        # remove series parasitics from the dut
+        caled.y = caled.y - deembeded_open.y
 
         return caled
 
