@@ -5593,8 +5593,14 @@ def s2s(s: NumberLike, z0: NumberLike, s_def_new: str, s_def_old: str):
     if s_def_new == s_def_old:
         # Nothing to do.
         return s
+        
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
+
+    if npy.isreal(z0).all():
+        # Nothing to do because all port impedances are real so the used 
+        # definition (power or travelling) does not make a difference.
+        return s
 
     # Calculate port voltages and currents using the old s_def.
     F, G = npy.zeros_like(s), npy.zeros_like(s)
