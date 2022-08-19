@@ -745,25 +745,32 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_allclose(ntwk.s, s_random)
 
     def test_s_def_setters(self):
-        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
-        ntwk = rf.Network(s=s_random, frequency=self.freq)
-        ntwk.z0 = npy.random.uniform(1, 100, len(ntwk.z0)) + 1j*npy.random.uniform(-100, 100, len(ntwk.z0))
-        ntwk.s = ntwk.s
+        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) +\
+            1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
+        z0_scalar = 50
+        z0_array_port = npy.random.uniform(1, 100, 2)
+        z0_array_freq = npy.random.uniform(1, 100, self.freq.npoints) +\
+            1j*npy.random.uniform(-100, 100, self.freq.npoints)
+        z0_array_freq_port = npy.random.uniform(1, 100, (self.freq.npoints,2)) +\
+            1j*npy.random.uniform(-100, 100, (self.freq.npoints,2))
+            
+        for z0 in [z0_scalar, z0_array_port, z0_array_freq, z0_array_freq_port]:
+            ntwk = rf.Network(s=s_random, frequency=self.freq, z0=z0)
 
-        s_traveling = rf.s2s(s_random, ntwk.z0, 'traveling', ntwk.s_def)
-        s_power = rf.s2s(s_random, ntwk.z0, 'power', ntwk.s_def)
-        s_pseudo = rf.s2s(s_random, ntwk.z0, 'pseudo', ntwk.s_def)
+            s_traveling = rf.s2s(s_random, z0, 'traveling', ntwk.s_def)
+            s_power = rf.s2s(s_random, z0, 'power', ntwk.s_def)
+            s_pseudo = rf.s2s(s_random, z0, 'pseudo', ntwk.s_def)
 
-        ntwk.s_traveling = s_traveling
-        npy.testing.assert_allclose(ntwk.s, s_random)
-        ntwk.s_power = s_power
-        npy.testing.assert_allclose(ntwk.s, s_random)
-        ntwk.s_pseudo = s_pseudo
-        npy.testing.assert_allclose(ntwk.s, s_random)
-
-        npy.testing.assert_allclose(ntwk.s_traveling, s_traveling)
-        npy.testing.assert_allclose(ntwk.s_power, s_power)
-        npy.testing.assert_allclose(ntwk.s_pseudo, s_pseudo)
+            ntwk.s_traveling = s_traveling
+            npy.testing.assert_allclose(ntwk.s, s_random)
+            ntwk.s_power = s_power
+            npy.testing.assert_allclose(ntwk.s, s_random)
+            ntwk.s_pseudo = s_pseudo
+            npy.testing.assert_allclose(ntwk.s, s_random)
+    
+            npy.testing.assert_allclose(ntwk.s_traveling, s_traveling)
+            npy.testing.assert_allclose(ntwk.s_power, s_power)
+            npy.testing.assert_allclose(ntwk.s_pseudo, s_pseudo)
 
     def test_sparam_conversion_with_complex_char_impedance(self):
         """
