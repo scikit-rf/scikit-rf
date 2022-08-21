@@ -17,9 +17,9 @@ from ...network import Network
 
 @dataclass
 class Measurement:
-    channel: int
     name: str
     param: str
+    channel: Optional[int] = None
 
 
 class VNA(ABC):
@@ -128,49 +128,42 @@ class VNA(ABC):
     def id_string(self) -> str:
         return self.query("*IDN?")
 
-    @classmethod
-    def available(cls, backend: str = "@py") -> List[str]:
-        rm = pyvisa.ResourceManager(backend)
-        avail = rm.list_resources()
-        rm.close()
-        return list(avail)
-
     @abstractmethod
-    def start_freq(self, channel: int = 1) -> float:
+    def start_freq(self) -> float:
         pass
 
     @abstractmethod
-    def set_start_freq(self, f: float, channel: int = 1) -> None:
+    def set_start_freq(self, f: float) -> None:
         pass
 
     @abstractmethod
-    def stop_freq(self, channel: int = 1) -> float:
+    def stop_freq(self) -> float:
         pass
 
     @abstractmethod
-    def set_stop_freq(self, f: float, channel: int = 1) -> None:
+    def set_stop_freq(self, f: float) -> None:
         pass
 
     @abstractmethod
-    def npoints(self, channel: int = 1) -> int:
+    def npoints(self) -> int:
         pass
 
     @abstractmethod
-    def set_npoints(self, n: int, channel: int = 1) -> None:
+    def set_npoints(self, n: int) -> None:
         pass
 
     @abstractmethod
-    def freq_step(self, channel: int = 1) -> float:
+    def freq_step(self) -> float:
         pass
 
     @abstractmethod
-    def set_freq_step(self, f: float, channel: int = 1) -> None:
+    def set_freq_step(self, f: float) -> None:
         pass
 
-    def frequency(self, channel: int = 1) -> Frequency:
-        start = self.start_freq(channel)
-        stop = self.stop_freq(channel)
-        npoints = self.npoints(channel)
+    def frequency(self) -> Frequency:
+        start = self.start_freq()
+        stop = self.stop_freq()
+        npoints = self.npoints()
         return Frequency(start, stop, npoints, unit="hz")
 
     def set_frequency(
@@ -179,7 +172,6 @@ class VNA(ABC):
         start: Optional[float] = None,
         stop: Optional[float] = None,
         npoints: Optional[int] = None,
-        channel: int = 1,
     ) -> None:
         if freq and any((start, stop, npoints)):
             raise ValueError(
@@ -191,80 +183,80 @@ class VNA(ABC):
             )
 
         if freq:
-            self.set_start_freq(freq.start, channel)
-            self.set_stop_freq(freq.stop, channel)
-            self.set_npoints(freq.npoints, channel)
+            self.set_start_freq(freq.start)
+            self.set_stop_freq(freq.stop)
+            self.set_npoints(freq.npoints)
         else:
-            self.set_start_freq(start, channel)  # type: ignore
-            self.set_stop_freq(stop, channel)  # type: ignore
-            self.set_npoints(npoints, channel)  # type: ignore
+            self.set_start_freq(start)  # type: ignore
+            self.set_stop_freq(stop)  # type: ignore
+            self.set_npoints(npoints)  # type: ignore
 
     @abstractmethod
-    def sweep_mode(self, channel: int = 1) -> str:
+    def sweep_mode(self) -> str:
         pass
 
     @abstractmethod
-    def set_sweep_mode(self, mode: str, channel: int = 1) -> None:
+    def set_sweep_mode(self, mode: str) -> None:
         pass
 
     @abstractmethod
-    def sweep_type(self, channel: int = 1) -> str:
+    def sweep_type(self) -> str:
         pass
 
     @abstractmethod
-    def set_sweep_type(self, _type: str, channel: int = 1) -> None:
+    def set_sweep_type(self, _type: str) -> None:
         pass
 
     @abstractmethod
-    def sweep_time(self, channel: int = 1) -> float:
+    def sweep_time(self) -> float:
         pass
 
     @abstractmethod
-    def set_sweep_time(self, time: Union[float, str], channel: int = 1) -> None:
+    def set_sweep_time(self, time: Union[float, str]) -> None:
         pass
 
     @abstractmethod
-    def if_bandwidth(self, channel: int = 1) -> float:
+    def if_bandwidth(self) -> float:
         pass
 
     @abstractmethod
-    def set_if_bandwidth(self, bw: float, channel: int = 1) -> None:
+    def set_if_bandwidth(self, bw: float) -> None:
         pass
 
     @abstractmethod
-    def averaging_on(self, channel: int = 1) -> bool:
+    def averaging_on(self) -> bool:
         pass
 
     @abstractmethod
-    def set_averaging_on(self, onoff: bool, channel: int = 1) -> None:
+    def set_averaging_on(self, onoff: bool) -> None:
         pass
 
     @abstractmethod
-    def average_count(self, channel: int = 1) -> int:
+    def average_count(self) -> int:
         pass
 
     @abstractmethod
-    def set_average_count(self, n: int, channel: int = 1) -> None:
+    def set_average_count(self, n: int) -> None:
         pass
 
     @abstractmethod
-    def average_mode(self, channel: int = 1) -> str:
+    def average_mode(self) -> str:
         pass
 
     @abstractmethod
-    def set_average_mode(self, mode: str, channel: int = 1) -> None:
+    def set_average_mode(self, mode: str) -> None:
         pass
 
     @abstractmethod
-    def clear_averaging(self, channel: int = 1) -> None:
+    def clear_averaging(self) -> None:
         pass
 
     @abstractmethod
-    def num_sweep_groups(self, channel: int = 1) -> int:
+    def num_sweep_groups(self) -> int:
         pass
 
     @abstractmethod
-    def set_num_sweep_groups(self, n: int, channel: int = 1) -> None:
+    def set_num_sweep_groups(self, n: int) -> None:
         pass
 
     @property
@@ -304,19 +296,19 @@ class VNA(ABC):
         pass
 
     @abstractmethod
-    def set_active_measurement(self, meas: Union[int, str], channel: int = 1) -> None:
+    def set_active_measurement(self, meas: Union[int, str]) -> None:
         pass
 
     @abstractmethod
-    def create_measurement(self, name: str, param: str, channel: int = 1) -> None:
+    def create_measurement(self, name: str, param: str) -> None:
         pass
 
     @abstractmethod
-    def delete_measurement(self, name: str, channel: int = 1) -> None:
+    def delete_measurement(self, name: str) -> None:
         pass
 
     @abstractmethod
-    def get_measurement(self, meas: Union[int, str], channel: int = 1) -> Network:
+    def get_measurement(self, meas: Union[int, str]) -> Network:
         pass
 
     @abstractmethod
@@ -325,12 +317,12 @@ class VNA(ABC):
 
     @property
     @abstractmethod
-    def snp_format(self, channel: int = 1) -> str:
+    def snp_format(self) -> str:
         pass
 
     @snp_format.setter
     @abstractmethod
-    def snp_format(self, format: str, channel: int = 1) -> None:
+    def snp_format(self, format: str) -> None:
         pass
 
     @property
@@ -344,13 +336,11 @@ class VNA(ABC):
         pass
 
     @abstractmethod
-    def sweep(self, channel: int = 1) -> None:
+    def sweep(self) -> None:
         pass
 
     @abstractmethod
-    def get_snp_network(
-        self, ports: Optional[Sequence] = None, channel: int = 1
-    ) -> Network:
+    def get_snp_network(self, ports: Optional[Sequence] = None) -> Network:
         pass
 
     @abstractmethod

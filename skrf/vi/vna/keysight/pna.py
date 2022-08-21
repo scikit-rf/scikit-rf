@@ -1,12 +1,17 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import List, Optional, Sequence, Union
+
 import pprint
-from typing import List, Optional, Sequence, Union
 
 import numpy as np
-
-from ...calibration import Calibration
-from ...frequency import Frequency
-from ...network import Network
-from .vna import VNA, Measurement
+from skrf.calibration import Calibration
+from skrf.frequency import Frequency
+from skrf.network import Network
+from skrf.vi.vna import VNA, Measurement
 
 
 class PNA(VNA):
@@ -38,6 +43,39 @@ class PNA(VNA):
         if "LIN" not in self.sweep_type(channel).upper():
             raise ValueError("Can only set frequency step in linear sweep mode")
         self.write(f"sense{channel}:sweep:step {f}")
+
+    def frequency(self, channel: int = 1) -> Frequency:
+        start = self.start_freq(channel)
+        stop = self.stop_freq(channel)
+        npoints = self.npoints(channel)
+        return Frequency(start, stop, npoints, unit="hz")
+
+    def set_frequency(
+        self,
+        freq: Optional[Frequency] = None,
+        start: Optional[float] = None,
+        stop: Optional[float] = None,
+        npoints: Optional[int] = None,
+        channel: int = 1,
+    ) -> None:
+        if freq and any((start, stop, npoints)):
+            raise ValueError(
+                "Got too many arguments. Pass either Frequency object or start, stop, and step."
+            )
+        if not freq and not all((start, stop, npoints)):
+            raise ValueError(
+                "Got too few arguments. Pass either Frequency object or start, stop, and step."
+            )
+
+        if freq:
+            self.set_start_freq(freq.start, channel)
+            self.set_stop_freq(freq.stop, channel)
+            self.set_npoints(freq.npoints, channel)
+        else:
+            # We've already checked that these can't be None, so type ignore
+            self.set_start_freq(start, channel)  # type: ignore
+            self.set_stop_freq(stop, channel)  # type: ignore
+            self.set_npoints(npoints, channel)  # type: ignore
 
     def sweep_mode(self, channel: int = 1) -> str:
         return self.query(f"sense{channel}:sweep:mode?")
@@ -126,7 +164,7 @@ class PNA(VNA):
             names = response[::2]
             params = response[1::2]
             return [
-                Measurement(channel, name, param)
+                Measurement(channel=channel, name=name, param=param)
                 for (name, param) in zip(names, params)
             ]
 
@@ -155,7 +193,7 @@ class PNA(VNA):
 
     def create_measurement(self, name: str, param: str, channel: int = 1) -> None:
         self.write(f"calculate{channel}:parameter:extended '{name}', '{param}'")
-        next_tr = int(self.query(f"display:window:trace:next?").strip())
+        next_tr = int(self.query("display:window:trace:next?").strip())
         self.write(f"display:window:trace{next_tr}:feed {name}")
         self.set_active_measurement(name, channel=channel)
 
@@ -164,6 +202,7 @@ class PNA(VNA):
 
     def get_measurement(self, meas: Union[int, str], channel: int = 1) -> Network:
         self.set_active_measurement(meas, channel, True)
+        self.query("*OPC?")
         raw = np.array(
             self.query_ascii(f"calculate{channel}:data? sdata"), dtype=np.complex64
         )
@@ -260,6 +299,8 @@ class PNA(VNA):
         self.active_channel = channel
         msmts = self.measurements_on_channel(channel)
         params = [m.param for m in msmts]
+        # TODO: Should we just do this for the user by creating temporary
+        # measurements and deleting when we're done?
         if not all([f"S{p}{p}" in params for p in ports]):
             raise KeyError(
                 "Missing measurement. Must create S_ii for all i's in ports."
@@ -295,7 +336,7 @@ class PNA(VNA):
         return ntwk
 
     def upload_oneport_calibration(self, port: int, cal: Calibration) -> None:
-        pass
+        raise NotImplementedError
 
     def upload_twoport_calibration(self, ports: Sequence, cal: Calibration) -> None:
-        pass
+        raise NotImplementedError

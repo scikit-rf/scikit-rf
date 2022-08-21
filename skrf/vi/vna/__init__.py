@@ -11,8 +11,9 @@ Available VNAs
     :toctree: generated/
 
     PNA
+    FieldFox
 """
 
-
-from .keysight.pna import PNA
-from .vna import VNA
+from .keysight import PNA, FieldFox
+from .utils import available
+from .vna import VNA, Measurement
