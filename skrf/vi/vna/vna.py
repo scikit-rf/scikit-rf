@@ -160,7 +160,7 @@ class VNA(ABC):
         pass
 
     @abstractmethod
-    def freq_step(self, channel: int = 1) -> None:
+    def freq_step(self, channel: int = 1) -> float:
         pass
 
     @abstractmethod
