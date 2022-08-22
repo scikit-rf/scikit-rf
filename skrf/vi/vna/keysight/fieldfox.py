@@ -1,3 +1,6 @@
+"""
+.. module:: skrf.vi.vna
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -10,10 +13,17 @@ import pprint
 import numpy as np
 from skrf.calibration import Calibration
 from skrf.network import Network
-from skrf.vi.vna import VNA, Measurement
+
+from ..vna import VNA, Measurement
 
 
 class FieldFox(VNA):
+    """
+    Keysight's FieldFox analyzer.
+
+    This class assumes the FieldFox has been put into NA mode before initializing
+    """
+
     def __init__(self, address: str, timeout: int = 2000, backend: str = "@py"):
         super().__init__(address, timeout, backend)
 

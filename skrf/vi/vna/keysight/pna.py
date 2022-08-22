@@ -11,7 +11,8 @@ import numpy as np
 from skrf.calibration import Calibration
 from skrf.frequency import Frequency
 from skrf.network import Network
-from skrf.vi.vna import VNA, Measurement
+
+from ..vna import VNA, Measurement
 
 
 class PNA(VNA):
