@@ -78,7 +78,14 @@ class PNA(VNA):
         ret = self.query(f"system:measurement:catalog? {channel}").strip().strip('"')
         return list(map(int, ret.split(",")))
 
-    @property
+    def measurements(self) -> List[Tuple]:
+        msmnts = []
+        chans = self.channels_in_use
+        for chan in chans:
+            msmnts.extend(self.measurements_on_channel(chan))
+
+        return msmnts
+
     def active_measurement(self) -> Optional[Union[str, int]]:
         active = self.query("system:active:measurement?")
         return None if active == "" else active
