@@ -426,7 +426,7 @@ class VNA(ABC):
         float
             current IF bandwidth [Hz]
         """
-        return float(self.query(f"sense{channel}:sweep:bwidth?"))
+        return float(self.query(f"sense{channel}:bwidth?"))
 
     def set_if_bandwidth(self, bw: float, channel: int = 1) -> None:
         """
@@ -455,7 +455,8 @@ class VNA(ABC):
         bool
             True if averaging is on, False otherwise
         """
-        return self.query(f"sense{channel}:average?").strip() != "0"
+        query = self.query(f"sense{channel}:average?").strip()
+        return query == "1" or query.lower() != "ON"
 
     def set_averaging_on(self, state: bool, channel: int = 1) -> None:
         """
@@ -468,7 +469,7 @@ class VNA(ABC):
         channel : int
             channel to set averaging state (if supported)
         """
-        self.write(f"sense{channel}:average {'on' if state else 'off'}")
+        self.write(f"sense{channel}:average {'ON' if state else 'OFF'}")
 
     def average_count(self, channel: int = 1) -> int:
         """
@@ -686,7 +687,9 @@ class VNA(ABC):
         self.query("*OPC?")
 
     @abstractmethod
-    def get_snp_network(self, ports: Optional[Sequence] = None) -> Network:
+    def get_snp_network(
+        self, ports: Optional[Sequence] = None, channel: int = 1
+    ) -> Network:
         """
         Get the full SNP network of the specified ports
 

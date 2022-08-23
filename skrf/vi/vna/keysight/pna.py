@@ -229,7 +229,7 @@ class PNA(VNA):
         port_str = ",".join(map(str, ports))
         self.snp_format = "RI"
         raw_data = self.query_ascii(
-            f"calculate{channel}:data:snp:ports? '{port_str}'", container=np.array
+            f"calculate{channel}:data:snp:ports? '{port_str}'", container=np.ndarray
         )
         self.query("*OPC?")
         self.snp_format = old_snp_format
@@ -243,10 +243,9 @@ class PNA(VNA):
         data = np.array(raw_data)
         data = data.reshape((nrows, -1))
 
-        freq_data = data[0]
         s_data = data[1:]
         ntwk = Network()
-        ntwk.frequency = Frequency.from_f(freq_data, unit="hz")
+        ntwk.frequency = self.frequency(channel)
         ntwk.s = np.empty(shape=(s_data.shape[1], nports, nports), dtype=np.complex64)
         # Can we speed this up?
         for n in range(nports):
