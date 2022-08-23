@@ -26,6 +26,6 @@ Keysight
     PNA
 """
 
-from .keysight import PNA, FieldFox
+from . import keysight, rhodeschwarz
 from .utils import available
 from .vna import VNA
