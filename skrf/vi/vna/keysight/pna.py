@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Sequence, Union
+    from typing import List, Optional, Sequence, Tuple, Union
 
 import pprint
 
@@ -12,117 +12,26 @@ from skrf.calibration import Calibration
 from skrf.frequency import Frequency
 from skrf.network import Network
 
-from ..vna import VNA, Measurement
+from ..vna import VNA
 
 
 class PNA(VNA):
     def __init__(self, address: str, timeout: int = 2000, backend: str = "@py"):
         super().__init__(address, timeout, backend)
 
-    def start_freq(self, channel: int = 1) -> float:
-        return float(self.query(f"sense{channel}:frequency:start?"))
-
-    def set_start_freq(self, f: float, channel: int = 1) -> None:
-        self.write(f"sense{channel}:frequency:start {f}")
-
-    def stop_freq(self, channel: int = 1) -> float:
-        return float(self.query(f"sense{channel}:frequency:stop?"))
-
-    def set_stop_freq(self, f: float, channel: int = 1) -> None:
-        self.write(f"sense{channel}:frequency:stop {f}")
-
-    def npoints(self, channel: int = 1) -> int:
-        return int(self.query(f"sense{channel}:sweep:points?"))
-
-    def set_npoints(self, n: int, channel: int = 1) -> None:
-        self.write(f"sense{channel}:sweep:points {n}")
-
-    def freq_step(self, channel: int = 1) -> float:
-        return float(self.query(f"sense{channel}:sweep:step?"))
-
     def set_freq_step(self, f: float, channel: int = 1) -> None:
-        if "LIN" not in self.sweep_type(channel).upper():
+        if "lin" not in self.sweep_type(channel).lower():
             raise ValueError("Can only set frequency step in linear sweep mode")
-        self.write(f"sense{channel}:sweep:step {f}")
 
-    def frequency(self, channel: int = 1) -> Frequency:
-        start = self.start_freq(channel)
-        stop = self.stop_freq(channel)
-        npoints = self.npoints(channel)
-        return Frequency(start, stop, npoints, unit="hz")
-
-    def set_frequency(
-        self,
-        freq: Optional[Frequency] = None,
-        start: Optional[float] = None,
-        stop: Optional[float] = None,
-        npoints: Optional[int] = None,
-        channel: int = 1,
-    ) -> None:
-        if freq and any((start, stop, npoints)):
-            raise ValueError(
-                "Got too many arguments. Pass either Frequency object or start, stop, and step."
-            )
-        if not freq and not all((start, stop, npoints)):
-            raise ValueError(
-                "Got too few arguments. Pass either Frequency object or start, stop, and step."
-            )
-
-        if freq:
-            self.set_start_freq(freq.start, channel)
-            self.set_stop_freq(freq.stop, channel)
-            self.set_npoints(freq.npoints, channel)
-        else:
-            # We've already checked that these can't be None, so type ignore
-            self.set_start_freq(start, channel)  # type: ignore
-            self.set_stop_freq(stop, channel)  # type: ignore
-            self.set_npoints(npoints, channel)  # type: ignore
-
-    def sweep_mode(self, channel: int = 1) -> str:
-        return self.query(f"sense{channel}:sweep:mode?")
-
-    def set_sweep_mode(self, mode: str, channel: int = 1) -> None:
-        self.write(f"sense{channel}:sweep:mode {mode}")
-
-    def sweep_type(self, channel: int = 1) -> str:
-        return self.query(f"sense{channel}:sweep:type?")
-
-    def set_sweep_type(self, _type: str, channel: int = 1) -> None:
-        self.write(f"sense{channel}:sweep:type {_type}")
-
-    def sweep_time(self, channel: int = 1) -> float:
-        return float(self.query(f"sense{channel}:sweep:time?"))
-
-    def set_sweep_time(self, time: float, channel: int = 1) -> None:
-        self.write(f"sense{channel}:sweep:time {time}")
-
-    def if_bandwidth(self, channel: int = 1) -> float:
-        return float(self.query(f"sense{channel}:bandwidth?"))
-
-    def set_if_bandwidth(self, bw: float, channel: int = 1) -> None:
-        self.write(f"sense{channel}:bandwidth {bw}")
-
-    def averaging_on(self, channel: int = 1) -> bool:
-        avg = self.query(f"sense{channel}:average?").strip()
-        return avg != "0"
-
-    def set_averaging_on(self, onoff: bool, channel: int = 1) -> None:
-        self.write(f"sense{channel}:average {int(onoff)}")
-
-    def average_count(self, channel: int = 1) -> int:
-        return int(self.query(f"sense{channel}:average:count?"))
-
-    def set_average_count(self, n: int, channel: int = 1) -> None:
-        self.write(f"sense{channel}:average:count {n}")
+        super().set_freq_step(f, channel)
 
     def average_mode(self, channel: int = 1) -> str:
-        return self.query(f"sense{channel}:average:mode?")
+        return self.query(f"sense{channel}:sweep:average:mode?")
 
     def set_average_mode(self, mode: str, channel: int = 1) -> None:
-        self.write(f"sense{channel}:average:mode {mode}")
-
-    def clear_averaging(self, channel: int = 1) -> None:
-        self.write(f"sense{channel}:average:clear")
+        if mode.lower() not in ["point, sweep"]:
+            raise ValueError(f"Unrecognized averaging mode: {mode}")
+        self.write(f"sense{channel}:sweep:average:mode {mode}")
 
     def num_sweep_groups(self, channel: int = 1) -> int:
         return int(self.query(f"sense{channel}:sweep:groups:count?"))
@@ -132,8 +41,7 @@ class PNA(VNA):
 
     @property
     def channels_in_use(self) -> List[int]:
-        response = self.query("system:channels:catalog?")
-        response = response.strip().replace('"', "")
+        response = self.query("system:channels:catalog?").strip().replace('"', "")
         return [int(c) for c in response.split(",")]
 
     @property
@@ -153,9 +61,9 @@ class PNA(VNA):
             # No command to set active channel, so get first measurement on `channel`
             # and set the selected measurement to that to hack set the active channel
             msmts = self.measurements_on_channel(channel)
-            self.set_active_measurement(msmts[0].name, channel)
+            self.set_active_measurement(msmts[0][0], channel)
 
-    def measurements_on_channel(self, channel: int = 1) -> List[Measurement]:
+    def measurements_on_channel(self, channel: int = 1) -> List[Tuple]:
         channels = self.channels_in_use
         if channel not in channels:
             return []
@@ -164,45 +72,45 @@ class PNA(VNA):
             response = response.strip().replace('"', "").split(",")
             names = response[::2]
             params = response[1::2]
-            return [
-                Measurement(channel=channel, name=name, param=param)
-                for (name, param) in zip(names, params)
-            ]
+            return [(name, param, channel) for (name, param) in zip(names, params)]
 
     def measurement_numbers(self, channel: int = 1) -> List[int]:
         ret = self.query(f"system:measurement:catalog? {channel}").strip().strip('"')
         return list(map(int, ret.split(",")))
 
     @property
-    def active_measurement(self) -> Optional[str]:
+    def active_measurement(self) -> Optional[Union[str, int]]:
         active = self.query("system:active:measurement?")
         return None if active == "" else active
 
     def set_active_measurement(
-        self, meas: Union[int, str], channel: int = 1, fast: bool = False
+        self, id_: Union[int, str], channel: int = 1, fast: bool = False
     ) -> None:
         fast_str = "fast" if fast else ""
-        if isinstance(meas, int):
-            if meas not in self.measurement_numbers(channel):
+        if isinstance(id_, int):
+            if id_ not in self.measurement_numbers(channel):
                 raise KeyError(f"Measurement doesn't exist on channel {channel}")
-            self.write(f"calculate{channel}:parameter:mnumber {meas},{fast_str}")
-        elif isinstance(meas, str):
-            meas_names = [m.name for m in self.measurements_on_channel(channel)]
-            if meas not in meas_names:
+            self.write(f"calculate{channel}:parameter:mnumber {id_},{fast_str}")
+        elif isinstance(id_, str):
+            meas_names = [m[0] for m in self.measurements_on_channel(channel)]
+            if id_ not in meas_names:
                 raise KeyError(f"Measurement doesn't exist on channel {channel}")
-            self.write(f"calculate{channel}:parameter:select '{meas}',{fast_str}")
+            self.write(f"calculate{channel}:parameter:select '{id_}',{fast_str}")
 
-    def create_measurement(self, name: str, param: str, channel: int = 1) -> None:
-        self.write(f"calculate{channel}:parameter:extended '{name}', '{param}'")
+    def create_measurement(
+        self, id_: Union[str, int], param: str, channel: int = 1
+    ) -> None:
+        self.write(f"calculate{channel}:parameter:extended '{id_}', '{param}'")
         next_tr = int(self.query("display:window:trace:next?").strip())
-        self.write(f"display:window:trace{next_tr}:feed {name}")
-        self.set_active_measurement(name, channel=channel)
+        self.write(f"display:window:trace{next_tr}:feed {id_}")
+        self.set_active_measurement(id_, channel=channel)
 
-    def delete_measurement(self, name: str, channel: int = 1) -> None:
-        self.write(f"calculate{channel}:parameter:delete {name}")
+    def delete_measurement(self, id_: Union[str, int], channel: int = 1) -> None:
+        assert isinstance(id_, str), "Can only delete measurement by name"
+        self.write(f"calculate{channel}:parameter:delete {id_}")
 
-    def get_measurement(self, meas: Union[int, str], channel: int = 1) -> Network:
-        self.set_active_measurement(meas, channel, True)
+    def get_measurement(self, id_: Union[str, int], channel: int = 1) -> Network:
+        self.set_active_measurement(id_, channel, True)
         self.query("*OPC?")
         raw = np.array(
             self.query_ascii(f"calculate{channel}:data? sdata"), dtype=np.complex64
@@ -261,15 +169,16 @@ class PNA(VNA):
     # TODO: Implement for multiple channels
     def sweep(self, channel: int = 1) -> None:
         self.resource.clear()
+
         orig_timeout = self.resource.timeout
         self.write("trigger:source immediate")
         sweep_mode = self.sweep_mode()
-        continuous = "CONT" in sweep_mode.upper()
+        continuous = "cont" in sweep_mode.lower()
         sweep_time = self.sweep_time()
         avg_on = self.averaging_on()
         avg_mode = self.average_mode()
 
-        if avg_on and "SWE" in avg_mode.upper():
+        if avg_on and "swe" in avg_mode.lower():
             sweep_mode = "groups"
             n_sweeps = self.average_count(channel)
             self.set_num_sweep_groups(n_sweeps, channel)
@@ -297,15 +206,16 @@ class PNA(VNA):
         if not ports:
             ports = self.ports
 
+        _ports = set(ports)
         self.active_channel = channel
-        msmts = self.measurements_on_channel(channel)
-        params = [m.param for m in msmts]
-        # TODO: Should we just do this for the user by creating temporary
-        # measurements and deleting when we're done?
-        if not all([f"S{p}{p}" in params for p in ports]):
-            raise KeyError(
-                "Missing measurement. Must create S_ii for all i's in ports."
-            )
+        params = [f"S{p}{p}" for p in _ports]
+        names = []
+        # Make sure the ports specified are driven
+        for param in params:
+            name = self.query(f"calculate{channel}:parameter:tag:next?").strip()
+            names.append(name)
+            self.create_measurement(name, param, channel)
+
         self.sweep(channel=channel)
 
         old_snp_format = self.snp_format
@@ -316,6 +226,9 @@ class PNA(VNA):
         )
         self.query("*OPC?")
         self.snp_format = old_snp_format
+
+        for name in names:
+            self.delete_measurement(name, channel)
 
         npoints = self.npoints()
         nrows = len(raw_data) // npoints

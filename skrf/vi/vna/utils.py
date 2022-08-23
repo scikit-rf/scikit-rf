@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 import pyvisa
 
 
-def available(cls, backend: str = "@py") -> List[str]:
+def available(backend: str = "@py") -> List[str]:
     rm = pyvisa.ResourceManager(backend)
     avail = rm.list_resources()
     rm.close()

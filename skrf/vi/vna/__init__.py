@@ -28,4 +28,4 @@ Keysight
 
 from .keysight import PNA, FieldFox
 from .utils import available
-from .vna import VNA, Measurement
+from .vna import VNA

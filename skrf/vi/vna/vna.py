@@ -1,13 +1,14 @@
 """
-.. module:: skrf.vi.vna
-
 Abstract base class for VNAs. Do not use directly.
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import List, Optional, Sequence, Tuple, Union
+
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import List, Optional, Sequence, Union
 
 import pyvisa
 from pyvisa.constants import RENLineOperation
@@ -16,19 +17,26 @@ from skrf.frequency import Frequency
 from skrf.network import Network
 
 
-@dataclass
-class Measurement:
-    name: str
-    param: str
-    channel: Optional[int] = None
-
-
 class VNA(ABC):
     """
     Abstract base class for VNAs
 
     This class defines the interface to be provided by all network analyzer
     implementations.
+
+    The instrument's manual and the SCPI manual should both be consulted when
+    subclassing. This base class only provides implementations of official SCPI
+    commands and the virutal instrument interface. Simple SCPI commands that are
+    specific to the instrument or manufacturer should only be defined in those
+    classes.
+
+    If an instrument does support a SCPI command that is defined in this class,
+    it should raise a `NotImplmentedError`.
+
+    Finally, subclasses should check that arguments are sensible to the
+    instrument they represent. For example, if an instrument only has two ports,
+    the user should only be able to create measurements with S11, S12, S21, S22
+    as parameters (as well as other supported parameters like A, B, etc.)
     """
 
     def __init__(self, address: str, timeout: int = 3000, backend: str = "@py") -> None:
@@ -48,8 +56,7 @@ class VNA(ABC):
         Notes
         -----
 
-        .. _NI VISA Address syntax:
-            https://www.ni.com/docs/en-US/bundle/ni-visa/page/ni-visa/visaresourcesyntaxandexamples.html
+        .. _visa-address-syntax: https://www.ni.com/docs/en-US/bundle/ni-visa/page/ni-visa/visaresourcesyntaxandexamples.html
         """
         rm = pyvisa.ResourceManager(backend)
         self.resource = rm.open_resource(address)
@@ -122,20 +129,23 @@ class VNA(ABC):
         """
         return self.query("*IDN?")
 
-    @abstractmethod
-    def start_freq(self) -> float:
+    def start_freq(self, channel: int = 1) -> float:
         """
         Get start frequency
+
+        Parameters
+        ---------
+        channel : int
+            channel to get frequency (if supported)
 
         Returns
         -------
         float
             start frequency [Hz]
         """
-        pass
+        return float(self.query(f"sense{channel}:frequency:start?"))
 
-    @abstractmethod
-    def set_start_freq(self, f: float) -> None:
+    def set_start_freq(self, f: float, channel: int = 1) -> None:
         """
         Set start frequency
 
@@ -143,23 +153,28 @@ class VNA(ABC):
         ----------
         f : float
             start frequency [Hz]
+        channel : int
+            channel to set frequency (if supported)
         """
-        pass
+        self.write(f"sense{channel}:frequency:start {f}")
 
-    @abstractmethod
-    def stop_freq(self) -> float:
+    def stop_freq(self, channel: int = 1) -> float:
         """
         Get stop frequency
+
+        Parameters
+        ----------
+        channel : int
+            channel to get frequency (if supported)
 
         Returns
         -------
         float
             stop frequency [Hz]
         """
-        pass
+        return float(self.query(f"sense{channel}:frequency:stop?"))
 
-    @abstractmethod
-    def set_stop_freq(self, f: float) -> None:
+    def set_stop_freq(self, f: float, channel: int = 1) -> None:
         """
         Set stop frequency
 
@@ -167,23 +182,28 @@ class VNA(ABC):
         ----------
         f : float
             stop frequency [Hz]
+        channel : int
+            channel to set frequency (if supported)
         """
-        pass
+        self.write(f"sense{channel}:frequency:stop {f}")
 
-    @abstractmethod
-    def npoints(self) -> int:
+    def npoints(self, channel: int = 1) -> int:
         """
         Get number of frequency points
+
+        Parameters
+        ----------
+        channel : int
+            channel to get npoints (if supported)
 
         Returns
         -------
         int
             number of frequency points
         """
-        pass
+        return int(self.query(f"sense{channel}:sweep:points?"))
 
-    @abstractmethod
-    def set_npoints(self, n: int) -> None:
+    def set_npoints(self, n: int, channel: int = 1) -> None:
         """
         Set number of frequency points
 
@@ -191,23 +211,28 @@ class VNA(ABC):
         ----------
         n : int
             number of frequency points
+        channel : int
+            channel to set npoints (if supported)
         """
-        pass
+        self.write(f"sense{channel}:sweep:points {n}")
 
-    @abstractmethod
-    def freq_step(self) -> float:
+    def freq_step(self, channel: int = 1) -> float:
         """
         Get frequency step
+
+        Parameters
+        ----------
+        channel : int
+            channel to get frequency step (if supported)
 
         Returns
         -------
         float
             frequency step [Hz]
         """
-        pass
+        return float(self.query(f"sense{channel}:sweep:step?"))
 
-    @abstractmethod
-    def set_freq_step(self, f: float) -> None:
+    def set_freq_step(self, f: float, channel: int = 1) -> None:
         """
         Set frequency step
 
@@ -215,29 +240,37 @@ class VNA(ABC):
         ----------
         f : float
             frequency step [Hz]
+        channel : int
+            channel to set frequency step (if supported)
         """
-        pass
+        self.write(f"sense{channel}:sweep:step {f}")
 
-    def frequency(self) -> Frequency:
+    def frequency(self, channel: int = 1) -> Frequency:
         """
         Get current frequency as :class:`Frequency` object
+
+        Parameters
+        ----------
+        channel : int
+            channel to get frequency (if supported)
 
         Returns
         -------
         Frequency
             current frequency settings as frequency object
         """
-        start = self.start_freq()
-        stop = self.stop_freq()
-        npoints = self.npoints()
+        start = self.start_freq(channel)
+        stop = self.stop_freq(channel)
+        npoints = self.npoints(channel)
         return Frequency(start, stop, npoints, unit="hz")
 
     def set_frequency(
         self,
-        freq: Optional[Frequency] = None,
+        frequency: Optional[Frequency] = None,
         start: Optional[float] = None,
         stop: Optional[float] = None,
         npoints: Optional[int] = None,
+        channel: int = 1,
     ) -> None:
         """
         Set current frequency
@@ -247,7 +280,7 @@ class VNA(ABC):
 
         Parameters
         ----------
-        freq :
+        frequency :
             Frequency object
         start :
             start frequency [Hz]
@@ -255,6 +288,8 @@ class VNA(ABC):
             stop frequency [Hz]
         npoints :
             number of frequency points
+        channel : int
+            channel to set frequency (if supported)
 
         Raises
         ------
@@ -262,40 +297,45 @@ class VNA(ABC):
             If a frequency object is passed with any other parameters or if not
             all of start, stop, and npoints are provided
         """
-        if freq and any((start, stop, npoints)):
+        if frequency and any((start, stop, npoints)):
             raise ValueError(
                 "Got too many arguments. Pass either Frequency object or start, stop, and step."
             )
-        if not freq and not all((start, stop, npoints)):
+        if not frequency and not all((start, stop, npoints)):
             raise ValueError(
                 "Got too few arguments. Pass either Frequency object or start, stop, and step."
             )
 
-        if freq:
-            self.set_start_freq(freq.start)
-            self.set_stop_freq(freq.stop)
-            self.set_npoints(freq.npoints)
+        if frequency:
+            self.set_start_freq(frequency.start, channel)
+            self.set_stop_freq(frequency.stop, channel)
+            self.set_npoints(frequency.npoints, channel)
         else:
-            self.set_start_freq(start)  # type: ignore
-            self.set_stop_freq(stop)  # type: ignore
-            self.set_npoints(npoints)  # type: ignore
+            # We've already checked our arguments at this point,
+            # so we can safely ignore the possibility of None
+            self.set_start_freq(start, channel)  # type: ignore
+            self.set_stop_freq(stop, channel)  # type: ignore
+            self.set_npoints(npoints, channel)  # type: ignore
 
-    @abstractmethod
-    def sweep_mode(self) -> str:
+    def sweep_mode(self, channel: int = 1) -> str:
         """
         Get the current sweep mode
 
         This is typically to hold, continuous, etc.
+
+        Parameters
+        ----------
+        channel : int
+            channel to get sweep mode (if supported)
 
         Returns
         -------
         str
             current sweep mode
         """
-        pass
+        return self.query(f"sense{channel}:sweep:mode?")
 
-    @abstractmethod
-    def set_sweep_mode(self, mode: str) -> None:
+    def set_sweep_mode(self, mode: str, channel: int = 1) -> None:
         """
         Set the sweep mode
 
@@ -305,25 +345,30 @@ class VNA(ABC):
         ----------
         mode : str
             sweep mode
+        channel : int
+            channel to set sweep mode (if supported)
         """
-        pass
+        self.write(f"sense{channel}:sweep:mode {mode}")
 
-    @abstractmethod
-    def sweep_type(self) -> str:
+    def sweep_type(self, channel: int = 1) -> str:
         """
         Get the current frequency sweep type
 
         This is typically linear, logarithmic, etc.
+
+        Parameters
+        ----------
+        channel : int
+            channel to get sweep type (if supported)
 
         Returns
         -------
         str
             Current sweep type
         """
-        pass
+        return self.query(f"sense{channel}:sweep:type?")
 
-    @abstractmethod
-    def set_sweep_type(self, _type: str) -> None:
+    def set_sweep_type(self, type_: str, channel: int = 1) -> None:
         """
         Set the type of frequency sweep
 
@@ -331,25 +376,30 @@ class VNA(ABC):
 
         Parameters
         ----------
-        _type : str
+        type_ : str
             type of frequency sweep
+        channel : int
+            channel to set sweep type (if supported)
         """
-        pass
+        self.write(f"sense{channel}:sweep:type {type_}")
 
-    @abstractmethod
-    def sweep_time(self) -> float:
+    def sweep_time(self, channel: int = 1) -> float:
         """
         Get the current sweep time
+
+        Parameters
+        ----------
+        channel : int
+            channel to get sweep time (if supported)
 
         Returns
         -------
         float
             duration of a single sweep [s]
         """
-        pass
+        return float(self.query(f"sense{channel}:sweep:time?"))
 
-    @abstractmethod
-    def set_sweep_time(self, time: Union[float, str]) -> None:
+    def set_sweep_time(self, time: Union[float, str], channel: int = 1) -> None:
         """
         Set the duration of a single sweep
 
@@ -357,23 +407,28 @@ class VNA(ABC):
         ----------
         time : Union[float, str]
             length of time to set a single sweep [s]
+        channel : int
+            channel to set sweep time (if supported)
         """
-        pass
+        self.write(f"sense{channel}:sweep:time {time}")
 
-    @abstractmethod
-    def if_bandwidth(self) -> float:
+    def if_bandwidth(self, channel: int = 1) -> float:
         """
         Get the current IF bandwidth
+
+        Parameters
+        ----------
+        channel : int
+            channel to get IF bandwidth (if supported)
 
         Returns
         -------
         float
             current IF bandwidth [Hz]
         """
-        pass
+        return float(self.query(f"sense{channel}:sweep:bwidth?"))
 
-    @abstractmethod
-    def set_if_bandwidth(self, bw: float) -> None:
+    def set_if_bandwidth(self, bw: float, channel: int = 1) -> None:
         """
         Set the IF bandwidth
 
@@ -381,47 +436,57 @@ class VNA(ABC):
         ----------
         bw : float
             desired IF bandwidth [Hz]
+        channel : int
+            channel to set IF bandwidth (if supported)
         """
-        pass
+        self.write(f"sense{channel}:bwidth {bw}")
 
-    @abstractmethod
-    def averaging_on(self) -> bool:
+    def averaging_on(self, channel: int = 1) -> bool:
         """
         Checks if averaging is on or off
+
+        Parameters
+        ----------
+        channel : int
+            channel to get averaging state (if supported)
 
         Returns
         -------
         bool
             True if averaging is on, False otherwise
         """
-        pass
+        return self.query(f"sense{channel}:average?").strip() != "0"
 
-    @abstractmethod
-    def set_averaging_on(self, onoff: bool) -> None:
+    def set_averaging_on(self, state: bool, channel: int = 1) -> None:
         """
         Sets averaging on or off
 
         Parameters
         ----------
-        onoff : bool
+        state : bool
             True to turn on averaging, False to turn it off
+        channel : int
+            channel to set averaging state (if supported)
         """
-        pass
+        self.write(f"sense{channel}:average {'on' if state else 'off'}")
 
-    @abstractmethod
-    def average_count(self) -> int:
+    def average_count(self, channel: int = 1) -> int:
         """
         Get the current averaging count
+
+        Parameters
+        ----------
+        channel : int
+            channel to get average count (if supported)
 
         Returns
         -------
         int
             The current averaging count
         """
-        pass
+        return int(self.query(f"sense{channel}:average:count?"))
 
-    @abstractmethod
-    def set_average_count(self, n: int) -> None:
+    def set_average_count(self, n: int, channel: int = 1) -> None:
         """
         Sets the averaging count
 
@@ -429,216 +494,112 @@ class VNA(ABC):
         ----------
         n : int
             desired averaging count
+        channel : int
+            channel to set average count (if supported)
         """
-        pass
+        self.write(f"sense{channel}:average:count {n}")
 
-    @abstractmethod
-    def average_mode(self) -> str:
-        """
-        Get the current averaging mode
-
-        This is typically point, sweep, etc.
-
-        Returns
-        -------
-        str
-            current averaging mode
-        """
-        pass
-
-    @abstractmethod
-    def set_average_mode(self, mode: str) -> None:
-        """
-        Set the averaging mode
-
-        Parameters
-        ----------
-        mode : str
-            desired averaging mode
-        """
-        pass
-
-    @abstractmethod
-    def clear_averaging(self) -> None:
+    def clear_averaging(self, channel: int = 1) -> None:
         """
         Clear the averaging values
-        """
-        pass
-
-    @abstractmethod
-    def num_sweep_groups(self) -> int:
-        """
-        Get the current number of sweep groups
-
-        Returns
-        -------
-        int
-            current number of sweep groups
-        """
-        pass
-
-    @abstractmethod
-    def set_num_sweep_groups(self, n: int) -> None:
-        """
-        Set the number of sweep groups
-
-        Parameters
-        ----------
-        n : int
-            desired number of sweep groups
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def channels_in_use(self) -> List[int]:
-        """
-        Get the channels currently in use
-
-        Returns
-        -------
-        List[int]
-            list of the channels currently in use
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def active_channel(self) -> Optional[int]:
-        """
-        Get the active channel
-
-        Returns
-        -------
-        Optional[int]
-            the number of the active channel. `None` if no channels are active
-        """
-        pass
-
-    @active_channel.setter
-    @abstractmethod
-    def active_channel(self, channel: int) -> None:
-        """
-        Set the active channel
 
         Parameters
         ----------
         channel : int
-            the desired channel
+            channel to clear averaging (if supported)
         """
-        pass
+        self.write(f"sense{channel}:average:clear")
 
     @abstractmethod
-    def measurements_on_channel(self, channel: int) -> List[Measurement]:
-        """
-        Get the list of measurements active on the specified channel
-
-        Parameters
-        ----------
-        channel : int
-            the channel in question
-
-        Returns
-        -------
-        List[Measurement]
-            List of measurement objects with measurement name, parameter, and channel
-        """
-        pass
-
-    @property
-    def measurements(self) -> List[Measurement]:
+    def measurements(self) -> List[Tuple]:
         """
         Get a list of all current measurements
 
         Returns
         -------
-        List[Measurement]
-            List of all measurements (name, parameter, channel) currently
-            defined on all channels
-        """
-        channels = self.channels_in_use
-        msmts = []
-        for chan in channels:
-            msmts += self.measurements_on_channel(chan)
-
-        return msmts
-
-    def measurement_names(self, channel: int = 1) -> List[str]:
-        """
-        Get the names of all measurements on a channel
-
-        Parameters
-        ----------
-        channel : int
-            the channel in question
-
-        Returns
-        -------
-        List[str]
-            list of measurement names
-        """
-        return [m.name for m in self.measurements if m.channel == channel]
-
-    @property
-    @abstractmethod
-    def active_measurement(self) -> Optional[str]:
-        """
-        Get the active measurement
-
-        Returns
-        -------
-        Optional[str]
-            the active measurement name. None if no measurement is active
+        List[Tuple]
+            List of all measurements currently defined on all channels. Each
+            element of the list is a Tuple containing (in order), the
+            measurement name or number, measurement parameter, and
+            channel if available.
         """
         pass
 
     @abstractmethod
-    def set_active_measurement(self, meas: Union[int, str]) -> None:
+    def active_measurement(self, channel: int = 1) -> Optional[Union[str, int]]:
+        """
+        Get the active measurement
+
+        Parameters
+        ----------
+        channel : int
+            channel to get active measurement from (if supported)
+
+        Returns
+        -------
+        Optional[str, int]
+            the active measurement or trace number. None if no measurement is
+            active
+        """
+        pass
+
+    @abstractmethod
+    def set_active_measurement(self, id_: Union[int, str], channel: int = 1) -> None:
         """
         Set the active measurement
 
         Parameters
         ----------
-        meas : Union[int, str]
+        id_ : Union[int, str]
             the name or number of the desired measurement
+        channel : int
+            channel to set active measurement on (if supported)
         """
         pass
 
     @abstractmethod
-    def create_measurement(self, name: str, param: str) -> None:
+    def create_measurement(
+        self, id_: Union[str, int], param: str, channel: int = 1
+    ) -> None:
         """
         Create a measurement
 
         Parameters
         ----------
-        name : str
-            what to name the measurement
+        id_ : Union[str, int]
+            the name or id of the new measurement
         param : str
             the measurement parameter (S11, S21, A, etc.)
+        channel : int
+            channel to create measurement on (if supported)
         """
         pass
 
     @abstractmethod
-    def delete_measurement(self, name: str) -> None:
+    def delete_measurement(self, id_: Union[str, int], channel: int = 1) -> None:
         """
         Delete a measurement
 
         Parameters
         ----------
-        name : str
-            name of the measurement to be deleted
+        id_ : Union[str, int]
+            name or number of the measurement to be deleted
+        channel : int
+            channel to delete measurement on (if supported)
         """
         pass
 
     @abstractmethod
-    def get_measurement(self, meas: Union[int, str]) -> Network:
+    def get_measurement(self, id_: Union[int, str], channel: int = 1) -> Network:
         """
         Get measurement data as a `Network`
 
         Parameters
         ----------
-        meas : Union[int, str]
+        id_ : Union[int, str]
             name or number of the measurement to get
+        channel : int
+            channel to get measurement from (if supported)
 
         Returns
         -------
@@ -716,12 +677,13 @@ class VNA(ABC):
         """
         pass
 
-    @abstractmethod
     def sweep(self) -> None:
         """
         Trigger a fresh sweep
         """
-        pass
+        self.resource.clear()
+        self.write("initiate:immediate")
+        self.query("*OPC?")
 
     @abstractmethod
     def get_snp_network(self, ports: Optional[Sequence] = None) -> Network:

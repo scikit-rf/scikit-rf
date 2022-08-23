@@ -1,6 +1,5 @@
 """
 .. module:: skrf.vi
-
 ========================================================
 virtual instruments (:mod:`skrf.vi`)
 ========================================================
@@ -61,27 +60,6 @@ SCPI Commands
 SCPI or Standard Commands for Programmable Instruments is a standard defined by
 the IVI Foundation to provide a standard syntax for controlling instruments.
 There are many types of instruments that can be controlled with SCPI commands.
-The difficult bit is that these commands can vary wildy between manufacturers
-and even between devices from the same manufacturer. As an example, consider the
-command to change the start frequency of a network anaylyzer to 1GHz.
-
-- Keysight PNA: SENS:FREQ:STAR 1000000000
-- Keysight Field Fox: SENS:FREQ:STAR 1000000000
-- Rhode and Schwarz: SENS:FREQ:STAR 1000000000
-
-They all look the same right? But what about turning averaging on and off:
-
-- Keysight PNA: SENS:AVER ON
-- Keysight FieldFox: ???
-- Rhode and Schwarz ZVA: SENS:AVER ON
-
-The PNA and the Rhode and Schwarz share the same command but the FieldFox
-doesn't have a command to directly turn averaging on and off. Instead you have
-to set the average count to 1 to turn off averaging.
-
-Inconsitencies like this are why we need to create classes for every instrument
-we support. Some Instrumentss (like the nanovna) don't even provide a SCPI
-interface.
 
 To learn about SCPI, you can read the `IVI website`_, or `Wikipedia`_.
 
