@@ -539,6 +539,34 @@ class Network(object):
         else:
             return cascade(self, other)
 
+    def __rshift__(self, other: 'Network') -> 'Network':
+        """
+        Cascade two 4-port networks with "1=>2/3=>4" port numbering.
+
+        Returns
+        -------
+        ntw : :class:`Network`
+            Cascaded Network
+
+        See Also
+        --------
+        cascade
+
+        """
+        check_nports_equal(self, other)
+        check_frequency_exist(self)
+        (h,_) = shape(self.s[0])
+        if h != 4:
+            raise ValueError("Operator >> may only be used to cascade 4-port networks.")
+            
+        _ntwk1 = self.copy()
+        _ntwk1.renumber([1,2],[2,1])
+        _ntwk2 = other.copy()
+        _ntwk2.renumber([1,2],[2,1])
+        _rslt = _ntwk1 ** _ntwk2
+        _rslt.renumber([1,2],[2,1])
+        return _rslt
+
     def __floordiv__(self, other: Union['Network', Tuple['Network', ...]] ) -> 'Network':
         """
         de-embedding 1 or 2 network[s], from this network
