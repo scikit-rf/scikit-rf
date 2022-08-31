@@ -249,7 +249,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir: str ='.', sorted = None, contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
+def read_all(dir: str ='.', sort = None, contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
     """
     Read all skrf objects in a directory.
 
@@ -319,8 +319,8 @@ def read_all(dir: str ='.', sorted = None, contains = None, f_unit = None, obj_t
     else:
         filelist.extend(files)
          
-    if sorted is not None:
-      filelist = sorted(filelist)
+    if sort is not None:
+      filelist.sort()
 
     for filename in filelist:
         if contains is not None and contains not in filename:
@@ -414,6 +414,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
     """
     if not os.path.exists('.'):
         raise OSError('No such directory: %s'%dir)
+         
 
 
     for k in dict_objs:
@@ -498,7 +499,7 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 
     Notes
     -------
-    Alternatively you can use the :func:`read_all` function.
+    Alternatively you can use the :func:`#` function.
 
     Parameters
     -----------
