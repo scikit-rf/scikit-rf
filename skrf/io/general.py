@@ -249,7 +249,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
+def read_all(dir: str ='.', sorted = None, contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
     """
     Read all skrf objects in a directory.
 
@@ -318,6 +318,9 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
             filelist.append(filename)
     else:
         filelist.extend(files)
+         
+    if sorted is not None:
+      filelist = sorted(filelist)
 
     for filename in filelist:
         if contains is not None and contains not in filename:
