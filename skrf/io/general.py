@@ -320,7 +320,7 @@ def read_all(dir: str ='.', sort = None, contains = None, f_unit = None, obj_typ
         filelist.extend(files)
          
     if sort is not None:
-      filelist.sort()
+        filelist.sort()
 
     for filename in filelist:
         if contains is not None and contains not in filename:
