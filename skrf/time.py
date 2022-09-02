@@ -17,11 +17,14 @@ Time domain functions
 
 """
 from .util import find_nearest_index
-from scipy.ndimage import convolve1d
 from scipy import signal
 import numpy as npy
-from numpy import fft
-from typing import List
+from numpy.fft import fft, fftshift, ifft, ifftshift
+
+# imports for type hinting
+from typing import List, TYPE_CHECKING
+if TYPE_CHECKING:
+    from .network import Network
 
 
 def indexes(y: npy.ndarray, thres: float = 0.3, min_dist: int = 1) -> npy.ndarray:
@@ -188,14 +191,12 @@ def detect_span(ntwk) -> float:
     return span
 
 
-def time_gate(ntwk, start: float = None, stop: float = None, center: float = None, span: float = None,
-              mode: str = 'bandpass', window=('kaiser', 6), media=None,
-              boundary: str = 'reflect', return_all: bool = False):
+def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
+              mode: str = 'bandpass', window=('kaiser', 6)) -> 'Network':
     """
-    Time-gate one-port s-parameters.
+    Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
-    The gate can be defined with start/stop times, or by
-    center/span. all times are in units of nanoseconds. common
+    The gate can be defined with start/stop times, or by center/span. All times are in units of nanoseconds. Common
     windows are:
 
     * ('kaiser', 6)
@@ -220,23 +221,15 @@ def time_gate(ntwk, start: float = None, stop: float = None, center: float = Non
     span : number, or None
         span of time gate, (ns).  If None span will be half of the
         distance to the second tallest peak
-    mode: ['bandpass','bandstop']
+    mode : ['bandpass', 'bandstop']
         mode of gate
-    boundary:  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'},
-        passed to `scipy.ndimage.filters.convolve1d`
     window : string, float, or tuple
-        passed to `window` arg of `scipy.signal.get_window`
+        passed to `window` arg of `scipy.signal.get_window()`
 
     Note
     ----
     You cant gate things that are 'behind' strong reflections. This
     is due to the multiple reflections that occur.
-
-    If `center!=0`, then the ntwk's time response is shifted
-    to t=0, gated, then shifted back to where it was. This is
-    done in frequency domain using `ntwk.delay()`. If the media being
-    gated is dispersive (ie waveguide), then the gate `span` will be
-    span at t=0, which is different.
 
     If you need to time-gate an N-port network, then you should
     gate each s-parameter independently.
@@ -246,16 +239,14 @@ def time_gate(ntwk, start: float = None, stop: float = None, center: float = Non
     ntwk : Network
         copy of ntwk with time-gated s-parameters
 
-
     .. warning::
         Depending on sharpness of the gate, the band edges may be
         inaccurate, due to properties of FFT. We do not re-normalize
         anything.
-
-
     """
+
     if ntwk.nports >1:
-        raise ValueError('Time-gating only works on one-ports. try taking ntwk.s11 or ntwk.s21 first')
+        raise ValueError('Time-gating only works on one-ports. Try passing `ntwk.s11` or `ntwk.s21`.')
 
     if start is not None and stop is not None:
         start *= 1e-9
@@ -287,47 +278,22 @@ def time_gate(ntwk, start: float = None, stop: float = None, center: float = Non
     window_width = abs(stop_idx - start_idx)
     window = signal.get_window(window, window_width)
 
+    nw_gated = ntwk.copy()
+
     # create the gate by padding the window with zeros
-    gate = npy.r_[npy.zeros(start_idx),
-                           window,
-                           npy.zeros(len(t) - stop_idx)]
+    gate = npy.zeros_like(t)
+    gate[start_idx:stop_idx] = window
 
-    #FFT the gate, so we have it's frequency response, aka kernel
-    kernel=fft.ifftshift(fft.fft(fft.fftshift(gate, axes=0), axis=0))
-    kernel =abs(kernel).flatten() # take mag and flatten
-    kernel=kernel/sum(kernel) # normalize kernel
-
-    out = ntwk.copy()
-
-    # conditionally delay ntwk, to center at t=0, this is
-    # equivalent to gating at center.  (this is probably very inefficient)
-    if center!=0:
-        out = out.delay(-center*1e9, 'ns',port=0,media=media)
-
-    # waste of code to handle convolve1d suck
-    re = out.s_re[:,0,0]
-    im = out.s_im[:,0,0]
-    s = convolve1d(re,kernel, mode=boundary)+\
-     1j*convolve1d(im,kernel, mode=boundary)
-    out.s[:,0,0] = s
-    # conditionally  un-delay ntwk
-    if center!=0:
-        out = out.delay(center*1e9, 'ns',port=0,media=media)
+    # time-domain gating
+    s_td = fftshift(ifft(nw_gated.s[:, 0, 0]))
+    s_td_g = s_td * gate
+    nw_gated.s[:, 0, 0] = fft(ifftshift(s_td_g))
 
     if mode == 'bandstop':
-        out = ntwk-out
+        nw_gated = ntwk - nw_gated
     elif mode=='bandpass':
         pass
     else:
         raise ValueError('mode should be \'bandpass\' or \'bandstop\'')
 
-    if return_all:
-        # compute the gate ntwk and add delay
-        gate_ntwk = out.s11.copy()
-        gate_ntwk.s = kernel
-        gate_ntwk= gate_ntwk.delay(center*1e9, 'ns', media=media)
-
-        return {'gated_ntwk':out,
-                'gate':gate_ntwk}
-    else:
-        return out
+    return nw_gated
