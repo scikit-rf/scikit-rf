@@ -249,7 +249,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
+def read_all(dir: str ='.', sort=True, contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
     """
     Read all skrf objects in a directory.
 
@@ -261,6 +261,8 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
     ----------
     dir : str, optional
         the directory to load from, default  \'.\'
+    sort: boolean, default is True
+        filelist will be sorted according to https://docs.python.org/3/library/stdtypes.html#list.sort without arguments
     contains : str, optional
         if not None, only files containing this substring will be loaded
     f_unit : ['hz','khz','mhz','ghz','thz']
@@ -318,6 +320,10 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
             filelist.append(filename)
     else:
         filelist.extend(files)
+    
+    if sort is True:
+        filelist = filelist.sort()
+   
 
     for filename in filelist:
         if contains is not None and contains not in filename:
