@@ -1,0 +1,66 @@
+[tool.poetry]
+name = "scikit-rf"
+version = "0.23.1"
+description = "Object Oriented Microwave Engineering"
+authors = ["Alex Arsenovic <alexanderarsenovic@gmail.com>"]
+license = "BSD-3-Clause"
+readme = "README.md"
+homepage = "https://scikit-rf.org/"
+repository = "https://github.com/scikit-rf/scikit-rf"
+documentation = "https://scikit-rf.readthedocs.io/en/latest/"
+keywords = [
+    "engineering", 
+    "electronics", 
+    "microwave-engineering", 
+    "radio-frequency", 
+    "touchstone"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Communications :: Ham Radio",
+    "Topic :: Scientific/Engineering"]
+packages = [{include="skrf"}]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+numpy = "^1.21"
+scipy = "^1.6.1"
+pandas = "^1.1.5"
+matplotlib = {version = "^3.5.3", optional=true}
+openpyxl = {version = "^3.0.10", optional=true}
+networkx = {version = "^2.6.3", optional=true}
+
+[tool.poetry.extras]
+plot = ["matplotlib"]
+xlsx = ["openpyxl"]
+netw = ["networkx"]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7"
+coverage = "^6"
+flake8 = "^5.0.4"
+pytest-cov = "^3.0.0"
+nbval = "^0.9.6"
+tox-gh-actions = "^2.9.1"
+PyVISA = "^1.12.0"
+
+[tool.poetry.group.doc]
+optional = true
+
+[tool.poetry.group.doc.dependencies]
+ipython = "^7"
+ipykernel = "^6.15.2"
+ipywidgets = "^8.0.2"
+python-ivi = "^0.14.9"
+jupyter-client = "^7.3.5"
+sphinx-rtd-theme = "^1.0.0"
+Sphinx = "^4"
+nbsphinx = "^0.8.9"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

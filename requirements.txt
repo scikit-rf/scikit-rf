@@ -1,8 +1,0 @@
-matplotlib
-scipy
-numpy>=1.19.5
-pandas
-nbsphinx
-networkx
-xlwt
-openpyxl
