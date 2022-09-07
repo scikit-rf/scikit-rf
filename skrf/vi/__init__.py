@@ -9,16 +9,6 @@ types of instruments used in RF measurements and experiments.
 
 .. automodule:: skrf.vi.vna
 
-Spectrum Analyzers (SAs)
-========================
-
-Coming soon!
-
-Antenna Positioners
-===================
-
-Coming soon!
-
 Conventions
 ===========
 
