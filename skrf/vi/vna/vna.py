@@ -266,28 +266,16 @@ class VNA(ABC):
 
     def set_frequency(
         self,
-        frequency: Optional[Frequency] = None,
-        start: Optional[float] = None,
-        stop: Optional[float] = None,
-        npoints: Optional[int] = None,
+        frequency: Frequency,
         channel: int = 1,
     ) -> None:
         """
-        Set current frequency
-
-        The user can provide **either** a frequency object **or** start, stop
-        **and** npoints
+        Set current frequency from a skrf Frequency object
 
         Parameters
         ----------
         frequency :
             Frequency object
-        start :
-            start frequency [Hz]
-        stop :
-            stop frequency [Hz]
-        npoints :
-            number of frequency points
         channel : int
             channel to set frequency (if supported)
 
@@ -297,25 +285,9 @@ class VNA(ABC):
             If a frequency object is passed with any other parameters or if not
             all of start, stop, and npoints are provided
         """
-        if frequency and any((start, stop, npoints)):
-            raise ValueError(
-                "Got too many arguments. Pass either Frequency object or start, stop, and step."
-            )
-        if not frequency and not all((start, stop, npoints)):
-            raise ValueError(
-                "Got too few arguments. Pass either Frequency object or start, stop, and step."
-            )
-
-        if frequency:
-            self.set_start_freq(frequency.start, channel)
-            self.set_stop_freq(frequency.stop, channel)
-            self.set_npoints(frequency.npoints, channel)
-        else:
-            # We've already checked our arguments at this point,
-            # so we can safely ignore the possibility of None
-            self.set_start_freq(start, channel)  # type: ignore
-            self.set_stop_freq(stop, channel)  # type: ignore
-            self.set_npoints(npoints, channel)  # type: ignore
+        self.set_start_freq(frequency.start, channel)
+        self.set_stop_freq(frequency.stop, channel)
+        self.set_npoints(frequency.npoints, channel)
 
     def sweep_mode(self, channel: int = 1) -> str:
         """
