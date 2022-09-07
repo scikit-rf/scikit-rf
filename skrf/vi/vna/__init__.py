@@ -26,6 +26,6 @@ Keysight
     PNA
 """
 
-from . import keysight, rhodeschwarz
+from . import keysight, nanovna, rhodeschwarz
 from .utils import available
 from .vna import VNA
