@@ -22,3 +22,5 @@ qtapps/sandbox*
 .coverage
 .tox/
 .coverage*
+
+poetry.lock
