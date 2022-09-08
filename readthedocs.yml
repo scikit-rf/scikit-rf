@@ -6,4 +6,4 @@ build:
     post_install:
       - pip install poetry==1.2.0
       - poetry config virtualenvs.create false
-      - poetry install --with doc
+      - poetry install --with docs
