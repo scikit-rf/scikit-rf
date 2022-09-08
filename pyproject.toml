@@ -43,6 +43,7 @@ coverage = {version="^6", optional=true}
 flake8 = {version="^5.0.4", optional=true}
 pytest-cov = {version="^3.0.0", optional=true}
 nbval = {version="^0.9.6", optional=true}
+requests = {version="^2.28.1", optional=true}
 ipython = {version="^7", optional=true}
 ipykernel = {version="^6.15.2", optional=true}
 ipywidgets = {version="^8.0.2", optional=true}
@@ -58,7 +59,7 @@ plot = ["matplotlib"]
 xlsx = ["openpyxl"]
 netw = ["networkx"]
 visa = ["pyvisa"]
-test = ["pytest", "coverage", "flake8", "pytest-cov", "nbval"]
+test = ["pytest", "coverage", "flake8", "pytest-cov", "nbval", "requests", "ipywidgets"]
 docs = ["ipython", "ipykernel", "ipywidgets", "python-ivi", 
         "jupyter-client", "sphinx-rtd-theme", "sphinx", "nbsphinx"]
 
