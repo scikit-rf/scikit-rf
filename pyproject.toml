@@ -59,6 +59,8 @@ xlsx = ["openpyxl"]
 netw = ["networkx"]
 visa = ["pyvisa"]
 test = ["pytest", "coverage", "flake8", "pytest-cov", "nbval"]
+docs = ["ipython", "ipykernel", "ipywidgets", "python-ivi", 
+        "jupyter-client", "sphinx-rtd-theme", "sphinx", "nbsphinx"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
