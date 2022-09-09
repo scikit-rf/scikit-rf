@@ -26,12 +26,12 @@ class PNA(VNA):
         super().set_freq_step(f, channel)
 
     def average_mode(self, channel: int = 1) -> str:
-        return self.query(f"sense{channel}:sweep:average:mode?")
+        return self.query(f"sense{channel}:average:mode?")
 
     def set_average_mode(self, mode: str, channel: int = 1) -> None:
         if mode.lower() not in ["point, sweep"]:
             raise ValueError(f"Unrecognized averaging mode: {mode}")
-        self.write(f"sense{channel}:sweep:average:mode {mode}")
+        self.write(f"sense{channel}:average:mode {mode}")
 
     def num_sweep_groups(self, channel: int = 1) -> int:
         return int(self.query(f"sense{channel}:sweep:groups:count?"))
@@ -117,11 +117,14 @@ class PNA(VNA):
         self.write(f"calculate{channel}:parameter:delete {id_}")
 
     def get_measurement(self, id_: Union[str, int], channel: int = 1) -> Network:
+        self.resource.clear()
         self.set_active_measurement(id_, channel, True)
         self.query("*OPC?")
+        self.sweep(channel=channel)
         raw = np.array(
             self.query_ascii(f"calculate{channel}:data? sdata"), dtype=np.complex64
         )
+        self.query("*OPC?")
         ntwk = Network()
         ntwk.frequency = self.frequency(channel)
         ntwk.s = raw[::2] + 1j * raw[1::2]
