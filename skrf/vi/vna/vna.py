@@ -17,6 +17,12 @@ from skrf.frequency import Frequency
 from skrf.network import Network
 
 
+class UnsupportedError(RuntimeError):
+    """Error raised when an instrument doesn't support something"""
+
+    pass
+
+
 class VNA(ABC):
     """
     Abstract base class for VNAs
@@ -24,14 +30,9 @@ class VNA(ABC):
     This class defines the interface to be provided by all network analyzer
     implementations.
 
-    The instrument's manual and the SCPI manual should both be consulted when
-    subclassing. This base class only provides implementations of official SCPI
-    commands and the virutal instrument interface. Simple SCPI commands that are
-    specific to the instrument or manufacturer should only be defined in those
-    classes.
-
-    If an instrument does support a SCPI command that is defined in this class,
-    it should raise a `NotImplmentedError`.
+    The instrument's manual should be consulted when subclassing. This base
+    class only provides the expected interface any subclass should implement. If
+    a device does not support a function, the default is to raise `UnsupportedError`.
 
     Finally, subclasses should check that arguments are sensible to the
     instrument they represent. For example, if an instrument only has two ports,
@@ -129,23 +130,20 @@ class VNA(ABC):
         """
         return self.query("*IDN?")
 
-    def start_freq(self, channel: int = 1) -> float:
+    @property
+    def start_freq(self) -> float:
         """
         Get start frequency
-
-        Parameters
-        ---------
-        channel : int
-            channel to get frequency (if supported)
 
         Returns
         -------
         float
             start frequency [Hz]
         """
-        return float(self.query(f"sense{channel}:frequency:start?"))
+        raise UnsupportedError
 
-    def set_start_freq(self, f: float, channel: int = 1) -> None:
+    @start_freq.setter
+    def start_freq(self, f: float) -> None:
         """
         Set start frequency
 
@@ -153,28 +151,23 @@ class VNA(ABC):
         ----------
         f : float
             start frequency [Hz]
-        channel : int
-            channel to set frequency (if supported)
         """
-        self.write(f"sense{channel}:frequency:start {f}")
+        raise UnsupportedError
 
-    def stop_freq(self, channel: int = 1) -> float:
+    @property
+    def stop_freq(self) -> float:
         """
         Get stop frequency
-
-        Parameters
-        ----------
-        channel : int
-            channel to get frequency (if supported)
 
         Returns
         -------
         float
             stop frequency [Hz]
         """
-        return float(self.query(f"sense{channel}:frequency:stop?"))
+        raise UnsupportedError
 
-    def set_stop_freq(self, f: float, channel: int = 1) -> None:
+    @stop_freq.setter
+    def stop_freq(self, f: float, channel: int = 1) -> None:
         """
         Set stop frequency
 
@@ -182,28 +175,23 @@ class VNA(ABC):
         ----------
         f : float
             stop frequency [Hz]
-        channel : int
-            channel to set frequency (if supported)
         """
-        self.write(f"sense{channel}:frequency:stop {f}")
+        raise UnsupportedError
 
-    def npoints(self, channel: int = 1) -> int:
+    @property
+    def npoints(self) -> int:
         """
         Get number of frequency points
-
-        Parameters
-        ----------
-        channel : int
-            channel to get npoints (if supported)
 
         Returns
         -------
         int
             number of frequency points
         """
-        return int(self.query(f"sense{channel}:sweep:points?"))
+        raise UnsupportedError
 
-    def set_npoints(self, n: int, channel: int = 1) -> None:
+    @npoints.setter
+    def npoints(self, n: int) -> None:
         """
         Set number of frequency points
 
@@ -211,28 +199,23 @@ class VNA(ABC):
         ----------
         n : int
             number of frequency points
-        channel : int
-            channel to set npoints (if supported)
         """
-        self.write(f"sense{channel}:sweep:points {n}")
+        raise UnsupportedError
 
-    def freq_step(self, channel: int = 1) -> float:
+    @property
+    def freq_step(self) -> float:
         """
         Get frequency step
-
-        Parameters
-        ----------
-        channel : int
-            channel to get frequency step (if supported)
 
         Returns
         -------
         float
             frequency step [Hz]
         """
-        return float(self.query(f"sense{channel}:sweep:step?"))
+        raise UnsupportedError
 
-    def set_freq_step(self, f: float, channel: int = 1) -> None:
+    @freq_step.setter
+    def freq_step(self, f: float) -> None:
         """
         Set frequency step
 
@@ -240,34 +223,25 @@ class VNA(ABC):
         ----------
         f : float
             frequency step [Hz]
-        channel : int
-            channel to set frequency step (if supported)
         """
-        self.write(f"sense{channel}:sweep:step {f}")
+        raise UnsupportedError
 
-    def frequency(self, channel: int = 1) -> Frequency:
+    @property
+    def frequency(self) -> Frequency:
         """
         Get current frequency as :class:`Frequency` object
-
-        Parameters
-        ----------
-        channel : int
-            channel to get frequency (if supported)
 
         Returns
         -------
         Frequency
             current frequency settings as frequency object
         """
-        start = self.start_freq(channel)
-        stop = self.stop_freq(channel)
-        npoints = self.npoints(channel)
-        return Frequency(start, stop, npoints, unit="hz")
+        raise UnsupportedError
 
-    def set_frequency(
+    @frequency.setter
+    def frequency(
         self,
         frequency: Frequency,
-        channel: int = 1,
     ) -> None:
         """
         Set current frequency from a skrf Frequency object
@@ -276,38 +250,25 @@ class VNA(ABC):
         ----------
         frequency :
             Frequency object
-        channel : int
-            channel to set frequency (if supported)
-
-        Raises
-        ------
-        ValueError
-            If a frequency object is passed with any other parameters or if not
-            all of start, stop, and npoints are provided
         """
-        self.set_start_freq(frequency.start, channel)
-        self.set_stop_freq(frequency.stop, channel)
-        self.set_npoints(frequency.npoints, channel)
+        raise UnsupportedError
 
-    def sweep_mode(self, channel: int = 1) -> str:
+    @property
+    def sweep_mode(self) -> str:
         """
         Get the current sweep mode
 
-        This is typically to hold, continuous, etc.
-
-        Parameters
-        ----------
-        channel : int
-            channel to get sweep mode (if supported)
+        This is typically hold, continuous, etc.
 
         Returns
         -------
         str
             current sweep mode
         """
-        return self.query(f"sense{channel}:sweep:mode?")
+        raise UnsupportedError
 
-    def set_sweep_mode(self, mode: str, channel: int = 1) -> None:
+    @sweep_mode.setter
+    def sweep_mode(self, mode: str) -> None:
         """
         Set the sweep mode
 
@@ -317,30 +278,25 @@ class VNA(ABC):
         ----------
         mode : str
             sweep mode
-        channel : int
-            channel to set sweep mode (if supported)
         """
-        self.write(f"sense{channel}:sweep:mode {mode}")
+        raise UnsupportedError
 
-    def sweep_type(self, channel: int = 1) -> str:
+    @property
+    def sweep_type(self) -> str:
         """
         Get the current frequency sweep type
 
         This is typically linear, logarithmic, etc.
-
-        Parameters
-        ----------
-        channel : int
-            channel to get sweep type (if supported)
 
         Returns
         -------
         str
             Current sweep type
         """
-        return self.query(f"sense{channel}:sweep:type?")
+        raise UnsupportedError
 
-    def set_sweep_type(self, type_: str, channel: int = 1) -> None:
+    @sweep_type.setter
+    def set_sweep_type(self, type_: str) -> None:
         """
         Set the type of frequency sweep
 
@@ -350,28 +306,23 @@ class VNA(ABC):
         ----------
         type_ : str
             type of frequency sweep
-        channel : int
-            channel to set sweep type (if supported)
         """
-        self.write(f"sense{channel}:sweep:type {type_}")
+        raise UnsupportedError
 
-    def sweep_time(self, channel: int = 1) -> float:
+    @property
+    def sweep_time(self) -> float:
         """
         Get the current sweep time
-
-        Parameters
-        ----------
-        channel : int
-            channel to get sweep time (if supported)
 
         Returns
         -------
         float
             duration of a single sweep [s]
         """
-        return float(self.query(f"sense{channel}:sweep:time?"))
+        raise UnsupportedError
 
-    def set_sweep_time(self, time: Union[float, str], channel: int = 1) -> None:
+    @sweep_time.setter
+    def sweep_time(self, time: float) -> None:
         """
         Set the duration of a single sweep
 
@@ -379,28 +330,23 @@ class VNA(ABC):
         ----------
         time : Union[float, str]
             length of time to set a single sweep [s]
-        channel : int
-            channel to set sweep time (if supported)
         """
-        self.write(f"sense{channel}:sweep:time {time}")
+        raise UnsupportedError
 
-    def if_bandwidth(self, channel: int = 1) -> float:
+    @property
+    def if_bandwidth(self) -> float:
         """
         Get the current IF bandwidth
-
-        Parameters
-        ----------
-        channel : int
-            channel to get IF bandwidth (if supported)
 
         Returns
         -------
         float
             current IF bandwidth [Hz]
         """
-        return float(self.query(f"sense{channel}:bwidth?"))
+        raise UnsupportedError
 
-    def set_if_bandwidth(self, bw: float, channel: int = 1) -> None:
+    @if_bandwidth.setter
+    def if_bandwidth(self, bw: float) -> None:
         """
         Set the IF bandwidth
 
@@ -408,29 +354,23 @@ class VNA(ABC):
         ----------
         bw : float
             desired IF bandwidth [Hz]
-        channel : int
-            channel to set IF bandwidth (if supported)
         """
-        self.write(f"sense{channel}:bwidth {bw}")
+        raise UnsupportedError
 
-    def averaging_on(self, channel: int = 1) -> bool:
+    @property
+    def averaging_on(self) -> bool:
         """
         Checks if averaging is on or off
-
-        Parameters
-        ----------
-        channel : int
-            channel to get averaging state (if supported)
 
         Returns
         -------
         bool
             True if averaging is on, False otherwise
         """
-        query = self.query(f"sense{channel}:average?").strip()
-        return query == "1" or query.lower() != "ON"
+        raise UnsupportedError
 
-    def set_averaging_on(self, state: bool, channel: int = 1) -> None:
+    @averaging_on.setter
+    def averaging_on(self, state: bool) -> None:
         """
         Sets averaging on or off
 
@@ -438,28 +378,23 @@ class VNA(ABC):
         ----------
         state : bool
             True to turn on averaging, False to turn it off
-        channel : int
-            channel to set averaging state (if supported)
         """
-        self.write(f"sense{channel}:average {'ON' if state else 'OFF'}")
+        raise UnsupportedError
 
-    def average_count(self, channel: int = 1) -> int:
+    @property
+    def average_count(self) -> int:
         """
         Get the current averaging count
-
-        Parameters
-        ----------
-        channel : int
-            channel to get average count (if supported)
 
         Returns
         -------
         int
             The current averaging count
         """
-        return int(self.query(f"sense{channel}:average:count?"))
+        raise UnsupportedError
 
-    def set_average_count(self, n: int, channel: int = 1) -> None:
+    @average_count.setter
+    def average_count(self, n: int) -> None:
         """
         Sets the averaging count
 
@@ -467,23 +402,81 @@ class VNA(ABC):
         ----------
         n : int
             desired averaging count
-        channel : int
-            channel to set average count (if supported)
         """
-        self.write(f"sense{channel}:average:count {n}")
+        raise UnsupportedError
 
-    def clear_averaging(self, channel: int = 1) -> None:
+    @property
+    def average_mode(self) -> str:
+        """
+        Get the current averaging mode
+
+        Returns
+        -------
+        str
+            The current averaging mode
+        """
+        raise UnsupportedError
+
+    @average_mode.setter
+    def average_mode(self, mode: str) -> None:
+        """
+        Sets the current averaging mode
+
+        Parameters
+        -------
+        mode : str
+            The desired averaging mode
+        """
+
+    def clear_averaging(self) -> None:
         """
         Clear the averaging values
+        """
+        raise UnsupportedError
+
+    @property
+    def active_channel(self) -> int:
+        """
+        Get the currently active channel
+
+        Returns
+        -------
+        int
+            Currently active channel
+        """
+        raise UnsupportedError
+
+    @active_channel.setter
+    def active_channel(self, channel: int) -> None:
+        """
+        Set the currently active channel
 
         Parameters
         ----------
         channel : int
-            channel to clear averaging (if supported)
+            Desired channel
         """
-        self.write(f"sense{channel}:average:clear")
+        raise UnsupportedError
 
-    @abstractmethod
+    def measurements_on_channel(self, channel: int) -> List[Tuple]:
+        """
+        Get a list of measurements on the specified channel
+
+        Parameters
+        ----------
+        channel : int
+            The channel in question
+
+        Returns
+        -------
+        List[Tuple]
+            List of measurements currently defined on the specified channel.
+            Each element of the list is a Tuple containing (in order), the
+            measurement name or number, measurement parameter
+        """
+        raise UnsupportedError
+
+    @property
     def measurements(self) -> List[Tuple]:
         """
         Get a list of all current measurements
@@ -491,22 +484,16 @@ class VNA(ABC):
         Returns
         -------
         List[Tuple]
-            List of all measurements currently defined on all channels. Each
-            element of the list is a Tuple containing (in order), the
-            measurement name or number, measurement parameter, and
-            channel if available.
+            List of all measurements currently defined. Each element of the list
+            is a Tuple containing (in order), the measurement name or number,
+            measurement parameter, and channel if available.
         """
-        pass
+        raise UnsupportedError
 
-    @abstractmethod
-    def active_measurement(self, channel: int = 1) -> Optional[Union[str, int]]:
+    @property
+    def active_measurement(self) -> Optional[Union[str, int]]:
         """
         Get the active measurement
-
-        Parameters
-        ----------
-        channel : int
-            channel to get active measurement from (if supported)
 
         Returns
         -------
@@ -514,10 +501,10 @@ class VNA(ABC):
             the active measurement or trace number. None if no measurement is
             active
         """
-        pass
+        raise UnsupportedError
 
-    @abstractmethod
-    def set_active_measurement(self, id_: Union[int, str], channel: int = 1) -> None:
+    @active_measurement.setter
+    def active_measurement(self, id_: Union[int, str]) -> None:
         """
         Set the active measurement
 
@@ -525,15 +512,10 @@ class VNA(ABC):
         ----------
         id_ : Union[int, str]
             the name or number of the desired measurement
-        channel : int
-            channel to set active measurement on (if supported)
         """
-        pass
+        raise UnsupportedError
 
-    @abstractmethod
-    def create_measurement(
-        self, id_: Union[str, int], param: str, channel: int = 1
-    ) -> None:
+    def create_measurement(self, id_: Union[str, int], param: str) -> None:
         """
         Create a measurement
 
@@ -543,13 +525,10 @@ class VNA(ABC):
             the name or id of the new measurement
         param : str
             the measurement parameter (S11, S21, A, etc.)
-        channel : int
-            channel to create measurement on (if supported)
         """
-        pass
+        raise UnsupportedError
 
-    @abstractmethod
-    def delete_measurement(self, id_: Union[str, int], channel: int = 1) -> None:
+    def delete_measurement(self, id_: Union[str, int]) -> None:
         """
         Delete a measurement
 
@@ -557,13 +536,10 @@ class VNA(ABC):
         ----------
         id_ : Union[str, int]
             name or number of the measurement to be deleted
-        channel : int
-            channel to delete measurement on (if supported)
         """
-        pass
+        raise UnsupportedError
 
-    @abstractmethod
-    def get_measurement(self, id_: Union[int, str], channel: int = 1) -> Network:
+    def get_measurement(self, id_: Union[int, str]) -> Network:
         """
         Get measurement data as a `Network`
 
@@ -571,15 +547,13 @@ class VNA(ABC):
         ----------
         id_ : Union[int, str]
             name or number of the measurement to get
-        channel : int
-            channel to get measurement from (if supported)
 
         Returns
         -------
         Network
             one-port network representing measurement data
         """
-        pass
+        raise UnsupportedError
 
     @abstractmethod
     def get_active_trace(self) -> Network:
@@ -594,7 +568,6 @@ class VNA(ABC):
         pass
 
     @property
-    @abstractmethod
     def snp_format(self) -> str:
         """
         Get the current SNP format
@@ -606,10 +579,9 @@ class VNA(ABC):
         str:
             current SNP format
         """
-        pass
+        raise UnsupportedError
 
     @snp_format.setter
-    @abstractmethod
     def snp_format(self, format: str) -> None:
         """
         Set the SNP format
@@ -619,7 +591,7 @@ class VNA(ABC):
         format : str
             desired SNP format
         """
-        pass
+        raise UnsupportedError
 
     @property
     @abstractmethod
@@ -650,18 +622,14 @@ class VNA(ABC):
         """
         pass
 
+    @abstractmethod
     def sweep(self) -> None:
         """
         Trigger a fresh sweep
         """
-        self.resource.clear()
-        self.write("initiate:immediate")
-        self.query("*OPC?")
+        pass
 
-    @abstractmethod
-    def get_snp_network(
-        self, ports: Optional[Sequence] = None, channel: int = 1
-    ) -> Network:
+    def get_snp_network(self, ports: Optional[Sequence] = None) -> Network:
         """
         Get the full SNP network of the specified ports
 
@@ -679,9 +647,8 @@ class VNA(ABC):
         Network
             network object containing full S network data
         """
-        pass
+        raise UnsupportedError
 
-    @abstractmethod
     def upload_oneport_calibration(self, port: int, cal: Calibration) -> None:
         """
         Upload one-port calibration to instrument and apply to a port
@@ -693,9 +660,8 @@ class VNA(ABC):
         cal : Calibration
             the calibration to apply
         """
-        pass
+        raise UnsupportedError
 
-    @abstractmethod
     def upload_twoport_calibration(self, ports: Sequence, cal: Calibration) -> None:
         """
         Upload a twoport calibration to the instrument and apply to the ports
@@ -708,4 +674,4 @@ class VNA(ABC):
         cal : Calibration
             the calibration to apply
         """
-        pass
+        raise UnsupportedError

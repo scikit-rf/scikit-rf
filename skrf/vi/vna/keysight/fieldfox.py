@@ -3,14 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import List, Optional, Sequence, Tuple, Union
+    from typing import List, Optional, Sequence, Union
 
 import itertools
 import pprint
 
 import numpy as np
-from skrf.calibration import Calibration
-from skrf.network import Network, four_oneports_2_twoport
+from skrf import Calibration, Frequency, Network
+from skrf.network import four_oneports_2_twoport
 
 from ..vna import VNA
 
@@ -22,53 +22,119 @@ class FieldFox(VNA):
     This class assumes the FieldFox has been put into NA mode before initializing
     """
 
-    def __init__(self, address: str, timeout: int = 2000, backend: str = "@py"):
-        super().__init__(address, timeout, backend)
+    @property
+    def start_freq(self) -> float:
+        return float(self.query("sense:frequency:start?"))
 
-    def sweep_mode(self) -> str:
-        raise NotImplementedError
+    @start_freq.setter
+    def start_freq(self, freq: float) -> None:
+        self.write(f"sense:frequency:start {freq}")
 
-    def set_sweep_mode(self, mode: str) -> None:
-        raise NotImplementedError
+    @property
+    def stop_freq(self) -> float:
+        return float(self.query("sense:frequency:stop?"))
 
-    def sweep_type(self) -> str:
-        raise NotImplementedError
+    @stop_freq.setter
+    def stop_freq(self, freq: float) -> None:
+        self.write(f"sense:frequency:stop {freq}")
 
-    def set_sweep_type(self, _type: str) -> None:
-        raise NotImplementedError
+    @property
+    def npoints(self) -> int:
+        return int(self.query("sense:sweep:points?"))
 
+    @npoints.setter
+    def npoints(self, n: int) -> None:
+        self.write(f"sense:sweep:points {n}")
+
+    @property
+    def freq_step(self) -> float:
+        return float(self.query("sense:sweep:step?"))
+
+    @freq_step.setter
+    def freq_step(self, f: float) -> None:
+        if "lin" not in self.sweep_type.lower():
+            raise ValueError("Can only set frequency step in linear sweep mode")
+
+        self.write(f"sense:sweep:step {f}")
+
+    @property
+    def frequency(self) -> Frequency:
+        return Frequency(
+            start=self.start_freq, stop=self.stop_freq, npoints=self.npoints, unit="Hz"
+        )
+
+    @frequency.setter
+    def frequency(self, frequency: Frequency) -> None:
+        start = frequency.start
+        stop = frequency.stop
+        npoints = frequency.npoints
+
+        self.write(
+            f"sense:frequency:start {start};"
+            f"frequency:stop {stop};"
+            f"sweep:points {npoints}"
+        )
+
+    @property
+    def sweep_time(self) -> float:
+        return float(self.query("sense:sweep:time?"))
+
+    @sweep_time.setter
+    def sweep_time(self, time: float) -> None:
+        self.write(f"sense:sweep:time {time}")
+
+    @property
+    def if_bandwidth(self) -> float:
+        return float(self.query("sense:bwidth?"))
+
+    @if_bandwidth.setter
+    def if_bandwidth(self, bw: float) -> None:
+        self.write(f"sense:bwidth {bw}")
+
+    @property
     def averaging_on(self) -> bool:
-        return self.average_count() != 1
+        return self.average_count != 1
 
-    def set_averaging_on(self, state: bool) -> None:
+    @averaging_on.setter
+    def averaging_on(self, state: bool) -> None:
         if state is False:
-            self.set_average_count(1)
+            self.average_count = 1
         else:
             raise NotImplementedError(
-                "No command to turn averaging on and off. Set average count instead"
+                "No command to turn averaging on directly. Set average_count instead"
             )
 
+    @property
+    def average_count(self) -> int:
+        return int(self.query("sense:average:count?"))
+
+    @average_count.setter
+    def average_count(self, count: int) -> None:
+        self.write(f"sense:average:count {count}")
+
+    @property
     def average_mode(self) -> str:
         return self.query("sense:average:mode?")
 
-    def set_average_mode(self, mode: str) -> None:
-        if mode.lower() not in ["sweep", "point"]:
+    @average_mode.setter
+    def average_mode(self, mode: str) -> None:
+        if mode.lower() not in ["swe", "sweep", "point"]:
             raise ValueError(f"Unrecognized averaging mode: {mode}")
-        self.write(f"sense:average:mode {mode.lower()}")
+        self.write(f"sense:average:mode {mode}")
+
+    def clear_averaging(self) -> None:
+        self.write("sense:average:clear")
 
     def measurement_numbers(self) -> List[int]:
         resp = int(self.query("calculate:parameter:count?"))
         return [i + 1 for i in range(resp)]
 
-    def measurements(self) -> List[Tuple]:
-        raise NotImplementedError
-
+    @property
     def active_measurement(self) -> Optional[str]:
-        raise NotImplementedError
+        return self.query("calculate:parameter:define?")
 
-    def set_active_measurement(
-        self, id_: Union[int, str], channel: int = 1, fast: bool = False
-    ) -> None:
+    @active_measurement.setter
+    def active_measurement(self, id_: Union[int, str]) -> None:
         assert isinstance(id_, int), "FieldFox only supports measurement numbers"
         self.write(f"calculate:parameter{id_}:select")
 
@@ -87,11 +153,11 @@ class FieldFox(VNA):
         self.write(f"display:window:trace{id_}:trace:state 0")
 
     def get_measurement(self, trace: int) -> Network:
-        self.set_active_measurement(trace)
+        self.active_measurement = trace
         raw = np.array(self.query_ascii("calculate:data:sdata?"), dtype=np.complex64)
         self.query("*OPC?")
         ntwk = Network()
-        ntwk.frequency = self.frequency()
+        ntwk.frequency = self.frequency
         ntwk.s = raw[::2] + 1j * raw[1::2]
         return ntwk
 
@@ -99,17 +165,9 @@ class FieldFox(VNA):
         raw = np.array(self.query_ascii("calculate:data:sdata?"), dtype=np.complex64)
         self.query("*OPC?")
         ntwk = Network()
-        ntwk.frequency = self.frequency()
+        ntwk.frequency = self.frequency
         ntwk.s = raw[::2] + 1j * raw[1::2]
         return ntwk
-
-    @property
-    def snp_format(self) -> str:
-        raise NotImplementedError
-
-    @snp_format.setter
-    def snp_format(self, format: str) -> None:
-        raise NotImplementedError
 
     @property
     def ports(self) -> List[str]:
