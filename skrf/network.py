@@ -555,16 +555,21 @@ class Network(object):
         """
         check_nports_equal(self, other)
         check_frequency_exist(self)
-        (h,_) = shape(self.s[0])
-        if h != 4:
-            raise ValueError("Operator >> may only be used to cascade 4-port networks.")
-            
+        (n,_) = shape(self.s[0])
+        if (n / 2) != (n // 2):
+            raise ValueError("Operator >> requires an even number of ports.")
+
+        ix_old = list(range(n))
+        n_2    = n//2
+        n_2_1  = list(range(n_2))
+        ix_new = list(sum(zip(n_2_1, list(map((lambda x: x + n_2), n_2_1))), ()))
+
         _ntwk1 = self.copy()
-        _ntwk1.renumber([1,2],[2,1])
+        _ntwk1.renumber(ix_old,ix_new)
         _ntwk2 = other.copy()
-        _ntwk2.renumber([1,2],[2,1])
+        _ntwk2.renumber(ix_old,ix_new)
         _rslt = _ntwk1 ** _ntwk2
-        _rslt.renumber([1,2],[2,1])
+        _rslt.renumber(ix_new,ix_old)
         return _rslt
 
     def __floordiv__(self, other: Union['Network', Tuple['Network', ...]] ) -> 'Network':
