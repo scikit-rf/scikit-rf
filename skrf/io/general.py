@@ -249,7 +249,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
+def read_all(dir: str ='.', sort = True, contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
     """
     Read all skrf objects in a directory.
 
@@ -261,6 +261,8 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
     ----------
     dir : str, optional
         the directory to load from, default  \'.\'
+    sort: boolean, default is True
+        filenames sorted by https://docs.python.org/3/library/stdtypes.html#list.sort without arguements
     contains : str, optional
         if not None, only files containing this substring will be loaded
     f_unit : ['hz','khz','mhz','ghz','thz']
@@ -318,6 +320,9 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
             filelist.append(filename)
     else:
         filelist.extend(files)
+         
+    if sort is True:
+        filelist.sort()
 
     for filename in filelist:
         if contains is not None and contains not in filename:
@@ -411,6 +416,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
     """
     if not os.path.exists('.'):
         raise OSError('No such directory: %s'%dir)
+         
 
 
     for k in dict_objs:
@@ -495,7 +501,7 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 
     Notes
     -------
-    Alternatively you can use the :func:`read_all` function.
+    
 
     Parameters
     -----------
