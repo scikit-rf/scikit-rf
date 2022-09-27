@@ -542,6 +542,18 @@ class Network(object):
     def __rshift__(self, other: 'Network') -> 'Network':
         """
         Cascade two 4-port networks with "1=>2/3=>4" port numbering.
+    Note
+    ----
+    connection diagram::
+
+              A               B
+           +---------+   +---------+
+          -|0        1|---|0        1|-
+          -|2        3|---|1        3|-
+          ...       ... ...       ...
+          -|2N-4  2N-3|---|2N-4  2N-3|-
+          -|2N-2  2N-1|---|2N-2  2N-1|-
+           +---------+   +---------+
 
         Returns
         -------
