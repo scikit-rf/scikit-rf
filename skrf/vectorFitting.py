@@ -1818,6 +1818,8 @@ class VectorFitting:
         ----------
         file : str
             Path and filename including file extension (usually .sp) for the SPICE subcircuit file.
+        fitted_model_name: str
+            Name of the resulting model, default "s_equivalent"
 
         Returns
         -------
