@@ -1980,7 +1980,7 @@ class VectorFitting:
             f.write('L1 n_pos 1 {ind}\n')
             f.write('C1 1 2 {cap}\n')
             f.write('R1 2 n_neg {res}\n')
-            f.write('G1 n_pos n_neg 1 2 {gm} m={mult}\n')
+            f.write('G1 n_pos n_neg 1 2 {gm * mult}\n')
             f.write('.ENDS rcl_vccs_admittance\n')
 
             f.write('*\n')
