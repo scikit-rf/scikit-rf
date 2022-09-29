@@ -1810,7 +1810,7 @@ class VectorFitting:
         ax.set_ylabel('Max. singular value')
         return ax
 
-    def write_spice_subcircuit_s(self, file: str) -> None:
+    def write_spice_subcircuit_s(self, file: str, fitted_model_name: str = "s_equivalent") -> None:
         """
         Creates an equivalent N-port SPICE subcircuit based on its vector fitted S parameter responses.
 
@@ -1873,7 +1873,7 @@ class VectorFitting:
             for n in range(self.network.nports):
                 str_input_nodes += 'p{} '.format(n + 1)
 
-            f.write('.SUBCKT s_equivalent {}\n'.format(str_input_nodes))
+            f.write('.SUBCKT {} {}\n'.format(fitted_model_name, str_input_nodes))
 
             for n in range(self.network.nports):
                 f.write('*\n')
