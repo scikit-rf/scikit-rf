@@ -734,18 +734,16 @@ def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
     df : pandas DataFrame Object
     """
     from pandas import DataFrame, Series # delayed because its not a requirement
-    d = {}
-    index =ntwk.frequency.f_scaled
 
     if ports is None:
         ports = ntwk.port_tuples
 
+    d = {}
     for attr in attrs:
-        for m,n in ports:
-            d['%s %i%i'%(attr, m+1,n+1)] = \
-                Series(ntwk.__getattribute__(attr)[:,m,n], index = index)
-
-    return DataFrame(d)
+        attr_array = ntwk.__getattribute__(attr)
+        for m, n in ports:
+            d[f'{attr} {m+1}{n+1}'] = attr_array[:, m, n]
+    return DataFrame(d, index=ntwk.frequency.f_scaled)
 
 def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_type: str = 'excel',
     *args, **kwargs):
