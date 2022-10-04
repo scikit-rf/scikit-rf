@@ -1875,7 +1875,7 @@ class VectorFitting:
             for n in range(self.network.nports):
                 str_input_nodes += 'p{} '.format(n + 1)
 
-            f.write('.SUBCKT {} {}\n'.format(fitted_model_name, str_input_nodes))
+            f.write(f'.SUBCKT {fitted_model_name} {str_input_nodes}\n')
 
             for n in range(self.network.nports):
                 f.write('*\n')
