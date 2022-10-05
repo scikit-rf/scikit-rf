@@ -5,6 +5,6 @@ build:
   tools: {python: "3.8"}
   jobs:
     post_install:
-      - pip install poetry==1.2.0
+      - pip install poetry==1.2.1
       - poetry config virtualenvs.create false
       - poetry install --with docs
