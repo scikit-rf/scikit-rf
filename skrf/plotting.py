@@ -456,7 +456,7 @@ def plot_polar(theta: NumberLike, r: NumberLike,
             # axes class you get, which is different for each projection type.
             # So, passing a axe projection not polar is probably undesired
             warnings.warn(
-                f"Projection of the Axes passed as `ax` is not 'polar' but as {ax.name}." +
+                f"Projection of the Axes passed as `ax` is not 'polar' but is {ax.name}." +
                 "See Matplotlib documentation to create a polar plot or call this function without the `ax` parameter."
             )
 
