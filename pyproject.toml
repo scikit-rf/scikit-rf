@@ -32,36 +32,34 @@ scipy = "^1.6.1"
 pandas = "^1.3.4"
 
 # Optional Runtime Dependencies
-matplotlib = {version = "^3.5.3", optional=true}
-openpyxl = {version = "^3.0.10", optional=true}
-networkx = {version = "^2.6.3", optional=true}
-PyVISA = {version="^1.12.0", optional=true}
+[tool.poetry.groups.plot]
+matplotlib = "^3.5.3"
+
+[tool.poetry.groups.xlsx]
+openpyxl = "^3.0.10"
+
+[tool.poetry.groups.netw]
+networkx = "^2.6.3"
+
+[tool.poetry.groups.visa]
+PyVISA = "^1.12.0"
 
 # Test & Doc Dependencies
-pytest = {version="^7", optional=true}
-coverage = {version="^6", optional=true}
-flake8 = {version="^5.0.4", optional=true}
-pytest-cov = {version="^3.0.0", optional=true}
-nbval = {version="^0.9.6", optional=true}
-requests = {version="^2.28.1", optional=true}
-ipython = {version="^7", optional=true}
-ipykernel = {version="^6.15.2", optional=true}
-ipywidgets = {version="^8.0.2", optional=true}
-python-ivi = {version="^0.14.9", optional=true}
-jupyter-client = {version="^7.3.5", optional=true}
-sphinx-rtd-theme = {version="^1.0.0", optional=true}
-Sphinx = {version="^4", optional=true}
-nbsphinx = {version="^0.8.9", optional=true}
-
-
-[tool.poetry.extras]
-plot = ["matplotlib"]
-xlsx = ["openpyxl"]
-netw = ["networkx"]
-visa = ["pyvisa"]
-test = ["pytest", "coverage", "flake8", "pytest-cov", "nbval", "requests", "ipywidgets"]
-docs = ["ipython", "ipykernel", "ipywidgets", "python-ivi", 
-        "jupyter-client", "sphinx-rtd-theme", "sphinx", "nbsphinx"]
+[tool.poetry.groups.test]
+pytest = "^7"
+coverage = "^6"
+flake8 = "^5.0.4"
+pytest-cov = "^3.0.0"
+nbval = "^0.9.6"
+requests = "^2.28.1"
+ipython = "^7"
+ipykernel = "^6.15.2"
+ipywidgets = "^8.0.2"
+python-ivi = "^0.14.9"
+jupyter-client = "^7.3.5"
+sphinx-rtd-theme = "^1.0.0"
+Sphinx = "^4"
+nbsphinx = "^0.8.9"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
