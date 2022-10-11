@@ -46,7 +46,7 @@ class VectorFittingTestCase(unittest.TestCase):
 
     def test_dc(self):
         # perform the fit on data including a dc sample (0 Hz)
-        nw = skrf.Network('./cst_example_4ports.s4p')
+        nw = skrf.Network('./skrf/tests/cst_example_4ports.s4p')
         vf = skrf.VectorFitting(nw)
         vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
         # quality of the fit is not important in this test; it only needs to finish
