@@ -442,7 +442,13 @@ def plot_polar(theta: NumberLike, r: NumberLike,
 
     """
     if ax is None:
-        ax = plt.gca(polar=True)
+        # no Axes passed
+        # if an existing (polar) plot is already present, grab and use its Axes
+        # otherwise, create a new polar plot and use that Axes
+        if not plt.get_fignums() or not plt.gcf().axes or plt.gca().name != 'polar':
+            ax = plt.figure().add_subplot(projection='polar')
+        else:
+            ax = plt.gca()
     else:
         if ax.name != 'polar':
             # The projection of an existing axes can't be changed,
@@ -450,8 +456,8 @@ def plot_polar(theta: NumberLike, r: NumberLike,
             # axes class you get, which is different for each projection type.
             # So, passing a axe projection not polar is probably undesired
             warnings.warn(
-                f"Axe projection is not defined as 'polar' but as {ax.name}."+
-                "See Matplotlib documentation to create polar plot axe."
+                f"Projection of the Axes passed as `ax` is not 'polar' but is {ax.name}." +
+                "See Matplotlib documentation to create a polar plot or call this function without the `ax` parameter."
             )
 
     ax.plot(theta, r, *args, **kwargs)
