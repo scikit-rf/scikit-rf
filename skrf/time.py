@@ -192,7 +192,7 @@ def detect_span(ntwk) -> float:
 
 
 def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
-              mode: str = 'bandpass', window=('kaiser', 6)) -> 'Network':
+              mode: str = 'bandpass', window=('kaiser', 6), method: str ='fft') -> 'Network':
     """
     Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
@@ -225,6 +225,22 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         mode of gate
     window : string, float, or tuple
         passed to `window` arg of `scipy.signal.get_window()`
+    method : str
+        Gating method. There are 3 option: 'convolution', 'fft', 'rfft'.
+
+        With *'convolution'*, the time-domain gate gets transformed into frequency-domain using inverse FFT and the
+        gating is then achieved by convolution with the frequency-domain data.
+
+        With *'fft'* (default), the data gets transformed into time-domain using inverse FFT and the gating is achieved
+        by multiplication with the time-domain gate. The gated time-domain signal is then transformed back into
+        frequency-domain using inverse FFT. As only positive signal frequencies are considered for the inverse FFT
+        (with or without a dc component), the resulting time-domain signal has the same number of samples as in the
+        frequency-domain, but is complex-valued. This method is also know as *time-domain band-pass mode*.
+
+        With *'rfft'*, the procedure is the same as with *'fft'*, but the inverse FFT uses a complex-conjugate copy of
+        the positive signal frequencies for the negative frequencies (Hermitian frequency response). A dc sample is
+        also required. The resulting time-domain signal is real-valued and has twice the number of samples, which gives
+        an improved time resolution. This method is also known as *time-domain low-pass mode*.
 
     Note
     ----
@@ -268,6 +284,14 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         start = center - span / 2.
         stop = center + span / 2.
 
+    if method.lower() == 'convolution':
+        pass
+    elif method.lower() == 'fft':
+        pass
+    elif method.lower() == 'rfft':
+        pass
+    else:
+        raise ValueError('Invalid parameter method=`{}`'.format(method))
 
     # find start/stop gate indices
     t = ntwk.frequency.t
