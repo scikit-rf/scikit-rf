@@ -1,19 +1,21 @@
-[tool.poetry]
+[project]
 name = "scikit-rf"
 version = "0.23.1"
 description = "Object Oriented Microwave Engineering"
-authors = ["Alex Arsenovic <alexanderarsenovic@gmail.com>"]
-license = "BSD-3-Clause"
+requires-python = ">=3.7"
+authors = [
+    {name="Alex Arsenovic", email="alexanderarsenovic@gmail.com"}
+]
+license = {text="LICENSE.txt"}
 readme = "README.md"
-homepage = "https://scikit-rf.org/"
-repository = "https://github.com/scikit-rf/scikit-rf"
-documentation = "https://scikit-rf.readthedocs.io/en/latest/"
+
 keywords = [
     "engineering", 
     "electronics", 
     "microwave-engineering", 
     "radio-frequency", 
     "touchstone"]
+
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Education",
@@ -23,44 +25,61 @@ classifiers = [
     "Programming Language :: Python",
     "Topic :: Communications :: Ham Radio",
     "Topic :: Scientific/Engineering"]
-packages = [{include="skrf"}]
 
-[tool.poetry.dependencies]
-python = "^3.7.1"
-numpy = "^1.21"
-scipy = "^1.6.1"
-pandas = "^1.3.4"
+dependencies = [
+    "numpy ~=1.21",
+    "scipy ~=1.7",
+    "pandas ~=1.1",
+]
 
-# Optional Runtime Dependencies
-[tool.poetry.groups.plot]
-matplotlib = "^3.5.3"
+[project.optional-dependencies]
+test = [
+    "pytest >=7",
+    "coverage >=6",
+    "flake8 >=5",
+    "pytest-cov >=3",
+    "nbval >=0.9"
+]
 
-[tool.poetry.groups.xlsx]
-openpyxl = "^3.0.10"
+plot = [
+    "matplotlib ~=3.5"
+]
 
-[tool.poetry.groups.netw]
-networkx = "^2.6.3"
+xlsx = [
+    "openpyxl ~=3.0"
+]
 
-[tool.poetry.groups.visa]
-PyVISA = "^1.12.0"
+netw = [
+    "networkx ~= 2.0"
+]
 
-# Test & Doc Dependencies
-[tool.poetry.groups.test]
-pytest = "^7"
-coverage = "^6"
-flake8 = "^5.0.4"
-pytest-cov = "^3.0.0"
-nbval = "^0.9.6"
-requests = "^2.28.1"
-ipython = "^7"
-ipykernel = "^6.15.2"
-ipywidgets = "^8.0.2"
-python-ivi = "^0.14.9"
-jupyter-client = "^7.3.5"
-sphinx-rtd-theme = "^1.0.0"
-Sphinx = "^4"
-nbsphinx = "^0.8.9"
+visa = [
+    "PyVISA ~= 1.12"
+]
+
+docs = [
+    "ipython >=7",
+    "ipykernel >=6.15",
+    "ipywidgets >=8.0.2",
+    "python-ivi >=0.14.9",
+    "jupyter-client >=7.3.5",
+    "sphinx-rtd-theme >=1.0",
+    "sphinx >=4",
+    "nbsphinx >= 0.8.9"
+]
+
+[project.urls]
+homepage = "https://scikit-rf.org/"
+repository = "https://github.com/scikit-rf/scikit-rf"
+documentation = "https://scikit-rf.readthedocs.io/en/latest/"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = [
+  "setuptools >= 40.9.0",
+  "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["skrf"]
+license-files = ["LICENSE.txt"]
