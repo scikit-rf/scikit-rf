@@ -44,6 +44,14 @@ class VectorFittingTestCase(unittest.TestCase):
             vf.vector_fit(n_poles_real=0, n_poles_cmplx=5, fit_proportional=False, fit_constant=True)
             self.assertEqual(warning[-1].category, RuntimeWarning)
 
+    def test_dc(self):
+        # perform the fit on data including a dc sample (0 Hz)
+        nw = skrf.Network('./skrf/tests/cst_example_4ports.s4p')
+        vf = skrf.VectorFitting(nw)
+        vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
+        # quality of the fit is not important in this test; it only needs to finish
+        self.assertLess(vf.get_rms_error(), 0.2)
+
     def test_spice_subcircuit(self):
         # fit ring slot example network
         nw = skrf.data.ring_slot

@@ -189,6 +189,12 @@ class VectorFitting:
 
         fmin = np.amin(freqs_norm)
         fmax = np.amax(freqs_norm)
+
+        # poles cannot be at f=0; hence, f_min for starting pole must be greater than 0
+        if fmin == 0.0:
+            # random choice: use 1/1000 of first non-zero frequency
+            fmin = freqs_norm[1] / 1000
+
         if init_pole_spacing == 'log':
             pole_freqs_real = np.geomspace(fmin, fmax, n_poles_real)
             pole_freqs_cmplx = np.geomspace(fmin, fmax, n_poles_cmplx)
