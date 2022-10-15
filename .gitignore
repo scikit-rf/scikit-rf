@@ -1,5 +1,5 @@
 .ipynb_checkpoints
-.gitignore
+!.git*
 
 *.pyc
 *~
@@ -22,3 +22,5 @@ qtapps/sandbox*
 .coverage
 .tox/
 .coverage*
+
+poetry.lock

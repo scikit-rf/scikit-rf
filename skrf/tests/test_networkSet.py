@@ -393,7 +393,8 @@ class NetworkSetTestCase(unittest.TestCase):
                                   values=self.ns_params.params_values, 
                                   data_types=self.ns_params.params_types)
         ns_params = rf.NetworkSet.from_mdif(test_file)
-        self.assertEqual(ns_params, self.ns_params)     
+        self.assertEqual(ns_params, self.ns_params)
+        os.remove(test_file)
         
     def test_from_citi(self):
         """ Create NetworkSets from CITI files """

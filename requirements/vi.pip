@@ -1,9 +1,0 @@
-# requirements to use virtual instruments
-#
--r base.pip 
--e https://github.com/python-ivi/python-ivi.git
-
-## and a suitable backend
-python-vxi11
-pyVisa==1.4
-
