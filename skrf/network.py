@@ -539,6 +539,52 @@ class Network(object):
         else:
             return cascade(self, other)
 
+    def __rshift__(self, other: 'Network') -> 'Network':
+        """
+        Cascade two 4-port networks with "1=>2/3=>4" port numbering.
+        
+        Note
+        ----
+        connection diagram::
+
+              A               B
+           +---------+   +---------+
+          -|0        1|---|0        1|-
+          -|2        3|---|1        3|-
+          ...       ... ...       ...
+          -|2N-4  2N-3|---|2N-4  2N-3|-
+          -|2N-2  2N-1|---|2N-2  2N-1|-
+           +---------+   +---------+
+
+        Returns
+        -------
+        ntw : :class:`Network`
+            Cascaded Network
+
+        See Also
+        --------
+        cascade
+
+        """
+        check_nports_equal(self, other)
+        check_frequency_exist(self)
+        (n,_) = shape(self.s[0])
+        if (n / 2) != (n // 2):
+            raise ValueError("Operator >> requires an even number of ports.")
+
+        ix_old = list(range(n))
+        n_2    = n//2
+        n_2_1  = list(range(n_2))
+        ix_new = list(sum(zip(n_2_1, list(map((lambda x: x + n_2), n_2_1))), ()))
+
+        _ntwk1 = self.copy()
+        _ntwk1.renumber(ix_old,ix_new)
+        _ntwk2 = other.copy()
+        _ntwk2.renumber(ix_old,ix_new)
+        _rslt = _ntwk1 ** _ntwk2
+        _rslt.renumber(ix_new,ix_old)
+        return _rslt
+
     def __floordiv__(self, other: Union['Network', Tuple['Network', ...]] ) -> 'Network':
         """
         de-embedding 1 or 2 network[s], from this network

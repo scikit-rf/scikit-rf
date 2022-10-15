@@ -60,6 +60,9 @@ class NetworkTestCase(unittest.TestCase):
         self.Fix = rf.concat_ports([l1, l1, l1, l1])
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
+        self.Fix2 = rf.concat_ports([l1, l1, l1, l1], port_order='first')
+        self.DUT2 = rf.concat_ports([l2, l2, l2, l2], port_order='first')
+        self.Meas2 = rf.concat_ports([l3, l3, l3, l3], port_order='first')
 
     def test_timedomain(self):
         t = self.ntwk1.s11.s_time
@@ -342,6 +345,10 @@ class NetworkTestCase(unittest.TestCase):
     def test_cascade(self):
         self.assertEqual(self.ntwk1 ** self.ntwk2, self.ntwk3)
         self.assertEqual(self.Fix ** self.DUT ** self.Fix.flipped(), self.Meas)
+
+    def test_cascade2(self):
+        self.assertEqual(self.ntwk1 >> self.ntwk2, self.ntwk3)
+        self.assertEqual(self.Fix2 >> self.DUT2 >> self.Fix2.flipped(), self.Meas2)
 
     def test_connect(self):
         self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
