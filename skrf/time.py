@@ -16,10 +16,13 @@ Time domain functions
    indexes
 
 """
+import scipy.signal
+
 from .util import find_nearest_index
 from scipy import signal
 import numpy as npy
-from numpy.fft import fft, fftshift, ifft, ifftshift
+from numpy.fft import fft, rfft, fftshift, ifft, irfft, ifftshift
+from scipy.ndimage import convolve1d
 
 # imports for type hinting
 from typing import List, TYPE_CHECKING
@@ -192,7 +195,7 @@ def detect_span(ntwk) -> float:
 
 
 def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
-              mode: str = 'bandpass', window=('kaiser', 6), method: str ='fft') -> 'Network':
+              mode: str = 'bandpass', window=('kaiser', 6), method: str ='fft', fft_window='hann') -> 'Network':
     """
     Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
@@ -242,6 +245,14 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         also required. The resulting time-domain signal is real-valued and has twice the number of samples, which gives
         an improved time resolution. This method is also known as *time-domain low-pass mode*.
 
+    fft_window : str or tuple or None
+        Frequency-domain window applied before the inverse FFT in case of the (R)FFT method.
+        This parameter takes the same values as the `window` parameter.
+        Example: `window='hann` (default), or `window=('kaiser', 5)`, or `window=None`.
+        The window helps to remove artefacts such as time-domain sidelobes of the pulses, but it is a trade-off with
+        the achievable pulse width. The window is removed when the gated time-domain signals is transformed back into
+        frequency-domain.
+
     Note
     ----
     You cant gate things that are 'behind' strong reflections. This
@@ -284,40 +295,82 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         start = center - span / 2.
         stop = center + span / 2.
 
-    if method.lower() == 'convolution':
-        pass
-    elif method.lower() == 'fft':
-        pass
-    elif method.lower() == 'rfft':
-        pass
+    ntwk_gated = ntwk.copy()
+    method = method.lower()
+    n_fd = ntwk.frequency.npoints
+    df = ntwk.frequency.step
+
+    if method == 'convolution':
+        # frequency-domain gating
+        n_td = n_fd
+        # create dummy-window
+        window_fd = npy.ones(n_fd)
+
+    elif method == 'fft':
+        # time-domain band-pass mode
+        n_td = n_fd
+        if fft_window is not None:
+            # create band-pass window (zero on both lower and upper limit, one at center)
+            window_fd = signal.get_window(window, n_fd)
+        else:
+            # create dummy-window
+            window_fd = npy.ones(n_fd)
+
+    elif method == 'rfft':
+        # time-domain low-pass mode
+        n_td = 2 * n_fd - 1
+        if fft_window is not None:
+            # create low-pass window (one at lower limit at f=0, zero on upper limit)
+            window_fd = signal.get_window(window, 2 * n_fd)
+            window_fd = window_fd[n_fd:]
+        else:
+            # create dummy-window
+            window_fd = npy.ones(n_fd)
+
     else:
         raise ValueError('Invalid parameter method=`{}`'.format(method))
 
+    # apply frequency-domain window
+    ntwk_gated.s[:, 0, 0] = ntwk_gated.s[:, 0, 0] * window_fd
+
+    # create time vector
+    t = npy.linspace(-0.5 / df, 0.5 / df, n_td)
+
     # find start/stop gate indices
-    t = ntwk.frequency.t
     start_idx = find_nearest_index(t, start)
     stop_idx = find_nearest_index(t, stop)
 
-    # create window
+    # create gating window
     window_width = abs(stop_idx - start_idx)
     window = signal.get_window(window, window_width)
-
-    nw_gated = ntwk.copy()
 
     # create the gate by padding the window with zeros
     gate = npy.zeros_like(t)
     gate[start_idx:stop_idx] = window
 
-    # time-domain gating
-    s_td = fftshift(ifft(nw_gated.s[:, 0, 0]))
-    s_td_g = s_td * gate
-    nw_gated.s[:, 0, 0] = fft(ifftshift(s_td_g))
+    if method == 'convolution':
+        # frequency-domain gating
+        kernel = fftshift(fft(ifftshift(gate), norm='forward'))
+        ntwk_gated.s[:, 0, 0] = convolve1d(ntwk_gated.s[:, 0, 0], kernel, mode='wrap')
+    elif method == 'fft':
+        # time-domain band-pass mode
+        s_td = fftshift(ifft(ntwk_gated.s[:, 0, 0]))
+        s_td_g = s_td * gate
+        ntwk_gated.s[:, 0, 0] = fft(ifftshift(s_td_g))
+    elif method == 'rfft':
+        # time-domain low-pass mode
+        s_td = fftshift(irfft(ntwk_gated.s[:, 0, 0], n=len(t)))
+        s_td_g = s_td * gate
+        ntwk_gated.s[:, 0, 0] = rfft(ifftshift(s_td_g))
+
+    # remove frequency-domain window
+    ntwk_gated.s[:, 0, 0] = ntwk_gated.s[:, 0, 0] / window_fd
 
     if mode == 'bandstop':
-        nw_gated = ntwk - nw_gated
-    elif mode=='bandpass':
+        ntwk_gated = ntwk - ntwk_gated
+    elif mode == 'bandpass':
         pass
     else:
         raise ValueError('mode should be \'bandpass\' or \'bandstop\'')
 
-    return nw_gated
+    return ntwk_gated
