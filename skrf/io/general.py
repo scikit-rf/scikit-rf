@@ -794,9 +794,8 @@ def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_
         # add file extension if missing
         if not file_name.endswith('.xlsx'):
             file_name += '.xlsx'
-        writer = ExcelWriter(file_name)
-        [network_2_spreadsheet(k, writer, sheet_name=k.name, *args, **kwargs) for k in ntwkset]
-        writer.save()
+        with ExcelWriter(file_name) as writer:
+            [network_2_spreadsheet(k, writer, sheet_name=k.name, *args, **kwargs) for k in ntwkset]
     else:
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
 
