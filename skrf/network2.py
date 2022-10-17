@@ -750,13 +750,13 @@ def s2z(s,z0=50):
     z0 = fix_z0_shape(z0, nfreqs, nports)
 
     z = npy.zeros(s.shape, dtype='complex')
-    I = npy.mat(npy.identity(s.shape[1]))
+    I = npy.identity(s.shape[1])
 
     s[s==1.] = 1. + 1e-12 # solve numerical singularity
     s[s==-1.] = -1. + 1e-12 # solve numerical singularity
     for fidx in range(s.shape[0]):
-        sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
-        z[fidx] = sqrtz0 * (I-s[fidx])**-1 * (I+s[fidx]) * sqrtz0
+        sqrtz0 = npy.sqrt(npy.diagflat(z0[fidx]))
+        z[fidx] = sqrtz0 @ npy.linalg.inv(I-s[fidx]) @ (I+s[fidx]) @ sqrtz0
     return z
 
 def s2y(s, z0=50):
@@ -808,12 +808,12 @@ def s2y(s, z0=50):
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
     y = npy.zeros(s.shape, dtype='complex')
-    I = npy.mat(npy.identity(s.shape[1]))
+    I = npy.identity(s.shape[1])
     s[s==-1.] = -1. + 1e-12 # solve numerical singularity
     s[s==1.] = 1. + 1e-12 # solve numerical singularity
     for fidx in range(s.shape[0]):
-        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
-        y[fidx] = sqrty0*(I-s[fidx])*(I+s[fidx])**-1*sqrty0
+        sqrty0 = npy.sqrt(npy.diagflat(1.0/z0[fidx]))
+        y[fidx] = sqrty0 @ (I-s[fidx]) @ npy.linalg.inv(I+s[fidx]) @ sqrty0
     return y
 
 def s2t(s):
@@ -923,10 +923,10 @@ def z2s(z, z0=50):
     nfreqs, nports, nports = z.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
     s = npy.zeros(z.shape, dtype='complex')
-    I = npy.mat(npy.identity(z.shape[1]))
+    I = npy.identity(z.shape[1])
     for fidx in range(z.shape[0]):
-        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
-        s[fidx] = (sqrty0*z[fidx]*sqrty0 - I) * (sqrty0*z[fidx]*sqrty0 + I)**-1
+        sqrty0 = npy.sqrt(npy.diagflat(1.0/z0[fidx]))
+        s[fidx] = (sqrty0 @ z[fidx] @ sqrty0 - I) @ npy.linalg.inv(sqrty0 @ z[fidx] @ sqrty0 + I)
     return s
 
 def z2y(z):
@@ -973,7 +973,7 @@ def z2y(z):
     """
     z = z.copy() # to prevent the original array from being altered
     z = fix_parameter_shape(z)
-    return npy.array([npy.mat(z[f,:,:])**-1 for f in range(z.shape[0])])
+    return npy.array([npy.linalg.inv(z[f,:,:]) for f in range(z.shape[0])])
 
 def z2t(z):
     """
@@ -1070,10 +1070,10 @@ def y2s(y, z0=50):
     nfreqs, nports, nports = y.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
     s = npy.zeros(y.shape, dtype='complex')
-    I = npy.mat(npy.identity(s.shape[1]))
+    I = npy.identity(s.shape[1])
     for fidx in range(s.shape[0]):
-        sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
-        s[fidx] = (I - sqrtz0*y[fidx]*sqrtz0) * (I + sqrtz0*y[fidx]*sqrtz0)**-1
+        sqrtz0 = npy.sqrt(npy.diagflat(z0[fidx]))
+        s[fidx] = (I - sqrtz0 @ y[fidx] @ sqrtz0) @ npy.linalg.inv(I + sqrtz0 @ y[fidx] @ sqrtz0)
     return s
 
 def y2z(y):
