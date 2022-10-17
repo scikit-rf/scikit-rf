@@ -49,7 +49,7 @@ class ESP300(Driver):
 
     def __init__(self, address=1, current_axis=1,\
             always_wait_for_stop=True,delay=0,**kwargs):
-        """
+        r"""
         Initializer
 
         Parameters
