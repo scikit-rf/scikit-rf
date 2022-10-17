@@ -815,12 +815,9 @@ def suppress_warning_decorator(msg):
         @wraps(func)
         def suppressed_func(*k, **kw):
             show_warnings = []
-            with warnings.catch_warnings(record=True) as wlist:
-                 res = func(*k, **kw)
-                 for w in wlist:
-                     if not w.message.args[0].startswith(msg):
-                         show_warnings.append(w)
-            for w in show_warnings:
-                warnings.warn(w.message.args[0])
+            with warnings.catch_warnings() as wlist:
+                warnings.filterwarnings("ignore", message=f"{msg}.*")
+                res = func(*k, **kw)
+            return res
         return suppressed_func
     return suppress_warnings_decorated
