@@ -483,9 +483,9 @@ class Network(object):
 
 
         if "f" in kwargs.keys():
-            kwargs["frequency"] = Frequency.from_f(kwargs.pop("f"))
+            kwargs["frequency"] = Frequency.from_f(kwargs.pop("f"), unit=f_unit)
 
-        for attr in PRIMARY_PROPERTIES + ['frequency', 'f', 'noise', 'noise_freq']:
+        for attr in PRIMARY_PROPERTIES + ['frequency', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
