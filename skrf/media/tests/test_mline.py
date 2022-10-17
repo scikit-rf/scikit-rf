@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from asyncio import Future
 import unittest
 import os
 import numpy as npy
