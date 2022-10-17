@@ -456,6 +456,9 @@ class Network(object):
                     fid.close()
                     self.read_touchstone(filename, self.encoding)
 
+                if not fid.closed:
+                    fid.close()
+
             if name is None and isinstance(file, str):
                 name = os.path.splitext(os.path.basename(file))[0]
 
@@ -477,6 +480,10 @@ class Network(object):
             self.s = npy.zeros(s_shape, dtype=complex)
 
         self.z0 = kwargs.get('z0', self._z0)
+
+
+        if "f" in kwargs.keys():
+            kwargs["frequency"] = Frequency.from_f(kwargs.pop("f"))
 
         for attr in PRIMARY_PROPERTIES + ['frequency', 'f', 'noise', 'noise_freq']:
             if attr in kwargs:
