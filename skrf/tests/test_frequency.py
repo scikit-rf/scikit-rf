@@ -3,6 +3,7 @@ import unittest
 import warnings
 
 import numpy as npy
+import pytest
 
 import skrf as rf
 from skrf.frequency import InvalidFrequencyWarning
@@ -67,18 +68,11 @@ class FrequencyTestCase(unittest.TestCase):
 
         with self.assertWarns(InvalidFrequencyWarning):
             freq = rf.Frequency.from_f([1,2,2])
-
-        with warnings.catch_warnings(record=True) as warns:
+        
+        with self.assertWarns(InvalidFrequencyWarning):
             freq = rf.Frequency.from_f([1,2,2], unit="Hz")
-
-            w = [w for w in warns if issubclass(w.category, InvalidFrequencyWarning)]
-            if w:
-                inv = freq.drop_non_monotonic_increasing()
-                self.assertListEqual(inv, [2])
-
-            else:
-                self.fail("Warning is not triggered")
-
+            inv = freq.drop_non_monotonic_increasing()
+            self.assertListEqual(inv, [2])
             self.assertTrue(npy.allclose(freq.f, [1,2]))
 
     def test_immutability(self):
