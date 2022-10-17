@@ -1120,7 +1120,7 @@ def y2z(y):
     """
     y = y.copy() # to prevent the original array from being altered
     y = fix_parameter_shape(y)
-    return npy.array([npy.mat(y[f,:,:])**-1 for f in range(y.shape[0])])
+    return npy.array([npy.linalg.inv(y[f,:,:]) for f in range(y.shape[0])])
 
 def y2t(y):
     """
