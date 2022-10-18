@@ -34,10 +34,10 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-    "pytest ~=7",
-    "coverage ~=6",
-    "flake8 ~=5",
-    "pytest-cov >=3",
+    "pytest ~=7.0",
+    "coverage ~=6.0",
+    "flake8 ~=5.0",
+    "pytest-cov ~=3.0",
     "nbval ~=0.9"
 ]
 
