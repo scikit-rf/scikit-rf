@@ -34,11 +34,11 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-    "pytest >=7",
-    "coverage >=6",
-    "flake8 >=5",
-    "pytest-cov >=3",
-    "nbval >=0.9"
+    "pytest ~=7.0",
+    "coverage ~=6.0",
+    "flake8 ~=5.0",
+    "pytest-cov ~=3.0",
+    "nbval ~=0.9"
 ]
 
 plot = [
@@ -75,7 +75,7 @@ documentation = "https://scikit-rf.readthedocs.io/en/latest/"
 
 [build-system]
 requires = [
-  "setuptools >= 40.9.0",
+  "setuptools >= 64",
   "wheel",
 ]
 build-backend = "setuptools.build_meta"
