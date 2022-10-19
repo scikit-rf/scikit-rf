@@ -193,7 +193,7 @@ man_pages = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python': ('http://docs.python.org/3', None),
+    'python': ('https://docs.python.org/3/objects.inv', None),
     'numpy': ('https://numpy.org/doc/stable', None),
     'pd': ('https://pandas.pydata.org/docs', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
