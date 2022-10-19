@@ -88,7 +88,7 @@ except ImportError as e:
     pass
 
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
-SI_CONVERSION = dict([(key, 10**((8-i)*3)) for i, key in enumerate(SI_PREFIXES_ASCII)])
+SI_CONVERSION = {key: 10**((8-i)*3) for i, key in enumerate(SI_PREFIXES_ASCII)}
 
 
 def scale_frequency_ticks(ax: plt.Axes, funit: str):
@@ -114,8 +114,8 @@ def scale_frequency_ticks(ax: plt.Axes, funit: str):
         prefix = funit[0]
         scale = SI_CONVERSION[prefix]
     else:
-        raise ValueError("invalid funit {}".format(funit))
-    ticks_x = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * scale))
+        raise ValueError(f"invalid funit {funit}")
+    ticks_x = ticker.FuncFormatter(lambda x, pos: f'{x * scale:g}')
     ax.xaxis.set_major_formatter(ticks_x)
 
 
@@ -745,12 +745,12 @@ def save_all_figs(dir: str = './', format: Union[None, List[str]] = None,
         if format is None:
             plt.savefig(dir+fileName)
             if echo:
-                print((dir+fileName))
+                print(dir+fileName)
         else:
             for fmt in format:
                 plt.savefig(dir+fileName+'.'+fmt, format=fmt)
                 if echo:
-                    print((dir+fileName+'.'+fmt))
+                    print(dir+fileName+'.'+fmt)
 saf = save_all_figs
 
 
@@ -997,7 +997,7 @@ def __generate_plot_functions(self):
             #     plt.show()
 
         plot_prop_polar.__doc__ = r"""
-plot the Network attribute :attr:`%s` vs frequency.
+plot the Network attribute :attr:`{}` vs frequency.
 
 Parameters
 ----------
@@ -1025,8 +1025,8 @@ initialization. This is accomplished by calling
 
 Examples
 --------
->>> myntwk.plot_%s(m=1,n=0,color='r')
-""" % (prop_name, prop_name)
+>>> myntwk.plot_{}(m=1,n=0,color='r')
+""".format(prop_name, prop_name)
         # setattr(self.__class__,'plot_%s_polar'%(prop_name), \
         setattr(self, 'plot_%s_polar'%(prop_name), plot_prop_polar)
 
@@ -1087,7 +1087,7 @@ Examples
             #    plt.show()
 
         plot_prop_rect.__doc__ = r"""
-plot the Network attribute :attr:`%s` vs frequency.
+plot the Network attribute :attr:`{}` vs frequency.
 
 Parameters
 ----------
@@ -1115,8 +1115,8 @@ initialization. This is accomplished by calling
 
 Examples
 --------
->>> myntwk.plot_%s(m=1,n=0,color='r')
-""" % (prop_name, prop_name)
+>>> myntwk.plot_{}(m=1,n=0,color='r')
+""".format(prop_name, prop_name)
 
         # setattr(self.__class__,'plot_%s_complex'%(prop_name), \
         setattr(self,'plot_%s_complex'%(prop_name), \
@@ -1124,7 +1124,7 @@ Examples
 
 
         for func_name in COMPONENT_FUNC_DICT:
-            attribute = '%s_%s' % (prop_name, func_name)
+            attribute = f'{prop_name}_{func_name}'
             y_label = Y_LABEL_DICT[func_name]
 
             def plot_func(self,  m=None, n=None, ax=None,

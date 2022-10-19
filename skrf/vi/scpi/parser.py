@@ -3,7 +3,7 @@ import os.path
 import re
 import sys
 
-kwarg_pattern = re.compile('<([a-zA-Z0-9_]+=?[a-zA-Z0-9_, \(\)\'\"]*)>')
+kwarg_pattern = re.compile('<([a-zA-Z0-9_]+=?[a-zA-Z0-9_, \\(\\)\'\"]*)>')
 
 
 def to_string(value):
@@ -36,7 +36,7 @@ def process_kwarg_default(value):
     elif isnumeric(value):
         return str(value)
     else:
-        return '"{:}"'.format(value)  # treat as string, must have quotes to use as a kwarg default value
+        return f'"{value}"'  # treat as string, must have quotes to use as a kwarg default value
 
 
 def parse_command_string(command_string):
@@ -55,9 +55,9 @@ def parse_command_string(command_string):
     if len(args) > 0:
         command_base = kwarg_pattern.sub("{:}", command_string)
         args_string = ", ".join(kwarg for kwarg, val in kwargs)
-        scpi_command = 'scpi_preprocess("{:}", {:})'.format(command_base, args_string)
+        scpi_command = f'scpi_preprocess("{command_base}", {args_string})'
     else:
-        scpi_command = '"{:}"'.format(command_string)
+        scpi_command = f'"{command_string}"'
 
     return kwargs_string, scpi_command
 
@@ -84,10 +84,10 @@ def parse_write_values_string(command_string):
     kwargs[-1][1] = "None"  # data_values will be set to None as default
     kwargs_string = "".join([', ' + kwarg + "=" + val for kwarg, val in kwargs])
 
-    command_string = command_string.replace("<{:}>".format(args[-1]), "")
+    command_string = command_string.replace(f"<{args[-1]}>", "")
     command_base = kwarg_pattern.sub("{:}", command_string)
     args_string = ", ".join(kwarg for kwarg, val in kwargs[:-1])  # last arg is the data we pass in
-    scpi_command = 'scpi_preprocess("{:}", {:})'.format(command_base, args_string)
+    scpi_command = f'scpi_preprocess("{command_base}", {args_string})'
 
     return kwargs_string, scpi_command, kwargs[-1][0]
 
@@ -297,7 +297,7 @@ def parse_yaml_file(driver_yaml_file):
     driver = os.path.splitext(driver_yaml_file)[0] + ".py"
 
     driver_template = None
-    with open(driver_yaml_file, 'r', encoding='utf-8') as yaml_file:
+    with open(driver_yaml_file, encoding='utf-8') as yaml_file:
         driver_template = yaml.load(yaml_file, Loader=yaml.Loader)
 
     sets, queries = parse_branch(driver_template["COMMAND_TREE"])

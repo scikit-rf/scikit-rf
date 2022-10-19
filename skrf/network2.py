@@ -1,4 +1,3 @@
-
 from .frequency import Frequency
 from .mathFunctions import *
 from .plotting import plot_complex_rectangular,plot_rectangular, smith
@@ -20,7 +19,7 @@ import re
 
 ##
 
-class Parameter(object):
+class Parameter:
     """
     a complex network parameter
     """
@@ -207,7 +206,7 @@ class STime(Parameter):
         return s2time(self._network.s.val)
 ##
 
-class Projection(object):
+class Projection:
     """
     a scalar projection of a parameter
     """
@@ -380,7 +379,7 @@ class Im(Projection):
 
 ##
 
-class Network(object):
+class Network:
     def __init__(self, frequency=None, z0=50, name='', comments='',
                  *args,  **kw):
         """

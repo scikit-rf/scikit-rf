@@ -65,7 +65,7 @@ def unique_name(name, names, exclude=-1):
     if not has_duplicate_value(name, names, exclude):
         return name
     else:
-        if re.match("_\d\d", name[-3:]):
+        if re.match(r"_\d\d", name[-3:]):
             name_base = name[:-3]
             suffix = int(name[-2:])
         else:
@@ -73,7 +73,7 @@ def unique_name(name, names, exclude=-1):
             suffix = 1
 
         for num in range(suffix, 100, 1):
-            name = "{:s}_{:02d}".format(name_base, num)
+            name = f"{name_base:s}_{num:02d}"
             if not has_duplicate_value(name, names, exclude):
                 break
     return name
@@ -152,7 +152,7 @@ def snp_string(ntwk, comments=None):
         raise ValueError("Network must be a two-port network")
 
     return s2p_comments + "# Hz S RI R 50\n" + \
-           "\n".join(" ".join("{:0.8g}".format(val) for val in row) for row in rows)
+           "\n".join(" ".join(f"{val:0.8g}" for val in row) for row in rows)
 
 
 def network_from_zip(zipfid):

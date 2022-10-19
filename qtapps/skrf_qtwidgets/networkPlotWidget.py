@@ -25,7 +25,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
     S_UNITS = list(S_VALS.keys())
 
     def __init__(self, parent=None, **kwargs):
-        super(NetworkPlotWidget, self).__init__(parent)
+        super().__init__(parent)
 
         self.checkBox_useCorrected = QtWidgets.QCheckBox()
         self.checkBox_useCorrected.setText("Plot Corrected")
@@ -211,7 +211,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         for n in range(nports):
             for m in range(nports):
-                self.comboBox_traceSelector.addItem("S{:d}{:d}".format(m + 1, n + 1))
+                self.comboBox_traceSelector.addItem(f"S{m + 1:d}{n + 1:d}")
 
         if current_index <= self.comboBox_traceSelector.count():
             self.comboBox_traceSelector.setCurrentIndex(current_index)
@@ -230,9 +230,9 @@ class NetworkPlotWidget(QtWidgets.QWidget):
                 S11 = xy.x() + 1j * xy.y()
                 Z = (1 + S11) / (1 - S11)
                 self.data_info_label.setText(
-                    "Sre: {:g}, Sim: {:g}  -  R: {:g}, X: {:g}".format(xy.x(), xy.y(), Z.real, Z.imag))
+                    f"Sre: {xy.x():g}, Sim: {xy.y():g}  -  R: {Z.real:g}, X: {Z.imag:g}")
             else:
-                self.data_info_label.setText("x: {:g}, y: {:g}".format(xy.x(), xy.y()))
+                self.data_info_label.setText(f"x: {xy.x():g}, y: {xy.y():g}")
         elif isinstance(ev.acceptedItem, pg.PlotCurveItem):
             curve = ev.acceptedItem  # type: pg.PlotCurveItem
             spoint = xy.x() + 1j * xy.y()
@@ -253,7 +253,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
                         continue
                 c = next(colors)
                 label = ntwk.name
-                param = "S{:d}{:d}".format(m + 1, n + 1)
+                param = f"S{m + 1:d}{n + 1:d}"
                 if ntwk.s.shape[1] > 1:
                     label += " - " + param
 
@@ -350,7 +350,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
                 c = next(colors)
                 label = ntwk.name
                 if ntwk.s.shape[1] > 1:
-                    label += " - S{:d}{:d}".format(m + 1, n + 1)
+                    label += f" - S{m + 1:d}{n + 1:d}"
 
                 s = ntwk.s[:, m, n]
                 curve = self.plot.plot(s.real, s.imag, pen=pg.mkPen(c), name=label)

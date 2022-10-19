@@ -35,7 +35,7 @@ def plot_rectangular(ntwk, **kwargs):
         fig = plotting.figure(
             title=ntwk.name,
             height=350, width=800,
-            x_axis_label="frequency ({:s})".format(ntwk.frequency.unit),
+            x_axis_label=f"frequency ({ntwk.frequency.unit:s})",
             y_axis_label=Y_LABEL_DICT[property_type],
             tools="resize, pan, wheel_zoom, box_zoom, save, reset",
             toolbar_location="above",
@@ -50,7 +50,7 @@ def plot_rectangular(ntwk, **kwargs):
             x = ntwk.frequency.f_scaled
             y = getattr(ntwk, primary_property + "_" + property_type)[:, m, n]
             glyphs.append(fig.line(x, y, line_color=next(colors)))
-            labels.append("S{:d}{:d}".format(n + 1, m + 1))
+            labels.append(f"S{n + 1:d}{m + 1:d}")
 
     legend_items = []
     for label, glyph in zip(labels, glyphs):
@@ -73,7 +73,7 @@ def plot_polar():
 def use_bokeh():
     for p in PRIMARY_PROPERTIES:
         for t in COMPONENT_FUNC_DICT.keys():
-            attribute_name = "plot_{:s}_{:s}".format(p, t)
+            attribute_name = f"plot_{p:s}_{t:s}"
 
             def gen_plot_function(p, t):
                 def plot_function(ntwk, **kwargs):

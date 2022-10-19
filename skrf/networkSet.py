@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 .. module:: skrf.networkSet
 
@@ -59,7 +58,7 @@ try:
 except ImportError:
     ArrayLike = Any
 
-class NetworkSet(object):
+class NetworkSet:
     """
     A set of Networks.
 
@@ -145,7 +144,7 @@ class NetworkSet(object):
             raise(TypeError('input must be list of Network types'))
 
         # do all Networks have the same # ports?
-        if len (set([ntwk.number_of_ports for ntwk in ntwk_set])) > 1:
+        if len ({ntwk.number_of_ports for ntwk in ntwk_set}) > 1:
             raise(ValueError('All elements in list of Networks must have same number of ports'))
 
         # is all frequency information the same?
@@ -533,7 +532,7 @@ class NetworkSet(object):
             and the Networks as values.
 
         """
-        return dict([(k.name, k) for k in self.ntwk_set])
+        return {k.name: k for k in self.ntwk_set}
 
     def to_s_dict(self):
         """
@@ -985,9 +984,9 @@ class NetworkSet(object):
             name='Freq(%s)'%self[0].frequency.unit
             )
         df = DataFrame(
-            dict([('%s'%(k.name),
-                Series(k.__getattribute__(attr)[:,m,n],index=index))
-                for k in self]),
+            {'%s'%(k.name):
+                Series(k.__getattribute__(attr)[:,m,n],index=index)
+                for k in self},
             index = index,
             )
         return df

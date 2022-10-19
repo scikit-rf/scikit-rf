@@ -195,7 +195,7 @@ class OptimizedResult(dict):
         return list(self.keys())
 
 
-class Qfactor(object):
+class Qfactor:
     """
     Q-factor calculation class.
 
@@ -1015,7 +1015,7 @@ class Qfactor(object):
         # m2 : imag part of cal_gamma_V
         # m3 : real part of b + j a/Q_L
         # m4 : imag part of b + j a/Q_L
-        m1, m2, m3, m4 = [opt_res[key] for key in ['m1', 'm2', 'm3', 'm4']]
+        m1, m2, m3, m4 = (opt_res[key] for key in ['m1', 'm2', 'm3', 'm4'])
 
         if A is None:
             A = 1.0 / abs(complex(m1, m2))  # scale to S_V
@@ -1075,7 +1075,7 @@ class Qfactor(object):
         else:
             raise ValueError("Illegal Scaling factor; should be a float or  None")
 
-        m1, m2, m3, m4, m5 = [opt_res[key] for key in ['m1', 'm2', 'm3', 'm4', 'Q_L']]
+        m1, m2, m3, m4, m5 = (opt_res[key] for key in ['m1', 'm2', 'm3', 'm4', 'Q_L'])
         FL = opt_res['f_L']
 
         if self.res_type == "transmission":
