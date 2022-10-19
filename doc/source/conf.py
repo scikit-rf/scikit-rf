@@ -82,20 +82,6 @@ master_doc = 'index'
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "**/*.rst.rst", '**.ipynb_checkpoints']
 
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-#
-# The short X.Y version.
-"""
-setup_lines = open('../../setup.py').readlines()
-version = VERSION#'vUndefined'
-for l in setup_lines:
-    if l.startswith('VERSION'):
-        version = l.split("'")[1]
-        break
-"""
-
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
