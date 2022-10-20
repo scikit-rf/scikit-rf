@@ -81,5 +81,10 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["skrf"]
 license-files = ["LICENSE.txt"]
+
+[tool.setuptools.packages.find]
+include = ["skrf*"]
+
+[tool.setuptools.package-data]
+skrf = ["data/*.s*p", "data/*.cal"]
