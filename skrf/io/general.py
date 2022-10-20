@@ -800,7 +800,6 @@ def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
 
 
-# Provide a StringBuffer that let's me work with Python2 strings and Python3 unicode strings without thinking
 from io import StringIO
 StringBuffer = StringIO
 
