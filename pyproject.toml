@@ -85,3 +85,6 @@ license-files = ["LICENSE.txt"]
 
 [tool.setuptools.packages.find]
 include = ["skrf*"]
+
+[tool.setuptools.package-data]
+skrf = ["data/*.s*p", "data/*.cal"]
