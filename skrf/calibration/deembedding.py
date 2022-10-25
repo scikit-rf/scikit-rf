@@ -147,9 +147,11 @@ class OpenShort(Deembedding):
     This is a commonly used de-embedding method for on-wafer applications.
 
     A deembedding object is created with two dummy measurements: `dummy_open` 
-    and `dummy_short`. When :func:`Deembedding.deembed` is applied, the 
-    Y-parameters of the dummy_open are subtracted from the DUT measurement, 
-    followed by subtraction of Z-parameters of dummy-short.
+    and `dummy_short`. When :func:`Deembedding.deembed` is applied, 
+    Open de-embedding is applied to the short dummy 
+    because the measurement results for the short dummy contains parallel parasitics.
+    Then the Y-parameters of the dummy_open are subtracted from the DUT measurement, 
+    followed by subtraction of Z-parameters of dummy-short which is previously de-embedded.
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
@@ -240,10 +242,13 @@ class OpenShort(Deembedding):
 
         caled = ntwk.copy()
 
-        # remove open parasitics
+        # remove parallel parasitics from the short dummy
+        deembeded_short = self.short.copy()
+        deembeded_short.y = self.short.y - self.open.y
+        # remove parallel parasitics from the dut
         caled.y = ntwk.y - self.open.y
-        # remove short parasitics
-        caled.z = caled.z - self.short.z
+        # remove series parasitics from the dut
+        caled.z = caled.z - deembeded_short.z
 
         return caled
 
@@ -342,9 +347,11 @@ class ShortOpen(Deembedding):
     Remove short parasitics followed by open parasitics.
 
     A deembedding object is created with two dummy measurements: `dummy_open` 
-    and `dummy_short`. When :func:`Deembedding.deembed` is applied, the 
-    Z-parameters of the dummy_short are subtracted from the DUT measurement, 
-    followed by subtraction of Y-parameters of dummy_open.
+    and `dummy_short`. When :func:`Deembedding.deembed` is applied, 
+    short de-embedding is applied to the open dummy 
+    because the measurement results for the open dummy contains series parasitics.
+    the Z-parameters of the dummy_short are subtracted from the DUT measurement, 
+    followed by subtraction of Y-parameters of dummy_open which is previously de-embedded.
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
@@ -427,10 +434,13 @@ class ShortOpen(Deembedding):
 
         caled = ntwk.copy()
 
-        # remove short parasitics
+        # remove series parasitics from the open dummy
+        deembeded_open = self.open.copy()
+        deembeded_open.z = self.open.z - self.short.z
+        # remove parallel parasitics from the dut
         caled.z = ntwk.z - self.short.z
-        # remove open parasitics
-        caled.y = caled.y - self.open.y
+        # remove series parasitics from the dut
+        caled.y = caled.y - deembeded_open.y
 
         return caled
 
@@ -1134,9 +1144,8 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                     RuntimeWarning
                     )
                 flag_DC = True
-                fold = f
                 f = f[1:]
-                s = s[:, :, 1:]
+                s = s[1:]
             else:
                 flag_DC = False
             
@@ -1147,6 +1156,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                    RuntimeWarning
                    )
                 flag_df = True
+                f_original = f
                 df = f[1] - f[0]
                 projected_n = round(f[-1]/f[0])
                 if(projected_n < 10000):
@@ -1154,8 +1164,10 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 else:
                     dfnew = f[-1]/10000
                     fnew = dfnew * (np.arange(0, 10000) + 1)
-                stemp = Network(frequency = Frequency.from_f(f), s = s)
-                stemp.interpolate(fnew)
+                stemp = Network(frequency = Frequency.from_f(f, 'Hz'), s = s)
+                f_interp = Frequency.from_f(fnew, unit = 'Hz')
+                stemp.interpolate_self(f_interp, kind = 'linear',
+                                       fill_value = 'extrapolate')
                 f = fnew
                 s = stemp.s
                 del stemp
@@ -1182,7 +1194,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 z11x = self.forced_z0_line
             else:
                 z11x = z11[x]
-            
+
             if self.verbose:
                 fig = plt.figure()
                 fig.suptitle('Midpoint length and impedance determination')
@@ -1201,7 +1213,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 ax2.grid()
                 ax2.legend()
             
-            temp = Network(frequency = self.s2xthru.frequency, s = s, z0 = self.z0)
+            temp = Network(frequency = Frequency.from_f(f, 'Hz'), s = s, z0 = self.z0)
             temp.renormalize(z11x)
             sr = temp.s
             del temp
@@ -1262,32 +1274,61 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                         e01[i] *= -1
                 e10[i] = e10e01[i] / e01[i]
             
-            # S-parameters are setup correctly
-            if not flag_DC and not flag_df:
-                fixture_model_1r = zeros((n, 2, 2), dtype = complex)
-                fixture_model_1r[:, 0, 0] = e001
-                fixture_model_1r[:, 1, 0] = e01
-                fixture_model_1r[:, 0, 1] = e01
-                fixture_model_1r[:, 1, 1] = e111
+            # revert to initial freq axis
+            if flag_df:
+                interp_e001 = interp1d(f, e001, kind = 'linear',
+                                fill_value = 'extrapolate',
+                                assume_sorted = True)
+                e001 = interp_e001(f_original)
+                interp_e01 = interp1d(f, e01, kind = 'linear',
+                                fill_value = 'extrapolate',
+                                assume_sorted = True)
+                e01 = interp_e01(f_original)
+                interp_e111 = interp1d(f, e111, kind = 'linear',
+                                fill_value = 'extrapolate',
+                                assume_sorted = True)
+                e111 = interp_e111(f_original)
+                interp_e002 = interp1d(f, e002, kind = 'linear',
+                                fill_value = 'extrapolate',
+                                assume_sorted = True)
+                e002 = interp_e002(f_original)
+                interp_e10 = interp1d(f, e10, kind = 'linear',
+                                fill_value = 'extrapolate',
+                                assume_sorted = True)
+                e10 = interp_e10(f_original)
+                interp_e112 = interp1d(f, e112, kind = 'linear',
+                                fill_value = 'extrapolate',
+                                assume_sorted = True)
+                e112 = interp_e112(f_original)
+                f = f_original
                 
-                fixture_model_2r = zeros((n, 2, 2), dtype = complex)
-                fixture_model_2r[:, 1, 1] = e002
-                fixture_model_2r[:, 0, 1] = e10
-                fixture_model_2r[:, 1, 0] = e10
-                fixture_model_2r[:, 0, 0] = e112
+            # dc point was included in the original file
+            if flag_DC:
+                e001 = concatenate(([self.dc_interp(e001, f)], e001))
+                e01  = concatenate(([self.dc_interp(e01, f)], e01))
+                e111 = concatenate(([self.dc_interp(e111, f)], e111))
+                e002 = concatenate(([self.dc_interp(e002, f)], e002))
+                e10 = concatenate(([self.dc_interp(e10, f)], e10))
+                e112 = concatenate(([self.dc_interp(e112, f)], e112))
+                f = concatenate(([0], f))
             
+            # S-parameters are now setup correctly
+            n = len(f)
+            fixture_model_1r = zeros((n, 2, 2), dtype = complex)
+            fixture_model_1r[:, 0, 0] = e001
+            fixture_model_1r[:, 1, 0] = e01
+            fixture_model_1r[:, 0, 1] = e01
+            fixture_model_1r[:, 1, 1] = e111
             
-            # S-parameters are not setup correctly
-            else:
-                # todo implement using Network.interpolate to revert to initial freq axis
-                if flag_DC:
-                    raise ValueError("TODO : handle DC point already existing.")
-                if flag_df:
-                    raise NotImplementedError("TODO : handle interpolation.")
+            fixture_model_2r = zeros((n, 2, 2), dtype = complex)
+            fixture_model_2r[:, 1, 1] = e002
+            fixture_model_2r[:, 0, 1] = e10
+            fixture_model_2r[:, 1, 0] = e10
+            fixture_model_2r[:, 0, 0] = e112
             
             # create the S-parameter objects for the errorboxes
-            s_fixture_model_r1  = Network(frequency = s2xthru.frequency, s = fixture_model_1r, z0 = z11x)
-            s_fixture_model_r2  = Network(frequency = s2xthru.frequency, s = fixture_model_2r, z0 = z11x)
+            s_fixture_model_r1  = Network(frequency = Frequency.from_f(f, 'Hz'), s = fixture_model_1r, z0 = z11x)
+            s_fixture_model_r2  = Network(frequency = Frequency.from_f(f, 'Hz'), s = fixture_model_2r, z0 = z11x)
                 
             # renormalize the S-parameter errorboxes to the original reference impedance
             s_fixture_model_r1.renormalize(self.z0)
@@ -1686,7 +1727,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         self.flag_df = False
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
-        self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru,
+        self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru.copy(),
                                                       self.sfix_dut_fix)
 
     def deembed(self, ntwk):
@@ -1735,7 +1776,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         snew[0, 1, 1] = self.dc_interp(s[:, 1, 1], f)
         
         f = concatenate(([0], f))
-        return Network(frequency = Frequency.from_f(f), s = snew)
+        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew)
     
     def dc_interp(self, s, f):
         """
@@ -1991,6 +2032,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             else:
                 errorbox1 = errorbox1 ** sTL1
                 errorbox2 = errorbox2 ** sTL2
+            # equivalent to function removeTL(in,TL1,TL2,z0)
             # no need to flip sTL2 because it is symmetrical
             s_dut = sTL1.inv ** s_dut ** sTL2.inv
             #IEEE abcd implementation
@@ -2018,7 +2060,47 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 axs[0, 0].plot(zeb1)
                 axs[0, 1].plot(zeb2)
                 axs[1, 0].plot(ifftshift(zdut1))
+                axs[1, 1].plot(ifftshift(zdut2))
         return errorbox1, errorbox2.flipped()
+    
+    def makeErrorBox_v8(self, s_dut, s2x, gamma, z0, pullback):
+        f = s2x.frequency.f
+        n = len(f)
+        s212x = s2x.s[:, 1, 0]
+        # extract midpoint of 2x-thru
+        DC21 = self.dc_interp(s212x, f)
+        x = np.argmax(irfft(concatenate(([DC21], s212x))))
+        #define relative length
+        #python first index is 0, thus 1 should be added to get the length
+        l = 1. / (2 * (x + 1))
+        #define the reflections to be mimicked
+        s11dut = s_dut.s[:, 0, 0]
+        #peel the fixture away and create the fixture model
+        #python range to n-1, thus 1 to be added to have proper iteration number
+        for i in range(x + 1 - pullback):
+            zline1 = self.getz(s11dut, f, z0)[0]
+            TL1 = self.makeTL(zline1,z0,gamma,l)
+            sTL1 = s_dut.copy()
+            sTL1.s = TL1
+            if i == 0:
+                errorbox1 = sTL1
+                _, z1 = self.getz(s11dut, f, z0)
+            else:
+                errorbox1 = errorbox1 ** sTL1
+            # equivalent to function removeTL_side1(in,TL,z0)
+            s_dut = sTL1.inv ** s_dut
+            s11dut = s_dut.s[:, 0, 0]
+            if self.verbose:
+                if i == 0:
+                    fig, axs = plt.subplots(1, 2)
+                    axs[0].plot(z1, color = 'k')
+                    axs[0].set_xlim((0, x))
+                    axs[1].set_xlim((n-100, n+x*2+10))
+                _, zeb1 = self.getz(errorbox1.s[:, 0, 0], f, z0)
+                _, zdut1 = self.getz(s11dut, f, z0)
+                axs[0].plot(zeb1)
+                axs[1].plot(ifftshift(zdut1))
+        return errorbox1
     
     
     def split2xthru(self, s2xthru, sfix_dut_fix):
@@ -2035,8 +2117,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 )
             self.flag_DC = True
             f = f[1:]
-            s = s[:, :, 1:]
-            sfix_dut_fix = Network(frequency = Frequency.from_f(f), s = s)
+            s = s[1:]
+            sfix_dut_fix = Network(frequency = Frequency.from_f(f, 'Hz'), s = s)
+            s2xthru.interpolate_self(Frequency.from_f(f, 'Hz'))
         
         # check for bad frequency vector
         df = f[1] - f[0]
@@ -2047,14 +2130,15 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                RuntimeWarning
                )
             self.flag_df = True
-            forg = f
+            f_original = f
             projected_n = np.floor(f[-1]/f[0])
             fnew = f[0] * (np.arange(0, projected_n) + 1)
-            sfix_dut_fix.interpolate(Frequency.from_f(fnew))
-        
-        # if the frequency vector needed to change, adjust the 2x-thru
-        if self.flag_DC or self.flag_df:
-            s2xthru.interpolate(Frequency.from_f(fnew))
+            f_interp = Frequency.from_f(fnew, unit = 'Hz')
+            sfix_dut_fix.interpolate_self(f_interp, kind = 'linear',
+                                   fill_value = 'extrapolate')
+            s2xthru.interpolate_self(f_interp, kind = 'linear',
+                                   fill_value = 'extrapolate')   
+            f = fnew
             
         # check if 2x-thru is not the same frequency vector as the
         # fixture-dut-fixture
@@ -2101,12 +2185,21 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         s_side2 = self.thru(sfix_dut_fix)
         
         if self.pullback1 == self.pullback2 and self.side1 and self.side2:
-            (s_side1, s_side2) = self.makeErrorBox_v7(sfix_dut_fix, s2xthru, gamma, self.z0, self.pullback1)
+            (s_side1, s_side2) = self.makeErrorBox_v7(sfix_dut_fix, s2xthru,
+                                              gamma, self.z0, self.pullback1)
+        elif self.side1 and self.side2:
+            s_side1 = self.makeErrorBox_v8(sfix_dut_fix, s2xthru,
+                                              gamma, self.z0, self.pullback1)
+            s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru, 
+                                              gamma, self.z0, self.pullback2)
+            # no need to flip FIX-2 as per IEEEP370 numbering recommandation 
+        elif self.side1:
+            s_side1 = self.makeErrorBox_v8(sfix_dut_fix, s2xthru,
+                                              gamma, self.z0, self.pullback1)
+        elif self.side2:
+            s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru, 
+                                              gamma, self.z0, self.pullback2)
         else:
-            warnings.warn(
-               "todo : extract error boxes for asymetric pullbacks or only one side",
-               RuntimeWarning
-               )
             warnings.warn(
                "no output because no output was requested",
                RuntimeWarning
@@ -2116,8 +2209,11 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         # interpolate to original frequency if needed
         # revert back to original frequency vector
         if self.flag_df:
-            s_side1.interpolate(Frequency.from_f(forg))
-            s_side2.interpolate(Frequency.from_f(forg))
+            f_interp = Frequency.from_f(f_original, unit = 'Hz')
+            s_side1.interpolate_self(f_interp, kind = 'linear',
+                                   fill_value = 'extrapolate')
+            s_side2.interpolate_self(f_interp, kind = 'linear',
+                                   fill_value = 'extrapolate')
         
         # add DC back in
         if self.flag_DC:

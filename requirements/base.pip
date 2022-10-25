@@ -1,6 +1,0 @@
-
-distribute>=0.6.28
-numpy>=1.6
-scipy>=0.10.1
-xlwt>=0.7.4
-xlrd>=0.6.1

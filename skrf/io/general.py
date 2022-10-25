@@ -249,7 +249,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
+def read_all(dir: str ='.', sort = True, contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
     """
     Read all skrf objects in a directory.
 
@@ -261,6 +261,8 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
     ----------
     dir : str, optional
         the directory to load from, default  \'.\'
+    sort: boolean, default is True
+        filenames sorted by https://docs.python.org/3/library/stdtypes.html#list.sort without arguements
     contains : str, optional
         if not None, only files containing this substring will be loaded
     f_unit : ['hz','khz','mhz','ghz','thz']
@@ -318,6 +320,9 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
             filelist.append(filename)
     else:
         filelist.extend(files)
+         
+    if sort is True:
+        filelist.sort()
 
     for filename in filelist:
         if contains is not None and contains not in filename:
@@ -411,6 +416,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
     """
     if not os.path.exists('.'):
         raise OSError('No such directory: %s'%dir)
+         
 
 
     for k in dict_objs:
@@ -495,7 +501,7 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 
     Notes
     -------
-    Alternatively you can use the :func:`read_all` function.
+    
 
     Parameters
     -----------
@@ -728,18 +734,16 @@ def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
     df : pandas DataFrame Object
     """
     from pandas import DataFrame, Series # delayed because its not a requirement
-    d = {}
-    index =ntwk.frequency.f_scaled
 
     if ports is None:
         ports = ntwk.port_tuples
 
+    d = {}
     for attr in attrs:
-        for m,n in ports:
-            d['%s %i%i'%(attr, m+1,n+1)] = \
-                Series(ntwk.__getattribute__(attr)[:,m,n], index = index)
-
-    return DataFrame(d)
+        attr_array = ntwk.__getattribute__(attr)
+        for m, n in ports:
+            d[f'{attr} {m+1}{n+1}'] = attr_array[:, m, n]
+    return DataFrame(d, index=ntwk.frequency.f_scaled)
 
 def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_type: str = 'excel',
     *args, **kwargs):
@@ -790,9 +794,8 @@ def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_
         # add file extension if missing
         if not file_name.endswith('.xlsx'):
             file_name += '.xlsx'
-        writer = ExcelWriter(file_name)
-        [network_2_spreadsheet(k, writer, sheet_name=k.name, *args, **kwargs) for k in ntwkset]
-        writer.save()
+        with ExcelWriter(file_name) as writer:
+            [network_2_spreadsheet(k, writer, sheet_name=k.name, *args, **kwargs) for k in ntwkset]
     else:
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
 

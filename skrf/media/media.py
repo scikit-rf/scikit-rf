@@ -13,6 +13,7 @@ Media class.
 
 """
 from numbers import Number
+from pathlib import Path
 import warnings
 
 import numpy as npy
@@ -422,6 +423,7 @@ class Media(ABC):
                 z0 = parse_z0(z0)*self.z0
             if z0_norm:
                 z0 = z0*self.z0
+
         result.z0 = z0
         return result
 
@@ -880,8 +882,11 @@ class Media(ABC):
             z0 = self.z0
 
         s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
-        # Need to use either traveling or pseudo definition here
-        # for the network to match traveling waves.
+
+        # The use of either traveling or pseudo waves s-parameters definition
+        # is required here.
+        # The definition of the reflection coefficient for power waves has
+        # conjugation. 
         result = self.match(nports=2, z0 = z0, s_def='traveling', **kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
@@ -939,7 +944,8 @@ class Media(ABC):
         delay_short
         delay_open
         """
-        return self.line(d=d, unit=unit, **kwargs) ** self.load(Gamma0=Gamma0, **kwargs)
+        return self.line(d=d, unit=unit, **kwargs) ** self.load(Gamma0=Gamma0,
+                                                                **kwargs)
 
     def delay_short(self, d: Number, unit: str = 'deg', **kwargs) -> Network:
         r"""
@@ -1059,7 +1065,7 @@ class Media(ABC):
         shunt_capacitor
         shunt_inductor
         """
-        return self.shunt(self.delay_load(*args, **kwargs))
+        return self.shunt(self.delay_load(*args, **kwargs), **kwargs)
 
     def shunt_delay_open(self,*args,**kwargs) -> Network:
         r"""
@@ -1089,7 +1095,7 @@ class Media(ABC):
         shunt_capacitor
         shunt_inductor
         """
-        return self.shunt(self.delay_open(*args, **kwargs))
+        return self.shunt(self.delay_open(*args, **kwargs), **kwargs)
 
     def shunt_delay_short(self, *args, **kwargs) -> Network:
         r"""
@@ -1119,7 +1125,7 @@ class Media(ABC):
         shunt_capacitor
         shunt_inductor
         """
-        return self.shunt(self.delay_short(*args, **kwargs))
+        return self.shunt(self.delay_short(*args, **kwargs), **kwargs)
 
     def shunt_capacitor(self, C: NumberLike, **kwargs) -> Network:
         r"""
@@ -1151,7 +1157,8 @@ class Media(ABC):
         shunt_delay_short
         shunt_inductor
         """
-        return self.shunt(self.capacitor(C=C, **kwargs) ** self.short())
+        return self.shunt(self.capacitor(C=C, **kwargs) ** 
+                          self.short(**kwargs), **kwargs)
 
     def shunt_inductor(self, L: NumberLike, **kwargs) -> Network:
         r"""
@@ -1183,7 +1190,8 @@ class Media(ABC):
         shunt_delay_short
         shunt_capacitor
         """
-        return self.shunt(self.inductor(L=L, **kwargs) ** self.short())
+        return self.shunt(self.inductor(L=L, **kwargs) **
+                          self.short(**kwargs), **kwargs)
 
     def attenuator(self, s21: NumberLike, db: bool = True, d: Number = 0,
                    unit: str = 'deg', name: str = '', **kwargs) -> Network:
@@ -1500,17 +1508,20 @@ class DefinedGammaZ0(Media):
         write_csv
         """
         try:
-            f = open(filename)
+            fid = open(filename)
         except(TypeError):
             # they may have passed a file
-            f = filename
+            fid = filename
 
-        header = f.readline()
+        header = fid.readline()
         # this is not the correct way to do this ... but whatever
         f_unit = header.split(',')[0].split('[')[1].split(']')[0]
 
         f,z_re,z_im,g_re,g_im,pz_re,pz_im = \
-                npy.loadtxt(f,  delimiter=',').T
+                npy.loadtxt(fid,  delimiter=',').T
+
+        if isinstance(filename, (str, Path)):
+            fid.close()
 
         return cls(
             frequency = Frequency.from_f(f, unit=f_unit),

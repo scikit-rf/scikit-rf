@@ -2,6 +2,7 @@
 import unittest
 import os
 import numpy as npy
+import pytest
 
 from skrf.media import MLine
 from skrf.frequency import Frequency

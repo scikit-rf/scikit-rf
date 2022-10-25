@@ -1,6 +1,7 @@
 import unittest
 import skrf as rf
 import os
+import numpy as np
 
 from skrf import network2 as n2
 
@@ -26,13 +27,16 @@ class Network2TestCase(unittest.TestCase):
     #    n2.Network()
 
     def test_init_from_s(self):
-        n2.Network(frequency=self.freq, s=self.s_2port, z0=50)
+        net = n2.Network(frequency=self.freq, s=self.s_2port, z0=50)
+        assert np.allclose(net.s.val, self.s_2port, atol=1e-3)
 
     def test_init_from_z(self):
-        n2.Network(frequency=self.freq, z=self.s_2port, z0=50)
+        net = n2.Network(frequency=self.freq, z=self.s_2port, z0=50)
+        assert np.allclose(net.z.val, self.s_2port, atol=1e-3)
 
     def test_init_from_y(self):
-        n2.Network(frequency=self.freq, y=self.s_2port, z0=50)
+        net = n2.Network(frequency=self.freq, y=self.s_2port, z0=50)
+        assert np.allclose(net.y.val, self.s_2port, atol=1e-3)
 
     def test_init_from_ntwkv1(self):
         n2.Network.from_ntwkv1(rf.data.ring_slot)

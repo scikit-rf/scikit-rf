@@ -2,6 +2,7 @@ import unittest
 import os
 import warnings
 import pickle
+import pytest
 
 import skrf as rf
 import numpy as npy
@@ -1237,6 +1238,7 @@ class LRRMTest(EightTermTest):
         m_i = wg.load(0.1, nports=1, name='load')
         thru = wg.line(d=50, z0=75, unit='um', name='thru')
         thru.renormalize(wg.z0)
+
         # Make sure calibration works with non-symmetric thru
         thru.s[:,1,1] += 0.02 + 0.05j
 

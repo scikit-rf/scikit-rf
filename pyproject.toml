@@ -1,0 +1,90 @@
+[project]
+name = "scikit-rf"
+version = "0.23.1"
+description = "Object Oriented Microwave Engineering"
+requires-python = ">=3.7"
+authors = [
+    {name="Alex Arsenovic", email="alexanderarsenovic@gmail.com"}
+]
+license = {text="LICENSE.txt"}
+readme = "README.md"
+
+keywords = [
+    "engineering", 
+    "electronics", 
+    "microwave-engineering", 
+    "radio-frequency", 
+    "touchstone"]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Communications :: Ham Radio",
+    "Topic :: Scientific/Engineering"]
+
+dependencies = [
+    "numpy ~=1.21",
+    "scipy ~=1.7",
+    "pandas ~=1.1",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest ~=7.0",
+    "coverage ~=6.0",
+    "flake8 ~=5.0",
+    "pytest-cov ~=3.0",
+    "nbval ~=0.9"
+]
+
+plot = [
+    "matplotlib ~=3.5"
+]
+
+xlsx = [
+    "openpyxl ~=3.0"
+]
+
+netw = [
+    "networkx ~= 2.0"
+]
+
+visa = [
+    "PyVISA ~= 1.12"
+]
+
+docs = [
+    "ipython >=7",
+    "ipykernel >=6.15",
+    "ipywidgets >=8.0.2",
+    "python-ivi >=0.14.9",
+    "jupyter-client >=7.3.5",
+    "sphinx-rtd-theme >=1.0",
+    "sphinx >=4",
+    "nbsphinx >= 0.8.9"
+]
+
+[project.urls]
+homepage = "https://scikit-rf.org/"
+repository = "https://github.com/scikit-rf/scikit-rf"
+documentation = "https://scikit-rf.readthedocs.io/en/latest/"
+
+[build-system]
+requires = [
+  "setuptools >= 64",
+  "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+license-files = ["LICENSE.txt"]
+
+[tool.setuptools.packages.find]
+include = ["skrf*"]
+
+[tool.setuptools.package-data]
+skrf = ["data/*.s*p", "data/*.cal", "data/*.mplstyle"]

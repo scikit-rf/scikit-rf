@@ -466,8 +466,8 @@ class Qfactor(object):
             G[i] = v1.real
             G[i2] = v1.imag
             v2 = v1 * t
-            M[i, :] = v.real, -v.imag, y.real, -y.imag, v2.imag
-            M[i2, :] = v.imag, v.real, y.imag, y.real, -v2.real
+            M[i, :] = np.array([v.real, -v.imag, y.real, -y.imag, v2.imag], dtype="object")
+            M[i2, :] = np.array([v.imag, v.real, y.imag, y.real, -v2.real], dtype="object")
 
         T = M.transpose()  # unweighted
         C = T @ M
@@ -717,23 +717,23 @@ class Qfactor(object):
                     u2 = -u * self.f[i] / Flwst
                     v = (c2 + y * c3) * expm7
                     u3 = v * fdn
-                    M[i, :] = (
-                        expm7.real,
+                    M[i, :] = np.array(
+                        [expm7.real,
                         -expm7.imag,
                         ym.real,
                         -ym.imag,
                         u.real,
                         u2.real,
-                        -u3.imag,
+                        -u3.imag], dtype="object"
                     )
-                    M[i2, :] = (
-                        expm7.imag,
+                    M[i2, :] = np.array(
+                        [expm7.imag,
                         expm7.real,
                         ym.imag,
                         ym.real,
                         u.imag,
                         u2.imag,
-                        u3.real,
+                        u3.real], dtype="object"
                     )
                     r = self.s[i] - v  # residual
                     G[i] = r.real
@@ -897,8 +897,8 @@ class Qfactor(object):
                     u2 = -u * self.f[i] / Flwst
                     FL = Flwst * m5 / m6
                     t = 2 * (self.f[i] - FL) / FL
-                    M[i, :] = 1.0, 0.0, y.real, -y.imag, u.real, u2.real, t, 0.0
-                    M[i2, :] = 0.0, 1.0, y.imag, y.real, u.imag, u2.imag, 0.0, t
+                    M[i, :] = np.array([1.0, 0.0, y.real, -y.imag, u.real, u2.real, t, 0.0], dtype="object")
+                    M[i2, :] = np.array([0.0, 1.0, y.imag, y.real, u.imag, u2.imag, 0.0, t], dtype="object")
                     v = c2 + c3 * y + (m8 + 1j * m9) * t
                     r = self.s[i] - v  # residual
                     G[i] = r.real

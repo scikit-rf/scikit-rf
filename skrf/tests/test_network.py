@@ -1,6 +1,7 @@
 from numpy.core.fromnumeric import squeeze
+import py
 import pytest
-from skrf.frequency import InvalidFrequencyWarning
+from skrf.frequency import Frequency, InvalidFrequencyWarning
 import unittest
 import os
 import io
@@ -60,6 +61,9 @@ class NetworkTestCase(unittest.TestCase):
         self.Fix = rf.concat_ports([l1, l1, l1, l1])
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
+        self.Fix2 = rf.concat_ports([l1, l1, l1, l1], port_order='first')
+        self.DUT2 = rf.concat_ports([l2, l2, l2, l2], port_order='first')
+        self.Meas2 = rf.concat_ports([l3, l3, l3, l3], port_order='first')
 
     def test_timedomain(self):
         t = self.ntwk1.s11.s_time
@@ -336,12 +340,17 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_stitch(self):
         tmp = self.ntwk1.copy()
-        tmp.f = tmp.f+ tmp.f[0]
-        c = rf.stitch(self.ntwk1, tmp)
+        tmp.frequency = Frequency.from_f(tmp.f + tmp.f[0], 'Hz')
+        with pytest.warns(rf.frequency.InvalidFrequencyWarning):
+            c = rf.stitch(self.ntwk1, tmp)
 
     def test_cascade(self):
         self.assertEqual(self.ntwk1 ** self.ntwk2, self.ntwk3)
         self.assertEqual(self.Fix ** self.DUT ** self.Fix.flipped(), self.Meas)
+
+    def test_cascade2(self):
+        self.assertEqual(self.ntwk1 >> self.ntwk2, self.ntwk3)
+        self.assertEqual(self.Fix2 >> self.DUT2 >> self.Fix2.flipped(), self.Meas2)
 
     def test_connect(self):
         self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
@@ -745,25 +754,32 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_allclose(ntwk.s, s_random)
 
     def test_s_def_setters(self):
-        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
-        ntwk = rf.Network(s=s_random, frequency=self.freq)
-        ntwk.z0 = npy.random.uniform(1, 100, len(ntwk.z0)) + 1j*npy.random.uniform(-100, 100, len(ntwk.z0))
-        ntwk.s = ntwk.s
+        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) +\
+            1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
+        z0_scalar = 50
+        z0_array_port = npy.random.uniform(1, 100, 2)
+        z0_array_freq = npy.random.uniform(1, 100, self.freq.npoints) +\
+            1j*npy.random.uniform(-100, 100, self.freq.npoints)
+        z0_array_freq_port = npy.random.uniform(1, 100, (self.freq.npoints,2)) +\
+            1j*npy.random.uniform(-100, 100, (self.freq.npoints,2))
+            
+        for z0 in [z0_scalar, z0_array_port, z0_array_freq, z0_array_freq_port]:
+            ntwk = rf.Network(s=s_random, frequency=self.freq, z0=z0)
 
-        s_traveling = rf.s2s(s_random, ntwk.z0, 'traveling', ntwk.s_def)
-        s_power = rf.s2s(s_random, ntwk.z0, 'power', ntwk.s_def)
-        s_pseudo = rf.s2s(s_random, ntwk.z0, 'pseudo', ntwk.s_def)
+            s_traveling = rf.s2s(s_random, z0, 'traveling', ntwk.s_def)
+            s_power = rf.s2s(s_random, z0, 'power', ntwk.s_def)
+            s_pseudo = rf.s2s(s_random, z0, 'pseudo', ntwk.s_def)
 
-        ntwk.s_traveling = s_traveling
-        npy.testing.assert_allclose(ntwk.s, s_random)
-        ntwk.s_power = s_power
-        npy.testing.assert_allclose(ntwk.s, s_random)
-        ntwk.s_pseudo = s_pseudo
-        npy.testing.assert_allclose(ntwk.s, s_random)
-
-        npy.testing.assert_allclose(ntwk.s_traveling, s_traveling)
-        npy.testing.assert_allclose(ntwk.s_power, s_power)
-        npy.testing.assert_allclose(ntwk.s_pseudo, s_pseudo)
+            ntwk.s_traveling = s_traveling
+            npy.testing.assert_allclose(ntwk.s, s_random)
+            ntwk.s_power = s_power
+            npy.testing.assert_allclose(ntwk.s, s_random)
+            ntwk.s_pseudo = s_pseudo
+            npy.testing.assert_allclose(ntwk.s, s_random)
+    
+            npy.testing.assert_allclose(ntwk.s_traveling, s_traveling)
+            npy.testing.assert_allclose(ntwk.s_power, s_power)
+            npy.testing.assert_allclose(ntwk.s_pseudo, s_pseudo)
 
     def test_sparam_conversion_with_complex_char_impedance(self):
         """
@@ -858,7 +874,7 @@ class NetworkTestCase(unittest.TestCase):
         for s_def in S_DEFINITIONS:
             ntwk = rf.Network(s_def=s_def)
             ntwk.z0 = rf.fix_z0_shape(z0, 2, 3)
-            ntwk.f = freqs
+            ntwk.frequency = Frequency.from_f(freqs)
             # test #1: define the network directly from z
             ntwk.z = z_ref
             npy.testing.assert_allclose(ntwk.z, z_ref)
@@ -878,7 +894,7 @@ class NetworkTestCase(unittest.TestCase):
         for s_def in S_DEFINITIONS:
             ntwk = rf.Network(s_def=s_def)
             ntwk.z0 = npy.array([50j, -50j])
-            ntwk.f = npy.array([1000])
+            ntwk.frequency = Frequency.from_f(npy.array([1000]))
             ntwk.s = npy.random.rand(1,2,2) + npy.random.rand(1,2,2)*1j
             self.assertFalse(npy.any(npy.isnan(ntwk.z)))
             self.assertFalse(npy.any(npy.isnan(ntwk.y)))
@@ -913,11 +929,9 @@ class NetworkTestCase(unittest.TestCase):
         # Unfortunately the frequency vector and the s shape can distinguish
         z0 = [1,2,3]
         ntwk.s = npy.random.rand(3,2,2)
-        with self.assertRaises(AttributeError):
-            ntwk.z0 = z0
-
-        ntwk.f = [1,2,3]
         ntwk.z0 = z0[::-1]
+
+        ntwk.frequency = Frequency.from_f([1,2,3])
         self.assertTrue(npy.allclose(ntwk.z0, npy.array([z0[::-1], z0[::-1]], dtype=complex).T))
 
     def test_z0_matrix(self):
@@ -931,7 +945,7 @@ class NetworkTestCase(unittest.TestCase):
         # Setting the frequency is required to be set, as the matrix size is checked against the
         # frequency vector
         ntwk.s = npy.random.rand(1,2,2)
-        ntwk.f = [1]
+        ntwk.frequency = Frequency.from_f([1])
         ntwk.z0 = z0
         self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
 
@@ -954,7 +968,7 @@ class NetworkTestCase(unittest.TestCase):
         tinyfloat = 1e-12
         ntwk = rf.Network()
         ntwk.z0 = npy.array([28,75+3j])
-        ntwk.f = npy.array([1000, 2000])
+        ntwk.frequency = Frequency.from_f(npy.array([1000, 2000]))
         ntwk.s = rf.z2s(npy.array([[[1+1j,5,11],[40,5,3],[16,8,9+8j]],
                                    [[1,20,3],[14,10,16],[27,18,-19-2j]]]))
         self.assertTrue((abs(rf.y2z(ntwk.y)-ntwk.z) < tinyfloat).all())

@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 class CPW(Media):
-    """
+    r"""
     Coplanar waveguide.
     
     

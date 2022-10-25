@@ -112,7 +112,7 @@ class PNA(Driver):
     """
     def __init__(self, address, channel=1,timeout = 3, echo = False,
         front_panel_lockout= False, **kwargs):
-        """
+        r"""
         Constructor
 
         Parameters
@@ -546,7 +546,7 @@ class PNA(Driver):
         return out
 
     def get_oneport(self, port=1, *args, **kwargs):
-        """
+        r"""
         Get a one-port Network object for given ports.
 
         This calls :func:`~PNA.get_data_snp` and :func:`~PNA.get_frequency`
@@ -579,7 +579,7 @@ class PNA(Driver):
         return ntwk
 
     def get_twoport(self, ports=[1,2], sweep=True, single=True, *args, **kwargs):
-        """
+        r"""
         Get a two-port Network object for given ports.
 
         This calls :func:`~PNA.get_data_snp` and :func:`~PNA.get_frequency`

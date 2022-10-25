@@ -124,15 +124,19 @@ class Touchstone:
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
         try:
-            if encoding is not None:
-                fid = get_fid(file, encoding=encoding)
-                self.filename = fid.name
-                self.load_file(fid)
-            else:
-                # Assume default encoding
-                fid = get_fid(file)
-                self.filename = fid.name
-                self.load_file(fid)
+            try:
+                if encoding is not None:
+                    fid = get_fid(file, encoding=encoding)
+                    self.filename = fid.name
+                    self.load_file(fid)
+                else:
+                    # Assume default encoding
+                    fid = get_fid(file)
+                    self.filename = fid.name
+                    self.load_file(fid)
+            except Exception as e:
+                fid.close()
+                raise e
 
         except UnicodeDecodeError:
             # Unicode fails -> Force Latin-1
@@ -149,13 +153,14 @@ class Touchstone:
         except Exception as e:
             raise ValueError(f'Something went wrong by the file opening: {e}')
 
-        self.gamma = []
-        self.z0 = []
+        finally:
+            self.gamma = []
+            self.z0 = []
 
-        if self.has_hfss_port_impedances:
-            self.get_gamma_z0_from_fid(fid)
+            if self.has_hfss_port_impedances:
+                self.get_gamma_z0_from_fid(fid)
 
-        fid.close()
+            fid.close()
 
     def load_file(self, fid: typing.TextIO):
         """
