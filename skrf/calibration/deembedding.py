@@ -61,7 +61,30 @@ import numpy as np
 from numpy import concatenate, conj, flip, real, angle, exp, zeros
 from numpy.fft import fft, fftshift, irfft, ifftshift
 from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
+from functools import wraps
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
+    
+def check_plotting(func):
+    """
+    This decorator checks if matplotlib.pyplot is available under the name mplt.
+    If not, raise an RuntimeError.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to run the decorated function without matplotlib
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if plt is None:
+            raise RuntimeError('Plotting is not available')
+        func(*args, **kwargs)
+
+    return wrapper
 
 
 class Deembedding(ABC):
@@ -1131,7 +1154,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             cnt += 1
         return DCpoint
     
-    
+    @check_plotting
     def split2xthru(self, s2xthru):
         f = s2xthru.frequency.f
         s = s2xthru.s
@@ -2102,7 +2125,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 axs[1].plot(ifftshift(zdut1))
         return errorbox1
     
-    
+    @check_plotting
     def split2xthru(self, s2xthru, sfix_dut_fix):
         
         f = sfix_dut_fix.frequency.f
