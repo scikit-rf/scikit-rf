@@ -1166,14 +1166,14 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 f_original = f
                 df = f[1] - f[0]
                 projected_n = round(f[-1]/f[0])
-                if(projected_n < 10000):
+                if(projected_n <= 10000):
                     fnew = f[0] * (np.arange(0, projected_n) + 1)
                 else:
                     dfnew = f[-1]/10000
                     fnew = dfnew * (np.arange(0, 10000) + 1)
                 stemp = Network(frequency = Frequency.from_f(f, 'Hz'), s = s)
                 f_interp = Frequency.from_f(fnew, unit = 'Hz')
-                stemp.interpolate_self(f_interp, kind = 'linear',
+                stemp.interpolate_self(f_interp, kind = 'cubic',
                                        fill_value = 'extrapolate')
                 f = fnew
                 s = stemp.s
@@ -1283,27 +1283,27 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             
             # revert to initial freq axis
             if flag_df:
-                interp_e001 = interp1d(f, e001, kind = 'linear',
+                interp_e001 = interp1d(f, e001, kind = 'cubic',
                                 fill_value = 'extrapolate',
                                 assume_sorted = True)
                 e001 = interp_e001(f_original)
-                interp_e01 = interp1d(f, e01, kind = 'linear',
+                interp_e01 = interp1d(f, e01, kind = 'cubic',
                                 fill_value = 'extrapolate',
                                 assume_sorted = True)
                 e01 = interp_e01(f_original)
-                interp_e111 = interp1d(f, e111, kind = 'linear',
+                interp_e111 = interp1d(f, e111, kind = 'cubic',
                                 fill_value = 'extrapolate',
                                 assume_sorted = True)
                 e111 = interp_e111(f_original)
-                interp_e002 = interp1d(f, e002, kind = 'linear',
+                interp_e002 = interp1d(f, e002, kind = 'cubic',
                                 fill_value = 'extrapolate',
                                 assume_sorted = True)
                 e002 = interp_e002(f_original)
-                interp_e10 = interp1d(f, e10, kind = 'linear',
+                interp_e10 = interp1d(f, e10, kind = 'cubic',
                                 fill_value = 'extrapolate',
                                 assume_sorted = True)
                 e10 = interp_e10(f_original)
-                interp_e112 = interp1d(f, e112, kind = 'linear',
+                interp_e112 = interp1d(f, e112, kind = 'cubic',
                                 fill_value = 'extrapolate',
                                 assume_sorted = True)
                 e112 = interp_e112(f_original)
@@ -2153,16 +2153,17 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             projected_n = np.floor(f[-1]/f[0])
             fnew = f[0] * (np.arange(0, projected_n) + 1)
             f_interp = Frequency.from_f(fnew, unit = 'Hz')
-            sfix_dut_fix.interpolate_self(f_interp, kind = 'linear',
+            sfix_dut_fix.interpolate_self(f_interp, kind = 'cubic',
                                    fill_value = 'extrapolate')
-            s2xthru.interpolate_self(f_interp, kind = 'linear',
+            s2xthru.interpolate_self(f_interp, kind = 'cubic',
                                    fill_value = 'extrapolate')   
             f = fnew
             
         # check if 2x-thru is not the same frequency vector as the
         # fixture-dut-fixture
         if(not np.array_equal(sfix_dut_fix.frequency.f, s2xthru.frequency.f)):
-            s2xthru.interpolate(sfix_dut_fix.frequency)
+            s2xthru.interpolate(sfix_dut_fix.frequency, kind = 'cubic',
+                                   fill_value = 'extrapolate')
             warnings.warn(
                "2x-thru does not have the same frequency vector as the fixture-dut-fixture. Interpolating to fix problem.",
                RuntimeWarning
@@ -2229,9 +2230,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         # revert back to original frequency vector
         if self.flag_df:
             f_interp = Frequency.from_f(f_original, unit = 'Hz')
-            s_side1.interpolate_self(f_interp, kind = 'linear',
+            s_side1.interpolate_self(f_interp, kind = 'cubic',
                                    fill_value = 'extrapolate')
-            s_side2.interpolate_self(f_interp, kind = 'linear',
+            s_side2.interpolate_self(f_interp, kind = 'cubic',
                                    fill_value = 'extrapolate')
         
         # add DC back in
