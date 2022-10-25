@@ -973,6 +973,13 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         -|1  2|---|1  2|---|2  1|-
          +----+   +----+   +----+
          
+    Warning for matlab users
+    ------------------------
+    There are two differences compared to the original matlab implementation:
+        - FIX-2 is flipped (see diagram above)
+        - A more robust root choice solution is used that avoids the apparition
+          of 180° phase jumps in the fixtures in certain circumstances
+         
     References
     ----------
     .. [ElSA20] Ellison J, Smith SB, Agili S., "Using a 2x-thru standard to achieve
@@ -1433,6 +1440,13 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         -|2  4|---|2  4|---|4  2|-
          +----+   +----+   +----+
     
+    Warning for matlab users
+    ------------------------
+    There are two differences compared to the original matlab implementation:
+        - FIX-2 is flipped (see diagram above)
+        - A more robust root choice solution is used that avoids the apparition
+          of 180° phase jumps in the fixtures in certain circumstances
+    
     References
     ----------
     .. [ElSA20] Ellison J, Smith SB, Agili S., "Using a 2x-thru standard to achieve
@@ -1653,6 +1667,11 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
          +----+   +----+   +----+
         -|1  2|---|1  2|---|2  1|-
          +----+   +----+   +----+
+         
+    Warning for matlab users
+    ------------------------
+    There is one difference compared to the original matlab implementation:
+        - FIX-2 is flipped (see diagram above)
          
     References
     ----------
@@ -2316,6 +2335,11 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         -|1  3|---|1  3|---|3  1|-
         -|2  4|---|2  4|---|4  2|-
          +----+   +----+   +----+
+         
+    Warning for matlab users
+    ------------------------
+    There is one difference compared to the original matlab implementation:
+        - FIX-2 is flipped (see diagram above)
     
     References
     ----------
