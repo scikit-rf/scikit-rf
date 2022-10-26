@@ -973,8 +973,9 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         -|1  2|---|1  2|---|2  1|-
          +----+   +----+   +----+
          
-    Warning for matlab users
-    ------------------------
+
+    Warning
+    -------
     There are two differences compared to the original matlab implementation:
         - FIX-2 is flipped (see diagram above)
         - A more robust root choice solution is used that avoids the apparition
@@ -1270,16 +1271,19 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             #     # mhuser : is it a problem with complex value cast to real here ?
             #     e10[i] = k * np.sqrt(s12r[i] * (1 - e111[i] * e112[i]))
             
-            # elegant way to avoid 180° phase jumps in case of phase noise
             # calc e01 and e10
-            e10e01 = 0.5 * (s12r + s21r) * (1 - e111 * e112)
-            e01 = np.sqrt(e10e01)
-            e10 = zeros(n, dtype = complex)
+            # avoid 180° phase jumps in case of phase noise
+            e01 = np.sqrt(s21r * (1 - e111 * e112))
             for i in range(n):
                 if i > 0:
                     if npy.abs(-e01[i] - e01[i-1]) < npy.abs(e01[i] - e01[i-1]):
-                        e01[i] *= -1
-                e10[i] = e10e01[i] / e01[i]
+                        e01[i] = - e01[i]
+            e10 = np.sqrt(s12r * (1 - e111 * e112))
+            for i in range(n):
+                if i > 0:
+                    if npy.abs(-e10[i] - e10[i-1]) < npy.abs(e10[i] - e10[i-1]):
+                        e10[i] = - e10[i]
+                    
             
             # revert to initial freq axis
             if flag_df:
@@ -1440,8 +1444,9 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         -|2  4|---|2  4|---|4  2|-
          +----+   +----+   +----+
     
-    Warning for matlab users
-    ------------------------
+
+    Warning
+    -------
     There are two differences compared to the original matlab implementation:
         - FIX-2 is flipped (see diagram above)
         - A more robust root choice solution is used that avoids the apparition
@@ -1668,8 +1673,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         -|1  2|---|1  2|---|2  1|-
          +----+   +----+   +----+
          
-    Warning for matlab users
-    ------------------------
+
+    Warning
+    -------
     There is one difference compared to the original matlab implementation:
         - FIX-2 is flipped (see diagram above)
          
@@ -2336,9 +2342,10 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         -|1  3|---|1  3|---|3  1|-
         -|2  4|---|2  4|---|4  2|-
          +----+   +----+   +----+
-         
-    Warning for matlab users
-    ------------------------
+    
+
+    Warning
+    -------
     There is one difference compared to the original matlab implementation:
         - FIX-2 is flipped (see diagram above)
     
