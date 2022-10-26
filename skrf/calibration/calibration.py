@@ -761,7 +761,7 @@ class Calibration:
         """
 
         residual_sets={}
-        std_names = list({k.name  for k in self.ideals })
+        std_names = list(set([k.name  for k in self.ideals]))
         for std_name in std_names:
             residual_sets[std_name] = NetworkSet(
                 [k for k in self.residual_ntwks if k.name.startswith(std_name)])
@@ -782,7 +782,7 @@ class Calibration:
         """
 
         caled_sets={}
-        std_names = list({k.name  for k in self.ideals })
+        std_names = list(set([k.name  for k in self.ideals ]))
         for std_name in std_names:
             caled_sets[std_name] = NetworkSet(
                 [k for k in self.caled_ntwks if k.name.startswith(std_name)])
@@ -5365,7 +5365,7 @@ def convert_pnacoefs_2_skrf(coefs):
             skrf_coefs[coef_key] = coefs[k]
 
     else:
-        ports = list({k[-2] for k in coefs})
+        ports = list(set([k[-2] for k in coefs]))
         ports.sort(key=int)
         port_map ={ports[0]: 'forward',
                    ports[1]: 'reverse'}
