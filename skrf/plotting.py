@@ -82,6 +82,27 @@ from . import mathFunctions as mf
 from . util import now_string_2_dt
 import matplotlib.tri as tri
 
+from functools import wraps
+    
+def check_plotting(func):
+    """
+    This decorator checks if matplotlib.pyplot is available under the name mplt.
+    If not, raise an RuntimeError.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to run the decorated function without matplotlib
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if plt is None:
+            raise RuntimeError('Plotting is not available')
+        func(*args, **kwargs)
+
+    return wrapper
+
 try:
     import networkx as nx
 except ImportError as e:
