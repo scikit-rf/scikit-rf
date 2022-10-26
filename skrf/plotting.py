@@ -86,7 +86,7 @@ from functools import wraps
     
 def check_plotting(func):
     """
-    This decorator checks if matplotlib.pyplot is available under the name plt.
+    This decorator checks if matplotlib.pyplot is available under the name mplt.
     If not, raise an RuntimeError.
 
     Raises
@@ -99,7 +99,7 @@ def check_plotting(func):
     def wrapper(*args, **kwargs):
         if plt is None:
             raise RuntimeError('Plotting is not available')
-        return func(*args, **kwargs)
+        func(*args, **kwargs)
 
     return wrapper
 
