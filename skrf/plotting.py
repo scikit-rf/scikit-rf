@@ -84,9 +84,10 @@ import matplotlib.tri as tri
 
 from functools import wraps
     
-def check_plotting(func):
+def check_plotting(matplotlib_pyplot_alias):
     """
-    This decorator checks if matplotlib.pyplot is available under the name mplt.
+    This decorator checks if matplotlib.pyplot is imported as
+    matplotlib_pyplot_alias.
     If not, raise an RuntimeError.
 
     Raises
@@ -94,14 +95,15 @@ def check_plotting(func):
     RuntimeError
         When trying to run the decorated function without matplotlib
     """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if plt is None:
-            raise RuntimeError('Plotting is not available')
-        func(*args, **kwargs)
-
-    return wrapper
+    def check_plotting_decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if matplotlib_pyplot_alias is None:
+                raise RuntimeError('Plotting is not available')
+            return func(*args, **kwargs)
+    
+        return wrapper
+    return check_plotting_decorator
 
 try:
     import networkx as nx

@@ -6,9 +6,9 @@ from typing import Any, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from .network import Network
 
-from functools import wraps
 try:
     from . import plotting    # will perform the correct setup for matplotlib before it is called below
+    from .plotting import check_plotting
     import matplotlib.pyplot as mplt
     from matplotlib.ticker import EngFormatter
 except ImportError:
@@ -1368,7 +1368,7 @@ class VectorFitting:
                 resp += residues[i] / (s - pole) + np.conjugate(residues[i]) / (s - np.conjugate(pole))
         return resp
 
-    @check_plotting
+    @check_plotting(mplt)
     def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None,
              parameter: str = 's', ax: mplt.Axes = None) -> mplt.Axes:
         """
@@ -1685,7 +1685,7 @@ class VectorFitting:
 
         return self.plot('im', *args, **kwargs)
 
-    @check_plotting
+    @check_plotting(mplt)
     def plot_s_singular(self, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the singular values of the vector fitted S-matrix in linear scale.
@@ -1739,7 +1739,7 @@ class VectorFitting:
         ax.legend(loc='best')
         return ax
 
-    @check_plotting
+    @check_plotting(mplt)
     def plot_convergence(self, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
@@ -1769,7 +1769,7 @@ class VectorFitting:
         ax2.set_ylabel('Residue', color='orangered')
         return ax
 
-    @check_plotting
+    @check_plotting(mplt)
     def plot_passivation(self, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the history of the greatest singular value during the iterative passivity enforcement process, which
