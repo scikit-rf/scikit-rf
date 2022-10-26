@@ -72,7 +72,7 @@ class VectorFittingTestCase(unittest.TestCase):
         vf.write_spice_subcircuit_s(name)
 
         # written tmp file should contain 69 lines
-        with open(name, 'r') as f:
+        with open(name) as f:
             n_lines = len(f.readlines())
         self.assertEqual(n_lines, 69)
         os.remove(name)
@@ -93,7 +93,7 @@ class VectorFittingTestCase(unittest.TestCase):
 
             # create a new vector fitting instance and import (read) those fitted parameters
             vf2 = skrf.vectorFitting.VectorFitting(nw)
-            vf2.read_npz(os.path.join(name, 'coefficients_{}.npz'.format(nw.name)))
+            vf2.read_npz(os.path.join(name, f'coefficients_{nw.name}.npz'))
 
         # compare both sets of parameters
         self.assertTrue(np.allclose(vf.poles, vf2.poles))

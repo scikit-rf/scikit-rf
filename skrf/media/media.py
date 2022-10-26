@@ -1,4 +1,3 @@
-
 """
 media (:mod:`skrf.media.media`)
 ========================================
@@ -1441,7 +1440,7 @@ class DefinedGammaZ0(Media):
     def __init__(self, frequency: Union[Frequency, None] = None,
                  z0: Union[NumberLike, None] = None, Z0: NumberLike = 50,
                  gamma: NumberLike = 1j):
-        super(DefinedGammaZ0, self).__init__(frequency=frequency,
+        super().__init__(frequency=frequency,
                                              z0=z0)
         self.gamma= gamma
         self.Z0 = Z0

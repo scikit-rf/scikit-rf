@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 import time
 import sys
@@ -14,14 +12,14 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 class QHLine(QtWidgets.QFrame):
     def __init__(self):
-        super(QHLine, self).__init__()
+        super().__init__()
         self.setFrameShape(QtWidgets.QFrame.HLine)
         self.setFrameShadow(QtWidgets.QFrame.Sunken)
 
 
 class QVLine(QtWidgets.QFrame):
     def __init__(self):
-        super(QVLine, self).__init__()
+        super().__init__()
         self.setFrameShape(QtWidgets.QFrame.VLine)
         self.setFrameShadow(QtWidgets.QFrame.Sunken)
 
@@ -96,7 +94,7 @@ def instantiate_app(sys_argv=None):
 
 class WarningMsgBox(QtWidgets.QDialog):
     def __init__(self, text, title="Warning", parent=None):
-        super(WarningMsgBox, self).__init__(parent)
+        super().__init__(parent)
         self.resize(500, 400)
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.verticalLayout.setContentsMargins(0, 0, 0, -1)
@@ -198,7 +196,7 @@ def close_splash_screen(widget, splash, start_time):
     splash.finish(widget)
 
 
-def single_widget_application(widget_class, splash_screen=True, appid=u"skrf.qtapp", icon=cfg.skrf_icon):
+def single_widget_application(widget_class, splash_screen=True, appid="skrf.qtapp", icon=cfg.skrf_icon):
     if appid:
         set_process_id(appid)
 
@@ -243,8 +241,8 @@ def set_process_id(appid=None):
 
 class HTMLDisplay(QtWidgets.QTextEdit):
     def __init__(self, parent=None):
-        super(HTMLDisplay, self).__init__(parent)
-        self.defaultSize = super(HTMLDisplay, self).sizeHint()
+        super().__init__(parent)
+        self.defaultSize = super().sizeHint()
         self.h = self.defaultSize.height() * 2
         self.w = self.defaultSize.width() * 2
 
@@ -257,8 +255,8 @@ class HTMLDisplay(QtWidgets.QTextEdit):
 
 class HelpIndicator(QtWidgets.QPushButton):
     def __init__(self, title="help text", help_text=None, parent=None):
-        super(HelpIndicator, self).__init__(parent)
-        self.defaultSize = super(HelpIndicator, self).sizeHint()
+        super().__init__(parent)
+        self.defaultSize = super().sizeHint()
         self.title = title
         self.h = self.defaultSize.height()
         self.w = self.h
@@ -293,7 +291,7 @@ class HelpIndicator(QtWidgets.QPushButton):
 
 class RunFunctionDialog(QtWidgets.QDialog):
     def __init__(self, function, title="Wait", text=None, parent=None):
-        super(RunFunctionDialog, self).__init__(parent)
+        super().__init__(parent)
         self.function = function
         self.layout = QtWidgets.QVBoxLayout(self)
         if text is None:
