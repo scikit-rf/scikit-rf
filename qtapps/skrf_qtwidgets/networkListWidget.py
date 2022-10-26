@@ -58,7 +58,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
     def something_happened(self):
         # Create a set of the newly selected items, so we can
         # compare to the old selected items set
-        newly_selected_items = {item.text() for item in self.selectedItems()}
+        newly_selected_items = set([item.text() for item in self.selectedItems()])
         if newly_selected_items != self.selected_items:
             # Only emit selection_changed signal if a change was detected
             self.selected_items = newly_selected_items
@@ -66,7 +66,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
 
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
-        newly_selected_items = {item.text() for item in self.selectedItems()}
+        newly_selected_items = set([item.text() for item in self.selectedItems()])
         if len(newly_selected_items) == 1 and newly_selected_items == self.selected_items:
             self.same_item_clicked.emit(self.selected_items)
         else:

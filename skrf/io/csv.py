@@ -164,7 +164,7 @@ def pna_csv_2_ntwks2(filename, *args, **kwargs):
     df = pna_csv_2_df(filename, *args, **kwargs)
     header, comments, d = read_pna_csv(filename)
     ntwk_dict  = {}
-    param_set={k[:3] for k in df.columns}
+    param_set=set([k[:3] for k in df.columns])
     f = df.index.values*1e-9
     for param in param_set:
         try:

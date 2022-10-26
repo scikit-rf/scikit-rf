@@ -144,7 +144,7 @@ class NetworkSet:
             raise(TypeError('input must be list of Network types'))
 
         # do all Networks have the same # ports?
-        if len ({ntwk.number_of_ports for ntwk in ntwk_set}) > 1:
+        if len (set([ntwk.number_of_ports for ntwk in ntwk_set])) > 1:
             raise(ValueError('All elements in list of Networks must have same number of ports'))
 
         # is all frequency information the same?
