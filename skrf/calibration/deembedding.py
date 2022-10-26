@@ -62,7 +62,7 @@ from numpy import concatenate, conj, flip, real, angle, exp, zeros
 from numpy.fft import fft, fftshift, irfft, ifftshift
 from scipy.interpolate import interp1d
 try:
-    from . import plotting    # will perform the correct setup for matplotlib before it is called below
+    from ..plotting import check_plotting
     import matplotlib.pyplot as plt
 except ImportError:
     plt = None
