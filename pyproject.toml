@@ -80,9 +80,15 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+
 [tool.setuptools]
-packages = ["skrf"]
 license-files = ["LICENSE.txt"]
+
+[tool.setuptools.packages.find]
+include = ["skrf*"]
+
+[tool.setuptools.package-data]
+skrf = ["data/*.s*p", "data/*.cal", "data/*.mplstyle"]
 
 [tool.pytest.ini_options]
 testpaths = [
@@ -101,5 +107,3 @@ filterwarnings = [
     "ignore::pytest.PytestRemovedIn8Warning",
     'ignore:.*hookimpl.*old-style configuration options.*:pytest.PytestDeprecationWarning'
 ]
-
-
