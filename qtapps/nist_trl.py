@@ -5,7 +5,7 @@ from qtpy import QtWidgets, QtCore
 
 class NISTTRLWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        super(NISTTRLWidget, self).__init__(parent)
+        super().__init__(parent)
 
         # --- Setup UI --- #
         self.resize(950, 575)

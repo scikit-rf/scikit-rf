@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 .. module:: skrf.io.mdif
 
@@ -309,7 +308,7 @@ class Mdif():
             if line.lower().startswith('var'):
                 in_a_block = True
                 # current parameter
-                param_name, param_value = [s.strip() for s in line[3:].split('=')]
+                param_name, param_value = (s.strip() for s in line[3:].split('='))
                 # remove the datatype "(blah)" in "varname(blah)" if any
                 param_name = param_name.split('(')[0]
                 # try to convert the value as a number
@@ -506,4 +505,4 @@ class Mdif():
                     if i[1] == nports:
                         optionstring += "\n"
 
-        return optionstring    
+        return optionstring

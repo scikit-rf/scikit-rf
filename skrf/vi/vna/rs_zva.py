@@ -30,7 +30,7 @@ class ZVA(abcvna.VNA):
         kwargs : dict
             interface (str), port (int), timeout (int),
         """
-        super(ZVA, self).__init__(address, **kwargs)
+        super().__init__(address, **kwargs)
         self.resource.timeout = kwargs.get("timeout", 2000)
         self.scpi = rs_zva_scpi.SCPI(self.resource)
         self.use_ascii()  # less likely to cause problems than use_binary
@@ -162,11 +162,11 @@ class ZVA(abcvna.VNA):
         # ensure all ports are ints, unique and in a valid range
         for i, port in enumerate(ports):
             if type(port) is not int:
-                raise TypeError("ports must be an iterable of integers, not type: {:d}".format(type(port)))
+                raise TypeError(f"ports must be an iterable of integers, not type: {type(port):d}")
             if not 0 < port <= self.NPORTS:
-                raise ValueError("invalid ports, must be between 1 and {:d}".format(self.NPORTS))
+                raise ValueError(f"invalid ports, must be between 1 and {self.NPORTS:d}")
             if port in ports[i+1:]:
-                raise ValueError("duplicate port: {:d}".format(port))
+                raise ValueError(f"duplicate port: {port:d}")
 
         channel = kwargs.get("channel", self.active_channel)
         catalogue = self.scpi.query_par_catalog(channel)  # type: list
@@ -176,9 +176,9 @@ class ZVA(abcvna.VNA):
         port_keys = list()
         for receive_port in ports:
             for source_port in ports:
-                key = "S{:d}{:d}".format(receive_port, source_port)
+                key = f"S{receive_port:d}{source_port:d}"
                 if key not in trace_data:
-                    raise Exception("missing measurement trace for {:s}".format(key))
+                    raise Exception(f"missing measurement trace for {key:s}")
                 port_keys.append(key)
 
         nports = len(ports)
@@ -190,7 +190,7 @@ class ZVA(abcvna.VNA):
 
         for m, source_port in enumerate(ports):
             for n, receive_port in enumerate(ports):
-                port_key = "S{:d}{:d}".format(receive_port, source_port)
+                port_key = f"S{receive_port:d}{source_port:d}"
                 trace = trace_name[trace_data.index(port_key)]
                 self.scpi.set_par_select(channel, trace)
                 sdata = self.scpi.query_data(channel, "SDATA")
@@ -199,6 +199,6 @@ class ZVA(abcvna.VNA):
         name = kwargs.get("name", None)
         if not name:
             port_string = ",".join(map(str, ports))
-            name = "{:d}-Port Network ({:})".format(nports, port_string)
+            name = f"{nports:d}-Port Network ({port_string})"
         ntwk.name = name
         return ntwk

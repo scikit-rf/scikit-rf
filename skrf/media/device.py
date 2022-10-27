@@ -1,5 +1,3 @@
-
-
 """
 .. currentmodule:: skrf.media.device
 
@@ -37,7 +35,7 @@ from ..network  import connect
 from numpy import sqrt,exp
 
 
-class Device(object):
+class Device:
     """
     A n-port microwave device
     
@@ -93,7 +91,7 @@ class MatchedSymmetricCoupler(Device):
   
     @classmethod
     def from_dbdeg(cls, media, db, deg=0, *args,**kw):
-        """
+        r"""
         Create a coupler in terms of couping(dB) and phase offset(deg)
         
         Parameters 

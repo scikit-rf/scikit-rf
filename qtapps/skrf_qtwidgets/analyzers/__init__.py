@@ -23,11 +23,11 @@ try:
         except Exception as e:
             etype, value, tb = sys.exc_info()
             err_msg = "\n".join(traceback.format_exception(etype, value, tb))
-            print("did not import {:s}\n\n{:s}".format(module_name, err_msg))
+            print(f"did not import {module_name:s}\n\n{err_msg:s}")
             continue
 
         if module.Analyzer.NAME in analyzers.keys():
-            print("overwriting Analyzer {:s} in selection".format(module.Analyzer.NAME))
+            print(f"overwriting Analyzer {module.Analyzer.NAME:s} in selection")
 
         analyzers[module.Analyzer.NAME] = module.Analyzer
     sys.path.pop(0)

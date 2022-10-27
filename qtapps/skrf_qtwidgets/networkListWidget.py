@@ -12,7 +12,7 @@ from .networkPlotWidget import NetworkPlotWidget
 class NetworkListItem(QtWidgets.QListWidgetItem):
 
     def __init__(self, parent=None):
-        super(NetworkListItem, self).__init__(parent)
+        super().__init__(parent)
         self.ntwk = None
         self.ntwk_corrected = None
         self.parameters = {}
@@ -36,7 +36,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
     state_changed = QtCore.Signal()
 
     def __init__(self, name_prefix='meas', parent=None):
-        super(NetworkListWidget, self).__init__(parent)
+        super().__init__(parent)
         self.name_prefix = name_prefix
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
@@ -65,7 +65,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
             self.selection_changed.emit(self.selected_items)
 
     def mousePressEvent(self, event):
-        super(NetworkListWidget, self).mousePressEvent(event)
+        super().mousePressEvent(event)
         newly_selected_items = set([item.text() for item in self.selectedItems()])
         if len(newly_selected_items) == 1 and newly_selected_items == self.selected_items:
             self.same_item_clicked.emit(self.selected_items)
@@ -73,7 +73,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
             self.something_happened()
 
     def mouseReleaseEvent(self, event):
-        super(NetworkListWidget, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
         self.something_happened()
     
     @staticmethod
@@ -102,8 +102,8 @@ class NetworkListWidget(QtWidgets.QListWidget):
         elif not isinstance(ntwk, skrf.Network):
             raise TypeError("ntwk must be a skrf.Network object to save")
 
-        extension = ".s{:d}p".format(ntwk.s.shape[1])
-        file_filter = "touchstone format (*{:s})".format(extension)
+        extension = f".s{ntwk.s.shape[1]:d}p"
+        file_filter = f"touchstone format (*{extension:s})"
         filename = os.path.join(qt.cfg.last_path, ntwk.name + extension)
 
         if save_which.lower() == "both":
@@ -169,7 +169,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
             names.append(item.ntwk.name)
 
         if name in names:
-            if re.match("_\d\d", name[-3:]):
+            if re.match(r"_\d\d", name[-3:]):
                 name_base = name[:-3]
                 suffix = int(name[-2:])
             else:
@@ -177,7 +177,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
                 suffix = 1
 
             for num in range(suffix, 100, 1):
-                name = "{:s}_{:02d}".format(name_base, num)
+                name = f"{name_base:s}_{num:02d}"
                 if name not in names:
                     break
         return name
@@ -500,7 +500,7 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
         parent : QtWidgets.QWidget
             the parent widget of the NetworkListWidget
         """
-        super(ParameterizedNetworkListWidget, self).__init__(name_prefix, parent)
+        super().__init__(name_prefix, parent)
         self.itemDelegate().commitData.disconnect(self.item_text_updated)
         self._item_parameters = OrderedDict()
         self.itemDoubleClicked.connect(self.edit_item)
@@ -540,10 +540,10 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
     def set_item_text(self, item):
         name = item.ntwk.name
         for param in self.label_parameters:
-            name += " - {:}".format(item.parameters[param])
+            name += f" - {item.parameters[param]}"
             units = self.item_parameters[param]["units"]
             if units:
-                name += " {:}".format(units)
+                name += f" {units}"
         item.setText(name)
 
     def load_network(self, ntwk, activate=True, parameters=None):
@@ -593,7 +593,7 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
                 elif isinstance(input, QtWidgets.QDoubleSpinBox) or isinstance(input, QtWidgets.QSpinBox):
                     value = input.value()
                 else:
-                    raise TypeError("Unsupported Widget {:}".format(input))
+                    raise TypeError(f"Unsupported Widget {input}")
                 if item.parameters[name] != value:
                     item.parameters[name] = value
                     state_changed = True

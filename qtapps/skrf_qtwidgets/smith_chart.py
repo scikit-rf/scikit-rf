@@ -1,4 +1,3 @@
-from __future__ import division
 from math import sqrt, acos, degrees
 import pyqtgraph as pg
 

@@ -145,7 +145,7 @@ class NanoVNAv2(abcvna.VNA):
         if v == 2:
             return 'NanoVNA_v2'
         else:
-            return 'Unknown device, got deviceVariant={}'.format(v)
+            return f'Unknown device, got deviceVariant={v}'
 
     def reset(self):
         raise NotImplementedError
@@ -461,7 +461,7 @@ class NanoVNAv2(abcvna.VNA):
                 elif port == 1:
                     s[:, rows[k], col] = data_s21
                 else:
-                    raise ValueError('Invalid port index `{}` in `ports`'.format(port))
+                    raise ValueError(f'Invalid port index `{port}` in `ports`')
                 k += 1
 
         return skrf.Network(frequency=frequency, s=s)

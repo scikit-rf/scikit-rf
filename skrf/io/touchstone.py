@@ -208,13 +208,13 @@ class Touchstone:
                         garbage, index = port_string.strip().split('[', 1) #throws ValueError on unpack
                         index = int(index.rstrip(']')) #throws ValueError on not int-able
                         if index > self.rank or index <= 0:
-                            print("Port name {0} provided for port number {1} but that's out of range for a file with extension s{2}p".format(name, index, self.rank))
+                            print(f"Port name {name} provided for port number {index} but that's out of range for a file with extension s{self.rank}p")
                         else:
                             if self.port_names is None: #Initialize the array at the last minute
                                 self.port_names = [''] * self.rank
                             self.port_names[index - 1] = name
                     except ValueError as e:
-                        print("Error extracting port names from line: {0}".format(line))
+                        print(f"Error extracting port names from line: {line}")
                 elif line[1].strip().lower().startswith('port impedance'):
                     self.has_hfss_port_impedances = True
 

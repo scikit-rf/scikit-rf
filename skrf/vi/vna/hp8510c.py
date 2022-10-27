@@ -20,7 +20,7 @@ class HP8510C(VNA):
     delay_seconds_before_readback = 0.0
 
     def __init__(self, address="GPIB::16::INSTR", visa_library='@py', **kwargs):
-        super(HP8510C, self).__init__(address, visa_library=visa_library, **kwargs)
+        super().__init__(address, visa_library=visa_library, **kwargs)
         self.resource.set_visa_attribute(pyvisa.constants.ResourceAttribute.timeout_value, 2000)
         id_str = self.query('OUTPIDEN;')
         assert('HP8510' in id_str) # example: 'HP8510C.07.14: Aug 26  1998 '
@@ -335,4 +335,3 @@ class HP8510C(VNA):
 
         return (forward,reverse)
 
-        

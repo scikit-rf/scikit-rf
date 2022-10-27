@@ -1,4 +1,3 @@
-
 import unittest
 import os
 import numpy as npy
@@ -35,7 +34,7 @@ class TouchstoneTestCase(unittest.TestCase):
 
         self.assertTrue((f == f_true).all())
         self.assertTrue((s == s_true).all())
-        self.assertTrue((z0 == z0_true))
+        self.assertTrue(z0 == z0_true)
 
     def test_read_with_special_encoding(self):
         """
@@ -70,7 +69,7 @@ class TouchstoneTestCase(unittest.TestCase):
 
         self.assertTrue((f == f_true).all())
         self.assertTrue((s == s_true).all())
-        self.assertTrue((z0 == z0_true))
+        self.assertTrue(z0 == z0_true)
 
     def test_get_sparameter_data(self):
         """

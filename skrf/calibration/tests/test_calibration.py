@@ -71,7 +71,7 @@ class DetermineTest(unittest.TestCase):
         [ self.assertEqual(k,l) for k,l in zip(self.r, r_found)]
 
 
-class CalibrationTest(object):
+class CalibrationTest:
     """
     This is the generic Calibration test case which all Calibration 
     Subclasses should be able to pass. They must implement

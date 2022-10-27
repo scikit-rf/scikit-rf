@@ -1,5 +1,3 @@
-
-
 """
 .. module:: skrf.calibration.calibrationSet
 ================================================================
@@ -48,7 +46,7 @@ def dot_product(ideals, measured_sets, *args, **kwargs):
 
     return cal_list
 
-class CalibrationSet(object):
+class CalibrationSet:
     """
     A set of Calibrations
 

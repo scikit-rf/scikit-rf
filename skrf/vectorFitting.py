@@ -257,7 +257,7 @@ class VectorFitting:
         s = 1j * omega
 
         while iterations > 0:
-            logging.info('Iteration {}'.format(self.max_iterations - iterations + 1))
+            logging.info(f'Iteration {self.max_iterations - iterations + 1}')
 
             # count number of rows and columns in final coefficient matrix to solve for (c_res, d_res)
             # (ratio #real/#complex poles might change during iterations)
@@ -368,7 +368,7 @@ class VectorFitting:
             b[-1] = weight_extra * n_samples
 
             cond_A = np.linalg.cond(A_fast)
-            logging.info('Condition number of coeff. matrix A = {}'.format(int(cond_A)))
+            logging.info(f'Condition number of coeff. matrix A = {int(cond_A)}')
             self.history_cond_A.append(cond_A)
 
             # solve least squares for real parts
@@ -387,7 +387,7 @@ class VectorFitting:
                               'means that more starting poles are required', RuntimeWarning, stacklevel=2)
 
             self.d_res_history.append(d_res)
-            logging.info('d_res = {}'.format(d_res))
+            logging.info(f'd_res = {d_res}')
 
             # build test matrix H, which will hold the new poles as eigenvalues
             H = np.zeros((len(c_res), len(c_res)))
@@ -417,7 +417,7 @@ class VectorFitting:
             new_max_singular = np.amax(singular_vals)
             delta_max = np.abs(1 - new_max_singular / max_singular)
             self.delta_max_history.append(delta_max)
-            logging.info('Max. relative change in residues = {}\n'.format(delta_max))
+            logging.info(f'Max. relative change in residues = {delta_max}\n')
             max_singular = new_max_singular
 
             stop = False
@@ -533,7 +533,7 @@ class VectorFitting:
         A[:, idx_constant] = 1
         A[:, idx_proportional] = s[:, None]
 
-        logging.info('Condition number of coefficient matrix = {}'.format(int(np.linalg.cond(A))))
+        logging.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A))}')
 
         # solve least squares and obtain results as stack of real part vector and imaginary part vector
         x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((A.real, A.imag)),
@@ -563,7 +563,7 @@ class VectorFitting:
         timer_stop = timer()
         self.wall_clock_time = timer_stop - timer_start
 
-        logging.info('\n### Vector fitting finished in {} seconds.\n'.format(self.wall_clock_time))
+        logging.info(f'\n### Vector fitting finished in {self.wall_clock_time} seconds.\n')
 
         # raise a warning if the fitted Network is passive but the fit is not (only without proportional_coeff):
         if self.network.is_passive() and not fit_proportional:
@@ -626,7 +626,7 @@ class VectorFitting:
         elif parameter_type.lower() == 'y':
             nw_responses = self.network.y
         else:
-            raise ValueError('Invalid parameter type `{}`. Valid options: `s`, `z`, or `y`'.format(parameter_type))
+            raise ValueError(f'Invalid parameter type `{parameter_type}`. Valid options: `s`, `z`, or `y`')
 
         error_mean_squared = 0
         for i in list_i:
@@ -1082,7 +1082,7 @@ class VectorFitting:
         t = 0
         self.history_max_sigma = []
         while t < self.max_iterations:
-            logging.info('Passivity enforcement; Iteration {}'.format(t + 1))
+            logging.info(f'Passivity enforcement; Iteration {t + 1}')
 
             # calculate S-matrix at this frequency (shape fxNxN)
             if D_t is not None:
@@ -1231,8 +1231,8 @@ class VectorFitting:
 
         filename = self.network.name
 
-        logging.info('Exporting results as compressed NumPy array to {}'.format(path))
-        np.savez_compressed(os.path.join(path, 'coefficients_{}'.format(filename)),
+        logging.info(f'Exporting results as compressed NumPy array to {path}')
+        np.savez_compressed(os.path.join(path, f'coefficients_{filename}'),
                             poles=self.poles, residues=self.residues, proportionals=self.proportional_coeff,
                             constants=self.constant_coeff)
 
@@ -1529,11 +1529,11 @@ class VectorFitting:
 
             # only print title if a single response is shown
             if i_fit == 1:
-                ax.set_title('Response i={}, j={}'.format(i, j))
+                ax.set_title(f'Response i={i}, j={j}')
 
             return ax
         else:
-            raise ValueError('The specified component ("{}") is not valid. Must be in {}.'.format(component, components))
+            raise ValueError(f'The specified component ("{component}") is not valid. Must be in {components}.')
 
     def plot_s_db(self, *args, **kwargs) -> mplt.Axes:
         """
@@ -1733,7 +1733,7 @@ class VectorFitting:
 
         # plot the frequency response of each singular value
         for n in range(n_ports):
-            ax.plot(freqs, sigma[:, n], label=r'$\sigma_{}$'.format(n + 1))
+            ax.plot(freqs, sigma[:, n], label=fr'$\sigma_{n + 1}$')
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Magnitude')
         ax.legend(loc='best')
@@ -1838,7 +1838,7 @@ class VectorFitting:
 
         # provides a unique SPICE subcircuit identifier (X1, X2, X3, ...)
         def get_new_subckt_identifier():
-            subcircuits.append('X{}'.format(len(subcircuits) + 1))
+            subcircuits.append(f'X{len(subcircuits) + 1}')
             return subcircuits[-1]
 
         # use engineering notation for the numbers in the SPICE file (1000 --> 1k)
@@ -1859,27 +1859,27 @@ class VectorFitting:
             # all ports share a common node for ground reference (node 0)
             str_input_nodes = ''
             for n in range(self.network.nports):
-                str_input_nodes += 'p{} '.format(n + 1)
+                str_input_nodes += f'p{n + 1} '
 
             f.write(f'.SUBCKT {fitted_model_name} {str_input_nodes}\n')
 
             for n in range(self.network.nports):
                 f.write('*\n')
-                f.write('* port {}\n'.format(n + 1))
+                f.write(f'* port {n + 1}\n')
                 # add port reference impedance z0 (has to be resistive, no imaginary part)
-                f.write('R{} a{} 0 {}\n'.format(n + 1, n + 1, np.real(self.network.z0[0, n])))
+                f.write(f'R{n + 1} a{n + 1} 0 {np.real(self.network.z0[0, n])}\n')
 
                 # add dummy voltage sources (V=0) to measure the input current
-                f.write('V{} p{} a{} 0\n'.format(n + 1, n + 1, n + 1))
+                f.write(f'V{n + 1} p{n + 1} a{n + 1} 0\n')
 
                 # CCVS and VCVS driving the transfer admittances with a = V/2/sqrt(Z0) + I/2*sqrt(Z0)
                 # In
-                f.write('H{} nt{} nts{} V{} {}\n'.format(n + 1, n + 1, n + 1, n + 1, np.real(self.network.z0[0, n])))
+                f.write(f'H{n + 1} nt{n + 1} nts{n + 1} V{n + 1} {np.real(self.network.z0[0, n])}\n')
                 # Vn
-                f.write('E{} nts{} 0 p{} 0 {}\n'.format(n + 1, n + 1, n + 1, 1))
+                f.write(f'E{n + 1} nts{n + 1} 0 p{n + 1} 0 {1}\n')
 
                 for j in range(self.network.nports):
-                    f.write('* transfer network for s{}{}\n'.format(n + 1, j + 1))
+                    f.write(f'* transfer network for s{n + 1}{j + 1}\n')
 
                     # stacking order in VectorFitting class variables:
                     # s11, s12, s13, ..., s21, s22, s23, ...
@@ -1894,12 +1894,12 @@ class VectorFitting:
                                                                     formatter(1 / np.real(self.network.z0[0, n]))))
 
                     # add dummy voltage source (V=0) in series with Y_nj to measure current through transfer admittance
-                    f.write('V{}{} nt{} nt{}{} 0\n'.format(n + 1, j + 1, j + 1, n + 1, j + 1))
-                    f.write('V{}{}_inv nt{} nt{}{}_inv 0\n'.format(n + 1, j + 1, j + 1, n + 1, j + 1))
+                    f.write(f'V{n + 1}{j + 1} nt{j + 1} nt{n + 1}{j + 1} 0\n')
+                    f.write(f'V{n + 1}{j + 1}_inv nt{j + 1} nt{n + 1}{j + 1}_inv 0\n')
 
                     # add corresponding transfer admittance Y_nj, which is modulating the control current
                     # the transfer admittance is a parallel circuit (sum) of individual admittances
-                    f.write('* transfer admittances for S{}{}\n'.format(n + 1, j + 1))
+                    f.write(f'* transfer admittances for S{n + 1}{j + 1}\n')
 
                     # start with proportional and constant term of the model
                     # H(s) = d + s * e  model
@@ -1909,21 +1909,21 @@ class VectorFitting:
 
                     # add R for constant term
                     if g < 0:
-                        f.write('R{}{} nt{}{}_inv 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1, formatter(np.abs(1 / g))))
+                        f.write(f'R{n + 1}{j + 1} nt{n + 1}{j + 1}_inv 0 {formatter(np.abs(1 / g))}\n')
                     elif g > 0:
-                        f.write('R{}{} nt{}{} 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1, formatter(1 / g)))
+                        f.write(f'R{n + 1}{j + 1} nt{n + 1}{j + 1} 0 {formatter(1 / g)}\n')
 
                     # add C for proportional term
                     if c < 0:
-                        f.write('C{}{} nt{}{}_inv 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1, formatter(np.abs(c))))
+                        f.write(f'C{n + 1}{j + 1} nt{n + 1}{j + 1}_inv 0 {formatter(np.abs(c))}\n')
                     elif c > 0:
-                        f.write('C{}{} nt{}{} 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1, formatter(c)))
+                        f.write(f'C{n + 1}{j + 1} nt{n + 1}{j + 1} 0 {formatter(c)}\n')
 
                     # add pairs of poles and residues
                     for i_pole in range(len(self.poles)):
                         pole = self.poles[i_pole]
                         residue = self.residues[i_response, i_pole]
-                        node = get_new_subckt_identifier() + ' nt{}{}'.format(n + 1, j + 1)
+                        node = get_new_subckt_identifier() + f' nt{n + 1}{j + 1}'
 
                         if np.real(residue) < 0.0:
                             # multiplication with -1 required, otherwise the values for RLC would be negative
@@ -1935,7 +1935,7 @@ class VectorFitting:
                             # real pole; add rl_admittance
                             l = 1 / np.real(residue)
                             r = -1 * np.real(pole) / np.real(residue)
-                            f.write(node + ' 0 rl_admittance res={} ind={}\n'.format(formatter(r), formatter(l)))
+                            f.write(node + f' 0 rl_admittance res={formatter(r)} ind={formatter(l)}\n')
                         else:
                             # complex pole of a conjugate pair; add rcl_vccs_admittance
                             l = 1 / (2 * np.real(residue))
