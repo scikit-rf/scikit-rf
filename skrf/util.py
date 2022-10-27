@@ -803,6 +803,28 @@ class ProgressBar:
         return str(self.prog_bar)
 
 
+def check_plotting(matplotlib_pyplot_alias):
+    """
+    This decorator checks if matplotlib.pyplot is imported as
+    matplotlib_pyplot_alias.
+    If not, raise an RuntimeError.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to run the decorated function without matplotlib
+    """
+    def check_plotting_decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if matplotlib_pyplot_alias is None:
+                raise RuntimeError('Plotting is not available')
+            return func(*args, **kwargs)
+    
+        return wrapper
+    return check_plotting_decorator
+
+
 @contextlib.contextmanager
 def suppress_numpy_warnings(**kw):
     olderr = npy.seterr(**kw)

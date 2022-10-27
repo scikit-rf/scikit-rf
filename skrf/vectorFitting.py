@@ -6,9 +6,9 @@ from typing import Any, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from .network import Network
 
+from .util import check_plotting
 try:
     from . import plotting    # will perform the correct setup for matplotlib before it is called below
-    from .plotting import check_plotting
     import matplotlib.pyplot as mplt
     from matplotlib.ticker import EngFormatter
 except ImportError:

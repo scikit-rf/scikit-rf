@@ -61,8 +61,8 @@ import numpy as np
 from numpy import concatenate, conj, flip, real, angle, exp, zeros
 from numpy.fft import fft, fftshift, irfft, ifftshift
 from scipy.interpolate import interp1d
+from ..util import check_plotting
 try:
-    from ..plotting import check_plotting
     import matplotlib.pyplot as plt
 except ImportError:
     plt = None
