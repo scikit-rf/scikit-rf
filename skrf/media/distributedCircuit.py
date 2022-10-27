@@ -1,5 +1,3 @@
-
-
 """
 distributedCircuit (:mod:`skrf.media.distributedCircuit`)
 ============================================================
@@ -106,7 +104,7 @@ class DistributedCircuit(Media):
                  C: NumberLike = 90e-12, L: NumberLike = 280e-9,
                  R: NumberLike = 0, G: NumberLike = 0,
                 *args, **kwargs):
-        super(DistributedCircuit, self).__init__(frequency=frequency,
+        super().__init__(frequency=frequency,
                                                  z0=z0)
         self.C, self.L, self.R, self.G = C,L,R,G
 

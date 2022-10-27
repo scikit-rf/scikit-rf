@@ -294,7 +294,7 @@ class NetworkTestCase(unittest.TestCase):
         # Test reading it back
         strio = io.StringIO(snp)
         # Required for reading touchstone file
-        strio.name = 'StringIO.s{}p'.format(ports)
+        strio.name = f'StringIO.s{ports}p'
         ntwk2 = rf.Network(strio)
 
         npy.testing.assert_allclose(ntwk2.s, s_random)
@@ -309,7 +309,7 @@ class NetworkTestCase(unittest.TestCase):
 
         # Read back the written touchstone
         strio = io.StringIO(snp)
-        strio.name = 'StringIO.s{}p'.format(ports)
+        strio.name = f'StringIO.s{ports}p'
         ntwk2 = rf.Network(strio)
 
         # Renormalize original network to match the written one

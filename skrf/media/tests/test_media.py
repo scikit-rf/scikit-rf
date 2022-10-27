@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import unittest
 import os
 import numpy as npy
@@ -568,4 +567,3 @@ class DefinedGammaZ0_s_def(unittest.TestCase):
 if __name__ == "__main__":
     # Launch all tests
     run_module_suite()
-    

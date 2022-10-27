@@ -151,7 +151,7 @@ class CircularWaveguide(Media):
         w = 2*pi*f
         # if self.mode_type =="te":
         u = jnp_zeros(1, 1)[-1] 
-        r =u/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
+        r =u/(w*mu) * 1./sqrt(1/(Z0*1j)**2+ep/mu)
         
         kwargs.update(dict(frequency=frequency, r=r, m=1, n=1, ep_r=ep_r, mu_r=mu_r))
         

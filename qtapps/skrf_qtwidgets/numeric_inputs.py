@@ -16,7 +16,7 @@ available_units = {
     }
 }
 
-number_units = re.compile("([-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?|\s*[a-zA-Z]+\s*$)")
+number_units = re.compile(r"([-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?|\s*[a-zA-Z]+\s*$)")
 
 
 def parse_number_with_units(number_string):
@@ -43,7 +43,7 @@ class NumericLineEdit(QtWidgets.QLineEdit):
     value_changed = QtCore.Signal()
 
     def __init__(self, parent=None):
-        super(NumericLineEdit, self).__init__(parent)
+        super().__init__(parent)
         self.current_value = self.text()
         self.editingFinished.connect(self.check_state)
 
@@ -60,7 +60,7 @@ class NumericLineEdit(QtWidgets.QLineEdit):
 
     def set_value(self, value):
         if type(value) in (float, int):
-            str_val = "{:0.6g}".format(value)
+            str_val = f"{value:0.6g}"
         elif util.is_numeric(value):
             str_val = str(value)
         else:
@@ -72,7 +72,7 @@ class NumericLineEdit(QtWidgets.QLineEdit):
 
 class DoubleLineEdit(NumericLineEdit):
     def __init__(self, value=0, parent=None):
-        super(DoubleLineEdit, self).__init__(parent)
+        super().__init__(parent)
         self.setValidator(QtGui.QDoubleValidator())
         self.setText(str(value))
 
@@ -87,14 +87,14 @@ class InputWithUnits(NumericLineEdit):
         units : str
             the unit of measure, e.g. "Hz", "mm", "in", "mil"
         """
-        super(InputWithUnits, self).__init__(parent)
+        super().__init__(parent)
         self.editingFinished.disconnect(self.check_state)
         if value is not None:
             try:
                 value = float(value)
                 self.setText(str(value))
             except ValueError as e:
-                Warning("invalid entry {:} for line Edit".format(value))
+                Warning(f"invalid entry {value} for line Edit")
 
         self.units = units
         self.conversions = None
@@ -109,10 +109,10 @@ class InputWithUnits(NumericLineEdit):
     def number_entered(self):
         value, unit = parse_number_with_units(self.text())
         if not unit:
-            self.setText("{:0.6g}".format(value))
+            self.setText(f"{value:0.6g}")
         elif unit in self.conversions.keys():
             value *= self.conversions[self.units] / self.conversions[unit]
-            self.setText("{:0.6g}".format(value))
+            self.setText(f"{value:0.6g}")
         else:
             self.setText("invalid unit")
         self.check_state()
@@ -123,14 +123,14 @@ class InputWithUnits(NumericLineEdit):
             if units in self.conversions.keys():
                 value *= self.conversions[units] / self.conversions[self.units]
             else:
-                raise ValueError("Invalid units {:} provided to get_value".format(units))
+                raise ValueError(f"Invalid units {units} provided to get_value")
         return value
 
     def set_units(self, units):
         if units not in self.conversions.keys():
-            raise KeyError("invalid units {}".format(units))
+            raise KeyError(f"invalid units {units}")
 
         value = float(self.text()) / self.conversions[self.units] * self.conversions[units]
         self.units = units
-        self.setText("{:0.6g}".format(value))
+        self.setText(f"{value:0.6g}")
         self.check_state()

@@ -1,5 +1,3 @@
-
-
 """
 .. module:: skrf.vi.vna
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1811,7 +1809,7 @@ class VectorStar(PNA):
         return int(self.ask(':calc%i:par:count?'%self.channel))
 
     def set_ntraces(self,val):
-        self.write((':calc%i:par:count %i'%(self.channel,int(val))))
+        self.write(':calc%i:par:count %i'%(self.channel,int(val)))
 
     ntraces = property(get_ntraces, set_ntraces)
 

@@ -1884,7 +1884,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         X = nin.nports
         fend = f[-1]
         if TD is None:
-            TD = np.zeros((X))
+            TD = np.zeros(X)
             for i in range(X):
                 theta0 = np.angle(p[-1, i, i])
                 if theta0 < -np.pi/2:

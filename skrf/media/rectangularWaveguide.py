@@ -157,7 +157,7 @@ class RectangularWaveguide(Media):
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r
         w = 2*pi*f
-        a =pi/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
+        a =pi/(w*mu) * 1./sqrt(1/(Z0*1j)**2+ep/mu)
 
         kw.update(dict(frequency=frequency,a=a, m=1, n=0, ep_r=ep_r, mu_r=mu_r))
 

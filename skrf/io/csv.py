@@ -1,4 +1,3 @@
-
 """
 .. module:: skrf.io.csv
 
@@ -92,7 +91,7 @@ def read_pna_csv(filename, *args, **kwargs):
     >>> header, comments, data = rf.read_pna_csv('myfile.csv')
     """
     warn("deprecated", DeprecationWarning)
-    with open(filename,'r') as fid:
+    with open(filename) as fid:
         begin_line = -2
         end_line = -1
         n_END = 0
@@ -157,7 +156,7 @@ def pna_csv_2_df(filename):
     names = header.split(',')
 
     index = Index(d[:,0], name = names[0])
-    df=DataFrame(dict([(names[k], d[:,k]) for k in range(1,len(names))]), index=index)
+    df=DataFrame({names[k]: d[:,k] for k in range(1,len(names))}, index=index)
     return df
 
 def pna_csv_2_ntwks2(filename, *args, **kwargs):
@@ -215,7 +214,7 @@ def pna_csv_2_ntwks3(filename):
     col_headers = pna_csv_header_split(filename)
 
     # set impedance to 50 Ohm (doesn't matter for now)
-    z0 = npy.ones((npy.shape(d)[0]))*50
+    z0 = npy.ones(npy.shape(d)[0])*50
     # read f values, convert to GHz
     f = d[:,0]/1e9
 
@@ -282,7 +281,7 @@ def read_all_csv(dir='.', contains = None):
     return out
 
 
-class AgilentCSV(object):
+class AgilentCSV:
     """
     Agilent-style csv file representing either scalar traces vs frequency
     or complex data vs. frequency.
@@ -321,7 +320,7 @@ class AgilentCSV(object):
             An array containing the data. The meaning of which depends on
             the header.
         """
-        with open(self.filename, 'r') as fid:
+        with open(self.filename) as fid:
             begin_line = -2
             end_line = -1
             comments = ''
@@ -492,7 +491,7 @@ class AgilentCSV(object):
                 elif 'real' in names[k].lower() and 'imag' in names[k+1].lower():
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
                 else:
-                    warn('CSV format unrecognized in "%s" or "%s". It\'s up to you to interpret the resultant network correctly.' % (names[k], names[k+1]))
+                    warn(f'CSV format unrecognized in "{names[k]}" or "{names[k+1]}". It\'s up to you to interpret the resultant network correctly.')
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
 
                 ntwk_list.append(
@@ -733,7 +732,7 @@ def read_zva_dat(filename, *args, **kwargs):
 
     """
     #warn("deprecated", DeprecationWarning)
-    with open(filename,'r') as fid:
+    with open(filename) as fid:
         begin_line = -2
         comments = ''
         for k,line in enumerate(fid.readlines()):
@@ -771,7 +770,7 @@ def zva_dat_2_ntwks(filename):
     col_headers = header.split(',')
 
     # set impedance to 50 Ohm (doesn't matter for now)
-    z0 = npy.ones((npy.shape(d)[0]))*50
+    z0 = npy.ones(npy.shape(d)[0])*50
     # read f values, convert to GHz
     f = d[:,0]/1e9
 
@@ -875,7 +874,7 @@ def read_vectorstar_csv(filename, *args, **kwargs):
 
 
     """
-    with open(filename,'r') as fid:
+    with open(filename) as fid:
         comments = ''.join([line for line in fid if line.startswith('!')])
         fid.seek(0)
         header = [line for line in fid if line.startswith('PNT')]

@@ -13,7 +13,7 @@ from ...network import Network
 from ...frequency import Frequency
 
 
-class VNA(object):
+class VNA:
     """
     class defining a base analyzer for using with scikit-rf
 
@@ -91,10 +91,10 @@ class VNA(object):
         interface = str(kwargs.get("interface", None)).upper()  # GPIB, SOCKET
         if interface == "GPIB":
             board = str(kwargs.get("card_number", "")).upper()
-            resource_string = "GPIB{:}::{:}::INSTR".format(board, address)
+            resource_string = f"GPIB{board}::{address}::INSTR"
         elif interface == "SOCKET":
             port = str(kwargs.get("port", 5025))
-            resource_string = "TCPIP0::{:}::{:}::SOCKET".format(address, port)
+            resource_string = f"TCPIP0::{address}::{port}::SOCKET"
         else:
             resource_string = address
         self.resource = rm.open_resource(resource_string)  # type: pyvisa.resources.messagebased.MessageBasedResource

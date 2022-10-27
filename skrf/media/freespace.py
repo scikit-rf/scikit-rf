@@ -1,5 +1,3 @@
-
-
 """
 freespace (:mod:`skrf.media.freespace`)
 ========================================

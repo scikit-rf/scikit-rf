@@ -48,7 +48,7 @@ def process_query(query, csv=False, strip_outer_quotes=True, returns="str"):
     return query
 
 
-class SCPI(object):
+class SCPI:
     def __init__(self, resource):
         self.resource = resource
         self.echo = False  # print scpi command string to scpi out

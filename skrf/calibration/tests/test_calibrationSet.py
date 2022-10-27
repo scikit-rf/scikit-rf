@@ -7,7 +7,7 @@ from skrf.calibration import OnePort, TRL, SOLT, EightTerm
 from skrf.util import suppress_warning_decorator
 
 
-class CalsetTest(object):
+class CalsetTest:
     @suppress_warning_decorator("No switch terms")
     def test_run(self):
         """

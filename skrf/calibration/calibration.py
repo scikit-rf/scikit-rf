@@ -147,7 +147,7 @@ coefs_list_3term = [
     ]
 
 
-class Calibration(object):
+class Calibration:
     """
     Base class for all Calibration objects.
 
@@ -254,7 +254,7 @@ class Calibration(object):
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
             if self.ideals[k].frequency != self.measured[0].frequency:
-                print('Warning: Frequency information doesn\'t match on ideals[{}], attempting to interpolate the ideal[{}] Network ..'.format(k,k))
+                print(f'Warning: Frequency information doesn\'t match on ideals[{k}], attempting to interpolate the ideal[{k}] Network ..')
                 try:
                     # try to resample our ideals network to match
                     # the measurement frequency
@@ -263,7 +263,7 @@ class Calibration(object):
                     print('Success')
 
                 except:
-                    raise(IndexError('Failed to interpolate. Check frequency of ideals[{}].'.format(k)))
+                    raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].'))
 
 
         # passed to calibration algorithm in run()
@@ -312,7 +312,7 @@ class Calibration(object):
         Apply correction to list of dict of Networks.
         """
         if hasattr(ntwk_list, 'keys'):
-            return dict([(k, self.apply_cal(ntwk_list[k])) for k in ntwk_list])
+            return {k: self.apply_cal(ntwk_list[k]) for k in ntwk_list}
         else:
             return [self.apply_cal(k) for k in ntwk_list]
 
@@ -580,11 +580,11 @@ class Calibration(object):
             * source match
             * reflection tracking'
         """
-        return dict([(k, self.coefs.get(k)) for k in [\
+        return {k: self.coefs.get(k) for k in [\
             'directivity',
             'source match',
             'reflection tracking',
-            ]])
+            ]}
 
     @property
     def coefs_3term_ntwks(self):
@@ -761,7 +761,7 @@ class Calibration(object):
         """
 
         residual_sets={}
-        std_names = list(set([k.name  for k in self.ideals ]))
+        std_names = list(set([k.name  for k in self.ideals]))
         for std_name in std_names:
             residual_sets[std_name] = NetworkSet(
                 [k for k in self.residual_ntwks if k.name.startswith(std_name)])
@@ -1533,12 +1533,12 @@ class TwelveTerm(Calibration):
         # update coefs
         coefs = {}
 
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
+        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
         eight_term_coefs = convert_12term_2_8term(coefs)
 
-        coefs.update(dict([(l, eight_term_coefs[l]) for l in \
-            ['forward switch term','reverse switch term','k'] ]))
+        coefs.update({l: eight_term_coefs[l] for l in \
+            ['forward switch term','reverse switch term','k'] })
         self._coefs = coefs
 
     def apply_cal(self,ntwk):
@@ -1755,12 +1755,12 @@ class SOLT(TwelveTerm):
             (1. - p2_coefs['source match']*p2_coefs['load match'])
         coefs = {}
 
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
+        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
         eight_term_coefs = convert_12term_2_8term(coefs)
 
-        coefs.update(dict([(l, eight_term_coefs[l]) for l in \
-            ['forward switch term','reverse switch term','k'] ]))
+        coefs.update({l: eight_term_coefs[l] for l in \
+            ['forward switch term','reverse switch term','k'] })
         self._coefs = coefs
 
 class TwoPortOnePath(TwelveTerm):
@@ -1859,8 +1859,8 @@ class TwoPortOnePath(TwelveTerm):
                 out_coefs[k_out] = self.coefs[k]
 
         eight_term_coefs = convert_12term_2_8term(out_coefs)
-        out_coefs.update(dict([(l, eight_term_coefs[l]) for l in \
-            ['forward switch term','reverse switch term','k'] ]))
+        out_coefs.update({l: eight_term_coefs[l] for l in \
+            ['forward switch term','reverse switch term','k'] })
         self._coefs = out_coefs
 
     def apply_cal(self, ntwk_tuple):
@@ -3125,7 +3125,7 @@ class NISTMultilineTRL(EightTerm):
                 R1 = S_thru[0,1]/denom
                 R2 = S_thru[1,0]/denom
             else:
-                raise ValueError('Unknown k_method: {}'.format(self.k_method))
+                raise ValueError(f'Unknown k_method: {self.k_method}')
 
             #Reference plane shift
             if self.ref_plane != 0:
@@ -3496,8 +3496,8 @@ class UnknownThru(EightTerm):
         coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
+        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
 
         if self.switch_terms is not None:
             coefs.update({
@@ -4065,7 +4065,7 @@ class LRRM(EightTerm):
         elif self.match_fit == 'none' or self.match_fit is None:
             pass
         else:
-            raise ValueError('Unknown match_fit {}'.format(self.match_fit))
+            raise ValueError(f'Unknown match_fit {self.match_fit}')
 
         gamma_m = calc_gm(R, match_l, match_c)
 
@@ -4287,8 +4287,8 @@ class MRC(UnknownThru):
         # create single dictionary for all error terms
         coefs = {}
 
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
+        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
 
         coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
