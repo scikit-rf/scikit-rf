@@ -32,7 +32,7 @@ from scipy  import linspace
 from numpy import exp, log
 
 
-class Taper1D(object):
+class Taper1D:
     """
     Generic 1D Taper Object
     """
@@ -230,7 +230,7 @@ class Linear(Taper1D):
     def __init__(self, **kw):
         opts = dict(f=lambda x:x, f_is_normed=True)
         kw.update(opts)
-        super(Linear, self).__init__(**kw)
+        super().__init__(**kw)
 
 
 class Exponential(Taper1D):
@@ -257,7 +257,7 @@ class Exponential(Taper1D):
 
         opts = dict(f=f, f_is_normed=False)
         kw.update(opts)
-        super(Exponential, self).__init__(**kw)
+        super().__init__(**kw)
 
 
 class SmoothStep(Taper1D):
@@ -282,7 +282,7 @@ class SmoothStep(Taper1D):
         f = lambda x:  3*x**2 - 2*x**3
         opts = dict(f=f, f_is_normed=True)
         kw.update(opts)
-        super(SmoothStep, self).__init__(**kw)
+        super().__init__(**kw)
 
 
 class Klopfenstein(Taper1D):

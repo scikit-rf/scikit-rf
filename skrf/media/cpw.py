@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 cpw (:mod:`skrf.media.cpw`)
 ========================================
@@ -23,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class CPW(Media):
-    """
+    r"""
     Coplanar waveguide.
     
     

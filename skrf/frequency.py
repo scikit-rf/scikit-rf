@@ -56,7 +56,7 @@ class InvalidFrequencyWarning(UserWarning):
     pass
 
 
-class Frequency(object):
+class Frequency:
     """
     A frequency band.
 

@@ -1,4 +1,6 @@
 import unittest
+
+import pytest
 import skrf
 import numpy as np
 import tempfile
@@ -26,7 +28,10 @@ class VectorFittingTestCase(unittest.TestCase):
         # perform the fit without proportional term
         nw = skrf.data.ring_slot
         vf = skrf.vectorFitting.VectorFitting(nw)
-        vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_proportional=False, fit_constant=False)
+        with pytest.warns(UserWarning, match="The fitted network is passive, but the vector fit is not passive") as record:
+            vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_proportional=False, fit_constant=False)
+
+        assert len(record) == 1
         self.assertLess(vf.get_rms_error(), 0.01)
 
     def test_190ghz_measured(self):
@@ -38,11 +43,13 @@ class VectorFittingTestCase(unittest.TestCase):
 
     def test_no_convergence(self):
         # perform a bad fit that does not converge and check if a RuntimeWarning is given
-        with warnings.catch_warnings(record=True) as warning:
-            nw = skrf.network.Network('./doc/source/examples/vectorfitting/190ghz_tx_measured.S2P')
-            vf = skrf.vectorFitting.VectorFitting(nw)
+        nw = skrf.network.Network('./doc/source/examples/vectorfitting/190ghz_tx_measured.S2P')
+        vf = skrf.vectorFitting.VectorFitting(nw)
+        
+        with pytest.warns(RuntimeWarning) as record:
             vf.vector_fit(n_poles_real=0, n_poles_cmplx=5, fit_proportional=False, fit_constant=True)
-            self.assertEqual(warning[-1].category, RuntimeWarning)
+        
+        assert len(record) == 1
 
     def test_dc(self):
         # perform the fit on data including a dc sample (0 Hz)
@@ -59,27 +66,34 @@ class VectorFittingTestCase(unittest.TestCase):
         vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_constant=True, fit_proportional=True)
 
         # write equivalent SPICE subcircuit to tmp file
-        tmp_file = tempfile.NamedTemporaryFile(suffix='.sp')
-        tmp_file.close()  # tmp_file.name can be used to open the file a second time on Linux but not on Windows
-        vf.write_spice_subcircuit_s(tmp_file.name)
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.sp', delete=False)
+        name = tmp_file.name
+        tmp_file.close()
+        vf.write_spice_subcircuit_s(name)
 
         # written tmp file should contain 69 lines
-        n_lines = len(open(tmp_file.name, 'r').readlines())
+        with open(name) as f:
+            n_lines = len(f.readlines())
         self.assertEqual(n_lines, 69)
+        os.remove(name)
 
     def test_read_write_npz(self):
         # fit ring slot example network
         nw = skrf.data.ring_slot
         vf = skrf.vectorFitting.VectorFitting(nw)
-        vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
+
+        with pytest.warns(UserWarning) as record:
+            vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
+
+        assert len(record) == 1
 
         # export (write) fitted parameters to .npz file in tmp directory
-        tmp_dir = tempfile.TemporaryDirectory()
-        vf.write_npz(tmp_dir.name)
+        with  tempfile.TemporaryDirectory() as name:
+            vf.write_npz(name)
 
-        # create a new vector fitting instance and import (read) those fitted parameters
-        vf2 = skrf.vectorFitting.VectorFitting(nw)
-        vf2.read_npz(os.path.join(tmp_dir.name, 'coefficients_{}.npz'.format(nw.name)))
+            # create a new vector fitting instance and import (read) those fitted parameters
+            vf2 = skrf.vectorFitting.VectorFitting(nw)
+            vf2.read_npz(os.path.join(name, f'coefficients_{nw.name}.npz'))
 
         # compare both sets of parameters
         self.assertTrue(np.allclose(vf.poles, vf2.poles))

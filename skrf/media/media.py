@@ -1,4 +1,3 @@
-
 """
 media (:mod:`skrf.media.media`)
 ========================================
@@ -13,6 +12,7 @@ Media class.
 
 """
 from numbers import Number
+from pathlib import Path
 import warnings
 
 import numpy as npy
@@ -1440,7 +1440,7 @@ class DefinedGammaZ0(Media):
     def __init__(self, frequency: Union[Frequency, None] = None,
                  z0: Union[NumberLike, None] = None, Z0: NumberLike = 50,
                  gamma: NumberLike = 1j):
-        super(DefinedGammaZ0, self).__init__(frequency=frequency,
+        super().__init__(frequency=frequency,
                                              z0=z0)
         self.gamma= gamma
         self.Z0 = Z0
@@ -1463,17 +1463,20 @@ class DefinedGammaZ0(Media):
         write_csv
         """
         try:
-            f = open(filename)
+            fid = open(filename)
         except(TypeError):
             # they may have passed a file
-            f = filename
+            fid = filename
 
-        header = f.readline()
+        header = fid.readline()
         # this is not the correct way to do this ... but whatever
         f_unit = header.split(',')[0].split('[')[1].split(']')[0]
 
         f,z_re,z_im,g_re,g_im,pz_re,pz_im = \
-                npy.loadtxt(f,  delimiter=',').T
+                npy.loadtxt(fid,  delimiter=',').T
+
+        if isinstance(filename, (str, Path)):
+            fid.close()
 
         return cls(
             frequency = Frequency.from_f(f, unit=f_unit),

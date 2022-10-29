@@ -195,7 +195,7 @@ class OptimizedResult(dict):
         return list(self.keys())
 
 
-class Qfactor(object):
+class Qfactor:
     """
     Q-factor calculation class.
 
@@ -466,8 +466,8 @@ class Qfactor(object):
             G[i] = v1.real
             G[i2] = v1.imag
             v2 = v1 * t
-            M[i, :] = v.real, -v.imag, y.real, -y.imag, v2.imag
-            M[i2, :] = v.imag, v.real, y.imag, y.real, -v2.real
+            M[i, :] = np.array([v.real, -v.imag, y.real, -y.imag, v2.imag], dtype="object")
+            M[i2, :] = np.array([v.imag, v.real, y.imag, y.real, -v2.real], dtype="object")
 
         T = M.transpose()  # unweighted
         C = T @ M
@@ -717,23 +717,23 @@ class Qfactor(object):
                     u2 = -u * self.f[i] / Flwst
                     v = (c2 + y * c3) * expm7
                     u3 = v * fdn
-                    M[i, :] = (
-                        expm7.real,
+                    M[i, :] = np.array(
+                        [expm7.real,
                         -expm7.imag,
                         ym.real,
                         -ym.imag,
                         u.real,
                         u2.real,
-                        -u3.imag,
+                        -u3.imag], dtype="object"
                     )
-                    M[i2, :] = (
-                        expm7.imag,
+                    M[i2, :] = np.array(
+                        [expm7.imag,
                         expm7.real,
                         ym.imag,
                         ym.real,
                         u.imag,
                         u2.imag,
-                        u3.real,
+                        u3.real], dtype="object"
                     )
                     r = self.s[i] - v  # residual
                     G[i] = r.real
@@ -897,8 +897,8 @@ class Qfactor(object):
                     u2 = -u * self.f[i] / Flwst
                     FL = Flwst * m5 / m6
                     t = 2 * (self.f[i] - FL) / FL
-                    M[i, :] = 1.0, 0.0, y.real, -y.imag, u.real, u2.real, t, 0.0
-                    M[i2, :] = 0.0, 1.0, y.imag, y.real, u.imag, u2.imag, 0.0, t
+                    M[i, :] = np.array([1.0, 0.0, y.real, -y.imag, u.real, u2.real, t, 0.0], dtype="object")
+                    M[i2, :] = np.array([0.0, 1.0, y.imag, y.real, u.imag, u2.imag, 0.0, t], dtype="object")
                     v = c2 + c3 * y + (m8 + 1j * m9) * t
                     r = self.s[i] - v  # residual
                     G[i] = r.real
@@ -1015,7 +1015,7 @@ class Qfactor(object):
         # m2 : imag part of cal_gamma_V
         # m3 : real part of b + j a/Q_L
         # m4 : imag part of b + j a/Q_L
-        m1, m2, m3, m4 = [opt_res[key] for key in ['m1', 'm2', 'm3', 'm4']]
+        m1, m2, m3, m4 = (opt_res[key] for key in ['m1', 'm2', 'm3', 'm4'])
 
         if A is None:
             A = 1.0 / abs(complex(m1, m2))  # scale to S_V
@@ -1075,7 +1075,7 @@ class Qfactor(object):
         else:
             raise ValueError("Illegal Scaling factor; should be a float or  None")
 
-        m1, m2, m3, m4, m5 = [opt_res[key] for key in ['m1', 'm2', 'm3', 'm4', 'Q_L']]
+        m1, m2, m3, m4, m5 = (opt_res[key] for key in ['m1', 'm2', 'm3', 'm4', 'Q_L'])
         FL = opt_res['f_L']
 
         if self.res_type == "transmission":

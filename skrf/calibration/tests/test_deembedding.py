@@ -1,3 +1,4 @@
+import pytest
 import skrf as rf
 import unittest
 import os
@@ -345,7 +346,8 @@ class DeembeddingTestCase(unittest.TestCase):
         s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
         # interpolate to dc
         s2xthru_dc = s2xthru.extrapolate_to_dc(kind='linear')
-        dm_nzc = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_dc, 
+        with pytest.warns(RuntimeWarning, match="DC point detected"):
+            dm_nzc = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_dc, 
                                         name = '2xthru')
         residuals = dm_nzc.deembed(s2xthru_dc)
         # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
@@ -370,8 +372,9 @@ class DeembeddingTestCase(unittest.TestCase):
         nonuniform_freq = rf.Frequency(s2xthru.f[0], s2xthru.f[-1], 
                                        npoints=len(s2xthru)-10, unit='Hz')
         s2xthru_nu = s2xthru.interpolate(nonuniform_freq)
-        dm_nzc_nu = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_nu, 
-                                            name = '2xthru')
+        with pytest.warns(RuntimeWarning, match="Non-uniform frequency vector detected"):
+            dm_nzc_nu = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_nu, 
+                                                name = '2xthru')
         residuals = dm_nzc_nu.deembed(s2xthru_nu)
         # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
         il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
@@ -418,13 +421,14 @@ class DeembeddingTestCase(unittest.TestCase):
         fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
         s2xthru_dc = s2xthru.extrapolate_to_dc(kind='linear')
         fdf_dc = fdf.extrapolate_to_dc(kind='linear')
-        dm_zc  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru_dc, 
-                                       dummy_fix_dut_fix = fdf_dc, 
-                                       bandwidth_limit = 10e9, 
-                                       pullback1 = 0, pullback2 = 0,
-                                       leadin = 0,
-                                       NRP_enable = False,
-                                       name = 'zc2xthru')
+        with pytest.warns(RuntimeWarning, match="DC point detected"):
+            dm_zc  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru_dc, 
+                                        dummy_fix_dut_fix = fdf_dc, 
+                                        bandwidth_limit = 10e9, 
+                                        pullback1 = 0, pullback2 = 0,
+                                        leadin = 0,
+                                        NRP_enable = False,
+                                        name = 'zc2xthru')
         residuals = dm_zc.deembed(s2xthru_dc)
         # insertion loss magnitude deviate from 1.0 from less than 0.2 dB
         il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))
@@ -451,13 +455,14 @@ class DeembeddingTestCase(unittest.TestCase):
                                        npoints=len(s2xthru)-10, unit='Hz')
         s2xthru_nu = s2xthru.interpolate(nonuniform_freq)
         fdf_nu = fdf.interpolate(nonuniform_freq)
-        dm_zc_nu  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru_nu, 
-                                       dummy_fix_dut_fix = fdf_nu, 
-                                       bandwidth_limit = 10e9, 
-                                       pullback1 = 0, pullback2 = 0,
-                                       leadin = 0,
-                                       NRP_enable = False,
-                                       name = 'zc2xthru')
+        with pytest.warns(RuntimeWarning, match="Non-uniform frequency vector detected"):
+            dm_zc_nu  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru_nu, 
+                                        dummy_fix_dut_fix = fdf_nu, 
+                                        bandwidth_limit = 10e9, 
+                                        pullback1 = 0, pullback2 = 0,
+                                        leadin = 0,
+                                        NRP_enable = False,
+                                        name = 'zc2xthru')
         residuals = dm_zc_nu.deembed(s2xthru_nu)
         # insertion loss magnitude deviate from 1.0 from less than 0.2 dB
         il_mag = 20.*np.log10(np.abs(residuals.s[:, 1, 0] + 1e-12))

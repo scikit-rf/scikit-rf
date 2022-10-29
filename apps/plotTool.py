@@ -1,5 +1,3 @@
-
-
 from traits.api import *
 from traitsui.api import *#View, Item, ButtonEditor, Group, HSplit,
 from traitsui.menu import *

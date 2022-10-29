@@ -8,7 +8,7 @@ from . import qt, networkListWidget, numeric_inputs, widgets, util
 
 class CalibratedMeasurementsWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        super(CalibratedMeasurementsWidget, self).__init__(parent)
+        super().__init__(parent)
 
         self.verticalLayout_main = QtWidgets.QVBoxLayout(self)
         self.verticalLayout_main.setContentsMargins(6, 6, 6, 6)
@@ -117,7 +117,7 @@ class TRLStandardsWidget(QtWidgets.QWidget):
     SWITCH_TERMS_ID_REVERSE = "reverse switch terms"
     
     def __init__(self, parent=None):
-        super(TRLStandardsWidget, self).__init__(parent)
+        super().__init__(parent)
 
         self.verticalLayout_main = QtWidgets.QVBoxLayout(self)
         self.verticalLayout_main.setContentsMargins(6, 6, 6, 6)
@@ -273,7 +273,7 @@ class TRLStandardsWidget(QtWidgets.QWidget):
         if isinstance(thru, skrf.Network):
             measured.append(thru)
         else:
-            error_messages.append("thru (type {:}) must be a valid 2-port network".format(type(thru)))
+            error_messages.append(f"thru (type {type(thru)}) must be a valid 2-port network")
 
         reflects = self.listWidget_reflect.get_all_networks()
         if len(reflects) == 0:
@@ -304,7 +304,7 @@ class NISTCalViewer(QtWidgets.QDialog):
         cal : skrf.calibration.NISTMultilineTRL
             the calibration object
         """
-        super(NISTCalViewer, self).__init__(parent)
+        super().__init__(parent)
         self.setWindowTitle("Inspect Cal")
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -342,7 +342,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
     calibration_updated = QtCore.Signal(object)
 
     def __init__(self, parent=None):
-        super(NISTTRLStandardsWidget, self).__init__(parent)
+        super().__init__(parent)
 
         self.verticalLayout_main = QtWidgets.QVBoxLayout(self)
         self.verticalLayout_main.setContentsMargins(6, 6, 6, 6)
@@ -680,7 +680,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         if isinstance(thru, skrf.Network):
             measured.append(thru)
         else:
-            error_messages.append("thru (type {:}) must be a valid 2-port network".format(type(thru)))
+            error_messages.append(f"thru (type {type(thru)}) must be a valid 2-port network")
 
         reflects = self.listWidget_reflect.get_all_networks()
         if len(reflects) == 0:

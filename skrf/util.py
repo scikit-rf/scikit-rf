@@ -662,7 +662,7 @@ def unique_name(name: str, names: list, exclude: int = -1) -> str:
             suffix = 1
 
         for num in range(suffix, 100, 1):
-            name = "{:s}_{:02d}".format(name_base, num)
+            name = f"{name_base:s}_{num:02d}"
             if has_duplicate_value(name, names, exclude) is False:
                 break
     return name
@@ -815,12 +815,9 @@ def suppress_warning_decorator(msg):
         @wraps(func)
         def suppressed_func(*k, **kw):
             show_warnings = []
-            with warnings.catch_warnings(record=True) as wlist:
-                 res = func(*k, **kw)
-                 for w in wlist:
-                     if not w.message.args[0].startswith(msg):
-                         show_warnings.append(w)
-            for w in show_warnings:
-                warnings.warn(w.message.args[0])
+            with warnings.catch_warnings() as wlist:
+                warnings.filterwarnings("ignore", message=f"{msg}.*")
+                res = func(*k, **kw)
+            return res
         return suppressed_func
     return suppress_warnings_decorated

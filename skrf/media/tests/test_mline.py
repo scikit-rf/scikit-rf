@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
 import unittest
 import os
 import numpy as npy
+import pytest
 
 from skrf.media import MLine
 from skrf.frequency import Frequency
@@ -139,7 +139,8 @@ class MLineTestCase(unittest.TestCase):
                             model = ref['model'], disp = ref['disp'],
                             diel = 'frequencyinvariant',
                             compatibility_mode = 'qucs')
-            line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
+            with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
+                line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
             line.name = 'skrf,qucs'
             
             # residuals
@@ -210,7 +211,8 @@ class MLineTestCase(unittest.TestCase):
                             tand = self.tand, rough = self.d,
                             model = 'hammerstadjensen', disp = ref['disp'],
                             diel = ref['diel'])
-            line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
+            with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
+                line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
             line.name = 'skrf,ads'
             
             # residuals

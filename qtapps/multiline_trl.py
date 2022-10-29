@@ -5,7 +5,7 @@ from qtpy import QtWidgets, QtCore
 
 class TRLWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        super(TRLWidget, self).__init__(parent)
+        super().__init__(parent)
 
         # --- Setup UI --- #
         self.resize(825, 575)

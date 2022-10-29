@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import unittest
 import os
 import numpy as npy
@@ -9,6 +8,8 @@ from skrf.frequency import Frequency
 import skrf as rf
 from numpy.testing import assert_array_almost_equal, assert_allclose, run_module_suite
 from matplotlib import pyplot as plt
+import pytest
+
 rf.stylely()
 
 
@@ -107,7 +108,8 @@ class CPWTestCase(unittest.TestCase):
                             tand = self.tand,
                             compatibility_mode = 'qucs',
                             diel = 'frequencyinvariant')
-            line = cpw.line(d=self.l, unit='m', embed = True, z0=cpw.Z0)
+            with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
+                line = cpw.line(d=self.l, unit='m', embed = True, z0=cpw.Z0)
             line.name = '`Media.CPW` skrf,qucs'
             
             # residuals
@@ -183,7 +185,8 @@ class CPWTestCase(unittest.TestCase):
                             tand = self.tand,
                             compatibility_mode = 'ads',
                             diel = 'djordjevicsvensson')
-            line = cpw.line(d=self.l, unit='m', embed = True, z0=cpw.Z0)
+            with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
+                line = cpw.line(d=self.l, unit='m', embed = True, z0=cpw.Z0)
             line.name = '`Media.CPW` skrf,ads'
             
             # residuals
@@ -286,7 +289,9 @@ class CPWTestCase(unittest.TestCase):
         with self.assertWarns(RuntimeWarning) as context:
             cpw = CPW(frequency = freq, z0 = 50., w = 3.0e-3, s = 0.3e-3, t = 35e-6,
                        ep_r = 4.5, rho = 1.7e-8)
-            line = cpw.line(d = 25e-3, unit = 'm', embed = True, z0 = cpw.Z0)
+            
+            with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
+                line = cpw.line(d = 25e-3, unit = 'm', embed = True, z0 = cpw.Z0)
             
     def test_zero_thickness(self):
         """

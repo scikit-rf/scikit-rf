@@ -2,6 +2,7 @@ import unittest
 import os
 import warnings
 import pickle
+import pytest
 
 import skrf as rf
 import numpy as npy
@@ -70,7 +71,7 @@ class DetermineTest(unittest.TestCase):
         [ self.assertEqual(k,l) for k,l in zip(self.r, r_found)]
 
 
-class CalibrationTest(object):
+class CalibrationTest:
     """
     This is the generic Calibration test case which all Calibration 
     Subclasses should be able to pass. They must implement
@@ -1231,7 +1232,8 @@ class LRRMTest(EightTermTest):
         o_i = wg.load(1, nports=1, name='open')
         s_i = wg.short(nports=1, name='short')
         m_i = wg.load(0.1, nports=1, name='load')
-        thru = wg.line(d=50, z0=75, unit='um', name='thru', embed=True)
+        with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
+            thru = wg.line(d=50, z0=75, unit='um', name='thru', embed=True)
         # Make sure calibration works with non-symmetric thru
         thru.s[:,1,1] += 0.02 + 0.05j
 

@@ -124,15 +124,19 @@ class Touchstone:
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
         try:
-            if encoding is not None:
-                fid = get_fid(file, encoding=encoding)
-                self.filename = fid.name
-                self.load_file(fid)
-            else:
-                # Assume default encoding
-                fid = get_fid(file)
-                self.filename = fid.name
-                self.load_file(fid)
+            try:
+                if encoding is not None:
+                    fid = get_fid(file, encoding=encoding)
+                    self.filename = fid.name
+                    self.load_file(fid)
+                else:
+                    # Assume default encoding
+                    fid = get_fid(file)
+                    self.filename = fid.name
+                    self.load_file(fid)
+            except Exception as e:
+                fid.close()
+                raise e
 
         except UnicodeDecodeError:
             # Unicode fails -> Force Latin-1
@@ -149,13 +153,14 @@ class Touchstone:
         except Exception as e:
             raise ValueError(f'Something went wrong by the file opening: {e}')
 
-        self.gamma = []
-        self.z0 = []
+        finally:
+            self.gamma = []
+            self.z0 = []
 
-        if self.has_hfss_port_impedances:
-            self.get_gamma_z0_from_fid(fid)
+            if self.has_hfss_port_impedances:
+                self.get_gamma_z0_from_fid(fid)
 
-        fid.close()
+            fid.close()
 
     def load_file(self, fid: typing.TextIO):
         """
@@ -203,13 +208,13 @@ class Touchstone:
                         garbage, index = port_string.strip().split('[', 1) #throws ValueError on unpack
                         index = int(index.rstrip(']')) #throws ValueError on not int-able
                         if index > self.rank or index <= 0:
-                            print("Port name {0} provided for port number {1} but that's out of range for a file with extension s{2}p".format(name, index, self.rank))
+                            print(f"Port name {name} provided for port number {index} but that's out of range for a file with extension s{self.rank}p")
                         else:
                             if self.port_names is None: #Initialize the array at the last minute
                                 self.port_names = [''] * self.rank
                             self.port_names[index - 1] = name
                     except ValueError as e:
-                        print("Error extracting port names from line: {0}".format(line))
+                        print(f"Error extracting port names from line: {line}")
                 elif line[1].strip().lower().startswith('port impedance'):
                     self.has_hfss_port_impedances = True
 

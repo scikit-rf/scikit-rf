@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 MLine (:mod:`skrf.media.MLine`)
 ========================================
@@ -24,7 +23,7 @@ if TYPE_CHECKING:
 
 
 class MLine(Media):
-    """
+    r"""
     A microstripline transmission line defined in terms of width, thickness
     and height on a given relative permittivity substrate. The line has a
     conductor resistivity and a tangential loss factor.

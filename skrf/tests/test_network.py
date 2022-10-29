@@ -1,6 +1,7 @@
 from numpy.core.fromnumeric import squeeze
+import py
 import pytest
-from skrf.frequency import InvalidFrequencyWarning
+from skrf.frequency import Frequency, InvalidFrequencyWarning
 import unittest
 import os
 import io
@@ -293,7 +294,7 @@ class NetworkTestCase(unittest.TestCase):
         # Test reading it back
         strio = io.StringIO(snp)
         # Required for reading touchstone file
-        strio.name = 'StringIO.s{}p'.format(ports)
+        strio.name = f'StringIO.s{ports}p'
         ntwk2 = rf.Network(strio)
 
         npy.testing.assert_allclose(ntwk2.s, s_random)
@@ -308,7 +309,7 @@ class NetworkTestCase(unittest.TestCase):
 
         # Read back the written touchstone
         strio = io.StringIO(snp)
-        strio.name = 'StringIO.s{}p'.format(ports)
+        strio.name = f'StringIO.s{ports}p'
         ntwk2 = rf.Network(strio)
 
         # Renormalize original network to match the written one
@@ -339,8 +340,9 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_stitch(self):
         tmp = self.ntwk1.copy()
-        tmp.f = tmp.f+ tmp.f[0]
-        c = rf.stitch(self.ntwk1, tmp)
+        tmp.frequency = Frequency.from_f(tmp.f + tmp.f[0], 'Hz')
+        with pytest.warns(rf.frequency.InvalidFrequencyWarning):
+            c = rf.stitch(self.ntwk1, tmp)
 
     def test_cascade(self):
         self.assertEqual(self.ntwk1 ** self.ntwk2, self.ntwk3)
@@ -872,7 +874,7 @@ class NetworkTestCase(unittest.TestCase):
         for s_def in S_DEFINITIONS:
             ntwk = rf.Network(s_def=s_def)
             ntwk.z0 = rf.fix_z0_shape(z0, 2, 3)
-            ntwk.f = freqs
+            ntwk.frequency = Frequency.from_f(freqs)
             # test #1: define the network directly from z
             ntwk.z = z_ref
             npy.testing.assert_allclose(ntwk.z, z_ref)
@@ -892,7 +894,7 @@ class NetworkTestCase(unittest.TestCase):
         for s_def in S_DEFINITIONS:
             ntwk = rf.Network(s_def=s_def)
             ntwk.z0 = npy.array([50j, -50j])
-            ntwk.f = npy.array([1000])
+            ntwk.frequency = Frequency.from_f(npy.array([1000]))
             ntwk.s = npy.random.rand(1,2,2) + npy.random.rand(1,2,2)*1j
             self.assertFalse(npy.any(npy.isnan(ntwk.z)))
             self.assertFalse(npy.any(npy.isnan(ntwk.y)))
@@ -929,7 +931,7 @@ class NetworkTestCase(unittest.TestCase):
         ntwk.s = npy.random.rand(3,2,2)
         ntwk.z0 = z0[::-1]
 
-        ntwk.f = [1,2,3]
+        ntwk.frequency = Frequency.from_f([1,2,3])
         self.assertTrue(npy.allclose(ntwk.z0, npy.array([z0[::-1], z0[::-1]], dtype=complex).T))
 
     def test_z0_matrix(self):
@@ -943,7 +945,7 @@ class NetworkTestCase(unittest.TestCase):
         # Setting the frequency is required to be set, as the matrix size is checked against the
         # frequency vector
         ntwk.s = npy.random.rand(1,2,2)
-        ntwk.f = [1]
+        ntwk.frequency = Frequency.from_f([1])
         ntwk.z0 = z0
         self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
 
@@ -966,7 +968,7 @@ class NetworkTestCase(unittest.TestCase):
         tinyfloat = 1e-12
         ntwk = rf.Network()
         ntwk.z0 = npy.array([28,75+3j])
-        ntwk.f = npy.array([1000, 2000])
+        ntwk.frequency = Frequency.from_f(npy.array([1000, 2000]))
         ntwk.s = rf.z2s(npy.array([[[1+1j,5,11],[40,5,3],[16,8,9+8j]],
                                    [[1,20,3],[14,10,16],[27,18,-19-2j]]]))
         self.assertTrue((abs(rf.y2z(ntwk.y)-ntwk.z) < tinyfloat).all())

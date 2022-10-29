@@ -1,5 +1,3 @@
-
-
 """
 .. module:: skrf.vi.sa
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -44,7 +42,7 @@ class HP8500(Driver):
     >>> my_sa.cont_sweep()
     """
     def __init__(self, address=18, *args, **kwargs):
-        """
+        r"""
         Initializer
 
         Parameters
@@ -65,7 +63,7 @@ class HP8500(Driver):
         return f
 
     def get_ntwk(self, trace='a', goto_local=False, *args, **kwargs):
-        """
+        r"""
         Get a trace and return the data in a :class:`~skrf.network.Network` format
 
         This will save instrument stage to reg 1, activate single sweep

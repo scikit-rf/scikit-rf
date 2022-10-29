@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import skrf as rf
 import numpy as np
 import unittest
