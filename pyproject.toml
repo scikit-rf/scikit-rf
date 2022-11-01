@@ -37,7 +37,7 @@ test = [
     "pytest ~=7.0",
     "coverage ~=6.0",
     "flake8 ~=5.0",
-    "pytest-cov ~=3.0",
+    "pytest-cov ~=4.0",
     "nbval ~=0.9"
 ]
 
@@ -105,5 +105,4 @@ norecursedirs = [
 filterwarnings = [
     "error",
     "ignore::pytest.PytestRemovedIn8Warning",
-    'ignore:.*hookimpl.*old-style configuration options.*:pytest.PytestDeprecationWarning'
 ]
