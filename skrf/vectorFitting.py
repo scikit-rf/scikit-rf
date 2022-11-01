@@ -19,25 +19,6 @@ from .util import axis_kwarg, Axes
 if TYPE_CHECKING:
     from .network import Network
 
-def check_plotting(func):
-    """
-    This decorator checks if matplotlib.pyplot is available under the name mplt.
-    If not, raise an RuntimeError.
-
-    Raises
-    ------
-    RuntimeError
-        When trying to run the decorated function without matplotlib
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if mplt is None:
-            raise RuntimeError('Plotting is not available')
-        func(*args, **kwargs)
-
-    return wrapper
-
 
 class VectorFitting:
     """

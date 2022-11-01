@@ -76,8 +76,8 @@ except ImportError:
 
 def axis_kwarg(func):
     """
-    This decorator checks if matplotlib.pyplot is available under the name mplt.
-    If not, raise an RuntimeError.
+    This decorator checks if a :class:`matplotlib.axes.Axes` object is passed, 
+    if not the current axis will be gathered through :func:`plt.gca`.
 
     Raises
     ------
@@ -99,6 +99,15 @@ def axis_kwarg(func):
 
 
 def subplots(*args, **kwargs) -> Tuple[Figure, npy.ndarray]:
+    """
+    Wraps the matplotlib subplots call and raises if not available.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to get subplots without matplotlib installed.
+    """
+
     try:
         return plt.subplots(*args, **kwargs)
     except NameError:
