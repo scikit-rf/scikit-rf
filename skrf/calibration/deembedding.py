@@ -61,8 +61,8 @@ import numpy as np
 from numpy import concatenate, conj, flip, real, angle, exp, zeros
 from numpy.fft import fft, fftshift, irfft, ifftshift
 from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
 
+from ..util import subplots
 
 class Deembedding(ABC):
     """
@@ -1205,15 +1205,13 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 z11x = z11[x]
 
             if self.verbose:
-                fig = plt.figure()
+                fig, (ax1, ax2) = subplots(2,1)
                 fig.suptitle('Midpoint length and impedance determination')
-                ax1 = plt.subplot(2, 1, 1)
                 ax1.plot(t21, label = 't21')
                 ax1.plot([x], [t21[x]], marker = 'o', linestyle = 'none',
                             label = 't21x')
                 ax1.grid()
                 ax1.legend()
-                ax2 = plt.subplot(2, 1, 2, sharex = ax1)
                 ax2.plot(z11, label = 'z11')
                 ax2.plot([x], [z11x], marker = 'o', linestyle = 'none',
                             label = 'z11x')
@@ -2074,7 +2072,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             s22dut = s_dut.s[:, 1, 1]
             if self.verbose:
                 if i == 0:
-                    fig, axs = plt.subplots(2, 2)
+                    fig, axs = subplots(2, 2)
                     axs[0, 0].plot(z1, color = 'k')
                     axs[0, 0].set_xlim((0, x))
                     axs[0, 1].plot(z2, color = 'k')
@@ -2120,7 +2118,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             s11dut = s_dut.s[:, 0, 0]
             if self.verbose:
                 if i == 0:
-                    fig, axs = plt.subplots(1, 2)
+                    fig, axs = subplots(1, 2)
                     axs[0].plot(z1, color = 'k')
                     axs[0].set_xlim((0, x))
                     axs[1].set_xlim((n-100, n+x*2+10))

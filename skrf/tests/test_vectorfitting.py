@@ -5,6 +5,7 @@ import skrf
 import numpy as np
 import tempfile
 import os
+import sys
 import warnings
 
 
@@ -59,6 +60,9 @@ class VectorFittingTestCase(unittest.TestCase):
         # quality of the fit is not important in this test; it only needs to finish
         self.assertLess(vf.get_rms_error(), 0.2)
 
+    @pytest.mark.skipif(
+        "matplotlib" not in sys.modules, 
+        reason="Spice subcircuit uses Engformatter which is not available without matplotlib.")
     def test_spice_subcircuit(self):
         # fit ring slot example network
         nw = skrf.data.ring_slot
@@ -101,9 +105,9 @@ class VectorFittingTestCase(unittest.TestCase):
         self.assertTrue(np.allclose(vf.proportional_coeff, vf2.proportional_coeff))
         self.assertTrue(np.allclose(vf.constant_coeff, vf2.constant_coeff))
 
+    @pytest.mark.skipif("matplotlib" in sys.modules, reason="Raise Error only if matplotlib is not installed.")
     def test_matplotlib_missing(self):
         vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
-        skrf.vectorFitting.mplt = None
         with self.assertRaises(RuntimeError):
             vf.plot_convergence()
 

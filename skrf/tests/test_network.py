@@ -19,7 +19,10 @@ from skrf.media import CPW
 from skrf.media import DistributedCircuit
 from skrf.constants import S_DEFINITIONS
 from skrf.networkSet import tuner_constellation
-from skrf.plotting import plot_contour
+try:
+    from skrf.plotting import plot_contour
+except ImportError:
+    pass
 
 class NetworkTestCase(unittest.TestCase):
     """
@@ -585,21 +588,27 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(self.Fix.inv ** self.Meas ** self.Fix.flipped().inv,
                          self.DUT)
 
+    @pytest.mark.skipif("matplotlib" not in sys.modules, reason="Requires matplotlib in sys.modules.")
     def test_plot_one_port_db(self):
         self.ntwk1.plot_s_db(0,0)
 
+    @pytest.mark.skipif("matplotlib" not in sys.modules, reason="Requires matplotlib in sys.modules.")
     def test_plot_one_port_deg(self):
         self.ntwk1.plot_s_deg(0,0)
 
+    @pytest.mark.skipif("matplotlib" not in sys.modules, reason="Requires matplotlib in sys.modules.")
     def test_plot_one_port_smith(self):
         self.ntwk1.plot_s_smith(0,0)
 
+    @pytest.mark.skipif("matplotlib" not in sys.modules, reason="Requires matplotlib in sys.modules.")
     def test_plot_two_port_db(self):
         self.ntwk1.plot_s_db()
 
+    @pytest.mark.skipif("matplotlib" not in sys.modules, reason="Requires matplotlib in sys.modules.")
     def test_plot_two_port_deg(self):
         self.ntwk1.plot_s_deg()
 
+    @pytest.mark.skipif("matplotlib" not in sys.modules, reason="Requires matplotlib in sys.modules.")
     def test_plot_two_port_smith(self):
         self.ntwk1.plot_s_smith()
 
@@ -1255,6 +1264,7 @@ class NetworkTestCase(unittest.TestCase):
         net_dc = self.ntwk1.extrapolate_to_dc(dc_sparam=zeros)
         net_dc = self.ntwk1.extrapolate_to_dc(dc_sparam=zeros.tolist())
 
+    @pytest.mark.skipif("matplotlib" not in sys.modules, reason="Requires matplotlib in sys.modules.")
     def test_noise_deembed(self):
 
 
@@ -1290,9 +1300,11 @@ class NetworkTestCase(unittest.TestCase):
           newnetw.set_noise_a(thru.noise_freq, nfmin_db=nfmin_set, gamma_opt=gamma_opt_set, rn=rn_set )
           z = newnetw.nfdb_gs(g)[:,0]
           freq = thru.noise_freq.f[0]
-          gamma_opt_rb, nfmin_rb = plot_contour(freq,x,y,z, min0max1=0, graph=False)
-          self.assertTrue(abs(nfmin_set - nfmin_rb) < 1.e-2, 'nf not retrieved by noise deembed')
-          self.assertTrue(abs(gamma_opt_rb.s[0,0,0] - gamma_opt_set) < 1.e-1, 'nf not retrieved by noise deembed')
+
+          if "matplotlib" in sys.modules:
+            gamma_opt_rb, nfmin_rb = plot_contour(freq,x,y,z, min0max1=0, graph=False)
+            self.assertTrue(abs(nfmin_set - nfmin_rb) < 1.e-2, 'nf not retrieved by noise deembed')
+            self.assertTrue(abs(gamma_opt_rb.s[0,0,0] - gamma_opt_set) < 1.e-1, 'nf not retrieved by noise deembed')
 
 
     def test_se2gmm2se(self):

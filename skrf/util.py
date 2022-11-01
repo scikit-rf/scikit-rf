@@ -53,7 +53,7 @@ General Purpose Objects
 import contextlib
 import fnmatch
 import os
-from typing import Iterable, Tuple, List, Union, Any
+from typing import Iterable, Tuple, List, Union, Any, TypeVar
 import warnings
 import numpy as npy
 from datetime import datetime
@@ -64,6 +64,45 @@ from subprocess import Popen, PIPE
 import sys
 from functools import wraps
 from .constants import Number, NumberLike
+
+try:
+    from matplotlib.figure import Figure
+    from matplotlib.axes import Axes
+    import matplotlib.pyplot as plt
+except ImportError:
+    Figure = TypeVar("Figure")
+    Axes = TypeVar("Axes")
+    pass
+
+def axis_kwarg(func):
+    """
+    This decorator checks if matplotlib.pyplot is available under the name mplt.
+    If not, raise an RuntimeError.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to run the decorated function without matplotlib
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        ax = kwargs.get('ax', None)
+        try:
+            if ax is None:
+                ax = plt.gca()
+        except NameError:
+            raise RuntimeError("Plotting is not available")
+        func(*args, ax=ax, **kwargs)
+
+    return wrapper
+
+
+def subplots(*args, **kwargs) -> Tuple[Figure, npy.ndarray]:
+    try:
+        return plt.subplots(*args, **kwargs)
+    except NameError:
+        raise RuntimeError("Plotting is not available")
 
 def now_string() -> str:
     """
