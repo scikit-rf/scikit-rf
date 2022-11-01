@@ -87,7 +87,7 @@ def axis_kwarg(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        ax = kwargs.get('ax', None)
+        ax = kwargs.pop('ax', None)
         try:
             if ax is None:
                 ax = plt.gca()
