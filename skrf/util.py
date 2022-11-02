@@ -74,7 +74,7 @@ except ImportError:
     Axes = TypeVar("Axes")
     pass
 
-def axis_kwarg(func):
+def axes_kwarg(func):
     """
     This decorator checks if a :class:`matplotlib.axes.Axes` object is passed, 
     if not the current axis will be gathered through :func:`plt.gca`.

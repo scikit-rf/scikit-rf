@@ -13,7 +13,7 @@ try:
 except ImportError:
     pass
 
-from .util import axis_kwarg, Axes
+from .util import axes_kwarg, Axes
 
 # imports for type hinting
 if TYPE_CHECKING:
@@ -1369,7 +1369,7 @@ class VectorFitting:
                 resp += residues[i] / (s - pole) + np.conjugate(residues[i]) / (s - np.conjugate(pole))
         return resp
 
-    @axis_kwarg
+    @axes_kwarg
     def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None,
              parameter: str = 's', *, ax: Axes = None) -> Axes:
         """
@@ -1683,7 +1683,7 @@ class VectorFitting:
 
         return self.plot('im', *args, **kwargs)
 
-    @axis_kwarg
+    @axes_kwarg
     def plot_s_singular(self, freqs: Any = None, *, ax: Axes = None) -> Axes:
         """
         Plots the singular values of the vector fitted S-matrix in linear scale.
@@ -1734,7 +1734,7 @@ class VectorFitting:
         ax.legend(loc='best')
         return ax
 
-    @axis_kwarg
+    @axes_kwarg
     def plot_convergence(self, ax: Axes = None) -> Axes:
         """
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
@@ -1761,7 +1761,7 @@ class VectorFitting:
         ax2.set_ylabel('Residue', color='orangered')
         return ax
 
-    @axis_kwarg
+    @axes_kwarg
     def plot_passivation(self, ax: Axes = None) -> Axes:
         """
         Plots the history of the greatest singular value during the iterative passivity enforcement process, which
