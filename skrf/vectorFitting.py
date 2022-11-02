@@ -1371,7 +1371,7 @@ class VectorFitting:
 
     @axis_kwarg
     def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None,
-             parameter: str = 's', *,ax = None):
+             parameter: str = 's', *, ax: Axes = None) -> Axes:
         """
         Plots the specified component of the parameter :math:`H_{i+1,j+1}` in the fit, where :math:`H` is
         either the scattering (:math:`S`), the impedance (:math:`Z`), or the admittance (:math:`H`) response specified
