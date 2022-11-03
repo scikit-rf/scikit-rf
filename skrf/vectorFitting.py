@@ -1,42 +1,23 @@
-import numpy as np
 import os
-
-# imports for type hinting
+import logging
+import warnings
+from timeit import default_timer as timer
 from typing import Any, Tuple, TYPE_CHECKING
-if TYPE_CHECKING:
-    from .network import Network
 
-from functools import wraps
+import numpy as np
+
 try:
     from . import plotting    # will perform the correct setup for matplotlib before it is called below
     import matplotlib.pyplot as mplt
     from matplotlib.ticker import EngFormatter
 except ImportError:
-    mplt = None
+    pass
 
-import logging
-import warnings
-from timeit import default_timer as timer
+from .util import axes_kwarg, Axes
 
-
-def check_plotting(func):
-    """
-    This decorator checks if matplotlib.pyplot is available under the name mplt.
-    If not, raise an RuntimeError.
-
-    Raises
-    ------
-    RuntimeError
-        When trying to run the decorated function without matplotlib
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if mplt is None:
-            raise RuntimeError('Plotting is not available')
-        func(*args, **kwargs)
-
-    return wrapper
+# imports for type hinting
+if TYPE_CHECKING:
+    from .network import Network
 
 
 class VectorFitting:
@@ -1388,9 +1369,9 @@ class VectorFitting:
                 resp += residues[i] / (s - pole) + np.conjugate(residues[i]) / (s - np.conjugate(pole))
         return resp
 
-    @check_plotting
+    @axes_kwarg
     def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None,
-             parameter: str = 's', ax: mplt.Axes = None) -> mplt.Axes:
+             parameter: str = 's', *, ax: Axes = None) -> Axes:
         """
         Plots the specified component of the parameter :math:`H_{i+1,j+1}` in the fit, where :math:`H` is
         either the scattering (:math:`S`), the impedance (:math:`Z`), or the admittance (:math:`H`) response specified
@@ -1441,9 +1422,6 @@ class VectorFitting:
 
         components = ['db', 'mag', 'deg', 'deg_unwrap', 're', 'im']
         if component.lower() in components:
-            if ax is None:
-                ax = mplt.gca()
-
             if self.residues is None or self.poles is None:
                 raise RuntimeError('Poles and/or residues have not been fitted. Cannot plot the model response.')
 
@@ -1555,7 +1533,7 @@ class VectorFitting:
         else:
             raise ValueError(f'The specified component ("{component}") is not valid. Must be in {components}.')
 
-    def plot_s_db(self, *args, **kwargs) -> mplt.Axes:
+    def plot_s_db(self, *args, **kwargs) -> Axes:
         """
         Plots the magnitude in dB of the scattering parameter response(s) in the fit.
 
@@ -1580,7 +1558,7 @@ class VectorFitting:
 
         return self.plot('db', *args, **kwargs)
 
-    def plot_s_mag(self, *args, **kwargs) -> mplt.Axes:
+    def plot_s_mag(self, *args, **kwargs) -> Axes:
         """
         Plots the magnitude in linear scale of the scattering parameter response(s) in the fit.
 
@@ -1605,7 +1583,7 @@ class VectorFitting:
 
         return self.plot('mag', *args, **kwargs)
 
-    def plot_s_deg(self, *args, **kwargs) -> mplt.Axes:
+    def plot_s_deg(self, *args, **kwargs) -> Axes:
         """
         Plots the phase in degrees of the scattering parameter response(s) in the fit.
 
@@ -1630,7 +1608,7 @@ class VectorFitting:
 
         return self.plot('deg', *args, **kwargs)
 
-    def plot_s_deg_unwrap(self, *args, **kwargs) -> mplt.Axes:
+    def plot_s_deg_unwrap(self, *args, **kwargs) -> Axes:
         """
         Plots the unwrapped phase in degrees of the scattering parameter response(s) in the fit.
 
@@ -1655,7 +1633,7 @@ class VectorFitting:
 
         return self.plot('deg_unwrap', *args, **kwargs)
 
-    def plot_s_re(self, *args, **kwargs) -> mplt.Axes:
+    def plot_s_re(self, *args, **kwargs) -> Axes:
         """
         Plots the real part of the scattering parameter response(s) in the fit.
 
@@ -1680,7 +1658,7 @@ class VectorFitting:
 
         return self.plot('re', *args, **kwargs)
 
-    def plot_s_im(self, *args, **kwargs) -> mplt.Axes:
+    def plot_s_im(self, *args, **kwargs) -> Axes:
         """
         Plots the imaginary part of the scattering parameter response(s) in the fit.
 
@@ -1705,8 +1683,8 @@ class VectorFitting:
 
         return self.plot('im', *args, **kwargs)
 
-    @check_plotting
-    def plot_s_singular(self, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+    @axes_kwarg
+    def plot_s_singular(self, freqs: Any = None, *, ax: Axes = None) -> Axes:
         """
         Plots the singular values of the vector fitted S-matrix in linear scale.
 
@@ -1739,9 +1717,6 @@ class VectorFitting:
             else:
                 freqs = self.network.f
 
-        if ax is None:
-            ax = mplt.gca()
-
         # get system matrices of state-space representation
         A, B, C, D, E = self._get_ABCDE()
 
@@ -1759,8 +1734,8 @@ class VectorFitting:
         ax.legend(loc='best')
         return ax
 
-    @check_plotting
-    def plot_convergence(self, ax: mplt.Axes = None) -> mplt.Axes:
+    @axes_kwarg
+    def plot_convergence(self, ax: Axes = None) -> Axes:
         """
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
         vector fitting, which should eventually converge to a fixed value. Additionally, the relative change of the
@@ -1778,9 +1753,6 @@ class VectorFitting:
             figure.
         """
 
-        if ax is None:
-            ax = mplt.gca()
-
         ax.semilogy(np.arange(len(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
         ax.set_xlabel('Iteration step')
         ax.set_ylabel('Max. relative change', color='darkblue')
@@ -1789,8 +1761,8 @@ class VectorFitting:
         ax2.set_ylabel('Residue', color='orangered')
         return ax
 
-    @check_plotting
-    def plot_passivation(self, ax: mplt.Axes = None) -> mplt.Axes:
+    @axes_kwarg
+    def plot_passivation(self, ax: Axes = None) -> Axes:
         """
         Plots the history of the greatest singular value during the iterative passivity enforcement process, which
         should eventually converge to a value slightly lower than 1.0 or stop after reaching the maximum number of
@@ -1807,9 +1779,6 @@ class VectorFitting:
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
         """
-
-        if ax is None:
-            ax = mplt.gca()
 
         ax.plot(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma)
         ax.set_xlabel('Iteration step')

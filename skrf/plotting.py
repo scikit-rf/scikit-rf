@@ -62,25 +62,19 @@ import sys
 import getpass
 import warnings
 
-import matplotlib as mpl
-# if running on remote mode on a linux server which does not have a display (like Docker images for CI)
-# seems to cause problems only in Python2, so let's try reconfiguring the backend only in that case
-if os.name == 'posix' and not os.environ.get('DISPLAY', '') and mpl.rcParams['backend'] != 'agg' and sys.version.startswith('2'):
-    print('No display found. Using non-interactive Agg backend.')
-    # https://matplotlib.org/faq/usage_faq.html
-    if getpass.getuser() != 'jovyan':  # only if not running on Binder
-        mpl.use('Agg')
 import numpy as npy
+
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import ticker, rcParams
 from matplotlib.patches import Circle   # for drawing smith chart
 from matplotlib.pyplot import quiver
 from matplotlib.dates import date2num
+import matplotlib.tri as tri
 
 from . import network, frequency, calibration, networkSet, circuit
 from . import mathFunctions as mf
 from . util import now_string_2_dt
-import matplotlib.tri as tri
 
 try:
     import networkx as nx

@@ -53,7 +53,7 @@ General Purpose Objects
 import contextlib
 import fnmatch
 import os
-from typing import Iterable, Tuple, List, Union, Any
+from typing import Iterable, Tuple, List, Union, Any, TypeVar
 import warnings
 import numpy as npy
 from datetime import datetime
@@ -64,6 +64,54 @@ from subprocess import Popen, PIPE
 import sys
 from functools import wraps
 from .constants import Number, NumberLike
+
+try:
+    from matplotlib.figure import Figure
+    from matplotlib.axes import Axes
+    import matplotlib.pyplot as plt
+except ImportError:
+    Figure = TypeVar("Figure")
+    Axes = TypeVar("Axes")
+    pass
+
+def axes_kwarg(func):
+    """
+    This decorator checks if a :class:`matplotlib.axes.Axes` object is passed, 
+    if not the current axis will be gathered through :func:`plt.gca`.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to run the decorated function without matplotlib
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        ax = kwargs.pop('ax', None)
+        try:
+            if ax is None:
+                ax = plt.gca()
+        except NameError:
+            raise RuntimeError("Plotting is not available")
+        func(*args, ax=ax, **kwargs)
+
+    return wrapper
+
+
+def subplots(*args, **kwargs) -> Tuple[Figure, npy.ndarray]:
+    """
+    Wraps the matplotlib subplots call and raises if not available.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to get subplots without matplotlib installed.
+    """
+
+    try:
+        return plt.subplots(*args, **kwargs)
+    except NameError:
+        raise RuntimeError("Plotting is not available")
 
 def now_string() -> str:
     """
