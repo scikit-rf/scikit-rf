@@ -1,5 +1,4 @@
-import skrf_qtwidgets.networkPlotWidget
-from skrf_qtwidgets import qt, widgets, calibration_widgets
+from skrf_qtapps.skrf_qtwidgets import NetworkPlotWidget, qt, widgets, calibration_widgets
 from qtpy import QtWidgets, QtCore
 
 
@@ -27,7 +26,7 @@ class TRLWidget(QtWidgets.QWidget):
         self.tabWidget.addTab(self.tab_calStandards, "Cal Standards")
         self.tabWidget.addTab(self.tab_measurements, "Measurements")
 
-        self.ntwk_plot = skrf_qtwidgets.networkPlotWidget.NetworkPlotWidget(self.splitter)
+        self.ntwk_plot = NetworkPlotWidget(self.splitter)
 
         self.verticalLayout_main.addWidget(self.splitter)
         self.splitter.setStretchFactor(1, 100)
@@ -38,4 +37,8 @@ class TRLWidget(QtWidgets.QWidget):
         self.tab_measurements.connect_plot(self.ntwk_plot)
         self.tab_measurements.get_calibration = self.tab_calStandards.get_calibration
 
-app = qt.single_widget_application(TRLWidget)
+def main():
+    qt.single_widget_application(TRLWidget)
+
+if __name__ == "__main__":
+    main()

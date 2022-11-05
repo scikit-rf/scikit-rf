@@ -5,7 +5,6 @@ import traceback
 import platform
 import ctypes
 
-import sip
 from . import cfg  # must import cfg before qtpy to properly parse qt-bindings
 from qtpy import QtCore, QtWidgets, QtGui
 
@@ -224,7 +223,6 @@ def single_widget_application(widget_class, splash_screen=True, appid="skrf.qtap
     if splash_screen:
         close_splash_screen(form, splash, start_time)
 
-    sip.setdestroyonexit(False)  # prevent a crash on exit
     sys.exit(app.exec_())
 
 

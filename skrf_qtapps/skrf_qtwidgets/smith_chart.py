@@ -1,9 +1,10 @@
 from math import sqrt, acos, degrees
 import pyqtgraph as pg
+from pyqtgraph.Qt.QtWidgets import QGraphicsPathItem, QGraphicsEllipseItem
 
 R_vals_default = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 10, 20, 50]
 X_vals_default = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 10, 20, 50]
-ZGrid_pen = pg.mkPen("999999", width=0.2, antialias=True)
+ZGrid_pen = pg.mkPen("#999999", width=0.2, antialias=True)
 YGrid_pen = pg.mkPen("g", width=0.2, antialias=True)
 
 
@@ -23,7 +24,7 @@ def reactance_arc_sweep(X):
 
 def resistance_grid_lines(R_vals=R_vals_default, path_item=None):
     if path_item is None:
-        path_item = pg.QtGui.QGraphicsPathItem()
+        path_item = QGraphicsPathItem()
     path = path_item.path()  # type: pg.QtGui.QPainterPath
 
     path.moveTo(1, 0)
@@ -38,7 +39,7 @@ def resistance_grid_lines(R_vals=R_vals_default, path_item=None):
 
 def conductance_grid_lines(C_vals=R_vals_default, path_item=None):
     if path_item is None:
-        path_item = pg.QtGui.QGraphicsPathItem()
+        path_item = QGraphicsPathItem()
     path = path_item.path()  # type: pg.QtGui.QPainterPath
 
     path.moveTo(-1, 0)
@@ -53,7 +54,7 @@ def conductance_grid_lines(C_vals=R_vals_default, path_item=None):
 
 def reactance_grid_lines(X_vals=X_vals_default, path_item=None):
     if path_item is None:
-        path_item = pg.QtGui.QGraphicsPathItem()
+        path_item = QGraphicsPathItem()
     path = path_item.path()  # type: pg.QtGui.QPainterPath
 
     for X in X_vals:
@@ -76,7 +77,7 @@ def reactance_grid_lines(X_vals=X_vals_default, path_item=None):
 
 def susceptance_grid_lines(Y_vals=X_vals_default, path_item=None):
     if path_item is None:
-        path_item = pg.QtGui.QGraphicsPathItem()
+        path_item = QGraphicsPathItem()
     path = path_item.path()  # type: pg.QtGui.QPainterPath
 
     for Y in Y_vals:
@@ -100,7 +101,7 @@ def susceptance_grid_lines(Y_vals=X_vals_default, path_item=None):
 
 
 def gen_s_unity_circle():
-    s_unity_circle = pg.QtGui.QGraphicsEllipseItem(1, -1, -2, 2)
+    s_unity_circle = QGraphicsEllipseItem(1, -1, -2, 2)
     s_unity_circle.setPen(pg.mkPen('w', antialias=True))
     return s_unity_circle
 
@@ -113,7 +114,7 @@ def gen_z_grid(major_accented=True):
         path = ZGridBold.path()
         path.moveTo(1, 0)
         path.lineTo(-1, 0)
-        ZGridBold.setPen(pg.mkPen('999999', width=0.6, antialias=True))
+        ZGridBold.setPen(pg.mkPen('#999999', width=0.6, antialias=True))
         ZGridBold.setParentItem(grid_lines)
 
     return grid_lines

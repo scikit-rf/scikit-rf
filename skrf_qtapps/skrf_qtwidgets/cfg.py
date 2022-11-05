@@ -17,10 +17,6 @@ skrf_icon = os.path.join(images_dir, "scikit-rf-logo.png")
 
 os.environ['SKRF_PLOT_ENV'] = "none"  # disable automatic loading of pylab
 
-os.environ['QT_API'] = 'pyqt5'  # force prefer pyqt5, let qtpy handle pyqt4 or pyside only
-if len(sys.argv) > 1:
-    if sys.argv[1].lower() in ("pyqt4", "pyqt", "pyside", "pyqt5"):
-        os.environ["QT_API"] = sys.argv[1].lower()
 
 preferred_styles = ['plastique', 'Fusion', 'cleanlooks', 'motif', 'cde']
 preferred_style = 'plastique'

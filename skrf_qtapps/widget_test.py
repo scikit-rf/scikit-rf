@@ -6,7 +6,7 @@ app = qt.instantiate_app(sys.argv)
 
 class nwa_dummy():
     def __init__(self, NPORTS=2, NCHANNELS=False):
-        self.NPORTS = NPORTS
+        self.nports = NPORTS
         self.NCHANNELS = NCHANNELS
 
     def get_list_of_traces(self):
