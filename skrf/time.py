@@ -195,7 +195,8 @@ def detect_span(ntwk) -> float:
 
 
 def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
-              mode: str = 'bandpass', window=('kaiser', 6), method: str ='fft', fft_window='hann') -> 'Network':
+              mode: str = 'bandpass', window=('kaiser', 6),
+              method: str ='fft', fft_window='hann', conv_mode='wrap') -> 'Network':
     """
     Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
@@ -252,6 +253,12 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         The window helps to remove artefacts such as time-domain sidelobes of the pulses, but it is a trade-off with
         the achievable pulse width. The window is removed when the gated time-domain signals is transformed back into
         frequency-domain.
+
+    conv_mode : str
+        Extension mode for the convolution (if selected) determining how the frequency-domain gate is extended beyond
+        the boundaries. This has a large effect on the generation of gating artefacts due to boundary effects. The
+        optimal mode depends on the data. See the parameter description of `scipy.ndimage.convolve1d` for the available
+        options.
 
     Note
     ----
@@ -351,7 +358,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     if method == 'convolution':
         # frequency-domain gating
         kernel = fftshift(fft(ifftshift(gate), norm='forward'))
-        ntwk_gated.s[:, 0, 0] = convolve1d(ntwk_gated.s[:, 0, 0], kernel, mode='wrap')
+        ntwk_gated.s[:, 0, 0] = convolve1d(ntwk_gated.s[:, 0, 0], kernel, mode=conv_mode)
     elif method == 'fft':
         # time-domain band-pass mode
         s_td = fftshift(ifft(ntwk_gated.s[:, 0, 0]))
