@@ -23,6 +23,7 @@ from scipy import signal
 import numpy as npy
 from numpy.fft import fft, rfft, fftshift, ifft, irfft, ifftshift
 from scipy.ndimage import convolve1d
+import warnings
 
 # imports for type hinting
 from typing import List, TYPE_CHECKING
@@ -325,6 +326,12 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
 
     elif method == 'rfft':
         # time-domain low-pass mode
+        if ntwk.f[0] > 0.0:
+            # no dc point included
+            warnings.warn('The network data to be gated does not contain the dc point (0 Hz). This is required for the '
+                          'selected low-pass gating mode. Please consider to include the dc point if the results are '
+                          'inaccurate, either by direct measurement of by extrapolation using '
+                          'skrf.Network.extrapolate_to_dc().', UserWarning, stacklevel=2)
         n_td = 2 * n_fd - 1
         if fft_window is not None:
             # create low-pass window (one at lower limit at f=0, zero on upper limit)
