@@ -79,7 +79,7 @@ homepage = "https://scikit-rf.org/"
 repository = "https://github.com/scikit-rf/scikit-rf"
 documentation = "https://scikit-rf.readthedocs.io/en/latest/"
 
-[project.scripts]
+[project.gui-scripts]
 data-grabber = "skrf_qtapps.data_grabber:main"
 multiline-trl = "skrf_qtapps.multiline_trl:main"
 
