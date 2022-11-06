@@ -217,7 +217,7 @@ class Citi():
         if not 'freq' in [it.lower() for it in self._params.keys()]:
             raise ValueError('Frequency points not found')
 
-        freq = Frequency.from_f(self._params['freq']['values'])
+        freq = Frequency.from_f(self._params['freq']['values'], unit='Hz')
 
         # Network parameters: search for S, then Z or Y
         if any([it.startswith('S') for it in self._data.keys()]):

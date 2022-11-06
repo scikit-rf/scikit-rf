@@ -96,7 +96,7 @@ class MediaTestCase(unittest.TestCase):
             coax = Coaxial.from_attenuation_VF(frequency=frequency2, att=att)
 
     def test_R(self):
-        freq = rf.Frequency(0, 100, 2)
+        freq = rf.Frequency(0, 100, 2, unit='GHz')
 
         rho = 1e-7
         dint = 0.44e-3

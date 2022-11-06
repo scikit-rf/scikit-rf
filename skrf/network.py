@@ -1387,7 +1387,7 @@ class Network:
         try:
             return self._frequency
         except (AttributeError):
-            self._frequency = Frequency(0, 0, 0)
+            self._frequency = Frequency(0, 0, 0, unit='Hz')
             return self._frequency
 
     @frequency.setter

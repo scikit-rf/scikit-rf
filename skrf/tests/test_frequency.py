@@ -56,7 +56,7 @@ class FrequencyTestCase(unittest.TestCase):
             npy.array([1,4,10,20])).all())
 
     def test_slicer(self):
-        a = rf.Frequency.from_f([1,2,4,5,6])
+        a = rf.Frequency.from_f([1,2,4,5,6], unit='GHz')
 
         b = a['2-5ghz']
         tinyfloat = 1e-12
@@ -64,13 +64,13 @@ class FrequencyTestCase(unittest.TestCase):
 
     def test_frequency_check(self):
         with self.assertWarns(InvalidFrequencyWarning):
-            freq = rf.Frequency.from_f([2,1])
+            freq = rf.Frequency.from_f([2,1], unit='Hz')
 
         with self.assertWarns(InvalidFrequencyWarning):
-            freq = rf.Frequency.from_f([1,2,2])
+            freq = rf.Frequency.from_f([1,2,2], unit='Hz')
         
         with self.assertWarns(InvalidFrequencyWarning):
-            freq = rf.Frequency.from_f([1,2,2], unit="Hz")
+            freq = rf.Frequency.from_f([1,2,2], unit='Hz')
             inv = freq.drop_non_monotonic_increasing()
             self.assertListEqual(inv, [2])
             self.assertTrue(npy.allclose(freq.f, [1,2]))
@@ -80,7 +80,7 @@ class FrequencyTestCase(unittest.TestCase):
         To avoid corner cases, it is not be possible to change the
         frequency points directly.
         """
-        a = rf.Frequency.from_f([1,2,4,5,6])
+        a = rf.Frequency.from_f([1,2,4,5,6], unit='Hz')
         # TODO : assertRaises(AttributeError) in next release
         with self.assertWarns(DeprecationWarning):
             a.f = [1, 2]
