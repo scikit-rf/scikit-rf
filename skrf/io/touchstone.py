@@ -295,7 +295,7 @@ class Touchstone:
                 self.resistance = complex(toks[4])
 
                 if self.frequency_unit not in self.allowed_units:
-                    if self.frequency_unit != 'sec':
+                    if self.frequency_unit not in ['sec', 's']:
                         raise InvalidFrequencyUnit('Invalid frequency_unit [%s]',  self.frequency_unit)
                     else:
                         raise TimeseriesFrequencyUnit('Time series touchstone file detected.\n' + 
@@ -629,9 +629,10 @@ class TimeseriesTouchstone(Touchstone):
     ----------
     .. [#] https://na.support.keysight.com/plts/help/WebHelp/FilePrint/SnP_File_Format.htm
     """
-    allowed_units = ['sec']
+    allowed_units = ['sec', 's']
 
-    def __init__(self, file):
+    def __init__(self, file: typing.Union[str, typing.TextIO],
+                 encoding: typing.Union[str, None] = None):
         """
         Constructor
 
@@ -639,9 +640,11 @@ class TimeseriesTouchstone(Touchstone):
         ----------
         file : str or file-object
             touchstone file to load
+        encoding : str, optional
+            define the file encoding to use. Default value is None, 
+            meaning the encoding is guessed (ANSI, UTF-8 or Latin-1).
 
         Examples
-        --------
         From filename
 
         >>> t = rf.TimeseriesTouchstone('time_series_network.s2p')
@@ -651,7 +654,7 @@ class TimeseriesTouchstone(Touchstone):
         >>> file = open('time_series_network.s2p')
         >>> t = rf.TimeseriesTouchstone(file)
         """
-        super().__init__(file)
+        super().__init__(file, encoding)
         self.frequency_mult = 1.0
 
         samples = npy.diff(self.sparameters[:,1::2], axis=0)

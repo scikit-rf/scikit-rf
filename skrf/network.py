@@ -541,7 +541,7 @@ class Network:
 
         # allows user to pass StringIO, filename or file obj
         if isinstance(file, io.StringIO):
-            self.read_touchstone(file, self.encoding)
+            self.read_touchstone(file, encoding=self.encoding, reader=reader)
 
         else:
             # open file in 'binary' mode because we are going to try and
@@ -557,7 +557,7 @@ class Network:
                 # non-binary mode and try to read it as touchstone
                 filename = fid.name
                 fid.close()
-                self.read_touchstone(filename, self.encoding)
+                self.read_touchstone(filename, encoding=self.encoding, reader=reader)
 
             if not fid.closed:
                 fid.close()
