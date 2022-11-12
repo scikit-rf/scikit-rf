@@ -70,7 +70,6 @@ import pickle
 from pickle import UnpicklingError
 import sys
 import warnings
-import zipfile
 
 import numpy as npy
 
@@ -99,7 +98,7 @@ OBJ_EXTN = [
 
 
 def read(file, *args, **kwargs):
-    """
+    r"""
     Read  skrf object[s] from a pickle file.
 
     Reads a skrf object that is written with :func:`write`, which uses
@@ -250,7 +249,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
+def read_all(dir: str ='.', sort = True, contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
     """
     Read all skrf objects in a directory.
 
@@ -262,6 +261,8 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
     ----------
     dir : str, optional
         the directory to load from, default  \'.\'
+    sort: boolean, default is True
+        filenames sorted by https://docs.python.org/3/library/stdtypes.html#list.sort without arguements
     contains : str, optional
         if not None, only files containing this substring will be loaded
     f_unit : ['hz','khz','mhz','ghz','thz']
@@ -319,6 +320,9 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
             filelist.append(filename)
     else:
         filelist.extend(files)
+         
+    if sort is True:
+        filelist.sort()
 
     for filename in filelist:
         if contains is not None and contains not in filename:
@@ -345,8 +349,8 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
                 pass
 
     if obj_type is not None:
-        out = dict([(k, out[k]) for k in out if
-            isinstance(out[k],sys.modules[__name__].__dict__[obj_type])])
+        out = {k: out[k] for k in out if
+            isinstance(out[k],sys.modules[__name__].__dict__[obj_type])}
 
     return out
 
@@ -370,7 +374,7 @@ def read_all_networks(*args, **kwargs):
 ran = read_all_networks
 
 def write_all(dict_objs, dir='.', *args, **kwargs):
-    """
+    r"""
     Write a dictionary of skrf objects individual files in `dir`.
 
     Each object is written to its own file. The filename used for each
@@ -412,6 +416,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
     """
     if not os.path.exists('.'):
         raise OSError('No such directory: %s'%dir)
+         
 
 
     for k in dict_objs:
@@ -496,7 +501,7 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 
     Notes
     -------
-    Alternatively you can use the :func:`read_all` function.
+    
 
     Parameters
     -----------
@@ -620,7 +625,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
         remove_tmp_file = True
 
     # This breaks compatibility with python 2.6 and older
-    with open(file_name, 'r') as old_file, open(new_file_name, 'w') as new_file:
+    with open(file_name) as old_file, open(new_file_name, 'w') as new_file:
         new_file.write('%s\n'%header_string)
         for line in old_file:
             new_file.write(line)
@@ -630,7 +635,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
 
 def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     *args, **kwargs):
-    """
+    r"""
     Write a Network object to a spreadsheet, for your boss.
 
     Write the s-parameters  of a network to a spreadsheet, in a variety
@@ -691,19 +696,19 @@ def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
         for m,n in ntwk.port_tuples:
             d['S%i%i Log Mag(dB)'%(m+1,n+1)] = \
                 Series(ntwk.s_db[:,m,n], index = index)
-            d[u'S%i%i Phase(deg)'%(m+1,n+1)] = \
+            d['S%i%i Phase(deg)'%(m+1,n+1)] = \
                 Series(ntwk.s_deg[:,m,n], index = index)
     elif form =='ma':
         for m,n in ntwk.port_tuples:
             d['S%i%i Mag(lin)'%(m+1,n+1)] = \
                 Series(ntwk.s_mag[:,m,n], index = index)
-            d[u'S%i%i Phase(deg)'%(m+1,n+1)] = \
+            d['S%i%i Phase(deg)'%(m+1,n+1)] = \
                 Series(ntwk.s_deg[:,m,n], index = index)
     elif form =='ri':
         for m,n in ntwk.port_tuples:
             d['S%i%i Real'%(m+1,n+1)] = \
                 Series(ntwk.s_re[:,m,n], index = index)
-            d[u'S%i%i Imag'%(m+1,n+1)] = \
+            d['S%i%i Imag'%(m+1,n+1)] = \
                 Series(ntwk.s_im[:,m,n], index = index)
 
     df = DataFrame(d)
@@ -729,22 +734,20 @@ def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
     df : pandas DataFrame Object
     """
     from pandas import DataFrame, Series # delayed because its not a requirement
-    d = {}
-    index =ntwk.frequency.f_scaled
 
     if ports is None:
         ports = ntwk.port_tuples
 
+    d = {}
     for attr in attrs:
-        for m,n in ports:
-            d['%s %i%i'%(attr, m+1,n+1)] = \
-                Series(ntwk.__getattribute__(attr)[:,m,n], index = index)
-
-    return DataFrame(d)
+        attr_array = ntwk.__getattribute__(attr)
+        for m, n in ports:
+            d[f'{attr} {m+1}{n+1}'] = attr_array[:, m, n]
+    return DataFrame(d, index=ntwk.frequency.f_scaled)
 
 def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_type: str = 'excel',
     *args, **kwargs):
-    """
+    r"""
     Write a NetworkSet object to a spreadsheet, for your boss.
 
     Write  the s-parameters  of a each network in the networkset to a
@@ -791,26 +794,14 @@ def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_
         # add file extension if missing
         if not file_name.endswith('.xlsx'):
             file_name += '.xlsx'
-        writer = ExcelWriter(file_name)
-        [network_2_spreadsheet(k, writer, sheet_name=k.name, *args, **kwargs) for k in ntwkset]
-        writer.save()
+        with ExcelWriter(file_name) as writer:
+            [network_2_spreadsheet(k, writer, sheet_name=k.name, *args, **kwargs) for k in ntwkset]
     else:
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
 
 
-# Provide a StringBuffer that let's me work with Python2 strings and Python3 unicode strings without thinking
-if sys.version_info < (3, 0):
-    import StringIO
-
-    class StringBuffer(StringIO.StringIO):
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            self.close()
-else:
-    from io import StringIO
-    StringBuffer = StringIO
+from io import StringIO
+StringBuffer = StringIO
 
 
 class TouchstoneEncoder(json.JSONEncoder):
@@ -822,7 +813,7 @@ class TouchstoneEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, npy.ndarray):
             return obj.tolist()
-        if isinstance(obj, npy.complex):
+        if isinstance(obj, complex):
             return npy.real(obj), npy.imag(obj)  # split into [real, im]
         if isinstance(obj, Frequency):
             return {'flist': obj.f_scaled.tolist(), 'funit': obj.unit}

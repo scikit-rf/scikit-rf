@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 .. module:: skrf.networkSet
 
@@ -46,8 +45,9 @@ NetworkSet Utilities
 """
 import zipfile
 import numpy as npy
-import typing
-from io import StringIO, BytesIO
+from numbers import Number
+from typing import Union, Any, Mapping, TextIO
+from io import BytesIO
 from scipy.interpolate import interp1d
 from . network import Network, Frequency, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
 from . import mathFunctions as mf
@@ -56,9 +56,9 @@ from . util import now_string_2_dt
 try:
     from numpy.typing import ArrayLike
 except ImportError:
-    ArrayLike = typing.Any
+    ArrayLike = Any
 
-class NetworkSet(object):
+class NetworkSet:
     """
     A set of Networks.
 
@@ -119,7 +119,7 @@ class NetworkSet(object):
 
     """
 
-    def __init__(self, ntwk_set: typing.Union[list, dict], name: str = None):
+    def __init__(self, ntwk_set: Union[list, dict] = [], name: str = None):
         """
         Initialize for NetworkSet.
 
@@ -139,10 +139,6 @@ class NetworkSet(object):
         if hasattr(ntwk_set, 'values'):
             ntwk_set = list(ntwk_set.values())
 
-        # list should not be empty
-        if len(ntwk_set) == 0:
-            raise ValueError('Input list should not be empty')
-
         # did they pass a list of Networks?
         if not all([isinstance(ntwk, Network) for ntwk in ntwk_set]):
             raise(TypeError('input must be list of Network types'))
@@ -160,6 +156,26 @@ class NetworkSet(object):
         # we are good to go
         self.ntwk_set = ntwk_set
         self.name = name
+        
+        # extract the dimensions of the set
+        try:
+            self.dims = self.ntwk_set[0].params.keys()
+        except (AttributeError, IndexError):  # .params is None
+            self.dims = dict()
+        
+        # extract the coordinates of the set
+        try:
+            self.coords = {p: [] for p in self.dims}
+    
+            for k in self.ntwk_set:
+                for p in self.dims:
+                    self.coords[p].append(k.params[p])
+                    
+            # keep only unique terms
+            for p in self.coords.keys():
+                self.coords[p] = list(set(self.coords[p]))
+        except TypeError:  # .params is None
+            self.coords = None
 
         # create list of network properties, which we use to dynamically
         # create a statistical properties of this set
@@ -205,7 +221,7 @@ class NetworkSet(object):
         sort_filenames: Boolean
             sort the filenames in the zip file before constructing the
             NetworkSet
-        \\*args, \\*\\*kwargs : arguments
+        \*args, \*\*kwargs : arguments
             passed to NetworkSet constructor
 
         Examples
@@ -222,18 +238,10 @@ class NetworkSet(object):
         if sort_filenames:
             filename_list.sort()
 
-
         for filename in filename_list:
             # try/except block in case not all files are touchstones
-
             try:  # Ascii files (Touchstone, etc)
-                # convert ZipExtFile to StringIO
-                # io.StringIO doesn't have an attribute called name like in
-                # file objects created with open(). So create it as it is
-                # required for the touchstone parser.
-                fileobj = StringIO(z.open(filename).read().decode('UTF-8'))
-                fileobj.name = filename
-                n = Network(fileobj)
+                n = Network.zipped_touchstone(filename, z)
                 ntwk_list.append(n)
                 continue
             except:
@@ -263,7 +271,7 @@ class NetworkSet(object):
         dir : str
             directory containing Network files.
 
-        \\*args, \\*\\*kwargs :
+        \*args, \*\*kwargs :
             passed to NetworkSet constructor
 
         Examples
@@ -273,8 +281,6 @@ class NetworkSet(object):
         """
         from . io.general import read_all_networks
         return cls(read_all_networks(dir), *args, **kwargs)
-
-
 
     @classmethod
     def from_s_dict(cls, d: dict, frequency: Frequency, *args, **kwargs):
@@ -292,7 +298,7 @@ class NetworkSet(object):
         frequency: :class:`~skrf.frequency.Frequency` object
             frequency assigned to each network
 
-        \\*args, \\*\\*kwargs :
+        \*args, \*\*kwargs :
             passed to Network.__init__ for each key/value pair of d
 
         Returns
@@ -305,6 +311,51 @@ class NetworkSet(object):
         """
         return cls([Network(s=d[k], frequency=frequency, name=k,
                             *args, **kwargs)  for k in d])
+
+    @classmethod
+    def from_mdif(cls, file: Union[str, TextIO]) -> 'NetworkSet':
+        """
+        Create a NetworkSet from a MDIF file.
+
+        Parameters
+        ----------
+        file : str or file-object
+            MDIF file to load
+
+        Returns
+        -------
+        ns : :class: `~skrf.networkSet.NetworkSet`
+        
+        See Also
+        --------
+        Mdif : MDIF Object
+        write_mdif : Convert a NetworkSet to a Generalized MDIF file.
+
+        """
+        from . io import Mdif
+        return Mdif(file).to_networkset()
+
+    @classmethod
+    def from_citi(cls, file: Union[str, TextIO]) -> 'NetworkSet':
+        """
+        Create a NetworkSet from a CITI file.
+
+        Parameters
+        ----------
+        file : str or file-object
+            CITI file to load
+
+        Returns
+        -------
+        ns : :class: `~skrf.networkSet.NetworkSet`
+        
+        See Also
+        --------
+        Citi
+
+        """
+        from . io import Citi
+        return Citi(file).to_networkset()
 
     def __add_a_operator(self, operator_name):
         """
@@ -334,7 +385,7 @@ class NetworkSet(object):
     def __str__(self):
         """
         """
-        return self.ntwk_set.__str__()
+        return f'{len(self.ntwk_set)}-Networks NetworkSet: '+self.ntwk_set.__str__()
 
     def __repr__(self):
         return self.__str__()
@@ -469,6 +520,7 @@ class NetworkSet(object):
         setattr(self.__class__,'plot_mm_'+\
                 network_property_name,plot_func)
 
+
     def to_dict(self) -> dict:
         """
         Return a dictionary representation of the NetworkSet.
@@ -480,7 +532,7 @@ class NetworkSet(object):
             and the Networks as values.
 
         """
-        return dict([(k.name, k) for k in self.ntwk_set])
+        return {k.name: k for k in self.ntwk_set}
 
     def to_s_dict(self):
         """
@@ -489,7 +541,7 @@ class NetworkSet(object):
         The resultant keys of the dictionary are the names of the Networks
         in NetworkSet
 
-         Returns
+        Returns
         -------
         s_dict : dictionary
             contains s-parameters in the form of complex numpy arrays
@@ -537,7 +589,7 @@ class NetworkSet(object):
         """
         return NetworkSet([k.copy() for k in self.ntwk_set])
 
-    def sort(self, key=lambda x: x.name, inplace: bool = True, **kwargs) -> typing.Union[None, 'NetworkSet']:
+    def sort(self, key=lambda x: x.name, inplace: bool = True, **kwargs) -> Union[None, 'NetworkSet']:
         r"""
         Sort this network set.
 
@@ -549,7 +601,7 @@ class NetworkSet(object):
             Sort the NetworkSet object directly if True, 
             return the sorted NetworkSet if False. Default is True.
         
-        \\*\\*kwargs : dict
+        \*\*kwargs : dict
             keyword args passed to builtin sorted acting on self.ntwk_set
 
         Return
@@ -637,7 +689,7 @@ class NetworkSet(object):
             
         Return
         ------
-        x : :class: Numpy.ndarray
+        x : :class: npy.ndarray
             
         """
         ntwk = self[0]
@@ -700,7 +752,7 @@ class NetworkSet(object):
                        
         which is NOT the same as
                 
-        `std(s_db)
+        `std(s_db)`
                         
         """
         ntwk= self.std_s_mag
@@ -834,7 +886,7 @@ class NetworkSet(object):
             filename or a file-object. If left as None then the
             filename will be set to Calibration.name, if its not None.
             If both are None, ValueError is raised.
-        \\*args, \\*\\*kwargs : arguments and keyword arguments
+        \*args, \*\*kwargs : arguments and keyword arguments
             passed through to :func:`~skrf.io.general.write`
 
         Notes
@@ -882,6 +934,40 @@ class NetworkSet(object):
         from . io.general import networkset_2_spreadsheet
         networkset_2_spreadsheet(self, *args, **kwargs)
 
+    def write_mdif(self,
+                   filename: str,
+                   values: Union[dict, None] = None,
+                   data_types: Union[dict, None] = None,
+                   comments = []):
+        """Convert a scikit-rf NetworkSet object to a Generalized MDIF file.
+
+        Parameters
+        ----------
+        filename : string
+            Output MDIF file name.
+        values : dictionary or None. Default is None.
+            The keys of the dictionnary are MDIF variables and its values are 
+            a list of the parameter values.
+            If None, then the values will be set to the NetworkSet names
+            and the datatypes will be set to "string".
+        data_types: dictionary or None. Default is None.
+            The keys are MDIF variables and the value are datatypes
+            specified by the following strings: "int", "double", and "string"
+        comments: list of strings
+            Comments to add to output_file.
+            Each list items is a separate comment line
+
+        See Also
+        --------
+        from_mdif : Create a NetworkSet from a MDIF file.
+        params_values : parameters values
+        params_types : parameters types
+
+        """
+        from . io import Mdif
+        Mdif.write(ns=self, filename=filename, values=values, 
+                             data_types=data_types, comments=comments)
+
     def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):
         """
         Converts an attributes of the Networks within a NetworkSet to a Pandas DataFrame.
@@ -898,9 +984,9 @@ class NetworkSet(object):
             name='Freq(%s)'%self[0].frequency.unit
             )
         df = DataFrame(
-            dict([('%s'%(k.name),
-                Series(k.__getattribute__(attr)[:,m,n],index=index))
-                for k in self]),
+            {'%s'%(k.name):
+                Series(k.__getattribute__(attr)[:,m,n],index=index)
+                for k in self},
             index = index,
             )
         return df
@@ -949,11 +1035,278 @@ class NetworkSet(object):
         ntw.s = f(x)
 
         return ntw
+   
+    def has_params(self) -> bool:
+        """
+        Check is all Networks in the NetworkSet have a similar params dictionnary.   
 
+        Returns
+        -------
+        bool
+            True is all Networks have a .params dictionnay (of same size), 
+            False otherwise
+
+        """
+        # does all networks have a params property?
+        if not all(hasattr(ntwk, 'params') for ntwk in self.ntwk_set):
+            return False
+        
+        # are all params property been set?
+        if any(ntwk.params is None for ntwk in self.ntwk_set):
+            return False
+        
+        # are they all of the same size?
+        params_len = len(self.ntwk_set[0].params)
+        if not all(len(ntwk.params) == params_len for ntwk in self.ntwk_set):
+            return False
+        
+        # are all the dict keys the same?
+        params_keys = self.ntwk_set[0].params.keys()
+        if not all(ntwk.params.keys() == params_keys for ntwk in self.ntwk_set):
+            return False
+        
+        # then we are all good
+        return True
+
+    @property
+    def params(self) -> list:
+        """
+        Return the list of parameter names stored in the Network of the NetworkSet.
+
+        Similar to the `dims` property, except it returns a list instead of a view.
+
+        Returns
+        -------
+        list: list
+            list of the parameter names if any. Empty list if no parameter found.
+
+        """
+        return list(self.dims)
+    
+    @property
+    def params_values(self) -> Union[dict, None]:
+        """
+        Return a dictionnary containing all parameters and their values.
+
+        Returns
+        -------
+        values : dict or None.
+            Dictionnary of all parameters names and their values (into a list). 
+            Return None if no parameters are defined in the NetworkSet.
+
+        """
+        if self.has_params():
+            # creating a dict of empty lists for each of the param keys
+            values = {key: [] for key in self.dims}
+            for ntwk in self.ntwk_set:
+                for key, value in ntwk.params.items():
+                    values[key].append(value)
+            return values
+        else:
+            return None
+
+    @property
+    def params_types(self) -> Union[dict, None]:
+        """
+        Return a dictionnary describing the data type of each parameters.
+
+        Returns
+        -------
+        data_types : dict or None.
+            Dictionnary of the (guessed) type of each parameters. 
+            Return None if no parameters are defined in the NetworkSet.
+
+        """
+        # for each parameter, scan all the value and try to guess the type
+        # If is not a int, and not a float (double), then it's a string
+        if self.has_params():
+            data_types = {}
+            values = self.params_values
+            for key in values:
+                try:
+                    _ = [int(v) for v in values[key]]
+                    data_types[key] = 'int'
+                except ValueError as e:  # not an int
+                    try:
+                        _ = [float(v) for v in values[key]]
+                        data_types[key] = 'double'
+                    except ValueError as e:  # not a float -> then a string
+                        data_types[key] = 'string'
+                        
+            return data_types
+        else:
+            return None
+            
+
+    def sel(self, indexers: Mapping[Any, Any] = None) -> 'NetworkSet':
+        """
+        Select Network(s) in the NetworkSet from a given value of a parameter.
+
+        Parameters
+        ----------
+        indexers : dict, optional
+            A dict with keys matching dimensions and values given by scalars,
+            or arrays of parameters. 
+            Default is None, which returns the entire NetworkSet
+            
+        Returns
+        -------
+        ns : NetworkSet
+            NetworkSet containing the selected Networks or 
+            empty NetworkSet if no match found
+
+        Example
+        -------
+        Creating a dummy example:
+
+        >>> params = [
+                {'a':0, 'X':10, 'c':'A'},
+                {'a':1, 'X':10, 'c':'A'},
+                {'a':2, 'X':10, 'c':'A'},
+                {'a':1, 'X':20, 'c':'A'},
+                {'a':0, 'X':20, 'c':'A'},
+                ]
+        >>> freq1 = rf.Frequency(75, 110, 101, 'ghz')
+        >>> ntwks_params = [rf.Network(frequency=freq1, 
+                                       s=np.random.rand(len(freq1),2,2), 
+                                       name=f'ntwk_{m}',
+                                       comment=f'ntwk_{m}',
+                                       params=params) \
+                                    for (m, params) in enumerate(params) ]     
+        >>> ns = rf.NetworkSet(ntwks_params)
+        
+        Selecting the sub-NetworkSet matching scalar parameters:
+        
+        >>> ns.sel({'a': 1})  # len == 2
+        >>> ns.sel({'a': 0, 'X': 10})  # len == 1
+        
+        Selectong the sub-NetworkSet matching a range of parameters:
+        
+        >>> ns.sel({'a': 0, 'X': [10,20]})  # len == 2
+        >>> ns.sel({'a': [0,1], 'X': [10,20]}) # len == 4
+        
+        If using a parameter name of value that does not exist, returns empty NetworkSet:
+
+        >>> ns.sel({'a': -1})  # len == 0
+        >>> ns.sel({'duh': 0})  # len == 0
+
+        """
+        from collections.abc import Iterable
+
+        if not indexers:  # None or {}
+            return self.copy()
+
+        if not self.has_params():
+            return NetworkSet()
+        
+        if not isinstance(indexers, dict):
+            raise TypeError('indexers should be a dictionnary.')
+
+        for p in indexers.keys():
+            if p not in self.dims:
+                return NetworkSet()
+
+        ntwk_list = []
+        for k in self.ntwk_set:
+            match_list = [k.params[p] in (v if isinstance(v, Iterable) else [v])
+                          for (p, v) in indexers.items()]
+            if all(match_list):
+                ntwk_list.append(k)
+           
+        if ntwk_list:
+            return NetworkSet(ntwk_list)
+        else:  # no match found
+            return NetworkSet()
+
+
+    def interpolate_from_params(self, param: str, x: float, 
+                                sub_params: dict={}, interp_kind: str = 'linear'):
+        """
+        Interpolate a Network from given parameters of NetworkSet's Networks.
+
+        Parameters
+        ----------
+        param : string
+            Name of the parameter to interpolate the NetworkSet with
+        x : float
+            Point to evaluate the interpolated network at
+        sub_params : dict, optional
+            Dictionnary of parameter/values to filter the NetworkSet,
+            if necessary to avoid an ambiguity.
+            Default is empty dict.
+        interp_kind: str
+            Specifies the kind of interpolation as a string: 'linear', 'nearest', 
+            'zero', 'slinear', 'quadratic', 'cubic'. 
+            Cf :class:`scipy.interpolate.interp1d` for detailed description.
+            Default is 'linear'.
+
+        Returns
+        -------
+        ntw : class:`~skrf.network.Network`
+            Network interpolated at x
+
+        Raises
+        ------
+        ValueError : if the interpolating param/value are incorrect or ambiguous
+
+        Example
+        -------
+        Creating a dummy example:
+
+        >>> params = [
+                {'a':0, 'X':10, 'c':'A'},
+                {'a':1, 'X':10, 'c':'A'},
+                {'a':2, 'X':10, 'c':'A'},
+                {'a':1, 'X':20, 'c':'A'},
+                {'a':0, 'X':20, 'c':'A'},
+                ]
+        >>> freq1 = rf.Frequency(75, 110, 101, 'ghz')
+        >>> ntwks_params = [rf.Network(frequency=freq1, 
+                                       s=np.random.rand(len(freq1),2,2), 
+                                       name=f'ntwk_{m}',
+                                       comment=f'ntwk_{m}',
+                                       params=params) \
+                                    for (m, params) in enumerate(params) ]     
+        >>> ns = rf.NetworkSet(ntwks_params)
+        
+        Interpolated Network for a=1.2 within X=10 Networks:
+        
+        >>> ns.interpolate_from_params('a', 1.2, {'X': 10})
+
+        """
+        # checking interpolating param and values
+        if not param in self.params:
+            raise ValueError(f'Parameter {param} is not found in the NetworkSet params.')
+        if isinstance(x, Number):
+            if not (min(self.coords[param]) < x < max(self.coords[param])):
+                ValueError(f'Out of bound values: {x} is not inside {self.coords[param]}. Cannot interpolate.')
+        else:
+            raise ValueError('Cannot interpolate between string-based parameters.')
+    
+        # checking sub-parameters
+        if sub_params:
+            for (p, v) in sub_params.items():
+                # of course it should exist
+                if p not in self.dims:
+                    raise ValueError(f'Parameter {p} is not found in the NetworkSet params.')    
+                       
+                # check if each sub-param exist in the parameters
+                if not v in self.coords[p]:  # also deals with string case
+                    raise ValueError(f'Parameter {p} value {v} is not found in the NetworkSet params.')
+            
+
+        
+        # interpolating the sub-NetworkSet matching the passed sub-parameters
+        sub_ns = self.sel(sub_params)
+        interp_ntwk = sub_ns.interpolate_from_network(sub_ns.coords[param], 
+                                                      x, interp_kind)       
+        
+        return interp_ntwk
+        
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):
-    """
+    r"""
     Applies a function to some attribute of a list of networks.
 
 
@@ -1002,7 +1355,7 @@ fon = func_on_networks
 
 
 def getset(ntwk_dict, s, *args, **kwargs):
-    """
+    r"""
     Creates a :class:`NetworkSet`, of all :class:`~skrf.network.Network`s
     objects in a dictionary that contain `s` in its key. This is useful
     for dealing with the output of

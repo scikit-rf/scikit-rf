@@ -13,7 +13,7 @@ from ...network import Network
 from ...frequency import Frequency
 
 
-class VNA(object):
+class VNA:
     """
     class defining a base analyzer for using with scikit-rf
 
@@ -91,10 +91,10 @@ class VNA(object):
         interface = str(kwargs.get("interface", None)).upper()  # GPIB, SOCKET
         if interface == "GPIB":
             board = str(kwargs.get("card_number", "")).upper()
-            resource_string = "GPIB{:}::{:}::INSTR".format(board, address)
+            resource_string = f"GPIB{board}::{address}::INSTR"
         elif interface == "SOCKET":
             port = str(kwargs.get("port", 5025))
-            resource_string = "TCPIP0::{:}::{:}::SOCKET".format(address, port)
+            resource_string = f"TCPIP0::{address}::{port}::SOCKET"
         else:
             resource_string = address
         self.resource = rm.open_resource(resource_string)  # type: pyvisa.resources.messagebased.MessageBasedResource
@@ -102,14 +102,13 @@ class VNA(object):
 
         self.resource.read_termination = "\n"  # most queries are terminated with a newline
         self.resource.write_termination = "\n"
-        if "instr" in resource_string.lower():
+        if "instr" in resource_string.lower() and interface.lower()=="gpib":
             self.resource.control_ren(2)
 
         # convenience pyvisa functions
         self.write = self.resource.write
         self.read = self.resource.read
         self.query = self.resource.query
-        self.query_values = self.resource.query_values
 
     def __enter__(self):
         """
@@ -327,7 +326,7 @@ class VNA(object):
         Parameters
         ----------
         freq : float or np.ndarray
-            a float or numpy.ndarray of floats of the frequency in f_units
+            a float or npy.ndarray of floats of the frequency in f_units
         f_unit : str
             the units of frequency (Hz, kHz, MHz, GHz, THz)
 

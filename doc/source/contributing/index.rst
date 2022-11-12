@@ -3,7 +3,7 @@
 
 
 .. image:: ../_static/scikit-rf-title-flat.svg
-    :target: scikitrf_
+    :target: ../_static/scikit-rf-title-flat.svg
     :height: 100
     :align: center
 
@@ -13,7 +13,7 @@ Contributing to scikit-rf
 
 Sponsoring the Project
 ----------------------
-It is possible to sponsor the maintainers and developpers of the scikit-rf package, using the GitHub Sponsor option ("Sponsor this project") visible in the `scikit-rf GitHub page <https://github.com/scikit-rf/scikit-rf>`_. 
+It is possible to sponsor the maintainers and developers of the scikit-rf package, using the GitHub Sponsor option ("Sponsor this project") visible in the `scikit-rf GitHub page <https://github.com/scikit-rf/scikit-rf>`_. 
 
 Sponsoring is one more way to contribute to open source: financially supporting the people who build and maintain it. Funding individuals helps them keep doing important work, expands opportunities to participate, and gives developers the recognition they deserve.
 
@@ -35,7 +35,7 @@ Basically, you will:
 3. Then send a `pull request (PR) <https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_ for your additions to be merged into the main scikit-rf repository. Your proposal will be reviewed or discussed and you may receive some comments which only aim to make your contribution as great as possible!
 
 
-.. tip:: When making your modification locally, you may need to work into a dedicated development environment in order to not interfere with the scikit-rf package that you have `already installed <https://scikit-rf.readthedocs.io/en/latest/tutorials/Installation.html>`_. You can use for example `anaconda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_. In order for the anaconda environment to find your local scikit-rf repo, use the convenient `conda-develop <https://docs.conda.io/projects/conda-build/en/latest/resources/commands/conda-develop.html>`_ command.
+.. tip:: When making your modification locally, you may need to work into a dedicated development environment in order to not interfere with the scikit-rf package that you have `already installed <../tutorials/Installation.html>`_. You can use for example `anaconda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_. In order for the anaconda environment to find your local scikit-rf repo, use the convenient `conda-develop <https://docs.conda.io/projects/conda-build/en/latest/resources/commands/conda-develop.html>`_ command.
 
 
 Basic git command-line workflow
@@ -89,26 +89,40 @@ Tests are vital for software reliability and maintainability. Writing tests ofte
 Before making a Pull Request, we advise contributors to run the tests locally to check if nothing has been broken following their modifications. In addition, we highly recommend to provide new tests when adding new features.
 
 The structure of the testing generally follows the conventions of `numpy/scipy <https://github.com/numpy/numpy/blob/master/doc/TESTS.rst.txt>`_. Test cases live in the module, or submodule, which they are testing, and are located in a directory called `tests`. So, the tests of the media module are located at `skrf/media/tests/`. 
-Tests can be run most easily with `nosetest <http://nose.readthedocs.org/en/latest/>`_. 
+Tests can be run most easily with `pytest <https://docs.pytest.org/en/latest/index.html>`_.
 
-You probably **don't** want to run the tests for the virtual instruments ``skrf.vi`` with the rest of the tests, so to prevent this, also install `nose-exclude <https://pypi.python.org/pypi/nose-exclude>`_ via pip (``pip install nose-exclude``) or conda. 
+You probably **don't** want to run the tests for the virtual instruments ``skrf.vi`` with the rest of the tests, so these tests are excluded by default.
 
 To run all the tests (except the virtual instruments)
 
 .. code-block:: sh
 
     cd scikit-rf
-    nosetests skrf -c nose.cfg
+    pytest 
 
-Or, to run test a single module or single test, 
+Or, to run tests for every installed python installation in an isolated environment. 
 
 .. code-block:: sh
 
-    nosetests media/
-    # ...
-    nosetests tests/test_network.py
-    # ...
-    
+    tox 
+
+
+If you want to test a single file or directory, you need to override the default pytest configuration (defined in the tox.ini file) and to indicate the test path. By example, to run only the tests associated to the Network object (-v to increase the verbosity):   
+
+.. code-block:: sh
+
+    pytest -v -c "" skrf/tests/test_network.py
+
+
+It is also possible to select some particular tests using the regex option (-k):
+
+.. code-block:: sh
+
+    pytest -v -c "" skrf/calibration/tests/test_calibration.py -k "test_error_ntwk"
+
+
+
+
 
 Contributing to the Documentation
 ----------------------------------

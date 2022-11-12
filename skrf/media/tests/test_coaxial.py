@@ -1,19 +1,20 @@
-# -*- coding: utf-8 -*-
 import unittest
 import os
+
+import pytest
 import skrf as rf
 from skrf.media import Coaxial
 import numpy as npy
 from numpy.testing import assert_almost_equal, assert_array_almost_equal, run_module_suite
 
 class MediaTestCase(unittest.TestCase):
-    '''
+    """
 
-    '''
+    """
     def setUp(self):
-        '''
+        """
 
-        '''
+        """
         self.files_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             'qucs_prj'
@@ -22,8 +23,8 @@ class MediaTestCase(unittest.TestCase):
 
 
     def test_line(self):
-        '''
-        '''
+        """
+        """
         fname = os.path.join(self.files_dir,\
                 'coaxial.s2p')
         qucs_ntwk = rf.Network(fname)
@@ -94,6 +95,22 @@ class MediaTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             coax = Coaxial.from_attenuation_VF(frequency=frequency2, att=att)
 
+    def test_R(self):
+        freq = rf.Frequency(0, 100, 2)
+
+        rho = 1e-7
+        dint = 0.44e-3
+        coax = Coaxial(freq, z0=50, Dint=dint, Dout=1.0e-3, sigma=1/rho)
+
+        dc_res = rho / (npy.pi * (dint/2)**2)
+
+        # Old R calculation valid only when skin depth is much smaller
+        # then inner conductor radius
+        with pytest.warns(RuntimeWarning, match="divide by zero"):
+            R_simple = coax.Rs/(2*npy.pi)*(1/coax.a + 1/coax.b)
+
+            self.assertTrue(abs(1 - coax.R[0]/dc_res) < 1e-2)
+            self.assertTrue(abs(1 - coax.R[1]/R_simple[1]) < 1e-2)
 
 if __name__ == "__main__":
     # Launch all tests

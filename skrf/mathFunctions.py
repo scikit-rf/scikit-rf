@@ -110,10 +110,10 @@ def complex_2_magnitude(z: NumberLike):
 
 
 def complex_2_db(z: NumberLike):
-    """
-    Return the magnitude in dB of a complex number (as :math:`20\\log_{10}(|z|)`)..
+    r"""
+    Return the magnitude in dB of a complex number (as :math:`20\log_{10}(|z|)`)..
 
-    The magnitude in dB is defined as :math:`20\\log_{10}(|z|)`
+    The magnitude in dB is defined as :math:`20\log_{10}(|z|)`
     where :math:`z` is a complex number.
 
     Parameters
@@ -129,10 +129,10 @@ def complex_2_db(z: NumberLike):
 
 
 def complex_2_db10(z: NumberLike):
-    """
-    Return the magnitude in dB of a complex number (as :math:`10\\log_{10}(|z|)`).
+    r"""
+    Return the magnitude in dB of a complex number (as :math:`10\log_{10}(|z|)`).
 
-    The magnitude in dB is defined as :math:`10\\log_{10}(|z|)`
+    The magnitude in dB is defined as :math:`10\log_{10}(|z|)`
     where :math:`z` is a complex number.
 
     Parameters
@@ -182,10 +182,10 @@ def complex_2_degree(z: NumberLike):
 
 
 def complex_2_quadrature(z: NumberLike):
-    """
+    r"""
     Take a complex number and returns quadrature, which is (length, arc-length from real axis)
 
-    Arc-length is calculated as :math:`|z| \\arg(z)`.
+    Arc-length is calculated as :math:`|z| \arg(z)`.
 
     Parameters
     ----------
@@ -546,7 +546,7 @@ def sqrt_known_sign(z_squared: NumberLike, z_approx: NumberLike):
 
 
 def find_correct_sign(z1: NumberLike, z2: NumberLike, z_approx: NumberLike):
-    """
+    r"""
     Create new vector from z1, z2 choosing elements with sign matching z_approx.
 
     This is used when you have to make a root choice on a complex number.
@@ -554,7 +554,7 @@ def find_correct_sign(z1: NumberLike, z2: NumberLike, z_approx: NumberLike):
 
     .. math::
 
-        z1,z2 = \\pm \\sqrt(z^2)
+        z1,z2 = \pm \sqrt(z^2)
 
 
     Parameters
@@ -602,14 +602,14 @@ def find_closest(z1: NumberLike, z2: NumberLike, z_approx: NumberLike):
     return npy.where(z1_dist<z2_dist,z1, z2)
 
 def sqrt_phase_unwrap(z: NumberLike):
-    """
+    r"""
     Take the square root of a complex number with unwrapped phase.
 
     This idea came from Lihan Chen.
 
     .. math::
 
-        \sqrt{|z|} \\exp( \\arg_{unwrap}(z) / 2 )
+        \sqrt{|z|} \exp( \arg_{unwrap}(z) / 2 )
 
 
     Parameters
@@ -628,7 +628,7 @@ def sqrt_phase_unwrap(z: NumberLike):
 
 # mathematical functions
 def dirac_delta(x: NumberLike):
-    """
+    r"""
     Calculate Dirac function.
 
     Dirac function :math:`\delta(x)` defined as :math:`\delta(x)=1` if x=0,
@@ -653,7 +653,7 @@ def dirac_delta(x: NumberLike):
 
 
 def neuman(x: NumberLike):
-    """
+    r"""
     Calculate Neumans number.
 
     It is defined as:
@@ -723,7 +723,7 @@ def inf_to_num(x: NumberLike):
 
 
 def cross_ratio(a: NumberLike, b: NumberLike, c: NumberLike, d:NumberLike):
-    """
+    r"""
     Calculate the cross ratio of a quadruple of distinct points on the real line.
 
 
@@ -732,7 +732,7 @@ def cross_ratio(a: NumberLike, b: NumberLike, c: NumberLike, d:NumberLike):
 
     .. math::
 
-        r = \\frac{ (a-b)(c-d) }{ (a-d)(c-b) }
+        r = \frac{ (a-b)(c-d) }{ (a-d)(c-b) }
 
 
 
@@ -895,9 +895,9 @@ def psd2TimeDomain(f: npy.ndarray, y: npy.ndarray, windowType: str = 'hamming'):
 
     Parameters
     ----------
-    f : list or numpy.ndarray
+    f : list or npy.ndarray
         frequency array
-    y : list of numpy.ndarray
+    y : list of npy.ndarray
         complex PSD array
     windowType: string
         windowing function, defaults to 'hamming''
@@ -942,7 +942,7 @@ def psd2TimeDomain(f: npy.ndarray, y: npy.ndarray, windowType: str = 'hamming'):
     return timeVector, signalVector
 
 
-def rational_interp(x: npy.ndarray, y: npy.ndarray, d: int = 4, epsilon: float = 1e-9, axis: int = 0) -> Callable:
+def rational_interp(x: npy.ndarray, y: npy.ndarray, d: int = 4, epsilon: float = 1e-9, axis: int = 0, assume_sorted: bool = False) -> Callable:
     """
     Interpolates function using rational polynomials of degree `d`.
 
@@ -957,11 +957,14 @@ def rational_interp(x: npy.ndarray, y: npy.ndarray, d: int = 4, epsilon: float =
     x : npy.ndarray
     y : npy.ndarray
     d : int, optional
-        order ot the polynomial, by default 4
+        order of the polynomial, by default 4
     epsilon : float, optional
         numerical tolerance, by default 1e-9
     axis : int, optional
         axis to operate on, by default 0
+    assume_sorted : bool, optional
+        If False, values of x can be in any order and they are sorted first.
+        If True, x has to be an array of monotonically increasing values.
 
     Returns
     -------
@@ -977,50 +980,60 @@ def rational_interp(x: npy.ndarray, y: npy.ndarray, d: int = 4, epsilon: float =
     ------------
     .. [#] M. S. Floater and K. Hormann, "Barycentric rational interpolation with no poles and high rates of approximation," Numer. Math., vol. 107, no. 2, pp. 315-331, Aug. 2007
     """
+    if axis != 0:
+        raise NotImplementedError("Axis other than 0 is not implemented")
+
+    if not assume_sorted:
+        sort_indices = npy.argsort(x, axis=axis)
+        x = x[sort_indices]
+        y = y[sort_indices]
+
     n = len(x)
+    if n <= d:
+        raise ValueError('Not enough x-axis points')
+
     w = npy.zeros(n)
+    # Scaling to give close to 1 weights
+    hd = (x[n//2] - x[n//2-1])**d
     for k in range(n):
         for i in range(max(0,k-d), min(k+1, n-d)):
-            p = 1.0
+            p = hd
             for j in range(i,min(n,i+d+1)):
                 if j == k:
                     continue
                 p *= 1/(x[k] - x[j])
-            w[k] += ((-1)**i)*p
+            if i % 2 == 1:
+                w[k] -= p
+            else:
+                w[k] += p
 
-    if axis != 0:
-        raise NotImplementedError("Axis other than 0 is not implemented")
+    # Add dimensions to match y shape
+    w_shape = [1]*len(y.shape)
+    w_shape[0] = -1
+    w = w.reshape(w_shape)
 
     def fx(xi):
-        def find_nearest(a, values, epsilon):
-            idx = npy.abs(npy.subtract.outer(a, values)).argmin(0)
-            return npy.abs(a[idx] - values) < epsilon
+        # The method will divide by zero if new x value is exactly existing x value.
+        # To avoid this we need to check for too close values and replace them with
+        # y value at that position.
+        idx = npy.searchsorted(x, xi)
+        idx[idx == len(x)] = len(x) - 1
+        nearest_idx = npy.where(npy.abs(x[idx] - xi) < epsilon)[0]
+        nearest_value = y[idx[nearest_idx]]
 
-        def find_nearest_value(a, values, y):
-            idx = npy.abs(npy.subtract.outer(a, values)).argmin(0)
-            return y[idx]
-
-        nearest = find_nearest(x, xi, epsilon)
-        nearest_value = find_nearest_value(x, xi, y)
-
-        #There needs to be a cleaner way
-        w_shape = [1]*len(y.shape)
-        w_shape[0] = -1
-        wr = w.reshape(*w_shape)
-
+        xi = xi.reshape(*w_shape)
         with npy.errstate(divide='ignore', invalid='ignore'):
-            #nans will be fixed later
-            v = npy.sum([y[i]*wr[i]/((xi - x[i]).reshape(*w_shape)) for i in range(n)], axis=0)\
-                /npy.sum([w[i]/((xi - x[i]).reshape(*w_shape)) for i in range(n)], axis=0)
+            assert axis == 0
+            v = sum(y[i]*w[i]/(xi - x[i]) for i in range(n))\
+                /sum(w[i]/(xi - x[i]) for i in range(n))
 
-        for e, i in enumerate(nearest):
-            if i:
-                v[e] = nearest_value[e]
+        # Fix divide by zero errors
+        for e, i in enumerate(nearest_idx):
+            v[i] = nearest_value[e]
 
         return v
 
     return fx
-
 
 def ifft(x: npy.ndarray) -> npy.ndarray:
     """
@@ -1094,7 +1107,7 @@ def is_unitary(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
 
     Parameters
     ----------
-    mat : npy.matrix
+    mat : npy.ndarray
         Matrix to test for unitariness
     tol : float
         Absolute tolerance. Defaults to :data:`ALMOST_ZERO`
@@ -1111,7 +1124,7 @@ def is_unitary(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     if not is_square(mat):
         return False
-    return npy.allclose(get_Hermitian_transpose(mat) * mat,
+    return npy.allclose(get_Hermitian_transpose(mat) @ mat,
                         npy.identity(mat.shape[0]), atol=tol)
 
 
@@ -1163,7 +1176,7 @@ def is_Hermitian(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
 
     Parameters
     ----------
-    mat : npy.matrix
+    mat : npy.ndarray
         Matrix to test for being Hermitian
     tol : float
         Absolute tolerance
@@ -1245,3 +1258,65 @@ def is_positive_semidefinite(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool
     except npy.linalg.LinAlgError:
         return False
     return npy.all(v > -tol)
+
+def rsolve(A: npy.ndarray, B: npy.ndarray) -> npy.ndarray:
+    r"""Solves x @ A = B.
+
+    Calls numpy.linalg.solve with transposed matrices.
+
+    Same as B @ npy.linalg.inv(A) but avoids calculating the inverse and
+    should be numerically slightly more accurate.
+
+    Input should have dimension of similar to (nfreqs, nports, nports).
+
+    Parameters
+    ----------
+    A : npy.ndarray
+    B : npy.ndarray
+
+    Returns
+    -------
+    x : npy.ndarray
+    """
+    return npy.transpose(npy.linalg.solve(npy.transpose(A, (0, 2, 1)).conj(),
+            npy.transpose(B, (0, 2, 1)).conj()), (0, 2, 1)).conj()
+
+def nudge_eig(mat: npy.ndarray, cond: float = 1e-9, min_eig: float = 1e-12) -> npy.ndarray:
+    r"""Nudge eigenvalues with absolute value smaller than
+    max(cond * max(eigenvalue), min_eig) to that value.
+    Can be used to avoid singularities in solving matrix equations.
+
+    Input should have dimension of similar to (nfreqs, nports, nports).
+
+    Parameters
+    ----------
+    mat : npy.ndarray
+        Matrices to nudge
+    cond : float, optional
+        Minimum eigenvalue ratio compared to the maximum eigenvalue
+    min_eig : float, optional
+        Minimum eigenvalue
+    Returns
+    -------
+    res : npy.ndarray
+        Nudged matrices
+    """
+    # Eigenvalues and vectors
+    eigw, eigv = npy.linalg.eig(mat)
+    # Max eigenvalue for each frequency
+    max_eig = npy.amax(npy.abs(eigw), axis=1)
+    # Calculate mask for positions where problematic eigenvalues are
+    mask = npy.logical_or(npy.abs(eigw) < cond * max_eig[:, None], npy.abs(eigw) < min_eig)
+    if not mask.any():
+        # Nothing to do. Return the original array.
+        return mat
+
+    mask_cond = cond * npy.repeat(max_eig[:, None], mat.shape[-1], axis=-1)[mask]
+    mask_min = min_eig * npy.ones(mask_cond.shape)
+    # Correct the eigenvalues
+    eigw[mask] = npy.maximum(mask_cond, mask_min)
+
+    # Now assemble the eigendecomposited matrices back
+    e = npy.zeros_like(mat)
+    npy.einsum('ijj->ij', e)[...] = eigw
+    return rsolve(eigv, eigv @ e)

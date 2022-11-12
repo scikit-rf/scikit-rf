@@ -1,5 +1,4 @@
-
-'''
+"""
 .. module:: skrf.media
 ========================================
 media (:mod:`skrf.media`)
@@ -34,7 +33,7 @@ Media base-class
 
 
 
-'''
+"""
 
 from .media import *
 from .distributedCircuit import DistributedCircuit

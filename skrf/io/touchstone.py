@@ -26,6 +26,8 @@ Functions related to reading/writing touchstones.
 """
 import re
 import os
+import typing
+import zipfile
 import numpy
 import numpy as npy
 
@@ -65,7 +67,7 @@ class Touchstone:
     The reference for writing this class is the draft of the
     Touchstone(R) File Format Specification Rev 2.0 [#]_ and
     Touchstone(R) File Format Specification Version 2.0 [#]_
-                                                         
+
     References
     ----------
     .. [#] https://ibis.org/interconnect_wip/touchstone_spec2_draft.pdf
@@ -74,7 +76,8 @@ class Touchstone:
 
     allowed_units = ['hz', 'khz', 'mhz', 'ghz']
 
-    def __init__(self, file):
+    def __init__(self, file: typing.Union[str, typing.TextIO],
+                 encoding: typing.Union[str, None] = None):
         """
         constructor
 
@@ -82,23 +85,34 @@ class Touchstone:
         ----------
         file : str or file-object
             touchstone file to load
+        encoding : str, optional
+            define the file encoding to use. Default value is None, 
+            meaning the encoding is guessed (ANSI, UTF-8 or Latin-1).
 
         Examples
         --------
         From filename
 
         >>> t = rf.Touchstone('network.s2p')
+        
+        File encoding can be specified to help parsing the special characters:
+        
+        >>> t = rf.Touchstone('network.s2p', encoding='ISO-8859-1')
 
         From file-object
 
         >>> file = open('network.s2p')
         >>> t = rf.Touchstone(file)
-        """
-        fid = get_fid(file)
-        filename = fid.name
-        ## file name of the touchstone data file
-        self.filename = filename
+        
+        From a io.StringIO object
+        
+        >>> link = 'https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/examples/basic_touchstone_plotting/horn antenna.s1p'
+        >>> r = requests.get(link)
+        >>> stringio = io.StringIO(r.text)
+        >>> stringio.name = 'horn.s1p'  # must be provided for the Touchstone parser
+        >>> horn = rf.Touchstone(stringio)
 
+        """
         ## file format version. 
         # Defined by default to 1.0, since version number can be omitted in V1.0 format
         self.version = '1.0'
@@ -106,7 +120,7 @@ class Touchstone:
         self.comments = None
         ## unit of the frequency (Hz, kHz, MHz, GHz)
         self.frequency_unit = None
-        ## number of frequency points 
+        ## number of frequency points
         self.frequency_nb = None
         ## s-parameter type (S,Y,Z,G,H)
         self.parameter = None
@@ -127,18 +141,53 @@ class Touchstone:
         ## Store port names in a list if they exist in the file
         self.port_names = None
 
-        self.comment_variables=None
-        self.load_file(fid)
+        self.comment_variables = None
 
-        self.gamma = []
-        self.z0 = []
+        # Does the input file have HFSS per frequency port impedances
+        self.has_hfss_port_impedances = False
 
-        if self.is_from_hfss:
-            self.get_gamma_z0_from_fid(fid)
+        # open the file depending on encoding
+        # Guessing the encoding by trial-and-error, unless specified encoding
+        try:
+            try:
+                if encoding is not None:
+                    fid = get_fid(file, encoding=encoding)
+                    self.filename = fid.name
+                    self.load_file(fid)
+                else:
+                    # Assume default encoding
+                    fid = get_fid(file)
+                    self.filename = fid.name
+                    self.load_file(fid)
+            except Exception as e:
+                fid.close()
+                raise e
 
-        fid.close()
+        except UnicodeDecodeError:
+            # Unicode fails -> Force Latin-1
+            fid = get_fid(file, encoding='ISO-8859-1')
+            self.filename = fid.name
+            self.load_file(fid)
 
-    def load_file(self, fid):
+        except ValueError:
+            # Assume Microsoft UTF-8 variant encoding with BOM
+            fid = get_fid(file, encoding='utf-8-sig')
+            self.filename = fid.name
+            self.load_file(fid)
+
+        except Exception as e:
+            raise ValueError(f'Something went wrong by the file opening: {e}')
+
+        finally:
+            self.gamma = []
+            self.z0 = []
+
+            if self.has_hfss_port_impedances:
+                self.get_gamma_z0_from_fid(fid)
+
+            fid.close()
+
+    def load_file(self, fid: typing.TextIO):
         """
         Load the touchstone file into the internal data structures.
 
@@ -148,12 +197,12 @@ class Touchstone:
 
         """
 
-        filename=self.filename
+        filename = self.filename
 
-        # Check the filename extension. 
+        # Check the filename extension.
         # Should be .sNp for Touchstone format V1.0, and .ts for V2
         extension = filename.split('.')[-1].lower()
-        
+
         if (extension[0] == 's') and (extension[-1] == 'p'): # sNp
             # check if N is a correct number
             try:
@@ -171,10 +220,10 @@ class Touchstone:
             if not line:
                 break
             # store comments if they precede the option line
-            line = line.split('!',1)
+            line = line.split('!', 1)
             if len(line) == 2:
                 if not self.parameter:
-                    if self.comments == None:
+                    if self.comments is None:
                         self.comments = ''
                     self.comments = self.comments + line[1]
                 elif line[1].startswith(' Port['):
@@ -184,13 +233,15 @@ class Touchstone:
                         garbage, index = port_string.strip().split('[', 1) #throws ValueError on unpack
                         index = int(index.rstrip(']')) #throws ValueError on not int-able
                         if index > self.rank or index <= 0:
-                            print("Port name {0} provided for port number {1} but that's out of range for a file with extension s{2}p".format(name, index, self.rank))
+                            print(f"Port name {name} provided for port number {index} but that's out of range for a file with extension s{self.rank}p")
                         else:
                             if self.port_names is None: #Initialize the array at the last minute
                                 self.port_names = [''] * self.rank
                             self.port_names[index - 1] = name
                     except ValueError as e:
-                        print("Error extracting port names from line: {0}".format(line))
+                        print(f"Error extracting port names from line: {line}")
+                elif line[1].strip().lower().startswith('port impedance'):
+                    self.has_hfss_port_impedances = True
 
             # remove the comment (if any) so rest of line can be processed.
             # touchstone files are case-insensitive
@@ -207,19 +258,19 @@ class Touchstone:
 
             # grab the [reference] string
             if line[:11] == '[reference]':
-                # The reference impedances can be span after the keyword  
+                # The reference impedances can be span after the keyword
                 # or on the following line
                 self.reference = [ float(r) for r in line.split()[2:] ]
                 if not self.reference:
                     line = fid.readline()
                     self.reference = [ float(r) for r in line.split()]
                 continue
-            
+
             # grab the [Number of Ports] string
             if line[:17] == '[number of ports]':
                 self.rank = int(line.split()[-1])
                 continue
-            
+
             # grab the [Number of Frequencies] string
             if line[:23] == '[number of frequencies]':
                 self.frequency_nb = line.split()[-1]
@@ -228,11 +279,11 @@ class Touchstone:
             # skip the [Network Data] keyword
             if line[:14] == '[network data]':
                 continue
-            
+
             # skip the [End] keyword
             if line[:5] == '[end]':
                 continue
-            
+
             # the option line
             if line[0] == '#':
                 toks = line[1:].strip().split()
@@ -241,7 +292,7 @@ class Touchstone:
                 self.frequency_unit = toks[0]
                 self.parameter = toks[1]
                 self.format = toks[2]
-                self.resistance = toks[4]
+                self.resistance = complex(toks[4])
 
                 if self.frequency_unit not in self.allowed_units:
                     if self.frequency_unit != 'sec':
@@ -290,12 +341,12 @@ class Touchstone:
 
     def get_comments(self, ignored_comments=['Created with skrf']):
         """
-        Returns the comments which appear anywhere in the file.  
-        
+        Returns the comments which appear anywhere in the file.
+
         Comment lines containing ignored comments are removed.
-        By default these are comments which contain special meaning withing 
+        By default these are comments which contain special meaning withing
         skrf and are not user comments.
-        
+
         Returns
         -------
         processed_comments : string
@@ -311,11 +362,11 @@ class Touchstone:
             if comment_line:
                 processed_comments = processed_comments + comment_line + '\n'
         return processed_comments
-    
+
     def get_comment_variables(self):
         """
         Convert hfss variable comments to a dict of vars.
-        
+
         Returns
         -------
         var_dict : dict (numbers, units)
@@ -333,13 +384,13 @@ class Touchstone:
             except:
                 pass
         return var_dict
-    
+
     def get_format(self, format="ri"):
         """
         Returns the file format string used for the given format.
-        
+
         This is useful to get some information.
-        
+
         Returns
         -------
         format : string
@@ -356,7 +407,7 @@ class Touchstone:
 
     def get_sparameter_names(self, format="ri"):
         """
-        Generate a list of column names for the s-parameter data. 
+        Generate a list of column names for the s-parameter data.
         The names are different for each format.
 
         Parameters
@@ -422,11 +473,11 @@ class Touchstone:
                 values[:,1::2] = numpy.real(v_complex)
                 values[:,2::2] = numpy.imag(v_complex)
             elif (self.format == 'ri') and (format == 'ma'):
-                v_complex = numpy.absolute(values[:,1::2] + 1j* self.sparameters[:,2::2])
+                v_complex = values[:,1::2] + 1j* values[:,2::2]
                 values[:,1::2] = numpy.absolute(v_complex)
                 values[:,2::2] = numpy.angle(v_complex)*(180/numpy.pi)
             elif (self.format == 'ri') and (format == 'db'):
-                v_complex = numpy.absolute(values[:,1::2] + 1j* self.sparameters[:,2::2])
+                v_complex = values[:,1::2] + 1j* values[:,2::2]
                 values[:,1::2] = 20*numpy.log10(numpy.absolute(v_complex))
                 values[:,2::2] = numpy.angle(v_complex)*(180/numpy.pi)
 
@@ -479,7 +530,7 @@ class Touchstone:
                     v_complex.reshape((-1, self.rank, self.rank)))
 
     def get_noise_names(self):
-        raise NotImplementedError('not yet implemented')        
+        raise NotImplementedError('not yet implemented')
 
 
     def get_noise_data(self):
@@ -489,30 +540,12 @@ class Touchstone:
         # noise_source_reflection = noise_values[:,2]
         # noise_source_phase = noise_values[:,3]
         # noise_normalized_resistance = noise_values[:,4]
-        raise NotImplementedError('not yet implemented') 
-        
-    def is_from_hfss(self):
-        """
-        Check if the Touchstone file has been produced by HFSS.
-        
-        Returns
-        -------
-        status : boolean
-            True if the Touchstone file has been produced by HFSS
-            False otherwise
-        """
-        if self.comments is None:
-            return False
-
-        if 'exported from hfss' in str.lower(self.comments):
-            return True
-
-        return False
+        raise NotImplementedError('not yet implemented')
 
     def get_gamma_z0_from_fid(self, fid):
         """
         Extracts Z0 and Gamma comments from fid.
-        
+
         Parameters
         ----------
         fid : file object
@@ -531,10 +564,10 @@ class Touchstone:
             line = line.replace('\t', ' ')
 
             # HFSS adds gamma and z0 data in .sNp files using comments.
-            # NB : each line(s) describe gamma and z0. 
+            # NB : each line(s) describe gamma and z0.
             #  But, depending on the HFSS version, either:
-            #  - up to 4 ports only. 
-                #  - up to 4 ports only. 
+            #  - up to 4 ports only.
+                #  - up to 4 ports only.
             #        for N > 4, gamma and z0 are given by additional lines
             #  - all gamma and z0 are given on a single line (since 2020R2)
             # In addition, some spurious '!' can remain in these lines
@@ -553,7 +586,7 @@ class Touchstone:
                         _line += fid.readline().replace('!', '').rstrip()
                     gamma.append(line2ComplexVector(_line))
 
-            
+
             if '! Port Impedance' in line:
                 _line = line.replace('! Port Impedance', '').rstrip()
                 nb_elem = len(_line.split())
@@ -567,22 +600,22 @@ class Touchstone:
 
         # If the file does not contain valid port impedance comments, set to default one
         if len(z0) == 0:
-            z0 = npy.complex(self.resistance)
+            z0 = npy.array(self.resistance, dtype=complex)
             #raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
 
-        self.gamma = npy.array(gamma) 
+        self.gamma = npy.array(gamma)
         self.z0 = npy.array(z0)
 
     def get_gamma_z0(self):
         """
         Extracts Z0 and Gamma comments from touchstone file (if provided).
-        
+
         Returns
         -------
-        gamma : complex numpy.ndarray
+        gamma : complex npy.ndarray
             complex  propagation constant
-        z0 : numpy.ndarray
-            complex port impedance    
+        z0 : npy.ndarray
+            complex port impedance
         """
         return self.gamma, self.z0
 
@@ -658,11 +691,11 @@ def hfss_touchstone_2_gamma_z0(filename):
 
     Returns
     -------
-    f : numpy.ndarray
+    f : npy.ndarray
         frequency vector (in Hz)
-    gamma : complex numpy.ndarray
+    gamma : complex npy.ndarray
         complex  propagation constant
-    z0 : numpy.ndarray
+    z0 : npy.ndarray
         complex port impedance
 
     Examples
@@ -682,8 +715,8 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
     ----------
     filename : string
         the HFSS-style Touchstone file
-    f_unit : string 
-        'hz', 'khz', 'mhz' or 'ghz', which is passed to the `f_unit` parameter 
+    f_unit : string
+        'hz', 'khz', 'mhz' or 'ghz', which is passed to the `f_unit` parameter
         to :class:`~skrf.frequency.Frequency` constructor
 
     Returns
@@ -705,7 +738,7 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
     freq = ntwk.frequency
     gamma = ntwk.gamma
     z0 = ntwk.z0
-    
+
 
     media_list = []
 
@@ -730,8 +763,8 @@ def hfss_touchstone_2_network(filename, f_unit='ghz'):
     ----------
     filename : string
         the HFSS-style Touchstone file
-    f_unit : string 
-        'hz', 'khz', 'mhz' or 'ghz', which is passed to the `f_unit` parameter 
+    f_unit : string
+        'hz', 'khz', 'mhz' or 'ghz', which is passed to the `f_unit` parameter
         to :class:`~skrf.frequency.Frequency` constructor
 
     Returns
@@ -751,7 +784,7 @@ def hfss_touchstone_2_network(filename, f_unit='ghz'):
     return(my_network)
 
 
-def read_zipped_touchstones(ziparchive, dir=""):
+def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> typing.Dict[str, Network]:
     """
     similar to skrf.io.read_all_networks, which works for directories but only for Touchstones in ziparchives.
 
@@ -765,6 +798,8 @@ def read_zipped_touchstones(ziparchive, dir=""):
     Returns
     -------
     dict
+        keys are touchstone filenames without extensions
+        values are network objects created from the touchstone files
     """
     networks = dict()
     for fname in ziparchive.namelist():  # type: str

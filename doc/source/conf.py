@@ -5,7 +5,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'scikit-rf'
-copyright = '2021, scikit-rf team'
+copyright = '2022, scikit-rf team'
 author = 'scikit-rf team'
 
 # -- General configuration ---------------------------------------------------
@@ -38,6 +38,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
+    'sphinx.ext.intersphinx',
     'nbsphinx',
     #'inheritance_diagram',
     'IPython.sphinxext.ipython_directive',
@@ -80,20 +81,6 @@ master_doc = 'index'
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "**/*.rst.rst", '**.ipynb_checkpoints']
-
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-#
-# The short X.Y version.
-'''
-setup_lines = open('../../setup.py').readlines()
-version = VERSION#'vUndefined'
-for l in setup_lines:
-    if l.startswith('VERSION'):
-        version = l.split("'")[1]
-        break
-'''
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -192,7 +179,8 @@ man_pages = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'http://docs.python.org/': None,
-    'http://docs.scipy.org/doc/numpy': None,
-    'http://docs.scipy.org/doc/scipy/reference': None,
-    }
+    'python': ('https://docs.python.org/3/objects.inv', None),
+    'numpy': ('https://numpy.org/doc/stable', None),
+    'pd': ('https://pandas.pydata.org/docs', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+}

@@ -5,13 +5,13 @@ from skrf.network import Network
 from skrf.constants import mil
 
 class MediaTestCase(unittest.TestCase):
-    '''
+    """
 
-    '''
+    """
     def setUp(self):
-        '''
+        """
 
-        '''
+        """
         self.files_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             'qucs_prj'
@@ -21,8 +21,8 @@ class MediaTestCase(unittest.TestCase):
 
     @unittest.skip
     def test_line(self):
-        '''
-        '''
+        """
+        """
         fname = os.path.join(self.files_dir,\
                 'rectangularWaveguideWR10,200mil.s2p')
 
@@ -37,11 +37,11 @@ class MediaTestCase(unittest.TestCase):
 
 
     def test_conductor_loss(self):
-        '''
+        """
         This only compares the magnitude of the generated line, because
         the loss approximation doesnt account for reactance of field on
         sidewalls.
-        '''
+        """
         ntwk = Network(os.path.join(self.pwd, 'wr1p5_1in_swg_Al_0rough.s2p'))
         wg = RectangularWaveguide(
             frequency = ntwk.frequency,
@@ -53,11 +53,11 @@ class MediaTestCase(unittest.TestCase):
             max(abs(wg.line(1,'in').s_mag[:,1,0] - ntwk.s_mag[:,1,0]))<1e-3 )
 
     def test_roughness(self):
-        '''
+        """
         This only compares the magnitude of the generated line, because
         the loss approximation doesnt account for reactance of field on
         sidewalls.
-        '''
+        """
         ntwk = Network(os.path.join(self.pwd, 'wr1p5_1in_swg_Al_100nm_rough.s2p'))
         wg = RectangularWaveguide(
             ntwk.frequency,

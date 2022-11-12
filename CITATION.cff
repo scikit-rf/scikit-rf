@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+type: software
+license: MIT
+repository-code: 'https://github.com/scikit-rf/scikit-rf'
+message: "If you use this software, please cite it as below."
+authors:
+  - orcid: 'https://orcid.org/0000-0002-8599-5873'
+    given-names: Alexander
+    family-names: Arsenovic
+    affiliation: '810 Labs LLC, Stanardsville, Virginia, 22973, USA'
+  - orcid: 'https://orcid.org/0000-0002-1073-6383'
+    given-names: Julien
+    family-names: Hillairet
+    affiliation: 'CEA, IRFM, F-13108 St-Paul-Lez-Durance, France'
+  - orcid: 'https://orcid.org/0000-0001-8898-6967'
+    given-names: Jackson
+    family-names: Anderson
+    affiliation: 'Purdue University, West Lafayette, Indiana, 47907, USA' 
+  - orcid: 'https://orcid.org/0000-0003-1841-9769'
+    given-names: Henrik
+    family-names: Forstén
+    affiliation: 'VTT Technical Research Centre of Finland, Espoo, 02044, Finland'
+  - orcid: 'https://orcid.org/0000-0002-3977-6813'
+    given-names: Vincent
+    family-names: Rieß
+    affiliation: 'AES GmbH, Bremen, 28199, Germany'
+  - given-names: Michael
+    family-names: Eller
+    affiliation: 'University of Virginia, Charlottesville, Virginia, 22904, USA'
+  - given-names: Noah
+    family-names: Sauber
+    affiliation: 'University of Virginia, Charlottesville, Virginia, 22904, USA'
+  - given-names: Robert
+    family-names: Weikle
+    affiliation: 'University of Virginia, Charlottesville, Virginia, 22904, USA'
+  - given-names: William
+    family-names: Barnhart
+    affiliation: 'HawkEye 360, Herndon, VA, 20170, USA'
+  - given-names: Franz
+    family-names: Forstmayr
+    affiliation: 'Rosenberger Hochfrequenztechnik GmbH & Co. KG, Fridolfing, 83413, Germany'
+title: "scikit-rf: An Open Source Python Package for Microwave Network Creation, Analysis, and Calibration"
+doi: 10.1109/MMM.2021.3117139
+date-released: 2021-12-01

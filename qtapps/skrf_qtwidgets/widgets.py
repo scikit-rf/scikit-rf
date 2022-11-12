@@ -54,7 +54,7 @@ def save_multiple_networks(ntwk_list):
     overwrite = False
     for ntwk in ntwk_list:
         if isinstance(ntwk, skrf.Network):
-            fname = os.path.join(dirname, ntwk.name) + ".s{:d}p".format(ntwk.s.shape[1])
+            fname = os.path.join(dirname, ntwk.name) + f".s{ntwk.s.shape[1]:d}p"
             if os.path.isfile(fname):
                 if not remember:
                     msg = "The file:\n" + fname + "\nalready exists.\n\nDo you want to overwrite the file?"
@@ -73,7 +73,7 @@ def save_multiple_networks(ntwk_list):
                         raise ValueError("did not recognize dialog choice")
 
                 if not overwrite:
-                    filter = "Touchstone file (*.s{:d}p)".format(ntwk.s.shape[1])
+                    filter = f"Touchstone file (*.s{ntwk.s.shape[1]:d}p)"
                     fname = qt.getSaveFileName_Global("save network file", filter)
 
             ntwk.write_touchstone(fname)
@@ -81,7 +81,7 @@ def save_multiple_networks(ntwk_list):
 
 class OverwriteFilesQuery(QtWidgets.QDialog):
     def __init__(self, title="", msg="", parent=None):
-        super(OverwriteFilesQuery, self).__init__(parent)
+        super().__init__(parent)
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.textBrowser = QtWidgets.QTextBrowser(self)
         self.verticalLayout.addWidget(self.textBrowser)
@@ -126,7 +126,7 @@ class OverwriteFilesQuery(QtWidgets.QDialog):
 
 class NetworkParameterEditor(QtWidgets.QDialog):
     def __init__(self, item, item_parameters, window_title="Edit Parameters", parent=None):
-        super(NetworkParameterEditor, self).__init__(parent)
+        super().__init__(parent)
         self.setWindowTitle(window_title)
         vlay = QtWidgets.QVBoxLayout(self)
         form = QtWidgets.QFormLayout(None)
@@ -179,7 +179,7 @@ class NetworkParameterEditor(QtWidgets.QDialog):
 
 class SwitchTermsDialog(QtWidgets.QDialog):
     def __init__(self, analyzer=None, parent=None):
-        super(SwitchTermsDialog, self).__init__(parent)
+        super().__init__(parent)
 
         self.setWindowTitle("Measure Switch Terms")
 
@@ -277,7 +277,7 @@ class VnaControllerDialog(QtWidgets.QDialog):
     """
 
     def __init__(self, vna, parent=None):
-        super(VnaControllerDialog, self).__init__(parent)
+        super().__init__(parent)
         self.controller = VnaController(vna, self)
         self.close = QtWidgets.QPushButton("Close")
         self.close.clicked.connect(self.close)
@@ -305,7 +305,7 @@ class VnaController(QtWidgets.QWidget):
         parent: QtWidgets.QWidget
             parent widget
         """
-        super(VnaController, self).__init__(parent)
+        super().__init__(parent)
 
         self.vna = vna
 
@@ -361,7 +361,7 @@ class VnaController(QtWidgets.QWidget):
 
     def set_start_frequency(self, value):
         self._start_frequency = float(value)
-        self.lineEdit_startFrequency.setText("{:g}".format(self._start_frequency))
+        self.lineEdit_startFrequency.setText(f"{self._start_frequency:g}")
 
     def get_start_frequency(self):
         self._start_frequency = float(self.lineEdit_startFrequency.text())
@@ -371,7 +371,7 @@ class VnaController(QtWidgets.QWidget):
 
     def set_stop_frequency(self, value):
         self._stop_frequency = float(value)
-        self.lineEdit_stopFrequency.setText("{:g}".format(self._stop_frequency))
+        self.lineEdit_stopFrequency.setText(f"{self._stop_frequency:g}")
 
     def get_stop_frequency(self):
         self._stop_frequency = float(self.lineEdit_stopFrequency.text())
@@ -389,7 +389,7 @@ class VnaSelector(QtWidgets.QWidget):
     enableStateToggled = QtCore.Signal(bool)
 
     def __init__(self, parent=None):
-        super(VnaSelector, self).__init__(parent)
+        super().__init__(parent)
 
         # --- Setup UI Elements --- #
         self.verticalLayout = QtWidgets.QVBoxLayout(self)  # primary widget layout
@@ -457,7 +457,7 @@ class VnaSelector(QtWidgets.QWidget):
         self.btn_controlVna.setEnabled(False)
 
     def setEnabled(self, enabled):
-        super(VnaSelector, self).setEnabled(enabled)
+        super().setEnabled(enabled)
         self.enableStateToggled.emit(enabled)
 
     def update_selected_analyzer(self):
@@ -521,7 +521,7 @@ class VnaSelector(QtWidgets.QWidget):
 
 class ReflectDialog(QtWidgets.QDialog):
     def __init__(self, analyzer=None, parent=None, **kwargs):
-        super(ReflectDialog, self).__init__(parent)
+        super().__init__(parent)
 
         self.setWindowTitle("Measure Reflect Standards")
 
@@ -650,7 +650,7 @@ class MeasurementDialog(QtWidgets.QDialog):
     measurements_available = QtCore.Signal(object)
 
     def __init__(self, nwa, parent=None):
-        super(MeasurementDialog, self).__init__(parent)
+        super().__init__(parent)
         self.setWindowTitle("MeasurementDialog")
         self.horizontalLayout_main = QtWidgets.QHBoxLayout(self)
 

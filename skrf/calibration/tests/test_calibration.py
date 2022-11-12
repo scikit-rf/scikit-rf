@@ -2,11 +2,12 @@ import unittest
 import os
 import warnings
 import pickle
+import pytest
+
 import skrf as rf
 import numpy as npy
 from numpy.random  import rand, uniform
-from nose.tools import nottest
-from nose.plugins.skip import SkipTest
+import pytest
 
 from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate, determine_line, determine_reflect, NISTMultilineTRL
 
@@ -70,11 +71,11 @@ class DetermineTest(unittest.TestCase):
         [ self.assertEqual(k,l) for k,l in zip(self.r, r_found)]
 
 
-class CalibrationTest(object):
-    '''
+class CalibrationTest:
+    """
     This is the generic Calibration test case which all Calibration 
     Subclasses should be able to pass. They must implement
-    '''
+    """
 
     def test_accuracy_of_dut_correction(self):
         a = self.wg.random(n_ports=self.n_ports, name = 'actual')
@@ -119,11 +120,11 @@ class CalibrationTest(object):
 
 
 class OnePortTest(unittest.TestCase, CalibrationTest):
-    '''
+    """
     One-port calibration test.
 
 
-    '''
+    """
     def setUp(self):
         self.n_ports = 1
         self.wg = WG
@@ -171,7 +172,6 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
 
 class SDDLTest(OnePortTest):
     def setUp(self):
-        #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
         #Exact only with a lossless waveguide
         self.wg = WG_lossless
@@ -228,15 +228,17 @@ class SDDLTest(OnePortTest):
             )
         self.cal.run()
     
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs(self):
-        raise SkipTest('not applicable ')
+        pass
+
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs_ntwks(self):
-        raise SkipTest('not applicable ')
+        pass
 
 
 class SDDLWeikle(OnePortTest):
     def setUp(self):
-        #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
         #Exact only with a lossless waveguide
         self.wg = WG_lossless
@@ -265,18 +267,21 @@ class SDDLWeikle(OnePortTest):
             measured = measured,
             )
     
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs(self):
-        raise SkipTest('not applicable ')
+        pass
+
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs_ntwks(self):
-        raise SkipTest('not applicable ')
+        pass
 
 
 class SDDMTest(OnePortTest):
-    '''
+    """
     This is a specific test of SDDL to verify it works when the load is 
     a matched load. This test has been used to show that the SDDLWeikle 
     variant fails, with a perfect matched load. 
-    '''
+    """
     def setUp(self):
         
         self.n_ports = 1
@@ -306,17 +311,19 @@ class SDDMTest(OnePortTest):
             measured = measured,
             )
     
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs(self):
-        raise SkipTest('not applicable ')
+        pass
     
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs_ntwks(self):
-        raise SkipTest('not applicable ')
+        pass
 
 
-@SkipTest
+@pytest.mark.skip()
 class PHNTest(OnePortTest):
-    '''
-    '''
+    """
+    """
     def setUp(self):
         
         self.n_ports = 1
@@ -357,10 +364,13 @@ class PHNTest(OnePortTest):
         self.assertEqual(self.actuals[0], self.cal.ideals[0])
         self.assertEqual(self.actuals[1], self.cal.ideals[1])
             
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs(self):
-        raise SkipTest('not applicable')
+        pass
+
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs_ntwks(self):
-        raise SkipTest('not applicable ')
+        pass
 
 
 class EightTermTest(unittest.TestCase, CalibrationTest):
@@ -383,9 +393,9 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             wg.match(nports=2, name='load'),
             wg.thru(name='thru'),
             ]
-            
+
         measured = [self.measure(k) for k in ideals]
-        
+
         self.cal = rf.EightTerm(
             ideals = ideals,
             measured = measured,
@@ -394,9 +404,9 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             )
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
         
     def measure(self,ntwk):
@@ -465,6 +475,16 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
     def test_verify_12term(self):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
 
+    def test_coefs_8term(self):
+        self.assertEqual(self.cal.coefs_8term, self.cal.coefs)
+
+    def test_coefs_12term(self):
+        self.assertEqual(self.cal.coefs_12term, rf.convert_8term_2_12term(self.cal.coefs))
+
+    def test_input_not_modified(self):
+        dut_before = self.X.copy()
+        self.cal.apply_cal(self.X)
+        self.assertEqual(dut_before, self.X)
 
 class TRLTest(EightTermTest):
     def setUp(self):
@@ -723,9 +743,9 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
             self.assertTrue(all(npy.abs(self.cal.coefs[k] - self.cal_shift.coefs[k]) < 1e-9))
 
 
+@pytest.mark.skip()
 class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
-        raise SkipTest()
         self.n_ports = 2
         self.wg = WG
         wg= self.wg
@@ -784,7 +804,7 @@ class TREightTermTest(unittest.TestCase, CalibrationTest):
 
 
 class TwelveTermTest(unittest.TestCase, CalibrationTest):
-    '''
+    """
     This test verifies the accuracy of the SOLT calibration. Generating 
     measured networks requires different error networks for forward and 
     reverse excitation states, these are described as follows
@@ -798,7 +818,7 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         Mr = Xr ** S ** Yr
     
     
-    '''
+    """
     def setUp(self):
         self.n_ports = 2
         self.wg = WG
@@ -918,17 +938,23 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         c = self.cal.apply_cal(m)
                
         self.assertEqual(a,c)
+
+    def test_coefs_8term(self):
+        self.assertEqual(self.cal.coefs_8term, rf.convert_12term_2_8term(self.cal.coefs))
+
+    def test_coefs_12term(self):
+        self.assertEqual(self.cal.coefs_12term, self.cal.coefs)
     
 
 class TwelveTermSloppyInitTest(TwelveTermTest):
-    '''
+    """
     Test the TwelveTerm.__init__'s ability to 
     1) determine the number of thrus (n_thrus) heuristically
     2) put the standards in correct order if they use sloppy_input
     
     It must be a entirely separate test because we want to ensure it 
     creates an accurate calibration.
-    '''
+    """
     @suppress_warning_decorator("dictionary passed, sloppy_input")
     @suppress_warning_decorator("n_thrus is None")
     def setUp(self):
@@ -1020,8 +1046,7 @@ class TwoPortOnePathTest(TwelveTermTest):
         #No leakage
         self.If = wg.match(n_ports =1, name='If')
         self.Ir = wg.match(n_ports =1, name='Ir')
-        
-        
+
         ideals = [
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
@@ -1029,8 +1054,7 @@ class TwoPortOnePathTest(TwelveTermTest):
             wg.random(2,name='rand1'),
             wg.random(2,name='rand2'),
             ]
-        
-    
+
         measured = [ self.measure(k) for k in ideals]
         self.cal = TwoPortOnePath(
             ideals = ideals,
@@ -1040,10 +1064,10 @@ class TwoPortOnePathTest(TwelveTermTest):
             )
 
     def measure(self,ntwk):
-        r= self.wg.random(2)
+        r = self.wg.match(2)
         m = ntwk.copy()
         mf = self.Xf**ntwk**self.Yf
-        
+
         m.s[:,1,0] = mf.s[:,1,0]
         m.s[:,0,0] = mf.s[:,0,0]
         m.s[:,1,1] = r.s[:,1,1]
@@ -1055,45 +1079,51 @@ class TwoPortOnePathTest(TwelveTermTest):
         f = self.measure(a)
         r = self.measure(a.flipped())
         c = self.cal.apply_cal((f,r))
-        c.name = 'corrected'   
+        c.name = 'corrected'
         self.assertEqual(c,a)
-        
+
     def test_embed_then_apply_cal(self):
         a = self.wg.random(n_ports=self.n_ports)
         f = self.cal.embed(a)
         r = self.cal.embed(a.flipped())
         self.assertEqual(self.cal.apply_cal((f,r)),a)
-        
+
+    @pytest.mark.skip(reason='measurement procedure is different so this test doesnt apply')
     def test_embed_equal_measure(self):
-        # measurement procedure is different so this test doesnt apply
-        raise SkipTest()
+        pass
 
     @suppress_warning_decorator("n_thrus is None")
     def test_from_coefs(self):
         cal_from_coefs = self.cal.from_coefs(self.cal.frequency, self.cal.coefs)
         ntwk = self.wg.random(n_ports=self.n_ports)
-    
+
     @suppress_warning_decorator("n_thrus is None")
     def test_from_coefs_ntwks(self):
         cal_from_coefs = self.cal.from_coefs_ntwks(self.cal.coefs_ntwks)
 
+    @pytest.mark.skip()
     def test_reverse_source_match_accuracy(self):
-        raise SkipTest()   
-    
-    def test_reverse_directivity_accuracy(self):
-        raise SkipTest()      
-    
-    def test_reverse_load_match_accuracy(self):
-        raise SkipTest()  
-    
-    def test_reverse_reflection_tracking_accuracy(self):
-        raise SkipTest()  
-    
-    def test_reverse_transmission_tracking_accuracy(self):
-        raise SkipTest()  
+        pass
 
+    @pytest.mark.skip()
+    def test_reverse_directivity_accuracy(self):
+        pass
+
+    @pytest.mark.skip()
+    def test_reverse_load_match_accuracy(self):
+        pass
+
+    @pytest.mark.skip()
+    def test_reverse_reflection_tracking_accuracy(self):
+        pass
+
+    @pytest.mark.skip()
+    def test_reverse_transmission_tracking_accuracy(self):
+        pass
+
+    @pytest.mark.skip()
     def test_convert_12term_2_8term_correction_accuracy(self):
-        raise SkipTest()
+        pass
 
 
 class UnknownThruTest(EightTermTest):
@@ -1202,7 +1232,10 @@ class LRRMTest(EightTermTest):
         o_i = wg.load(1, nports=1, name='open')
         s_i = wg.short(nports=1, name='short')
         m_i = wg.load(0.1, nports=1, name='load')
-        thru = wg.line(d=50, unit='um', name='thru')
+        with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
+            thru = wg.line(d=50, z0=75, unit='um', name='thru', embed=True)
+        # Make sure calibration works with non-symmetric thru
+        thru.s[:,1,1] += 0.02 + 0.05j
 
         # Actual reflects with parasitics
         s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
@@ -1373,12 +1406,12 @@ class MRCTest(EightTermTest):
 
 
 class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
-    '''
+    """
     This test verifies the accuracy of the SOLT calibration, when used 
     on an error-box (8-term) model.
     
     
-    '''
+    """
     @suppress_warning_decorator("n_thrus is None")
     def setUp(self):
         self.n_ports = 2
@@ -1415,9 +1448,9 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
         self.coefs= coefs
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
 
     def measure(self,ntwk):
@@ -1518,9 +1551,9 @@ class SixteenTermTest(unittest.TestCase, CalibrationTest):
             )
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
 
     def measure(self,ntwk):
@@ -1694,9 +1727,9 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
             )
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
 
     def measure(self,ntwk):

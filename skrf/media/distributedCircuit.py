@@ -1,5 +1,3 @@
-
-
 """
 distributedCircuit (:mod:`skrf.media.distributedCircuit`)
 ============================================================
@@ -23,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class DistributedCircuit(Media):
-    """
+    r"""
     A transmission line mode defined in terms of distributed impedance and admittance values.
 
     Parameters
@@ -71,8 +69,8 @@ class DistributedCircuit(Media):
     ===================================  ==================================================  ==============================
     Quantity                             Symbol                                              Property
     ===================================  ==================================================  ==============================
-    Distributed Impedance                :math:`Z^{'} = R^{'} + j \\omega L^{'}`              :attr:`Z`
-    Distributed Admittance               :math:`Y^{'} = G^{'} + j \\omega C^{'}`              :attr:`Y`
+    Distributed Impedance                :math:`Z^{'} = R^{'} + j \omega L^{'}`              :attr:`Z`
+    Distributed Admittance               :math:`Y^{'} = G^{'} + j \omega C^{'}`              :attr:`Y`
     ===================================  ==================================================  ==============================
 
 
@@ -81,8 +79,8 @@ class DistributedCircuit(Media):
     ===================================  ============================================  ==============================
     Quantity                             Symbol                                        Method
     ===================================  ============================================  ==============================
-    Characteristic Impedance             :math:`Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}`     :func:`Z0`
-    Propagation Constant                 :math:`\\gamma = \\sqrt{ Z^{'}  Y^{'}}`         :func:`gamma`
+    Characteristic Impedance             :math:`Z_0 = \sqrt{ \frac{Z^{'}}{Y^{'}}}`     :func:`Z0`
+    Propagation Constant                 :math:`\gamma = \sqrt{ Z^{'}  Y^{'}}`         :func:`gamma`
     ===================================  ============================================  ==============================
 
     Given the following definitions, the components of propagation
@@ -90,9 +88,9 @@ class DistributedCircuit(Media):
 
     .. math::
 
-        +\\Re e\\{\\gamma\\} = \\text{attenuation}
+        +\Re e\{\gamma\} = \text{attenuation}
 
-        -\\Im m\\{\\gamma\\} = \\text{forward propagation}
+        -\Im m\{\gamma\} = \text{forward propagation}
 
 
     See Also
@@ -106,7 +104,7 @@ class DistributedCircuit(Media):
                  C: NumberLike = 90e-12, L: NumberLike = 280e-9,
                  R: NumberLike = 0, G: NumberLike = 0,
                 *args, **kwargs):
-        super(DistributedCircuit, self).__init__(frequency=frequency,
+        super().__init__(frequency=frequency,
                                                  z0=z0)
         self.C, self.L, self.R, self.G = C,L,R,G
 
@@ -180,55 +178,63 @@ class DistributedCircuit(Media):
 
     @property
     def Z(self) -> NumberLike:
-        """
+        r"""
         Distributed Impedance, :math:`Z^{'}`.
 
         Defined as
 
         .. math::
 
-                Z^{'} = R^{'} + j \\omega L^{'}
+                Z^{'} = R^{'} + j \omega L^{'}
 
         Returns
         -------
-        Z : numpy.ndarray
+        Z : npy.ndarray
             Distributed impedance in units of ohm/m
         """
         w  = self.frequency.w
-        return self.R + 1j*w*self.L
+        Z = self.R + 1j*w*self.L
+        # Avoid divide by zero.
+        # Needs to be imaginary to avoid all divide by zeros in the media class.
+        Z[Z.imag == 0] += 1j*1e-12
+        return Z
 
     @property
     def Y(self) -> NumberLike:
-        """
+        r"""
         Distributed Admittance, :math:`Y^{'}`.
 
         Defined as
 
         .. math::
 
-                Y^{'} = G^{'} + j \\omega C^{'}
+                Y^{'} = G^{'} + j \omega C^{'}
 
         Returns
         -------
-        Y : numpy.ndarray
+        Y : npy.ndarray
             Distributed Admittance in units of S/m
         """
 
         w  = self.frequency.w
-        return self.G + 1j*w*self.C
+        Y = self.G + 1j*w*self.C
+        # Avoid divide by zero.
+        # Needs to be imaginary to avoid all divide by zeros in the media class.
+        Y[Y.imag == 0] += 1j*1e-12
+        return Y
 
     @property
     def Z0(self) -> NumberLike:
-        """
+        r"""
         Characteristic Impedance, :math:`Z0`
 
         .. math::
 
-                Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}
+                Z_0 = \sqrt{ \frac{Z^{'}}{Y^{'}}}
 
         Returns
         -------
-        Z0 : numpy.ndarray
+        Z0 : npy.ndarray
             Characteristic Impedance in units of ohms
         """
 
@@ -236,18 +242,18 @@ class DistributedCircuit(Media):
 
     @property
     def gamma(self) -> NumberLike:
-        """
-        Propagation Constant, :math:`\\gamma`.
+        r"""
+        Propagation Constant, :math:`\gamma`.
 
         Defined as,
 
         .. math::
 
-                \\gamma =  \\sqrt{ Z^{'}  Y^{'}}
+                \gamma =  \sqrt{ Z^{'}  Y^{'}}
 
         Returns
         -------
-        gamma : numpy.ndarray
+        gamma : npy.ndarray
                 Propagation Constant,
 
         Note
