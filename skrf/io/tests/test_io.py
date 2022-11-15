@@ -25,7 +25,7 @@ class IOTestCase(unittest.TestCase):
         self.ntwk_comments_file = os.path.join(self.test_dir, 'comments.s3p')
         self.test_files = [os.path.join(self.test_dir, test_file) for test_file in ['ntwk1.s2p', 'ntwk2.s2p']]
         self.embeding_network= rf.Network(os.path.join(self.test_dir, 'embedingNetwork.s2p'))
-        self.freq = rf.F(75,110,101)
+        self.freq = rf.F(75, 110, 101, unit='GHz')
 
     def read_write(self,obj):
         """

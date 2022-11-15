@@ -22,8 +22,8 @@ from skrf.media import DistributedCircuit
 global NPTS  
 NPTS = 1
 
-WG_lossless =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil, z0=50)
-WG =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil, z0=50, rho='gold')
+WG_lossless = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*rf.mil, z0=50)
+WG = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*rf.mil, z0=50, rho='gold')
 
 
 class DetermineTest(unittest.TestCase):
@@ -203,7 +203,7 @@ class SDDLTest(OnePortTest):
     
     def test_init_with_nones(self):
         wg=self.wg
-        wg.frequency = rf.F.from_f([100])
+        wg.frequency = rf.F.from_f([100], unit='GHz')
         
         self.E = wg.random(n_ports =2, name = 'E')
         
@@ -1416,7 +1416,7 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.n_ports = 2
         wg= rf.wr10
-        wg.frequency = rf.F.from_f([100])
+        wg.frequency = rf.F.from_f([100], unit='GHz')
         self.wg = wg
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')

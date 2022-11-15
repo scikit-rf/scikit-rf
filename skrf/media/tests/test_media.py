@@ -17,7 +17,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
             'qucs_prj'
             )
         self.dummy_media = DefinedGammaZ0(
-            frequency = Frequency(1,100,21,'ghz'),
+            frequency = Frequency(1, 100, 21, unit='ghz'),
             gamma=1j,
             z0 = 50 ,
             )
@@ -42,7 +42,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'tee'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.tee(name = name)
         self.assertEqual(name, skrf_ntwk.name)
         
@@ -52,7 +52,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'splitter'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.splitter(3, name = name)
         self.assertEqual(name, skrf_ntwk.name)
         
@@ -62,7 +62,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'thru'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.thru(name = name)
         self.assertEqual(name, skrf_ntwk.name)
         
@@ -72,7 +72,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'line'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.line(90, 'deg', name = name)
         self.assertEqual(name, skrf_ntwk.name)
         
@@ -82,7 +82,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'delay_load'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.delay_load(1j, 90, 'deg',
                                                       name = name)
         self.assertEqual(name, skrf_ntwk.name)
@@ -93,7 +93,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'shunt_delay_load'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.shunt_delay_load(1j, 90, 'deg',
                                                       name = name)
         self.assertEqual(name, skrf_ntwk.name)
@@ -104,7 +104,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'delay_open'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.delay_open(90, 'deg', name = name)
         self.assertEqual(name, skrf_ntwk.name)
         
@@ -114,7 +114,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'shunt_delay_open'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.shunt_delay_open(90, 'deg', name = name)
         self.assertEqual(name, skrf_ntwk.name)
         
@@ -124,7 +124,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'delay_short'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.delay_short(90, 'deg', name = name)
         self.assertEqual(name, skrf_ntwk.name)
         
@@ -134,7 +134,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'shunt_delay_short'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.shunt_delay_short(90, 'deg', name = name)
         self.assertEqual(name, skrf_ntwk.name)
 
@@ -170,7 +170,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'shunt_capacitor,p01pF'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.capacitor(.01e-12, name = name)
         self.assertEqual(name, skrf_ntwk.name)
 
@@ -194,7 +194,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'shunt_inductor,p1nH'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.inductor(.1e-9, name = name)
         self.assertEqual(name, skrf_ntwk.name)
         
@@ -204,7 +204,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'attenuator,-10dB'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.attenuator(-10, d = 90, unit = 'deg',
                                                 name = name)
         self.assertEqual(name, skrf_ntwk.name)
@@ -215,7 +215,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'lossless_mismatch,-10dB'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.lossless_mismatch(-10, name = name)
         self.assertEqual(name, skrf_ntwk.name)
     
@@ -225,7 +225,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'isolator'
-        self.dummy_media.frequency = Frequency(1, 1, 1, 'GHz')
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.isolator(name = name)
         self.assertEqual(name, skrf_ntwk.name)
 
@@ -234,7 +234,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         """
         test ability to create a Media from scalar quantities for gamma/z0
         """
-        freq = Frequency(1,10,101)
+        freq = Frequency(1, 10, 101, unit='GHz')
         a = DefinedGammaZ0(freq, gamma=1j, z0=50)
         self.assertEqual(len(freq), len(a))
         self.assertEqual(len(freq), len(a.gamma))
@@ -245,7 +245,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         """
         test ability to create a Media from vector quantities for gamma/z0
         """
-        freq = Frequency(1,10,101)
+        freq = Frequency(1, 10, 101, unit='GHz')
         a = DefinedGammaZ0(freq,
                            gamma = 1j*npy.ones(len(freq)) ,
                            z0 =  50*npy.ones(len(freq)),
@@ -276,7 +276,7 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.dummy_media = DefinedGammaZ0(
-            frequency=Frequency(1, 100, 21, 'GHz'),
+            frequency=Frequency(1, 100, 21, unit='GHz'),
             gamma=1j,
             z0=50,
             )
@@ -379,7 +379,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
     """
     def setUp(self):
         self.dummy_media = DefinedGammaZ0(
-            frequency=Frequency(1, 100, 21,'GHz'),
+            frequency=Frequency(1, 100, 21, unit='GHz'),
             gamma=1j,
             z0=50 ,
             )
@@ -503,7 +503,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         alpha = 0.5
         beta = 2.0
         lossy_media = DefinedGammaZ0(
-            frequency=Frequency(1, 100, 21, 'GHz'),
+            frequency=Frequency(1, 100, 21, unit='GHz'),
             gamma=alpha + 1j*beta,
             z0=z0
             )
@@ -519,7 +519,7 @@ class DefinedGammaZ0_s_def(unittest.TestCase):
 
     def test_complex_ports(self):
         m = DefinedGammaZ0(
-            frequency = Frequency(1,1,1,'ghz'),
+            frequency = Frequency(1, 1, 1, unit='ghz'),
             gamma=1j,
             z0 = 50,
             Z0 = 10+20j,

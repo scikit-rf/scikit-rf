@@ -99,7 +99,7 @@ class Frequency:
 
 
     def __init__(self, start: float = 0, stop: float = 0, npoints: int = 0,
-        unit: str = 'ghz', sweep_type: str = 'lin') -> None:
+        unit: str = None, sweep_type: str = 'lin') -> None:
         """
         Frequency initializer.
 
@@ -145,6 +145,15 @@ class Frequency:
         >>> wr1p5band = Frequency(500, 750, 401, 'ghz')
 
         """
+        if unit is None:
+            warnings.warn('''
+                          Frequency unit not passed: currently uses 'GHz' per default.
+                          The future versions of scikit-rf will use 'Hz' per default instead,
+                          so it is recommended to specify explicitly the frequency unit
+                          to obtain similar results with future versions.
+                          ''',
+                          DeprecationWarning, stacklevel=2)
+            unit = 'ghz'
         self._unit = unit.lower()
 
         start =  self.multiplier * start

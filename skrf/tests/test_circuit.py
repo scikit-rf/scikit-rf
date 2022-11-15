@@ -43,7 +43,7 @@ class CircuitTestConstructor(unittest.TestCase):
                        [(_ntwk1, 1), (self.ntwk2, 0)],
                        [(self.ntwk2, 1), (self.port2, 0)]]
 
-        _ntwk1.frequency = rf.Frequency(start=1, stop=1, npoints=1)
+        _ntwk1.frequency = rf.Frequency(start=1, stop=1, npoints=1, unit='GHz')
         self.assertRaises(AttributeError, rf.Circuit, connections)
 
     def test_no_duplicate_node(self):
@@ -75,7 +75,7 @@ class CircuitClassMethods(unittest.TestCase):
     Test the various class methods of Circuit such as Ground, Port, etc.
     """
     def setUp(self):
-        self.freq = rf.Frequency(start=1, stop=2, npoints=101)
+        self.freq = rf.Frequency(start=1, stop=2, npoints=101, unit='GHz')
         self.media = rf.DefinedGammaZ0(self.freq)
 
     def test_ground(self):
@@ -156,7 +156,7 @@ class CircuitTestWilkinson(unittest.TestCase):
         Circuit setup
         """
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
-        self.freq = rf.Frequency(start=1, stop=2, npoints=101)
+        self.freq = rf.Frequency(start=1, stop=2, npoints=101, unit='GHz')
         # characteristic impedance of the ports
         Z0_ports = 50
 
@@ -370,7 +370,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         """
         Connect a matched load directly to the port
         """
-        freq = rf.Frequency(start=1, npoints=1)
+        freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         port1 = rf.Circuit.Port(freq,  name='port1')
         line = rf.media.DefinedGammaZ0(frequency=freq)
         match_load = line.match(name='match_load')
@@ -386,7 +386,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         """
         Connect a short directly to the port
         """
-        freq = rf.Frequency(start=1, npoints=1)
+        freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         port1 = rf.Circuit.Port(freq,  name='port1')
         line = rf.media.DefinedGammaZ0(frequency=freq)
         short = line.short(name='short')
@@ -409,7 +409,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         """
         Connect a random load directly to the port
         """
-        freq = rf.Frequency(start=1, npoints=1)
+        freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         port1 = rf.Circuit.Port(freq,  name='port1')
         line = rf.media.DefinedGammaZ0(frequency=freq)
         gamma = np.random.rand(1,1) + 1j*np.random.rand(1,1)
@@ -426,7 +426,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         """
         Connect a random 2 port network connected to a matched load
         """
-        freq = rf.Frequency(start=1, npoints=1)
+        freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
         a.s = np.random.rand(4).reshape(2, 2)
@@ -449,7 +449,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         Both ports are complex.
         """
         z01, z02 = 1-1j, 2+4j
-        freq = rf.Frequency(start=1, npoints=1)
+        freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
         a.s = np.random.rand(4).reshape(2, 2)
@@ -472,7 +472,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         Connect two 2-ports networks in a resulting  2-ports network,
         same default charact impedance (50 Ohm) for all ports
         """
-        freq = rf.Frequency(start=1, npoints=1)
+        freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
         a.s = np.random.rand(4).reshape(2, 2)
@@ -501,7 +501,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         same complex charact impedance (1+1j) for all ports
         """
         z0 = 1 + 1j
-        freq = rf.Frequency(start=1, npoints=1)
+        freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
         a.s = np.random.rand(4).reshape(2, 2)
@@ -531,7 +531,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         Connect two 2-ports networks in a resulting  2-ports network,
         different characteristic impedances for each network ports
         """
-        freq = rf.Frequency(start=1, npoints=1)
+        freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
         a.s = np.random.rand(4).reshape(2,2)
@@ -561,7 +561,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         Connect two 4-ports networks in a resulting 4-ports network,
         with default characteristic impedances
         """
-        freq = rf.Frequency(start=1, npoints=1)
+        freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
         a.s = np.random.rand(16).reshape(4, 4)
@@ -595,7 +595,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         with same complex characteristic impedances
         """
         z0 = 5 + 4j
-        freq = rf.Frequency(start=1, npoints=1)
+        freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
         a.s = np.random.rand(16).reshape(4, 4)
@@ -631,7 +631,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         with different characteristic impedances
         """
         z0 = [1, 2, 3, 4]
-        freq = rf.Frequency(start=1, npoints=1)
+        freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
         a.s = np.random.rand(16).reshape(4, 4)
@@ -666,7 +666,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         """
         Compare a shunt element network (here a capacitor)
         """
-        freq = rf.Frequency(start=1, stop=2, npoints=101)
+        freq = rf.Frequency(start=1, stop=2, npoints=101, unit='GHz')
         line = rf.media.DefinedGammaZ0(frequency=freq, z0=50)
         # usual way
         cap_shunt_manual = line.shunt_capacitor(50e-12)
@@ -819,7 +819,7 @@ class CircuitTestGraph(unittest.TestCase):
 
         Setup a circuit which has various interconnections (2 or 3)
         """
-        self.freq = rf.Frequency(start=1, stop=2, npoints=101)
+        self.freq = rf.Frequency(start=1, stop=2, npoints=101, unit='GHz')
 
         # dummy components
         self.R = 100
