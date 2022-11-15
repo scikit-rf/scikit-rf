@@ -1,6 +1,6 @@
 [project]
 name = "scikit-rf"
-version = "0.24.0"
+version = "0.24.1"
 description = "Object Oriented Microwave Engineering"
 requires-python = ">=3.7"
 authors = [
