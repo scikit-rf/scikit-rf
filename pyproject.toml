@@ -65,7 +65,8 @@ docs = [
     "jupyter-client >=7.3.5",
     "sphinx-rtd-theme >=1.0",
     "sphinx >=4",
-    "nbsphinx >= 0.8.9"
+    "nbsphinx >= 0.8.9",
+    "openpyxl >= 3"
 ]
 
 [project.urls]
