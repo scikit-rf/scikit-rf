@@ -33,6 +33,15 @@ If you have [installed conda](https://docs.conda.io/projects/conda/en/latest/use
 conda install -c conda-forge scikit-rf 
 ```
 
+**scikit-rf** includes standalone gui applications which can be installed and used like this
+```Shell
+# Install the additional dependencies for the gui applications
+python -m pip install scikit-rf[plot,qtapps,visa]
+# Run the apps
+data-grabber # Run the data-grabber application
+multiline-trl # Run the multiline-trl application
+```
+
 ## Questions or comments? Ask the Community
 
 [![Mailing List](https://img.shields.io/badge/mail-Mailing%20list-brightgreen)](http://groups.google.com/group/scikit-rf)
