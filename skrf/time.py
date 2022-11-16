@@ -175,7 +175,7 @@ def find_n_peaks(x: npy.ndarray, n: int, thres: float = 0.9, **kwargs) -> List[i
     raise ValueError('Couldnt find %i peaks' % n)
 
 
-def detect_span(ntwk) -> float:
+def detect_span(ntwk: 'Network') -> float:
     """
     Detect the correct time-span between two largest peaks.
 
@@ -194,10 +194,19 @@ def detect_span(ntwk) -> float:
     span = abs(ntwk.frequency.t_ns[p1]-ntwk.frequency.t_ns[p2])
     return span
 
+time_lookup_dict = {
+    "s": 1,
+    "ms": 1e-3,
+    "us": 1e-6,
+    "µs": 1e-6,
+    "ns": 1e-9,
+    "ps": 1e-12
+}
+
 
 def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
               mode: str = 'bandpass', window=('kaiser', 6),
-              method: str ='fft', fft_window='hann', conv_mode='wrap') -> 'Network':
+              method: str ='fft', fft_window: str='hann', conv_mode: str='wrap', t_unit: str = "") -> 'Network':
     """
     Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
@@ -217,14 +226,14 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     ntwk : :class:`~skrf.network.Network`
         network to operate on
     start : number, or None
-        start of time gate, (ns).
+        start of time gate in t_unit.
     stop : number, or None
-        stop of time gate (ns).
+        stop of time gate in t_unit.
     center : number, or None
-        center of time gate, (ns). If None, and span is given,
+        center of time gate, in t_unit. If None, and span is given,
         the gate will be centered on the peak.
     span : number, or None
-        span of time gate, (ns).  If None span will be half of the
+        span of time gate, in t_unit.  If None span will be half of the
         distance to the second tallest peak
     mode : ['bandpass', 'bandstop']
         mode of gate
@@ -260,6 +269,16 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         the boundaries. This has a large effect on the generation of gating artefacts due to boundary effects. The
         optimal mode depends on the data. See the parameter description of `scipy.ndimage.convolve1d` for the available
         options.
+    
+    t_unit : str
+        Time unit for start, stop, center and span arguments, defaults to nanoseconds (ns).
+        Possible values: 
+            's': seconds
+            'ms': milliseconds
+            'µs' or 'us': microseconds
+            'ns': nanoseconds (default)
+            'ps': picoseconds
+
 
     Note
     ----
@@ -283,9 +302,23 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     if ntwk.nports >1:
         raise ValueError('Time-gating only works on one-ports. Try passing `ntwk.s11` or `ntwk.s21`.')
 
+    if t_unit == "":
+        if not all([e is None for e in [start, stop, center, span]]):
+            # Do not raise in autogate mode, where all parameters are None
+            warnings.warn('''
+                            Time unit not passed: currently uses 'ns' per default.
+                            The future versions of scikit-rf will use 's' per default instead,
+                            so it is recommended to specify explicitly the time unit
+                            to obtain similar results with future versions.
+                            ''',
+                            DeprecationWarning, stacklevel=2)
+        t_unit = 'ns'
+
+    t_mult = time_lookup_dict[t_unit]
+
     if start is not None and stop is not None:
-        start *= 1e-9
-        stop *= 1e-9
+        start *= t_mult
+        stop *= t_mult
         span = abs(stop-start)
         center = (stop+start)/2.
 
@@ -298,8 +331,8 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         if span is None:
             span = detect_span(ntwk)
 
-        center *= 1e-9
-        span *= 1e-9
+        center *= t_mult
+        span *= t_mult
         start = center - span / 2.
         stop = center + span / 2.
 
