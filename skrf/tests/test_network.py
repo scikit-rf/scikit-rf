@@ -90,7 +90,12 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(len(gated)== len(ntwk))
 
     def test_autogate(self):
-        ntwk = self.Meas
+        l1 = self.cpw.line(0.1, 'm', z0=50)
+        l2 = self.cpw.line(0.1, 'm', z0=30)
+        l3 = self.cpw.line(0.1, 'm', z0=50)
+
+        ntwk = l1 ** l2 ** l3
+
         # Auto gate should not raise
         gated = ntwk.s11.time_gate()
         self.assertTrue(len(gated)== len(ntwk))
