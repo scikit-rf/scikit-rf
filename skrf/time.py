@@ -210,8 +210,9 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     """
     Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
-    The gate can be defined with start/stop times, or by center/span. All times are in units of nanoseconds. Common
-    windows are:
+    The gate can be defined with start/stop times, or by center/span. All times are in units of nanoseconds but
+    can be changed using the `t_unit` parameter. The default unit will change to `s` in **scikit-rf** version 1.0.
+    Common windows are:
 
     * ('kaiser', 6)
     * 6 # integers are interpreted as kaiser beta-values
