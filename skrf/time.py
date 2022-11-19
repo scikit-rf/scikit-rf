@@ -174,26 +174,6 @@ def find_n_peaks(x: npy.ndarray, n: int, thres: float = 0.9, **kwargs) -> List[i
             return peak_idxs
     raise ValueError('Couldnt find %i peaks' % n)
 
-
-def detect_span(ntwk: 'Network') -> float:
-    """
-    Detect the correct time-span between two largest peaks.
-
-    Parameters
-    ----------
-    ntwk : :class:`~skrf.network.Network`
-        network to get data from
-
-    Returns
-    -------
-    span : float
-    """
-    x = ntwk.s_time_db.flatten()
-    p1, p2 = find_n_peaks(x, n=2)
-    # distance to nearest neighbor peak
-    span = abs(ntwk.frequency.t_ns[p1]-ntwk.frequency.t_ns[p2])
-    return span
-
 time_lookup_dict = {
     "s": 1,
     "ms": 1e-3,
@@ -202,6 +182,51 @@ time_lookup_dict = {
     "ns": 1e-9,
     "ps": 1e-12
 }
+
+def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
+    """
+    Detect the correct time-span between two largest peaks.
+
+    Parameters
+    ----------
+    ntwk : :class:`~skrf.network.Network`
+        network to get data from
+    
+    t_unit : str
+        Time unit for start, stop, center and span arguments, defaults to nanoseconds (ns).
+        Possible values:
+
+            * 's': seconds
+            * 'ms': milliseconds
+            * 'µs' or 'us': microseconds
+            * 'ns': nanoseconds (default)
+            * 'ps': picoseconds
+
+
+    Returns
+    -------
+    span : float in unit t_unit
+    """
+
+    if t_unit == "":
+        # Do not raise in autogate mode, where all parameters are None
+        warnings.warn('''
+                        Time unit not passed: currently uses 'ns' per default.
+                        The future versions of scikit-rf will use 's' per default instead,
+                        so it is recommended to specify explicitly the time unit
+                        to obtain similar results with future versions.
+                        ''',
+                        DeprecationWarning, stacklevel=2)
+        t_unit = 'ns'
+
+    x = ntwk.s_time_db.flatten()
+    p1, p2 = find_n_peaks(x, n=2)
+    print(p1, p2)
+    # distance to nearest neighbor peak
+    span = abs(ntwk.frequency.t[p1]-ntwk.frequency.t[p2])
+
+    return span / time_lookup_dict[t_unit]
+
 
 
 def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
@@ -273,12 +298,13 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     
     t_unit : str
         Time unit for start, stop, center and span arguments, defaults to nanoseconds (ns).
-        Possible values: 
-            's': seconds
-            'ms': milliseconds
-            'µs' or 'us': microseconds
-            'ns': nanoseconds (default)
-            'ps': picoseconds
+        Possible values:
+
+            * 's': seconds
+            * 'ms': milliseconds
+            * 'µs' or 'us': microseconds
+            * 'ns': nanoseconds (default)
+            * 'ps': picoseconds
 
 
     Note
@@ -330,7 +356,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
             center = ntwk.frequency.t_ns[n]
 
         if span is None:
-            span = detect_span(ntwk)
+            span = detect_span(ntwk, t_unit='ns')
 
         center *= t_mult
         span *= t_mult
