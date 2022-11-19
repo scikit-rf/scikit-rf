@@ -194,8 +194,8 @@ def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
     
     t_unit : str
         Time unit for start, stop, center and span arguments, defaults to nanoseconds (ns).
+        
         Possible values:
-
             * 's': seconds
             * 'ms': milliseconds
             * 'µs' or 'us': microseconds
@@ -298,8 +298,8 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     
     t_unit : str
         Time unit for start, stop, center and span arguments, defaults to nanoseconds (ns).
+        
         Possible values:
-
             * 's': seconds
             * 'ms': milliseconds
             * 'µs' or 'us': microseconds
