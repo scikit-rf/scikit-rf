@@ -72,11 +72,35 @@ class NetworkTestCase(unittest.TestCase):
         t = self.ntwk1.s11.s_time
         s = self.ntwk1.s11.s
         self.assertTrue(len(t)== len(s))
+    
     def test_time_gate(self):
         ntwk = self.ntwk1
-        gated = self.ntwk1.s11.time_gate(0,.2)
+        gated = self.ntwk1.s11.time_gate(0,.2, t_unit='ns')
+        self.assertTrue(len(gated)== len(ntwk))
+
+    def test_time_gate_raises(self):
+        ntwk = self.ntwk1
+        with pytest.warns(DeprecationWarning, match="Time unit not passed"):
+            gated = self.ntwk1.s11.time_gate(0,.2)
 
         self.assertTrue(len(gated)== len(ntwk))
+
+        with pytest.warns(DeprecationWarning, match="Time unit not passed"):
+            gated = self.ntwk1.s11.time_gate(0,.2, t_unit='')
+        self.assertTrue(len(gated)== len(ntwk))
+
+    def test_autogate(self):
+        l1 = self.cpw.line(0.1, 'm', z0=50)
+        l2 = self.cpw.line(0.1, 'm', z0=30)
+        l3 = self.cpw.line(0.1, 'm', z0=50)
+
+        ntwk = l1 ** l2 ** l3
+
+        # Auto gate should not raise
+        gated = ntwk.s11.time_gate()
+        self.assertTrue(len(gated)== len(ntwk))
+
+    
     def test_time_transform(self):
         spb = (4, 5)
         data_rate = 5e9
