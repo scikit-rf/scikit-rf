@@ -221,7 +221,6 @@ def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
 
     x = ntwk.s_time_db.flatten()
     p1, p2 = find_n_peaks(x, n=2)
-    print(p1, p2)
     # distance to nearest neighbor peak
     span = abs(ntwk.frequency.t[p1]-ntwk.frequency.t[p2])
 
