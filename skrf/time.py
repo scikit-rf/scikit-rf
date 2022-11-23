@@ -231,7 +231,7 @@ def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
 
 def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
               mode: str = 'bandpass', window=('kaiser', 6),
-              method: str ='fft', fft_window: str='hann', conv_mode: str='wrap', t_unit: str = "") -> 'Network':
+              method: str ='fft', fft_window: str='cosine', conv_mode: str='wrap', t_unit: str = "") -> 'Network':
     """
     Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
