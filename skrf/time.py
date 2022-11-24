@@ -230,7 +230,7 @@ def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
 
 def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
               mode: str = 'bandpass', window=('kaiser', 6),
-              method: str ='fft', fft_window: str='hann', conv_mode: str='wrap', t_unit: str = "") -> 'Network':
+              method: str ='fft', fft_window: str='cosine', conv_mode: str='wrap', t_unit: str = "") -> 'Network':
     """
     Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
@@ -378,7 +378,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         n_td = n_fd
         if fft_window is not None:
             # create band-pass window (zero on both lower and upper limit, one at center)
-            window_fd = signal.get_window(window, n_fd)
+            window_fd = signal.get_window(fft_window, n_fd)
         else:
             # create dummy-window
             window_fd = npy.ones(n_fd)
@@ -394,7 +394,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         n_td = 2 * n_fd - 1
         if fft_window is not None:
             # create low-pass window (one at lower limit at f=0, zero on upper limit)
-            window_fd = signal.get_window(window, 2 * n_fd)
+            window_fd = signal.get_window(fft_window, 2 * n_fd)
             window_fd = window_fd[n_fd:]
         else:
             # create dummy-window
