@@ -188,10 +188,17 @@ from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 if TYPE_CHECKING:
     import pandas as pd
 
-#from matplotlib import cm
-#import matplotlib.pyplot as plt
-#import matplotlib.tri as tri
-#from scipy.interpolate import interp1d
+def add_property(inst : object, name : str, method : Callable, doc : Optional[str] = None):
+    """ Add a property to an instance
+    
+    Adapted from: https://stackoverflow.com/a/2954373/19469050
+    """
+    cls = type(inst)
+    if not hasattr(cls, '__perinstance'):
+      cls = type(cls.__name__, (cls,), {})
+      cls.__perinstance = True
+      inst.__class__ = cls
+    setattr(cls, name, property(method, doc=doc))
 
 class Network:
     r"""
@@ -962,11 +969,9 @@ class Network:
                 doc = """
                 one-port sub-network.
                 """
-                setattr(self, 's%i_%i'%(m+1, n+1),
-                        property(fget, doc=doc))
+                add_property(self, f's{m+1}_{n+1}', fget, doc=doc)
                 if m < 9 and n < 9:
-                    setattr(self, 's%i%i' % (m + 1, n + 1),
-                            getattr(self, 's%i_%i'%(m+1, n+1)))
+                    add_property(self, f's{m+1}{n+1}', fget, doc=doc)
 
 
     # PRIMARY PROPERTIES
