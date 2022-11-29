@@ -208,7 +208,6 @@ class Frequency:
         if isinstance(key, str):
 
             # they passed a string try and do some interpretation
-            re_numbers = re.compile(r'.*\d')
             re_hyphen = re.compile(r'\s*-\s*')
             re_letters = re.compile('[a-zA-Z]+')
 
@@ -279,7 +278,7 @@ class Frequency:
         if npy.isscalar(f):
             f = [f]
         temp_freq =  cls(0,0,0,*args, **kwargs)
-        temp_freq._f = npy.array(f) * temp_freq.multiplier
+        temp_freq._f = npy.asarray(f) * temp_freq.multiplier
         temp_freq.check_monotonic_increasing()
 
         return temp_freq

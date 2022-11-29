@@ -935,14 +935,14 @@ class Network:
                 else:
                     def fget(self: 'Network', f: Callable = func, p: str = prop_name) -> npy.ndarray:
                         return f(getattr(self, p))
-                doc = """
-                The {} component of the {}-matrix
+                doc = f"""
+                The {func_name} component of the {prop_name}-matrix
 
 
                 See Also
                 --------
-                {}
-                """.format(func_name, prop_name, prop_name)
+                {prop_name}
+                """
 
                 setattr(self.__class__, f'{prop_name}_{func_name}', \
                         property(fget, doc=doc))
@@ -962,11 +962,11 @@ class Network:
                 doc = """
                 one-port sub-network.
                 """
-                setattr(self.__class__, 's%i_%i'%(m+1, n+1),
+                setattr(self, 's%i_%i'%(m+1, n+1),
                         property(fget, doc=doc))
                 if m < 9 and n < 9:
-                    setattr(self.__class__, 's%i%i' % (m + 1, n + 1),
-                            getattr(self.__class__, 's%i_%i'%(m+1, n+1)))
+                    setattr(self, 's%i%i' % (m + 1, n + 1),
+                            getattr(self, 's%i_%i'%(m+1, n+1)))
 
 
     # PRIMARY PROPERTIES
