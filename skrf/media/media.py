@@ -1444,7 +1444,7 @@ class DefinedGammaZ0(Media):
                                              z0=z0)
         self.gamma= gamma
         self.Z0 = Z0
-
+        
     @classmethod
     def from_csv(cls, filename: str, *args, **kwargs) -> Media:
         """

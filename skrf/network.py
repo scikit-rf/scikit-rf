@@ -662,7 +662,7 @@ class Network:
             result.s = self.s * other.s
         else:
             # other may be an array or a number
-            result.s = self.s * npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s * npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
@@ -682,7 +682,7 @@ class Network:
             result.s = self.s * other.s
         else:
             # other may be an array or a number
-            result.s = self.s * npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s * npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
@@ -701,7 +701,7 @@ class Network:
             result.s = self.s + other.s
         else:
             # other may be an array or a number
-            result.s = self.s + npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s + npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
@@ -720,7 +720,7 @@ class Network:
             result.s = self.s + other.s
         else:
             # other may be an array or a number
-            result.s = self.s + npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s + npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
@@ -735,7 +735,7 @@ class Network:
             result.s = self.s - other.s
         else:
             # other may be an array or a number
-            result.s = self.s - npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s - npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
@@ -754,7 +754,7 @@ class Network:
             result.s = other.s - self.s
         else:
             # other may be an array or a number
-            result.s = npy.array(other).reshape(-1, self.nports, self.nports) - self.s
+            result.s = npy.asarray(other).reshape(-1, self.nports, self.nports) - self.s
 
         return result
 
@@ -763,7 +763,7 @@ class Network:
 
     def __div__(self, other: 'Network') -> 'Network':
         """
-        Element-wise complex multiplication of s-matrix
+        Element-wise complex division of s-matrix
 
         Returns
         -------
@@ -776,7 +776,7 @@ class Network:
             result.s = self.s / other.s
         else:
             # other may be an array or a number
-            result.s = self.s / npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s / npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
