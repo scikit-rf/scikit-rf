@@ -4925,6 +4925,9 @@ class LMR16(SixteenTerm):
 class Normalization(Calibration):
     """
     Simple Thru Normalization.
+
+    For calibration the S parameters of the network are divided by average of
+    the measured networks. The ideal networks are not used in the calibration.
     """
     def run(self):
         pass
