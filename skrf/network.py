@@ -947,27 +947,20 @@ class Network:
                 setattr(self.__class__, f'{prop_name}_{func_name}', \
                         property(fget, doc=doc))
 
-    def __generate_subnetworks(self) -> None:
-        """
-        generates all one-port sub-networks
-        """
-        for m in range(self.number_of_ports):
-            for n in range(self.number_of_ports):
-                def fget(self: 'Network', m:int=m, n:int=n) -> 'Network':
-                    ntwk = self.copy()
-                    ntwk.s = self.s[:, m, n]
-                    ntwk.z0 = self.z0[:, m]
-                    return ntwk
+    def __getattr__(self, name: str) -> 'Network':
+        print(name)
+        m = re.match(r"s(\d+)_(\d+)", name)
+        if not m:
+            m = re.match(r"s(\d)(\d)", name)
 
-                doc = """
-                one-port sub-network.
-                """
-                setattr(self.__class__, 's%i_%i'%(m+1, n+1),
-                        property(fget, doc=doc))
-                if m < 9 and n < 9:
-                    setattr(self.__class__, 's%i%i' % (m + 1, n + 1),
-                            getattr(self.__class__, 's%i_%i'%(m+1, n+1)))
-
+        if m:
+            t0 = int(m.group(1)) - 1
+            t1 = int(m.group(2)) - 1
+            ntwk = self.copy()
+            ntwk.s = self.s[:, t0, t1]
+            ntwk.z0 = self.z0[:, t0]
+            return ntwk
+        raise AttributeError
 
     # PRIMARY PROPERTIES
     @property
@@ -1014,7 +1007,6 @@ class Network:
         """
         self._s = fix_param_shape(s)
         self.__generate_secondary_properties()
-        self.__generate_subnetworks()
         
         if self.z0.ndim == 0:
             self.z0 = self.z0

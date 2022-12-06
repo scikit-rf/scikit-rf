@@ -1503,7 +1503,7 @@ class NetworkTestCase(unittest.TestCase):
             for n in range(ntwk.nports):
                 npy.testing.assert_array_almost_equal(
                     ntwk.s[:,m,n],
-                    ntwk.__getattribute__(f's{m+1}_{n+1}').s[:,0,0]
+                    getattr(ntwk, f's{m+1}_{n+1}').s[:,0,0]
                 )
 
 
