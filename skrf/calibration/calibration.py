@@ -3439,7 +3439,7 @@ class UnknownThru(EightTerm):
 
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
-            The order must align with `ideals` list ( or use sloppy_input
+            The order must align with `ideals` list ( or use `sloppy_input`)
 
         switch_terms : tuple of :class:`~skrf.network.Network` objects
             the pair of switch terms in the order (forward, reverse)
@@ -3457,8 +3457,6 @@ class UnknownThru(EightTerm):
 
         thru_m = self.measured_unterminated[-1]
 
-        thru_approx  =  self.ideals[-1]
-
         # create one port calibration for all reflective standards
         port1_cal = OnePort(measured = p1_m, ideals = p1_i)
         port2_cal = OnePort(measured = p2_m, ideals = p2_i)
@@ -3469,8 +3467,6 @@ class UnknownThru(EightTerm):
 
         e_rf = port1_cal.coefs_ntwks['reflection tracking']
         e_rr = port2_cal.coefs_ntwks['reflection tracking']
-        X = port1_cal.error_ntwk
-        Y = port2_cal.error_ntwk
 
         # create a fully-determined 8-term cal just get estimate on k's sign
         # this is really inefficient, i need to work out the math on the
@@ -4929,6 +4925,9 @@ class LMR16(SixteenTerm):
 class Normalization(Calibration):
     """
     Simple Thru Normalization.
+
+    For calibration the S parameters of the network are divided by average of
+    the measured networks. The ideal networks are not used in the calibration.
     """
     def run(self):
         pass
