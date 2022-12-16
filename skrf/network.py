@@ -2584,7 +2584,7 @@ class Network:
 
     # interpolation
     def interpolate(self, freq_or_n: Union[Frequency, NumberLike], basis: str = 's',
-                    coords: str = 'cart', f_kwargs: dict = {}, return_array: bool = False,
+                    coords: str = 'polar', f_kwargs: dict = {}, return_array: bool = False,
                     **kwargs) -> Union['Network', npy.ndarray]:
         r"""
         Interpolate a Network along frequency axis
