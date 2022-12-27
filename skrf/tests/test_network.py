@@ -1459,6 +1459,21 @@ class NetworkTestCase(unittest.TestCase):
         # vswr_act should be equal to vswr22 if a = [0,1]
         npy.testing.assert_array_almost_equal(self.ntwk1.vswr_active([0, 1])[:,1], vswr_ref[:,1,1])
 
+    def test_twport_to_nport(self):
+        fpoints = 2
+        nports = 4
+        s = npy.ones((fpoints, 2, 2), dtype=complex)
+        f = rf.F(1, 10, fpoints, unit='GHz')
+        twoport = rf.Network(s=s, frequency=f)
+        nport = rf.twoport_to_nport(twoport, 0, 1, nports)
+        zeros = npy.zeros(fpoints, dtype=complex)
+        for i in range(nports):
+            for j in range(nports):
+                if i in [0, 1] and j in [0, 1]:
+                    npy.testing.assert_array_almost_equal(nport.s[:,i,j], twoport.s[:,i,j])
+                else:
+                    npy.testing.assert_array_almost_equal(nport.s[:,i,j], zeros)
+
 
     def test_generate_subnetworks_nportsbelow10(self):
         """

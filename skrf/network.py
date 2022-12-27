@@ -7264,3 +7264,35 @@ def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
     vswr_act = npy.einsum('fp,fp->fp', (1 + npy.abs(s_act)), npy.reciprocal(1 - npy.abs(s_act)))
     return vswr_act
 
+def twoport_to_nport(ntwk, port1, port2, nports, **kwargs):
+    r"""
+    Add ports to two-port. S-parameters of added ports are all zeros.
+
+    Parameters
+    ----------
+    ntwk : Two-port Network object
+    port1: int
+        First port of the two-port in the resulting N-port.
+    port2: int
+        Second port of the two-port in the resulting N-port.
+    nports: int
+        Number of ports in the N-port network.
+    \*\*kwargs:
+        Passed to :func:`Network.__init__` for resultant network.
+
+    Returns
+    -------
+    nport: N-port Network object
+    """
+    fpoints = len(ntwk.frequency)
+    nport = Network(frequency=ntwk.frequency,
+                    s=npy.zeros(shape=(fpoints, nports, nports)),
+                    name=ntwk.name,
+                    **kwargs)
+    nport.s[:,port1,port1] = ntwk.s[:,0,0]
+    nport.s[:,port2,port1] = ntwk.s[:,1,0]
+    nport.s[:,port1,port2] = ntwk.s[:,0,1]
+    nport.s[:,port2,port2] = ntwk.s[:,1,1]
+    nport.z0[:,port1] = ntwk.z0[:,0]
+    nport.z0[:,port2] = ntwk.z0[:,1]
+    return nport
