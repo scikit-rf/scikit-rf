@@ -34,6 +34,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
+    "tox >= 3.26.0",
     "pytest ~=7.0",
     "coverage ~=6.0",
     "flake8 ~=5.0",
