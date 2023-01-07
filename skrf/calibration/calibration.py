@@ -4989,7 +4989,7 @@ class MultiportCal():
     """
 
     family = 'Multiport'
-    def __init__(self, cal_dict, isolation=None, *args, **kwargs):
+    def __init__(self, cal_dict, isolation=None):
         if type(cal_dict) != dict:
             raise ValueError("cal_dict not dictionary.")
         nports = None
@@ -5025,7 +5025,7 @@ class MultiportCal():
                     frequency = m.frequency
                 elif m.frequency != frequency:
                     raise ValueError("Inconsistent frequency in measured.")
-        self.nports = max_key_nports + 1
+        self.nports = nports = max_key_nports + 1
         if min_key_nports < 0:
             raise ValueError("Negative port number found. Minimum should be zero.")
         if min_key_nports != 0:
@@ -5036,6 +5036,8 @@ class MultiportCal():
         if isolation is not None:
             # Zero diagonal so that network can be simply subtracted
             isolation = isolation.copy()
+            if isolation.nports != nports:
+                raise ValueError("Isolation network should have the same number of ports as measurements.")
             for i in range(nports):
                 isolation.s[:,i,i] = 0
         else:
@@ -5048,6 +5050,9 @@ class MultiportCal():
         self.cals = {}
 
     def run(self):
+        """
+        Run the calibration algorithm.
+        """
         nports = self.nports
         p_count = defaultdict(int)
         self.terminations = [None for i in range(nports)]
@@ -5074,6 +5079,21 @@ class MultiportCal():
             self.run_2port(method, p, k_side, **c)
 
     def run_2port(self, method, p, k_side, **kwargs):
+        r"""
+        Call the two-port calibration algorithm and populate multi-port error
+        coefficients for this port pair.
+
+        Parameters
+        ----------
+        method: Two-port calibration class
+            Use to calibrate the port pair.
+        p: tuple of int
+            Length two tuple of port indices in the pair.
+        k_side: int
+            Port to put 'k' coefficient in the pair.
+        \*\*kwargs: Keyword arguments
+            Passed to the calibration method.
+        """
         cal = method(**kwargs)
         cal.run()
         self.cals[p] = cal
@@ -5150,7 +5170,6 @@ class MultiportCal():
         Returns
         -------
         T1,T2,T3,T4 : numpy ndarray
-
         """
         npoints = len(self.coefs[0]['k'])
         one = npy.ones(npoints, dtype=complex)
@@ -5188,6 +5207,9 @@ class MultiportCal():
         return T1, T2, T3, T4
 
     def apply_cal(self, ntwk):
+        """
+        Apply correction to a Network.
+        """
         # Need to copy original to not modify the original after subtracting the
         # isolation.
         ntwk = ntwk.copy()
@@ -5223,6 +5245,9 @@ class MultiportCal():
         return caled
 
     def embed(self, ntwk):
+        """
+        Embed an ideal response in the estimated error network[s]
+        """
         fpoints = len(self.coefs[0]['k'])
         nports = self.nports
         nout = ntwk.copy()
@@ -5247,6 +5272,14 @@ class MultiportCal():
         return nout
 
     def coefs_to_ntwks(self, coefs, k_side=0):
+        """
+        Two-port 8-term error coefficients to Networks.
+
+        Parameters
+        ----------
+        k_side: int, 0 or 1
+            Port to put 'k' coefficient.
+        """
         npoints = len(coefs['k'])
         one = npy.ones(npoints, dtype=complex)
 
@@ -5334,7 +5367,7 @@ class MultiportSOLT(MultiportCal):
     """
 
     family = 'Multiport'
-    def __init__(self, method, measured, ideals, isolation=None, switch_terms=None, thru_pos='auto', cal_args=None, *args, **kwargs):
+    def __init__(self, method, measured, ideals, isolation=None, switch_terms=None, thru_pos='auto', cal_args=None):
         self.ideals = ideals
         self.measured = measured
         self.nports = ideals[0].nports
@@ -5365,17 +5398,6 @@ class MultiportSOLT(MultiportCal):
             raise ValueError("method must be Calibration subclass.")
         if issubclass(method, SixteenTerm):
             warn("SixteenTerm calibration is reduced to 8-terms.")
-
-        if isolation is None:
-            isolation = ideals[-1].copy()
-            for i in range(nports):
-                for j in range(nports):
-                    isolation.s[:,i,j] = 0
-        else:
-            # Zero diagonal so that network can be simply subtracted
-            isolation = isolation.copy()
-            for i in range(nports):
-                isolation.s[:,i,i] = 0
 
         if len(ideals) < nports - 1:
             raise ValueError("Invalid number of ideals. Expected at least {} but got {}.".format(nports-1, len(ideals)))
