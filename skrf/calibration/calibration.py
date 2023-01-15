@@ -5322,8 +5322,7 @@ class MultiportCal():
 
 class MultiportSOLT(MultiportCal):
     """
-    Multi-port VNA calibration using two-port calibration method with one
-    transmissive standard for each two-port pair.
+    Multi-port VNA calibration using two-port calibration method with one transmissive standard for each two-port pair.
 
     `method` should be a two-port calibration method such as `EightTerm`,
     `UnknownThru` or `SOLT`. This class calibrates a multi-port network using
