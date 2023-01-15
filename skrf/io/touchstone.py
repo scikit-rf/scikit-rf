@@ -398,10 +398,16 @@ class Touchstone:
         if format == 'orig':
             format = self.format
         ext1, ext2 = {'ri':('R','I'),'ma':('M','A'), 'db':('DB','A')}.get(format)
+        file_name_ending = self.filename.split('.')[-1].lower()
         for r1 in range(self.rank):
             for r2 in range(self.rank):
-                names.append("S%i%i%s"%(r1+1,r2+1,ext1))
-                names.append("S%i%i%s"%(r1+1,r2+1,ext2))
+                # Transpose Touchstone V1 2-port files (.2p), as the order is (11) (21) (12) (22)
+                if self.rank == 2 and file_name_ending == "s2p":
+                    names.append(f"S{r2+1}{r1+1}{ext1}")
+                    names.append(f"S{r2+1}{r1+1}{ext2}")
+                else:
+                    names.append(f"S{r1+1}{r2+1}{ext1}")
+                    names.append(f"S{r1+1}{r2+1}{ext2}")
         return names
 
     def get_sparameter_data(self, format='ri'):
@@ -456,14 +462,6 @@ class Touchstone:
 
         for i,n in enumerate(self.get_sparameter_names(format=format)):
             ret[n] = values[:,i]
-
-        # transpose Touchstone V1 2-port files (.2p), as the order is (11) (21) (12) (22)
-        file_name_ending = self.filename.split('.')[-1].lower()
-        if self.rank == 2 and file_name_ending == "s2p":
-            swaps = [ k for k in ret if '21' in k]
-            for s in swaps:
-                true_s = s.replace('21', '12')
-                ret[s], ret[true_s] = ret[true_s], ret[s]
 
         return ret
 

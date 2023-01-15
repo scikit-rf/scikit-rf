@@ -139,6 +139,12 @@ class TouchstoneTestCase(unittest.TestCase):
                     msg='Field %s does not match. Expected "%s", got "%s"'%(
                         k, str(expected_sp_db[k]), str(sp_db[k]))  )
 
+        for k, v in zip(touch.get_sparameter_names(), touch.sparameters.T):
+            if k[0] != 'S':
+                # frequency doesn't match because of Hz vs GHz.
+                continue
+            self.assertTrue(npy.all(expected_sp_ri[k] == v))
+
 
     def test_HFSS_touchstone_files(self):
         """
