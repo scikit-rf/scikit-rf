@@ -188,10 +188,38 @@ from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 if TYPE_CHECKING:
     import pandas as pd
 
-#from matplotlib import cm
-#import matplotlib.pyplot as plt
-#import matplotlib.tri as tri
-#from scipy.interpolate import interp1d
+_PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 't']
+"""
+Primary Network Properties list like 's', 'z', 'y', etc.
+"""
+
+_COMPONENT_FUNC_DICT = {
+    're': npy.real,
+    'im': npy.imag,
+    'mag': npy.abs,
+    'db': mf.complex_2_db,
+    'db10': mf.complex_2_db10,
+    'rad': npy.angle,
+    'deg': lambda x: npy.angle(x, deg=True),
+    'arcl': lambda x: npy.angle(x) * npy.abs(x),
+    'rad_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)),
+    'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
+        npy.angle(x))),
+    'arcl_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)) * \
+                                npy.abs(x),
+    # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
+    'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
+    'time': mf.ifft,
+    'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
+    'time_mag': lambda x: mf.complex_2_magnitude(mf.ifft(x)),
+    'time_impulse': None,
+    'time_step': None,
+}
+
+"""
+Component functions like 're', 'im', 'mag', 'db', etc.
+"""
+_GENERATED_FUNCTIONS = {f"{p}_{func_name}": (func, p) for p in _PRIMARY_PROPERTIES for func_name, func in _COMPONENT_FUNC_DICT.items()}
 
 class Network:
     r"""
@@ -278,37 +306,8 @@ class Network:
     .. [#TwoPortWiki] http://en.wikipedia.org/wiki/Two-port_network
 
     """
-
-    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 't']
-    """
-    Primary Network Properties list like 's', 'z', 'y', etc.
-    """
-
-    COMPONENT_FUNC_DICT = {
-        're': npy.real,
-        'im': npy.imag,
-        'mag': npy.abs,
-        'db': mf.complex_2_db,
-        'db10': mf.complex_2_db10,
-        'rad': npy.angle,
-        'deg': lambda x: npy.angle(x, deg=True),
-        'arcl': lambda x: npy.angle(x) * npy.abs(x),
-        'rad_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)),
-        'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
-            npy.angle(x))),
-        'arcl_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)) * \
-                                 npy.abs(x),
-        # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
-        'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-        'time': mf.ifft,
-        'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
-        'time_mag': lambda x: mf.complex_2_magnitude(mf.ifft(x)),
-        'time_impulse': None,
-        'time_step': None,
-    }
-    """
-    Component functions like 're', 'im', 'mag', 'db', etc.
-    """
+    PRIMARY_PROPERTIES = _PRIMARY_PROPERTIES
+    COMPONENT_FUNC_DICT = _COMPONENT_FUNC_DICT
 
     # provides y-axis labels to the plotting functions
     Y_LABEL_DICT = {
@@ -920,36 +919,12 @@ class Network:
         if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
 
-    @classmethod
-    def _generate_secondary_properties(cls) -> None:
-        """
-        creates numerous `secondary properties` which are various
-        different scalar projects of the primary properties. the primary
-        properties are s,z, and y.
-        """
-        for prop_name in cls.PRIMARY_PROPERTIES:
-            for func_name in cls.COMPONENT_FUNC_DICT:
-                func = cls.COMPONENT_FUNC_DICT[func_name]
-                if 'gd' in func_name:  # scaling of gradient by frequency
-                    def fget(self: 'Network', f: Callable = func, p: str = prop_name) -> npy.ndarray:
-                        return f(getattr(self, p)) / (2 * npy.pi * self.frequency.step)
-                else:
-                    def fget(self: 'Network', f: Callable = func, p: str = prop_name) -> npy.ndarray:
-                        return f(getattr(self, p))
-                doc = """
-                The {} component of the {}-matrix
+    def __getattr__(self, name: str) -> Union['Network', npy.ndarray]:
 
+        if name in _GENERATED_FUNCTIONS.keys():
+            func, arg = _GENERATED_FUNCTIONS[name]
+            return func(getattr(self, arg))
 
-                See Also
-                --------
-                {}
-                """.format(func_name, prop_name, prop_name)
-
-                setattr(cls, f'{prop_name}_{func_name}', \
-                        property(fget, doc=doc))
-
-    def __getattr__(self, name: str) -> 'Network':
-        print(name)
         m = re.match(r"s(\d+)_(\d+)", name)
         if not m:
             m = re.match(r"s(\d)(\d)", name)
@@ -962,6 +937,15 @@ class Network:
             ntwk.z0 = self.z0[:, t0]
             return ntwk
         raise AttributeError
+
+    def __dir__(self):
+        ret = super().__dir__()
+        
+        s_properties = [f"s{t1}_{t2}" for t1 in range(self.nports) for t2 in range(self.nports)]
+        s_properties += [f"s{t1}{t2}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
+
+        return ret + s_properties + list(_GENERATED_FUNCTIONS.keys())
+        
 
     # PRIMARY PROPERTIES
     @property
@@ -4137,8 +4121,6 @@ class Network:
             y_active : active Y-parameters
         """
         return s2vswr_active(self.s, a)
-
-Network._generate_secondary_properties()
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
 PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
