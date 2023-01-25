@@ -7051,7 +7051,7 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling')
     return result
 
 
-def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
+def two_port_reflect(ntwk1: Network, ntwk2: Network = None, name : Optional[str] = None) -> Network:
     """
     Generates a two-port reflective two-port, from two one-ports.
 
@@ -7062,7 +7062,9 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
             network seen from port 1
     ntwk2 : one-port Network object, or None
             network seen from port 2. if None then will use ntwk1.
-
+    name: Name for the combined network. If None, then construcut for the
+          names of the input networks
+          
     Returns
     -------
     result : Network object
@@ -7091,10 +7093,14 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
          [s21, s22]]). \
         transpose().reshape(-1, 2, 2)
     result.z0 = npy.hstack([ntwk1.z0, ntwk2.z0])
-    try:
-        result.name = ntwk1.name + '-' + ntwk2.name
-    except(TypeError):
-        pass
+
+    if name is None:
+        try:
+            result.name = ntwk1.name + '-' + ntwk2.name
+        except(TypeError):
+            pass
+    else:
+        result.name = name
     return result
 
 def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
