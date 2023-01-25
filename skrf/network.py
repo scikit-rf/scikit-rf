@@ -7062,8 +7062,8 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None, name : Optional[str]
             network seen from port 1
     ntwk2 : one-port Network object, or None
             network seen from port 2. if None then will use ntwk1.
-    name: Name for the combined network. If None, then construcut for the
-          names of the input networks
+    name: Name for the combined network. If None, then construct the name
+          from the names of the input networks
           
     Returns
     -------
