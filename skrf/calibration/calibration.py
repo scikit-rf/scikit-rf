@@ -2656,7 +2656,7 @@ class NISTMultilineTRL(EightTerm):
             self.refl_offset = [self.refl_offset]
 
         if len(measured) != len(self.Grefls) + len(l):
-            raise ValueError("Amount of measurements doesn't match amount of line lengths and reflection coefficients")
+            raise ValueError(f"Amount of measurements {len(measured)} doesn't match amount of line lengths {len(l)} and reflection coefficients {len(self.Grefls)}")
 
         #Not used, but needed for Calibration class init
         ideals = measured
