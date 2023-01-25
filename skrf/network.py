@@ -920,15 +920,16 @@ class Network:
         if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
 
-    def __generate_secondary_properties(self) -> None:
+    @classmethod
+    def _generate_secondary_properties(cls) -> None:
         """
         creates numerous `secondary properties` which are various
         different scalar projects of the primary properties. the primary
         properties are s,z, and y.
         """
-        for prop_name in PRIMARY_PROPERTIES:
-            for func_name in COMPONENT_FUNC_DICT:
-                func = COMPONENT_FUNC_DICT[func_name]
+        for prop_name in cls.PRIMARY_PROPERTIES:
+            for func_name in cls.COMPONENT_FUNC_DICT:
+                func = cls.COMPONENT_FUNC_DICT[func_name]
                 if 'gd' in func_name:  # scaling of gradient by frequency
                     def fget(self: 'Network', f: Callable = func, p: str = prop_name) -> npy.ndarray:
                         return f(getattr(self, p)) / (2 * npy.pi * self.frequency.step)
@@ -944,7 +945,7 @@ class Network:
                 {}
                 """.format(func_name, prop_name, prop_name)
 
-                setattr(self.__class__, f'{prop_name}_{func_name}', \
+                setattr(cls, f'{prop_name}_{func_name}', \
                         property(fget, doc=doc))
 
     def __getattr__(self, name: str) -> 'Network':
@@ -1006,7 +1007,6 @@ class Network:
 
         """
         self._s = fix_param_shape(s)
-        self.__generate_secondary_properties()
         
         if self.z0.ndim == 0:
             self.z0 = self.z0
@@ -4137,6 +4137,8 @@ class Network:
             y_active : active Y-parameters
         """
         return s2vswr_active(self.s, a)
+
+Network._generate_secondary_properties()
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
 PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
