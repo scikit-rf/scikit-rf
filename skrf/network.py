@@ -1931,7 +1931,7 @@ class Network:
         >>> a.copy_from (b)
         """
         for attr in ['_s', 'frequency', '_z0', 'name']:
-            self.__setattr__(attr, copy(other.__getattribute__(attr)))
+            setattr(self, attr, copy(getattr(other, attr)))
 
     def copy_subset(self, key: npy.ndarray) -> 'Network':
         """
@@ -2691,7 +2691,7 @@ class Network:
             result._z0 = f_interp(f, self.z0, axis=0, **kwargs)(f_new)
 
         # interpolate  parameter for a given basis
-        x = self.__getattribute__(basis)
+        x = getattr(self, basis)
         if coords == 'cart':
             x_new = f_interp(f, x, axis=0, **kwargs)(f_new)
         elif coords == 'polar':
@@ -3448,7 +3448,7 @@ class Network:
         >>> ntwk.func_on_parameter(inv)
         """
         ntwkB = self.copy()
-        p = self.__getattribute__(attr)
+        p = getattr(self, attr)
         ntwkB.s = npy.r_[[func(p[k, :, :], *args, **kwargs) \
                           for k in range(len(p))]]
         return ntwkB
@@ -3479,8 +3479,8 @@ class Network:
             Resulting renumbered Network
 
         """
-        forward = self.__getattribute__('s%i%i' % (m, n))
-        reverse = self.__getattribute__('s%i%i' % (n, m))
+        forward = getattr(self, f"s{m}_{n}")
+        reverse = getattr(self, f"s{n}_{m}")
         if normalize:
             denom = forward * reverse
             denom.s = npy.sqrt(denom.s)
