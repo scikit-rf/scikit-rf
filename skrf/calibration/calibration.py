@@ -311,18 +311,18 @@ class Calibration:
         """
         raise NotImplementedError('The Subclass must implement this')
 
-    def apply_cal(self,ntwk):
+    def apply_cal(self, ntwk):
         """
         Apply correction to a Network.
         """
         raise NotImplementedError('The Subclass must implement this')
 
-    def apply_cal_to_list(self,ntwk_list):
+    def apply_cal_to_list(self, ntwk_list):
         """
-        Apply correction to list of dict of Networks.
+        Apply correction to list or dict of Networks.
         """
         if hasattr(ntwk_list, 'keys'):
-            return {k: self.apply_cal(ntwk_list[k]) for k in ntwk_list}
+            return {k: self.apply_cal(nw) for k, nw in ntwk_list.items()}
         else:
             return [self.apply_cal(k) for k in ntwk_list]
 
@@ -979,7 +979,7 @@ class OnePort(Calibration):
     respectively.
 
 
-    If more than three standards are supplied then a least square
+    If more than three standards are supplied, then a least square
     algorithm is applied.
 
     See [1]_  and [2]_
@@ -1033,13 +1033,13 @@ class OnePort(Calibration):
                              *args, **kwargs)
 
     def run(self):
-        """
+        """ Run the calibration algorithm.
         """
         numStds = self.nstandards
         numCoefs=3
 
-        mList = [self.measured[k].s.reshape((-1,1)) for k in list(range(numStds))]
-        iList = [self.ideals[k].s.reshape((-1,1)) for k in list(range(numStds))]
+        mList = [self.measured[k].s.reshape((-1,1)) for k in range(numStds)]
+        iList = [self.ideals[k].s.reshape((-1,1)) for k in range(numStds)]
 
         # ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
         fLength = len(mList[0])
@@ -1057,8 +1057,8 @@ class OnePort(Calibration):
         for f in list(range(fLength)):
             #create  m, i, and 1 vectors
             one = npy.ones(shape=(numStds,1))
-            m = npy.array([ mList[k][f] for k in list(range(numStds))]).reshape(-1,1)# m-vector at f
-            i = npy.array([ iList[k][f] for k in list(range(numStds))]).reshape(-1,1)# i-vector at f
+            m = npy.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
+            i = npy.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f
 
             # construct the matrix
             Q = npy.hstack([i, one, i*m])
@@ -1101,7 +1101,7 @@ class OnePort(Calibration):
         er_ntwk = Network(frequency = self.frequency, name=ntwk.name)
         tracking  = self.coefs['reflection tracking']
         s12 = npy.sqrt(tracking)
-        s21 = npy.sqrt(tracking)
+        s21 = s12
 
         s11 = self.coefs['directivity']
         s22 = self.coefs['source match']
@@ -1109,8 +1109,7 @@ class OnePort(Calibration):
         return er_ntwk.inv**ntwk
 
     def embed(self,ntwk):
-        embedded = ntwk.copy()
-        embedded = self.error_ntwk**embedded
+        embedded = self.error_ntwk ** ntwk
         embedded.name = ntwk.name
         return embedded
 
