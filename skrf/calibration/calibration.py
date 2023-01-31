@@ -5209,9 +5209,7 @@ class MultiportCal():
         """
         Apply correction to a Network.
         """
-        # Need to copy original to not modify the original after subtracting the
-        # isolation.
-        ntwk = ntwk.copy()
+        # A new copy of ntwk is created
         ntwk = ntwk - self.isolation
         caled = ntwk.copy()
         # Use traveling definition since it can renormalize to negative real part impedance.
