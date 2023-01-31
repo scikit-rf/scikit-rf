@@ -74,8 +74,8 @@ class NetworkTestCase(unittest.TestCase):
         n2 = rf.two_port_reflect(n, n)
         self.assertEqual(n2.name, n.name + '-' + n.name )
         self.assertEqual(n2.s.shape, (number_of_data_points, 2, 2))
-        np.testing.assert_array_equal(n2.s[:, 0, 1],np.zeros(number_of_data_points))
-        np.testing.assert_array_equal(n2.s[:, 0, 0], n.s)
+        np.testing.assert_array_equal(n2.s[:, 0, 1], np.zeros(number_of_data_points))
+        np.testing.assert_array_equal(n2.s[:, 0, 0], n.s.flatten())
 
         n2 = rf.two_port_reflect(n, n, name = 'new_name')
         self.assertEqual(n2.name, 'new_name' )
