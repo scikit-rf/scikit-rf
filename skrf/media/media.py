@@ -594,7 +594,7 @@ class Media(ABC):
         Parameters
         ----------
         L : number, array
-            Inductance, in Henrys. If this is an array, must be of
+            Inductance, in Henries. If this is an array, must be of
             same length as frequency vector.
         \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
@@ -1126,7 +1126,7 @@ class Media(ABC):
         Parameters
         ----------
         L : number, array-like
-            Inductance in Farads.
+            Inductance in Henries.
         \*\*kwargs : arguments, keyword arguments
             passed to func:`inductor`
 
