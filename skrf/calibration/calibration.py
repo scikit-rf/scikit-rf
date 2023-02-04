@@ -1106,7 +1106,9 @@ class OnePort(Calibration):
         s11 = self.coefs['directivity']
         s22 = self.coefs['source match']
         er_ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose(2,0,1)
-        er_ntwk = er_ntwk.interpolate(ntwk.frequency)
+        # if the frequencies aren't a perfect match, interpolate
+        if er_ntwk.frequency != ntwk.frequency.f and er_ntwk.frequency.npoints > 1 and ntwk.frequency.npoints > 1:
+          er_ntwk = er_ntwk.interpolate(ntwk.frequency)
         return er_ntwk.inv**ntwk
 
     def embed(self,ntwk):
