@@ -154,16 +154,14 @@ Misc Functions
 from typing import (Any, NoReturn, Optional, Sequence,
     Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List, TextIO)
 from numbers import Number
-from functools import reduce
+from functools import reduce, partialmethod
 
 import os
 import warnings
 import io
 from pathlib import Path
-import pickle
 from pickle import UnpicklingError
 
-import sys
 import re
 import zipfile
 from copy import deepcopy as copy
@@ -172,14 +170,13 @@ from itertools import product
 
 import numpy as npy
 from numpy.linalg import inv as npy_inv
-from numpy import fft, gradient, ndarray, reshape, shape, ones, std
+from numpy import gradient, ndarray, reshape, shape, ones, std
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
-import unittest  # fotr unitest.skip
 
 from . import mathFunctions as mf
 from .frequency import Frequency
-from .util import get_fid, get_extn, find_nearest_index, slice_domain
+from .util import get_fid, get_extn, find_nearest_index, plotting_available
 from .time import time_gate
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
@@ -188,38 +185,7 @@ from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 if TYPE_CHECKING:
     import pandas as pd
 
-_PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 't']
-"""
-Primary Network Properties list like 's', 'z', 'y', etc.
-"""
 
-_COMPONENT_FUNC_DICT = {
-    're': npy.real,
-    'im': npy.imag,
-    'mag': npy.abs,
-    'db': mf.complex_2_db,
-    'db10': mf.complex_2_db10,
-    'rad': npy.angle,
-    'deg': lambda x: npy.angle(x, deg=True),
-    'arcl': lambda x: npy.angle(x) * npy.abs(x),
-    'rad_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)),
-    'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
-        npy.angle(x))),
-    'arcl_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)) * \
-                                npy.abs(x),
-    # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
-    'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-    'time': mf.ifft,
-    'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
-    'time_mag': lambda x: mf.complex_2_magnitude(mf.ifft(x)),
-    'time_impulse': None,
-    'time_step': None,
-}
-
-"""
-Component functions like 're', 'im', 'mag', 'db', etc.
-"""
-_GENERATED_FUNCTIONS = {f"{p}_{func_name}": (func, p) for p in _PRIMARY_PROPERTIES for func_name, func in _COMPONENT_FUNC_DICT.items()}
 
 class Network:
     r"""
@@ -304,10 +270,38 @@ class Network:
     References
     ----------
     .. [#TwoPortWiki] http://en.wikipedia.org/wiki/Two-port_network
-
     """
-    PRIMARY_PROPERTIES = _PRIMARY_PROPERTIES
-    COMPONENT_FUNC_DICT = _COMPONENT_FUNC_DICT
+
+    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 't']
+    """
+    Primary Network Properties list like 's', 'z', 'y', etc.
+    """
+
+    COMPONENT_FUNC_DICT = {
+        're': npy.real,
+        'im': npy.imag,
+        'mag': npy.abs,
+        'db': mf.complex_2_db,
+        'db10': mf.complex_2_db10,
+        'rad': npy.angle,
+        'deg': lambda x: npy.angle(x, deg=True),
+        'arcl': lambda x: npy.angle(x) * npy.abs(x),
+        'rad_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)),
+        'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
+            npy.angle(x))),
+        'arcl_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)) * \
+                                 npy.abs(x),
+        # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
+        'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
+        'time': mf.ifft,
+        'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
+        'time_mag': lambda x: mf.complex_2_magnitude(mf.ifft(x)),
+        'time_impulse': None,
+        'time_step': None,
+    }
+    """
+    Component functions like 're', 'im', 'mag', 'db', etc.
+    """
 
     # provides y-axis labels to the plotting functions
     Y_LABEL_DICT = {
@@ -919,12 +913,7 @@ class Network:
         if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
 
-    def __getattr__(self, name: str) -> Union['Network', npy.ndarray]:
-
-        if name in _GENERATED_FUNCTIONS.keys():
-            func, arg = _GENERATED_FUNCTIONS[name]
-            return func(getattr(self, arg))
-
+    def __getattr__(self, name: str) -> 'Network':
         m = re.match(r"s(\d+)_(\d+)", name)
         if not m:
             m = re.match(r"s(\d)(\d)", name)
@@ -944,8 +933,17 @@ class Network:
         s_properties = [f"s{t1}_{t2}" for t1 in range(self.nports) for t2 in range(self.nports)]
         s_properties += [f"s{t1}{t2}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
 
-        return ret + s_properties + list(_GENERATED_FUNCTIONS.keys())
-        
+        return ret + s_properties
+
+    def get(self, prop_name: str, conversion: str) -> npy.ndarray:
+        prop = getattr(self, prop_name)
+        return COMPONENT_FUNC_DICT[conversion](prop)
+
+    def plot_attribute(self, prop_name: str, conversion: str, *args, **kwargs):
+        from .plotting import plot_network_attribute
+
+        return plot_network_attribute(self, prop_name, conversion, *args, **kwargs)
+
 
     # PRIMARY PROPERTIES
     @property
@@ -4121,6 +4119,32 @@ class Network:
             y_active : active Y-parameters
         """
         return s2vswr_active(self.s, a)
+
+for prop_name, conversion in product(Network.PRIMARY_PROPERTIES, Network.COMPONENT_FUNC_DICT.keys()):
+    
+    func_name = f"{prop_name}_{conversion}"
+    doc = f"""
+        The {conversion} component of the {prop_name}-matrix
+
+
+        See Also
+        --------
+        {prop_name}
+    """
+
+    setattr(Network, func_name, property(
+        fget=lambda self, 
+            prop_name=prop_name, 
+            conversion=conversion: 
+            
+            self.get(prop_name, conversion), doc=doc))
+
+if plotting_available():
+    for prop_name, conversion in product(Network.PRIMARY_PROPERTIES, Network.COMPONENT_FUNC_DICT.keys()):
+    
+        func_name = f"plot_{prop_name}_{conversion}"
+        func = partialmethod(Network.plot_attribute, prop_name, conversion)
+        setattr(Network, func_name, func)
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
 PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES

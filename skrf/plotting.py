@@ -74,7 +74,7 @@ import matplotlib.tri as tri
 
 from . import network, frequency, calibration, networkSet, circuit
 from . import mathFunctions as mf
-from . util import now_string_2_dt
+from . util import now_string_2_dt  
 
 try:
     import networkx as nx
@@ -1117,161 +1117,142 @@ Examples
             plot_prop_rect)
 
 
-        for func_name in COMPONENT_FUNC_DICT:
-            attribute = f'{prop_name}_{func_name}'
-            y_label = Y_LABEL_DICT[func_name]
 
-            def plot_func(self,  m=None, n=None, ax=None,
-                          show_legend=True, attribute=attribute,
-                          y_label=y_label, logx=False, pad=0, window='hamming', z0=50, *args, **kwargs):
+def plot_network_attribute(netw: network.Network, 
+                           attribute: str, 
+                           conversion: str, 
+                           m=None, 
+                           n=None, 
+                           ax=None,
+                           show_legend=True, 
+                           y_label=None, 
+                           logx=False, **kwargs):
+    """plot Network's `conversion`(`attribute`) component vs frequency or time.
 
-                # create index lists, if not provided by user
-                if m is None:
-                    M = range(self.number_of_ports)
+    Args:
+        netw (network.Network): _description_
+        attribute (str): _description_
+        conversion (str): _description_
+        m : int, optional
+            first index of s-parameter matrix, if None will use all
+        n : int, optional
+            secon index of the s-parameter matrix, if None will use all
+        ax : :class:`matplotlib.Axes` object, optional
+            An existing Axes object to plot on
+        show_legend : Boolean
+            draw legend or not
+        y_label : string, optional
+            the y-axis label
+        logx : Boolean, optional
+            Enable logarithmic x-axis, default off
+    """
+
+    # create index lists, if not provided by user
+    if m is None:
+        M = range(netw.number_of_ports)
+    else:
+        M = [m]
+    if n is None:
+        N = range(netw.number_of_ports)
+    else:
+        N = [n]
+
+    if 'label' not in kwargs.keys():
+        gen_label = True
+    else:
+        gen_label = False
+
+    #TODO: turn off interactive plotting for performance
+    # this didnt work because it required a show()
+    # to be called, which in turn, disrupted testCases
+    #
+    # was_interactive = plt.isinteractive
+    # if was_interactive:
+    #     plt.interactive(False)
+    for m in M:
+        for n in N:
+            # set the legend label for this trace to the networks
+            # name if it exists, and they didn't pass a name key in
+            # the kwargs
+            if gen_label:
+                if netw.name is None:
+                    if plt.rcParams['text.usetex']:
+                        label_string = '$%s_{%i%i}$'%\
+                        (attribute[0].upper(),m+1,n+1)
+                    else:
+                        label_string = '%s%i%i'%\
+                        (attribute[0].upper(),m+1,n+1)
                 else:
-                    M = [m]
-                if n is None:
-                    N = range(self.number_of_ports)
+                    if plt.rcParams['text.usetex']:
+                        label_string = netw.name+', $%s_{%i%i}$'%\
+                        (attribute[0].upper(),m+1,n+1)
+                    else:
+                        label_string = netw.name+', %s%i%i'%\
+                        (attribute[0].upper(),m+1,n+1)
+                kwargs['label'] = label_string
+
+            # quick and dirty way to plot step and impulse response
+            if 'time_impulse' in attribute:
+                xlabel = 'Time (ns)'
+
+                x,y = netw.impulse_response(**kwargs)
+                # default is reflexion coefficient axis
+                if attribute[0].lower() == 'z':
+                    # if they want impedance axis, give it to them
+                    y_label = 'Z (ohm)'
+                    y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
+                    y[x == -1.] = -1. + 1e-12  # solve numerical singularity
+                    y = netw.z0 * (1+y) / (1-y)
+                plot_rectangular(x=x * 1e9,
+                                    y=y,
+                                    x_label=xlabel,
+                                    y_label=y_label,
+                                    show_legend=show_legend, ax=ax,
+                                    **kwargs)
+            elif 'time_step' in attribute:
+                xlabel = 'Time (ns)'
+                x, y = netw.step_response(**kwargs)
+                # default is reflexion coefficient axis
+                if attribute[0].lower() == 'z':
+                    # if they want impedance axis, give it to them
+                    y_label = 'Z (ohm)'
+                    y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
+                    y[x == -1.] = -1. + 1e-12  # solve numerical singularity
+                    y = netw.z0 * (1+y) / (1-y)
+                plot_rectangular(x=x * 1e9,
+                                    y=y,
+                                    x_label=xlabel,
+                                    y_label=y_label,
+                                    show_legend=show_legend, ax=ax,
+                                    **kwargs)
+
+            else:
+                # plot the desired attribute vs frequency
+                if 'time' in attribute:
+                    xlabel = 'Time (ns)'
+                    x = netw.frequency.t_ns
+
                 else:
-                    N = [n]
+                    xlabel = 'Frequency (%s)' % netw.frequency.unit
+                    # x = self.frequency.f_scaled
+                    x = netw.frequency.f  # always plot f, and then scale the ticks instead
 
-                if 'label'  not in kwargs.keys():
-                    gen_label = True
-                else:
-                    gen_label = False
+                    # scale the ticklabels according to the frequency unit and set log-scale if desired:
+                    if ax is None:
+                        ax = plt.gca()
+                    if logx:
+                        ax.set_xscale('log')
 
-                #TODO: turn off interactive plotting for performance
-                # this didnt work because it required a show()
-                # to be called, which in turn, disrupted testCases
-                #
-                # was_interactive = plt.isinteractive
-                # if was_interactive:
-                #     plt.interactive(False)
-                for m in M:
-                    for n in N:
-                        # set the legend label for this trace to the networks
-                        # name if it exists, and they didn't pass a name key in
-                        # the kwargs
-                        if gen_label:
-                            if self.name is None:
-                                if plt.rcParams['text.usetex']:
-                                    label_string = '$%s_{%i%i}$'%\
-                                    (attribute[0].upper(),m+1,n+1)
-                                else:
-                                    label_string = '%s%i%i'%\
-                                    (attribute[0].upper(),m+1,n+1)
-                            else:
-                                if plt.rcParams['text.usetex']:
-                                    label_string = self.name+', $%s_{%i%i}$'%\
-                                    (attribute[0].upper(),m+1,n+1)
-                                else:
-                                    label_string = self.name+', %s%i%i'%\
-                                    (attribute[0].upper(),m+1,n+1)
-                            kwargs['label'] = label_string
-
-                        # quick and dirty way to plot step and impulse response
-                        if 'time_impulse' in attribute:
-                            xlabel = 'Time (ns)'
-                            x,y = self.impulse_response(pad=pad, window=window)
-                            # default is reflexion coefficient axis
-                            if attribute[0].lower() == 'z':
-                                # if they want impedance axis, give it to them
-                                y_label = 'Z (ohm)'
-                                y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
-                                y[x == -1.] = -1. + 1e-12  # solve numerical singularity
-                                y = z0 * (1+y) / (1-y)
-                            plot_rectangular(x=x * 1e9,
-                                             y=y,
-                                             x_label=xlabel,
-                                             y_label=y_label,
-                                             show_legend=show_legend, ax=ax,
-                                             *args, **kwargs)
-                        elif 'time_step' in attribute:
-                            xlabel = 'Time (ns)'
-                            x, y = self.step_response(pad=pad, window=window)
-                            # default is reflexion coefficient axis
-                            if attribute[0].lower() == 'z':
-                                # if they want impedance axis, give it to them
-                                y_label = 'Z (ohm)'
-                                y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
-                                y[x == -1.] = -1. + 1e-12  # solve numerical singularity
-                                y = z0 * (1+y) / (1-y)
-                            plot_rectangular(x=x * 1e9,
-                                             y=y,
-                                             x_label=xlabel,
-                                             y_label=y_label,
-                                             show_legend=show_legend, ax=ax,
-                                             *args, **kwargs)
-
-                        else:
-                            # plot the desired attribute vs frequency
-                            if 'time' in attribute:
-                                xlabel = 'Time (ns)'
-                                x = self.frequency.t_ns
-
-                            else:
-                                xlabel = 'Frequency (%s)' % self.frequency.unit
-                                # x = self.frequency.f_scaled
-                                x = self.frequency.f  # always plot f, and then scale the ticks instead
-
-                                # scale the ticklabels according to the frequency unit and set log-scale if desired:
-                                if ax is None:
-                                    ax = plt.gca()
-                                if logx:
-                                    ax.set_xscale('log')
-
-                                scale_frequency_ticks(ax, self.frequency.unit)
+                    scale_frequency_ticks(ax, netw.frequency.unit)
 
 
 
-                            plot_rectangular(x=x,
-                                             y=getattr(self, attribute)[:, m, n],
-                                             x_label=xlabel,
-                                             y_label=y_label,
-                                             show_legend=show_legend, ax=ax,
-                                             *args, **kwargs)
-                #if was_interactive:
-                #    plt.interactive(True)
-                #    plt.draw()
-                #    #plt.show()
-
-            plot_func.__doc__ = r"""
-    plot the Network attribute :attr:`%s` vs frequency.
-
-    Parameters
-    ----------
-    m : int, optional
-        first index of s-parameter matrix, if None will use all
-    n : int, optional
-        secon index of the s-parameter matrix, if None will use all
-    ax : :class:`matplotlib.Axes` object, optional
-        An existing Axes object to plot on
-    show_legend : Boolean
-        draw legend or not
-    attribute : string
-        Network attribute to plot
-    y_label : string, optional
-        the y-axis label
-    logx : Boolean, optional
-        Enable logarithmic x-axis, default off
-
-    \*args,\**kwargs : arguments, keyword arguments
-        passed to :func:`matplotlib.plot`
-
-    Note
-    ----
-    This function is dynamically generated upon Network
-    initialization. This is accomplished by calling
-    :func:`plot_vs_frequency_generic`
-
-    Examples
-    --------
-    >>> myntwk.plot_%s(m=1,n=0,color='r')
-    """%(attribute,attribute)
-
-            # setattr(self.__class__,'plot_%s'%(attribute), \
-            setattr(self,'plot_%s'%(attribute), \
-                plot_func)
+                plot_rectangular(x=x,
+                                    y=netw.get(attribute, conversion)[:, m, n],
+                                    x_label=xlabel,
+                                    y_label=y_label,
+                                    show_legend=show_legend, ax=ax,
+                                    **kwargs)
 
 
 def labelXAxis(self, ax: Union[plt.Axes, None] = None):

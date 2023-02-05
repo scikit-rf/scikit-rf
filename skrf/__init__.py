@@ -72,7 +72,7 @@ saf = None
 stylely = None
 
 
-def setup_pylab():
+def setup_pylab() -> bool:
     try:
         import matplotlib
     except ImportError:
@@ -99,4 +99,4 @@ def setup_plotting():
     # elif some different plotting environment
         # set that up
 
-setup_plotting()
+plotting_available = setup_plotting()

@@ -74,6 +74,9 @@ except ImportError:
     Axes = TypeVar("Axes")
     pass
 
+def plotting_available() -> bool:
+    return "matplotlib" in sys.modules
+
 def axes_kwarg(func):
     """
     This decorator checks if a :class:`matplotlib.axes.Axes` object is passed, 
