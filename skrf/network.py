@@ -4143,7 +4143,7 @@ if plotting_available():
     for prop_name, conversion in product(Network.PRIMARY_PROPERTIES, Network.COMPONENT_FUNC_DICT.keys()):
     
         func_name = f"plot_{prop_name}_{conversion}"
-        func = partialmethod(Network.plot_attribute, prop_name, conversion)
+        func = partialmethod(Network.plot, prop_name, conversion)
         setattr(Network, func_name, func)
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
