@@ -4655,12 +4655,45 @@ def overlap(ntwkA: Network, ntwkB: Network) -> Tuple[Network, Network]:
     --------
 
     :func:`skrf.frequency.overlap_freq`
+    :func:`skrf.network.overlap_multi`
 
     """
 
     new_freq = ntwkA.frequency.overlap(ntwkB.frequency)
     return ntwkA.interpolate(new_freq), ntwkB.interpolate(new_freq)
 
+def overlap_multi(ntwk_list: Sequence[Network]):
+    """
+    Returns the overlapping parts of multiple Networks, interpolating if needed.
+
+    If frequency vectors for each ntwk don't perfectly overlap, then
+    all networks after the first are interpolated so that the resultant networks
+    have identical frequencies.
+
+    Parameters
+    ----------
+    ntwk_list  : list of skrf.Networks
+        a list of networks with some overlap
+
+    Returns
+    -------
+    overlap_list  : list of skrf.Networks
+        a list of networks that mutually overlap
+
+
+    See Also
+    --------
+
+    :func:`skrf.frequency.overlap_freq`
+    :func:`skrf.network.overlap`
+
+    """
+
+    new_freq = ntwk_list[0].frequency
+    for ntwk in ntwk_list[1:]:
+        new_freq = new_freq.overlap(ntwk.frequency)
+
+    return [ntwk.interpolate(new_freq) for ntwk in ntwk_list]
 
 def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
         *args, **kw) -> Network:
