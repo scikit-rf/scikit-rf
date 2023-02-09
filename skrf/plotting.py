@@ -701,7 +701,8 @@ def shade_bands(edges: NumberLike, y_range: Union[Tuple, None] = None,
     >>> rf.shade_bands([325,500,750,1100], alpha=.2)
     """
     cmap = plt.cm.get_cmap(cmap)
-    y_range=plt.gca().get_ylim()
+    if not isinstance(y_range, (tuple, list)) or (len(y_range) != 2):
+        y_range=plt.gca().get_ylim()
     axis = plt.axis()
     for k in range(len(edges)-1):
         plt.fill_between(
