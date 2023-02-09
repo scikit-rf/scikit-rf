@@ -1412,6 +1412,3 @@ def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=2
         return TNW, x,y,g
     else :
         return x,y,g
-
-        return x,y,g
-
