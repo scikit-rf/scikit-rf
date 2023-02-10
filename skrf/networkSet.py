@@ -44,14 +44,17 @@ NetworkSet Utilities
 
 """
 import zipfile
-import numpy as npy
-from numbers import Number
-from typing import Union, Any, Mapping, TextIO
 from io import BytesIO
+from numbers import Number
+from typing import Any, Mapping, TextIO, Union
+
+import numpy as npy
 from scipy.interpolate import interp1d
-from . network import Network, Frequency, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
+
 from . import mathFunctions as mf
-from . util import now_string_2_dt
+from .network import (COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency,
+                      Network)
+from .util import now_string_2_dt
 
 try:
     from numpy.typing import ArrayLike
@@ -206,7 +209,7 @@ class NetworkSet:
             self.__add_a_element_wise_method(network_method_name)
 
         for operator_name in \
-                ['__pow__','__floordiv__','__mul__','__div__','__add__','__sub__']:
+                ['__pow__','__floordiv__','__mul__','__truediv__','__add__','__sub__']:
             self.__add_a_operator(operator_name)
 
     @classmethod
@@ -279,7 +282,7 @@ class NetworkSet:
         >>> my_set = rf.NetworkSet.from_dir('./data/')
 
         """
-        from . io.general import read_all_networks
+        from .io.general import read_all_networks
         return cls(read_all_networks(dir), *args, **kwargs)
 
     @classmethod
@@ -332,7 +335,7 @@ class NetworkSet:
         write_mdif : Convert a NetworkSet to a Generalized MDIF file.
 
         """
-        from . io import Mdif
+        from .io import Mdif
         return Mdif(file).to_networkset()
 
     @classmethod
@@ -354,7 +357,7 @@ class NetworkSet:
         Citi
 
         """
-        from . io import Citi
+        from .io import Citi
         return Citi(file).to_networkset()
 
     def __add_a_operator(self, operator_name):
@@ -786,8 +789,8 @@ class NetworkSet:
 
 
         """
-        from scipy import stats
         from numpy import frompyfunc
+        from scipy import stats
 
         gimme_norm = lambda x: stats.norm(loc=0,scale=x).rvs(1)[0]
         ugimme_norm = frompyfunc(gimme_norm,1,1)
@@ -907,7 +910,7 @@ class NetworkSet:
 
         """
         # this import is delayed until here because of a circular dependency
-        from . io.general import write
+        from .io.general import write
 
         if file is None:
             if self.name is None:
@@ -931,7 +934,7 @@ class NetworkSet:
         skrf.io.general.network_2_spreadsheet
 
         """
-        from . io.general import networkset_2_spreadsheet
+        from .io.general import networkset_2_spreadsheet
         networkset_2_spreadsheet(self, *args, **kwargs)
 
     def write_mdif(self,
@@ -964,7 +967,7 @@ class NetworkSet:
         params_types : parameters types
 
         """
-        from . io import Mdif
+        from .io import Mdif
         Mdif.write(ns=self, filename=filename, values=values, 
                              data_types=data_types, comments=comments)
 
@@ -978,7 +981,7 @@ class NetworkSet:
         >>> df.to_excel('output.xls')  # see Pandas docs for more info
 
         """
-        from pandas import DataFrame, Series, Index
+        from pandas import DataFrame, Index, Series
         index = Index(
             self[0].frequency.f_scaled,
             name='Freq(%s)'%self[0].frequency.unit
@@ -1409,4 +1412,3 @@ def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=2
         return TNW, x,y,g
     else :
         return x,y,g
-
