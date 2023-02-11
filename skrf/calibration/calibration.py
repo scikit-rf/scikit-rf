@@ -1042,9 +1042,9 @@ class OnePort(Calibration):
         iList = [self.ideals[k].s.reshape((-1,1)) for k in range(numStds)]
 
         if not all([n.number_of_ports==1 for n in self.ideals]):
-            raise RuntimeError('ideals for {self.family} should be 1-port Networks')
+            raise RuntimeError(f'ideals for {self.family} should be 1-port Networks')
         if not all([n.number_of_ports==1 for n in self.measured]):
-            raise RuntimeError('measured networks for {self.family} should be 1-port Networks')
+            raise RuntimeError(f'measured networks for {self.family} should be 1-port Networks')
 
         # ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
         fLength = len(mList[0])
