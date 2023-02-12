@@ -343,6 +343,8 @@ class Network:
     Default interpolation method.
     """
 
+    _secondary_properties_generated = False
+
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
                  comments: str = None, f_unit: str = None,
@@ -410,7 +412,6 @@ class Network:
         write : write a network to a file, using pickle
         write_touchstone : write a network to a touchstone file
         """
-
         # allow for old kwarg for backward compatibility
         if 'touchstone_filename' in kwargs:
             file = kwargs['touchstone_filename']
@@ -920,32 +921,36 @@ class Network:
         if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
 
-    def __generate_secondary_properties(self) -> None:
+    @classmethod
+    def __generate_secondary_properties(cls) -> None:
         """
         creates numerous `secondary properties` which are various
         different scalar projects of the primary properties. the primary
         properties are s,z, and y.
+
+        The properties are set on the class, so this method only needs to be called once
         """
+        if cls._secondary_properties_generated:
+            return
         for prop_name in PRIMARY_PROPERTIES:
-            for func_name in COMPONENT_FUNC_DICT:
-                func = COMPONENT_FUNC_DICT[func_name]
+            for func_name, func in COMPONENT_FUNC_DICT.items():
                 if 'gd' in func_name:  # scaling of gradient by frequency
                     def fget(self: 'Network', f: Callable = func, p: str = prop_name) -> npy.ndarray:
                         return f(getattr(self, p)) / (2 * npy.pi * self.frequency.step)
                 else:
                     def fget(self: 'Network', f: Callable = func, p: str = prop_name) -> npy.ndarray:
                         return f(getattr(self, p))
-                doc = """
-                The {} component of the {}-matrix
+                doc = f"""
+                The {func_name} component of the {prop_name}-matrix
 
 
                 See Also
                 --------
-                {}
-                """.format(func_name, prop_name, prop_name)
+                {prop_name}
+                """
 
-                setattr(self.__class__, f'{prop_name}_{func_name}', \
-                        property(fget, doc=doc))
+                setattr(cls, f'{prop_name}_{func_name}', property(fget, doc=doc))
+        cls._secondary_properties_generated = True
 
     def __generate_subnetworks(self) -> None:
         """
@@ -7051,7 +7056,7 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling')
     return result
 
 
-def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
+def two_port_reflect(ntwk1: Network, ntwk2: Network = None, name : Optional[str] = None) -> Network:
     """
     Generates a two-port reflective two-port, from two one-ports.
 
@@ -7062,7 +7067,9 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
             network seen from port 1
     ntwk2 : one-port Network object, or None
             network seen from port 2. if None then will use ntwk1.
-
+    name: Name for the combined network. If None, then construct the name
+          from the names of the input networks
+          
     Returns
     -------
     result : Network object
@@ -7091,10 +7098,14 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
          [s21, s22]]). \
         transpose().reshape(-1, 2, 2)
     result.z0 = npy.hstack([ntwk1.z0, ntwk2.z0])
-    try:
-        result.name = ntwk1.name + '-' + ntwk2.name
-    except(TypeError):
-        pass
+
+    if name is None:
+        try:
+            result.name = ntwk1.name + '-' + ntwk2.name
+        except(TypeError):
+            pass
+    else:
+        result.name = name
     return result
 
 def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:

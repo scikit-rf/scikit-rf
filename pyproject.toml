@@ -1,6 +1,6 @@
 [project]
 name = "scikit-rf"
-version = "0.24.1"
+dynamic = ["version"]
 description = "Object Oriented Microwave Engineering"
 requires-python = ">=3.7"
 authors = [
@@ -96,6 +96,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 license-files = ["LICENSE.txt"]
+
+[tool.setuptools.dynamic]
+version = {attr = "skrf.__version__"}
 
 [tool.setuptools.packages.find]
 include = ["skrf*", "skrf_qtapps*"]
