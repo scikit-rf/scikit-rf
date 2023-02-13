@@ -174,6 +174,7 @@ from numpy import gradient, ndarray, reshape, shape, ones, std
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 
+from .base_network import BaseNetwork
 from . import mathFunctions as mf
 from .frequency import Frequency
 from .util import get_fid, get_extn, find_nearest_index, plotting_available
@@ -182,10 +183,12 @@ from .time import time_gate
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
+from .plotting import PlottingMixin
+
 if TYPE_CHECKING:
     import pandas as pd
 
-class Network:
+class Network(PlottingMixin, BaseNetwork):
     r"""
     A n-port electrical network.
 

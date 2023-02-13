@@ -53,7 +53,7 @@ General Purpose Objects
 import contextlib
 import fnmatch
 import os
-from typing import Iterable, Tuple, List, Union, Any, TypeVar
+from typing import Iterable, Tuple, List, Union, Any, TypeVar, Callable
 import warnings
 import numpy as npy
 from datetime import datetime
@@ -98,6 +98,13 @@ def axes_kwarg(func):
             raise RuntimeError("Plotting is not available")
         func(*args, ax=ax, **kwargs)
 
+    return wrapper
+
+def copy_doc(copy_func: Callable) -> Callable:
+    """Use Example: copy_doc(self.copy_func)(self.func) or used as deco"""
+    def wrapper(func: Callable) -> Callable:
+        func.__doc__ = copy_func.__doc__
+        return func
     return wrapper
 
 
