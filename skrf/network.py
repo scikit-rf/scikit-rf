@@ -154,7 +154,7 @@ Misc Functions
 from typing import (Any, NoReturn, Optional, Sequence,
     Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List, TextIO)
 from numbers import Number
-from functools import reduce
+from functools import reduce, lru_cache
 
 import os
 import warnings
@@ -187,39 +187,6 @@ from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
 if TYPE_CHECKING:
     import pandas as pd
-
-_PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 't']
-"""
-Primary Network Properties list like 's', 'z', 'y', etc.
-"""
-
-_COMPONENT_FUNC_DICT = {
-    're': npy.real,
-    'im': npy.imag,
-    'mag': npy.abs,
-    'db': mf.complex_2_db,
-    'db10': mf.complex_2_db10,
-    'rad': npy.angle,
-    'deg': lambda x: npy.angle(x, deg=True),
-    'arcl': lambda x: npy.angle(x) * npy.abs(x),
-    'rad_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)),
-    'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
-        npy.angle(x))),
-    'arcl_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)) * \
-                                npy.abs(x),
-    # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
-    'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-    'time': mf.ifft,
-    'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
-    'time_mag': lambda x: mf.complex_2_magnitude(mf.ifft(x)),
-    'time_impulse': None,
-    'time_step': None,
-}
-
-"""
-Component functions like 're', 'im', 'mag', 'db', etc.
-"""
-_GENERATED_FUNCTIONS = {f"{p}_{func_name}": (func, p) for p in _PRIMARY_PROPERTIES for func_name, func in _COMPONENT_FUNC_DICT.items()}
 
 class Network:
     r"""
@@ -306,8 +273,45 @@ class Network:
     .. [#TwoPortWiki] http://en.wikipedia.org/wiki/Two-port_network
 
     """
-    PRIMARY_PROPERTIES = _PRIMARY_PROPERTIES
-    COMPONENT_FUNC_DICT = _COMPONENT_FUNC_DICT
+
+    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 't']
+    """
+    Primary Network Properties list like 's', 'z', 'y', etc.
+    """
+
+    COMPONENT_FUNC_DICT = {
+        're': npy.real,
+        'im': npy.imag,
+        'mag': npy.abs,
+        'db': mf.complex_2_db,
+        'db10': mf.complex_2_db10,
+        'rad': npy.angle,
+        'deg': lambda x: npy.angle(x, deg=True),
+        'arcl': lambda x: npy.angle(x) * npy.abs(x),
+        'rad_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)),
+        'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
+            npy.angle(x))),
+        'arcl_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)) * \
+                                    npy.abs(x),
+        # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
+        'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
+        'time': mf.ifft,
+        'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
+        'time_mag': lambda x: mf.complex_2_magnitude(mf.ifft(x)),
+        'time_impulse': None,
+        'time_step': None,
+    }
+
+    """
+    Component functions like 're', 'im', 'mag', 'db', etc.
+    """
+
+    @classmethod
+    @lru_cache()
+    def _generated_functions(cls) -> dict[str, Callable]:
+        return {f"{p}_{func_name}": (func, p) 
+            for p in cls.PRIMARY_PROPERTIES 
+            for func_name, func in cls.COMPONENT_FUNC_DICT.items()}
 
     # provides y-axis labels to the plotting functions
     Y_LABEL_DICT = {
@@ -921,8 +925,8 @@ class Network:
 
     def __getattr__(self, name: str) -> Union['Network', npy.ndarray]:
 
-        if name in _GENERATED_FUNCTIONS.keys():
-            func, arg = _GENERATED_FUNCTIONS[name]
+        if name in self._generated_functions().keys():
+            func, arg = self._generated_functions()[name]
             return func(getattr(self, arg))
 
         m = re.match(r"s(\d+)_(\d+)", name)
@@ -944,7 +948,7 @@ class Network:
         s_properties = [f"s{t1}_{t2}" for t1 in range(self.nports) for t2 in range(self.nports)]
         s_properties += [f"s{t1}{t2}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
 
-        return ret + s_properties + list(_GENERATED_FUNCTIONS.keys())
+        return ret + s_properties + list(self._generated_functions().keys())
         
 
     # PRIMARY PROPERTIES
