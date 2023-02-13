@@ -922,7 +922,7 @@ class Network:
         if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
 
-    def __getattr__(self, name: str) -> Union['Network', npy.ndarray]:
+    def __getattr__(self, name: str) -> 'Network':
 
         m = re.match(r"s(\d+)_(\d+)", name)
         if not m:
