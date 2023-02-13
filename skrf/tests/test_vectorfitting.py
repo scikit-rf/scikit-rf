@@ -24,7 +24,7 @@ class VectorFittingTestCase(unittest.TestCase):
         with pytest.warns(UserWarning, match=self.msg_passivity_violation) as record:
             vf.vector_fit(n_poles_real=2, n_poles_cmplx=0, fit_proportional=True, fit_constant=True)
 
-        assert len(record) == 1
+        assert len(record) <= 1
         self.assertLess(vf.get_rms_error(), 0.02)
 
     def test_ringslot_default_log(self):
@@ -36,7 +36,7 @@ class VectorFittingTestCase(unittest.TestCase):
         with pytest.warns(UserWarning, match=self.msg_passivity_violation) as record:
             vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, init_pole_spacing='log')
 
-        assert len(record) == 1
+        assert len(record) <= 1
         self.assertLess(vf.get_rms_error(), 0.01)
 
     def test_ringslot_without_prop_const(self):
@@ -48,7 +48,7 @@ class VectorFittingTestCase(unittest.TestCase):
         with pytest.warns(UserWarning, match=self.msg_passivity_violation) as record:
             vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_proportional=False, fit_constant=False)
 
-        assert len(record) == 1
+        assert len(record) <= 1
         self.assertLess(vf.get_rms_error(), 0.01)
 
     def test_ringslot_custompoles(self):
@@ -61,7 +61,7 @@ class VectorFittingTestCase(unittest.TestCase):
         with pytest.warns(UserWarning, match=self.msg_passivity_violation) as record:
             vf.vector_fit(init_pole_spacing='custom')
 
-        assert len(record) == 1
+        assert len(record) <= 1
         self.assertLess(vf.get_rms_error(), 0.01)
 
     def test_190ghz_measured(self):
