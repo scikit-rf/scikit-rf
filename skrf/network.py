@@ -308,8 +308,8 @@ class Network:
 
     @classmethod
     @lru_cache()
-    def _generated_functions(cls) -> dict[str, Callable]:
-        return {f"{p}_{func_name}": (func, p) 
+    def _generated_functions(cls) -> Dict[str, Tuple[Callable, str, str]]:
+        return {f"{p}_{func_name}": (func, p, func_name) 
             for p in cls.PRIMARY_PROPERTIES 
             for func_name, func in cls.COMPONENT_FUNC_DICT.items()}
 
@@ -926,10 +926,6 @@ class Network:
 
     def __getattr__(self, name: str) -> Union['Network', npy.ndarray]:
 
-        if name in self._generated_functions().keys():
-            func, arg = self._generated_functions()[name]
-            return func(getattr(self, arg))
-
         m = re.match(r"s(\d+)_(\d+)", name)
         if not m:
             m = re.match(r"s(\d)(\d)", name)
@@ -950,8 +946,11 @@ class Network:
         s_properties += [f"s{t1}{t2}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
 
         return ret + s_properties + list(self._generated_functions().keys())
-        
 
+    def attribute(self, prop_name: str, conversion: str) -> npy.ndarray:
+        prop = getattr(self, prop_name)
+        return self.COMPONENT_FUNC_DICT[conversion](prop)
+        
     # PRIMARY PROPERTIES
     @property
     def s(self) -> npy.ndarray:
@@ -4126,6 +4125,23 @@ class Network:
             y_active : active Y-parameters
         """
         return s2vswr_active(self.s, a)
+
+for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
+
+    func_name = f"{prop_name}_{conversion}"
+    doc = f"""
+        The {conversion} component of the {prop_name}-matrix
+        See Also
+        --------
+        {prop_name}
+    """
+
+    setattr(Network, func_name, property(
+        fget=lambda self, 
+            prop_name=prop_name, 
+            conversion=conversion: 
+
+            self.attribute(prop_name, conversion), doc=doc))
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
 PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
