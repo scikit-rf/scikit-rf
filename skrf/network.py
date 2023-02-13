@@ -4129,6 +4129,7 @@ for func_name, (_func, prop_name, conversion) in Network._generated_functions().
     func_name = f"{prop_name}_{conversion}"
     doc = f"""
         The {conversion} component of the {prop_name}-matrix
+        
         See Also
         --------
         {prop_name}
