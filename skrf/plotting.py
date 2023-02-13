@@ -2341,7 +2341,11 @@ class PlottingMixin(BaseNetwork):
     def __dir__(self):
         ret = super().__dir__()
 
-        return ret + [f"plot_{e}" for e in self._generated_functions().keys()]
+        polar_plots = [f"plot_{e}_polar" for e in self.PRIMARY_PROPERTIES]
+        complex_plots = [f"plot_{e}_complex" for e in self.PRIMARY_PROPERTIES]
+        attribute_plots = [f"plot_{e}" for e in self._generated_functions().keys()]
+
+        return ret + polar_plots + complex_plots + attribute_plots
 
     def __init_subclass__(cls) -> None:
 
