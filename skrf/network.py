@@ -914,34 +914,10 @@ class Network:
         if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
 
-<<<<<<< HEAD
     def __getattr__(self, name: str) -> 'Network':
         m = re.match(r"s(\d+)_(\d+)", name)
         if not m:
             m = re.match(r"s(\d)(\d)", name)
-=======
-    @classmethod
-    def __generate_secondary_properties(cls) -> None:
-        """
-        creates numerous `secondary properties` which are various
-        different scalar projects of the primary properties. the primary
-        properties are s,z, and y.
-
-        The properties are set on the class, so this method only needs to be called once
-        """
-        if cls._secondary_properties_generated:
-            return
-        for prop_name in PRIMARY_PROPERTIES:
-            for func_name, func in COMPONENT_FUNC_DICT.items():
-                if 'gd' in func_name:  # scaling of gradient by frequency
-                    def fget(self: 'Network', f: Callable = func, p: str = prop_name) -> npy.ndarray:
-                        return f(getattr(self, p)) / (2 * npy.pi * self.frequency.step)
-                else:
-                    def fget(self: 'Network', f: Callable = func, p: str = prop_name) -> npy.ndarray:
-                        return f(getattr(self, p))
-                doc = f"""
-                The {func_name} component of the {prop_name}-matrix
->>>>>>> master
 
         if m:
             t0 = int(m.group(1)) - 1
@@ -952,7 +928,6 @@ class Network:
             return ntwk
         raise AttributeError
 
-<<<<<<< HEAD
     def __dir__(self):
         ret = super().__dir__()
         
@@ -960,15 +935,6 @@ class Network:
         s_properties += [f"s{t1}{t2}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
 
         return ret + s_properties
-=======
-                See Also
-                --------
-                {prop_name}
-                """
-
-                setattr(cls, f'{prop_name}_{func_name}', property(fget, doc=doc))
-        cls._secondary_properties_generated = True
->>>>>>> master
 
     def get(self, prop_name: str, conversion: str) -> npy.ndarray:
         prop = getattr(self, prop_name)
