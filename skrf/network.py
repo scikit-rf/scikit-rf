@@ -154,7 +154,7 @@ Misc Functions
 from typing import (Any, NoReturn, Optional, Sequence,
     Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List, TextIO)
 from numbers import Number
-from functools import reduce, partialmethod
+from functools import reduce, lru_cache
 
 import os
 import warnings
@@ -184,8 +184,6 @@ from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
 if TYPE_CHECKING:
     import pandas as pd
-
-
 
 class Network:
     r"""
@@ -290,7 +288,7 @@ class Network:
         'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
             npy.angle(x))),
         'arcl_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)) * \
-                                 npy.abs(x),
+                                    npy.abs(x),
         # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
         'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
         'time': mf.ifft,
@@ -299,9 +297,17 @@ class Network:
         'time_impulse': None,
         'time_step': None,
     }
+
     """
     Component functions like 're', 'im', 'mag', 'db', etc.
     """
+
+    @classmethod
+    @lru_cache()
+    def _generated_functions(cls) -> Dict[str, Tuple[Callable, str, str]]:
+        return {f"{p}_{func_name}": (func, p, func_name) 
+            for p in cls.PRIMARY_PROPERTIES 
+            for func_name, func in cls.COMPONENT_FUNC_DICT.items()}
 
     # provides y-axis labels to the plotting functions
     Y_LABEL_DICT = {
@@ -335,8 +341,6 @@ class Network:
     """
     Default interpolation method.
     """
-
-    _secondary_properties_generated = False
 
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
@@ -934,18 +938,12 @@ class Network:
         s_properties = [f"s{t1}_{t2}" for t1 in range(self.nports) for t2 in range(self.nports)]
         s_properties += [f"s{t1}{t2}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
 
-        return ret + s_properties
+        return ret + s_properties + list(self._generated_functions().keys())
 
-    def get(self, prop_name: str, conversion: str) -> npy.ndarray:
+    def attribute(self, prop_name: str, conversion: str) -> npy.ndarray:
         prop = getattr(self, prop_name)
-        return COMPONENT_FUNC_DICT[conversion](prop)
-
-    def plot_attribute(self, prop_name: str, conversion: str, *args, **kwargs):
-        from .plotting import plot_network_attribute
-
-        return plot_network_attribute(self, prop_name, conversion, *args, **kwargs)
-
-
+        return self.COMPONENT_FUNC_DICT[conversion](prop)
+        
     # PRIMARY PROPERTIES
     @property
     def s(self) -> npy.ndarray:
@@ -4121,13 +4119,11 @@ class Network:
         """
         return s2vswr_active(self.s, a)
 
-for prop_name, conversion in product(Network.PRIMARY_PROPERTIES, Network.COMPONENT_FUNC_DICT.keys()):
-    
+for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
+
     func_name = f"{prop_name}_{conversion}"
     doc = f"""
         The {conversion} component of the {prop_name}-matrix
-
-
         See Also
         --------
         {prop_name}
@@ -4137,15 +4133,8 @@ for prop_name, conversion in product(Network.PRIMARY_PROPERTIES, Network.COMPONE
         fget=lambda self, 
             prop_name=prop_name, 
             conversion=conversion: 
-            
-            self.get(prop_name, conversion), doc=doc))
 
-if plotting_available():
-    for prop_name, conversion in product(Network.PRIMARY_PROPERTIES, Network.COMPONENT_FUNC_DICT.keys()):
-    
-        func_name = f"plot_{prop_name}_{conversion}"
-        func = partialmethod(Network.plot, prop_name, conversion)
-        setattr(Network, func_name, func)
+            self.attribute(prop_name, conversion), doc=doc))
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
 PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
