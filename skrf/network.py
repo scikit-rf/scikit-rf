@@ -346,8 +346,6 @@ class Network:
     Default interpolation method.
     """
 
-    _secondary_properties_generated = False
-
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
                  comments: str = None, f_unit: str = None,
