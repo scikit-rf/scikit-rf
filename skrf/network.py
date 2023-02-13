@@ -346,6 +346,8 @@ class Network:
     Default interpolation method.
     """
 
+    _secondary_properties_generated = False
+
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
                  comments: str = None, f_unit: str = None,
@@ -413,7 +415,6 @@ class Network:
         write : write a network to a file, using pickle
         write_touchstone : write a network to a touchstone file
         """
-
         # allow for old kwarg for backward compatibility
         if 'touchstone_filename' in kwargs:
             file = kwargs['touchstone_filename']
@@ -665,7 +666,7 @@ class Network:
             result.s = self.s * other.s
         else:
             # other may be an array or a number
-            result.s = self.s * npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s * npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
@@ -685,7 +686,7 @@ class Network:
             result.s = self.s * other.s
         else:
             # other may be an array or a number
-            result.s = self.s * npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s * npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
@@ -704,7 +705,7 @@ class Network:
             result.s = self.s + other.s
         else:
             # other may be an array or a number
-            result.s = self.s + npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s + npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
@@ -723,7 +724,7 @@ class Network:
             result.s = self.s + other.s
         else:
             # other may be an array or a number
-            result.s = self.s + npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s + npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
@@ -738,7 +739,7 @@ class Network:
             result.s = self.s - other.s
         else:
             # other may be an array or a number
-            result.s = self.s - npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s - npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
@@ -757,7 +758,7 @@ class Network:
             result.s = other.s - self.s
         else:
             # other may be an array or a number
-            result.s = npy.array(other).reshape(-1, self.nports, self.nports) - self.s
+            result.s = npy.asarray(other).reshape(-1, self.nports, self.nports) - self.s
 
         return result
 
@@ -766,7 +767,7 @@ class Network:
 
     def __div__(self, other: 'Network') -> 'Network':
         """
-        Element-wise complex multiplication of s-matrix
+        Element-wise complex division of s-matrix
 
         Returns
         -------
@@ -779,7 +780,7 @@ class Network:
             result.s = self.s / other.s
         else:
             # other may be an array or a number
-            result.s = self.s / npy.array(other).reshape(-1, self.nports, self.nports)
+            result.s = self.s / npy.asarray(other).reshape(-1, self.nports, self.nports)
 
         return result
 
@@ -7031,7 +7032,7 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling')
     return result
 
 
-def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
+def two_port_reflect(ntwk1: Network, ntwk2: Network = None, name : Optional[str] = None) -> Network:
     """
     Generates a two-port reflective two-port, from two one-ports.
 
@@ -7042,7 +7043,9 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
             network seen from port 1
     ntwk2 : one-port Network object, or None
             network seen from port 2. if None then will use ntwk1.
-
+    name: Name for the combined network. If None, then construct the name
+          from the names of the input networks
+          
     Returns
     -------
     result : Network object
@@ -7071,10 +7074,14 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
          [s21, s22]]). \
         transpose().reshape(-1, 2, 2)
     result.z0 = npy.hstack([ntwk1.z0, ntwk2.z0])
-    try:
-        result.name = ntwk1.name + '-' + ntwk2.name
-    except(TypeError):
-        pass
+
+    if name is None:
+        try:
+            result.name = ntwk1.name + '-' + ntwk2.name
+        except(TypeError):
+            pass
+    else:
+        result.name = name
     return result
 
 def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
@@ -7244,3 +7251,35 @@ def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
     vswr_act = npy.einsum('fp,fp->fp', (1 + npy.abs(s_act)), npy.reciprocal(1 - npy.abs(s_act)))
     return vswr_act
 
+def twoport_to_nport(ntwk, port1, port2, nports, **kwargs):
+    r"""
+    Add ports to two-port. S-parameters of added ports are all zeros.
+
+    Parameters
+    ----------
+    ntwk : Two-port Network object
+    port1: int
+        First port of the two-port in the resulting N-port.
+    port2: int
+        Second port of the two-port in the resulting N-port.
+    nports: int
+        Number of ports in the N-port network.
+    \*\*kwargs:
+        Passed to :func:`Network.__init__` for resultant network.
+
+    Returns
+    -------
+    nport: N-port Network object
+    """
+    fpoints = len(ntwk.frequency)
+    nport = Network(frequency=ntwk.frequency,
+                    s=npy.zeros(shape=(fpoints, nports, nports)),
+                    name=ntwk.name,
+                    **kwargs)
+    nport.s[:,port1,port1] = ntwk.s[:,0,0]
+    nport.s[:,port2,port1] = ntwk.s[:,1,0]
+    nport.s[:,port1,port2] = ntwk.s[:,0,1]
+    nport.s[:,port2,port2] = ntwk.s[:,1,1]
+    nport.z0[:,port1] = ntwk.z0[:,0]
+    nport.z0[:,port2] = ntwk.z0[:,1]
+    return nport

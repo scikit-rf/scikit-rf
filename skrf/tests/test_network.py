@@ -1,4 +1,3 @@
-from numpy.core.fromnumeric import squeeze
 import py
 import pytest
 from skrf.frequency import Frequency, InvalidFrequencyWarning
@@ -13,7 +12,7 @@ from pathlib import Path
 import pickle
 import skrf as rf
 import warnings
-
+import numpy as np
 from skrf import setup_pylab
 from skrf.media import CPW
 from skrf.media import DistributedCircuit
@@ -67,6 +66,19 @@ class NetworkTestCase(unittest.TestCase):
         self.Fix2 = rf.concat_ports([l1, l1, l1, l1], port_order='first')
         self.DUT2 = rf.concat_ports([l2, l2, l2, l2], port_order='first')
         self.Meas2 = rf.concat_ports([l3, l3, l3, l3], port_order='first')
+
+    def test_two_port_reflect(self):
+        number_of_data_points = 10
+        f = rf.Frequency.from_f(np.linspace(2e6, 3e6, number_of_data_points), unit="Hz")
+        n=rf.Network(frequency=f, s=np.linspace(0.1, .8, number_of_data_points), name='test')
+        n2 = rf.two_port_reflect(n, n)
+        self.assertEqual(n2.name, n.name + '-' + n.name )
+        self.assertEqual(n2.s.shape, (number_of_data_points, 2, 2))
+        np.testing.assert_array_equal(n2.s[:, 0, 1], np.zeros(number_of_data_points))
+        np.testing.assert_array_equal(n2.s[:, 0, 0], n.s.flatten())
+
+        n2 = rf.two_port_reflect(n, n, name = 'new_name')
+        self.assertEqual(n2.name, 'new_name' )
 
     def test_timedomain(self):
         t = self.ntwk1.s11.s_time
@@ -1458,6 +1470,21 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(self.ntwk1.vswr_active([1, 0])[:,0], vswr_ref[:,0,0])
         # vswr_act should be equal to vswr22 if a = [0,1]
         npy.testing.assert_array_almost_equal(self.ntwk1.vswr_active([0, 1])[:,1], vswr_ref[:,1,1])
+
+    def test_twport_to_nport(self):
+        fpoints = 2
+        nports = 4
+        s = npy.ones((fpoints, 2, 2), dtype=complex)
+        f = rf.F(1, 10, fpoints, unit='GHz')
+        twoport = rf.Network(s=s, frequency=f)
+        nport = rf.twoport_to_nport(twoport, 0, 1, nports)
+        zeros = npy.zeros(fpoints, dtype=complex)
+        for i in range(nports):
+            for j in range(nports):
+                if i in [0, 1] and j in [0, 1]:
+                    npy.testing.assert_array_almost_equal(nport.s[:,i,j], twoport.s[:,i,j])
+                else:
+                    npy.testing.assert_array_almost_equal(nport.s[:,i,j], zeros)
 
 
     def test_generate_subnetworks_nportsbelow10(self):

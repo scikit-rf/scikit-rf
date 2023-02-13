@@ -9,7 +9,7 @@ import numpy as npy
 from numpy.random  import rand, uniform
 import pytest
 
-from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate, determine_line, determine_reflect, NISTMultilineTRL
+from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate, terminate_nport, determine_line, determine_reflect, NISTMultilineTRL, MultiportCal, MultiportSOLT
 
 from skrf import two_port_reflect
 from skrf.networkSet import NetworkSet
@@ -1797,6 +1797,170 @@ class LMR16Test(SixteenTermTest):
             self.thru,
             self.cal.solved_through)
 
-    
+class MultiportCalTest(unittest.TestCase):
+    """Multi-port NISTMultilineTRL calibration test"""
+
+    def test_cal(self):
+        self.wg = WG
+        wg = self.wg
+
+        self.n_ports = 3
+        nports = self.n_ports
+
+        self.make_error_networks(wg, nports)
+
+        cal_dict = {}
+
+        actuals = [
+            wg.thru(),
+            rf.two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
+            wg.line(100,'um'),
+            wg.line(900,'um'),
+            ]
+
+        dut = self.wg.random(n_ports=self.n_ports, name='dut')
+        dut_meas = self.measure(dut)
+
+        l = [0, 100e-6, 900e-6]
+
+        for p in [(0, 1), (0, 2)]:
+
+            measured = [self.measure(rf.twoport_to_nport(k, p[0], p[1], nports)) for k in actuals]
+            cal_dict[p] = {}
+            cal_dict[p]['method'] = NISTMultilineTRL
+            cal_dict[p]['measured'] = measured
+            # Two-port switch terms are in reverse order from multi-port switch terms.
+            cal_dict[p]['switch_terms'] = [self.gammas[i] for i in p][::-1]
+            cal_dict[p]['l'] = l
+            cal_dict[p]['Grefls'] = [-1]
+            cal_dict[p]['er_est'] = 1
+            cal_dict[p]['gamma_root_choice'] = 'real'
+
+        isolation = self.measure(wg.match(nports=nports))
+
+        self.cal = MultiportCal(cal_dict, isolation=isolation)
+
+        # Test coefs
+        nports = self.n_ports
+        for e, c in enumerate(self.cal.coefs):
+            self.assertTrue(npy.abs(c['directivity'] - self.Z.s[:,e,e]) < 1e-7)
+            self.assertTrue(npy.abs(c['source match'] - self.Z.s[:,nports+e,nports+e]) < 1e-7)
+            self.assertTrue(npy.abs(c['reflection tracking'] - self.Z.s[:,e,nports+e] * self.Z.s[:,nports+e,e]) < 1e-7)
+            self.assertTrue(npy.abs(c['switch term'] - self.gammas[e].s) < 1e-7)
+            self.assertTrue(npy.abs(c['k']/self.cal.coefs[0]['k'] - self.Z.s[:,nports+0,0]/self.Z.s[:,nports+e,e]) < 1e-7)
+
+        # Test DUT correction
+        dut_cal = self.cal.apply_cal(dut_meas)
+        self.assertEqual(dut_cal, dut)
+
+        # Test cal inverts embed
+        a = self.wg.random(n_ports=self.n_ports)
+        self.assertEqual(self.cal.apply_cal(self.cal.embed(a)),a)
+
+        # Test embed equals measure
+        a = self.wg.random(n_ports=self.n_ports)
+        self.assertEqual(self.cal.embed(a),self.measure(a))
+
+        # Test gamma solved by TRL
+        for p in [(0, 1), (0, 2)]:
+            self.assertTrue(max(npy.abs(self.wg.gamma-self.cal.cals[p].gamma)) < 1e-3)
+
+    def make_error_networks(self, wg, nports):
+        self.Z = wg.random(n_ports = 2*nports, name = 'Z')
+
+        # Isolation terms are between all ports.
+        # No error in the same port.
+        self.isolation = wg.random(n_ports=nports, name='I')
+        for i in range(nports):
+            self.isolation.s[:, i, i] = 0
+
+        port_type = lambda n: 'VNA' if n < nports else 'DUT'
+        port_number = lambda n: n if n < nports else n - nports
+        # Remove leakage terms
+        for i in range(2*nports):
+            for j in range(i+1, 2*nports):
+                # No connection between different VNA/DUT ports.
+                # No connection between VNA and DUT ports with different number.
+                if port_type(i) == port_type(j) or port_number(i) != port_number(j):
+                    self.Z.s[:,i,j] = 0
+                    self.Z.s[:,j,i] = 0
+
+        self.gammas = []
+        for i in range(nports):
+            self.gammas.append(wg.random(n_ports=1, name=f'gamma_{i}'))
+
+    def terminate(self, ntwk):
+        """
+        Terminate a measured network with the switch terms
+        """
+        return terminate_nport(ntwk, self.gammas)
+
+    def measure(self, ntwk):
+        out = self.terminate(rf.connect(self.Z, self.n_ports, ntwk, 0, num=self.n_ports))
+        out = out + self.isolation
+        out.name = ntwk.name
+        return out
+
+class MultiportSOLTTest(MultiportCalTest):
+
+    def test_cal(self):
+        nport_list = [3, 4]
+        method_list = [SOLT, UnknownThru]
+
+        self.wg = WG
+        wg = self.wg
+
+        for nport in nport_list:
+            self.n_ports = nport
+            nports = self.n_ports
+
+            self.make_error_networks(wg, nports)
+
+            o = wg.open(nports=nports, name='open')
+            s = wg.short(nports=nports, name='short')
+            m = wg.match(nports=nports, name='load')
+
+            thru = wg.thru(name='thru')
+
+            ideals = []
+            # nports-1 thrus from port 0 to all other ports.
+            for i in range(1, nports):
+                thru_i = rf.twoport_to_nport(thru, 0, i, nports)
+                ideals.append(thru_i)
+
+            ideals.extend([o,s,m])
+            measured = [self.measure(k) for k in ideals]
+
+            dut = self.wg.random(n_ports=self.n_ports, name='dut')
+            dut_meas = self.measure(dut)
+
+            for method in method_list:
+
+                if method == SOLT:
+                    self.cal = MultiportSOLT(method, measured, ideals, isolation=measured[-1])
+                else:
+                    self.cal = MultiportSOLT(method, measured, ideals, isolation=measured[-1], switch_terms=self.gammas)
+
+                # Test coefs
+                nports = self.n_ports
+                for e, c in enumerate(self.cal.coefs):
+                    self.assertTrue(npy.abs(c['directivity'] - self.Z.s[:,e,e]) < 1e-7)
+                    self.assertTrue(npy.abs(c['source match'] - self.Z.s[:,nports+e,nports+e]) < 1e-7)
+                    self.assertTrue(npy.abs(c['reflection tracking'] - self.Z.s[:,e,nports+e] * self.Z.s[:,nports+e,e]) < 1e-7)
+                    self.assertTrue(npy.abs(c['switch term'] - self.gammas[e].s) < 1e-7)
+                    self.assertTrue(npy.abs(c['k']/self.cal.coefs[0]['k'] - self.Z.s[:,nports+0,0]/self.Z.s[:,nports+e,e]) < 1e-7)
+
+                # Test DUT correction
+                dut_cal = self.cal.apply_cal(dut_meas)
+                self.assertEqual(dut_cal, dut)
+
+                # Test cal inverts embed
+                a = self.wg.random(n_ports=self.n_ports)
+                self.assertEqual(self.cal.apply_cal(self.cal.embed(a)),a)
+
+                # Test embed equals measure
+                a = self.wg.random(n_ports=self.n_ports)
+                self.assertEqual(self.cal.embed(a),self.measure(a))
+
 if __name__ == "__main__":
     unittest.main()

@@ -559,7 +559,7 @@ def plot_complex_polar(z: NumberLike,
 def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
                x_label: str = 'Real', y_label: str = 'Imaginary', title: str = 'Complex Plane',
                show_legend: bool = True, axis: str = 'equal', ax: Union[plt.Axes, None] = None,
-               force_chart: bool = False, draw_vswr: Union[List, bool, None] = None,
+               force_chart: bool = False, draw_vswr: Union[List, bool, None] = None, draw_labels: bool = False,
                *args, **kwargs):
     r"""
     plot complex data on smith chart.
@@ -591,6 +591,8 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
     draw_vswr : list of numbers, Boolean or None, optional
         draw VSWR circles. If True, default values are used.
         Default is None.
+    draw_labels : Boolean
+        annotate chart with impedance values
     \*args, \*\*kwargs : passed to pylab.plot
 
     See Also
@@ -608,7 +610,7 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
     # test if smith chart is already drawn
     if not force_chart:
         if len(ax.patches) == 0:
-            smith(ax=ax, smithR = smith_r, chart_type=chart_type, draw_vswr=draw_vswr)
+            smith(ax=ax, smithR = smith_r, chart_type=chart_type, draw_vswr=draw_vswr, draw_labels=draw_labels)
 
     plot_complex_rectangular(s, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,
@@ -699,7 +701,8 @@ def shade_bands(edges: NumberLike, y_range: Union[Tuple, None] = None,
     >>> rf.shade_bands([325,500,750,1100], alpha=.2)
     """
     cmap = plt.cm.get_cmap(cmap)
-    y_range=plt.gca().get_ylim()
+    if not isinstance(y_range, (tuple, list)) or (len(y_range) != 2):
+        y_range=plt.gca().get_ylim()
     axis = plt.axis()
     for k in range(len(edges)-1):
         plt.fill_between(
