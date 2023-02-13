@@ -35,6 +35,14 @@ class VectorFittingTestCase(unittest.TestCase):
         assert len(record) == 1
         self.assertLess(vf.get_rms_error(), 0.01)
 
+    def test_ringslot_custompoles(self):
+        # perform the fit with custom initial poles
+        nw = skrf.data.ring_slot
+        vf = skrf.vectorFitting.VectorFitting(nw)
+        vf.poles = 2 * np.pi * np.array([-100e9, -10e9+100e9j])
+        vf.vector_fit(init_pole_spacing='custom')
+        self.assertLess(vf.get_rms_error(), 0.01)
+
     def test_190ghz_measured(self):
         # perform the fit without proportional term
         nw = skrf.network.Network('./doc/source/examples/vectorfitting/190ghz_tx_measured.S2P')
