@@ -250,6 +250,7 @@ class VectorFitting:
         # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
         weights_responses = np.linalg.norm(freq_responses, axis=1)
         #weights_responses = np.ones(self.network.nports ** 2)
+        #weights_responses = 10 / np.exp(np.mean(np.log(np.abs(freq_responses)), axis=1))
 
         # weight of extra equation to avoid trivial solution
         weight_extra = np.linalg.norm(weights_responses[:, None] * freq_responses) / n_samples
