@@ -166,7 +166,8 @@ class VectorFitting:
 
         # create initial poles and space them across the frequencies in the provided Touchstone file
         # use normalized frequencies during the iterations (seems to be more stable during least-squares fit)
-        norm = np.average(self.network.f)
+        #norm = np.average(self.network.f)
+        norm = np.exp(np.mean(np.log(self.network.f)))
         freqs_norm = np.array(self.network.f) / norm
 
         fmin = np.amin(freqs_norm)
@@ -187,7 +188,11 @@ class VectorFitting:
         elif init_pole_spacing == 'custom':
             pole_freqs_real = None
             pole_freqs_cmplx = None
-            poles = self.poles / norm
+            if self.poles is not None and len(self.poles) > 0:
+                poles = self.poles / norm
+            else:
+                raise ValueError('Initial poles must be provided in `self.poles` when calling with '
+                                 '`init_pole_spacing == \'custom\'`.')
         else:
             warnings.warn('Invalid choice of initial pole spacing; proceeding with linear spacing.', UserWarning,
                           stacklevel=2)
@@ -243,7 +248,8 @@ class VectorFitting:
         # responses will be weighted according to their norm;
         # alternative: equal weights with weight_response = 1.0
         # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
-        weights_responses = np.linalg.norm(freq_responses, axis=1)
+        weights_responses = 10 / np.exp(np.mean(np.log(np.abs(freq_responses)), axis=1))
+        #weights_responses = np.linalg.norm(freq_responses, axis=1)
         #weights_responses = np.ones(self.network.nports ** 2)
 
         # weight of extra equation to avoid trivial solution
