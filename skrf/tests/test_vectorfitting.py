@@ -30,7 +30,7 @@ class VectorFittingTestCase(unittest.TestCase):
         vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, init_pole_spacing='log')
         self.assertLess(vf.get_rms_error(), 0.01)
 
-    #@pytest.mark.filterwarnings(f'ignore:*{msg_passivity_violation}*:UserWarning')
+    @pytest.mark.filterwarnings(f'ignore:*passivity_enforce()*:UserWarning')
     def test_ringslot_without_prop_const(self):
         # perform the fit without proportional term
         nw = skrf.data.ring_slot
