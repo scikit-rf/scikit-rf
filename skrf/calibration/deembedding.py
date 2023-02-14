@@ -239,10 +239,10 @@ class OpenShort(Deembedding):
             warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
             caled, op, sh = overlap_multi([ntwk, self.open, self.short])
         else:
-            caled, op, sh = ntwk.copy(), self.open, self.short.copy()
+            caled, op, sh = ntwk.copy(), self.open, self.short
 
         # remove parallel parasitics from the short dummy
-        deembeded_short = sh
+        deembeded_short = sh.copy()
         deembeded_short.y = sh.y - op.y
         # remove parallel parasitics from the dut
         caled.y = caled.y - op.y
@@ -430,11 +430,11 @@ class ShortOpen(Deembedding):
             warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
             ntwk, op, sh = overlap_multi([ntwk, self.open, self.short])
         else:
-            op, sh = self.open.copy(), self.short
+            op, sh = self.open, self.short
 
         caled = ntwk.copy()
         # remove series parasitics from the open dummy
-        deembeded_open = op
+        deembeded_open = op.copy()
         deembeded_open.z = op.z - sh.z
         # remove parallel parasitics from the dut
         caled.z = ntwk.z - sh.z
@@ -526,7 +526,7 @@ class Short(Deembedding):
             warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
             ntwk, sh = overlap_multi([ntwk, self.short])
         else:
-            sh = self.short.copy()
+            sh = self.short
 
         caled = ntwk.copy()
         # remove short parasitics
