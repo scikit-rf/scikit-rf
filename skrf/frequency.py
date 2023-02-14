@@ -697,9 +697,9 @@ class Frequency:
             'lin' if linearly increasing, 'log' or 'unknown'.
 
         """
-        if npy.allclose(self.f, linspace(self.f[0], self.f[-1], self.npoints)):
+        if npy.allclose(self.f, linspace(self.f[0], self.f[-1], self.npoints), rtol=0.05):
             sweep_type = 'lin'
-        elif self.f[0] and npy.allclose(self.f, geomspace(self.f[0], self.f[-1], self.npoints)):
+        elif self.f[0] and npy.allclose(self.f, geomspace(self.f[0], self.f[-1], self.npoints), rtol=0.05):
             sweep_type = 'log'
         else:
             sweep_type = 'unknown'
