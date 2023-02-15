@@ -11,7 +11,7 @@ class VectorFittingTestCase(unittest.TestCase):
 
     msg_passivity_violation = 'UserWarning: The fitted network is passive, but the vector fit is not passive.'
 
-    @pytest.mark.filterwarnings(f'ignore:{msg_passivity_violation}:UserWarning')
+    @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_ringslot_with_proportional(self):
         # perform the fit
         nw = skrf.data.ring_slot
@@ -19,7 +19,7 @@ class VectorFittingTestCase(unittest.TestCase):
         vf.vector_fit(n_poles_real=2, n_poles_cmplx=0, fit_proportional=True, fit_constant=True)
         self.assertLess(vf.get_rms_error(), 0.02)
 
-    @pytest.mark.filterwarnings(f'ignore:{msg_passivity_violation}:UserWarning')
+    @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_ringslot_default_log(self):
         # perform the fit without proportional term
         nw = skrf.data.ring_slot
@@ -27,7 +27,7 @@ class VectorFittingTestCase(unittest.TestCase):
         vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, init_pole_spacing='log')
         self.assertLess(vf.get_rms_error(), 0.01)
 
-    @pytest.mark.filterwarnings(f'ignore:{msg_passivity_violation}:UserWarning')
+    @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_ringslot_without_prop_const(self):
         # perform the fit without proportional term
         nw = skrf.data.ring_slot
