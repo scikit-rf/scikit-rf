@@ -9,8 +9,6 @@ import sys
 
 class VectorFittingTestCase(unittest.TestCase):
 
-    msg_passivity_violation = 'UserWarning: The fitted network is passive, but the vector fit is not passive.'
-
     @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_ringslot_with_proportional(self):
         # perform the fit
