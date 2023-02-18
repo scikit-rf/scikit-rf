@@ -35,14 +35,14 @@ class VectorFittingTestCase(unittest.TestCase):
         vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_proportional=False, fit_constant=False)
         self.assertLess(vf.get_rms_error(), 0.01)
 
-    # @pytest.mark.filterwarnings(f'ignore:*{msg_passivity_violation}*:UserWarning')
-    # def test_ringslot_custompoles(self):
-    #     # perform the fit with custom initial poles
-    #     nw = skrf.data.ring_slot
-    #     vf = skrf.vectorFitting.VectorFitting(nw)
-    #     vf.poles = 2 * np.pi * np.array([-100e9, -10e9 + 100e9j])
-    #     vf.vector_fit(init_pole_spacing='custom')
-    #     self.assertLess(vf.get_rms_error(), 0.01)
+    @pytest.mark.filterwarnings('ignore::UserWarning')
+    def test_ringslot_custompoles(self):
+        # perform the fit with custom initial poles
+        nw = skrf.data.ring_slot
+        vf = skrf.vectorFitting.VectorFitting(nw)
+        vf.poles = 2 * np.pi * np.array([-100e9, -10e9 + 100e9j])
+        vf.vector_fit(init_pole_spacing='custom')
+        self.assertLess(vf.get_rms_error(), 0.01)
 
     def test_190ghz_measured(self):
         # perform the fit without proportional term
