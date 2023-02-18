@@ -188,10 +188,6 @@ from .constants import S_DEFINITIONS, S_DEF_DEFAULT, S_DEF_HFSS_DEFAULT
 if TYPE_CHECKING:
     import pandas as pd
 
-#from matplotlib import cm
-#import matplotlib.pyplot as plt
-#import matplotlib.tri as tri
-#from scipy.interpolate import interp1d
 
 class Network:
     r"""
@@ -2116,28 +2112,28 @@ class Network:
         
 
         if touchstoneFile.noise is not None:
-          noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult
-          nfmin_db = touchstoneFile.noise[:, 1]
-          gamma_opt_mag = touchstoneFile.noise[:, 2]
-          gamma_opt_angle = npy.deg2rad(touchstoneFile.noise[:, 3])
-
-          # TODO maybe properly interpolate z0?
-          # it probably never actually changes
-          if touchstoneFile.version == '1.0':
-            rn = touchstoneFile.noise[:, 4] * self.z0[0, 0]
-          else:
-            rn = touchstoneFile.noise[:, 4]
-
-          gamma_opt = gamma_opt_mag * npy.exp(1j * gamma_opt_angle)
-
-          nf_min = npy.power(10., nfmin_db/10.)
-          # TODO maybe interpolate z0 as above
-          y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
-          # use the voltage/current correlation matrix; this works nicely with
-          # cascading networks
-          self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
-          self.noise_freq.unit = touchstoneFile.frequency_unit
-          self.set_noise_a(self.noise_freq, nfmin_db, gamma_opt, rn )
+            noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult
+            nfmin_db = touchstoneFile.noise[:, 1]
+            gamma_opt_mag = touchstoneFile.noise[:, 2]
+            gamma_opt_angle = npy.deg2rad(touchstoneFile.noise[:, 3])
+    
+            # TODO maybe properly interpolate z0?
+            # it probably never actually changes
+            if touchstoneFile.version == '1.0':
+                rn = touchstoneFile.noise[:, 4] * self.z0[0, 0]
+            else:
+                rn = touchstoneFile.noise[:, 4]
+    
+            gamma_opt = gamma_opt_mag * npy.exp(1j * gamma_opt_angle)
+    
+            nf_min = npy.power(10., nfmin_db/10.)
+            # TODO maybe interpolate z0 as above
+            y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
+            # use the voltage/current correlation matrix; this works nicely with
+            # cascading networks
+            self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
+            self.noise_freq.unit = touchstoneFile.frequency_unit
+            self.set_noise_a(self.noise_freq, nfmin_db, gamma_opt, rn)
 
         if self.name is None:
             try:
