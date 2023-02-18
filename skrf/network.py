@@ -183,7 +183,7 @@ from .util import get_fid, get_extn, find_nearest_index, slice_domain
 from .time import time_gate
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
-from .constants import S_DEFINITIONS, S_DEF_DEFAULT
+from .constants import S_DEFINITIONS, S_DEF_DEFAULT, S_DEF_HFSS_DEFAULT
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -348,7 +348,7 @@ class Network:
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
                  comments: str = None, f_unit: str = None,
-                 s_def: str = S_DEF_DEFAULT, **kwargs) -> None:
+                 s_def: Union[str, None] = None, **kwargs) -> None:
         r"""
         Network constructor.
 
@@ -427,7 +427,7 @@ class Network:
         self.noise_freq = None
         self._z0 = npy.array(50, dtype=complex)
 
-        if s_def not in S_DEFINITIONS:
+        if s_def not in S_DEFINITIONS and s_def is not None:
             raise ValueError('s_def parameter should be either:', S_DEFINITIONS)
         else:
             self.s_def = s_def
@@ -464,6 +464,11 @@ class Network:
 
         if self.frequency is not None and f_unit is not None:
             self.frequency.unit = f_unit
+
+        # S-param definition. Done *after* reading data,
+        # where the S-param definition may have been guessed.
+        if self.s_def is None:  # not guessed
+            self.s_def = S_DEF_DEFAULT
 
         # Check for multiple attributes
         params = [attr for attr in PRIMARY_PROPERTIES if attr in kwargs]
@@ -2103,8 +2108,9 @@ class Network:
 
         if touchstoneFile.has_hfss_port_impedances:
             self.gamma, self.z0 = touchstoneFile.get_gamma_z0()
-            # This is the s_def that HFSS uses
-            self.s_def = 'traveling'
+            # if s_def not explicitely passed before, uses default HFSS setting
+            if self.s_def is None:
+                self.s_def = S_DEF_HFSS_DEFAULT 
         else:
             self.z0 = touchstoneFile.resistance
         
