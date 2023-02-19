@@ -107,9 +107,9 @@ class Deembedding(ABC):
        # ensure all the dummy Networks' frequency's are the same
         for dmyntwk in dummies:
             if dummies[0].frequency != dmyntwk.frequency:
-                raise(ValueError('Dummy Networks dont have matching frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+                warnings.warn('Dummy Networks dont have matching frequencies, attempting overlap.', RuntimeWarning)
+                dummies = overlap_multi(dummies)
+                break
 
         self.frequency = dummies[0].frequency
         self.dummies = dummies
@@ -236,17 +236,16 @@ class OpenShort(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
-
-        caled = ntwk.copy()
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            caled, op, sh = overlap_multi([ntwk, self.open, self.short])
+        else:
+            caled, op, sh = ntwk.copy(), self.open, self.short
 
         # remove parallel parasitics from the short dummy
-        deembeded_short = self.short.copy()
-        deembeded_short.y = self.short.y - self.open.y
+        deembeded_short = sh.copy()
+        deembeded_short.y = sh.y - op.y
         # remove parallel parasitics from the dut
-        caled.y = ntwk.y - self.open.y
+        caled.y = caled.y - op.y
         # remove series parasitics from the dut
         caled.z = caled.z - deembeded_short.z
 
@@ -330,14 +329,14 @@ class Open(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, op = overlap_multi([ntwk, self.open])
+        else:
+            op = self.open
 
         caled = ntwk.copy()
-
         # remove open parasitics
-        caled.y = ntwk.y - self.open.y
+        caled.y = ntwk.y - op.y
 
         return caled
 
@@ -428,17 +427,17 @@ class ShortOpen(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, op, sh = overlap_multi([ntwk, self.open, self.short])
+        else:
+            op, sh = self.open, self.short
 
         caled = ntwk.copy()
-
         # remove series parasitics from the open dummy
-        deembeded_open = self.open.copy()
-        deembeded_open.z = self.open.z - self.short.z
+        deembeded_open = op.copy()
+        deembeded_open.z = op.z - sh.z
         # remove parallel parasitics from the dut
-        caled.z = ntwk.z - self.short.z
+        caled.z = ntwk.z - sh.z
         # remove series parasitics from the dut
         caled.y = caled.y - deembeded_open.y
 
@@ -524,14 +523,14 @@ class Short(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.short.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, sh = overlap_multi([ntwk, self.short])
+        else:
+            sh = self.short
 
         caled = ntwk.copy()
-
         # remove short parasitics
-        caled.z = ntwk.z - self.short.z
+        caled.z = ntwk.z - sh.z
 
         return caled
 
@@ -618,16 +617,17 @@ class SplitPi(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, thru = overlap_multi([ntwk, self.thru])
+        else:
+            thru = self.thru
 
-        # TODO: attempt to interpolate if frequencies do not match
-
-        left = self.thru.copy()
+        left = thru.copy()
         left_y = left.y
-        left_y[:,0,0] = (self.thru.y[:,0,0] - self.thru.y[:,1,0] + self.thru.y[:,1,1] - self.thru.y[:,0,1]) / 2
-        left_y[:,0,1] = self.thru.y[:,1,0] + self.thru.y[:,0,1]
-        left_y[:,1,0] = self.thru.y[:,1,0] + self.thru.y[:,0,1]
-        left_y[:,1,1] = - self.thru.y[:,1,0] - self.thru.y[:,0,1]
+        left_y[:,0,0] = (thru.y[:,0,0] - thru.y[:,1,0] + thru.y[:,1,1] - thru.y[:,0,1]) / 2
+        left_y[:,0,1] = thru.y[:,1,0] + thru.y[:,0,1]
+        left_y[:,1,0] = thru.y[:,1,0] + thru.y[:,0,1]
+        left_y[:,1,1] = - thru.y[:,1,0] - thru.y[:,0,1]
         left.y = left_y
         right = left.flipped()
         caled = left.inv ** ntwk ** right.inv
@@ -717,16 +717,17 @@ class SplitTee(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, thru = overlap_multi([ntwk, self.thru])
+        else:
+            thru = self.thru
 
-        # TODO: attempt to interpolate if frequencies do not match
-
-        left = self.thru.copy()
+        left = thru.copy()
         left_z = left.z
-        left_z[:,0,0] = (self.thru.z[:,0,0] + self.thru.z[:,1,0] + self.thru.z[:,1,1] + self.thru.z[:,0,1]) / 2
-        left_z[:,0,1] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
-        left_z[:,1,0] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
-        left_z[:,1,1] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
+        left_z[:,0,0] = (thru.z[:,0,0] + thru.z[:,1,0] + thru.z[:,1,1] + thru.z[:,0,1]) / 2
+        left_z[:,0,1] = thru.z[:,1,0] + thru.z[:,0,1]
+        left_z[:,1,0] = thru.z[:,1,0] + thru.z[:,0,1]
+        left_z[:,1,1] = thru.z[:,1,0] + thru.z[:,0,1]
         left.z = left_z
         right = left.flipped()
         caled = left.inv ** ntwk ** right.inv
@@ -819,12 +820,13 @@ class AdmittanceCancel(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, thru = overlap_multi([ntwk, self.thru])
+        else:
+            thru = self.thru
 
         caled = ntwk.copy()
-        h = ntwk ** self.thru.inv
+        h = ntwk ** thru.inv
         h_ = h.flipped()
         caled.y = (h.y + h_.y) / 2
 
@@ -919,12 +921,13 @@ class ImpedanceCancel(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, thru = overlap_multi([ntwk, self.thru])
+        else:
+            thru = self.thru
 
         caled = ntwk.copy()
-        h = ntwk ** self.thru.inv
+        h = ntwk ** thru.inv
         h_ = h.flipped()
         caled.z = (h.z + h_.z) / 2
 
@@ -1074,11 +1077,14 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
+            s_side1, s_side2 = self.split2xthru(s2xthru)
+        else:
+            s_side1 = self.s_side1
+            s_side2 = self.s_side2
 
-        # TODO: attempt to interpolate if frequencies do not match
-
-        return self.s_side1.inv ** ntwk ** self.s_side2.flipped().inv
+        return s_side1.inv ** ntwk ** s_side2.flipped().inv
     
     def dc_interp(self, s, f):
         """
@@ -1555,9 +1561,12 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
+            se_side1, se_side2 = self.split2xthru(s2xthru)
+        else:
+            se_side1 = self.se_side1
+            se_side2 = self.se_side2
         
         # check if 4-port
         if ntwk.nports != 4:
@@ -1574,7 +1583,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
             ntwk.renumber(old_order, new_order)
 
-        deembedded = self.se_side1.inv ** ntwk ** self.se_side2.flipped().inv
+        deembedded = se_side1.inv ** ntwk ** se_side2.flipped().inv
         #renumber back if required
         if self.port_order != 'second':
             deembedded.renumber(new_order, old_order)
@@ -1775,11 +1784,15 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
+            s_side1, s_side2 = self.split2xthru(s2xthru,
+                                                      self.sfix_dut_fix)
+        else:
+            s_side1 = self.s_side1
+            s_side2 = self.s_side2
 
-        # TODO: attempt to interpolate if frequencies do not match
-
-        return self.s_side1.inv ** ntwk ** self.s_side2.flipped().inv
+        return s_side1.inv ** ntwk ** s_side2.flipped().inv
     
     def thru(self, n):
         out = n.copy();
@@ -2452,9 +2465,12 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
+            se_side1, se_side2 = self.split2xthru(s2xthru, self.sfix_dut_fix)
+        else:
+            se_side1 = self.se_side1
+            se_side2 = self.se_side2
         
         # check if 4-port
         if ntwk.nports != 4:
@@ -2471,7 +2487,7 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
             new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
             ntwk.renumber(old_order, new_order)
 
-        deembedded = self.se_side1.inv ** ntwk ** self.se_side2.flipped().inv
+        deembedded = se_side1.inv ** ntwk ** se_side2.flipped().inv
         #renumber back if required
         if self.port_order != 'second':
             deembedded.renumber(new_order, old_order)
