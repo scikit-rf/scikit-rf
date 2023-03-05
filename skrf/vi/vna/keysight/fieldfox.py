@@ -1,218 +1,218 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import List, Optional, Sequence, Union
-
 import itertools
-import pprint
+from enum import Enum
 
 import numpy as np
-from skrf import Calibration, Frequency, Network
-from skrf.network import four_oneports_2_twoport
 
-from ..vna import VNA
+import skrf
+from skrf.vi import vna
+from skrf.vi.validators import (
+    EnumValidator,
+    FloatValidator,
+    FreqValidator,
+    IntValidator,
+    SetValidator,
+)
 
 
-class FieldFox(VNA):
-    """
-    Keysight's FieldFox analyzer.
+class WindowFormat(Enum):
+    ONE_TRACE = "D1"
+    TWO_TRACES = "D2"
+    THREE_TRACES = "D3"
+    TWO_VERTICAL = "D12H"
+    ONE_FIRST_ROW_TWO_SECOND_ROW = "D11_23"
+    TWO_BY_TWO = "D12_34"
 
-    This class assumes the FieldFox has been put into NA mode before initializing
-    """
+
+class MeasurementParameter(Enum):
+    S11 = "S11"
+    S12 = "S12"
+    S21 = "S21"
+    S22 = "S22"
+    A = "A"
+    B = "B"
+    R1 = "R1"
+    R2 = "R2"
+
+
+class FieldFox(vna.VNA):
+
+    freq_start = vna.VNA.command(
+        get_cmd="SENS:FREQ:STAR?",
+        set_cmd="SENS:FREQ:STAR <arg>",
+        doc="""The start frequency [Hz]""",
+        validator=FreqValidator(),
+    )
+
+    freq_stop = vna.VNA.command(
+        get_cmd="SENS:FREQ:STOP?",
+        set_cmd="SENS:FREQ:STOP <arg>",
+        doc="""The start frequency [Hz]""",
+        validator=FreqValidator(),
+    )
+
+    freq_center = vna.VNA.command(
+        get_cmd="SENS:FREQ:CENT?",
+        set_cmd="SENS:FREQ:CENT <arg>",
+        doc="""The center frequency [Hz]""",
+        validator=FreqValidator(),
+    )
+
+    freq_span = vna.VNA.command(
+        get_cmd="SENS:FREQ:SPAN?",
+        set_cmd="SENS:FREQ:SPAN <arg>",
+        doc="""The frequency span [Hz]""",
+        validator=FreqValidator(),
+    )
+
+    npoints = vna.VNA.command(
+        get_cmd="SENS:SWE:POIN?",
+        set_cmd="SENS:SWE:POIN <arg>",
+        doc="""The number of frequency points""",
+        validator=IntValidator(),
+    )
+
+    sweep_time = vna.VNA.command(
+        get_cmd="SENS:SWE:TIME?",
+        set_cmd="SENS:SWE:TIME <arg>",
+        doc="""The sweep time [s]""",
+        validator=FloatValidator(),
+    )
+
+    if_bandwidth = vna.VNA.command(
+        get_cmd="SENS:BWID?",
+        set_cmd="SENS:BWID <arg>",
+        doc="""The center frequency [Hz]""",
+        validator=SetValidator([10, 30, 100, 300, 1000, 10_000, 30_000, 100_000]),
+    )
+
+    window_configuration = vna.VNA.command(
+        get_cmd="DISP:WIND:SPL?",
+        set_cmd="DISP:WIND:SPL <arg>",
+        doc="""How multiple trace windows appear on screen""",
+        validator=EnumValidator(WindowFormat),
+    )
+
+    n_traces = vna.VNA.command(
+        get_cmd="CALC:PAR:COUN?",
+        set_cmd="CALC:PAR:COUN <arg>",
+        doc="""The number of active traces.""",
+        validator=IntValidator(min=1, max=4),
+    )
+
+    active_trace = vna.VNA.command(
+        set_cmd="CALC:PAR<arg>:SEL",
+        doc="""Set the active trace. There is no command to read the active
+            trace.""",
+        validator=IntValidator(min=1, max=4),
+    )
+
+    active_trace_sdata = vna.VNA.command(
+        get_cmd="CALC:DATA:SDATA?",
+        doc="""Get the current trace data as a network""",
+        values=True,
+    )
+
+    def __init__(self, address: str, backend: str = "@py") -> None:
+        super().__init__(address, backend)
+
+        self._resource.read_termination = "\n"
+        self._resource.write_termination = "\n"
+
+    @staticmethod
+    def _cal_terms_and_keys(self):
+        direction = ["forward", "reverse"]
+        term_map = {
+            "es": "source match",
+            "er": "reflection tracking",
+            "ed": "directivity",
+            "el": "load match",
+            "et": "transmission tracking",
+            "ex": "isolation",
+        }
+        ports = ["1,1", "1,2", "2,1", "2,2"]
+        terms = [",".join(k) for k in itertools.product(term_map.keys(), ports)]
+        cal_keys = [
+            " ".join(k) for k in itertools.product(direction, term_map.values())
+        ]
+
+        return zip(terms, cal_keys)
 
     @property
-    def start_freq(self) -> float:
-        return float(self.query("sense:frequency:start?"))
-
-    @start_freq.setter
-    def start_freq(self, freq: float) -> None:
-        self.write(f"sense:frequency:start {freq}")
-
-    @property
-    def stop_freq(self) -> float:
-        return float(self.query("sense:frequency:stop?"))
-
-    @stop_freq.setter
-    def stop_freq(self, freq: float) -> None:
-        self.write(f"sense:frequency:stop {freq}")
-
-    @property
-    def npoints(self) -> int:
-        return int(self.query("sense:sweep:points?"))
-
-    @npoints.setter
-    def npoints(self, n: int) -> None:
-        self.write(f"sense:sweep:points {n}")
-
-    @property
-    def freq_step(self) -> float:
-        return float(self.query("sense:sweep:step?"))
-
-    @freq_step.setter
-    def freq_step(self, f: float) -> None:
-        if "lin" not in self.sweep_type.lower():
-            raise ValueError("Can only set frequency step in linear sweep mode")
-
-        self.write(f"sense:sweep:step {f}")
-
-    @property
-    def frequency(self) -> Frequency:
-        return Frequency(
-            start=self.start_freq, stop=self.stop_freq, npoints=self.npoints, unit="Hz"
+    def frequency(self) -> skrf.Frequency:
+        return skrf.Frequency(
+            start=self.freq_start, stop=self.freq_stop, npoints=self.npoints
         )
 
     @frequency.setter
-    def frequency(self, frequency: Frequency) -> None:
-        start = frequency.start
-        stop = frequency.stop
-        npoints = frequency.npoints
+    def frequency(self, f: skrf.Frequency):
+        self.freq_start = f.start
+        self.freq_stop = f.stop
+        self.npoints = f.npoints
 
-        self.write(
-            f"sense:frequency:start {start};"
-            f"frequency:stop {stop};"
-            f"sweep:points {npoints}"
+    @property
+    def calibration(self) -> skrf.Calibration:
+        cal_dict = {}
+        for term, cal_key in self._cal_terms_and_keys():
+            raw = self.query_values(f"SENS:CORR:COEF? {term}", container=np.array)
+            cal_dict[cal_key] = raw[::2] + 1j * raw
+
+        return skrf.Calibration.from_coefs(self.frequency, cal_dict)
+
+    @calibration.setter
+    def calibration(self, cal: skrf.Calibration) -> None:
+        for term, cal_key in self._cal_terms_and_keys():
+            vals = np.array([(x.real, x.imag) for x in cal[cal_key]]).flatten()
+            self.write_values(f"SENS:CORR:COEF {term},", vals)
+
+    @property
+    def query_format(self) -> vna.ValuesFormat:
+        fmt = self.query("FORM?")
+        if fmt == "ASC,0":
+            self._query_values_fmt = vna.ValuesFormat.ASCII
+        elif fmt == "REAL,32":
+            self._query_values_fmt = vna.ValuesFormat.BINARY
+        return self._query_values_fmt
+
+    @query_format.setter
+    def query_format(self, fmt: vna.ValuesFormat) -> None:
+        if fmt == vna.ValuesFormat.ASCII:
+            self._query_values_fmt = vna.ValuesFormat.ASCII
+            self.write("FORM ASC,0")
+        elif fmt == vna.ValuesFormat.BINARY:
+            self._query_values_fmt = vna.ValuesFormat.BINARY
+            self.write("FORM REAL,32")
+
+    def define_measurement(self, trace: int, parameter: MeasurementParameter) -> None:
+        if trace not in range(1, self.n_traces + 1):
+            self.n_traces = trace
+
+        self.write(f"CALC:PAR{trace}:DEF {parameter.value}")
+
+    def get_snp_network(self, ports=[1, 2]) -> skrf.Network:
+        msmnts = list(itertools.product(ports, repeat=2))
+        msmnt_params = [f"S{a}{b}" for a, b in msmnts]
+
+        original_config = {
+            "n_traces": self.n_traces,
+            "window_configuration": self.window_configuration,
+        }
+
+        self.n_traces = len(msmnts)
+        ntwk = skrf.Network()
+        ntwk.frequency = self.frequency
+        ntwk.s = np.empty(
+            shape=(ntwk.frequency.npoints, len(msmnts), len(msmnts)), dtype=complex
         )
 
-    @property
-    def sweep_time(self) -> float:
-        return float(self.query("sense:sweep:time?"))
+        for tr, ((i, j), msmnt) in enumerate(zip(msmnts, msmnt_params)):
+            self.active_trace = tr + 1
 
-    @sweep_time.setter
-    def sweep_time(self, time: float) -> None:
-        self.write(f"sense:sweep:time {time}")
+            raw = self.active_trace_sdata
+            ntwk.s[:, i - 1, j - 1] = raw[::2] + 1j * raw[1::2]
 
-    @property
-    def if_bandwidth(self) -> float:
-        return float(self.query("sense:bwidth?"))
-
-    @if_bandwidth.setter
-    def if_bandwidth(self, bw: float) -> None:
-        self.write(f"sense:bwidth {bw}")
-
-    @property
-    def averaging_on(self) -> bool:
-        return self.average_count != 1
-
-    @averaging_on.setter
-    def averaging_on(self, state: bool) -> None:
-        if state is False:
-            self.average_count = 1
-        else:
-            raise NotImplementedError(
-                "No command to turn averaging on directly. Set average_count instead"
-            )
-
-    @property
-    def average_count(self) -> int:
-        return int(self.query("sense:average:count?"))
-
-    @average_count.setter
-    def average_count(self, count: int) -> None:
-        self.write(f"sense:average:count {count}")
-
-    @property
-    def average_mode(self) -> str:
-        return self.query("sense:average:mode?")
-
-    @average_mode.setter
-    def average_mode(self, mode: str) -> None:
-        if mode.lower() not in ["swe", "sweep", "point"]:
-            raise ValueError(f"Unrecognized averaging mode: {mode}")
-        self.write(f"sense:average:mode {mode}")
-
-    def clear_averaging(self) -> None:
-        self.write("sense:average:clear")
-
-    def measurement_numbers(self) -> List[int]:
-        resp = int(self.query("calculate:parameter:count?"))
-        return [i + 1 for i in range(resp)]
-
-    @property
-    def active_measurement(self) -> Optional[str]:
-        return self.query("calculate:parameter:define?")
-
-    @active_measurement.setter
-    def active_measurement(self, id_: Union[int, str]) -> None:
-        assert isinstance(id_, int), "FieldFox only supports measurement numbers"
-        self.write(f"calculate:parameter{id_}:select")
-
-    def create_measurement(self, id_: Union[str, int], param: str) -> None:
-        assert isinstance(id_, int), "FieldFox only supports measurement numbers"
-        if (id_ < 1) or (id_ > 4):
-            raise ValueError("Trace must be between 1 and 4")
-        if param.lower() not in ["s11", "s12", "s21", "s22", "a", "b", "r1", "r2"]:
-            raise ValueError(f"Unrecognized measurement type: {param}")
-
-        self.write(f"calculate:parameter{id_}:define {param}")
-
-    def delete_measurement(self, id_: Union[str, int]) -> None:
-        # TODO: Check this is correct in testing
-        assert isinstance(id_, int), "FieldFox only supports measurement numbers"
-        self.write(f"display:window:trace{id_}:trace:state 0")
-
-    def get_measurement(self, trace: int) -> Network:
-        self.active_measurement = trace
-        raw = np.array(self.query_ascii("calculate:data:sdata?"), dtype=np.complex64)
-        self.query("*OPC?")
-        ntwk = Network()
-        ntwk.frequency = self.frequency
-        ntwk.s = raw[::2] + 1j * raw[1::2]
-        return ntwk
-
-    def get_active_trace(self) -> Network:
-        raw = np.array(self.query_ascii("calculate:data:sdata?"), dtype=np.complex64)
-        self.query("*OPC?")
-        ntwk = Network()
-        ntwk.frequency = self.frequency
-        ntwk.s = raw[::2] + 1j * raw[1::2]
-        return ntwk
-
-    @property
-    def ports(self) -> List[str]:
-        return ["1", "2"]
-
-    @property
-    def sysinfo(self) -> str:
-        info = {"ID": self.id_string, "SCPI Version": self.query("system:version?")}
-
-        return pprint.pformat(info)
-
-    # TODO: Implement for multiple channels
-    def sweep(self) -> None:
-        self.resource.clear()
-        self.write("initiate:immediate")
-        self.write("*OPC?")
-
-    def get_snp_network(self, ports: Optional[Sequence]) -> Network:
-        self.resource.clear()
-
-        if not ports:
-            ports = self.ports
-
-        _ports = set(ports)
-        msmts = itertools.product(_ports, repeat=2)
-        params = [f"S{a}{b}" for a, b in msmts]
-        # Create all measurements
-        self.write("display:window:split D12_34")
-        for i, param in enumerate(params):
-            self.create_measurement(i, param)
-
-        self.sweep()
-
-        data = dict()
-        for i, (n, m) in enumerate(msmts):
-            data[(n, m)] = self.get_measurement(i)
-
-        ntwk = four_oneports_2_twoport(
-            s11=data[(1, 1)], s12=data[(1, 2)], s21=data[(2, 1)], s22=data[(2, 2)]
-        )
+        for key, val in original_config.items():
+            print(key)
+            print(val)
+            setattr(self, key, val)
 
         return ntwk
-
-    def upload_oneport_calibration(self, port: int, cal: Calibration) -> None:
-        raise NotImplementedError
-
-    def upload_twoport_calibration(self, ports: Sequence, cal: Calibration) -> None:
-        raise NotImplementedError
