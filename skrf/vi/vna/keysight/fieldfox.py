@@ -5,13 +5,8 @@ import numpy as np
 
 import skrf
 from skrf.vi import vna
-from skrf.vi.validators import (
-    EnumValidator,
-    FloatValidator,
-    FreqValidator,
-    IntValidator,
-    SetValidator,
-)
+from skrf.vi.validators import (EnumValidator, FloatValidator, FreqValidator,
+                                IntValidator, SetValidator)
 
 
 class WindowFormat(Enum):
@@ -112,35 +107,42 @@ class FieldFox(vna.VNA):
         values=True,
     )
 
+    _cal_term_map = {
+        "forward directivity": "ed,1,1",
+        "reverse directivity": "ed,2,2",
+        "forward source match": "es,1,1",
+        "reverse source match": "es,2,2",
+        "forward reflection tracking": "er,1,1",
+        "reverse reflection tracking": "er,2,2",
+        "forward transmission tracking": "et,2,1",
+        "reverse transmission tracking": "et,1,2",
+        "forward load match": "el,2,1",
+        "reverse load match": "el,1,2",
+        "forward isolation": "ex,2,1",
+        "reverse isolation": "ex,1,2"
+    }
+
     def __init__(self, address: str, backend: str = "@py") -> None:
         super().__init__(address, backend)
 
         self._resource.read_termination = "\n"
         self._resource.write_termination = "\n"
 
-    @staticmethod
-    def _cal_terms_and_keys(self):
-        direction = ["forward", "reverse"]
-        term_map = {
-            "es": "source match",
-            "er": "reflection tracking",
-            "ed": "directivity",
-            "el": "load match",
-            "et": "transmission tracking",
-            "ex": "isolation",
-        }
-        ports = ["1,1", "1,2", "2,1", "2,2"]
-        terms = [",".join(k) for k in itertools.product(term_map.keys(), ports)]
-        cal_keys = [
-            " ".join(k) for k in itertools.product(direction, term_map.values())
-        ]
+    @property
+    def freq_step(self) -> int:
+        f = self.frequency
+        return f.step
 
-        return zip(terms, cal_keys)
+    @freq_step.setter
+    def freq_step(self, f: int) -> None:
+        freq = self.frequency
+        self.npoints = len(range(int(freq.start), int(freq.stop) + f, f))
+
 
     @property
     def frequency(self) -> skrf.Frequency:
         return skrf.Frequency(
-            start=self.freq_start, stop=self.freq_stop, npoints=self.npoints
+            start=self.freq_start, stop=self.freq_stop, npoints=self.npoints, unit='Hz'
         )
 
     @frequency.setter
@@ -152,7 +154,7 @@ class FieldFox(vna.VNA):
     @property
     def calibration(self) -> skrf.Calibration:
         cal_dict = {}
-        for term, cal_key in self._cal_terms_and_keys():
+        for cal_key, term in self._cal_term_map.items():
             raw = self.query_values(f"SENS:CORR:COEF? {term}", container=np.array)
             cal_dict[cal_key] = raw[::2] + 1j * raw
 
@@ -160,7 +162,7 @@ class FieldFox(vna.VNA):
 
     @calibration.setter
     def calibration(self, cal: skrf.Calibration) -> None:
-        for term, cal_key in self._cal_terms_and_keys():
+        for cal_key, term in self._cal_term_map.items():
             vals = np.array([(x.real, x.imag) for x in cal[cal_key]]).flatten()
             self.write_values(f"SENS:CORR:COEF {term},", vals)
 
@@ -211,8 +213,6 @@ class FieldFox(vna.VNA):
             ntwk.s[:, i - 1, j - 1] = raw[::2] + 1j * raw[1::2]
 
         for key, val in original_config.items():
-            print(key)
-            print(val)
             setattr(self, key, val)
 
         return ntwk

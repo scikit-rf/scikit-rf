@@ -1,8 +1,5 @@
-import inspect
-
 import pytest
 
-from skrf.vi.validators import IntValidator
 from skrf.vi.vna import vna
 
 

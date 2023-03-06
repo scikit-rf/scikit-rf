@@ -1,15 +1,9 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    import numpy as np
-
 import inspect
 import re
 from abc import ABC
 from enum import Enum, auto
 
+import numpy as np
 import pyvisa
 
 from ..validators import Validator
@@ -62,7 +56,6 @@ class VNA(ABC):
             self._setup_scpi()
 
         def __init_subclass__(cls):
-            print("VNA.__init_subclass__")
             if "Channel" in [c[0] for c in inspect.getmembers(cls, inspect.isclass)]:
                 VNA._add_channel_support(cls)
 
@@ -114,7 +107,6 @@ class VNA(ABC):
                 raise LookupError("Property cannot be read")
 
             cmd = format_cmd(get_cmd, self=self)
-            print(f"{cmd=}")
             if values:
                 arg = self.query_values(cmd)
             else:
@@ -130,7 +122,7 @@ class VNA(ABC):
                 raise LookupError("Property cannot be set")
 
             if validator:
-                arg = validator.validate_output(arg)
+                arg = validator.validate_input(arg)
 
             cmd = format_cmd(set_cmd, self=self, arg=arg)
             self.write(cmd)

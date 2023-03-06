@@ -1,3 +1,4 @@
+import re
 from enum import Enum
 
 import pytest
@@ -23,7 +24,7 @@ from skrf.vi.validators import ValidationError
 )
 def test_int_validator(bounds, test_in, expected):
     v = validators.IntValidator(*bounds)
-    assert v.validate(test_in) == expected
+    assert v.validate_input(test_in) == expected
 
 
 @pytest.mark.parametrize(
@@ -40,7 +41,7 @@ def test_int_validator(bounds, test_in, expected):
 def test_int_validator_out_of_bounds(bounds, test_in):
     v = validators.IntValidator(*bounds)
     with pytest.raises(ValidationError):
-        v.validate(test_in)
+        v.validate_input(test_in)
 
 
 @pytest.mark.parametrize(
@@ -61,7 +62,7 @@ def test_int_validator_out_of_bounds(bounds, test_in):
 )
 def test_float_validator(bounds, test_in, expected):
     v = validators.FloatValidator(*bounds)
-    assert v.validate(test_in) == expected
+    assert v.validate_input(test_in) == expected
 
 
 @pytest.mark.parametrize(
@@ -77,7 +78,7 @@ def test_float_validator(bounds, test_in, expected):
 def test_float_validator_out_of_bounds(bounds, test_in):
     v = validators.FloatValidator(*bounds)
     with pytest.raises(ValidationError):
-        v.validate(test_in)
+        v.validate_input(test_in)
 
 
 @pytest.mark.parametrize(
@@ -98,7 +99,7 @@ def test_float_validator_out_of_bounds(bounds, test_in):
 )
 def test_freq_validator(test_in, expected):
     v = validators.FreqValidator()
-    assert v.validate(test_in) == expected
+    assert v.validate_input(test_in) == expected
 
 
 def test_enum_validator():
@@ -107,18 +108,43 @@ def test_enum_validator():
         B = "B"
 
     v = validators.EnumValidator(Foo)
-    assert v.validate("A") == "A"
-    assert v.validate("B") == "B"
-    assert v.validate(Foo.A) == "A"
-    assert v.validate(Foo.B) == "B"
+    assert v.validate_input("A") == "A"
+    assert v.validate_input("B") == "B"
+    assert v.validate_input(Foo.A) == "A"
+    assert v.validate_input(Foo.B) == "B"
 
     with pytest.raises(ValidationError):
-        v.validate("C")
+        v.validate_input("C")
+
+    assert v.validate_output('A') == Foo.A
+    assert v.validate_output('B') == Foo.B
+    with pytest.raises(ValidationError):
+        v.validate_output("C")
 
 
 def test_set_validator():
     v = validators.SetValidator([1, 2])
-    assert v.validate(1) == 1
-    assert v.validate(2) == 2
+    assert v.validate_input(1) == 1
+    assert v.validate_input(2) == 2
     with pytest.raises(ValidationError):
-        v.validate(3)
+        v.validate_input(3)
+
+    with pytest.raises(ValueError):
+        validators.SetValidator([1, '2'])
+
+def test_dict_validator():
+    arg_str = "{a},{b}"
+    resp_pat = r"(?P<a>\d),(?P<b>\d)"
+    v = validators.DictValidator(arg_str, resp_pat)
+
+    assert v.validate_input({"a":1, "b":2}) == "1,2"
+    assert v.validate_output('1,2') == {"a":'1', "b":'2'}
+
+    with pytest.raises(ValidationError):
+        v.validate_input({"a":1})
+
+    with pytest.raises(ValidationError):
+        v.validate_output('1,2,3')
+
+    v = validators.DictValidator(arg_str, re.compile(r"(?P<a>\d),(?P<b>\d)"))
+    assert v.validate_input({"a":1, "b":2}) == "1,2"

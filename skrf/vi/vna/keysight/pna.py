@@ -2,12 +2,8 @@ from enum import Enum
 
 import skrf
 from skrf.vi import vna
-from skrf.vi.validators import (
-    EnumValidator,
-    FloatValidator,
-    FreqValidator,
-    IntValidator,
-)
+from skrf.vi.validators import (EnumValidator, FloatValidator, FreqValidator,
+                                IntValidator)
 from skrf.vi.vna import VNA
 
 
@@ -39,14 +35,18 @@ class PNA(VNA):
         freq_step = VNA.command(
             get_cmd="SENS<self:cnum>:SWE:STEP?",
             set_cmd="SENS<self:cnum>:SWE:STEP <arg>",
-            doc="""The frequency step [Hz]. Sets the number of points as a side effect""",
+            doc="""The frequency step [Hz]. Sets the number of points as a side
+                effect
+            """,
             validator=FreqValidator(),
         )
 
         npoints = VNA.command(
             get_cmd="SENS<self:cnum>:SWE:POIN?",
             set_cmd="SENS<self:cnum>:SWE:POIN <arg>",
-            doc="""The number of frequency points. Sets the frequency step as a side effect""",
+            doc="""The number of frequency points. Sets the frequency step as a
+                side effect
+            """,
             validator=IntValidator(),
         )
 

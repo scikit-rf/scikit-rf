@@ -164,5 +164,6 @@ class DictValidator(Validator):
             return match.groupdict()
         else:
             raise ValidationError(
-                f"Response did not fit regex. Response: {arg} Pattern: {self.pattern.pattern}"
+                "Response did not fit regex. "
+                f"Response: {arg} Pattern: {self.pattern.pattern}"
             )
