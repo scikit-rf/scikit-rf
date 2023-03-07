@@ -167,3 +167,32 @@ class DictValidator(Validator):
                 "Response did not fit regex. "
                 f"Response: {arg} Pattern: {self.pattern.pattern}"
             )
+
+class DelimitedStrValidator(Validator):
+    def __init__(self, dtype: type =str , sep: str = ',') -> None:
+        self.dtype = dtype
+        self.sep = sep
+
+    def validate_input(self, arg: Sequence) -> str:
+        if not all(isinstance(x, self.dtype) for x in arg):
+            raise ValidationError("All elements must be of type {self.dtype}.")
+
+        return self.sep.join(str(x) for x in arg)
+
+    def validate_output(self, arg: str) -> list:
+        return [self.dtype(val) for val in arg.split(self.sep)]
+
+class BooleanValidator(Validator):
+    truthy = ['1', 'on', 'true']
+    falsey = ['0', 'off', 'false']
+
+    def validate_input(self, arg) -> str:
+        if str(arg).lower() in self.truthy:
+            return '1'
+        elif str(arg).lower() in self.falsey:
+            return '0'
+        else:
+            raise ValidationError('Argument must be a truthy or falsey value')
+
+    def validate_output(self, arg) -> bool:
+        return str(arg).lower() in self.truthy

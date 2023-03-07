@@ -5,8 +5,9 @@ import numpy as np
 
 import skrf
 from skrf.vi import vna
-from skrf.vi.validators import (EnumValidator, FloatValidator, FreqValidator,
-                                IntValidator, SetValidator)
+from skrf.vi.validators import (BooleanValidator, EnumValidator,
+                                FloatValidator, FreqValidator, IntValidator,
+                                SetValidator)
 
 
 class WindowFormat(Enum):
@@ -16,17 +17,6 @@ class WindowFormat(Enum):
     TWO_VERTICAL = "D12H"
     ONE_FIRST_ROW_TWO_SECOND_ROW = "D11_23"
     TWO_BY_TWO = "D12_34"
-
-
-class MeasurementParameter(Enum):
-    S11 = "S11"
-    S12 = "S12"
-    S21 = "S21"
-    S22 = "S22"
-    A = "A"
-    B = "B"
-    R1 = "R1"
-    R2 = "R2"
 
 
 class FieldFox(vna.VNA):
@@ -107,6 +97,13 @@ class FieldFox(vna.VNA):
         values=True,
     )
 
+    is_continuous = vna.VNA.command(
+        get_cmd="INIT:CONT?",
+        set_cmd="INIT:CONT <arg>",
+        doc="""Get the current trace data as a network""",
+        validator=BooleanValidator()
+    )
+
     _cal_term_map = {
         "forward directivity": "ed,1,1",
         "reverse directivity": "ed,2,2",
@@ -128,10 +125,12 @@ class FieldFox(vna.VNA):
         self._resource.read_termination = "\n"
         self._resource.write_termination = "\n"
 
+        _ = self.query_format # calling the getter sets _values_format to make sure we're in sync with the instrument
+
     @property
     def freq_step(self) -> int:
         f = self.frequency
-        return f.step
+        return int(f.step)
 
     @freq_step.setter
     def freq_step(self, f: int) -> None:
@@ -156,7 +155,7 @@ class FieldFox(vna.VNA):
         cal_dict = {}
         for cal_key, term in self._cal_term_map.items():
             raw = self.query_values(f"SENS:CORR:COEF? {term}", container=np.array)
-            cal_dict[cal_key] = raw[::2] + 1j * raw
+            cal_dict[cal_key] = raw[::2] + 1j * raw[1::2]
 
         return skrf.Calibration.from_coefs(self.frequency, cal_dict)
 
@@ -170,34 +169,52 @@ class FieldFox(vna.VNA):
     def query_format(self) -> vna.ValuesFormat:
         fmt = self.query("FORM?")
         if fmt == "ASC,0":
-            self._query_values_fmt = vna.ValuesFormat.ASCII
+            self._values_fmt = vna.ValuesFormat.ASCII
         elif fmt == "REAL,32":
-            self._query_values_fmt = vna.ValuesFormat.BINARY
-        return self._query_values_fmt
+            self._values_fmt = vna.ValuesFormat.BINARY_32
+        return self._values_fmt
 
     @query_format.setter
     def query_format(self, fmt: vna.ValuesFormat) -> None:
         if fmt == vna.ValuesFormat.ASCII:
-            self._query_values_fmt = vna.ValuesFormat.ASCII
+            self._values_fmt = vna.ValuesFormat.ASCII
             self.write("FORM ASC,0")
-        elif fmt == vna.ValuesFormat.BINARY:
-            self._query_values_fmt = vna.ValuesFormat.BINARY
+        elif fmt == vna.ValuesFormat.BINARY_32:
+            self._values_fmt = vna.ValuesFormat.BINARY_32
             self.write("FORM REAL,32")
 
-    def define_measurement(self, trace: int, parameter: MeasurementParameter) -> None:
+    def get_measurement_parameter(self, trace: int) -> str:
+        if trace not in range(1, 5):
+            raise ValueError("Trace must be between 1 and 4")
+
+        return self.query(f"CALC:PAR{trace}:DEF?")
+
+    def define_measurement(self, trace: int, parameter: str) -> None:
         if trace not in range(1, self.n_traces + 1):
             self.n_traces = trace
 
-        self.write(f"CALC:PAR{trace}:DEF {parameter.value}")
+        self.write(f"CALC:PAR{trace}:DEF {parameter}")
 
-    def get_snp_network(self, ports=[1, 2]) -> skrf.Network:
+    def sweep(self) -> None:
+        self._resource.clear()
+        was_continuous = self.is_continuous
+        self.is_continuous = False
+        self.write("INIT")
+        self.is_continuous = was_continuous
+
+    def get_snp_network(self, ports=[1, 2], restore_settings: bool = True) -> skrf.Network:
         msmnts = list(itertools.product(ports, repeat=2))
         msmnt_params = [f"S{a}{b}" for a, b in msmnts]
 
-        original_config = {
-            "n_traces": self.n_traces,
-            "window_configuration": self.window_configuration,
-        }
+        if restore_settings:
+            original_config = {
+                "n_traces": self.n_traces,
+                "window_configuration": self.window_configuration,
+                "trace_params": [self.get_measurement_parameter(i+1) for i in range(self.n_traces)]
+            }
+
+        for i, param in enumerate(msmnt_params):
+            self.define_measurement(i+1, param)
 
         self.n_traces = len(msmnts)
         ntwk = skrf.Network()
@@ -206,13 +223,20 @@ class FieldFox(vna.VNA):
             shape=(ntwk.frequency.npoints, len(msmnts), len(msmnts)), dtype=complex
         )
 
-        for tr, ((i, j), msmnt) in enumerate(zip(msmnts, msmnt_params)):
+        self.sweep()
+        for tr, ((i, j), param) in enumerate(zip(msmnts, msmnt_params)):
             self.active_trace = tr + 1
 
             raw = self.active_trace_sdata
-            ntwk.s[:, i - 1, j - 1] = raw[::2] + 1j * raw[1::2]
+            if len(msmnts) == 1:
+                ntwk.s[:, 0, 0] = raw[::2] + 1j * raw[1::2]
+            else:
+                ntwk.s[:, i - 1, j - 1] = raw[::2] + 1j * raw[1::2]
 
-        for key, val in original_config.items():
-            setattr(self, key, val)
+        if restore_settings:
+            for i, param in enumerate(original_config.pop('trace_params')):
+                self.define_measurement(i+1, param)
+            for key, val in original_config.items():
+                setattr(self, key, val)
 
         return ntwk

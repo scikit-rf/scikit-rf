@@ -1,9 +1,21 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Optional
+
 from enum import Enum
 
 import skrf
 from skrf.vi import vna
-from skrf.vi.validators import (EnumValidator, FloatValidator, FreqValidator,
-                                IntValidator)
+from skrf.vi.validators import (
+    DelimitedStrValidator,
+    EnumValidator,
+    FloatValidator,
+    FreqValidator,
+    IntValidator,
+)
 from skrf.vi.vna import VNA
 
 
@@ -41,6 +53,20 @@ class PNA(VNA):
             validator=FreqValidator(),
         )
 
+        freq_span = VNA.command(
+            get_cmd="SENS<self:cnum>:FREQ:SPAN?",
+            set_cmd="SENS<self:cnum>:FREQ:SPAN <arg>",
+            doc="""The frequency span [Hz].""",
+            validator=FreqValidator(),
+        )
+
+        freq_center = VNA.command(
+            get_cmd="SENS<self:cnum>:FREQ:CENT?",
+            set_cmd="SENS<self:cnum>:FREQ:CENT <arg>",
+            doc="""The frequency span [Hz].""",
+            validator=FreqValidator(),
+        )
+
         npoints = VNA.command(
             get_cmd="SENS<self:cnum>:SWE:POIN?",
             set_cmd="SENS<self:cnum>:SWE:POIN <arg>",
@@ -71,6 +97,13 @@ class PNA(VNA):
             validator=EnumValidator(SweepType),
         )
 
+        measurements = VNA.command(
+            get_cmd="SYST:MEAS:CAT? <self:cnum>",
+            set_cmd=None,
+            doc="""The time in seconds for a single sweep [s]""",
+            validator=DelimitedStrValidator(int),
+        )
+
         @property
         def frequency(self) -> skrf.Frequency:
             f = skrf.Frequency(
@@ -86,3 +119,39 @@ class PNA(VNA):
 
     def __init__(self, address: str, backend: str) -> None:
         self.create_channel(1, "Channel 1")
+
+    @property
+    def active_channel(self) -> Optional[Channel]:
+        num = self.query('SYST:ACT:CHAN?')
+        return getattr(self, f"ch{num}", None)
+
+    @active_channel.setter
+    def active_channel(self, ch: Channel) -> None:
+        if self.active_channel.cnum == ch.cnum:
+            return
+
+        msmnt = ch.measurements[0]
+        self.write(f'CALC{ch.cnum}:PAR:MNUM {msmnt},fast')
+
+    @property
+    def query_format(self) -> vna.ValuesFormat:
+        fmt = self.query("FORM?")
+        if fmt == "ASC,0":
+            self._values_fmt = vna.ValuesFormat.ASCII
+        elif fmt == "REAL,32":
+            self._values_fmt = vna.ValuesFormat.BINARY_32
+        elif fmt == "REAL,64":
+            self._values_fmt = vna.ValuesFormat.BINARY_64
+        return self._values_fmt
+
+    @query_format.setter
+    def query_format(self, fmt: vna.ValuesFormat) -> None:
+        if fmt == vna.ValuesFormat.ASCII:
+            self._values_fmt = vna.ValuesFormat.ASCII
+            self.write("FORM ASC,0")
+        elif fmt == vna.ValuesFormat.BINARY_32:
+            self._values_fmt = vna.ValuesFormat.BINARY_32
+            self.write("FORM REAL,32")
+        elif fmt == vna.ValuesFormat.BINARY_64:
+            self._values_fmt = vna.ValuesFormat.BINARY_64
+            self.write("FORM REAL,64")

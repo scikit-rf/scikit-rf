@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional
 
+import functools
 import inspect
 import re
 from abc import ABC
@@ -32,7 +33,8 @@ def format_cmd(cmd: str, **kwargs) -> str:
 
 
 class ValuesFormat(Enum):
-    BINARY = auto()
+    BINARY_32 = auto()
+    BINARY_64 = auto()
     ASCII = auto()
 
 
@@ -87,8 +89,8 @@ class VNA(ABC):
     def _setup_scpi(self) -> None:
         setattr(
             self.__class__,
-            "op_complete",
-            property(lambda self: self.query("*OPC?")),
+            "wait_for_complete",
+            lambda self: self.query("*OPC?"),
         )
         setattr(self.__class__, "status", property(lambda self: self.query("*STB?")))
         setattr(self.__class__, "options", property(lambda self: self.query("*OPT?")))
@@ -115,9 +117,12 @@ class VNA(ABC):
 
             cmd = format_cmd(get_cmd, self=self)
             if values:
-                arg = self.query_values(cmd)
+                arg = self.query_values(cmd, container=values_container)
             else:
                 arg = self.query(cmd)
+
+            if hasattr(self, 'wait_for_complete'):
+                self.wait_for_complete()
 
             if validator:
                 return validator.validate_output(arg)
@@ -133,6 +138,9 @@ class VNA(ABC):
 
             cmd = format_cmd(set_cmd, self=self, arg=arg)
             self.write(cmd)
+
+            if hasattr(self, 'wait_for_complete'):
+                self.wait_for_complete()
 
         fget.__doc__ = doc
 
@@ -165,8 +173,11 @@ class VNA(ABC):
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             if self._values_fmt == ValuesFormat.ASCII:
                 fn = self._resource.write_ascii_values
-            elif self._values_fmt == ValuesFormat.BINARY:
+            elif self._values_fmt == ValuesFormat.BINARY_32:
                 fn = self._resource.write_binary_values
+            elif self._values_fmt == ValuesFormat.BINARY_64:
+                fn = functools.partial(self._resource.write_binary_values, datatype='d')
+            
         elif isinstance(self._resource, pyvisa.resources.RegisterBasedResource):
             raise NotImplementedError()
         else:
@@ -188,8 +199,10 @@ class VNA(ABC):
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             if self._values_fmt == ValuesFormat.ASCII:
                 fn = self._resource.query_ascii_values
-            elif self._values_fmt == ValuesFormat.BINARY:
+            elif self._values_fmt == ValuesFormat.BINARY_32:
                 fn = self._resource.query_binary_values
+            elif self._values_fmt == ValuesFormat.BINARY_64:
+                fn = functools.partial(self._resource.query_binary_values, datatype='d')
         elif isinstance(self._resource, pyvisa.resources.RegisterBasedResource):
             raise NotImplementedError()
         else:
