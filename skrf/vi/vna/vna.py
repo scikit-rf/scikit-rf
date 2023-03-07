@@ -64,7 +64,7 @@ class VNA(ABC):
 
     def __init_subclass__(cls):
         if "Channel" in [c[0] for c in inspect.getmembers(cls, inspect.isclass)]:
-            VNA._add_channel_support(cls)
+            cls._add_channel_support()
 
     @classmethod
     def _add_channel_support(cls):
