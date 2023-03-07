@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any, Optional, Sequence, Union
 
 import re
 from abc import ABC, abstractmethod
@@ -30,7 +30,7 @@ class Validator(ABC):
 
 
 class IntValidator(Validator):
-    def __init__(self, min: int | None = None, max: int | None = None) -> None:
+    def __init__(self, min: Optional[int] = None, max: Optional[int] = None) -> None:
         self.min = min
         self.max = max
 
@@ -60,7 +60,7 @@ class IntValidator(Validator):
 
 
 class FloatValidator(Validator):
-    def __init__(self, min: float | None = None, max: float | None = None) -> None:
+    def __init__(self, min: Optional[float] = None, max: Optional[float] = None) -> None:
         self.min = min
         self.max = max
 
@@ -145,7 +145,7 @@ class SetValidator(Validator):
 
 
 class DictValidator(Validator):
-    def __init__(self, arg_string: str, response_pattern: re.Pattern | str) -> None:
+    def __init__(self, arg_string: str, response_pattern: Union[re.Pattern, str]) -> None:
         self.arg_string = arg_string
         if isinstance(response_pattern, str):
             self.pattern = re.compile(response_pattern)

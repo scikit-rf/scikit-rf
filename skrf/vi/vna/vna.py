@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Optional
+
 import inspect
 import re
 from abc import ABC
@@ -31,7 +38,7 @@ class ValuesFormat(Enum):
 
 class Channel:
     def __init__(
-        self, parent, cnum: int | None = None, cname: str | None = None
+        self, parent, cnum: Optional[int] = None, cname: Optional[str]= None
     ) -> None:
         self.parent = parent
         self.cnum = cnum
@@ -55,9 +62,9 @@ class VNA(ABC):
         if self._scpi:
             self._setup_scpi()
 
-        def __init_subclass__(cls):
-            if "Channel" in [c[0] for c in inspect.getmembers(cls, inspect.isclass)]:
-                VNA._add_channel_support(cls)
+    def __init_subclass__(cls):
+        if "Channel" in [c[0] for c in inspect.getmembers(cls, inspect.isclass)]:
+            VNA._add_channel_support(cls)
 
     @classmethod
     def _add_channel_support(cls):
@@ -93,12 +100,12 @@ class VNA(ABC):
 
     @staticmethod
     def command(
-        get_cmd: str | None = None,
-        set_cmd: str | None = None,
-        doc: str | None = None,
-        validator: Validator | None = None,
+        get_cmd: Optional[str] = None,
+        set_cmd: Optional[str] = None,
+        doc: Optional[str] = None,
+        validator: Optional[Validator] = None,
         values: bool = False,
-        values_container: type | None = np.array,
+        values_container: Optional[type] = np.array,
     ) -> None:
         """Create a property for the instrument."""
 
