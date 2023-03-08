@@ -1,9 +1,10 @@
+import numpy as np
 import pytest
 
 import skrf
 from skrf.vi import vna
 from skrf.vi.vna import keysight
-from skrf.vi.vna.keysight.fieldfox import MeasurementParameter, WindowFormat
+from skrf.vi.vna.keysight.fieldfox import WindowFormat
 
 
 @pytest.fixture
@@ -130,13 +131,85 @@ def test_query_fmt_query(mocker, mocked_ff):
     mocked_ff.query.assert_called_once_with('FORM?')
     assert test == vna.ValuesFormat.ASCII
 
+    mocker.patch('skrf.vi.vna.keysight.FieldFox.query', return_value='REAL,32')
+    test = mocked_ff.query_format
+    assert test == vna.ValuesFormat.BINARY_32
+
 def test_query_fmt_write(mocker, mocked_ff):
     mocker.patch('skrf.vi.vna.keysight.FieldFox.write')
     mocked_ff.query_format = vna.ValuesFormat.ASCII
-    mocked_ff.write.assert_called_once_with('FORM ASC,0')
+    mocked_ff.write.assert_called_with('FORM ASC,0')
+    mocked_ff.query_format = vna.ValuesFormat.BINARY_32
+    mocked_ff.write.assert_called_with('FORM REAL,32')
 
-def test_definte_msmnt(mocker, mocked_ff):
+def test_define_msmnt(mocker, mocked_ff):
     mocker.patch('skrf.vi.vna.keysight.FieldFox.write')
     mocker.patch('skrf.vi.vna.keysight.FieldFox.n_traces', return_value=1, new_callable=mocker.PropertyMock)
-    mocked_ff.define_measurement(1, MeasurementParameter.S11)
+    mocked_ff.define_measurement(1, 'S11')
     mocked_ff.write.assert_called_once_with('CALC:PAR1:DEF S11')
+
+def test_calibration_write(mocker, mocked_ff):
+    mocker.patch('skrf.vi.vna.keysight.FieldFox.write_values')
+    cal_terms = mocked_ff._cal_term_map
+    mock_array = np.array([1+1j, 1+1j])
+    cal_dict = {k: mock_array.copy() for k in cal_terms.keys()}
+    mock_cal = skrf.Calibration.from_coefs(skrf.Frequency(100, 200, 11, unit='hz'), cal_dict)
+    mocked_ff.calibration = mock_cal
+
+    # numpy defines == in a way that makes mocker.assert_has_calls not work
+    # Instead, we can just do the individual comparisons ourselves
+    expected_calls = [
+        mocker.call(f'SENS:CORR:COEF {term},', np.array([1.,1.,1.,1.]))
+        for term in cal_terms.values()
+    ]
+    actual_calls = mocked_ff.write_values.call_args_list
+    for actual, expected in zip(actual_calls, expected_calls):
+        assert actual[0][0] == expected[1][0]
+        np.testing.assert_array_almost_equal(actual[0][1], expected[1][1])
+
+def test_get_measurement_parameter(mocker, mocked_ff):
+    mocker.patch('skrf.vi.vna.keysight.FieldFox.query', return_value='S11')
+    test = mocked_ff.get_measurement_parameter(1)
+    assert test == 'S11'
+
+    with pytest.raises(ValueError):
+        test = mocked_ff.get_measurement_parameter(5)
+
+def test_sweep(mocker, mocked_ff):
+    mocked_ff._resource = mocker.Mock()
+    mocker.patch('skrf.vi.vna.keysight.FieldFox.write')
+    mocker.patch('skrf.vi.vna.keysight.FieldFox.query', return_value='1')
+    mocked_ff.sweep()
+    calls = [
+        mocker.call('INIT:CONT 0'),
+        mocker.call('INIT'),
+        mocker.call('INIT:CONT 1'),
+    ]
+    mocked_ff.write.assert_has_calls(calls)
+    mocked_ff._resource.clear.assert_called_once()
+
+def test_get_snp_network(mocker, mocked_ff):
+    mocker.patch('skrf.vi.vna.keysight.FieldFox.write')
+    mocker.patch('skrf.vi.vna.keysight.FieldFox.sweep')
+    query_ret_vals = [
+        '1', 
+        WindowFormat.ONE_TRACE, 
+        '1',
+        'S11',
+        '4', '4', '4', '4',
+        '100', '200', '11', 
+        '4'
+    ]
+    mocker.patch('skrf.vi.vna.keysight.FieldFox.query', side_effect=query_ret_vals)
+    mock_s_data = np.array([1.]*22) # our test has 11 frequency points and we expect two values per point (re,im)
+    mocker.patch('skrf.vi.vna.keysight.FieldFox.active_trace_sdata', return_value=mock_s_data.copy(), new_callable=mocker.PropertyMock)
+
+    test = mocked_ff.get_snp_network()
+
+    mocked_ff.sweep.assert_called_once()
+    assert isinstance(test, skrf.Network)
+    assert test.s.shape == (11,2,2)
+    expected = np.array([1+1j]*11)
+    for s in [getattr(test, f'{param}') for param in ['s11', 's12', 's21', 's22']]:
+        actual = s.s.reshape((-1,))
+        np.testing.assert_array_almost_equal(actual, expected)

@@ -5,9 +5,14 @@ import numpy as np
 
 import skrf
 from skrf.vi import vna
-from skrf.vi.validators import (BooleanValidator, EnumValidator,
-                                FloatValidator, FreqValidator, IntValidator,
-                                SetValidator)
+from skrf.vi.validators import (
+    BooleanValidator,
+    EnumValidator,
+    FloatValidator,
+    FreqValidator,
+    IntValidator,
+    SetValidator,
+)
 
 
 class WindowFormat(Enum):
@@ -161,8 +166,9 @@ class FieldFox(vna.VNA):
 
     @calibration.setter
     def calibration(self, cal: skrf.Calibration) -> None:
+        cal_dict = cal.coefs_12term
         for cal_key, term in self._cal_term_map.items():
-            vals = np.array([(x.real, x.imag) for x in cal[cal_key]]).flatten()
+            vals = np.array([(x.real, x.imag) for x in cal_dict[cal_key]]).flatten()
             self.write_values(f"SENS:CORR:COEF {term},", vals)
 
     @property
@@ -213,14 +219,14 @@ class FieldFox(vna.VNA):
                 "trace_params": [self.get_measurement_parameter(i+1) for i in range(self.n_traces)]
             }
 
+        self.n_traces = len(msmnts)
         for i, param in enumerate(msmnt_params):
             self.define_measurement(i+1, param)
 
-        self.n_traces = len(msmnts)
         ntwk = skrf.Network()
         ntwk.frequency = self.frequency
         ntwk.s = np.empty(
-            shape=(ntwk.frequency.npoints, len(msmnts), len(msmnts)), dtype=complex
+            shape=(ntwk.frequency.npoints, len(ports), len(ports)), dtype=complex
         )
 
         self.sweep()
