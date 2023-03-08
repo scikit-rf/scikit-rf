@@ -93,21 +93,27 @@ class PNA(VNA):
         sweep_type = VNA.command(
             get_cmd="SENS<self:cnum>:SWE:TYPE?",
             set_cmd="SENS<self:cnum>:SWE:TYPE <arg>",
-            doc="""The time in seconds for a single sweep [s]""",
+            doc="""The type of sweep (linear, log, etc)""",
             validator=EnumValidator(SweepType),
         )
 
-        measurements = VNA.command(
+        measurement_numbers = VNA.command(
             get_cmd="SYST:MEAS:CAT? <self:cnum>",
             set_cmd=None,
-            doc="""The time in seconds for a single sweep [s]""",
+            doc="""The list of measurement numbers on this channel""", 
             validator=DelimitedStrValidator(int),
         )
+
+        def __init__(self, parent, cnum: int, cname: str):
+            super().__init__(parent, cnum, cname)
 
         @property
         def frequency(self) -> skrf.Frequency:
             f = skrf.Frequency(
-                start=self.freq_start, stop=self.freq_stop, npoints=self.npoints
+                start=self.freq_start, 
+                stop=self.freq_stop,
+                npoints=self.npoints,
+                unit='hz'
             )
             return f
 
@@ -117,7 +123,8 @@ class PNA(VNA):
             self.freq_stop = f.stop
             self.npoints = f.npoints
 
-    def __init__(self, address: str, backend: str) -> None:
+    def __init__(self, address: str, backend: str = '@py') -> None:
+        super().__init__(address, backend)
         self.create_channel(1, "Channel 1")
 
     @property
@@ -130,7 +137,7 @@ class PNA(VNA):
         if self.active_channel.cnum == ch.cnum:
             return
 
-        msmnt = ch.measurements[0]
+        msmnt = ch.measurement_numbers[0]
         self.write(f'CALC{ch.cnum}:PAR:MNUM {msmnt},fast')
 
     @property

@@ -5,14 +5,9 @@ import numpy as np
 
 import skrf
 from skrf.vi import vna
-from skrf.vi.validators import (
-    BooleanValidator,
-    EnumValidator,
-    FloatValidator,
-    FreqValidator,
-    IntValidator,
-    SetValidator,
-)
+from skrf.vi.validators import (BooleanValidator, EnumValidator,
+                                FloatValidator, FreqValidator, IntValidator,
+                                SetValidator)
 
 
 class WindowFormat(Enum):
@@ -178,6 +173,8 @@ class FieldFox(vna.VNA):
             self._values_fmt = vna.ValuesFormat.ASCII
         elif fmt == "REAL,32":
             self._values_fmt = vna.ValuesFormat.BINARY_32
+        elif fmt == "REAL,64":
+            self._values_fmt = vna.ValuesFormat.BINARY_64
         return self._values_fmt
 
     @query_format.setter
@@ -188,6 +185,9 @@ class FieldFox(vna.VNA):
         elif fmt == vna.ValuesFormat.BINARY_32:
             self._values_fmt = vna.ValuesFormat.BINARY_32
             self.write("FORM REAL,32")
+        elif fmt == vna.ValuesFormat.BINARY_64:
+            self._values_fmt = vna.ValuesFormat.BINARY_64
+            self.write("FORM REAL,64")
 
     def get_measurement_parameter(self, trace: int) -> str:
         if trace not in range(1, 5):
