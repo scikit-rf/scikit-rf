@@ -1987,6 +1987,8 @@ def plot_contour(freq: Frequency,
         min or max.
 
     """
+    from . import Network
+
     ri =  npy.linspace(0,1, 50);
     ti =  npy.linspace(0,2*npy.pi, 150);
     Ri , Ti = npy.meshgrid(ri, ti)
@@ -1999,7 +2001,7 @@ def plot_contour(freq: Frequency,
         VALopt = npy.max(z)
     else :
         VALopt = npy.min(z)
-    GAMopt = network.Network(f=[freq], s=x[z==VALopt] +1j*y[z==VALopt])
+    GAMopt = Network(f=[freq], s=x[z==VALopt] +1j*y[z==VALopt])
 
     if graph :
         fig, ax = plt.subplots(**kwargs)
