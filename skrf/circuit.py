@@ -85,18 +85,13 @@ Graph representation
 from . network import Network, a2s, s2s
 from . media import media
 from . constants import INF, NumberLike, S_DEF_DEFAULT
-from .util import subplots
+from . util import subplots
 
 import numpy as np
 
 from itertools import chain, product
 
 from typing import List, TYPE_CHECKING, Tuple
-
-try:
-    import networkx as nx
-except ImportError as e:
-    pass
 
 if TYPE_CHECKING:
     from .frequency import Frequency
@@ -118,6 +113,24 @@ class Circuit:
     .. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
 
     """
+    @staticmethod
+    def _get_nx():
+        """Returns networkx module if available.
+
+        Raises:
+        -------
+            ImportError: If networkx module is not installed
+
+        Returns:
+        --------
+            networkx module
+        """
+        try:
+            import networkx as nx
+            return nx
+        except ImportError as err:
+            raise ImportError('networkx package as not been installed and is required.') from err
+
     def __init__(self, connections: List[List[Tuple]]) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
@@ -517,11 +530,8 @@ class Circuit:
         ----------
         .. [#] https://networkx.github.io/
         """
-        try:
-            import networkx as nx
-        except ImportError as e:
-            raise ImportError('networkx package as not been installed and is required. ')
 
+        nx = self._get_nx()
         G = nx.Graph()
         # Adding network nodes
         G.add_nodes_from([it for it in self.networks_dict(self.connections)])
@@ -542,15 +552,9 @@ class Circuit:
 
         Check if every pair of vertices in the graph is connected.
         """
-        # Get the circuit graph. Will raise an error if the networkx package
-        # is not installed.
-        G = self.G
 
-        try:
-            import networkx as nx
-            return nx.algorithms.components.is_connected(G)
-        except ImportError as e:
-            raise ImportError('networkx package as not been installed and is required. ')
+        nx = self._get_nx()
+        return nx.algorithms.components.is_connected(self.G)
 
 
     @property
@@ -1322,8 +1326,8 @@ class Circuit:
             'label_shift_y': 0
 
         """
-        # Get the circuit graph. Will raise an error if the networkx package
-        # is not installed.
+
+        nx = self._get_nx()
         G = self.G
 
         # default values
