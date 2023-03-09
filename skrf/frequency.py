@@ -47,7 +47,7 @@ from numpy import pi, linspace, geomspace
 import numpy as npy
 from numpy import gradient  # used to center attribute `t` at 0
 import re
-from .util import slice_domain, find_nearest_index
+from .util import slice_domain, find_nearest_index, axes_kwarg, Axes
 
 
 class InvalidFrequencyWarning(UserWarning):
@@ -704,6 +704,60 @@ class Frequency:
         else:
             sweep_type = 'unknown'
         return sweep_type
+    
+    @axes_kwarg
+    def labelXAxis(self, ax: Axes = None):
+        """
+        Label the x-axis of a plot.
+
+        Sets the labels of a plot using :func:`matplotlib.x_label` with
+        string containing the frequency unit.
+
+        Parameters
+        ----------
+        ax : :class:`matplotlib.Axes` or None, optional
+                Axes on which to label the plot.
+                Defaults is None, for the current axe
+                returned by :func:`matplotlib.gca()`
+        """
+
+        ax.set_xlabel('Frequency (%s)' % self.unit)
+
+    @axes_kwarg
+    def plot(self, y: NumberLike, *args, ax: Axes=None, **kwargs):
+        """
+        Plot something vs this frequency.
+
+        This plots whatever is given vs. `self.f_scaled` and then
+        calls `labelXAxis`.
+        """
+
+        from .plotting import scale_frequency_ticks
+
+        try:
+            if len(npy.shape(y)) > 2:
+                # perhaps the dimensions are empty, try to squeeze it down
+                y = y.squeeze()
+                if len(npy.shape(y)) > 2:
+                    # the dimensions are full, so lets loop and plot each
+                    for m in range(npy.shape(y)[1]):
+                        for n in range(npy.shape(y)[2]):
+                            self.plot(y[:, m, n], *args, **kwargs)
+                    return
+            if len(y) == len(self):
+                pass
+            else:
+
+                raise IndexError(['thing to plot doesn\'t have same'
+                                ' number of points as f'])
+        except(TypeError):
+            y = y * npy.ones(len(self))
+
+        # plt.plot(self.f_scaled, y, *args, **kwargs)
+        ax.plot(self.f, y, *args, **kwargs)
+        scale_frequency_ticks(ax, self.unit)
+        ax.autoscale(axis='x', tight=True)
+        self.labelXAxis()
 
 
 def overlap_freq(f1: 'Frequency',f2: 'Frequency') -> Frequency:

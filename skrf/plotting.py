@@ -73,7 +73,7 @@ from .base_network import BaseNetwork
 from .frequency import Frequency
 from . import mathFunctions as mf
 
-from . util import now_string_2_dt, copy_doc
+from . util import now_string_2_dt, copy_doc, axes_kwarg
 
 if TYPE_CHECKING:
     from . import Network, NetworkSet
@@ -894,9 +894,6 @@ def colors() -> List[str]:
 def setup_matplotlib_plotting():
     from . import network, frequency, networkSet, circuit, calibration
 
-    frequency.Frequency.labelXAxis = labelXAxis
-    frequency.Frequency.plot = plot_v_frequency
-
     calibration.Calibration.plot_errors = plot_calibration_errors
     calibration.Calibration.plot_caled_ntwks = plot_caled_ntwks
     calibration.Calibration.plot_residuals = plot_residuals
@@ -913,59 +910,6 @@ def setup_matplotlib_plotting():
     networkSet.NetworkSet.plot_uncertainty_bounds_s = plot_uncertainty_bounds_s
     networkSet.NetworkSet.plot_logsigma = plot_logsigma
     networkSet.NetworkSet.signature = signature
-
-def labelXAxis(self, ax: Union[plt.Axes, None] = None):
-    """
-    Label the x-axis of a plot.
-
-    Sets the labels of a plot using :func:`matplotlib.x_label` with
-    string containing the frequency unit.
-
-    Parameters
-    ----------
-    ax : :class:`matplotlib.Axes` or None, optional
-            Axes on which to label the plot.
-            Defaults is None, for the current axe
-            returned by :func:`matplotlib.gca()`
-    """
-    if ax is None:
-        ax = plt.gca()
-    ax.set_xlabel('Frequency (%s)' % self.unit)
-
-
-def plot_v_frequency(self, y: NumberLike, *args, **kwargs):
-    """
-    Plot something vs this frequency.
-
-    This plots whatever is given vs. `self.f_scaled` and then
-    calls `labelXAxis`.
-    """
-
-    try:
-        if len(npy.shape(y)) > 2:
-            # perhaps the dimensions are empty, try to squeeze it down
-            y = y.squeeze()
-            if len(npy.shape(y)) > 2:
-                # the dimensions are full, so lets loop and plot each
-                for m in range(npy.shape(y)[1]):
-                    for n in range(npy.shape(y)[2]):
-                        self.plot(y[:, m, n], *args, **kwargs)
-                return
-        if len(y) == len(self):
-            pass
-        else:
-
-            raise IndexError(['thing to plot doesn\'t have same'
-                              ' number of points as f'])
-    except(TypeError):
-        y = y * npy.ones(len(self))
-
-    # plt.plot(self.f_scaled, y, *args, **kwargs)
-    plt.plot(self.f, y, *args, **kwargs)
-    ax = plt.gca()
-    scale_frequency_ticks(ax, self.unit)
-    plt.autoscale(axis='x', tight=True)
-    self.labelXAxis()
 
 
 ## specific plotting functions
