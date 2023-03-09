@@ -7,8 +7,13 @@ from skrf.media import MLine
 from skrf.frequency import Frequency
 import skrf as rf
 from numpy.testing import run_module_suite
-from matplotlib import pyplot as plt
-rf.stylely()
+
+try:
+    from matplotlib import pyplot as plt
+    rf.stylely()
+except ImportError:
+    pass
+
 
 
 class MLineTestCase(unittest.TestCase):

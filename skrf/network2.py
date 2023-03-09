@@ -6,7 +6,11 @@ from .util import get_fid, get_extn, find_nearest_index,slice_domain
 from scipy import  signal
 import numpy as npy
 from numpy import fft
-import matplotlib.pyplot as plb
+
+try:
+    import matplotlib.pyplot as plb
+except ImportError:
+    pass
 
 from IPython.display import Image
 from IPython.core.pylabtools import print_figure

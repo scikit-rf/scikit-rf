@@ -61,10 +61,8 @@ try:
 except ImportError:
     ArrayLike = Any
 
-try: 
-    from . import plotting as skrf_plt
-except ImportError:
-    pass
+from . import plotting as skrf_plt
+
 
 
 class NetworkSet:

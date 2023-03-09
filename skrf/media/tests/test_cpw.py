@@ -7,10 +7,15 @@ from skrf.network import Network
 from skrf.frequency import Frequency
 import skrf as rf
 from numpy.testing import assert_array_almost_equal, assert_allclose, run_module_suite
-from matplotlib import pyplot as plt
+
+try:
+    from matplotlib import pyplot as plt
+    rf.stylely()
+except ImportError:
+    pass
+
 import pytest
 
-rf.stylely()
 
 
 class CPWTestCase(unittest.TestCase):
