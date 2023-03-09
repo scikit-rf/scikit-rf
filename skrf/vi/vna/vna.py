@@ -83,8 +83,18 @@ class VNA(ABC):
                 return
             delattr(self, ch_id)
 
+        def _channels(self) -> list[Channel]:
+            return [
+                getattr(self, ch) 
+                for ch in dir(self) 
+                if ch.startswith('ch') 
+                and ch != 'channels'
+            ]
+
         setattr(cls, "create_channel", create_channel)
         setattr(cls, "delete_channel", delete_channel)
+        setattr(cls, "channels", property(_channels))
+        # setattr(cls, "channels", property(lambda self: self.channels()))
 
     def _setup_scpi(self) -> None:
         setattr(
