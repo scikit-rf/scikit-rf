@@ -894,10 +894,6 @@ def colors() -> List[str]:
 def setup_matplotlib_plotting():
     from . import network, frequency, networkSet, circuit, calibration
 
-    calibration.Calibration.plot_errors = plot_calibration_errors
-    calibration.Calibration.plot_caled_ntwks = plot_caled_ntwks
-    calibration.Calibration.plot_residuals = plot_residuals
-
     networkSet.NetworkSet.animate = animate
     networkSet.NetworkSet.plot_uncertainty_bounds_component = plot_uncertainty_bounds_component
     networkSet.NetworkSet.plot_minmax_bounds_component = plot_minmax_bounds_component
@@ -1165,82 +1161,6 @@ def stylely(rc_dict: dict = {}, style_file: str = 'skrf.mplstyle'):
     from .data import pwd # delayed to solve circular import
     mpl.style.use(os.path.join(pwd, style_file))
     mpl.rc(rc_dict)
-
-
-def plot_calibration_errors(self, *args, **kwargs):
-    """
-    Plot biased, unbiased and total error in dB scaled.
-
-    See Also
-    --------
-    biased_error
-    unbiased_error
-    total_error
-    """
-    port_list = self.biased_error.port_tuples
-    for m,n in port_list:
-        plt.figure()
-        plt.title('S%i%i'%(m+1,n+1))
-        self.unbiased_error.plot_s_db(m,n,**kwargs)
-        self.biased_error.plot_s_db(m,n,**kwargs)
-        self.total_error.plot_s_db(m,n,**kwargs)
-        plt.ylim(-100,0)
-
-
-def plot_caled_ntwks(self, attr: str = 's_smith', show_legend: bool = False, **kwargs):
-    r"""
-    Plot corrected calibration standards.
-
-    Given that the calibration is overdetermined, this may be used
-    as a heuristic verification of calibration quality.
-
-    Parameters
-    ----------
-    attr : str
-        Network property to plot, ie 's_db', 's_smith', etc.
-        Default is 's_smith'
-    show_legend : bool, optional
-        draw a legend or not. Default is False.
-    \*\*kwargs : kwargs
-        passed to the plot method of Network
-    """
-    ns = networkSet.NetworkSet(self.caled_ntwks)
-    kwargs.update({'show_legend':show_legend})
-
-    if ns[0].nports ==1:
-        ns.__getattribute__('plot_'+attr)(0,0, **kwargs)
-    elif ns[0].nports ==2:
-        plt.figure(figsize = (8,8))
-        for k,mn in enumerate([(0, 0), (1, 1), (0, 1), (1, 0)]):
-            plt.subplot(221+k)
-            plt.title('S%i%i'%(mn[0]+1,mn[1]+1))
-            ns.__getattribute__('plot_'+attr)(*mn, **kwargs)
-    else:
-        raise NotImplementedError
-    plt.tight_layout()
-
-
-def plot_residuals(self, attr: str = 's_db', **kwargs):
-    r"""
-    Plot residual networks.
-
-    Given that the calibration is overdetermined, this may be used
-    as a metric of the calibration's *goodness of fit*
-
-    Parameters
-    ----------
-    attr : str, optional.
-        Network property to plot, ie 's_db', 's_smith', etc.
-        Default is 's_db'
-    \*\*kwargs : kwargs
-        passed to the plot method of Network
-
-    See Also
-    --------
-    Calibration.residual_networks
-    """
-
-    networkSet.NetworkSet(self.residual_ntwks).__getattribute__('plot_'+attr)(**kwargs)
 
 
 # Network Set Plotting Commands
@@ -1843,12 +1763,13 @@ def plot_contour(freq: Frequency,
 
 class PlottingMixin(BaseNetwork):
 
+    @axes_kwarg
     def plot_attribute(self, 
                             attribute: str, 
                             conversion: str, 
                             m=None, 
                             n=None, 
-                            ax=None,
+                            ax: plt.Axes=None,
                             show_legend=True, 
                             y_label=None, 
                             logx=False, **kwargs):
@@ -1956,8 +1877,6 @@ class PlottingMixin(BaseNetwork):
                         x = self.frequency.f  # always plot f, and then scale the ticks instead
 
                         # scale the ticklabels according to the frequency unit and set log-scale if desired:
-                        if ax is None:
-                            ax = plt.gca()
                         if logx:
                             ax.set_xscale('log')
 
