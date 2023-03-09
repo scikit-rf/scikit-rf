@@ -52,6 +52,8 @@ Convenience plotting functions
     signature
 
 """
+from __future__ import annotations
+
 from . constants import NumberLike
 from functools import partialmethod
 from numbers import Number
@@ -76,7 +78,7 @@ from . import mathFunctions as mf
 from . util import now_string_2_dt, copy_doc, axes_kwarg
 
 if TYPE_CHECKING:
-    from . import Network, NetworkSet
+    from . import NetworkSet
 
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
 SI_CONVERSION = {key: 10**((8-i)*3) for i, key in enumerate(SI_PREFIXES_ASCII)}
@@ -890,23 +892,6 @@ def colors() -> List[str]:
     """
     return [c['color'] for c in rcParams['axes.prop_cycle']]
 
-# TODO: remove this as it takes up ~70% cpu time of this init
-def setup_matplotlib_plotting():
-    from . import network, frequency, networkSet, circuit, calibration
-
-    networkSet.NetworkSet.animate = animate
-    networkSet.NetworkSet.plot_uncertainty_bounds_component = plot_uncertainty_bounds_component
-    networkSet.NetworkSet.plot_minmax_bounds_component = plot_minmax_bounds_component
-    networkSet.NetworkSet.plot_uncertainty_bounds_s_db = plot_uncertainty_bounds_s_db
-    networkSet.NetworkSet.plot_minmax_bounds_s_db = plot_minmax_bounds_s_db
-    networkSet.NetworkSet.plot_minmax_bounds_s_db10 = plot_minmax_bounds_s_db10
-    networkSet.NetworkSet.plot_uncertainty_bounds_s_time_db = plot_uncertainty_bounds_s_time_db
-    networkSet.NetworkSet.plot_minmax_bounds_s_time_db = plot_minmax_bounds_s_time_db
-    networkSet.NetworkSet.plot_uncertainty_decomposition = plot_uncertainty_decomposition
-    networkSet.NetworkSet.plot_uncertainty_bounds_s = plot_uncertainty_bounds_s
-    networkSet.NetworkSet.plot_logsigma = plot_logsigma
-    networkSet.NetworkSet.signature = signature
-
 
 ## specific plotting functions
 def plot(netw: BaseNetwork, *args, **kw):
@@ -1164,7 +1149,7 @@ def stylely(rc_dict: dict = {}, style_file: str = 'skrf.mplstyle'):
 
 
 # Network Set Plotting Commands
-def animate(self, attr: str = 's_deg', ylims: Tuple = (-5, 5),
+def animate(self: NetworkSet, attr: str = 's_deg', ylims: Tuple = (-5, 5),
             xlims: Union[Tuple, None] = None, show: bool = True,
             savefigs: bool = False, dir_: str = '.', *args, **kwargs):
     r"""
@@ -1245,7 +1230,7 @@ def animate(self, attr: str = 's_deg', ylims: Tuple = (-5, 5),
 #------------------------------
 
 def plot_uncertainty_bounds_component(
-        self, attribute: str,
+        self: NetworkSet, attribute: str,
         m: Union[int, None] = None, n: Union[int, None] = None,
         type: str = 'shade', n_deviations: int = 3,
         alpha: float = .3, color_error: Union[str, None] = None,
@@ -1361,12 +1346,12 @@ def plot_uncertainty_bounds_component(
             else:
                 raise(ValueError('incorrect plot type'))
 
-            ax.set_ylabel(Y_LABEL_DICT.get(plot_attribute[2:], ''))  # use only the function of the attribute
+            ax.set_ylabel(self[0].Y_LABEL_DICT.get(plot_attribute[2:], ''))  # use only the function of the attribute
             scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
             ax.axis('tight')
 
 
-def plot_minmax_bounds_component(self, attribute: str, m: int = 0, n: int = 0,
+def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
                                  type: str = 'shade', n_deviations: int = 3,
                                  alpha: float = .3, color_error: Union[str, None] = None,
                                  markevery_error: int = 20, ax: Union[plt.Axes, None] = None,
@@ -1465,12 +1450,12 @@ def plot_minmax_bounds_component(self, attribute: str, m: int = 0, n: int = 0,
     else:
         raise(ValueError('incorrect plot type'))
 
-    ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:], ''))  # use only the function of the attribute
+    ax.set_ylabel(self[0].Y_LABEL_DICT.get(attribute[2:], ''))  # use only the function of the attribute
     scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
     ax.axis('tight')
 
 
-def plot_uncertainty_bounds_s_db(self, *args, **kwargs):
+def plot_uncertainty_bounds_s_db(self: NetworkSet, *args, **kwargs):
     """
     Call ``plot_uncertainty_bounds(attribute='s_mag','ppf':mf.magnitude_2_db*args,**kwargs)``.
 
@@ -1480,7 +1465,7 @@ def plot_uncertainty_bounds_s_db(self, *args, **kwargs):
     kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
     self.plot_uncertainty_bounds_component(*args,**kwargs)
 
-def plot_minmax_bounds_s_db(self, *args, **kwargs):
+def plot_minmax_bounds_s_db(self: NetworkSet, *args, **kwargs):
     """
     Call ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``.
 
@@ -1490,7 +1475,7 @@ def plot_minmax_bounds_s_db(self, *args, **kwargs):
     kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
     self.plot_minmax_bounds_component(*args,**kwargs)
 
-def plot_minmax_bounds_s_db10(self, *args, **kwargs):
+def plot_minmax_bounds_s_db10(self: NetworkSet, *args, **kwargs):
     """
     Call ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``.
 
@@ -1500,7 +1485,7 @@ def plot_minmax_bounds_s_db10(self, *args, **kwargs):
     kwargs.update({'attribute':'s_mag','ppf':mf.mag_2_db10})
     self.plot_minmax_bounds_component(*args,**kwargs)
 
-def plot_uncertainty_bounds_s_time_db(self, *args, **kwargs):
+def plot_uncertainty_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
     """
     Call ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``.
 
@@ -1520,7 +1505,7 @@ def plot_minmax_bounds_s_time_db(self, *args, **kwargs):
     kwargs.update({'attribute':'s_time_mag','ppf':mf.magnitude_2_db})
     self.plot_minmax_bounds_component(*args, **kwargs)
 
-def plot_uncertainty_decomposition(self, m: int = 0, n: int = 0):
+def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0):
     """
     Plot the total and component-wise uncertainty.
 
@@ -1540,7 +1525,7 @@ def plot_uncertainty_decomposition(self, m: int = 0, n: int = 0):
     self.std_s_mag.plot_s_mag(label='Magnitude',  m=m,n=n)
     self.std_s_arcl.plot_s_mag(label='Arc-length',  m=m,n=n)
 
-def plot_uncertainty_bounds_s(self, multiplier: float = 200, *args, **kwargs):
+def plot_uncertainty_bounds_s(self: NetworkSet, multiplier: float = 200, *args, **kwargs):
     """
     Plot complex uncertainty bounds plot on smith chart.
 
@@ -1591,7 +1576,7 @@ def plot_uncertainty_bounds_s(self, multiplier: float = 200, *args, **kwargs):
     plt.draw()
     plt.show()
 
-def plot_logsigma(self, label_axis: bool = True, *args,**kwargs):
+def plot_logsigma(self: NetworkSet, label_axis: bool = True, *args,**kwargs):
     r"""
     Plot the uncertainty for the set in units of log-sigma.
 
@@ -1610,7 +1595,7 @@ def plot_logsigma(self, label_axis: bool = True, *args,**kwargs):
         plt.ylabel('Standard Deviation(dB)')
 
 
-def signature(self, m: int = 0, n: int = 0, component: str = 's_mag',
+def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag',
               vmax: Union[Number, None] = None, vs_time: bool = False,
               cbar_label: Union[str, None] = None,
               *args, **kwargs):

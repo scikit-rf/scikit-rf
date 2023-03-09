@@ -80,8 +80,7 @@ def setup_pylab() -> bool:
         return False
 
     from . import plotting
-    plotting.setup_matplotlib_plotting()
-
+    
     global saf, stylely
     saf = plotting.save_all_figs
     stylely = plotting.stylely
