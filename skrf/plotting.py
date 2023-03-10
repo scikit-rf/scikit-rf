@@ -17,7 +17,6 @@ Plots and Charts
     plot_polar
     plot_complex_rectangular
     plot_complex_polar
-    plot_v_frequency
     plot_it_all
 
     plot_minmax_bounds_component
