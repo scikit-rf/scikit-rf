@@ -11,14 +11,9 @@ import numpy as np
 
 import skrf
 from skrf.vi import vna
-from skrf.vi.validators import (
-    BooleanValidator,
-    DelimitedStrValidator,
-    EnumValidator,
-    FloatValidator,
-    FreqValidator,
-    IntValidator,
-)
+from skrf.vi.validators import (BooleanValidator, DelimitedStrValidator,
+                                EnumValidator, FloatValidator, FreqValidator,
+                                IntValidator)
 from skrf.vi.vna import VNA, ValuesFormat
 
 
@@ -148,7 +143,7 @@ class PNA(VNA):
         averaging_mode = VNA.command(
             get_cmd="SENS<self:cnum>:AVER:COUN?",
             set_cmd="SENS<self:cnum>:AVER:COUN <arg>",
-            doc="""The number of measurements combined for an average""", 
+            doc="""How measurements are averaged together""", 
             validator=EnumValidator(AveragingMode),
         )
 
@@ -190,6 +185,14 @@ class PNA(VNA):
         @property
         def measurement_names(self) -> list[str]:
             return [msmnt[0] for msmnt in self.measurements]
+
+        @property
+        def calibration(self) -> skrf.Calibration:
+            raise NotImplementedError()
+
+        @calibration.setter
+        def calibration(self, cal: skrf.Calibration) -> None:
+            raise NotImplementedError()
 
         def clear_averaging(self) -> None:
             self.write(f"SENS{self.cnum}:AVER:CLE")
@@ -234,7 +237,7 @@ class PNA(VNA):
             ports: Optional[Sequence]=None, 
         ) -> skrf.Network:
             if not ports:
-                ports = list(range(1, self.parent.n_ports+1))
+                ports = list(range(1, self.parent.nports+1))
             
             orig_query_fmt = self.parent.query_format
             self.parent.query_format = ValuesFormat.BINARY_64
@@ -298,10 +301,10 @@ class PNA(VNA):
                 self.sweep_mode = SweepMode.GROUPS
                 n_sweeps = self.averaging_count
                 self.n_sweep_groups = n_sweeps
-                n_sweeps *= self.parent.n_ports
+                n_sweeps *= self.parent.nports
             else:
                 self.sweep_mode = SweepMode.SINGLE
-                n_sweeps = self.parent.n_ports
+                n_sweeps = self.parent.nports
 
             try:
                 sweep_time *= (n_sweeps * 1_000) # 1s per port
@@ -312,7 +315,6 @@ class PNA(VNA):
                 self.parent._resource.timeout = original_config.pop('timeout')
                 for k,v in original_config.items():
                     setattr(self, k, v)
-
 
     def __init__(self, address: str, backend: str = '@py') -> None:
         super().__init__(address, backend)
@@ -325,7 +327,7 @@ class PNA(VNA):
         validator=EnumValidator(TriggerSource)
     )
 
-    n_ports = VNA.command(
+    nports = VNA.command(
         get_cmd='SYST:CAP:HARD:PORT:COUN?',
         set_cmd=None,
         doc="""Number of ports this instrument has""",

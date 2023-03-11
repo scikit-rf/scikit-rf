@@ -17,7 +17,7 @@ def test_format_cmd(cmd, kwargs, expected):
         cnum = 1
         name = "channel"
 
-    assert vna.format_cmd(cmd, self=TestDevice(), **kwargs) == expected
+    assert vna._format_cmd(cmd, self=TestDevice(), **kwargs) == expected
 
 
 def test_vna_add_channel_support():

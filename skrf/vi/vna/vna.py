@@ -1,3 +1,11 @@
+"""
+.. module:: skrf.vi.vna.vna
+=================================================
+vna (:mod:`skrf.vi.vna.vna`)
+=================================================
+
+Provides the VNA base class
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -17,7 +25,7 @@ import pyvisa
 from ..validators import Validator
 
 
-def format_cmd(cmd: str, **kwargs) -> str:
+def _format_cmd(cmd: str, **kwargs) -> str:
     def sub(match_obj):
         prefix = match_obj.group("prefix")
         attr = match_obj.group("attr")
@@ -33,12 +41,26 @@ def format_cmd(cmd: str, **kwargs) -> str:
 
 
 class ValuesFormat(Enum):
+    """How values are written to and queried from the insturment"""
+    
+    #: 32 bits per value
     BINARY_32 = auto()
+    #: 64 bits per value
     BINARY_64 = auto()
+    #: Transferred as ASCII (e.g. representing numbers as strings)
     ASCII = auto()
 
 
 class Channel:
+    """
+    A single channel of the instrument. 
+
+    This is only for those instruments which support channels, and should be
+    subclassed in those instrument classes.
+
+    .. warning::
+        This class should not be instantiated directly
+    """
     def __init__(
         self, parent, cnum: Optional[int] = None, cname: Optional[str]= None
     ) -> None:
@@ -118,14 +140,47 @@ class VNA(ABC):
         validator: Optional[Validator] = None,
         values: bool = False,
         values_container: Optional[type] = np.array,
-    ) -> None:
-        """Create a property for the instrument."""
+    ) -> property:
+        """
+        Create a property for the instrument.
+
+        This method is used to add a property to an instrument. These properties
+        can be read-only, write-only, read-write, and can validate values before
+        sending to the instrument as well as validate responses from the
+        instrument to return proper types.
+
+        Parameters
+        ----------
+        get_cmd
+            Command sent to the instrument to request data
+        set_cmd
+            Command sent to the instrument to set data
+        doc
+            The docstring for the property
+        validator
+            The :class:`Validator` that will be used to transform data to the
+            proper format before sending and after querying
+        values
+            Whether or not this command is using a `Sequence` to set data, or
+            expects a `Sequence` in response.
+        values_container:
+            If values is true, you set set this to the type of container the
+            values should be returned in. For example, this is np.array by
+            default, meaning instead of return a `list`, you will get a numpy
+            array.
+            
+        Returns
+        -------
+        property
+            The property constructed from the parameters passed. Should be set
+            to a class variable
+        """
 
         def fget(self, get_cmd=get_cmd, validator=validator):
             if get_cmd is None:
                 raise LookupError("Property cannot be read")
 
-            cmd = format_cmd(get_cmd, self=self)
+            cmd = _format_cmd(get_cmd, self=self)
             if values:
                 arg = self.query_values(cmd, container=values_container)
             else:
@@ -146,13 +201,15 @@ class VNA(ABC):
             if validator:
                 arg = validator.validate_input(arg)
 
-            cmd = format_cmd(set_cmd, self=self, arg=arg)
+            cmd = _format_cmd(set_cmd, self=self, arg=arg)
             self.write(cmd)
 
             if hasattr(self, 'wait_for_complete'):
                 self.wait_for_complete()
 
         fget.__doc__ = doc
+        # TODO: Potentially add the validator docstring to add the verbosity to
+        # the generated docs, but keep the code less verbose?
 
         return property(fget=fget, fset=fset)
 

@@ -27,7 +27,7 @@ def mocked_ff(mocker):
         ('npoints', 'SENS:SWE:POIN?', 'SENS:SWE:POIN 100', '100', 100, 100),
         ('if_bandwidth', 'SENS:BWID?', 'SENS:BWID 100', '100', 100, 100),
         ('window_configuration', 'DISP:WIND:SPL?', 'DISP:WIND:SPL D1', 'D1', WindowFormat.ONE_TRACE, WindowFormat.ONE_TRACE),
-        ('n_traces', 'CALC:PAR:COUN?', 'CALC:PAR:COUN 1', '1', 1, 1),
+        ('ntraces', 'CALC:PAR:COUN?', 'CALC:PAR:COUN 1', '1', 1, 1),
         ('active_trace', None, 'CALC:PAR1:SEL', None, None, 1),
     ]
 )
@@ -86,7 +86,7 @@ def test_query_fmt_write(mocker, mocked_ff):
     mocked_ff.write.assert_called_with('FORM REAL,64')
 
 def test_define_msmnt(mocker, mocked_ff):
-    mocker.patch('skrf.vi.vna.keysight.FieldFox.n_traces', return_value=1, new_callable=mocker.PropertyMock)
+    mocker.patch('skrf.vi.vna.keysight.FieldFox.ntraces', return_value=1, new_callable=mocker.PropertyMock)
     mocked_ff.define_measurement(1, 'S11')
     mocked_ff.write.assert_called_once_with('CALC:PAR1:DEF S11')
 
