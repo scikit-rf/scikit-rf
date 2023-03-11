@@ -154,7 +154,7 @@ Misc Functions
 from typing import (Any, NoReturn, Optional, Sequence,
     Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List, TextIO)
 from numbers import Number
-from functools import reduce, lru_cache
+from functools import reduce
 
 import os
 import warnings
@@ -306,7 +306,6 @@ class Network(PlottingMixin, BaseNetwork):
     """
 
     @classmethod
-    @lru_cache()
     def _generated_functions(cls) -> Dict[str, Tuple[Callable, str, str]]:
         return {f"{p}_{func_name}": (func, p, func_name) 
             for p in cls.PRIMARY_PROPERTIES 
@@ -938,10 +937,10 @@ class Network(PlottingMixin, BaseNetwork):
     def __dir__(self):
         ret = super().__dir__()
         
-        s_properties = [f"s{t1}_{t2}" for t1 in range(self.nports) for t2 in range(self.nports)]
-        s_properties += [f"s{t1}{t2}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
+        s_properties = [f"s{t1+1}_{t2+1}" for t1 in range(self.nports) for t2 in range(self.nports)]
+        s_properties += [f"s{t1+1}{t2+1}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
 
-        return ret + s_properties + list(self._generated_functions().keys())
+        return ret + s_properties
 
     def attribute(self, prop_name: str, conversion: str) -> npy.ndarray:
         prop = getattr(self, prop_name)
