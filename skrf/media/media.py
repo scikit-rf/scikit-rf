@@ -991,6 +991,7 @@ class Media(ABC):
         shunt_delay_load
         shunt_delay_open
         shunt_delay_short
+        shunt_resistor
         shunt_capacitor
         shunt_inductor
         """
@@ -1021,6 +1022,7 @@ class Media(ABC):
         shunt
         shunt_delay_open
         shunt_delay_short
+        shunt_resistor
         shunt_capacitor
         shunt_inductor
         """
@@ -1051,6 +1053,7 @@ class Media(ABC):
         shunt
         shunt_delay_load
         shunt_delay_short
+        shunt_resistor
         shunt_capacitor
         shunt_inductor
         """
@@ -1086,6 +1089,40 @@ class Media(ABC):
         """
         return self.shunt(self.delay_short(*args, **kwargs), **kwargs)
 
+    def shunt_resistor(self, R: NumberLike, **kwargs) -> Network:
+        r"""
+        Shunted resistor.
+
+        Parameters
+        ----------
+        R : number, array-like
+            Resistor in Ohm.
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`resistor`
+
+        Returns
+        -------
+        shunt_resistor : :class:`~skrf.network.Network` object
+            shunted resistor (2-port)
+
+        Notes
+        -----
+        This calls::
+
+                shunt(resistor(R, **kwargs) ** short())
+
+        See Also
+        --------
+        shunt
+        shunt_delay_load
+        shunt_delay_open
+        shunt_delay_short
+        shunt_inductor
+        shunt_capacitor
+        """
+        return self.shunt(self.resistor(R=R, **kwargs) ** 
+                          self.short(**kwargs), **kwargs)
+
     def shunt_capacitor(self, C: NumberLike, **kwargs) -> Network:
         r"""
         Shunted capacitor.
@@ -1114,6 +1151,7 @@ class Media(ABC):
         shunt_delay_load
         shunt_delay_open
         shunt_delay_short
+        shunt_resistor
         shunt_inductor
         """
         return self.shunt(self.capacitor(C=C, **kwargs) ** 
@@ -1147,6 +1185,7 @@ class Media(ABC):
         shunt_delay_load
         shunt_delay_open
         shunt_delay_short
+        shunt_resistor
         shunt_capacitor
         """
         return self.shunt(self.inductor(L=L, **kwargs) **
