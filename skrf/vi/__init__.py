@@ -50,17 +50,8 @@ averaging_mode       How averages are taken (per point, each sweep, etc)
 if_bandwidth         IF bandwidth [Hz]
 ==================== ========================================================
 
-SCPI Commands
-=============
-
-SCPI or Standard Commands for Programmable Instruments is a standard defined by
-the IVI Foundation to provide a standard syntax for controlling instruments.
-There are many types of instruments that can be controlled with SCPI commands.
-
-To learn about SCPI, you can read the `IVI website`_, or `Wikipedia`_.
-
-.. _IVI website: http://www.ivifoundation.org/scpi/
-.. _Wikipedia: https://en.wikipedia.org/wiki/Standard_Commands_for_Programmable_Instruments
+Validators
+----------
 
 .. autosummary::
     :toctree: generated/

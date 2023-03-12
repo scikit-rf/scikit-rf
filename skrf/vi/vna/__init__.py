@@ -14,7 +14,12 @@ VNA Classes (organized by manufacturer)
 Keysight
 --------
 
-   :class:`keysight.FieldFox`
+.. autosummary::
+    :nosignatures:
+    :toctree: generated/
+
+   keysight.FieldFox
+   keysight.PNA
 
 The Base Class and Writing an Instrument Driver
 ===============================================
