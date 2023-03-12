@@ -194,11 +194,26 @@ class BooleanValidator(Validator):
     truthy = ['1', 'on', 'true']
     falsey = ['0', 'off', 'false']
 
+    def __init__(
+        self, 
+        true_response: Optional[str] = None, 
+        false_response: Optional[str] = None, 
+        true_setting: str='1', 
+        false_setting: str='0'
+    ):
+        if true_response:
+            self.truthy.append(true_response.lower())
+        if false_response:
+            self.falsey.append(false_response.lower())
+
+        self.true_val = true_setting
+        self.false_val = false_setting
+
     def validate_input(self, arg) -> str:
         if str(arg).lower() in self.truthy:
-            return '1'
+            return self.true_val
         elif str(arg).lower() in self.falsey:
-            return '0'
+            return self.false_val
         else:
             raise ValidationError('Argument must be a truthy or falsey value')
 

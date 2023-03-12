@@ -83,6 +83,10 @@ class VNA(ABC):
         rm = pyvisa.ResourceManager(backend)
         self._resource = rm.open_resource(address)
 
+        # Reading and setting the query values format is instrument specific
+        # and must be done for each subclass. We default to using ASCII
+        self._values_fmt: ValuesFormat = ValuesFormat.ASCII
+
         if self._scpi:
             self._setup_scpi()
 
@@ -128,9 +132,6 @@ class VNA(ABC):
         setattr(self.__class__, "options", property(lambda self: self.query("*OPT?")))
         setattr(self.__class__, "id", property(lambda self: self.query("*IDN?")))
 
-        # Reading and setting the query values format is instrument specific
-        # and must be done for each subclass. We default to using ASCII
-        self._values_fmt: ValuesFormat = ValuesFormat.ASCII
 
     @staticmethod
     def command(

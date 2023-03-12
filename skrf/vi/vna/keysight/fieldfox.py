@@ -1,7 +1,7 @@
 """
 .. module:: skrf.vi.vna.keysight.fieldfox
 =================================================
-Keysight FieldFox (:mod:`skrf.vi.vna.fieldfox`)
+Keysight FieldFox (:mod:`skrf.vi.vna.keysight.fieldfox`)
 =================================================
 
 Provides a class to interact with Keysight's FieldFox handheld analyzer. 
@@ -35,14 +35,9 @@ import numpy as np
 
 import skrf
 from skrf.vi import vna
-from skrf.vi.validators import (
-    BooleanValidator,
-    EnumValidator,
-    FloatValidator,
-    FreqValidator,
-    IntValidator,
-    SetValidator,
-)
+from skrf.vi.validators import (BooleanValidator, EnumValidator,
+                                FloatValidator, FreqValidator, IntValidator,
+                                SetValidator)
 
 
 class WindowFormat(Enum):
