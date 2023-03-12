@@ -247,7 +247,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         ntwk = self.dummy_media.shunt_inductor(L)
         Z = 1j*L*ntwk.frequency.w
         ABCD = npy.full(ntwk.s.shape, [[1, 0],
-                                       [1/Z, 1]])
+                                       [1-1j, 1]])
         ABCD[:,1,0] = 1/Z
         npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
 
