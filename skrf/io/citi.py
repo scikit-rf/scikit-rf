@@ -244,7 +244,6 @@ class Citi():
         # Network parameter generic array
         p = np.zeros((occ, len(freq), rank, rank), dtype=complex)
 
-
         # create a 2D array of all parameters sets
         if self.params:
             params_sets = np.array(np.meshgrid(*[self._params[name]['values']
@@ -252,8 +251,19 @@ class Citi():
         else:
             params_sets = []
 
-        z0 = 50  # TODO extract from PortZ[port]
+        # extract from PortZ[port]
+        z0s = np.full((occ, len(freq), rank), 50, dtype=complex)
+        if any(k.upper().startswith('PORTZ') for k in self._data.keys()):
+            # could be PortZ or PORTZ depending CTI file
+            if any(k.startswith('PortZ') for k in self._data.keys()):
+                zname = 'PortZ'
+            else:
+                zname = 'PORTZ'
 
+            for m in range(rank):
+                for (idx_set, params_set) in enumerate(params_sets):
+                    z0s[idx_set,:,m] = self._data[f'{zname}[{m+1}]']['values'].reshape((int(occ), len(freq)))[idx_set,:]
+           
         # create list of Networks assuming the following ordering:
         # val_param1_f1
         # ...
@@ -282,9 +292,9 @@ class Citi():
             params = dict(zip(self.params, params_set))
 
             if ntwkprm == 'S':
-                ntwk = Network(frequency=freq, s=p[idx_set], params=params, z0=z0)
+                ntwk = Network(frequency=freq, s=p[idx_set], params=params, z0=z0s[idx_set])
             elif ntwkprm == 'Z':
-                ntwk = Network(frequency=freq, s=z2s(p[idx_set], z0), params=params, z0=z0)
+                ntwk = Network(frequency=freq, s=z2s(p[idx_set], z0s[idx_set]), params=params, z0=z0s[idx_set])
             else:
                 raise NotImplementedError('Unknown Network Parameter')
             networks.append(ntwk)

@@ -8,6 +8,8 @@ DATA S[1,1] RI
 DATA S[1,2] RI
 DATA S[2,1] RI
 DATA S[2,2] RI
+DATA PortZ[1] RI
+DATA PortZ[2] RI
 VAR_LIST_BEGIN
          200
          100
@@ -48,4 +50,20 @@ BEGIN
     22.4, 4000
     22.5, 5000
     22.6, 6000
+END
+BEGIN
+    50, 1
+    51, 2
+    52, 3
+    53, 4
+    54, 5
+    55, 6
+END
+BEGIN
+    60, 10
+    61, 20
+    62, 30
+    63, 40
+    64, 50
+    65, 60
 END
