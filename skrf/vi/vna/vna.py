@@ -22,6 +22,7 @@ from enum import Enum, auto
 import numpy as np
 import pyvisa
 
+from ..scpi_errors import SCPIError
 from ..validators import Validator
 
 
@@ -90,6 +91,9 @@ class VNA(ABC):
         if self._scpi:
             self._setup_scpi()
 
+        self.echo = False
+
+
     def __init_subclass__(cls):
         if "Channel" in [c[0] for c in inspect.getmembers(cls, inspect.isclass)]:
             cls._add_channel_support()
@@ -101,26 +105,28 @@ class VNA(ABC):
             if hasattr(self, ch_id):
                 raise RuntimeError(f"Channel {cnum} already exists")
 
-            setattr(self, ch_id, self.Channel(self, cnum, cname))
+            new_channel = self.Channel(self, cnum, cname)
+            setattr(self, ch_id, new_channel)
 
         def delete_channel(self, cnum: str) -> None:
             ch_id = f"ch{cnum}"
             if not hasattr(self, ch_id):
                 return
+            ch = getattr(self, ch_id)
+            if hasattr(ch, '_on_delete'):
+                ch._on_delete()
             delattr(self, ch_id)
 
         def _channels(self) -> list[Channel]:
             return [
                 getattr(self, ch) 
                 for ch in dir(self) 
-                if ch.startswith('ch') 
-                and ch != 'channels'
+                if re.fullmatch(r"ch\d+", ch)
             ]
 
         setattr(cls, "create_channel", create_channel)
         setattr(cls, "delete_channel", delete_channel)
         setattr(cls, "channels", property(_channels))
-        # setattr(cls, "channels", property(lambda self: self.channels()))
 
     def _setup_scpi(self) -> None:
         setattr(
@@ -131,7 +137,17 @@ class VNA(ABC):
         setattr(self.__class__, "status", property(lambda self: self.query("*STB?")))
         setattr(self.__class__, "options", property(lambda self: self.query("*OPT?")))
         setattr(self.__class__, "id", property(lambda self: self.query("*IDN?")))
+        setattr(self.__class__, "clear_errors", lambda self: self.write("*CLS"))
 
+        def errcheck(self) -> None:
+            err = self.query("SYST:ERR?")
+            errno = int(err.split(',')[0])
+            if errno == 0:
+                return
+            else:
+                raise SCPIError(errno)
+                
+        setattr(self.__class__, "check_errors", errcheck)
 
     @staticmethod
     def command(
@@ -228,6 +244,9 @@ class VNA(ABC):
         pass
 
     def write(self, cmd, **kwargs) -> None:
+        if self.echo:
+            print(cmd)
+
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             fn = self._resource.write
         elif isinstance(self._resource, pyvisa.resources.RegisterBasedResource):
@@ -238,6 +257,9 @@ class VNA(ABC):
         fn(cmd, **kwargs)
 
     def write_values(self, cmd, values, **kwargs) -> None:
+        if self.echo:
+            print(cmd)
+
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             if self._values_fmt == ValuesFormat.ASCII:
                 fn = self._resource.write_ascii_values
@@ -254,6 +276,9 @@ class VNA(ABC):
         return fn(cmd, values, **kwargs)
 
     def query(self, cmd, **kwargs) -> None:
+        if self.echo:
+            print(cmd)
+
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             fn = self._resource.query
         elif isinstance(self._resource, pyvisa.resources.RegisterBasedResource):
@@ -264,6 +289,9 @@ class VNA(ABC):
         return fn(cmd, **kwargs)
 
     def query_values(self, cmd, **kwargs) -> None:
+        if self.echo:
+            print(cmd)
+
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             if self._values_fmt == ValuesFormat.ASCII:
                 fn = self._resource.query_ascii_values

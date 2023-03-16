@@ -114,6 +114,13 @@ class FreqValidator(Validator):
             except ValueError:
                 raise ValidationError("Could not convert {arg} to an int")
 
+    def validate_output(self, arg) -> int:
+        try:
+            f = float(arg)
+            return int(f)
+        except ValueError:
+            raise ValidationError(f"Response from instrument ({arg}) could not be converted to an int")
+
 
 class EnumValidator(Validator):
     def __init__(self, enum: Enum) -> None:
@@ -188,6 +195,7 @@ class DelimitedStrValidator(Validator):
         return self.sep.join(str(x) for x in arg)
 
     def validate_output(self, arg: str) -> list:
+        arg = arg.replace('"', '')
         return [self.dtype(val) for val in arg.split(self.sep)]
 
 class BooleanValidator(Validator):

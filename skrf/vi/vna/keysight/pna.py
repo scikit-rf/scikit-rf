@@ -8,12 +8,18 @@ if TYPE_CHECKING:
 from enum import Enum
 
 import numpy as np
+from pyvisa.errors import VisaIOError
 
 import skrf
 from skrf.vi import vna
-from skrf.vi.validators import (BooleanValidator, DelimitedStrValidator,
-                                EnumValidator, FloatValidator, FreqValidator,
-                                IntValidator)
+from skrf.vi.validators import (
+    BooleanValidator,
+    DelimitedStrValidator,
+    EnumValidator,
+    FloatValidator,
+    FreqValidator,
+    IntValidator,
+)
 from skrf.vi.vna import VNA, ValuesFormat
 
 
@@ -38,12 +44,33 @@ class TriggerSource(Enum):
 
 class AveragingMode(Enum):
     POINT = "POIN"
-    SWEEP = "SWEEP"
+    SWEEP = "SWE"
 
 class PNA(VNA):
+    # PNA Models:
+    # E8361A, E8362B, E8363B, E8364B, N5221A, N5222A, N5224A, N5225A, N5227A
+    # N5224B, N5222B, N5227B, N5225B, N5221B, E8356A, E8357A, E8358A, E8361A
+    # E8361C, E8362A, E8362C, E8363A, E8363B, E8363C, E8364A, E8364B, E8364C
+    # E8801A, E8802A, E8803A, N3381A, N3382A, N3383A, N5250C
+
+    # PNA-L Models:
+    # N5230A, N5230C, N5231A, N5232A, N5234A, N5235A, N5239A, N5234B, N5235B
+    # N5231B, N5232B, N5239B
+
+    # PNA-X Models:
+    # N5241A, N5242A, N5244A, N5245A, N5247A, N5249A, N5247B, N5245B, N5244B
+    # N5242B, N5241B, N5249B, N5264A, N5264B
+
     class Channel(vna.Channel):
         def __init__(self, parent, cnum: int, cname: str):
             super().__init__(parent, cnum, cname)
+
+            if cnum != 1:
+                default_msmnt = f"CH{self.cnum}_S11_1"
+                self.create_measurement(default_msmnt, 'S11')
+
+        def _on_delete(self):
+            self.write(f"SYST:CHAN:DEL {self.cnum}")
 
         freq_start = VNA.command(
             get_cmd="SENS<self:cnum>:FREQ:STAR?",
@@ -56,15 +83,6 @@ class PNA(VNA):
             get_cmd="SENS<self:cnum>:FREQ:STOP?",
             set_cmd="SENS<self:cnum>:FREQ:STOP <arg>",
             doc="""The stop frequency [Hz]""",
-            validator=FreqValidator(),
-        )
-
-        freq_step = VNA.command(
-            get_cmd="SENS<self:cnum>:SWE:STEP?",
-            set_cmd="SENS<self:cnum>:SWE:STEP <arg>",
-            doc="""The frequency step [Hz]. Sets the number of points as a side
-                effect
-            """,
             validator=FreqValidator(),
         )
 
@@ -127,8 +145,8 @@ class PNA(VNA):
         )
 
         averaging_on = VNA.command(
-            get_cmd="SENS<self:cnum>:AVER:MODE?",
-            set_cmd="SENS<self:cnum>:AVER:MODE <arg>",
+            get_cmd="SENS<self:cnum>:AVER:STATE?",
+            set_cmd="SENS<self:cnum>:AVER:STATE <arg>",
             doc="""Whether averaging is on or off""", 
             validator=BooleanValidator(),
         )
@@ -141,8 +159,8 @@ class PNA(VNA):
         )
 
         averaging_mode = VNA.command(
-            get_cmd="SENS<self:cnum>:AVER:COUN?",
-            set_cmd="SENS<self:cnum>:AVER:COUN <arg>",
+            get_cmd="SENS<self:cnum>:AVER:MODE?",
+            set_cmd="SENS<self:cnum>:AVER:MODE <arg>",
             doc="""How measurements are averaged together""", 
             validator=EnumValidator(AveragingMode),
         )
@@ -154,11 +172,23 @@ class PNA(VNA):
             validator=IntValidator(1, int(2E6)),
         )
 
-        active_trace_sdata = vna.VNA.command(
-            get_cmd="CALC<self:cnum>:DATA:SDATA?",
-            doc="""Get the current trace data as a network""",
-            values=True,
+        active_trace_sdata = VNA.command(
+            get_cmd="CALC<self:cnum>:DATA? SDATA",
+            set_cmd=None,
+            doc="""Get the current trace's s-values as a numpy array""",
+            values=True
         )
+
+        @property
+        def freq_step(self) -> int:
+            # Not all instruments support SENS:FREQ:STEP
+            f = self.frequency
+            return int(f.step)
+
+        @freq_step.setter
+        def freq_step(self, f: int) -> None:
+            freq = self.frequeny
+            self.npoints = len(range(int(freq.start), int(freq.stop) + f, f))
 
         @property
         def frequency(self) -> skrf.Frequency:
@@ -178,7 +208,7 @@ class PNA(VNA):
 
         @property
         def measurements(self) -> list[tuple[str, str]]:
-            msmnts = self.query(f"CALC{self.cnum}:PAR:CAT:EXT?")
+            msmnts = self.query(f"CALC{self.cnum}:PAR:CAT:EXT?").replace('"', '')
             msmnts = msmnts.split(',')
             return list(zip(msmnts[::2], msmnts[1::2]))
 
@@ -199,8 +229,11 @@ class PNA(VNA):
 
         def create_measurement(self, name: str, parameter: str) -> None:
             self.write(f"CALC{self.cnum}:PAR:EXT '{name}',{parameter}")
-            next_tr = int(self.query("DISP:WIND:TRAC:NEXT?"))
-            self.write(f"DISP:WIND:TRAC:FEED{next_tr} '{name}'")
+            # Not all instruments support DISP:WIND:TRAC:NEXT
+            traces = self.query("DISP:WIND:CAT?").replace('"', '')
+            traces = [int(tr) for tr in traces.split(',')]
+            next_tr = traces[-1] + 1
+            self.write(f"DISP:WIND:TRAC{next_tr}:FEED '{name}'")
 
         def delete_measurement(self, name: str) -> None:
             self.write(f"CALC{self.cnum}:PAR:DEL '{name}'")
@@ -234,10 +267,10 @@ class PNA(VNA):
 
         def get_snp_network(
             self, 
-            ports: Optional[Sequence]=None, 
+            ports: Sequence={1,2}, 
         ) -> skrf.Network:
-            if not ports:
-                ports = list(range(1, self.parent.nports+1))
+            # if not ports:
+            #     ports = list(range(1, self.parent.nports+1))
             
             orig_query_fmt = self.parent.query_format
             self.parent.query_format = ValuesFormat.BINARY_64
@@ -248,7 +281,8 @@ class PNA(VNA):
             names = []
             # Make sure the ports specified are driven
             for param in msmnt_params:
-                name = self.query(f"CALC{self.cnum}:PAR:TAG:NEXT?").strip()
+                # Not all models support CALC:PAR:TAG:NEXT
+                name = f"CH{self.cnum}_SKRF_{param}"
                 names.append(name)
                 self.create_measurement(name, param)
 
@@ -285,8 +319,8 @@ class PNA(VNA):
             self.parent._resource.clear()
 
             sweep_mode = self.sweep_mode
-            sweep_time = self.sweep_time,
-            avg_on = self.averaging_on,
+            sweep_time = self.sweep_time
+            avg_on = self.averaging_on
             avg_mode = self.averaging_mode
 
             original_config = {
@@ -318,7 +352,12 @@ class PNA(VNA):
 
     def __init__(self, address: str, backend: str = '@py') -> None:
         super().__init__(address, backend)
+
+        self._resource.read_termination = '\n'
+        self._resource.write_termination = '\n'
+
         self.create_channel(1, "Channel 1")
+        self.active_channel = self.ch1
 
     trigger_source = VNA.command(
         get_cmd='TRIG:SOUR?',
@@ -327,16 +366,36 @@ class PNA(VNA):
         validator=EnumValidator(TriggerSource)
     )
 
-    nports = VNA.command(
-        get_cmd='SYST:CAP:HARD:PORT:COUN?',
+    nerrors = VNA.command(
+        get_cmd="SYST:ERR:COUN?",
         set_cmd=None,
-        doc="""Number of ports this instrument has""",
+        doc="""The number of errors since last cleared (see
+            :func:`PNA.clear_errors`)""",
         validator=IntValidator()
     )
 
+    channel_numbers = VNA.command(
+        get_cmd="SYST:CHAN:CAT?",
+        set_cmd = None,
+        doc="""The channel numbers currently in use""",
+        validator=DelimitedStrValidator(int)
+    )
+
+    @property
+    def nports(self) -> int:
+        try:
+            ports = self.query("SYST:CAP:HARD:PORT:COUN?")
+        except VisaIOError:
+            # This is crap. With instruments that don't support the above command,
+            # we either have to hard code the number of ports by model number or
+            # figure something else out
+            ports = 2
+
+        return int(ports)
+
     @property
     def active_channel(self) -> Optional[Channel]:
-        num = self.query('SYST:ACT:CHAN?')
+        num = int(self.query('SYST:ACT:CHAN?'))
         return getattr(self, f"ch{num}", None)
 
     @active_channel.setter
@@ -345,11 +404,11 @@ class PNA(VNA):
             return
 
         msmnt = ch.measurement_numbers[0]
-        self.write(f'CALC{ch.cnum}:PAR:MNUM {msmnt},fast')
+        self.write(f'CALC{ch.cnum}:PAR:MNUM {msmnt}')
 
     @property
     def query_format(self) -> vna.ValuesFormat:
-        fmt = self.query("FORM?")
+        fmt = self.query("FORM?").replace('+', '')
         if fmt == "ASC,0":
             self._values_fmt = vna.ValuesFormat.ASCII
         elif fmt == "REAL,32":
@@ -365,14 +424,16 @@ class PNA(VNA):
             self.write("FORM ASC,0")
         elif fmt == vna.ValuesFormat.BINARY_32:
             self._values_fmt = vna.ValuesFormat.BINARY_32
-            self.write("FORM:BORD SWAP;FORM REAL,32")
+            self.write("FORM:BORD SWAP")
+            self.write("FORM REAL,32")
         elif fmt == vna.ValuesFormat.BINARY_64:
             self._values_fmt = vna.ValuesFormat.BINARY_64
-            self.write("FORM:BORD SWAP;FORM REAL,64")
+            self.write("FORM:BORD SWAP")
+            self.write("FORM REAL,64")
 
     @property
     def active_measurement(self) -> str:
-        return self.query("SYST:ACT:MEAS?")
+        return self.query("SYST:ACT:MEAS?").replace('"', '')
 
     @active_measurement.setter
     def active_measurement(self, name: str) -> None:
@@ -385,4 +446,9 @@ class PNA(VNA):
         if name not in measurements:
             raise KeyError(f"{name} does not exist")
 
-        self.write(f"CALC{measurements[name].cnum}:PAR:SEL '{name}',fast")
+        # FIXME: Not all models support the 'fast' argument. Should we figure
+        # out some way to determine if the instrument supports this argument,
+        # have a dictionary of models and particular configs, subclass PNA for
+        # every model with its particular configuration, something else?
+        # self.write(f"CALC{measurements[name].cnum}:PAR:SEL '{name}',fast")
+        self.write(f"CALC{measurements[name].cnum}:PAR:SEL '{name}'")
