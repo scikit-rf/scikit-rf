@@ -64,6 +64,7 @@ from time import sleep
 # 0x21 0x20: number of sweep frequency points (2 bytes; uint16)
 # 0x23 0x22: number of data points to output for each frequency (2 bytes; uint16)
 
+
 class NanoVNAv2(abcvna.VNA):
     """
     Python class for NanoVNA V2 network analyzers [#website]_.
@@ -121,12 +122,13 @@ class NanoVNAv2(abcvna.VNA):
     .. [#website] Website of NanoVNA V2: https://nanorfe.com/nanovna-v2.html
     """
 
-    def __init__(self, address: str = 'ASRL/dev/ttyACM0::INSTR'):
-        super().__init__(address=address, visa_library='@py')
+    def __init__(self, address: str = "ASRL/dev/ttyACM0::INSTR"):
+        super().__init__(address=address, visa_library="@py")
         self._protocol_reset()
         self._frequency = np.linspace(1e6, 10e6, 101)
         self.set_frequency_sweep(1e6, 10e6, 101)
 
+    @property
     def idn(self) -> str:
         """
         Returns the identification string of the device.
@@ -138,14 +140,11 @@ class NanoVNAv2(abcvna.VNA):
         """
 
         # send 1-byte READ (0x10) of address 0xf0 to retrieve device variant code
-        self.resource.write_raw([0x10, 0xf0])
+        self.resource.write_raw([0x10, 0xF0])
         v_byte = self.resource.read_bytes(1)
-        v = int.from_bytes(v_byte, byteorder='little')
+        v = int.from_bytes(v_byte, byteorder="little")
 
-        if v == 2:
-            return 'NanoVNA_v2'
-        else:
-            return f'Unknown device, got deviceVariant={v}'
+        return "NanoVNA_v2" if v == 2 else f"Unknown device, got deviceVariant={v}"
 
     def reset(self):
         raise NotImplementedError
@@ -191,7 +190,6 @@ class NanoVNAv2(abcvna.VNA):
         f_remaining = f_points
 
         while f_remaining > 0:
-
             # can only read 255 values in one take
             if f_remaining > 255:
                 len_segment = 255
@@ -211,13 +209,13 @@ class NanoVNAv2(abcvna.VNA):
             i_start = i * 32
             i_stop = (i + 1) * 32
             data_chunk = data_raw[i_start:i_stop]
-            fwd0re = int.from_bytes(data_chunk[0:4], 'little', signed=True)
-            fwd0im = int.from_bytes(data_chunk[4:8], 'little', signed=True)
-            rev0re = int.from_bytes(data_chunk[8:12], 'little', signed=True)
-            rev0im = int.from_bytes(data_chunk[12:16], 'little', signed=True)
-            rev1re = int.from_bytes(data_chunk[16:20], 'little', signed=True)
-            rev1im = int.from_bytes(data_chunk[20:24], 'little', signed=True)
-            freqIndex = int.from_bytes(data_chunk[24:26], 'little', signed=False)
+            fwd0re = int.from_bytes(data_chunk[0:4], "little", signed=True)
+            fwd0im = int.from_bytes(data_chunk[4:8], "little", signed=True)
+            rev0re = int.from_bytes(data_chunk[8:12], "little", signed=True)
+            rev0im = int.from_bytes(data_chunk[12:16], "little", signed=True)
+            rev1re = int.from_bytes(data_chunk[16:20], "little", signed=True)
+            rev1im = int.from_bytes(data_chunk[20:24], "little", signed=True)
+            freqIndex = int.from_bytes(data_chunk[24:26], "little", signed=False)
 
             a1 = complex(fwd0re, fwd0im)
             b1 = complex(rev0re, rev0im)
@@ -228,7 +226,9 @@ class NanoVNAv2(abcvna.VNA):
 
         return data_s11, data_s21
 
-    def set_frequency_sweep(self, start_freq: float, stop_freq: float, num_points: int = 201, **kwargs) -> None:
+    def set_frequency_sweep(
+        self, start_freq: float, stop_freq: float, num_points: int = 201, **kwargs
+    ) -> None:
         """
         Configures the frequency sweep. Only linear spacing is supported.
 
@@ -254,15 +254,21 @@ class NanoVNAv2(abcvna.VNA):
         self._frequency = np.linspace(start_freq, stop_freq, num_points)
 
         # set f_start by writing 8 bytes (cmd=0x23) to (0x00...0x07)
-        cmd = b'\x23\x00' + int.to_bytes(int(start_freq), 8, byteorder='little', signed=False)
+        cmd = b"\x23\x00" + int.to_bytes(
+            int(start_freq), 8, byteorder="little", signed=False
+        )
         self.resource.write_raw(cmd)
 
         # set f_step by writing 8 bytes (cmd=0x23) to (0x10...0x17)
-        cmd = b'\x23\x10' + int.to_bytes(int(f_step), 8, byteorder='little', signed=False)
+        cmd = b"\x23\x10" + int.to_bytes(
+            int(f_step), 8, byteorder="little", signed=False
+        )
         self.resource.write_raw(cmd)
 
         # set f_points by writing 2 bytes (cmd=0x21) to (0x20 0x21)
-        cmd = b'\x21\x20' + int.to_bytes(int(num_points), 2, byteorder='little', signed=False)
+        cmd = b"\x21\x20" + int.to_bytes(
+            int(num_points), 2, byteorder="little", signed=False
+        )
         self.resource.write_raw(cmd)
 
         # wait 1s for changes to be effective
@@ -283,8 +289,7 @@ class NanoVNAv2(abcvna.VNA):
         list
         """
 
-        return [{'channel': 0, 'parameter': 'S11'},
-                {'channel': 1, 'parameter': 'S21'}]
+        return [{"channel": 0, "parameter": "S11"}, {"channel": 1, "parameter": "S21"}]
 
     def get_traces(self, traces: list = None, **kwargs) -> list:
         """
@@ -304,17 +309,17 @@ class NanoVNAv2(abcvna.VNA):
         """
 
         data_s11, data_s21 = self.get_s11_s21()
-        frequency = skrf.Frequency.from_f(self._frequency, unit='hz')
-        nw_s11 = skrf.Network(frequency=frequency, s=data_s11, name='Trace0')
-        nw_s21 = skrf.Network(frequency=frequency, s=data_s21, name='Trace1')
+        frequency = skrf.Frequency.from_f(self._frequency, unit="hz")
+        nw_s11 = skrf.Network(frequency=frequency, s=data_s11, name="Trace0")
+        nw_s21 = skrf.Network(frequency=frequency, s=data_s21, name="Trace1")
 
         traces_valid = self.get_list_of_traces()
         networks = []
         for trace in traces:
             if trace in traces_valid:
-                if trace['channel'] == 0:
+                if trace["channel"] == 0:
                     networks.append(nw_s11)
-                elif trace['channel'] == 1:
+                elif trace["channel"] == 1:
                     networks.append(nw_s21)
 
         return networks
@@ -426,7 +431,7 @@ class NanoVNAv2(abcvna.VNA):
 
         # load s11, s21 from NanoVNA
         data_s11, data_s21 = self.get_s11_s21()
-        frequency = skrf.Frequency.from_f(self._frequency, unit='hz')
+        frequency = skrf.Frequency.from_f(self._frequency, unit="hz")
 
         # prepare empty S matrix to be populated
         s = np.zeros((len(frequency), len(ports), len(ports)), dtype=complex)
@@ -450,7 +455,9 @@ class NanoVNAv2(abcvna.VNA):
                 col = 0
             else:
                 # problem: column index is ambiguous
-                raise ValueError('Source port index `0` is missing in `ports` with length > 1. Column index is ambiguous.')
+                raise ValueError(
+                    "Source port index `0` is missing in `ports` with length > 1. Column index is ambiguous."
+                )
 
         # populate N-port network with s11 and s21
         k = 0
@@ -461,7 +468,7 @@ class NanoVNAv2(abcvna.VNA):
                 elif port == 1:
                     s[:, rows[k], col] = data_s21
                 else:
-                    raise ValueError(f'Invalid port index `{port}` in `ports`')
+                    raise ValueError(f"Invalid port index `{port}` in `ports`")
                 k += 1
 
         return skrf.Network(frequency=frequency, s=s)
@@ -480,7 +487,7 @@ class NanoVNAv2(abcvna.VNA):
         """
         traces = self.get_list_of_traces()
         ntwk = self.get_traces([traces[0]])[0]
-        ntwk.name = 'NanoVNA_S11'
+        ntwk.name = "NanoVNA_S11"
         return ntwk
 
     @property
@@ -494,5 +501,5 @@ class NanoVNAv2(abcvna.VNA):
         """
         traces = self.get_list_of_traces()
         ntwk = self.get_traces([traces[1]])[0]
-        ntwk.name = 'NanoVNA_S21'
+        ntwk.name = "NanoVNA_S21"
         return ntwk
