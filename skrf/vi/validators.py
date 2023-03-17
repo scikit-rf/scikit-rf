@@ -68,9 +68,15 @@ class IntValidator(Validator):
 
 
 class FloatValidator(Validator):
-    def __init__(self, min: Optional[float] = None, max: Optional[float] = None) -> None:
+    def __init__(
+        self, 
+        min: Optional[float] = None, 
+        max: Optional[float] = None, 
+        decimal_places: int=50
+    ) -> None:
         self.min = min
         self.max = max
+        self.dec_places = decimal_places
 
     def validate_input(self, arg) -> float:
         try:
@@ -81,7 +87,7 @@ class FloatValidator(Validator):
         if self.min is not None or self.max is not None:
             self.check_bounds(arg)
 
-        return arg
+        return round(arg, self.dec_places)
 
     def check_bounds(self, arg):
         try:

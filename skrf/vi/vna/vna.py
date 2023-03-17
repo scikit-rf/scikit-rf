@@ -157,6 +157,7 @@ class VNA(ABC):
         validator: Optional[Validator] = None,
         values: bool = False,
         values_container: Optional[type] = np.array,
+        complex_values: bool = False
     ) -> property:
         """
         Create a property for the instrument.
@@ -185,6 +186,10 @@ class VNA(ABC):
             values should be returned in. For example, this is np.array by
             default, meaning instead of return a `list`, you will get a numpy
             array.
+        complex_values:
+            If the values expected from the instrument are complex. If so, the
+            values will be converted from [real[0], imag[0], real[1], imag[1], ...] 
+            to [complex(real[0], imag[0]), complex(real[1], imag[1]), ...]
             
         Returns
         -------
@@ -199,7 +204,7 @@ class VNA(ABC):
 
             cmd = _format_cmd(get_cmd, self=self)
             if values:
-                arg = self.query_values(cmd, container=values_container)
+                arg = self.query_values(cmd, container=values_container, complex_values=complex_values)
             else:
                 arg = self.query(cmd)
 
@@ -256,9 +261,12 @@ class VNA(ABC):
 
         fn(cmd, **kwargs)
 
-    def write_values(self, cmd, values, **kwargs) -> None:
+    def write_values(self, cmd, values, complex_values: bool=False, **kwargs) -> None:
         if self.echo:
             print(cmd)
+
+        if complex_values:
+            values = np.array([(x.real, x.imag) for x in values]).flatten()
 
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             if self._values_fmt == ValuesFormat.ASCII:
@@ -288,7 +296,7 @@ class VNA(ABC):
 
         return fn(cmd, **kwargs)
 
-    def query_values(self, cmd, **kwargs) -> None:
+    def query_values(self, cmd, complex_values: bool=False, **kwargs) -> None:
         if self.echo:
             print(cmd)
 
@@ -304,4 +312,9 @@ class VNA(ABC):
         else:
             raise RuntimeError("unreachable")
 
-        return fn(cmd, **kwargs)
+        vals = fn(cmd, **kwargs)
+
+        if complex_values:
+            vals = np.vectorize(complex)(vals[::2], vals[1::2])
+
+        return vals

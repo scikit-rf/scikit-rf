@@ -140,6 +140,7 @@ class FieldFox(vna.VNA):
         get_cmd="CALC:DATA:SDATA?",
         doc="""Get the current trace data as a network""",
         values=True,
+        complex_values=True
     )
 
     is_continuous = vna.VNA.command(
@@ -202,8 +203,8 @@ class FieldFox(vna.VNA):
         """The currently defined calibration as a :class:`skrf.calibration.calibration.Calibration`"""
         cal_dict = {}
         for cal_key, term in self._cal_term_map.items():
-            raw = self.query_values(f"SENS:CORR:COEF? {term}", container=np.array)
-            cal_dict[cal_key] = raw[::2] + 1j * raw[1::2]
+            vals = self.query_values(f"SENS:CORR:COEF? {term}", container=np.array, complex_values=True)
+            cal_dict[cal_key] = vals
 
         return skrf.Calibration.from_coefs(self.frequency, cal_dict)
 
@@ -211,8 +212,7 @@ class FieldFox(vna.VNA):
     def calibration(self, cal: skrf.Calibration) -> None:
         cal_dict = cal.coefs_12term
         for cal_key, term in self._cal_term_map.items():
-            vals = np.array([(x.real, x.imag) for x in cal_dict[cal_key]]).flatten()
-            self.write_values(f"SENS:CORR:COEF {term},", vals)
+            self.write_values(f"SENS:CORR:COEF {term},", cal_dict[cal_key], complex_values=True)
 
     @property
     def query_format(self) -> vna.ValuesFormat:
@@ -332,11 +332,11 @@ class FieldFox(vna.VNA):
         for tr, ((i, j), param) in enumerate(zip(msmnts, msmnt_params)):
             self.active_trace = tr + 1
 
-            raw = self.active_trace_sdata
+            sdata = self.active_trace_sdata
             if len(msmnts) == 1:
-                ntwk.s[:, 0, 0] = raw[::2] + 1j * raw[1::2]
+                ntwk.s[:, 0, 0] = sdata
             else:
-                ntwk.s[:, i - 1, j - 1] = raw[::2] + 1j * raw[1::2]
+                ntwk.s[:, i - 1, j - 1] = sdata
 
         if restore_settings:
             for i, param in enumerate(original_config.pop('trace_params')):

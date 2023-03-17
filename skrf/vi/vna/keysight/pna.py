@@ -5,10 +5,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional, Sequence
 
+import re
+import sys
 from enum import Enum
 
 import numpy as np
-from pyvisa.errors import VisaIOError
 
 import skrf
 from skrf.vi import vna
@@ -47,6 +48,11 @@ class AveragingMode(Enum):
     SWEEP = "SWE"
 
 class PNA(VNA):
+    # TODO: 
+    # - active_calset_name: SENS<self:cnum>:CORR:CSET:ACT? NAME
+    # - create_calset: SENS<self:cnum>:CORR:CSET:CRE <name>
+    # - calset_data: SENS<self:cnum>:CORR:CSET:DATA?  <eterm>,<port a>,<port b> '<receiver>'
+
     # PNA Models:
     # E8361A, E8362B, E8363B, E8364B, N5221A, N5222A, N5224A, N5225A, N5227A
     # N5224B, N5222B, N5227B, N5225B, N5221B, E8356A, E8357A, E8358A, E8361A
@@ -60,6 +66,16 @@ class PNA(VNA):
     # PNA-X Models:
     # N5241A, N5242A, N5244A, N5245A, N5247A, N5249A, N5247B, N5245B, N5244B
     # N5242B, N5241B, N5249B, N5264A, N5264B
+    _models = {
+        'default': {
+            'nports': 2,
+            'unsupported': []
+        },
+        'E8362C': {
+            'nports': 2,
+            'unsupported': ['nports', 'freq_step', 'fast_sweep']
+        },
+    }
 
     class Channel(vna.Channel):
         def __init__(self, parent, cnum: int, cname: str):
@@ -120,7 +136,7 @@ class PNA(VNA):
             get_cmd="SENS<self:cnum>:SWE:TIME?",
             set_cmd="SENS<self:cnum>:SWE:TIME <arg>",
             doc="""The time in seconds for a single sweep [s]""",
-            validator=FloatValidator(),
+            validator=FloatValidator(decimal_places=2),
         )
 
         sweep_type = VNA.command(
@@ -176,7 +192,8 @@ class PNA(VNA):
             get_cmd="CALC<self:cnum>:DATA? SDATA",
             set_cmd=None,
             doc="""Get the current trace's s-values as a numpy array""",
-            values=True
+            values=True,
+            complex_values=True
         )
 
         @property
@@ -218,7 +235,41 @@ class PNA(VNA):
 
         @property
         def calibration(self) -> skrf.Calibration:
-            raise NotImplementedError()
+            orig_query_fmt = self.parent.query_format
+            self.parent.query_format = ValuesFormat.BINARY_64
+
+            eterm_re = re.compile(r"(\w+)\((\d),(\d)\)")
+            cset_terms = self.query(f"SENS{self.cnum}:CORR:CSET:ETER:CAT?")
+            terms = re.findall(eterm_re, cset_terms)
+
+            if len(terms) == 3:
+                cal = skrf.OnePort
+            elif len(terms) == 12:
+                # cal = skrf.TwoPort
+                raise NotImplementedError()
+            else:
+                # cal = skrf.MultiPort
+                raise NotImplementedError()
+
+            coeffs = {}
+            for term in terms:
+                pna_name = term[0]
+                skrf_name = re.sub(
+                    r"([A-Z])",
+                    lambda pat: f" {pat.group(1).lower()}",
+                    pna_name
+                ).strip()
+
+                coeffs[skrf_name] = self.query_values(
+                    f"SENS{self.cnum}:CORR:CSET:ETERM? '{pna_name}({a},{b})'",
+                    complex_values=True,
+                    container=np.array
+                )
+
+            self.parent.query_format = orig_query_fmt
+
+            freq = self.frequency
+            return cal.from_coefs(freq, coeffs)
 
         @calibration.setter
         def calibration(self, cal: skrf.Calibration) -> None:
@@ -269,8 +320,8 @@ class PNA(VNA):
             self, 
             ports: Sequence={1,2}, 
         ) -> skrf.Network:
-            # if not ports:
-            #     ports = list(range(1, self.parent.nports+1))
+            if not ports:
+                ports = list(range(1, self.parent.nports+1))
             
             orig_query_fmt = self.parent.query_format
             self.parent.query_format = ValuesFormat.BINARY_64
@@ -294,21 +345,32 @@ class PNA(VNA):
             for name in names:
                 self.delete_measurement(name)
 
+            # The data is sent back as:
+            # [
+            #   [frequency points],
+            #   [s11.real],
+            #   [s11.imag],
+            #   [s12.real],
+            #   [s12.imag],
+            # ...
+            # ] 
+            # but flattened. So we recreate the above shape from the flattened data
             npoints = self.npoints
             nrows = len(raw) // npoints
-            nports = int(((nrows - 1) / 2) ** (1 / 2))
-            data = np.array(raw)
-            data = data.reshape((nrows, -1))[1:]
+            nports = len(ports)
+            data = raw.reshape((nrows, -1))[1:]
 
             ntwk = skrf.Network()
             ntwk.frequency = self.frequency
             ntwk.s = np.empty(
                 shape=(len(ntwk.frequency), nports, nports), dtype=complex
             )
+            real_rows = data[::2]
+            imag_rows = data[1::2]
             for n in range(nports):
                 for m in range(nports):
                     i = n * nports + m
-                    ntwk.s[:, n, m] = data[i*2] + 1j * data[i*2+1]
+                    ntwk.s[:, n, m] = real_rows[i] + 1j * imag_rows[i]
 
             self.parent.query_format = orig_query_fmt
 
@@ -359,6 +421,24 @@ class PNA(VNA):
         self.create_channel(1, "Channel 1")
         self.active_channel = self.ch1
 
+        self.model = self.id.split(',')[1]
+        if self.model not in self._models:
+            print(
+                f"WARNING: This model ({self.model}) has not been tested with "
+                "scikit-rf. By default, all features are turned on but older "
+                "instruments might be missing SCPI support for some commands "
+                "which will cause errors. Consider submitting an issue on GitHub to "
+                "help testing and adding support.", file=sys.stderr
+            )
+
+    def _supports(self, feature: str) -> bool:
+        model_config = self._models.get(self.model, self._models['default'])
+        return feature not in model_config['unsupported']
+
+    def _model_param(self, param: str):
+        model_config = self._models.get(self.model, self._models['default'])
+        return model_config[param]
+    
     trigger_source = VNA.command(
         get_cmd='TRIG:SOUR?',
         set_cmd='TRIG:SOUR <arg>',
@@ -383,15 +463,10 @@ class PNA(VNA):
 
     @property
     def nports(self) -> int:
-        try:
-            ports = self.query("SYST:CAP:HARD:PORT:COUN?")
-        except VisaIOError:
-            # This is crap. With instruments that don't support the above command,
-            # we either have to hard code the number of ports by model number or
-            # figure something else out
-            ports = 2
-
-        return int(ports)
+        if self._supports('nports'):
+            return int(self.query("SYST:CAP:HARD:PORT:COUN?"))
+        else:
+            return self._model_param('nports')
 
     @property
     def active_channel(self) -> Optional[Channel]:
@@ -446,9 +521,7 @@ class PNA(VNA):
         if name not in measurements:
             raise KeyError(f"{name} does not exist")
 
-        # FIXME: Not all models support the 'fast' argument. Should we figure
-        # out some way to determine if the instrument supports this argument,
-        # have a dictionary of models and particular configs, subclass PNA for
-        # every model with its particular configuration, something else?
-        # self.write(f"CALC{measurements[name].cnum}:PAR:SEL '{name}',fast")
-        self.write(f"CALC{measurements[name].cnum}:PAR:SEL '{name}'")
+        if self._supports('fast_sweep'):
+            self.write(f"CALC{measurements[name].cnum}:PAR:SEL '{name}',fast")
+        else:
+            self.write(f"CALC{measurements[name].cnum}:PAR:SEL '{name}'")
