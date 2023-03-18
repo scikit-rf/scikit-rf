@@ -46,7 +46,7 @@ class REG_ADDR(bytes, Enum):
 class NanoVNA(vna.VNA):
     _scpi = False
 
-    def __init__(self, address, backend):
+    def __init__(self, address, backend: str = "@py"):
         super().__init__(address, backend)
         if not isinstance(self._resource, pyvisa.resources.SerialInstrument):
             raise RuntimeError(
@@ -58,7 +58,7 @@ class NanoVNA(vna.VNA):
         self.write_raw = self._resource.write_raw
 
         self._freq = skrf.Frequency(start=1e6, stop=10e6, npoints=201)
-        self._protocol_reset()
+        self._reset_protocol()
 
     def _reset_protocol(self):
         self.write_raw(b"\x00\x00\x00\x00\x00\x00\x00\x00")
@@ -106,7 +106,7 @@ class NanoVNA(vna.VNA):
 
 
     @property
-    def freq_start(self) -> int:
+    def freq_start(self) -> float:
         return self._freq.start
 
     @freq_start.setter
@@ -115,7 +115,7 @@ class NanoVNA(vna.VNA):
         self._freq.start = f
 
     @property
-    def freq_stop(self) -> int:
+    def freq_stop(self) -> float:
         return self._freq.stop
 
     @freq_stop.setter
@@ -124,7 +124,7 @@ class NanoVNA(vna.VNA):
         self._freq.stop = f
 
     @property
-    def freq_step(self) -> int:
+    def freq_step(self) -> float:
         return self._freq.step
 
     @freq_step.setter
@@ -200,8 +200,8 @@ class NanoVNA(vna.VNA):
             raw.extend(self.read_bytes(32 * len_segment))
 
         s11, s21 = skrf.Network(), skrf.Network()
-        s11.frequency = self._frequency.copy()
-        s21.frequency = self._frequency.copy()
+        s11.frequency = self._freq.copy()
+        s21.frequency = self._freq.copy()
 
         s11.s, s21.s = self._convert_bytes_to_sparams(n, raw)
 
