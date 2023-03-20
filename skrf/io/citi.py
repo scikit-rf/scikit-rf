@@ -238,9 +238,6 @@ class Citi():
 
         # deduce the rank of the Network
         rank = int(np.sqrt(len([it for it in self._data.keys() if it.startswith(ntwkprm)])))
-
-        # Network parameter generic array
-        p = np.zeros((len(freq), rank, rank), dtype=complex)
         
         # occurences of each parameter and total number of frequency sets
         occurences = [self._params[name]['occurences'] for name in self.params]
@@ -254,6 +251,9 @@ class Citi():
             params_sets = []
 
         z0 = 50  # TODO extract from PortZ[port]
+
+        # Network parameter generic array
+        p = np.zeros((len(freq), rank, rank, len(params_sets)), dtype=complex)
 
         # create list of Networks assuming the following ordering:
         # val_param1_f1
@@ -275,17 +275,19 @@ class Citi():
                     
                 for (idx_set, params_set) in enumerate(params_sets):
                     # network param (m,n) for the current set of params 
-                    p[:,m,n] = pp[:,idx_set]
-                    # params dict {param1: val1, param2: val, etc}
-                    params = dict(zip(self.params, params_set))
+                    p[:,m,n,idx_set] = pp[:,idx_set]
                     
-                    if ntwkprm == 'S':
-                        ntwk = Network(frequency=freq, s=p, params=params, z0=z0)
-                    elif ntwkprm == 'Z':
-                        ntwk = Network(frequency=freq, s=z2s(p, z0), params=params, z0=z0)
-                    else:
-                        raise NotImplementedError('Unknown Network Parameter')
-                    networks.append(ntwk)
+        for (idx_set, params_set) in enumerate(params_sets):
+            # params dict {param1: val1, param2: val, etc}
+            params = dict(zip(self.params, params_set))
+            
+            if ntwkprm == 'S':
+                ntwk = Network(frequency=freq, s=p[:,:,:,idx_set], params=params, z0=z0)
+            elif ntwkprm == 'Z':
+                ntwk = Network(frequency=freq, s=z2s(p[:,:,:,idx_set], z0), params=params, z0=z0)
+            else:
+                raise NotImplementedError('Unknown Network Parameter')
+            networks.append(ntwk)
         
         return networks
 
