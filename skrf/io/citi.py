@@ -199,6 +199,15 @@ class Citi():
                     raise NotImplementedError('Not implemented format case')
 
                 self._data[cur_name]['values'] = values
+                
+        if len(self._params.keys()) == 1:
+            self._params["dummy"] = {
+                'format': 'MAG',
+                'occurences': 1,
+                'order': 0,
+                'values': np.array([0])
+                }
+            self._params["freq"]["order"] = 1
 
     @property
     def networks(self) -> list:
