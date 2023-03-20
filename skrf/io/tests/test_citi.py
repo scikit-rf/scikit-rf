@@ -40,6 +40,16 @@ class CitiTestCase(unittest.TestCase):
         for ex in self.examples:
             for ntwk in ex.networks:
                 self.assertIsInstance(ntwk, rf.Network)
+                
+    def test_networkset_len(self):
+        """ Test if the number of networks in the networkset is correct """
+        self.assertEqual(len(self.oneport_example1.networks), 4)
+        self.assertEqual(len(self.oneport_example2.networks), 1)
+        self.assertEqual(len(self.twoport_example1.networks), 4)
+        self.assertEqual(len(self.twoport_example2.networks), 1)
+        self.assertEqual(len(self.twoport_example3.networks), 24)
+        self.assertEqual(len(self.twoport_example4.networks), 24)
+        self.assertEqual(len(self.fourport_example1.networks), 3)
 
     def test_to_networkset(self):
         """ Test if CITI data are correctly converted into NetworkSet """
