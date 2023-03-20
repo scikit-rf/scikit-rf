@@ -249,7 +249,7 @@ class Citi():
         # create a 2D array of all parameters sets
         if self.params:
             params_sets = np.array(np.meshgrid(*[self._params[name]['values'] 
-                                           for name in self.params])).reshape(-1,len(self.params))
+                                           for name in self.params])).transpose().reshape(-1,len(self.params))
         else:
             params_sets = []
 
