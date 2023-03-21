@@ -35,7 +35,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
 
         self.assertEqual(qucs_ntwk, skrf_ntwk)
         self.assertEqual(qucs_ntwk.name, skrf_ntwk.name)
-        
+
     def test_tee(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -45,7 +45,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.tee(name = name)
         self.assertEqual(name, skrf_ntwk.name)
-        
+
     def test_splitter(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -55,7 +55,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.splitter(3, name = name)
         self.assertEqual(name, skrf_ntwk.name)
-        
+
     def test_thru(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -65,7 +65,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.thru(name = name)
         self.assertEqual(name, skrf_ntwk.name)
-        
+
     def test_line(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -75,7 +75,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.line(90, 'deg', name = name)
         self.assertEqual(name, skrf_ntwk.name)
-        
+
     def test_delay_load(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -86,7 +86,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         skrf_ntwk = self.dummy_media.delay_load(1j, 90, 'deg',
                                                       name = name)
         self.assertEqual(name, skrf_ntwk.name)
-    
+
     def test_shunt_delay_load(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -97,7 +97,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         skrf_ntwk = self.dummy_media.shunt_delay_load(1j, 90, 'deg',
                                                       name = name)
         self.assertEqual(name, skrf_ntwk.name)
-        
+
     def test_delay_open(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -107,7 +107,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.delay_open(90, 'deg', name = name)
         self.assertEqual(name, skrf_ntwk.name)
-        
+
     def test_shunt_delay_open(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -117,7 +117,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.shunt_delay_open(90, 'deg', name = name)
         self.assertEqual(name, skrf_ntwk.name)
-        
+
     def test_delay_short(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -127,7 +127,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.delay_short(90, 'deg', name = name)
         self.assertEqual(name, skrf_ntwk.name)
-        
+
     def test_shunt_delay_short(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -150,6 +150,28 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         skrf_ntwk = self.dummy_media.resistor(1, name = name)
         self.assertEqual(qucs_ntwk, skrf_ntwk)
         self.assertEqual(qucs_ntwk.name, skrf_ntwk.name)
+        # test vs analytical ABCD parameters of a series resistor
+        Z = 10 - 4j
+        ntwk = self.dummy_media.resistor(Z)
+        ABCD = npy.full(ntwk.s.shape, [[1, -1+1j],
+                                       [0, 1]])
+        ABCD[:,0,1] = Z
+        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+
+    def test_shunt_resistor(self):
+        """
+        Test the naming of the network. When circuit is used to connect a
+        topology of networks, they should have unique names.
+        """
+        name = 'shunt_resistor,1ohm'
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
+        skrf_ntwk = self.dummy_media.resistor(1, name = name)
+        self.assertEqual(name, skrf_ntwk.name)
+        # test vs analytical ABCD parameters of a shunt resistor
+        Z = 10 - 4j
+        ntwk = self.dummy_media.shunt_resistor(Z)
+        ABCD = npy.asarray([[[1, 0], [1/Z, 1]]])
+        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
 
     def test_capacitor(self):
         """
@@ -163,7 +185,15 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         skrf_ntwk = self.dummy_media.capacitor(.01e-12, name = name)
         self.assertEqual(qucs_ntwk, skrf_ntwk)
         self.assertEqual(qucs_ntwk.name, skrf_ntwk.name)
-        
+        # test vs analytical ABCD parameters of a series capacitor
+        C = 0.1e-12
+        ntwk = self.dummy_media.capacitor(C)
+        Z = 1/(1j*C*ntwk.frequency.w)
+        ABCD = npy.full(ntwk.s.shape, [[1, -1+1j],
+                                       [0, 1]])
+        ABCD[:,0,1] = Z
+        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+
     def test_shunt_capacitor(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -173,7 +203,14 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.capacitor(.01e-12, name = name)
         self.assertEqual(name, skrf_ntwk.name)
-
+        # test vs analytical ABCD parameters of a shunt capacitor
+        C = 0.1e-12
+        ntwk = self.dummy_media.shunt_capacitor(C)
+        Z = 1/(1j*C*ntwk.frequency.w)
+        ABCD = npy.full(ntwk.s.shape, [[1, 0],
+                                       [-1+1j, 1]])
+        ABCD[:,1,0] = 1/Z
+        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
 
     def test_inductor(self):
         """
@@ -187,7 +224,15 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         skrf_ntwk = self.dummy_media.inductor(.1e-9, name = name)
         self.assertEqual(qucs_ntwk, skrf_ntwk)
         self.assertEqual(qucs_ntwk.name, skrf_ntwk.name)
-        
+        # test vs analytical ABCD parameters of a series inductor
+        L = 0.1e-9
+        ntwk = self.dummy_media.inductor(L)
+        Z = 1j*L*ntwk.frequency.w
+        ABCD = npy.full(ntwk.s.shape, [[1, -1+1j],
+                                       [0, 1]])
+        ABCD[:,0,1] = Z
+        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+
     def test_shunt_inductor(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -197,7 +242,15 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.inductor(.1e-9, name = name)
         self.assertEqual(name, skrf_ntwk.name)
-        
+        # test vs analytical ABCD parameters of a shunt inductor
+        L = 0.1e-9
+        ntwk = self.dummy_media.shunt_inductor(L)
+        Z = 1j*L*ntwk.frequency.w
+        ABCD = npy.full(ntwk.s.shape, [[1, 0],
+                                       [1-1j, 1]])
+        ABCD[:,1,0] = 1/Z
+        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+
     def test_attenuator(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -208,7 +261,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         skrf_ntwk = self.dummy_media.attenuator(-10, d = 90, unit = 'deg',
                                                 name = name)
         self.assertEqual(name, skrf_ntwk.name)
-        
+
     def test_lossless_mismatch(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -218,7 +271,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.lossless_mismatch(-10, name = name)
         self.assertEqual(name, skrf_ntwk.name)
-    
+
     def test_isolator(self):
         """
         Test the naming of the network. When circuit is used to connect a
@@ -253,7 +306,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.assertEqual(len(freq), len(a))
         self.assertEqual(len(freq), len(a.gamma))
         self.assertEqual(len(freq), len(a.z0))
-        
+
     def test_write_csv(self):
         fname = os.path.join(self.files_dir,\
                 'out.csv')
