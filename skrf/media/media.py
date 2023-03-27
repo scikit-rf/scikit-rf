@@ -792,7 +792,7 @@ class Media(ABC):
         return self.line(0, **kwargs)
 
     def line(self, d: NumberLike, unit: str = 'deg',
-             z0: Union[NumberLike, str, None] = None, embed: bool = False, **kwargs) -> Network:
+             z0: Union[NumberLike, str, None] = None, embed: Optional[bool] = None, **kwargs) -> Network:
         r"""
         Transmission line of a given length and impedance.
 
@@ -849,16 +849,19 @@ class Media(ABC):
         result.s = \
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 
-        if embed and self.z0 is not None:
+        if embed is None:
+            if self.z0 != result.z0:
+                result.renormalize(self.z0, s_def=s_def)
+            else:
+                result.renormalize(result.z0, s_def=s_def)
+        else:
             # warns of future deprecation
             warnings.warn('In a future version, the `embed` parameter will be removed.\n'
-                          'The line and media port impedance z0 and '
-                          'characteristic impedance Z0 are used '
-                          'to determine if the line has to be renormalized.',
-              FutureWarning, stacklevel = 2)
-            result.renormalize(self.z0, s_def=s_def)
-        else:
-            if self.z0 != result.z0:
+                              'The line and media port impedance z0 and '
+                              'characteristic impedance Z0 are used '
+                              'to determine if the line has to be renormalized.',
+                  FutureWarning, stacklevel = 2)
+            if embed and self.z0 is not None:
                 result.renormalize(self.z0, s_def=s_def)
             else:
                 result.renormalize(result.z0, s_def=s_def)
