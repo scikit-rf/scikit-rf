@@ -851,14 +851,17 @@ class Media(ABC):
 
         if embed and self.z0 is not None:
             # warns of future deprecation
-            warnings.warn('In a future version,`embed` will be deprecated.\n'
+            warnings.warn('In a future version, the `embed` parameter will be removed.\n'
                           'The line and media port impedance z0 and '
-                          'characteristic impedance Z0 will be used instead '
+                          'characteristic impedance Z0 are used '
                           'to determine if the line has to be renormalized.',
               FutureWarning, stacklevel = 2)
             result.renormalize(self.z0, s_def=s_def)
         else:
-            result.renormalize(result.z0, s_def=s_def)
+            if self.z0 != result.z0:
+                result.renormalize(self.z0, s_def=s_def)
+            else:
+                result.renormalize(result.z0, s_def=s_def)
 
         return result
 
