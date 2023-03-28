@@ -5725,10 +5725,10 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     ----------
     thru_m : :class:`~skrf.network.Network`
         raw measurement of a thru
-    line_m : :class:`~skrf.network.Network`
-        raw measurement of a matched transmissive standard
     reflect_m: :class:`~skrf.network.Network`
         raw measurement of a reflect standard
+    line_m : :class:`~skrf.network.Network`
+        raw measurement of a matched transmissive standard
     reflect_approx : :class:`~skrf.network.Network`
         approximate One-port network for the reflect.  if None, then
         we assume its a flush short (gamma=-1)
