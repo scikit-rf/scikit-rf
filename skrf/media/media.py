@@ -11,6 +11,7 @@ Media class.
     DefinedGammaZ0
 
 """
+from typing import Optional
 from numbers import Number
 from pathlib import Path
 import warnings
@@ -850,10 +851,8 @@ class Media(ABC):
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 
         if embed is None:
-            if self.z0 != result.z0:
-                result.renormalize(self.z0, s_def=s_def)
-            else:
-                result.renormalize(result.z0, s_def=s_def)
+            # the result.renormalize checks whether we need to renormalize by comparing self.z0 with result.z0
+            result.renormalize(self.z0, s_def=s_def)
         else:
             # warns of future deprecation
             warnings.warn('In a future version, the `embed` parameter will be removed.\n'

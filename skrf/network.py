@@ -3051,7 +3051,7 @@ class Network:
         out.flip()
         return out
 
-    def renormalize(self, z_new: NumberLike, s_def: str = None) -> None:
+    def renormalize(self, z_new: NumberLike, s_def: Optional[str] = None) -> None:
         """
         Renormalize s-parameter matrix given a new port impedances.
 

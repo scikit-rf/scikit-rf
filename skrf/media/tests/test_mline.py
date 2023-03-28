@@ -139,7 +139,7 @@ class MLineTestCase(unittest.TestCase):
                             model = ref['model'], disp = ref['disp'],
                             diel = 'frequencyinvariant',
                             compatibility_mode = 'qucs')
-            with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
+            with pytest.warns(FutureWarning, match="`embed` parameter will be"):
                 line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
             line.name = 'skrf,qucs'
             
@@ -211,7 +211,7 @@ class MLineTestCase(unittest.TestCase):
                             tand = self.tand, rough = self.d,
                             model = 'hammerstadjensen', disp = ref['disp'],
                             diel = ref['diel'])
-            with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
+            with pytest.warns(FutureWarning, match="`embed` parameter will be"):
                 line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
             line.name = 'skrf,ads'
             
