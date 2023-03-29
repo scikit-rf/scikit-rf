@@ -138,7 +138,7 @@ class DistributedCircuit(Media):
         ----------
         my_media : :class:`~skrf.media.media.Media` instance.
             the media object
-            
+
         See Also
         --------
         :class:`~skrf.media.media.Media`
@@ -172,7 +172,7 @@ class DistributedCircuit(Media):
         See Also
         --------
         write_csv
-        """        
+        """
         d = DefinedGammaZ0.from_csv(*args,**kw)
         return self.from_media(d)
 

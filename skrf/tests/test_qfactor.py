@@ -3,7 +3,7 @@ import numpy as np
 import unittest
 import os
 from numpy.testing import (
-    assert_almost_equal, assert_allclose, 
+    assert_almost_equal, assert_allclose,
     assert_array_equal, run_module_suite
     )
 
@@ -27,7 +27,7 @@ class QfactorTests(unittest.TestCase):
         self.ntwk_1port = rf.data.ring_slot_meas
 
     def csv_file_example_to_network(self, file: str) -> rf.Network:
-        """Convert the S-parameter txt file to Network.        
+        """Convert the S-parameter txt file to Network.
 
         Parameters
         ----------
@@ -44,15 +44,15 @@ class QfactorTests(unittest.TestCase):
             f, s_re, s_im = np.loadtxt(file, comments="%", unpack=True)
         except ValueError as e:
             f, s_re, s_im, s_abs, s_mag = np.loadtxt(file, comments="%", unpack=True)
-        
+
         s = s_re + 1j * s_im
         freq = rf.Frequency.from_f(f, unit='GHz')
-        return rf.Network(s=s, frequency=freq)        
+        return rf.Network(s=s, frequency=freq)
 
     def test_constructor(self):
         """
         Test the Qfactor() constructor.
-        """       
+        """
         # constructor tests
         _Q1 = rf.Qfactor(self.ntwk_1port, res_type='reflection')
         _Q2 = rf.Qfactor(self.ntwk_1port, res_type='reflection', Q_L0=3)
@@ -61,17 +61,17 @@ class QfactorTests(unittest.TestCase):
 
     def test_exceptions(self):
         "Test the raised exceptions."
-        
+
         # Passing a 2-port Network raises a ValueError
         self.assertRaises(ValueError, rf.Qfactor, self.ntwk_2port, 'reflection')
-        
+
         # Uncorrect resonance type raises a ValueError
         self.assertRaises(ValueError, rf.Qfactor, self.ntwk_1port, 'dummy')
-        
+
         # Asking for fitted S-param and Network without prior fit raises a ValueError
         _Q = rf.Qfactor(self.ntwk_1port, res_type='reflection')
         self.assertRaises(ValueError, _Q.fitted_s)
-        self.assertRaises(ValueError, _Q.fitted_network)        
+        self.assertRaises(ValueError, _Q.fitted_network)
 
     def test_NLQFIT6(self):
         """
@@ -84,7 +84,7 @@ class QfactorTests(unittest.TestCase):
         """
         # File 'Figure6b.txt' contains S21 data for Fig. 6(b) in MAT 58
         ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Figure6b.txt")
-        
+
         Q = rf.Qfactor(ntwk, res_type='transmission', verbose=True)
 
         # Test against expected solutions
@@ -94,7 +94,7 @@ class QfactorTests(unittest.TestCase):
 
         # Optimised weighted fit --> result vector
         res = Q.fit(method="NLQFIT6")
-        
+
         # Test against expected solutions
         assert_allclose(res.f_L, 3.987848e9)
         assert_almost_equal(res.Q_L, 7454, decimal=0)
@@ -128,25 +128,25 @@ class QfactorTests(unittest.TestCase):
 
         """
         ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Figure27.txt")
-        
+
         Q = rf.Qfactor(ntwk, res_type='absorption', verbose=True)
 
         # Test against expected solutions
         assert_almost_equal(Q._a, -17072.3098 + 9047.0761j, decimal=4)
         assert_almost_equal(Q._b, 0.0063 + 0.0168j, decimal=4)
-        
+
         # Q.tol = 1.0e-5 * np.argmax(np.abs(Q.s))
-       
+
         # Step 2: Optimised weighted fit --> result vector
         res = Q.fit(method="NLQFIT6")
-        
+
         assert_allclose(res.f_L, 6.07225567e9)
         assert_almost_equal(res.Q_L, 56019.85, decimal=0)
         assert_almost_equal(res.weighting_ratio, 4.714, decimal=3)
         assert_almost_equal(res.RMS_Error, 0.01394722)
         assert_allclose(Q.Q_L, res.Q_L)
         assert_allclose(Q.f_L, res.f_L)
-        
+
         Q0 = Q.Q_unloaded(res)
         cal_diam, cal_gamma_V, cal_gamma_T = Q.Q_circle(res)
 
@@ -167,13 +167,13 @@ class QfactorTests(unittest.TestCase):
 
         """
         ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Table6c27.txt")
-        
+
         Q = rf.Qfactor(ntwk, res_type='reflection', verbose=True)
         # Expected results after initial fit
         assert_almost_equal(Q._a, 760.9731 + 67.7804j, decimal=4)
         assert_almost_equal(Q._b, 0.0609 - 0.6432j, decimal=4)
         assert_almost_equal(Q.Q_L, 779.068, decimal=3)
-        
+
         # Expected results after fit
         res = Q.fit(method='NLQFIT7')
         # Fitted length of uncalibrated line [m]
@@ -186,7 +186,7 @@ class QfactorTests(unittest.TestCase):
         print("Assumes attenuating uncalibrated line")
         Q0 = Q.Q_unloaded(res)
         cal_diam, cal_gamma_V, cal_gamma_T = Q.Q_circle(res)
-        
+
         # Test against expected solutions
         assert_almost_equal(Q0, 862, decimal=0)
         assert_almost_equal(cal_diam, 0.3573, decimal=4)
@@ -221,23 +221,23 @@ class QfactorTests(unittest.TestCase):
 
         """
         ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Figure23.txt")
-        
+
         Q = rf.Qfactor(ntwk, res_type='transmission')
-        
+
         # # De-embed cables
         # N = len(Q.f)
         ncablelen = 1.2  # root_eps * cable length in metres
         # D =  ntwk.s[:,0,0]* np.exp(-1j * 2*np.pi *Q.f * ncablelen / rf.c)
-    
+
         # ntwk2 = ntwk.copy()
         # ntwk2.s[:,0,0] = D
-        
+
         # piece of transmission line to deembbed
         gamma = 0 - 1j*ntwk.frequency.w * ncablelen / rf.c
         coax = rf.media.DefinedGammaZ0(frequency=ntwk.frequency, gamma=gamma)
         line = coax.line(1/2, unit='m')
         ntwk2 = line.inv ** ntwk
-        
+
         # Find peak in |S21| - this is used to give initial value of freq.
         # Tol is 1.0E-5 * |S21| at peak.
         Mg = np.abs(ntwk2.s).squeeze()
@@ -291,10 +291,10 @@ class QfactorTests(unittest.TestCase):
         Q = rf.Qfactor(self.ntwk_1port, res_type='reflection')
         res = Q.fit(method="NLQFIT6")
         self.assertRaises(ValueError, Q.Q_circle, A='dummy')
-        self.assertRaises(ValueError, Q.Q_circle, A=1j)   
+        self.assertRaises(ValueError, Q.Q_circle, A=1j)
         self.assertRaises(ValueError, Q.Q_circle, res, A='dummy')
-        self.assertRaises(ValueError, Q.Q_circle, res, A=1j)        
-        
+        self.assertRaises(ValueError, Q.Q_circle, res, A=1j)
+
         # passing of not the fitted results after fit should be the same
         self.assertEqual(Q.Q_circle(res), Q.Q_circle())
         # passing a different solution should lead to different values
@@ -313,8 +313,8 @@ class QfactorTests(unittest.TestCase):
             # the resonance frequency corresponds to min value before fitting
             assert_almost_equal(Q.f_L, f_L_expected)
             assert_almost_equal(Q.f_L_scaled, f_L_expected_scaled)
-        # NB: after the fit this should not be the case anymore (slight deviation)      
-            
+        # NB: after the fit this should not be the case anymore (slight deviation)
+
     def test_BW(self):
         "Test bandwidth values."
         Q = rf.Qfactor(self.ntwk_2port.s11, res_type='reflection')
@@ -322,7 +322,7 @@ class QfactorTests(unittest.TestCase):
         with self.assertWarns(Warning):
             BW = Q.BW
             BW_scaled = Q.BW_scaled
-    
+
 
 if __name__ == "__main__":
     # Launch all tests

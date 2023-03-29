@@ -117,7 +117,7 @@ def read(file, *args, **kwargs):
 
         * a file-object, it is left open
 
-        * a filename, then a file-object is opened and closed. 
+        * a filename, then a file-object is opened and closed.
 
         * a file-object and reading fails, then the position is reset back to 0 using seek if possible.
 
@@ -320,7 +320,7 @@ def read_all(dir: str ='.', sort = True, contains = None, f_unit = None, obj_typ
             filelist.append(filename)
     else:
         filelist.extend(files)
-         
+
     if sort is True:
         filelist.sort()
 
@@ -416,7 +416,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
     """
     if not os.path.exists('.'):
         raise OSError('No such directory: %s'%dir)
-         
+
 
 
     for k in dict_objs:
@@ -501,7 +501,7 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 
     Notes
     -------
-    
+
 
     Parameters
     -----------

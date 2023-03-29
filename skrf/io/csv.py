@@ -391,7 +391,7 @@ class AgilentCSV:
 
         If splitting the header fails, then a suitable list is returned of
         the correct length, which looks like::
-            
+
             ['Freq(?)','filename-0','filename-1',..]
         """
         header,  d = self.header, self.data
@@ -457,8 +457,8 @@ class AgilentCSV:
     def networks(self):
         """
         Reads a PNAX csv file, and returns a list of one-port Networks.
-        
-        
+
+
         .. note::
             Note this only works if csv is save in Real/Imaginary format for now
 
@@ -505,7 +505,7 @@ class AgilentCSV:
     def dict(self):
         """
         Dictionnary representation of csv file.
-        
+
         Returns
         -------
         dict : dict
@@ -588,7 +588,7 @@ def pna_csv_2_ntwks(filename):
         Use :func:`pna_csv_2_ntwks3` instead.
 
 
-    .. note::    
+    .. note::
         Note this only works if csv is save in Real/Imaginary format for now
 
 
@@ -893,7 +893,7 @@ def vectorstar_csv_2_ntwks(filename):
     """
     Reads a vectorstar csv file, and returns a list of one-port Networks.
 
-    
+
     .. note::
         Note this only works if csv is save in Real/Imaginary format for now
 
@@ -922,5 +922,3 @@ def vectorstar_csv_2_ntwks(filename):
         name = names[k].rstrip(),
         comments = comments,
         ) for k in range(d.shape[1]/3)]
-
-

@@ -263,7 +263,7 @@ class Citi():
             for m in range(rank):
                 for (idx_set, params_set) in enumerate(params_sets):
                     z0s[idx_set,:,m] = self._data[f'{zname}[{m+1}]']['values'].reshape((int(occ), len(freq)))[idx_set,:]
-           
+
         # create list of Networks assuming the following ordering:
         # val_param1_f1
         # ...

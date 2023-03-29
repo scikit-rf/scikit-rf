@@ -84,7 +84,7 @@ class NetworkTestCase(unittest.TestCase):
         t = self.ntwk1.s11.s_time
         s = self.ntwk1.s11.s
         self.assertTrue(len(t)== len(s))
-    
+
     def test_time_gate(self):
         ntwk = self.ntwk1
         gated = self.ntwk1.s11.time_gate(0,.2, t_unit='ns')
@@ -112,7 +112,7 @@ class NetworkTestCase(unittest.TestCase):
         gated = ntwk.s11.time_gate()
         self.assertTrue(len(gated)== len(ntwk))
 
-    
+
     def test_time_transform(self):
         spb = (4, 5)
         data_rate = 5e9
@@ -807,7 +807,7 @@ class NetworkTestCase(unittest.TestCase):
             1j*npy.random.uniform(-100, 100, self.freq.npoints)
         z0_array_freq_port = npy.random.uniform(1, 100, (self.freq.npoints,2)) +\
             1j*npy.random.uniform(-100, 100, (self.freq.npoints,2))
-            
+
         for z0 in [z0_scalar, z0_array_port, z0_array_freq, z0_array_freq_port]:
             ntwk = rf.Network(s=s_random, frequency=self.freq, z0=z0)
 
@@ -821,7 +821,7 @@ class NetworkTestCase(unittest.TestCase):
             npy.testing.assert_allclose(ntwk.s, s_random)
             ntwk.s_pseudo = s_pseudo
             npy.testing.assert_allclose(ntwk.s, s_random)
-    
+
             npy.testing.assert_allclose(ntwk.s_traveling, s_traveling)
             npy.testing.assert_allclose(ntwk.s_power, s_power)
             npy.testing.assert_allclose(ntwk.s_pseudo, s_pseudo)
@@ -1057,7 +1057,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue( ((a+2+2j).s == npy.array([[[3+4j]],[[5+6j]]])).all())
         # operating on list
         self.assertTrue( ((a+[1+1j,2+2j]).s == npy.array([[[2+3j]],[[5+6j]]])).all())
-     
+
 
     def test_interpolate(self):
         a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)

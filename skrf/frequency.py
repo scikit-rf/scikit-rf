@@ -331,7 +331,7 @@ class Frequency:
         increase = npy.diff(self.f) > 0
         if not increase.all():
             warnings.warn("Frequency values are not monotonously increasing!\n"
-            "To get rid of the invalid values call `drop_non_monotonic_increasing`", 
+            "To get rid of the invalid values call `drop_non_monotonic_increasing`",
                 InvalidFrequencyWarning)
 
     def drop_non_monotonic_increasing(self) -> List[int]:
@@ -393,7 +393,7 @@ class Frequency:
         """
         warnings.warn('Possibility to set the npoints parameter will removed in the next release.',
              DeprecationWarning, stacklevel=2)
-        
+
         if self.sweep_type == 'lin':
             self.f = linspace(self.start, self.stop, n)
         elif self.sweep_type == 'log':
@@ -488,7 +488,7 @@ class Frequency:
         """
 
         return self._f
-    
+
     @f.setter
     def f(self,new_f: NumberLike) -> None:
         """
@@ -501,7 +501,7 @@ class Frequency:
         """
         warnings.warn('Possibility to set the f parameter will removed in the next release.',
              DeprecationWarning, stacklevel=2)
-        
+
         self._f = npy.array(new_f)
 
         self.check_monotonic_increasing()
@@ -529,14 +529,14 @@ class Frequency:
     def w(self) -> npy.ndarray:
         r"""
         Angular frequency in radians/s.
-        
+
         Angular frequency is defined as :math:`\omega=2\pi f` [#]_
 
         Returns
         -------
         w : :class:`numpy.ndarray`
             Angular frequency in rad/s
-            
+
         References
         ----------
         .. [#] https://en.wikipedia.org/wiki/Angular_frequency
@@ -552,7 +552,7 @@ class Frequency:
     def df(self) -> npy.ndarray:
         """
         The gradient of the frequency vector.
-        
+
         Note
         ----
         The gradient is calculated using::

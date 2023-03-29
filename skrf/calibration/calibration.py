@@ -25,7 +25,7 @@ One-port
 
    OnePort
    SDDL
-   SDDLWeikle   
+   SDDLWeikle
    PHN
 
 Two-port
@@ -388,11 +388,11 @@ class Calibration:
     def remove_and_cal(self, std):
         """
         Remove a cal standard and correct it, returning correct and ideal.
-        
-        This requires requires overdetermination. Useful in 
-        troubleshooting a calibration in which one standard is junk, but 
-        you dont know which. 
-        
+
+        This requires requires overdetermination. Useful in
+        troubleshooting a calibration in which one standard is junk, but
+        you dont know which.
+
         Parameters
         ----------
         std : int or str
@@ -404,7 +404,7 @@ class Calibration:
         ideal,corrected : tuple of skrf.Networks
             the ideal and corrected networks which were removed out of the
             calibration
-            
+
         """
         measured, ideals = copy(self.measured), copy(self.ideals)
         i,m  = self.pop(std)
@@ -1781,9 +1781,9 @@ class TwoPortOnePath(TwelveTerm):
     """
     Two Port One Path Calibration (aka poor man's TwelveTerm).
 
-    Provides full error correction  on a switchless three receiver 
-    system, i.e. you can only measure the waves a1,b1,and b2. 
-    Given this architecture, the DUT must be flipped and measured 
+    Provides full error correction  on a switchless three receiver
+    system, i.e. you can only measure the waves a1,b1,and b2.
+    Given this architecture, the DUT must be flipped and measured
     twice to be fully corrected.
 
     To allow for this, the `apply_cal` method takes a tuple of
@@ -1883,22 +1883,22 @@ class TwoPortOnePath(TwelveTerm):
 
         Notes
         -----
-        Full correction is possible given you have measured your DUT 
-        in both orientations. Meaning, you have measured the device, 
-        then physically flipped the device and made a second measurement. 
-        
+        Full correction is possible given you have measured your DUT
+        in both orientations. Meaning, you have measured the device,
+        then physically flipped the device and made a second measurement.
+
         This tuple of 2-port Networks is what is meant by
         (forward,reverse), in the docstring below
-        
-        If you pass a single 2-port Network, then the measurement will 
-        only be partially corrected using what is known as the 
-        `EnhancedResponse` calibration. 
+
+        If you pass a single 2-port Network, then the measurement will
+        only be partially corrected using what is known as the
+        `EnhancedResponse` calibration.
 
         Parameters
         ----------
         network_tuple: tuple, or Network
-            tuple of 2-port Networks in order (forward, reverse) OR 
-            a single 2-port Network. 
+            tuple of 2-port Networks in order (forward, reverse) OR
+            a single 2-port Network.
 
 
 
@@ -1941,7 +1941,7 @@ class EnhancedResponse(TwoPortOnePath):
 
     For code-structuring reasons, this is a dummy placeholder class.
     Its just TwoPortOnePath, which defaults to enhancedresponse correction
-    when you apply the calibration to a single network, and not a tuple 
+    when you apply the calibration to a single network, and not a tuple
     of networks.
     """
     family = 'EnhancedResponse'
@@ -1974,7 +1974,7 @@ class EightTerm(Calibration):
     .. [2] Rytting, D. (1996) Network Analyzer Error Models and Calibration Methods. RF 8: Microwave Measurements for Wireless Applications (ARFTG/NIST Short Course Notes)
 
     """
-    
+
     family = 'EightTerm'
     def __init__(self, measured, ideals, switch_terms=None,
                 isolation=None, ut_hook=None,*args, **kwargs):
@@ -2022,9 +2022,9 @@ class EightTerm(Calibration):
             #Zero port matching so that networks can be simply subtracted
             self.isolation.s[:,0,0] = 0
             self.isolation.s[:,1,1] = 0
-        
+
         self.ut_hook=ut_hook
-        
+
         Calibration.__init__(self,
             measured = measured,
             ideals = ideals,
@@ -2041,15 +2041,15 @@ class EightTerm(Calibration):
         """
         if self.ut_hook is not None:
             return self.ut_hook(self,ntwk)
-        
+
         if self.switch_terms is not None:
             gamma_f, gamma_r = self.switch_terms
             return unterminate(ntwk, gamma_f, gamma_r)
 
         else:
             return ntwk
-        
-        
+
+
 
     def terminate(self, ntwk):
         """
@@ -2336,24 +2336,24 @@ class TRL(EightTerm):
         Initialize a TRL calibration.
 
         Note that the order of `measured` and `ideals` is strict.
-        It must be [Thru, Reflect, Line]. A multiline algorithms is 
+        It must be [Thru, Reflect, Line]. A multiline algorithms is
         used if more than one line is passed. A multi-reflect algorithm
         is used if multiple reflects are passed, see `n_reflects` argument.
 
         All of the `ideals` can be individually set to None, or the entire
-        list set to None (`ideals=None`). For each ideal set to None 
-        the following assumptions are made: 
-        
-        * thru : flush thru 
-        * reflect : flush shorts 
+        list set to None (`ideals=None`). For each ideal set to None
+        the following assumptions are made:
+
+        * thru : flush thru
+        * reflect : flush shorts
         * line : and approximately  90deg  matched line (can be lossy)
-        
-        The reflect ideals can also be given as a +-1. 
-        
-        Note you can also use the `estimate_line` option  to 
-        automatically  estimate the initial guess for the line length 
+
+        The reflect ideals can also be given as a +-1.
+
+        Note you can also use the `estimate_line` option  to
+        automatically  estimate the initial guess for the line length
         from measurements . This is sensible
-        if you have no idea what the line length is, but your **error 
+        if you have no idea what the line length is, but your **error
         networks** are well matched (E_ij >>E_ii).
 
 
@@ -2367,48 +2367,48 @@ class TRL(EightTerm):
         ----------
         measured : list of :class:`~skrf.network.Network`
             must be in order [Thru, Reflect[s], Line[s]]. if the number
-            of reflects is >1 then use `n_reflects` argument. 
+            of reflects is >1 then use `n_reflects` argument.
 
         ideals : list of :class:`~skrf.network.Network`, [+1,-1] , None
-            must be in order [Thru, Reflect, Line]. Each element in the 
-            list may be None, or equivalently, the list may be None. 
-            Also the reflects can be simply given as  +1 or -1. 
+            must be in order [Thru, Reflect, Line]. Each element in the
+            list may be None, or equivalently, the list may be None.
+            Also the reflects can be simply given as  +1 or -1.
 
         estimate_line : bool
-            should we estimates the length of the line standard from 
+            should we estimates the length of the line standard from
             raw measurements, if not we assume its about 90 deg.
-        
+
         solve_reflect : bool
-            Solve for the reflect or not. 
-        
+            Solve for the reflect or not.
+
         n_reflects :  1
-            number of reflective standards 
+            number of reflective standards
 
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
-    
+
         Examples
         --------
-        
+
         >>> thru = rf.Network('thru.s2p')
         >>> reflect = rf.Network('reflect.s2p')
         >>> line = rf.Network('line.s2p')
-        
+
         Ideals is None, so we assume it's close to a flush short:
-        
+
         >>> trl = TRL(measured=[thru,reflect,line], ideals=None)
-        
+
         Reflect is given as close to a flush short:
-        
+
         >>> trl = TRL(measured=[thru,reflect,line], ideals=[None,-1,None])
-        
+
         Reflect is given as close to a flush open:
-        
+
         >>> trl = TRL(measured=[thru,reflect,line], ideals=[None,+1,None])
-        
+
         See Also
         --------
-        determine_line 
+        determine_line
         determine_reflect
 
         """
@@ -2418,7 +2418,7 @@ class TRL(EightTerm):
         self.n_reflects = n_reflects
         self.estimate_line = estimate_line
         self.solve_reflect = solve_reflect
-        
+
         ## generate ideals, given various inputs
 
         if ideals is None:
@@ -2437,7 +2437,7 @@ class TRL(EightTerm):
             if ideals[k] is None:
                 # default  assume they are using flushshorts
                 ideals[k] =-1
-                
+
             if isinstance(ideals[k], Number):
                 ideal_reflect = measured[k].copy()
                 ideal_reflect.s[:,0,0] = ideals[k]
@@ -2445,7 +2445,7 @@ class TRL(EightTerm):
                 ideal_reflect.s[:,1,0] = 0
                 ideal_reflect.s[:,0,1] = 0
                 ideals[k] = ideal_reflect
-                
+
 
         for k in range(n_reflects+1,n_stds):
             if ideals[k] is None:
@@ -3287,7 +3287,7 @@ class NISTMultilineTRL(EightTerm):
     def gamma(self):
         """
         Propagation constant of the solved line.
-        
+
         """
         try:
             return self._gamma
@@ -5645,12 +5645,12 @@ def determine_line(thru_m, line_m, line_approx=None):
     Determine S21 of a matched line.
 
     Given raw measurements of a `thru` and a matched `line` with unknown
-    s21, this will calculate the response of the line. This works for 
+    s21, this will calculate the response of the line. This works for
     lossy lines, and attenuators. The `line_approx`
     is an approximation to line, this used  to choose the correct
-    root sign. If left as None, it will be estimated from raw measurements, 
-    which requires your error networks to be well matched  (S_ij >>S_ii). 
-    
+    root sign. If left as None, it will be estimated from raw measurements,
+    which requires your error networks to be well matched  (S_ij >>S_ii).
+
 
     This is possible because two measurements can be combined to
     create a relationship of similar matrices, as shown below. Equating
@@ -5716,11 +5716,11 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
                      line_approx=None, return_all=False):
     """
     Determine reflect from a thru, reflect, line measurements.
-    
-    This is used in the TRL algorithm, but is made modular for 
-    multi-line, multi-reflect options. 
-    
-    
+
+    This is used in the TRL algorithm, but is made modular for
+    multi-line, multi-reflect options.
+
+
     Parameters
     ----------
     thru_m : :class:`~skrf.network.Network`
@@ -5735,7 +5735,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     return_all: bool
         return all possible values fo reflect, one for each root-choice.
         useful for troubleshooting.
-        
+
     Returns
     -------
     reflect : :class:`~skrf.network.Network`

@@ -197,4 +197,3 @@ class TestUnitConversions(unittest.TestCase):
 if __name__ == "__main__":
     # Launch all tests
     run_module_suite()
-

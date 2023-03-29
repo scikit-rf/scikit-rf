@@ -7,6 +7,6 @@ python -m pip install scikit-rf
 
 If you have installed Anaconda, then you can also get scikit-rf from
 
-conda install -c conda-forge scikit-rf 
+conda install -c conda-forge scikit-rf
 
 For more information, please refer to the official website: http://scikit-rf.org/

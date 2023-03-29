@@ -138,6 +138,3 @@ class Dot(CalibrationSet):
             cal = self.cal_class(ideals=ideals, measured= measured,
                                  *args,**kwargs)
             self.cal_list.append(cal)
-
-
-

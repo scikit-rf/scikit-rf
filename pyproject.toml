@@ -10,10 +10,10 @@ license = {text="LICENSE.txt"}
 readme = "README.md"
 
 keywords = [
-    "engineering", 
-    "electronics", 
-    "microwave-engineering", 
-    "radio-frequency", 
+    "engineering",
+    "electronics",
+    "microwave-engineering",
+    "radio-frequency",
     "touchstone"]
 
 classifiers = [
@@ -104,7 +104,7 @@ version = {attr = "skrf.__version__"}
 include = ["skrf*", "skrf_qtapps*"]
 
 [tool.setuptools.package-data]
-skrf = ["data/*.s*p", "data/*.cal", "data/*.mplstyle"] 
+skrf = ["data/*.s*p", "data/*.cal", "data/*.mplstyle"]
 skrf_qtapps = ["skrf_qtwidgets/images/*.*"]
 
 [tool.pytest.ini_options]

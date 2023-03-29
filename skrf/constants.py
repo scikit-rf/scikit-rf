@@ -29,10 +29,10 @@ This module contains constants, numerical approximations, and unit conversions
 
 .. data:: S_DEFINITIONS
 
-    S-parameter definition labels: 
-        - 'power' for power-waves definition, 
-        - 'pseudo' for pseudo-waves definition. 
-        - 'traveling' corresponds to the initial implementation. 
+    S-parameter definition labels:
+        - 'power' for power-waves definition,
+        - 'pseudo' for pseudo-waves definition.
+        - 'traveling' corresponds to the initial implementation.
 
 .. data:: S_DEF_DEFAULT
 

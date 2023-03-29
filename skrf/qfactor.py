@@ -78,19 +78,19 @@ the coupling factor, then measure :math:`Q_L` from the 3 dB bandwidth
 and using the relationships above.
 
 Fortunately, scikit-rf implements methods for determining loaded and
-unloaded Q-factors from frequency-domain S-parameters. The implemented methods 
-are described in detail in [MAT58]_, and can be applied to measurements of 
+unloaded Q-factors from frequency-domain S-parameters. The implemented methods
+are described in detail in [MAT58]_, and can be applied to measurements of
 transmission or reflection.
 
 Q-factor determination through equivalent-circuit models
 --------------------------------------------------------
 Characterisation of resonances from measurements in the frequency-domain
 can be achieved through equivalent-circuit models [MAT58]_. Resonators can be
-modelled as an ideal RLC resonator connected to an external circuit, 
+modelled as an ideal RLC resonator connected to an external circuit,
 incorporating elements to account for a lossy coupling and coupling reactances.
 
-For high Q-factor resonators (in practice, :math:`Q_L` > 100), the S-parameter 
-response of a resonator measured in a calibrated system with reference planes 
+For high Q-factor resonators (in practice, :math:`Q_L` > 100), the S-parameter
+response of a resonator measured in a calibrated system with reference planes
 at the resonator couplings can be expressed like [MAT58]_, [Galwas]_ :
 
 .. math::
@@ -981,7 +981,7 @@ class Qfactor:
         ----------
        opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
            Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
-           If None, uses the solution previously calculated, if performed. 
+           If None, uses the solution previously calculated, if performed.
         A : None of float. Default is None.
             Scaling factor as defined in MAT 58 [MAT58]_.
             For `reflection` resonance type, can be set as None
@@ -1005,7 +1005,7 @@ class Qfactor:
 
         """
         # if no solution passed, use internal solution if exist
-        if opt_res is None: 
+        if opt_res is None:
             if self.opt_res is None:
                 raise ValueError('No solution found or passed.')
             else:
@@ -1043,7 +1043,7 @@ class Qfactor:
         ----------
        opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
            Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
-           If None, uses the solution previously calculated, if performed. 
+           If None, uses the solution previously calculated, if performed.
         A : float or None. Default is None.
             Scaling factor as defined in MAT 58 [MAT58]_.
             For `reflection` resonance type, can be set as None
@@ -1062,7 +1062,7 @@ class Qfactor:
 
         """
         # if no solution passed, use internal solution if exist
-        if opt_res is None: 
+        if opt_res is None:
             if self.opt_res is None:
                 raise ValueError('No solution found or passed.')
             else:
@@ -1160,7 +1160,7 @@ class Qfactor:
         ----------
        opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
            Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
-           If None, uses the solution previously calculated, if performed. 
+           If None, uses the solution previously calculated, if performed.
         f : None or np.ndarray. Default is None.
             frequency array [Hz]. If None, use the self frequencies.
 
@@ -1178,7 +1178,7 @@ class Qfactor:
 
         """
         # if no solution passed, use internal solution if exist
-        if opt_res is None: 
+        if opt_res is None:
             if self.opt_res is None:
                 raise ValueError('No solution found or passed.')
             else:
@@ -1206,7 +1206,7 @@ class Qfactor:
         ----------
         opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
             Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
-            If None, uses the solution previously calculated, if performed. 
+            If None, uses the solution previously calculated, if performed.
         frequency : None or :class:`~skrf.frequency.Frequency`. Default is None.
             Frequency for the fitted Network. If None, use the same
             Frequency than the one used to create the QFactor.
@@ -1218,7 +1218,7 @@ class Qfactor:
 
         """
         # if no solution passed, use internal solution if exist
-        if opt_res is None: 
+        if opt_res is None:
             if self.opt_res is None:
                 raise ValueError('No solution found or passed.')
             else:
@@ -1241,7 +1241,7 @@ class Qfactor:
         -------
         float
             Resonant frequency in the frequency unit.
-            
+
         See Also
         --------
         f_L : Resonant Frequency in Hz.
