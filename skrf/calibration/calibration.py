@@ -5698,15 +5698,16 @@ def determine_line(thru_m, line_m, line_approx=None):
     if line_approx is None:
         # estimate line length, by assuming error networks are well
         # matched
-        line_approx = line_m/thru_m
-
+        line_approx_s21 = line_m.s[:,1,0] / thru_m.s[:,1,0]
+    else:
+        line_approx_s21 = line_approx.s[:,1,0]
 
     C = thru_m.inv**line_m
     # the eigen values of the matrix C, are equal to s12,s12^-1)
     # we need to choose the correct one
     w,v = linalg.eig(C.t)
     s12_0, s12_1 = w[:,0], w[:,1]
-    s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
+    s12 = find_correct_sign(s12_0, s12_1, line_approx_s21)
     found_line = line_m.copy()
     found_line.s = npy.array([[zero, s12],[s12,zero]]).transpose(2,0,1)
     return found_line
