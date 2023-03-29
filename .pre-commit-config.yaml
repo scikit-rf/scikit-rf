@@ -1,7 +1,7 @@
 exclude: |
      (?x)(
           ^conda.recipe/meta.yaml|
-          .*\.(csv)
+          (?i).*\.(csv|s[0-9]+p|mdf|cti|ts|svg)
      )
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
