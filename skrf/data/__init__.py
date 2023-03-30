@@ -20,6 +20,9 @@ Example/Test Networks
     ring_slot_meas
     line
     tee
+    ind
+    open_2p
+    short_2p
 
 """
 import os
@@ -30,7 +33,14 @@ from ..io.general import read
 pwd = os.path.dirname(os.path.abspath(__file__))
 
 ntwk1 = Network(os.path.join(pwd, 'ntwk1.s2p'))
+""" 2-Port Network: 'line',  75.0-110.0 GHz, 201 pts, z0=[50.+0.j 50.+0.j] """
 line = Network(os.path.join(pwd, 'line.s2p'))
+""" 2-Port Network: 'open',  1000000000.0-10000000000.0 Hz, 10 pts, z0=[50.+0.j 50.+0.j] """
+open_2p = Network(os.path.join(pwd, 'open.s2p'))
+""" 2-Port Network: 'short',  1000000000.0-10000000000.0 Hz, 10 pts, z0=[50.+0.j 50.+0.j] """
+short_2p = Network(os.path.join(pwd, 'short.s2p'))
+""" Measured 1 nH series inductor (with parasitics) """
+ind = Network(os.path.join(pwd, 'ind.s2p'))
 """ 2-Port Network: 'line',  75.0-110.0 GHz, 201 pts, z0=[50.+0.j 50.+0.j]"""
 ring_slot = Network(os.path.join(pwd, 'ring slot.s2p'))
 """ 2-Port Network: 'ring slot',  75.0-110.0 GHz, 201 pts, z0=[50.+0.j 50.+0.j] """
