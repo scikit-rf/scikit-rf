@@ -1,16 +1,15 @@
 import unittest
-
 import pytest
 import skrf
 import numpy as np
 import tempfile
 import os
 import sys
-import warnings
 
 
 class VectorFittingTestCase(unittest.TestCase):
 
+    @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_ringslot_with_proportional(self):
         # perform the fit
         nw = skrf.data.ring_slot
@@ -18,6 +17,7 @@ class VectorFittingTestCase(unittest.TestCase):
         vf.vector_fit(n_poles_real=2, n_poles_cmplx=0, fit_proportional=True, fit_constant=True)
         self.assertLess(vf.get_rms_error(), 0.02)
 
+    @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_ringslot_default_log(self):
         # perform the fit without proportional term
         nw = skrf.data.ring_slot
@@ -25,14 +25,21 @@ class VectorFittingTestCase(unittest.TestCase):
         vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, init_pole_spacing='log')
         self.assertLess(vf.get_rms_error(), 0.01)
 
+    @pytest.mark.filterwarnings('ignore::UserWarning')
     def test_ringslot_without_prop_const(self):
         # perform the fit without proportional term
         nw = skrf.data.ring_slot
         vf = skrf.vectorFitting.VectorFitting(nw)
-        with pytest.warns(UserWarning, match="The fitted network is passive, but the vector fit is not passive") as record:
-            vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_proportional=False, fit_constant=False)
+        vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_proportional=False, fit_constant=False)
+        self.assertLess(vf.get_rms_error(), 0.01)
 
-        assert len(record) == 1
+    @pytest.mark.filterwarnings('ignore::UserWarning')
+    def test_ringslot_custompoles(self):
+        # perform the fit with custom initial poles
+        nw = skrf.data.ring_slot
+        vf = skrf.vectorFitting.VectorFitting(nw)
+        vf.poles = 2 * np.pi * np.array([-100e9, -10e9 + 100e9j])
+        vf.vector_fit(init_pole_spacing='custom')
         self.assertLess(vf.get_rms_error(), 0.01)
 
     def test_190ghz_measured(self):

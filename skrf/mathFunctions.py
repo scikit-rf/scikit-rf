@@ -83,13 +83,14 @@ Various Utility Functions
 
 
 """
-from typing import Callable
+from typing import Callable, Union
 import numpy as npy
 from numpy import pi, angle, unwrap, real, imag, array
 from scipy import signal
 from scipy.interpolate import interp1d
 
-from . constants import NumberLike, INF, ALMOST_ZERO, LOG_OF_NEG
+from . constants import NumberLike, INF, ALMOST_ZERO, LOG_OF_NEG, EIG_COND, EIG_MIN
+
 
 # simple conversions
 def complex_2_magnitude(z: NumberLike):
@@ -1281,7 +1282,9 @@ def rsolve(A: npy.ndarray, B: npy.ndarray) -> npy.ndarray:
     return npy.transpose(npy.linalg.solve(npy.transpose(A, (0, 2, 1)).conj(),
             npy.transpose(B, (0, 2, 1)).conj()), (0, 2, 1)).conj()
 
-def nudge_eig(mat: npy.ndarray, cond: float = 1e-9, min_eig: float = 1e-12) -> npy.ndarray:
+def nudge_eig(mat: npy.ndarray,
+              cond: Union[float, None] = None,
+              min_eig: Union[float, None] = None) -> npy.ndarray:
     r"""Nudge eigenvalues with absolute value smaller than
     max(cond * max(eigenvalue), min_eig) to that value.
     Can be used to avoid singularities in solving matrix equations.
@@ -1293,14 +1296,22 @@ def nudge_eig(mat: npy.ndarray, cond: float = 1e-9, min_eig: float = 1e-12) -> n
     mat : npy.ndarray
         Matrices to nudge
     cond : float, optional
-        Minimum eigenvalue ratio compared to the maximum eigenvalue
+        Minimum eigenvalue ratio compared to the maximum eigenvalue. 
+        Default value is set by `skrf.constants.EIG_COND`.
     min_eig : float, optional
-        Minimum eigenvalue
+        Minimum eigenvalue.
+        Default value is set by `skrf.constants.EIG_MIN`.
     Returns
     -------
     res : npy.ndarray
         Nudged matrices
     """
+    # use current constants
+    if not cond:
+        cond = EIG_COND
+    if not min_eig:
+        min_eig = EIG_MIN
+
     # Eigenvalues and vectors
     eigw, eigv = npy.linalg.eig(mat)
     # Max eigenvalue for each frequency

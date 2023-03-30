@@ -89,6 +89,17 @@ T0 = 290.
 Room temperature (kind of)
 """
 
+EIG_COND = 1e-9
+"""
+Eigenvalue ratio compared to the maximum eigenvalue in :meth:`~skrf.mathFunctions.nudge_eig`.
+
+EIG_COND * max(eigenvalue)
+"""
+
+EIG_MIN = 1e-12
+"""
+Minimum eigenvalue used in :meth:`~skrf.mathFunctions.nudge_eig`
+"""
 
 # S-parameter definition labels and default definition
 S_DEFINITIONS = ['power', 'pseudo', 'traveling']
