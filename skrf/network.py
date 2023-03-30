@@ -2252,10 +2252,6 @@ class Network:
                 raise ValueError('r_ref must be real')
             ntwk.renormalize(r_ref)
 
-        if write_z0 and have_complex_ports and ntwk.s_def != 'traveling':
-            warnings.warn(f"Network s_def will be changed from {ntwk.s_def} to traveling to be compatible with HFSS. To silence this warning manually use Network.renormalize to change the s_def.", UserWarning)
-            ntwk.renormalize(ntwk.z0, s_def='traveling')
-
         if filename is None:
             if ntwk.name is not None:
                 filename = ntwk.name

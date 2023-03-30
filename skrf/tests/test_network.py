@@ -320,18 +320,9 @@ class NetworkTestCase(unittest.TestCase):
         with pytest.raises(ValueError) as e_info:
             snp = ntwk.write_touchstone(return_string=True)
 
-        ntwk.s_def = 'power'
-        # Should raise warning when write_z0 and s_def != 'traveling'.
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            snp = ntwk.write_touchstone(return_string=True, write_z0=True)
-            self.assertTrue(len(w) == 1)
-
-        ntwk.s_def = 'traveling'
-        # Ok if write_z0 specified
+        # Writing Touchstone and reading it back
         snp = ntwk.write_touchstone(return_string=True, write_z0=True)
 
-        # Test reading it back
         strio = io.StringIO(snp)
         # Required for reading touchstone file
         strio.name = f'StringIO.s{ports}p'
