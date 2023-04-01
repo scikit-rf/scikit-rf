@@ -121,7 +121,7 @@ class Coaxial(DistributedCircuit, Media):
 
         """
         # test size of parameters
-        if size(array(att, dtype="object")) not in (1, size(array(frequency, dtype="object"))):
+        if size(array(att, dtype="object")) not in (1, size(frequency.f)):
             raise ValueError('Attenuation should be scalar or of same size that the frequency.')
 
         # create gamma
