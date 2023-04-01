@@ -5743,7 +5743,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
         a One-port network for the found reflect.
 
     The equations are from "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual Six-Port Automatic Network Analyzer", G.F. Engen et al., 1979
-    
+
     """
 
     #Call determine_line first to solve root choice of the propagation constant
@@ -5760,7 +5760,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     b = tt[:,1,1]-tt[:,0,0]
     c = -tt[:,0,1]
 
-    # the sol1 and sol2 correspond to the ratios (r11/r21) and (r12/r22) from 
+    # the sol1 and sol2 correspond to the ratios (r11/r21) and (r12/r22) from
     # equations (30) and (31) in the paper
     sol1 = (-b-sqrt(b*b-4*a*c))/(2*a)
     sol2 = (-b+sqrt(b*b-4*a*c))/(2*a)
