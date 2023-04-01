@@ -53,10 +53,10 @@ class VectorFittingTestCase(unittest.TestCase):
         # perform a bad fit that does not converge and check if a RuntimeWarning is given
         nw = skrf.network.Network('./doc/source/examples/vectorfitting/190ghz_tx_measured.S2P')
         vf = skrf.vectorFitting.VectorFitting(nw)
-        
+
         with pytest.warns(RuntimeWarning) as record:
             vf.vector_fit(n_poles_real=0, n_poles_cmplx=5, fit_proportional=False, fit_constant=True)
-        
+
         assert len(record) == 1
 
     def test_dc(self):
@@ -68,7 +68,7 @@ class VectorFittingTestCase(unittest.TestCase):
         self.assertLess(vf.get_rms_error(), 0.2)
 
     @pytest.mark.skipif(
-        "matplotlib" not in sys.modules, 
+        "matplotlib" not in sys.modules,
         reason="Spice subcircuit uses Engformatter which is not available without matplotlib.")
     def test_spice_subcircuit(self):
         # fit ring slot example network

@@ -558,7 +558,7 @@ class Network:
     def __rshift__(self, other: 'Network') -> 'Network':
         """
         Cascade two 4-port networks with "1=>2/3=>4" port numbering.
-        
+
         Note
         ----
         connection diagram::
@@ -1325,7 +1325,7 @@ class Network:
             return
 
         # if _z0 is a scalar, we broadcast to the correct shape.
-        # 
+        #
         # if _z0 is a vector, we check if the dimension matches with either
         # nports or frequency.npoints. If yes, we accept the value.
         # Note that there can be an ambiguity in theory, if nports == npoints
@@ -1334,7 +1334,7 @@ class Network:
         # In any other case raise an Exception
         self._z0 = npy.empty(self.s.shape[:2], dtype=complex)
         if z0.ndim == 0:
-            self._z0[:] = z0 
+            self._z0[:] = z0
         elif z0.ndim == 1 and z0.shape[0] == self.s.shape[0]:
             self._z0[:] = z0[:, None]
         elif z0.ndim == 1 and z0.shape[0] == self.s.shape[1]:
@@ -2087,7 +2087,7 @@ class Network:
                 self.s_def = S_DEF_HFSS_DEFAULT 
         else:
             self.z0 = touchstoneFile.resistance
-        
+
 
         if touchstoneFile.noise is not None:
             noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult
@@ -2671,8 +2671,8 @@ class Network:
         else:
             dim = len(shape(freq_or_n))
             if dim == 0:
-                # input is a number 
-                new_frequency = Frequency(start=self.frequency.start_scaled, 
+                # input is a number
+                new_frequency = Frequency(start=self.frequency.start_scaled,
                                           stop=self.frequency.stop_scaled,
                                           unit=self.frequency.unit,
                                           npoints=freq_or_n)
@@ -3538,49 +3538,49 @@ class Network:
 
         In the resulting network, port 0 is single-ended, port 1 is
         differential mode, and port 2 is common mode.
-        
+
         In following examples, sx is single-mode port x, dy is
         differential-mode port y, and cz is common-mode port z. The low
         insertion loss path of a transmission line is symbolized by ==.
-        
+
         2-Port diagram::
-            
+
               +-----+             +-----+
             0-|s0   |           0-|d0   |
               |     | =se2gmm=>   |     |
             1-|s1   |           1-|c0   |
               +-----+             +-----+
-        
+
         3-Port diagram::
-            
+
               +-----+             +-----+
             0-|s0   |           0-|d0   |
             1-|s1   | =se2gmm=> 1-|c0   |
             2-|s2   |           2-|s2   |
               +-----+             +-----+
-              
+
         Note: The port s2 remain in single-mode.
-        
+
         4-Port diagram::
-              
+
               +------+               +------+
             0-|s0==s2|-2           0-|d0==d1|-1
               |      |   =se2gmm=>   |      |
             1-|s1==s3|-3           2-|c0==c1|-3
               +------+               +------+
-        
+
         5-Port diagram::
-            
+
               +------+               +------+
             0-|s0==s2|-2           0-|d0==d1|-1
             1-|s1==s3|-3 =se2gmm=> 2-|c0==c1|-3
               |    s4|-4             |    s4|-4
               +------+               +------+
-              
+
         Note: The port s4 remain in single-mode.
-        
+
         8-Port diagram::
-            
+
               +------+               +------+
             0-|s0==s2|-2           0-|d0==d1|-1
             1-|s1==s3|-3           2-|d2==d3|-3
@@ -3588,18 +3588,18 @@ class Network:
             4-|s4==s6|-6           4-|c0==c1|-5
             5-|s5==s7|-7           6-|c2==c3|-7
               +------+               +------+
-        
+
         2N-Port diagram::
-            
+
                  A                                  B
-                 +------------+                     +-----------+ 
+                 +------------+                     +-----------+
                0-|s0========s2|-2                 0-|d0=======d1|-1
                1-|s1========s3|-3                 2-|d2=======d3|-3
                 ...          ...     =se2gmm=>     ...         ...
             2N-4-|s2N-4==s2N-2|-2N-2           2N-4-|cN-4===cN-3|-2N-3
             2N-3-|s2N-3==s2N-1|-2N-1           2N-2-|cN-2===cN-1|-2N-1
                  +------------+                     +-----------+
-                 
+
         Note: The network `A` is not cascadable with the `**` operator
         along transmission path.
 
@@ -3663,52 +3663,52 @@ class Network:
             'power' for power-waves definition [#Kurokawa]_,
             'pseudo' for pseudo-waves definition [#Marks]_.
             All the definitions give the same result if z0 is real valued.
-            
+
         Examples
         --------
-        
+
         In following examples, sx is single-mode port x, dy is
         differential-mode port y, and cz is common-mode port z. The low
         insertion loss path of a transmission line is symbolized by ==.
-        
+
         2-Port diagram::
-            
+
               +-----+             +-----+
             0-|s0   |           0-|d0   |
               |     | <=gmm2se=   |     |
             1-|s1   |           1-|c0   |
               +-----+             +-----+
-        
+
         3-Port diagram::
-            
+
               +-----+             +-----+
             0-|s0   |           0-|d0   |
             1-|s1   | <=gmm2se= 1-|c0   |
             2-|s2   |           2-|s2   |
               +-----+             +-----+
-              
+
         Note: The port s2 remain in single-mode.
-        
+
         4-Port diagram::
-              
+
               +------+               +------+
             0-|s0==s2|-2           0-|d0==d1|-1
               |      |   <=gmm2se=   |      |
             1-|s1==s3|-3           2-|c0==c1|-3
               +------+               +------+
-        
+
         5-Port diagram::
-            
+
               +------+               +------+
             0-|s0==s2|-2           0-|d0==d1|-1
             1-|s1==s3|-3 <=gmm2se= 2-|c0==c1|-3
               |    s4|-4             |    s4|-4
               +------+               +------+
-              
+
         Note: The port s4 remain in single-mode.
-        
+
         8-Port diagram::
-            
+
               +------+               +------+
             0-|s0==s2|-2           0-|d0==d1|-1
             1-|s1==s3|-3           2-|d2==d3|-3
@@ -3716,18 +3716,18 @@ class Network:
             4-|s4==s6|-6           4-|c0==c1|-5
             5-|s5==s7|-7           6-|c2==c3|-7
               +------+               +------+
-        
+
         2N-Port diagram::
-            
+
                  A                                  B
-                 +------------+                     +-----------+ 
+                 +------------+                     +-----------+
                0-|s0========s2|-2                 0-|d0=======d1|-1
                1-|s1========s3|-3                 2-|d2=======d3|-3
                 ...          ...    <=gmm2se=     ...         ...
             2N-4-|s2N-4==s2N-2|-2N-2           2N-4-|cN-4===cN-3|-2N-3
             2N-3-|s2N-3==s2N-1|-2N-1           2N-2-|cN-2===cN-1|-2N-1
                  +------------+                     +-----------+
-                 
+
         Note: The network `A` is not cascadable with the `**` operator
         along transmission path.
 
@@ -5679,12 +5679,12 @@ def s2s(s: NumberLike, z0: NumberLike, s_def_new: str, s_def_old: str):
     if s_def_new == s_def_old:
         # Nothing to do.
         return s
-        
+
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
 
     if npy.isreal(z0).all():
-        # Nothing to do because all port impedances are real so the used 
+        # Nothing to do because all port impedances are real so the used
         # definition (power or travelling) does not make a difference.
         return s
 
@@ -7096,7 +7096,7 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None, name : Optional[str]
             network seen from port 2. if None then will use ntwk1.
     name: Name for the combined network. If None, then construct the name
           from the names of the input networks
-          
+
     Returns
     -------
     result : Network object
@@ -7263,7 +7263,7 @@ def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
     s_act = s2s_active(s, a)
-    y_act = npy.einsum('fp,fp,fp->fp', npy.reciprocal(z0), 1 - s_act, npy.reciprocal(1 + s_act))        
+    y_act = npy.einsum('fp,fp,fp->fp', npy.reciprocal(z0), 1 - s_act, npy.reciprocal(1 + s_act))
     return y_act
 
 def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:

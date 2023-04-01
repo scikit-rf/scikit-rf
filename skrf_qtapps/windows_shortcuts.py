@@ -20,4 +20,3 @@ path = r"C:\Users\A3R7LZZ\Desktop\Multiline TRL.lnk"
 target = r"C:\Miniconda3\pythonw.exe"
 args = r"C:\Coding\Python\scikit-rf\qtapps\multiline_trl.py"
 createShortcut(path, target, args=args)
-

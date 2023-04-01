@@ -66,7 +66,7 @@ class VectorFitting:
 
     def __init__(self, network: 'Network'):
         self.network = network
-        """ Instance variable holding the Network to be fitted. This is the Network passed during initialization, 
+        """ Instance variable holding the Network to be fitted. This is the Network passed during initialization,
         which may be changed or set to *None*. """
 
         self.poles = None
@@ -76,14 +76,14 @@ class VectorFitting:
         """ Instance variable holding the list of fitted residues. Will be initialized by :func:`vector_fit`. """
 
         self.proportional_coeff = None
-        """ Instance variable holding the list of fitted proportional coefficients. Will be initialized by 
+        """ Instance variable holding the list of fitted proportional coefficients. Will be initialized by
         :func:`vector_fit`. """
 
         self.constant_coeff = None
         """ Instance variable holding the list of fitted constants. Will be initialized by :func:`vector_fit`. """
 
         self.max_iterations = 100
-        """ Instance variable specifying the maximum number of iterations for the fitting process and for the passivity 
+        """ Instance variable specifying the maximum number of iterations for the fitting process and for the passivity
         enforcement. To be changed by the user before calling :func:`vector_fit` and/or :func:`passivity_enforce`. """
 
         self.max_tol = 1e-6
@@ -91,7 +91,7 @@ class VectorFitting:
          user before calling :func:`vector_fit`. """
 
         self.wall_clock_time = 0
-        """ Instance variable holding the wall-clock time (in seconds) consumed by the most recent fitting process with 
+        """ Instance variable holding the wall-clock time (in seconds) consumed by the most recent fitting process with
         :func:`vector_fit`. Subsequent calls of :func:`vector_fit` will overwrite this value. """
 
         self.d_res_history = []
@@ -114,7 +114,7 @@ class VectorFitting:
         warnings.warn('Attribute `zeros` is deprecated and will be removed in a future version. Please use the new '
                       'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
         self.residues = value
-    
+
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """

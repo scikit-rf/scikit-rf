@@ -68,7 +68,7 @@ class FrequencyTestCase(unittest.TestCase):
 
         with self.assertWarns(InvalidFrequencyWarning):
             freq = rf.Frequency.from_f([1,2,2], unit='Hz')
-        
+
         with self.assertWarns(InvalidFrequencyWarning):
             freq = rf.Frequency.from_f([1,2,2], unit='Hz')
             inv = freq.drop_non_monotonic_increasing()
