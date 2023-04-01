@@ -740,7 +740,7 @@ def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
 
     d = {}
     for attr in attrs:
-        attr_array = ntwk.__getattribute__(attr)
+        attr_array = getattr(ntwk, attr)
         for m, n in ports:
             d[f'{attr} {m+1}{n+1}'] = attr_array[:, m, n]
     return DataFrame(d, index=ntwk.frequency.f_scaled)

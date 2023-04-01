@@ -375,10 +375,10 @@ class NetworkSet:
             if isinstance(other, NetworkSet):
                 if len(other) != len(self):
                     raise(ValueError('Network sets must be of same length to be cascaded'))
-                return NetworkSet([self.ntwk_set[k].__getattribute__(operator_name)(other.ntwk_set[k]) for k in range(len(self))])
+                return NetworkSet([getattr(self.ntwk_set[k], operator_name)(other.ntwk_set[k]) for k in range(len(self))])
 
             elif isinstance(other, Network):
-                return NetworkSet([ntwk.__getattribute__(operator_name)(other) for ntwk in self.ntwk_set])
+                return NetworkSet([getattr(ntwk, operator_name)(other) for ntwk in self.ntwk_set])
 
             else:
                 raise(TypeError('NetworkSet operators operate on either Network, or NetworkSet types'))
@@ -575,7 +575,7 @@ class NetworkSet:
         ns: :class: `~skrf.networkSet.NetworkSet`
 
         """
-        output = [ntwk.__getattribute__(network_method_name)(*args, **kwargs) for ntwk in self.ntwk_set]
+        output = [getattr(ntwk, network_method_name)(*args, **kwargs) for ntwk in self.ntwk_set]
         if isinstance(output[0],Network):
             return NetworkSet(output)
         else:
@@ -698,7 +698,7 @@ class NetworkSet:
         ntwk = self[0]
         nfreq = len(ntwk)
         # x will have the axes (frequency, observations, ports)
-        x = npy.array([[mf.flatten_c_mat(k.__getattribute__(param)[f]) \
+        x = npy.array([[mf.flatten_c_mat(getattr(k, param)[f]) \
             for k in self] for f in range(nfreq)])
 
         return x
@@ -855,8 +855,8 @@ class NetworkSet:
         >>> (ntwk_mean, ntwk_lb, ntwk_ub) = my_ntwk_set.uncertainty_ntwk_triplet('s_mag')
 
         """
-        ntwk_mean = self.__getattribute__('mean_'+attribute)
-        ntwk_std = self.__getattribute__('std_'+attribute)
+        ntwk_mean = getattr(self, 'mean_'+attribute)
+        ntwk_std = getattr(self, 'std_'+attribute)
         ntwk_std.s = n_deviations * ntwk_std.s
 
         upper_bound = (ntwk_mean + ntwk_std)
@@ -988,7 +988,7 @@ class NetworkSet:
             )
         df = DataFrame(
             {'%s'%(k.name):
-                Series(k.__getattribute__(attr)[:,m,n],index=index)
+                Series(getattr(k, attr)[:,m,n],index=index)
                 for k in self},
             index = index,
             )
@@ -1342,8 +1342,7 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
     >>> func_on_networks(ntwk_list, mean)
 
     """
-    data_matrix = \
-            npy.array([ntwk.__getattribute__(attribute) for ntwk in ntwk_list])
+    data_matrix = npy.array([getattr(ntwk, attribute) for ntwk in ntwk_list])
 
     new_ntwk = ntwk_list[0].copy()
     new_ntwk.s = func(data_matrix,axis=0,*args,**kwargs)

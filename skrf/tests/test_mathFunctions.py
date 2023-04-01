@@ -5,6 +5,7 @@ import numpy as npy
 from numpy import e, log, pi, isnan, inf
 from numpy.testing import assert_equal, run_module_suite, assert_almost_equal
 import pytest
+from skrf.constants import EIG_COND, EIG_MIN
 
 class TestUnitConversions(unittest.TestCase):
     """
@@ -183,7 +184,7 @@ class TestUnitConversions(unittest.TestCase):
     def test_nudge_eig(self):
         A = npy.zeros((3, 2, 2))
         cond_A = npy.linalg.cond(A)
-        A2 = rf.nudge_eig(A, cond=1e-9, min_eig=1e-12)
+        A2 = rf.nudge_eig(A)
 
         self.assertFalse(A is A2)
         self.assertTrue(npy.all(npy.linalg.cond(A2) < cond_A))
@@ -191,8 +192,18 @@ class TestUnitConversions(unittest.TestCase):
 
     def test_nudge_eig2(self):
         A = npy.diag([1, 1, 1, 1]).reshape(1, 4, 4)
-        A2 = rf.nudge_eig(A, cond=1e-9, min_eig=1e-12)
+        A2 = rf.nudge_eig(A)
         self.assertTrue(A is A2)
+
+    def test_nudge_default_params(self):
+        "Test default params and passing different optional params"
+        # check that Minimum eigenvalue is correctly passed
+        A = npy.zeros((3, 2, 2))
+        A2 = rf.nudge_eig(A)
+        npy.testing.assert_allclose(A2[:,0,0], EIG_MIN)
+        A3 = rf.nudge_eig(A, min_eig=1e-10)
+        npy.testing.assert_allclose(A3[:,0,0], 1e-10)
+
 
 if __name__ == "__main__":
     # Launch all tests

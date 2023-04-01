@@ -1,0 +1,18 @@
+! Touchstone file exported from HFSS Original with power definition
+! Design: HFSSDesign1
+! Project:
+! Setup: Setup1
+! Solution: Sweep1
+!
+! Variables:
+! XX = 3
+! YY = 1
+!
+!Data is not renormalized
+# GHz S RI
+! Terminal data exported
+! Port[1] = 1
+29.5 -0.35405022547854376 -0.25487435607686554
+! Port Impedance 30.000000000000 -10.00000000000000
+37.0 -0.24739933815826692 0.6386340944068366
+! Port Impedance 20.000000000000 10.00000000000000
