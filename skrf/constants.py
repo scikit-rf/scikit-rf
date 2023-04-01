@@ -38,6 +38,10 @@ This module contains constants, numerical approximations, and unit conversions
 
     Default S-parameter definition: 'power', for power-wave definition.
 
+.. data:: S_DEF_HFSS_DEFAULT
+
+    Default S-parameter definition setting in HFSS: 'traveling' ("Generalized" in HFSS)
+
 .. autosummary::
    :toctree: generated/
 
@@ -85,10 +89,22 @@ T0 = 290.
 Room temperature (kind of)
 """
 
+EIG_COND = 1e-9
+"""
+Eigenvalue ratio compared to the maximum eigenvalue in :meth:`~skrf.mathFunctions.nudge_eig`.
+
+EIG_COND * max(eigenvalue)
+"""
+
+EIG_MIN = 1e-12
+"""
+Minimum eigenvalue used in :meth:`~skrf.mathFunctions.nudge_eig`
+"""
 
 # S-parameter definition labels and default definition
 S_DEFINITIONS = ['power', 'pseudo', 'traveling']
 S_DEF_DEFAULT = 'power'
+S_DEF_HFSS_DEFAULT = 'traveling'
 
 NumberLike = Union[Number, Sequence[Number], npy.ndarray]
 

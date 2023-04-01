@@ -1041,6 +1041,11 @@ class OnePort(Calibration):
         mList = [self.measured[k].s.reshape((-1,1)) for k in range(numStds)]
         iList = [self.ideals[k].s.reshape((-1,1)) for k in range(numStds)]
 
+        if not all([n.number_of_ports==1 for n in self.ideals]):
+            raise RuntimeError(f'ideals for {self.family} should be 1-port Networks')
+        if not all([n.number_of_ports==1 for n in self.measured]):
+            raise RuntimeError(f'measured networks for {self.family} should be 1-port Networks')
+
         # ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
         fLength = len(mList[0])
 
@@ -5693,15 +5698,16 @@ def determine_line(thru_m, line_m, line_approx=None):
     if line_approx is None:
         # estimate line length, by assuming error networks are well
         # matched
-        line_approx = line_m/thru_m
-
+        line_approx_s21 = line_m.s[:,1,0] / thru_m.s[:,1,0]
+    else:
+        line_approx_s21 = line_approx.s[:,1,0]
 
     C = thru_m.inv**line_m
     # the eigen values of the matrix C, are equal to s12,s12^-1)
     # we need to choose the correct one
     w,v = linalg.eig(C.t)
     s12_0, s12_1 = w[:,0], w[:,1]
-    s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
+    s12 = find_correct_sign(s12_0, s12_1, line_approx_s21)
     found_line = line_m.copy()
     found_line.s = npy.array([[zero, s12],[s12,zero]]).transpose(2,0,1)
     return found_line
@@ -5720,10 +5726,10 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     ----------
     thru_m : :class:`~skrf.network.Network`
         raw measurement of a thru
-    line_m : :class:`~skrf.network.Network`
-        raw measurement of a matched transmissive standard
     reflect_m: :class:`~skrf.network.Network`
         raw measurement of a reflect standard
+    line_m : :class:`~skrf.network.Network`
+        raw measurement of a matched transmissive standard
     reflect_approx : :class:`~skrf.network.Network`
         approximate One-port network for the reflect.  if None, then
         we assume its a flush short (gamma=-1)
@@ -5735,6 +5741,9 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     -------
     reflect : :class:`~skrf.network.Network`
         a One-port network for the found reflect.
+
+    The equations are from "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual Six-Port Automatic Network Analyzer", G.F. Engen et al., 1979
+    
     """
 
     #Call determine_line first to solve root choice of the propagation constant
@@ -5743,12 +5752,16 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     inv = linalg.inv
     rt = thru_m.t
     rd = line_m.t
+
+    # tt is equal to T from equation (24) in the paper
     tt = einsum('ijk,ikl -> ijl', rd, inv(rt))
 
     a = tt[:,1,0]
     b = tt[:,1,1]-tt[:,0,0]
     c = -tt[:,0,1]
 
+    # the sol1 and sol2 correspond to the ratios (r11/r21) and (r12/r22) from 
+    # equations (30) and (31) in the paper
     sol1 = (-b-sqrt(b*b-4*a*c))/(2*a)
     sol2 = (-b+sqrt(b*b-4*a*c))/(2*a)
 

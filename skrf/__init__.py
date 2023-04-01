@@ -3,7 +3,7 @@ skrf is an object-oriented approach to microwave engineering,
 implemented in Python. 
 """
 
-__version__ = '0.24.1'
+__version__ = '0.25.0'
 ## Import all  module names for coherent reference of name-space
 #import io
 

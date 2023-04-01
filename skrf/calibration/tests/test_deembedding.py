@@ -236,14 +236,14 @@ class DeembeddingTestCase(unittest.TestCase):
 
     def test_freqmismatch(self):
         """
-        Check that error is caught when networks are of different frequencies
+        Check that a warning is caught when networks are of different frequencies
         """
-        with self.assertRaises(ValueError):
-            rf.OpenShort(self.open, self.short_1f)
+        with self.assertWarns(RuntimeWarning):
+            rf.OpenShort(self.open, self.short[0:len(self.short)//2])
         
-        with self.assertRaises(ValueError):
-            self.dm_os.deembed(self.raw)
-
+        with self.assertWarns(RuntimeWarning):
+            self.dm.deembed(self.raw[0:len(self.raw)//2])
+            
     def test_openshort(self):
         """
         After de-embedding, the network is a pure inductor of 1nH.
