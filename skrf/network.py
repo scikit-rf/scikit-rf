@@ -154,7 +154,7 @@ Misc Functions
 from typing import (Any, NoReturn, Optional, Sequence,
     Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List, TextIO)
 from numbers import Number
-from functools import reduce
+from functools import reduce, lru_cache
 
 import os
 import warnings
@@ -293,7 +293,7 @@ class Network:
         'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
             npy.angle(x))),
         'arcl_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)) * \
-                                 npy.abs(x),
+                                    npy.abs(x),
         # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
         'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
         'time': mf.ifft,
@@ -302,9 +302,17 @@ class Network:
         'time_impulse': None,
         'time_step': None,
     }
+
     """
     Component functions like 're', 'im', 'mag', 'db', etc.
     """
+
+    @classmethod
+    @lru_cache()
+    def _generated_functions(cls) -> Dict[str, Tuple[Callable, str, str]]:
+        return {f"{p}_{func_name}": (func, p, func_name) 
+            for p in cls.PRIMARY_PROPERTIES 
+            for func_name, func in cls.COMPONENT_FUNC_DICT.items()}
 
     # provides y-axis labels to the plotting functions
     Y_LABEL_DICT = {
@@ -338,8 +346,6 @@ class Network:
     """
     Default interpolation method.
     """
-
-    _secondary_properties_generated = False
 
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
@@ -922,59 +928,33 @@ class Network:
         if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
 
-    @classmethod
-    def __generate_secondary_properties(cls) -> None:
-        """
-        creates numerous `secondary properties` which are various
-        different scalar projects of the primary properties. the primary
-        properties are s,z, and y.
+    def __getattr__(self, name: str) -> 'Network':
 
-        The properties are set on the class, so this method only needs to be called once
-        """
-        if cls._secondary_properties_generated:
-            return
-        for prop_name in PRIMARY_PROPERTIES:
-            for func_name, func in COMPONENT_FUNC_DICT.items():
-                if 'gd' in func_name:  # scaling of gradient by frequency
-                    def fget(self: 'Network', f: Callable = func, p: str = prop_name) -> npy.ndarray:
-                        return f(getattr(self, p)) / (2 * npy.pi * self.frequency.step)
-                else:
-                    def fget(self: 'Network', f: Callable = func, p: str = prop_name) -> npy.ndarray:
-                        return f(getattr(self, p))
-                doc = f"""
-                The {func_name} component of the {prop_name}-matrix
+        m = re.match(r"s(\d+)_(\d+)", name)
+        if not m:
+            m = re.match(r"s(\d)(\d)", name)
 
+        if m:
+            t0 = int(m.group(1)) - 1
+            t1 = int(m.group(2)) - 1
+            ntwk = self.copy()
+            ntwk.s = self.s[:, t0, t1]
+            ntwk.z0 = self.z0[:, t0]
+            return ntwk
+        raise AttributeError
 
-                See Also
-                --------
-                {prop_name}
-                """
+    def __dir__(self):
+        ret = super().__dir__()
+        
+        s_properties = [f"s{t1}_{t2}" for t1 in range(self.nports) for t2 in range(self.nports)]
+        s_properties += [f"s{t1}{t2}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
 
-                setattr(cls, f'{prop_name}_{func_name}', property(fget, doc=doc))
-        cls._secondary_properties_generated = True
+        return ret + s_properties + list(self._generated_functions().keys())
 
-    def __generate_subnetworks(self) -> None:
-        """
-        generates all one-port sub-networks
-        """
-        for m in range(self.number_of_ports):
-            for n in range(self.number_of_ports):
-                def fget(self: 'Network', m:int=m, n:int=n) -> 'Network':
-                    ntwk = self.copy()
-                    ntwk.s = self.s[:, m, n]
-                    ntwk.z0 = self.z0[:, m]
-                    return ntwk
-
-                doc = """
-                one-port sub-network.
-                """
-                setattr(self.__class__, 's%i_%i'%(m+1, n+1),
-                        property(fget, doc=doc))
-                if m < 9 and n < 9:
-                    setattr(self.__class__, 's%i%i' % (m + 1, n + 1),
-                            getattr(self.__class__, 's%i_%i'%(m+1, n+1)))
-
-
+    def attribute(self, prop_name: str, conversion: str) -> npy.ndarray:
+        prop = getattr(self, prop_name)
+        return self.COMPONENT_FUNC_DICT[conversion](prop)
+        
     # PRIMARY PROPERTIES
     @property
     def s(self) -> npy.ndarray:
@@ -1019,8 +999,6 @@ class Network:
 
         """
         self._s = fix_param_shape(s)
-        self.__generate_secondary_properties()
-        self.__generate_subnetworks()
         
         if self.z0.ndim == 0:
             self.z0 = self.z0
@@ -1961,7 +1939,7 @@ class Network:
         >>> a.copy_from (b)
         """
         for attr in ['_s', 'frequency', '_z0', 'name']:
-            self.__setattr__(attr, copy(other.__getattribute__(attr)))
+            setattr(self, attr, copy(getattr(other, attr)))
 
     def copy_subset(self, key: npy.ndarray) -> 'Network':
         """
@@ -2718,7 +2696,7 @@ class Network:
             result._z0 = f_interp(f, self.z0, axis=0, **kwargs)(f_new)
 
         # interpolate  parameter for a given basis
-        x = self.__getattribute__(basis)
+        x = getattr(self, basis)
         if coords == 'cart':
             x_new = f_interp(f, x, axis=0, **kwargs)(f_new)
         elif coords == 'polar':
@@ -3475,7 +3453,7 @@ class Network:
         >>> ntwk.func_on_parameter(inv)
         """
         ntwkB = self.copy()
-        p = self.__getattribute__(attr)
+        p = getattr(self, attr)
         ntwkB.s = npy.r_[[func(p[k, :, :], *args, **kwargs) \
                           for k in range(len(p))]]
         return ntwkB
@@ -3506,8 +3484,8 @@ class Network:
             Resulting renumbered Network
 
         """
-        forward = self.__getattribute__('s%i%i' % (m, n))
-        reverse = self.__getattribute__('s%i%i' % (n, m))
+        forward = getattr(self, f"s{m}_{n}")
+        reverse = getattr(self, f"s{n}_{m}")
         if normalize:
             denom = forward * reverse
             denom.s = npy.sqrt(denom.s)
@@ -4148,6 +4126,24 @@ class Network:
             y_active : active Y-parameters
         """
         return s2vswr_active(self.s, a)
+
+for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
+
+    func_name = f"{prop_name}_{conversion}"
+    doc = f"""
+        The {conversion} component of the {prop_name}-matrix
+        
+        See Also
+        --------
+        {prop_name}
+    """
+
+    setattr(Network, func_name, property(
+        fget=lambda self, 
+            prop_name=prop_name, 
+            conversion=conversion: 
+
+            self.attribute(prop_name, conversion), doc=doc))
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
 PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
