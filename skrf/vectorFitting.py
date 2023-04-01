@@ -130,15 +130,16 @@ class VectorFitting:
             Number of initial complex conjugate poles. See notes.
 
         init_pole_spacing : str, optional
-            Type of initial pole spacing across the frequency interval of the S-matrix. Either linear (lin) or
-            logarithmic (log).
+            Type of initial pole spacing across the frequency interval of the S-matrix. Either *linear* (`'lin'`),
+            *logarithmic* (`'log'`), or `custom`. In case of `custom`, the initial poles must be stored in :attr:`poles`
+            as a NumPy array before calling this method. They will be overwritten by the final poles. The
+            initialization parameters `n_poles_real` and `n_poles_cmplx` will be ignored in case of `'custom'`.
 
         parameter_type : str, optional
-            Representation type of the frequency responses to be fitted. Either *scattering* (:attr:`s` or :attr:`S`),
-            *impedance* (:attr:`z` or :attr:`Z`) or *admittance* (:attr:`y` or :attr:`Y`). As scikit-rf can currently
-            only read S parameters from a Touchstone file, the fit should also be performed on the original S
-            parameters. Otherwise, scikit-rf will convert the responses from S to Z or Y, which might work for the fit
-            but can cause other issues.
+            Representation type of the frequency responses to be fitted. Either *scattering* (`'s'` or `'S'`),
+            *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). As scikit-rf can currently only read S parameters
+            from a Touchstone file, the fit should also be performed on the original S parameters. Otherwise, scikit-rf
+            will convert the responses from S to Z or Y, which might work for the fit but can cause other issues.
 
         fit_constant : bool, optional
             Include a constant term **d** in the fit.
@@ -166,6 +167,7 @@ class VectorFitting:
         # create initial poles and space them across the frequencies in the provided Touchstone file
         # use normalized frequencies during the iterations (seems to be more stable during least-squares fit)
         norm = np.average(self.network.f)
+        #norm = np.exp(np.mean(np.log(self.network.f)))
         freqs_norm = np.array(self.network.f) / norm
 
         fmin = np.amin(freqs_norm)
@@ -176,31 +178,41 @@ class VectorFitting:
             # random choice: use 1/1000 of first non-zero frequency
             fmin = freqs_norm[1] / 1000
 
+        init_pole_spacing = init_pole_spacing.lower()
         if init_pole_spacing == 'log':
             pole_freqs_real = np.geomspace(fmin, fmax, n_poles_real)
             pole_freqs_cmplx = np.geomspace(fmin, fmax, n_poles_cmplx)
         elif init_pole_spacing == 'lin':
             pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
             pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
+        elif init_pole_spacing == 'custom':
+            pole_freqs_real = None
+            pole_freqs_cmplx = None
+            if self.poles is not None and len(self.poles) > 0:
+                poles = self.poles / norm
+            else:
+                raise ValueError('Initial poles must be provided in `self.poles` when calling with '
+                                 '`init_pole_spacing == \'custom\'`.')
         else:
             warnings.warn('Invalid choice of initial pole spacing; proceeding with linear spacing.', UserWarning,
                           stacklevel=2)
             pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
             pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
 
-        # init poles array of correct length
-        poles = np.zeros(n_poles_real + n_poles_cmplx, dtype=complex)
+        if pole_freqs_real is not None and pole_freqs_cmplx is not None:
+            # init poles array of correct length
+            poles = np.zeros(n_poles_real + n_poles_cmplx, dtype=complex)
 
-        # add real poles
-        for i, f in enumerate(pole_freqs_real):
-            omega = 2 * np.pi * f
-            poles[i] = -1 * omega
+            # add real poles
+            for i, f in enumerate(pole_freqs_real):
+                omega = 2 * np.pi * f
+                poles[i] = -1 * omega
 
-        # add complex-conjugate poles (store only positive imaginary parts)
-        i_offset = len(pole_freqs_real)
-        for i, f in enumerate(pole_freqs_cmplx):
-            omega = 2 * np.pi * f
-            poles[i_offset + i] = (-0.01 + 1j) * omega
+            # add complex-conjugate poles (store only positive imaginary parts)
+            i_offset = len(pole_freqs_real)
+            for i, f in enumerate(pole_freqs_cmplx):
+                omega = 2 * np.pi * f
+                poles[i_offset + i] = (-0.01 + 1j) * omega
 
         # save initial poles (un-normalize first)
         initial_poles = poles * norm
@@ -238,6 +250,7 @@ class VectorFitting:
         # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
         weights_responses = np.linalg.norm(freq_responses, axis=1)
         #weights_responses = np.ones(self.network.nports ** 2)
+        #weights_responses = 10 / np.exp(np.mean(np.log(np.abs(freq_responses)), axis=1))
 
         # weight of extra equation to avoid trivial solution
         weight_extra = np.linalg.norm(weights_responses[:, None] * freq_responses) / n_samples
