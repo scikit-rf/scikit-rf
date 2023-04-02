@@ -904,20 +904,20 @@ class NetworkTestCase(unittest.TestCase):
         pwfile = 'hfss_oneport_powerwave.s1p'
         pwfile_skrf = 'tmp_skrf_oneport_powerwave.s1p'
 
-        # s_def must be explicitely passed as 'power', 
+        # s_def must be explicitely passed as 'power',
         # otherwise 'traveling' would have been assumed (being default HFSS setting)
         ntwk_orig = rf.Network(os.path.join(self.test_dir, pwfile))
         self.assertEqual(ntwk_orig.s_def, S_DEF_HFSS_DEFAULT)
-                
+
         ntwk_orig = rf.Network(os.path.join(self.test_dir, pwfile), s_def='power')
         self.assertEqual(ntwk_orig.s_def, 'power')
-        
+
         # write Touchstone file and read it. Results should be the same
         ntwk_orig.write_touchstone(os.path.join(self.test_dir, pwfile_skrf), write_z0=True, form='RI')
         ntwk_skrf = rf.Network(os.path.join(self.test_dir, pwfile_skrf))
-        
+
         self.assertTrue(ntwk_orig == ntwk_skrf)
-        
+
     def test_network_from_z_or_y(self):
         ' Construct a network from its z or y parameters '
         # test for both real and complex char. impedance
