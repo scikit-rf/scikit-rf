@@ -71,6 +71,12 @@ class MediaTestCase(unittest.TestCase):
         coax = Coaxial.from_attenuation_VF(frequency=frequency, VF=1, att=_att, unit='Np/feet')
         assert_almost_equal(coax.gamma.real,  _att*rf.meter_2_feet())
 
+        with self.assertRaises(ValueError):
+            coax = Coaxial.from_attenuation_VF(frequency=frequency, VF=1, att=npy.array([.1, .2]), unit='Np/feet')
+        frequency = rf.Frequency(1., 1.1, unit='GHz', npoints=2)
+        coax = Coaxial.from_attenuation_VF(frequency=frequency, VF=1, att=npy.array([.1, .2]), unit='Np/feet')
+        self.assertEqual( coax.frequency.f.shape, (2,))
+
 
     def test_init_from_attenuation_VF_array_att(self):
         """
