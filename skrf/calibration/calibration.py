@@ -5807,7 +5807,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     w2 = reflect_m.s[:,1,1]
 
     # equation (45)
-    a = sqrt(((w1-y)*(1+w2*b_A)*(d-b*f))/\
+    a = sqrt(((w1-b)*(1+w2*b_A)*(d-b*f))/\
             ((w2+gam)*(1-w1/x)*(1-e/x)))
         
     out = [(w1-b)/(a*(1-w1/x)), (w1-b)/(-a*(1-w1/x))] # equation (47)
