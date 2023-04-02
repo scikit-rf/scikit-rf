@@ -5786,8 +5786,8 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     sol1 = (-b-sqrtD)/denom
     sol2 = (-b+sqrtD)/denom
    
-    x1 = (tt[:,1,0]*sol1*sol2 + tt[:,1,1]*sol2)/(tt[:,0,1] + tt[:,0,0]*sol2)
-    x2 = (tt[:,1,0]*sol2*sol1 + tt[:,1,1]*sol1)/(tt[:,0,1] + tt[:,0,0]*sol1)
+    x1 = (tt[:,1,0]*sol1 + tt[:,1,1])/(tt[:,0,1]/sol2 + tt[:,0,0])
+    x2 = (tt[:,1,0]*sol2 + tt[:,1,1])/(tt[:,0,1]/sol1 + tt[:,0,0])
        
     e2 = line.s[:,0,1]**2
     rootChoice = abs(x1 - e2) < abs(x2 - e2) 
