@@ -310,8 +310,8 @@ class Network:
     @classmethod
     @lru_cache()
     def _generated_functions(cls) -> Dict[str, Tuple[Callable, str, str]]:
-        return {f"{p}_{func_name}": (func, p, func_name) 
-            for p in cls.PRIMARY_PROPERTIES 
+        return {f"{p}_{func_name}": (func, p, func_name)
+            for p in cls.PRIMARY_PROPERTIES
             for func_name, func in cls.COMPONENT_FUNC_DICT.items()}
 
     # provides y-axis labels to the plotting functions
@@ -945,7 +945,7 @@ class Network:
 
     def __dir__(self):
         ret = super().__dir__()
-        
+
         s_properties = [f"s{t1}_{t2}" for t1 in range(self.nports) for t2 in range(self.nports)]
         s_properties += [f"s{t1}{t2}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
 
@@ -954,7 +954,7 @@ class Network:
     def attribute(self, prop_name: str, conversion: str) -> npy.ndarray:
         prop = getattr(self, prop_name)
         return self.COMPONENT_FUNC_DICT[conversion](prop)
-        
+
     # PRIMARY PROPERTIES
     @property
     def s(self) -> npy.ndarray:
@@ -999,7 +999,7 @@ class Network:
 
         """
         self._s = fix_param_shape(s)
-        
+
         if self.z0.ndim == 0:
             self.z0 = self.z0
 
@@ -2084,7 +2084,7 @@ class Network:
             self.gamma, self.z0 = touchstoneFile.get_gamma_z0()
             # if s_def not explicitely passed before, uses default HFSS setting
             if self.s_def is None:
-                self.s_def = S_DEF_HFSS_DEFAULT 
+                self.s_def = S_DEF_HFSS_DEFAULT
         else:
             self.z0 = touchstoneFile.resistance
 
@@ -2094,16 +2094,16 @@ class Network:
             nfmin_db = touchstoneFile.noise[:, 1]
             gamma_opt_mag = touchstoneFile.noise[:, 2]
             gamma_opt_angle = npy.deg2rad(touchstoneFile.noise[:, 3])
-    
+
             # TODO maybe properly interpolate z0?
             # it probably never actually changes
             if touchstoneFile.version == '1.0':
                 rn = touchstoneFile.noise[:, 4] * self.z0[0, 0]
             else:
                 rn = touchstoneFile.noise[:, 4]
-    
+
             gamma_opt = gamma_opt_mag * npy.exp(1j * gamma_opt_angle)
-    
+
             nf_min = npy.power(10., nfmin_db/10.)
             # TODO maybe interpolate z0 as above
             y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
@@ -4132,16 +4132,16 @@ for func_name, (_func, prop_name, conversion) in Network._generated_functions().
     func_name = f"{prop_name}_{conversion}"
     doc = f"""
         The {conversion} component of the {prop_name}-matrix
-        
+
         See Also
         --------
         {prop_name}
     """
 
     setattr(Network, func_name, property(
-        fget=lambda self, 
-            prop_name=prop_name, 
-            conversion=conversion: 
+        fget=lambda self,
+            prop_name=prop_name,
+            conversion=conversion:
 
             self.attribute(prop_name, conversion), doc=doc))
 

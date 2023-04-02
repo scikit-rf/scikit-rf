@@ -19,7 +19,7 @@ Steps to reproduce the behavior:
 A clear and concise description of what you expected to happen.
 
 **Data**
-If applicable, add the data leading to the issue (a minimum example is appreciated) 
+If applicable, add the data leading to the issue (a minimum example is appreciated)
 
 **Screenshots**
 If applicable, add screenshots to help explain your problem.

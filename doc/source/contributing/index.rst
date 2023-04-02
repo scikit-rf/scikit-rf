@@ -21,7 +21,7 @@ Sponsoring is one more way to contribute to open source: financially supporting 
 Contributing to the Code
 ------------------------
 
-.. note:: if you feel that the instructions on this page are too complicated, but you still would like to contribute, do not hesitate email us on the `scikit-rf mailing list <https://groups.google.com/forum/#!forum/scikit-rf>`_ or join us in the `scikit-rf Slack channel <https://join.slack.com/t/scikit-rf/shared_invite/zt-d82b62wg-0bdSJjZVhHBKf6687V80Jg>`_ to get some help.
+.. note:: if you feel that the instructions on this page are too complicated, but you still would like to contribute, do not hesitate email us on the `scikit-rf mailing list <https://groups.google.com/forum/#!forum/scikit-rf>`_ or join us in the `scikit-rf Slack channel <https://join.slack.com/t/scikit-rf/shared_invite/zt-d82b62wg-0bdSJjZVhHBKf6687V80Jg>`_ or the `scikit-rf Matrix/Element channel <https://app.element.io/#/room/#scikit-rf:matrix.org>`_ to get some help.
 
 
 **skrf** uses the "Fork + Pull" collaborative development model. If this new to you, see GitHub's articles on  `forking <https://help.github.com/articles/fork-a-repo>`_ and `pull requests <https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_.
@@ -36,6 +36,32 @@ Basically, you will:
 
 
 .. tip:: When making your modification locally, you may need to work into a dedicated development environment in order to not interfere with the scikit-rf package that you have `already installed <../tutorials/Installation.html>`_. You can use for example `anaconda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_. In order for the anaconda environment to find your local scikit-rf repo, use the convenient `conda-develop <https://docs.conda.io/projects/conda-build/en/latest/resources/commands/conda-develop.html>`_ command.
+
+Pre-commit
+++++++++++
+
+You can use pre-commit_ to automate your code quality checks and perform
+automated fixes in **scikit-rf**.
+
+To enable pre-commit on your computer (make sure it is installed first), open a terminal and Navigate to 
+the :file:`scikit-rf/` directory that contains your clone of scikit-rf's repository, then run:
+
+.. code-block:: bash
+
+    pre-commit install
+
+.. note::
+
+   Once pre-commit has been installed for a repository, pre-commit will
+   run every time you try to commit a change. If any pre-commit checks
+   fail, or if pre-commit changes any files, it will be necessary to
+   redo `git add` on the changed files and `git commit` once
+   again.
+
+.. tip::
+
+   To commit a change without running pre-commit, use the `-n` or
+   `--no-verify` flag with git.
 
 
 Basic git command-line workflow
