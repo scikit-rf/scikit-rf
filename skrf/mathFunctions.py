@@ -1296,7 +1296,7 @@ def nudge_eig(mat: npy.ndarray,
     mat : npy.ndarray
         Matrices to nudge
     cond : float, optional
-        Minimum eigenvalue ratio compared to the maximum eigenvalue. 
+        Minimum eigenvalue ratio compared to the maximum eigenvalue.
         Default value is set by `skrf.constants.EIG_COND`.
     min_eig : float, optional
         Minimum eigenvalue.
