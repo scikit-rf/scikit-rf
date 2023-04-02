@@ -7,7 +7,7 @@ from numpy.random  import uniform
 
 import skrf as rf
 from skrf.media import Coaxial
-from skrf.calibration import PHN, SOLT, UnknownThru, TwoPortOnePath, TwelveTerm,  terminate, terminate_nport, determine_line, determine_reflect, NISTMultilineTRL, MultiportCal, MultiportSOLT
+from skrf.calibration import PHN, SOLT, UnknownThru, TwoPortOnePath, TwelveTerm, terminate, terminate_nport, determine_line, determine_reflect, NISTMultilineTRL, MultiportCal, MultiportSOLT
 
 from skrf import two_port_reflect
 from skrf.networkSet import NetworkSet
@@ -69,33 +69,33 @@ class DetermineTest(unittest.TestCase):
         [ self.assertEqual(k,l) for k,l in zip(self.r, r_found)]
         
     def test_determine_reflect_matched_thru_and_line_ideal_reflect(self):
-        freq = skrf.F(.25,.7,801, unit='GHz') 
+        freq = rf.F(.25,.7,801, unit='GHz')
         medium=Coaxial.from_attenuation_VF(freq, att=3.0, VF=.69)
     
         thru = medium.line(0, 'm')
         line = medium.line(0.12, 'm')
     
-        short = skrf.two_port_reflect(medium.short(), medium.short())    
+        short = rf.two_port_reflect(medium.short(), medium.short())
         r=determine_reflect(thru, short, line)
-        np.testing.assert_array_almost_equal( r.s, -np.ones_like(r.s))
+        npy.testing.assert_array_almost_equal( r.s, -npy.ones_like(r.s))
     
-        reflect = skrf.two_port_reflect(medium.open(), medium.open())    
+        reflect = rf.two_port_reflect(medium.open(), medium.open())
         r=determine_reflect(thru, reflect, line, reflect_approx = medium.open())
-        np.testing.assert_array_almost_equal( r.s, np.ones_like(r.s))
+        npy.testing.assert_array_almost_equal( r.s, npy.ones_like(r.s))
     
     def test_determine_reflect_matched_thru_and_line(self):
-        freq = skrf.F(.25,.7,100, unit='GHz') # works
+        freq = rf.F(.25,.7,100, unit='GHz')
         medium=Coaxial.from_attenuation_VF(freq, att=3.0, VF=.69)
     
         thru = medium.line(0, 'm')
         line = medium.line(0.12, 'm')
         short=medium.short()
         
-        rng=np.random.default_rng(12)    
+        rng=npy.random.default_rng(12)
         short.s[:,0,0] = short.s[:,0,0]+rng.uniform(-.02, 0.02, freq.f.size)+rng.uniform(-.02, 0.02, freq.f.size)*1j
         
-        r=determine_reflect(thru, skrf.two_port_reflect(short, short), line)
-        np.testing.assert_array_almost_equal( r.s, short.s)
+        r=determine_reflect(thru, rf.two_port_reflect(short, short), line)
+        npy.testing.assert_array_almost_equal( r.s, short.s)
 
 
 class CalibrationTest:
