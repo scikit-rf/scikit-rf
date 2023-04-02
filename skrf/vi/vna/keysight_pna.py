@@ -173,7 +173,7 @@ class PNA(abcvna.VNA):
     def upload_twoport_calibration(self, cal, port1=1, port2=2, **kwargs):
         """
         upload a calibration to the vna, and set correction on all measurements
-        
+
         Parameters
         ----------
         cal : skrf.Calibration
@@ -185,12 +185,12 @@ class PNA(abcvna.VNA):
             "directivity": "EDIR",
             "source match": "ESRM",
             "reflection tracking": "ERFT",
-            
+
             # forward = (2, 1), reverse = (1, 2)
             "load match": "ELDM",
             "transmission tracking": "ETRT"
             "isolation": "EXTLK"
-        
+
         """
         self.active_channel = channel = kwargs.get("channel", self.active_channel)
 

@@ -24,39 +24,39 @@ if TYPE_CHECKING:
 class CPW(Media):
     r"""
     Coplanar waveguide.
-    
-    
+
+
     A coplanar waveguide transmission line is defined in terms of width,
     spacing, and thickness on a given relative permittivity substrate of a
     certain height. The line has a conductor resistivity and a tangential loss
-    factor. The backside of the strip can be made of air or metal (grounded 
+    factor. The backside of the strip can be made of air or metal (grounded
     coplanar waveguide).
 
     This class is highly inspired by the technical documentation [QUCSa]_
     and sources provided by the qucs project [QUCSb]_ .
-    
+
     In addition, Djordjevic [DBLS01]_ /Svensson [SvDe01]_  wideband debye dielectric
     model is considered to provide a more realistic modelling of broadband
     microstrip with causal time domain response.
-    
+
     A compatibility mode is provided to mimic the behaviour of QUCS or of
     Keysight ADS. There is known differences in the output of these
     simulators.
-    
+
     The quasi-static models of characteristic impedance and effective
     permittivity give the value at zero frequency. The dispersion models
     compute frequency-dependant values of these variables.
-    
+
     * Quasi-static characteristic impedance and effective permittivity model
       use [GhNa84]_ and [GhNa83]_. The models are corrected to account for
       strip thickness using a first-order approach described in [GGBB96]_.
       A comparison shows that ADS simulator uses another thickness correction
       method that is according to ADS doc based on [Cohn60]_. This second method
       is not implemented in skrf.
-    
+
     * Frequency dispersion of impedance and effective permittivity model use
       [FGVM91]_ and [GMDK97]_.
-    
+
     * Loss model is computed using Wheeler's incremental inductance rule
       [Whee42]_ applied to coplanar waveguide by [OwWu58]_ and [Ghio93]_.
 
@@ -84,10 +84,10 @@ class CPW(Media):
         no unit. Default is 4.5.
     diel : str
         dielectric frequency dispersion model in:
-        
+
         * 'djordjevicsvensson' (default)
         * 'frequencyinvariant'
-        
+
     rho : number, or array-like, or None
         resistivity of conductor, ohm / m. Default is 1.68e-8 ohm /m (copper).
     tand : number, or array-like
@@ -103,13 +103,13 @@ class CPW(Media):
         Default is 1 GHz.
     compatibility_mode: str or None (default)
         If set to 'qucs', following behaviour happens :
-        
+
         * Characteristic impedance will be real (no imaginary part due to tand)
-        
+
     \*args, \*\*kwargs : arguments, keyword arguments
             passed to :class:`~skrf.media.media.Media`'s constructor
             (:func:`~skrf.media.media.Media.__init__`
-             
+
     Note
     ----
     When the thickness of the strip is smaller than 3 skin depth, the losses
@@ -147,7 +147,7 @@ class CPW(Media):
        I. Vendik, "Simple and accurate dispersion expression for the
        effective dielectric constant of coplanar waveguides" in
        Proceedings of Microwaves, Antennas and Propagation,
-       vol. 144, no. 2.IEE, Apr. 1997, pp. 145-148. 
+       vol. 144, no. 2.IEE, Apr. 1997, pp. 145-148.
     .. [Whee42] H. A. Wheeler, "Formulas for the Skin Effect,"
         Proceedings of the IRE, vol. 30, no. 9, pp. 412-424, Sept. 1942.
     .. [OwWu58] G. H. Owyang and T. T. Wu, "The Approximate Parameters of Slot
@@ -156,7 +156,7 @@ class CPW(Media):
     .. [Ghio93] G. Ghione, "A CAD-Oriented Analytical Model for the Losses of
         General Asymmetric Coplanar Lines in Hybrid and Monolithic MICs"
         IEEE Trans. on Microwave Theory and Techniques,
-        vol. 41, no. 9, pp. 1499-1510, Sept. 1993. 
+        vol. 41, no. 9, pp. 1499-1510, Sept. 1993.
 
     """
     def __init__(self, frequency: Union['Frequency', None] = None,
@@ -179,7 +179,7 @@ class CPW(Media):
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
         self.has_metal_backside = has_metal_backside
         self.compatibility_mode = compatibility_mode
-        
+
         # variation of effective permittivity with frequency
         # Not implemented in QUCS but implemented in ADS.
         # 'frequencyinvariant' will give a constant complex value whith a real
@@ -188,7 +188,7 @@ class CPW(Media):
             self.ep_r, self.tand,
             self.f_low, self.f_high, self.f_epr_tand, self.frequency.f,
             self.diel)
-        
+
         # quasi-static effective permittivity of substrate + line and
         # the impedance of the coplanar waveguide
         # qucs use real-valued ep_r giving real-valued impedance
@@ -200,7 +200,7 @@ class CPW(Media):
             self.zl_eff, self.ep_reff, k1, kk1, kpk1 = \
                 self.analyse_quasi_static(
                 self.ep_r_f, w, s, h, t, has_metal_backside)
-        
+
         # analyse dispersion of impedance and relatice permittivity
         if compatibility_mode == 'qucs':
             self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
@@ -215,7 +215,7 @@ class CPW(Media):
             self._z_characteristic, self.ep_reff_f = self.analyse_dispersion(
                 self.zl_eff, self.ep_reff, self.ep_r_f, w, s, h,
                 self.frequency.f)
-        
+
         # analyse losses of line
         self.alpha_conductor, self.alpha_dielectric = self.analyse_loss(
             real(self.ep_r_f), real(self.ep_reff_f), self.tand_f, rho, 1.,
@@ -245,21 +245,21 @@ class CPW(Media):
     def gamma(self) -> NumberLike:
         """
         Propagation constant.
-        
+
         Returns
         -------
         gamma : :class:`numpy.ndarray`
         """
         ep_reff, f = real(self.ep_reff_f), self.frequency.f
-        
+
         alpha = self.alpha_dielectric.copy()
         if self.rho is not None:
             alpha += self.alpha_conductor
-            
+
         beta = 2. * pi * f * sqrt(ep_reff) / c
 
         return alpha + 1j * beta
-    
+
     def analyse_dielectric(self, ep_r: NumberLike, tand: NumberLike,
                           f_low: NumberLike, f_high: NumberLike,
                           f_epr_tand: NumberLike, f: NumberLike,
@@ -267,7 +267,7 @@ class CPW(Media):
         """
         This function calculate the frequency-dependent relative permittivity
         of dielectric and tangential loss factor.
-        
+
         References
         ----------
         .. [#] C. Svensson, G.E. Dermer,
@@ -277,7 +277,7 @@ class CPW(Media):
             Wideband frequency-domain characterization of FR-4 and time-domain
             causality,
             IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
-            
+
         Returns
         -------
         ep_r_f : :class:`numpy.ndarray`
@@ -299,10 +299,10 @@ class CPW(Media):
             tand_f = tand
         else:
             raise ValueError('Unknown dielectric dispersion model')
-        
+
         return ep_r_f, tand_f
-    
-    def analyse_quasi_static(self, ep_r: NumberLike, 
+
+    def analyse_quasi_static(self, ep_r: NumberLike,
                            w: NumberLike, s: NumberLike,
                            h: NumberLike, t: NumberLike,
                            has_metal_backside: bool):
@@ -316,7 +316,7 @@ class CPW(Media):
         strip thickness using a first-order approach described in [GGBB96]_.
         ADS simulator report to use a custom correction based on [Cohn60]_.
         This second method is not implemented in skrf.
-        
+
         References
         ----------
         .. [GhNa84] G. Ghione and C. Naldi. "Analytical Formulas for Coplanar Lines
@@ -330,7 +330,7 @@ class CPW(Media):
            Vol. MTT-8, November 1960, pp. 638-644.
         .. [GGBB96] K. C. Gupta, R. Garg, I. J. Bahl, and P. Bhartia, Microstrip
            Lines and Slotlines, 2nd ed.Artech House, Inc., 1996.
-            
+
         Returns
         -------
         zl_eff : :class:`numpy.ndarray`
@@ -339,13 +339,13 @@ class CPW(Media):
         Z0 = sqrt(mu_0 / epsilon_0)
         a = w
         b = w + 2. * s
-        
+
         # equation (3a) from [GhNa84] or (6) from [GhNa83]
         k1 = a / b
         kk1 = ellipk(k1)
         kpk1 = ellipk(sqrt(1. - k1 * k1))
         q1 = ellipa(k1)
-        
+
         # backside is metal
         if has_metal_backside:
             # equation (4) from [GhNa83]
@@ -358,7 +358,7 @@ class CPW(Media):
             e = 1. + q3 * qz * (ep_r - 1.)
             # equation (8) from [GhNa83] with later division by sqrt(e)
             zr = Z0 / 2. * qz
-            
+
         # backside is air
         else:
             # equation (3b) from [GhNa84]
@@ -368,16 +368,16 @@ class CPW(Media):
             e = 1. + (ep_r - 1.) / 2. * q2 / q1
             # equation (1) from [GhNa84] with later division by sqrt(e)
             zr = Z0 / 4. / q1
-            
+
         # a posteriori effect of strip thickness
         if t is not None and t > 0.:
             # equation (7.98) from [GGBB96]
-            d = 1.25 * t / pi * (1. + log(4. * pi * w / t)) 
+            d = 1.25 * t / pi * (1. + log(4. * pi * w / t))
             # equation between (7.99) and (7.100) from [GGBB96]
             #approx. equal to ke = (w + d) / (w + d + 2 * (s - d))
             ke = k1 + (1. - k1 * k1) * d / 2. / s
             qe = ellipa(ke)
-            
+
             # backside is metal
             if has_metal_backside:
                 # equation (8) from [GhNa83] with k1 -> ke
@@ -388,17 +388,17 @@ class CPW(Media):
             else:
                 # equation (7.99) from [GGBB96] with later division by sqrt(e)
                 zr = Z0 / 4. / qe
-            
+
             # modifies ep_re
             # equation (7.100) of [GGBB96]
             e = e - (0.7 * (e - 1.) * t / s) / (q1 + (0.7 * t / s))
-        
+
         ep_reff = e
         # final division of (1) from [GhNa84] and (8) from [GhNa83]
         zl_eff = zr / sqrt(ep_reff)
-        
+
         return zl_eff, ep_reff, k1, kk1, kpk1
-    
+
     def analyse_dispersion(self, zl_eff: NumberLike, ep_reff: NumberLike,
                           ep_r: NumberLike, w: NumberLike, s: NumberLike,
                           h: NumberLike, f: NumberLike):
@@ -406,7 +406,7 @@ class CPW(Media):
          This function computes the frequency-dependent characteristic
          impedance and effective permittivity accounting for coplanar waveguide
          frequency dispersion.
-         
+
          References
          ----------
          .. [#] M. Y. Frankel, S. Gupta, J. A. Valdmanis, and G. A. Mourou,
@@ -417,8 +417,8 @@ class CPW(Media):
             I. Vendik, "Simple and accurate dispersion expression for the
             effective dielectric constant of coplanar waveguides" in
             Proceedings of Microwaves, Antennas and Propagation,
-            vol. 144, no. 2.IEE, Apr. 1997, pp. 145-148. 
-             
+            vol. 144, no. 2.IEE, Apr. 1997, pp. 145-148.
+
          Returns
          -------
          z : :class:`numpy.ndarray`
@@ -426,32 +426,32 @@ class CPW(Media):
          """
          # cut-off frequency of the TE0 mode
          fte = ((c / 4.) / (h * sqrt(ep_r - 1.)))
-         
+
          # dispersion factor G
          p = log(w / h)
          u = 0.54 - (0.64 - 0.015 * p) * p
          v = 0.43 - (0.86 - 0.54 * p) * p
          G = exp(u * log(w / s) + v)
-         
+
          # add the dispersive effects to ep_reff
          sqrt_ep_reff = sqrt(ep_reff)
          sqrt_e = sqrt_ep_reff + (sqrt(ep_r) - sqrt_ep_reff) / \
              (1. + G * (f / fte)**(-1.8))
-             
+
          e = sqrt_e**2
-             
+
          z = zl_eff * sqrt_ep_reff / sqrt_e
-         
+
          return z, e
-     
-    def analyse_loss(self, ep_r: NumberLike, ep_reff: NumberLike, 
+
+    def analyse_loss(self, ep_r: NumberLike, ep_reff: NumberLike,
                     tand: NumberLike, rho: NumberLike, mu_r: NumberLike,
                     f: NumberLike, w: NumberLike, t: NumberLike, s: NumberLike,
                     k1: NumberLike, kk1: NumberLike, kpk1: NumberLike):
         """
         The function calculates the conductor and dielectric losses of a
         complanar waveguide line using wheeler's incremental inductance rule.
-        
+
         References
         ----------
         .. [#] H. A. Wheeler, "Formulas for the Skin Effect,"
@@ -462,8 +462,8 @@ class CPW(Media):
         .. [#] G. Ghione, "A CAD-Oriented Analytical Model for the Losses of
             General Asymmetric Coplanar Lines in Hybrid and Monolithic MICs"
             IEEE Trans. on Microwave Theory and Techniques,
-            vol. 41, no. 9, pp. 1499-1510, Sept. 1993. 
-            
+            vol. 41, no. 9, pp. 1499-1510, Sept. 1993.
+
         Returns
         -------
         a_conductor : :class:`numpy.ndarray`
@@ -487,25 +487,25 @@ class CPW(Media):
             b = a + s
             ac = (pi + log(n * a)) / a + (pi + log(n * b)) / b
             a_conductor = r_s * sqrt(ep_reff) * ac / (4. * Z0 * kk1 * kpk1 * \
-                               (1. - k1 * k1)) 
+                               (1. - k1 * k1))
         else:
             a_conductor = zeros(f.shape)
-        
+
         l0 = c / f
         a_dielectric =  pi * ep_r / (ep_r - 1) * (ep_reff - 1) / \
             sqrt(ep_reff) * tand / l0
-            
+
         return a_conductor, a_dielectric
-    
+
 def ellipa(k: NumberLike):
     """
     Approximation of K(k)/K'(k).
     First appeared in [#]_
     More accurate expressions can be found in the above article and in [#]_.
-    
+
     The maximum relative error of the approximation implemented here is
     about 2 ppm, so good enough for any practical purpose.
-    
+
     References
     ==========
     .. [#] Hilberg, W., "From Approximations to Exact Relations for
@@ -519,5 +519,5 @@ def ellipa(k: NumberLike):
         r = pi / log(2. * (1. + sqrt(kp)) / (1. - sqrt(kp)))
     else:
         r = log(2. * (1. + sqrt(k)) / (1. - sqrt(k))) / pi
-    
+
     return r

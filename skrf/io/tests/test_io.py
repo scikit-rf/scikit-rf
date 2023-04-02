@@ -40,7 +40,7 @@ class IOTestCase(unittest.TestCase):
 
     def test_read_all(self):
         rf.read_all(self.test_dir)
-    
+
     def test_read_all_files(self):
         rf.read_all(files=self.test_files)
 

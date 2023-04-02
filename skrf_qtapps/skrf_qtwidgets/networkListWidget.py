@@ -75,19 +75,19 @@ class NetworkListWidget(QtWidgets.QListWidget):
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
         self.something_happened()
-    
+
     @staticmethod
     def save_NetworkListItem(ntwk_list_item, save_which):
         """
         Save a single network list item as a touchstone file
-        
+
         Parameters
         ----------
         ntwk_list_item : NetworkListItem
             the QListWidgetItem referencing the N
         save_which : str
             specify to save the raw, corrected or both
-        
+
         """
 
         if save_which.lower() not in ("raw", "cal", "both"):
@@ -244,7 +244,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
         if not self.ntwk_plot:
             return
 
-        items = self.selectedItems()        
+        items = self.selectedItems()
         ntwk_list = []
         ntwk_list_corrected = []
 
@@ -253,12 +253,12 @@ class NetworkListWidget(QtWidgets.QListWidget):
                 ntwk_list.append(item.ntwk)
             elif type(item.ntwk) in (list, tuple):
                 ntwk_list.extend(item.ntwk)
-                
+
             if isinstance(item.ntwk_corrected, skrf.Network):
                 ntwk_list_corrected.append(item.ntwk_corrected)
             elif type(item.ntwk_corrected) in (list, tuple):
                 ntwk_list_corrected.extend(item.ntwk_corrected)
-        
+
         if ntwk_list:
             ntwk = ntwk_list if len(ntwk_list) > 1 else ntwk_list[0]
         else:

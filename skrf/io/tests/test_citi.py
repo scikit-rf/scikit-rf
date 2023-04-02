@@ -22,7 +22,7 @@ class CitiTestCase(unittest.TestCase):
         self.twoport_example2 = rf.Citi(self.test_dir + 'test_2p_citi_2.cti')
         self.twoport_example3 = rf.Citi(self.test_dir + 'test_2p_citi_2params.cti')
         self.twoport_example4 = rf.Citi(self.test_dir + 'test_2p_citi_2params_db.cti')
-        self.twoport_example5 = rf.Citi(self.test_dir + 'test_2p_citi_3_ri.cti')       
+        self.twoport_example5 = rf.Citi(self.test_dir + 'test_2p_citi_3_ri.cti')
         self.fourport_example1 = rf.Citi(self.test_dir + 'test_4p_citi.cti')
 
         self.examples = [self.oneport_example1, self.oneport_example2,
