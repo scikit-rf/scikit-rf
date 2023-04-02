@@ -6,7 +6,8 @@ import numpy as npy
 from numpy.random  import uniform
 
 import skrf as rf
-from skrf.calibration import PHN, SOLT, UnknownThru, TwoPortOnePath, TwelveTerm,  terminate, terminate_nport, determine_line, determine_reflect, NISTMultilineTRL, MultiportCal, MultiportSOLT, Coaxial
+from skrf.media import Coaxial
+from skrf.calibration import PHN, SOLT, UnknownThru, TwoPortOnePath, TwelveTerm,  terminate, terminate_nport, determine_line, determine_reflect, NISTMultilineTRL, MultiportCal, MultiportSOLT
 
 from skrf import two_port_reflect
 from skrf.networkSet import NetworkSet
