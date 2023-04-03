@@ -35,9 +35,14 @@ import numpy as np
 
 import skrf
 from skrf.vi import vna
-from skrf.vi.validators import (BooleanValidator, EnumValidator,
-                                FloatValidator, FreqValidator, IntValidator,
-                                SetValidator)
+from skrf.vi.validators import (
+    BooleanValidator,
+    EnumValidator,
+    FloatValidator,
+    FreqValidator,
+    IntValidator,
+    SetValidator,
+)
 
 
 class WindowFormat(Enum):
@@ -172,6 +177,10 @@ class FieldFox(vna.VNA):
         self._resource.write_termination = "\n"
 
         _ = self.query_format # calling the getter sets _values_format to make sure we're in sync with the instrument
+
+    @property
+    def nports(self) -> int:
+        return 2
 
     @property
     def freq_step(self) -> int:
