@@ -73,6 +73,10 @@ class NetworkTestCase(unittest.TestCase):
         n2 = n.copy()
         self.assertEqual( n.frequency, n2.frequency)
         self.assertNotEqual( id(n.frequency), id(n2.frequency))
+        self.assertNotEqual( id(n.frequency.f), id(n2.frequency.f))
+
+        n.frequency.f[0] = 0
+        self.assertNotEqual(n2.frequency.f[0], 0)
 
     def test_two_port_reflect(self):
         number_of_data_points = 10
