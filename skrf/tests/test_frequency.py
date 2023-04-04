@@ -81,10 +81,9 @@ class FrequencyTestCase(unittest.TestCase):
         frequency points directly.
         """
         a = rf.Frequency.from_f([1,2,4,5,6], unit='Hz')
-        # TODO : assertRaises(AttributeError) in next release
-        with self.assertWarns(DeprecationWarning):
+        with self.assertRaises(AttributeError):
             a.f = [1, 2]
-        with self.assertWarns(DeprecationWarning):
+        with self.assertRaises(AttributeError):
             a.npoints = 10
         with self. assertRaises(AttributeError):
             a.start = 2

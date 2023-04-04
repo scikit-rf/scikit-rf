@@ -165,7 +165,7 @@ class Frequency:
             self._f = geomspace(start, stop, npoints)
         else:
             raise ValueError('Sweep Type not recognized')
-        self._f.flags.writable = False
+        self._f.setflags(write = False)
 
     def __str__(self) -> str:
         """
@@ -386,21 +386,6 @@ class Frequency:
         """
         return len(self.f)
 
-    @npoints.setter
-    def npoints(self, n: int) -> None:
-        """
-        Set the number of points in the frequency.
-        """
-        raise Exception('Possibility to set the npoints parameter has been removed')
-
-        if self.sweep_type == 'lin':
-            self.f = linspace(self.start, self.stop, n)
-        elif self.sweep_type == 'log':
-            self.f = geomspace(self.start, self.stop, n)
-        else:
-            raise ValueError(
-                'Unable to change number of points for sweep type', self.sweep_type)
-
     @property
     def center(self) -> float:
         """
@@ -487,23 +472,6 @@ class Frequency:
         """
 
         return self._f
-
-    @f.setter
-    def f(self,new_f: NumberLike) -> None:
-        """
-        Sets the frequency object by passing a vector in Hz.
-
-        Raises
-        ------
-        InvalidFrequencyWarning:
-            If frequency points are not monotonously increasing
-        """
-        raise Exception('Possibility to set the f parameter has been removed')
-
-        self._f = npy.array(new_f)
-
-        self.check_monotonic_increasing()
-
 
 
     @property
