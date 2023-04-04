@@ -165,6 +165,7 @@ class Frequency:
             self._f = geomspace(start, stop, npoints)
         else:
             raise ValueError('Sweep Type not recognized')
+        self._f.flags.writable = False
 
     def __str__(self) -> str:
         """
@@ -390,8 +391,7 @@ class Frequency:
         """
         Set the number of points in the frequency.
         """
-        warnings.warn('Possibility to set the npoints parameter will removed in the next release.',
-             DeprecationWarning, stacklevel=2)
+        raise Exception('Possibility to set the npoints parameter has been removed')
 
         if self.sweep_type == 'lin':
             self.f = linspace(self.start, self.stop, n)
@@ -498,8 +498,7 @@ class Frequency:
         InvalidFrequencyWarning:
             If frequency points are not monotonously increasing
         """
-        warnings.warn('Possibility to set the f parameter will removed in the next release.',
-             DeprecationWarning, stacklevel=2)
+        raise Exception('Possibility to set the f parameter has been removed')
 
         self._f = npy.array(new_f)
 
