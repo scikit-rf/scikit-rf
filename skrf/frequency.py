@@ -83,7 +83,7 @@ class Frequency:
             'thz': 'THz'
             }
     """
-    Dictionnary to convert unit string with correct capitalization for display.
+    Dictionary to convert unit string with correct capitalization for display.
     """
 
     multiplier_dict={
@@ -593,14 +593,14 @@ class Frequency:
         Unit of this frequency band.
 
         Possible strings for this attribute are:
-        'hz', 'khz', 'mhz', 'ghz', 'thz'
+        'Hz', 'kHz', 'MHz', 'GHz', 'THz'
 
         Setting this attribute is not case sensitive.
 
         Returns
         -------
         unit : string
-            lower-case string representing the frequency units
+            String representing the frequency unit
         """
         return self.unit_dict[self._unit]
 
