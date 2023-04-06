@@ -95,6 +95,7 @@ import json
 from numbers import Number
 from collections import OrderedDict
 from copy import copy
+import warnings
 from warnings import warn
 
 from ..mathFunctions import sqrt_phase_unwrap, \
@@ -5786,11 +5787,13 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     sol1 = (-b-sqrtD)/denom
     sol2 = (-b+sqrtD)/denom
 
+    # equation (32)
     x1 = (tt[:,1,0]*sol1 + tt[:,1,1])/(tt[:,0,1]/sol2 + tt[:,0,0])
     x2 = (tt[:,1,0]*sol2 + tt[:,1,1])/(tt[:,0,1]/sol1 + tt[:,0,0])
 
     e2 = line.s[:,0,1]**2
-    rootChoice = abs(x1 - e2) < abs(x2 - e2)
+    rootChoice0 = abs(x1 - e2) < abs(x2 - e2) # original choice for the root. see gh-870
+    rootChoice = npy.abs(x1) < npy.abs(x2) # criterium from eq (55)
 
     y = sol1*invert(rootChoice) + sol2*rootChoice
     x = sol1*rootChoice + sol2*invert(rootChoice)

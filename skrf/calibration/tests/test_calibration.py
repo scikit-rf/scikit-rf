@@ -98,6 +98,18 @@ class DetermineTest(unittest.TestCase):
         npy.testing.assert_array_almost_equal( r.s, short.s)
 
 
+    def test_determine_reflect_regression(self):
+        freq = rf.F(434615384.6153846, .7e9, 1, unit = 'Hz')
+
+        thru = rf.Network(f=freq.f, s=[[[0,1] ,[1,0]] ], f_unit='Hz')
+        s=npy.array([[[ 0.+0.j, (-0.012811542676311568-0.9593150869904133j)],
+                [ (-0.012811542676311568-0.9593150869904133j), 0.+0.j]]])
+        line = rf.Network(f=freq.f, s=s, f_unit='Hz')
+        short = rf.Network(f=freq.f, s=[[[(-1.0099670216756622+0.017870117714376983j)] ] ],f_unit='Hz')
+
+        r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
+        npy.testing.assert_array_almost_equal( r.s, short.s)
+
 class CalibrationTest:
     """
     This is the generic Calibration test case which all Calibration
