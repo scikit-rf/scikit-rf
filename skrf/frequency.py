@@ -339,15 +339,7 @@ class Frequency:
         Returns:
             list[int]: The dropped indices
         """
-        invalid = npy.zeros(len(self.f), dtype=bool)
-        for i, val in enumerate(self.f):
-            if not i:
-                last_valid = val
-            else:
-                if val > last_valid:
-                    last_valid = val
-                else:
-                    invalid[i] = True
+        invalid = npy.diff(self.f, prepend=self.f[0]-1) <= 0
         self._f = self._f[~invalid]
         return list(npy.flatnonzero(invalid))
 
