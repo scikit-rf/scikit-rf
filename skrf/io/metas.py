@@ -6,7 +6,7 @@ metas (:mod:`skrf.io.metas`)
 
 Functions for reading and writing file formats defined by METAS
 
-http://www.metas.ch/metas/en/home/fabe/hochfrequenz/vna-tools.html
+https://www.metas.ch/vnatools
 
 .. autosummary::
    :toctree: generated/
