@@ -165,7 +165,6 @@ class Frequency:
             self._f = geomspace(start, stop, npoints)
         else:
             raise ValueError('Sweep Type not recognized')
-        self._f.setflags(write = False)
 
     def __str__(self) -> str:
         """
