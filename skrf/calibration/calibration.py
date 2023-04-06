@@ -109,7 +109,7 @@ from .. import __version__ as skrf__version__
 from collections import defaultdict
 from itertools import combinations
 
-FloatArray = npy.typing.NDArray[npy.float_]
+ComplexArray = npy.typing.NDArray[complex]
 
 global coefs_list_12term
 coefs_list_12term =[
@@ -5716,10 +5716,10 @@ def determine_line(thru_m, line_m, line_approx=None):
     return found_line
 
 
-def _regularize_inplace(z : FloatArray, epsilon : float=1e-7) -> FloatArray:
+def _regularize_inplace(z : ComplexArray, epsilon : float=1e-7) -> ComplexArray:
     """ Regularize an array inplace around zero """
     zero_idx = npy.abs(z)<epsilon
-    z[zero_idx] = .5*(epsilon * npy.exp(npy.angle(z[zero_idx])*1j)+z[zero_idx]) 
+    z[zero_idx] = .5*(epsilon * npy.exp(npy.angle(z[zero_idx])*1j)+z[zero_idx])
     return z
 
 def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
@@ -5777,21 +5777,21 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     # The variables a, b, c define a quadratic equation for which the solutions sol1 and sol2 correspond to the
     # ratios (r11/r21) and (r12/r22) from equations (30) and (31) in the paper
     # The quadratic equation has solutions sol1 = (-b-sqrt(b*b-4*a*c))/(2*a), sol2 = (-b+sqrt(b*b-4*a*c))/(2*a)
-    # For a=0 these become degenerate. Also the consequtive equations for x1 and x2 contain singularities for a=0 or c=0    
+    # For a=0 these become degenerate. Also the consequtive equations for x1 and x2 contain singularities for a=0 or c=0
     # We address this by regularizing small values of a and the candidate solutions.
     # The impact on the final solution is small as for small a one root of the equation goes to infinity,
     # for the other the series expension in a is -c/b  - a c^2/b^3 + O(a^2)
-    
+
     denom = 2*a
     sol1 = (-b-sqrtD)/denom
     sol2 = (-b+sqrtD)/denom
-   
+
     x1 = (tt[:,1,0]*sol1 + tt[:,1,1])/(tt[:,0,1]/sol2 + tt[:,0,0])
     x2 = (tt[:,1,0]*sol2 + tt[:,1,1])/(tt[:,0,1]/sol1 + tt[:,0,0])
-       
+
     e2 = line.s[:,0,1]**2
-    rootChoice = abs(x1 - e2) < abs(x2 - e2) 
-        
+    rootChoice = abs(x1 - e2) < abs(x2 - e2)
+
     y = sol1*invert(rootChoice) + sol2*rootChoice
     x = sol1*rootChoice + sol2*invert(rootChoice)
     b = y
@@ -5800,7 +5800,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     d = -det(thru_m.s)
     f = -thru_m.s[:,1,1]
 
-    gam = (f-d/x)/(1-e/x) # equation (40) 
+    gam = (f-d/x)/(1-e/x) # equation (40)
     b_A = (e-b)/(d-b*f)  # equation (41): beta/alpha
 
     w1 = reflect_m.s[:,0,0]
@@ -5809,9 +5809,9 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     # equation (45)
     a = sqrt(((w1-b)*(1+w2*b_A)*(d-b*f))/\
             ((w2+gam)*(1-w1/x)*(1-e/x)))
-        
+
     out = [(w1-b)/(a*(1-w1/x)), (w1-b)/(-a*(1-w1/x))] # equation (47)
-        
+
     if return_all:
         return [Network(frequency=thru_m.frequency, s = k) for k in out]
 
@@ -5822,7 +5822,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     closer = find_closest(out[0], out[1], reflect_approx.s11.s.flatten())
     reflect = reflect_approx.copy()
     reflect.s[:,0,0]=closer
-    
+
     return reflect.s11
 
 
