@@ -8,11 +8,11 @@ import skrf as rf
 from skrf.util import suppress_warning_decorator
 
 class AgilentCSVTestCase(unittest.TestCase):
-    """ 
+    """
     AgilentCSVTestCase tests the IO of agilent style CSV files
     """
     def setUp(self):
-        """ 
+        """
         Sets up the test directory and the initializes the members.
         This method gets the current file path to this file, then gets the file
         name for pna_csv_reim.csv file, then reads it in.
@@ -22,7 +22,7 @@ class AgilentCSVTestCase(unittest.TestCase):
         self.acsv = rf.AgilentCSV(filename)
 
     def test_columns(self):
-        """ 
+        """
         This tests reading of columns from the test file.
         """
         self.assertEqual(self.acsv.columns, ['Freq(Hz)', '"A,1"(REAL)',
@@ -31,7 +31,7 @@ class AgilentCSVTestCase(unittest.TestCase):
 
     @pytest.mark.skip(reason='unicode error with carrage returns for p3 vs p2')
     def test_comments(self):
-        """ 
+        """
         This tests reading of comment lines in the test file.
         """
         self.assertEqual(self.acsv.comments.strip('\r'), 'this is a comment\nline\n')
@@ -46,7 +46,7 @@ class AgilentCSVTestCase(unittest.TestCase):
                                    ])).all())
 
     def test_frequency(self):
-        """ 
+        """
         This tests the reading of frequency from the test file
         """
         self.assertEqual(self.acsv.frequency, rf.F(750e9, 1100e9, 2, 'hz'))
@@ -63,4 +63,3 @@ class AgilentCSVTestCase(unittest.TestCase):
         This only tests for execution, not accuracy
         """
         a = self.acsv.scalar_networks
-

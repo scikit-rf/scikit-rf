@@ -191,10 +191,10 @@ def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
     ----------
     ntwk : :class:`~skrf.network.Network`
         network to get data from
-    
+
     t_unit : str
         Time unit for start, stop, center and span arguments, defaults to nanoseconds (ns).
-        
+
         Possible values:
             * 's': seconds
             * 'ms': milliseconds
@@ -294,10 +294,10 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         the boundaries. This has a large effect on the generation of gating artefacts due to boundary effects. The
         optimal mode depends on the data. See the parameter description of `scipy.ndimage.convolve1d` for the available
         options.
-    
+
     t_unit : str
         Time unit for start, stop, center and span arguments, defaults to nanoseconds (ns).
-        
+
         Possible values:
             * 's': seconds
             * 'ms': milliseconds

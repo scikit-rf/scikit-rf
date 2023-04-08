@@ -463,5 +463,3 @@ class RectangularWaveguide(Media):
                          }
 
         return impedance_dict[self.mode_type]
-
-

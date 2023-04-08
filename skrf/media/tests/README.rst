@@ -5,7 +5,7 @@ skrf.media tests
 Running Tests
 -----------------
 These tests are most easily run using pytest, like so ::
-    
+
     pytest skrf/media/tests/
 
 Using QUCS for test-cases
@@ -15,21 +15,18 @@ skrf's media classes are tested by comparison with those produced by qucs (http:
 
     ln -s skrf/media/tests/qucs_prj ~/.qucs/
 
-Once you simulate the test network in qucs, you can convert the output 
-data into a touchstone file by using `qucsconv`, for example :: 
+Once you simulate the test network in qucs, you can convert the output
+data into a touchstone file by using `qucsconv`, for example ::
 
     qucsconv -if qucsdata -i resistor.dat -of touchstone  -o resistor,1ohm.s2p
 
 This touchstone can then be loaded into skrf as a Network, and tests
-can be run. 
+can be run.
 
 
 Structure of tests
 -------------------
 
-The test module `test_all_construction.py` tests that all media classes can call network creation methods that are inherited from the `Media` class. 
+The test module `test_all_construction.py` tests that all media classes can call network creation methods that are inherited from the `Media` class.
 
-In addition to this, each media class should have a seperate test module that tests its functionality. 
-
-
-
+In addition to this, each media class should have a seperate test module that tests its functionality.

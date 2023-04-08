@@ -32,7 +32,7 @@ and in BibTex format
    @ARTICLE{9632487,
   author={Arsenovic, Alexander and Hillairet, Julien and Anderson, Jackson and Forstén, Henrik and Rieß, Vincent and Eller, Michael and Sauber, Noah and Weikle, Robert and Barnhart, William and Forstmayr, Franz},
   journal={IEEE Microwave Magazine},
-  title={scikit-rf: An Open Source Python Package for Microwave Network Creation, Analysis, and Calibration [Speaker’s Corner]}, 
+  title={scikit-rf: An Open Source Python Package for Microwave Network Creation, Analysis, and Calibration [Speaker’s Corner]},
   year={2022},
   volume={23},
   number={1},
@@ -43,7 +43,7 @@ In Presentations or Apps
 -------------------------
 
 If you are giving a presentation featuring work/research that makes use of scikit-rf or creating an app that uses it under the hood, we provide this "powered by" image `[PNG] <http://scikit-rf.org/_downloads/powered_by_scikit-rf.png>`_
-`[SVG] <http://scikit-rf.org/_downloads/powered_by_scikit-rf.svg>`_ : 
+`[SVG] <http://scikit-rf.org/_downloads/powered_by_scikit-rf.svg>`_ :
 
 .. image:: http://scikit-rf.org/_downloads/powered_by_scikit-rf.png
     :width: 400px
@@ -83,7 +83,7 @@ This list has been extracted from a `"scikit-rf" research on Google Scholar <htt
 * Harrison, S.T., Hovey, G.J., Veidt, B., Ljusic, Z., Burgess, T., 2018. A digital beamformer for the advanced focal array demonstrator (AFAD), in: Millimeter, Submillimeter, and Far-Infrared Detectors and Instrumentation for Astronomy IX. Presented at the Millimeter, Submillimeter, and Far-Infrared Detectors and Instrumentation for Astronomy IX, International Society for Optics and Photonics, p. 1070834. https://doi.org/10/gg6xxn
 * Hammond, I. M., Hammond, A. M. & Camacho, R. M. Deep learning-enhanced, open-source eigenmode expansion. Opt. Lett. 47, 1383 (2022).
 * Hillairet, J., 2019. RF Network Analysis of the WEST ICRH Antenna with the Open-Source Python scikit-rf Package, in: 23rd Topical Conference on Radiofrequency Power in Plasmas (RFPPC 2019). Hefei, China. https://hal-cea.archives-ouvertes.fr/cea-02459571/
-*  Anthony I. Huber, Scott C. Chapman, Adrian K. Sinclair, Locke D. Spencer, Jason E. Austermann, Steve K. Choi, Jesslyn Devina, Patricio A. Gallardo, Doug Henke, Zachary B. Huber, Ben Keller, Yaqiong Li, Lawrence T. Lin, Mike Niemack, Kayla M. Rossi, Eve M. Vavagiakis, and Jordan D. Wheeler "CCAT-prime: optical and cryogenic design of the 850 GHz module for Prime-Cam", Proc. SPIE 12190, Millimeter, Submillimeter, and Far-Infrared Detectors and Instrumentation for Astronomy XI, 121901D (31 August 2022); https://doi.org/10.1117/12.2630370 
+*  Anthony I. Huber, Scott C. Chapman, Adrian K. Sinclair, Locke D. Spencer, Jason E. Austermann, Steve K. Choi, Jesslyn Devina, Patricio A. Gallardo, Doug Henke, Zachary B. Huber, Ben Keller, Yaqiong Li, Lawrence T. Lin, Mike Niemack, Kayla M. Rossi, Eve M. Vavagiakis, and Jordan D. Wheeler "CCAT-prime: optical and cryogenic design of the 850 GHz module for Prime-Cam", Proc. SPIE 12190, Millimeter, Submillimeter, and Far-Infrared Detectors and Instrumentation for Astronomy XI, 121901D (31 August 2022); https://doi.org/10.1117/12.2630370
 * Humphries, J.R., Reed, F.K., Carmichael, C.P., Fuhr, P.L., McIntyre, T.J., Weeks, A.R., Malocha, D.C., 2017. Noise Radar Approach for Interrogating SAW Sensors Using Software Defined Radio. IEEE Sensors Journal 17, 6760-6769. https://doi.org/10/gcf249
 * Kaniecki, M., Saenz, E., Rolo, L., Appleby, R., Breinbjerg, O., 2014. Scattering-parameter extraction and calibration techniques for RF free-space material characterization, in: The 8th European Conference on Antennas and Propagation (EuCAP 2014). Presented at the The 8th European Conference on Antennas and Propagation (EuCAP 2014), pp. 1093-1097. https://doi.org/10/gg6xw3
 * K. Kawahara, J. Sawada, T. Kamo, Y. Umeda, K. Takano and S. Hara, "Bandwidth Tripler: Broadband Signal Generation With an Image-Rejection Analog Multiplexer for Fiber Optic Transmitters," in IEEE Transactions on Microwave Theory and Techniques, 2022, doi: 10.1109/TMTT.2022.3190480.
