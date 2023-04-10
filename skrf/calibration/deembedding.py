@@ -5,10 +5,10 @@
 deembedding (:mod:`skrf.calibration.deembedding`)
 ====================================================
 
-De-embedding is the procedure of removing effects of the 
+De-embedding is the procedure of removing effects of the
 test fixture that is often present in the measurement of a device
 or circuit. It is based on a lumped element approximation of the
-test fixture which needs removal from the raw data, and its 
+test fixture which needs removal from the raw data, and its
 equivalent circuit often needs to be known a-priori. This is often
 required since implementation of calibration methods such as
 Thru-Reflect-Line (TRL) becomes too expensive for implementation
@@ -16,12 +16,12 @@ in on-wafer measurement environments where space is limited, or
 insufficiently accurate as in the case of Short-Open-Load-Thru
 (SOLT) calibration where the load cannot be manufactured accurately.
 De-embedding is often performed as a second step, after a
-SOLT, TRL or similar calibration to the end of a known reference 
+SOLT, TRL or similar calibration to the end of a known reference
 plane, like the probe-tips in on-wafer measurements.
 
-This module provides objects to implement commonly used de-embedding 
-method in on-wafer applications.  
-Each de-embedding method inherits from the common abstract base 
+This module provides objects to implement commonly used de-embedding
+method in on-wafer applications.
+Each de-embedding method inherits from the common abstract base
 class :class:`Deembedding`.
 
 Base Class
@@ -85,14 +85,14 @@ class Deembedding(ABC):
         dummy networks. We check that each of these dummy networks
         have matching frequencies to perform de-embedding.
 
-        It should be known a-priori what the equivalent circuit 
+        It should be known a-priori what the equivalent circuit
         of the parasitic network looks like. The proper de-embedding
         method should then be chosen accordingly.
 
         Parameters
         ----------
         dummies : list of :class:`~skrf.network.Network` objects
-            Network info of all the dummy structures used in a 
+            Network info of all the dummy structures used in a
             given de-embedding algorithm.
 
         name : string
@@ -107,9 +107,9 @@ class Deembedding(ABC):
        # ensure all the dummy Networks' frequency's are the same
         for dmyntwk in dummies:
             if dummies[0].frequency != dmyntwk.frequency:
-                raise(ValueError('Dummy Networks dont have matching frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+                warnings.warn('Dummy Networks dont have matching frequencies, attempting overlap.', RuntimeWarning)
+                dummies = overlap_multi(dummies)
+                break
 
         self.frequency = dummies[0].frequency
         self.dummies = dummies
@@ -142,27 +142,27 @@ class Deembedding(ABC):
 
 class OpenShort(Deembedding):
     """
-    Remove open parasitics followed by short parasitics. 
+    Remove open parasitics followed by short parasitics.
 
     This is a commonly used de-embedding method for on-wafer applications.
 
-    A deembedding object is created with two dummy measurements: `dummy_open` 
-    and `dummy_short`. When :func:`Deembedding.deembed` is applied, 
-    Open de-embedding is applied to the short dummy 
+    A deembedding object is created with two dummy measurements: `dummy_open`
+    and `dummy_short`. When :func:`Deembedding.deembed` is applied,
+    Open de-embedding is applied to the short dummy
     because the measurement results for the short dummy contains parallel parasitics.
-    Then the Y-parameters of the dummy_open are subtracted from the DUT measurement, 
+    Then the Y-parameters of the dummy_open are subtracted from the DUT measurement,
     followed by subtraction of Z-parameters of dummy-short which is previously de-embedded.
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the series parasitics are closest to device under test, 
+    where the series parasitics are closest to device under test,
     followed by the parallel parasitics. For more information, see [1]_
 
     References
     ------------
 
-    .. [1] M. C. A. M. Koolen, J. A. M. Geelen and M. P. J. G. Versleijen, "An improved 
-        de-embedding technique for on-wafer high frequency characterization", 
+    .. [1] M. C. A. M. Koolen, J. A. M. Geelen and M. P. J. G. Versleijen, "An improved
+        de-embedding technique for on-wafer high frequency characterization",
         IEEE 1991 Bipolar Circuits and Technology Meeting, pp. 188-191, Sep. 1991.
 
     Example
@@ -236,17 +236,16 @@ class OpenShort(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
-
-        caled = ntwk.copy()
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            caled, op, sh = overlap_multi([ntwk, self.open, self.short])
+        else:
+            caled, op, sh = ntwk.copy(), self.open, self.short
 
         # remove parallel parasitics from the short dummy
-        deembeded_short = self.short.copy()
-        deembeded_short.y = self.short.y - self.open.y
+        deembeded_short = sh.copy()
+        deembeded_short.y = sh.y - op.y
         # remove parallel parasitics from the dut
-        caled.y = ntwk.y - self.open.y
+        caled.y = caled.y - op.y
         # remove series parasitics from the dut
         caled.z = caled.z - deembeded_short.z
 
@@ -258,13 +257,13 @@ class Open(Deembedding):
     Remove open parasitics only.
 
     A deembedding object is created with just one open dummy measurement,
-    `dummy_open`. When :func:`Deembedding.deembed` is applied, the 
-    Y-parameters of the open dummy are subtracted from the DUT measurement, 
+    `dummy_open`. When :func:`Deembedding.deembed` is applied, the
+    Y-parameters of the open dummy are subtracted from the DUT measurement,
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the series parasitics are assumed to be negligible, 
-    but parallel parasitics are unwanted. 
+    where the series parasitics are assumed to be negligible,
+    but parallel parasitics are unwanted.
 
     Example
     --------
@@ -330,14 +329,14 @@ class Open(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, op = overlap_multi([ntwk, self.open])
+        else:
+            op = self.open
 
         caled = ntwk.copy()
-
         # remove open parasitics
-        caled.y = ntwk.y - self.open.y
+        caled.y = ntwk.y - op.y
 
         return caled
 
@@ -346,16 +345,16 @@ class ShortOpen(Deembedding):
     """
     Remove short parasitics followed by open parasitics.
 
-    A deembedding object is created with two dummy measurements: `dummy_open` 
-    and `dummy_short`. When :func:`Deembedding.deembed` is applied, 
-    short de-embedding is applied to the open dummy 
+    A deembedding object is created with two dummy measurements: `dummy_open`
+    and `dummy_short`. When :func:`Deembedding.deembed` is applied,
+    short de-embedding is applied to the open dummy
     because the measurement results for the open dummy contains series parasitics.
-    the Z-parameters of the dummy_short are subtracted from the DUT measurement, 
+    the Z-parameters of the dummy_short are subtracted from the DUT measurement,
     followed by subtraction of Y-parameters of dummy_open which is previously de-embedded.
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the parallel parasitics are closest to device under test, 
+    where the parallel parasitics are closest to device under test,
     followed by the series parasitics.
 
     Example
@@ -428,17 +427,17 @@ class ShortOpen(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, op, sh = overlap_multi([ntwk, self.open, self.short])
+        else:
+            op, sh = self.open, self.short
 
         caled = ntwk.copy()
-
         # remove series parasitics from the open dummy
-        deembeded_open = self.open.copy()
-        deembeded_open.z = self.open.z - self.short.z
+        deembeded_open = op.copy()
+        deembeded_open.z = op.z - sh.z
         # remove parallel parasitics from the dut
-        caled.z = ntwk.z - self.short.z
+        caled.z = ntwk.z - sh.z
         # remove series parasitics from the dut
         caled.y = caled.y - deembeded_open.y
 
@@ -447,17 +446,17 @@ class ShortOpen(Deembedding):
 
 class Short(Deembedding):
     """
-    Remove short parasitics only. 
+    Remove short parasitics only.
 
     This is a useful method to remove pad contact resistances from measurement.
 
     A deembedding object is created with just one dummy measurement: `dummy_short`.
-    When :func:`Deembedding.deembed` is applied, the 
-    Z-parameters of the dummy_short are subtracted from the DUT measurement, 
+    When :func:`Deembedding.deembed` is applied, the
+    Z-parameters of the dummy_short are subtracted from the DUT measurement,
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where only series parasitics are to be removed while retaining all others. 
+    where only series parasitics are to be removed while retaining all others.
 
     Example
     --------
@@ -524,14 +523,14 @@ class Short(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.short.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, sh = overlap_multi([ntwk, self.short])
+        else:
+            sh = self.short
 
         caled = ntwk.copy()
-
         # remove short parasitics
-        caled.z = ntwk.z - self.short.z
+        caled.z = ntwk.z - sh.z
 
         return caled
 
@@ -548,12 +547,12 @@ class SplitPi(Deembedding):
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the series parasitics are closest to device under test, 
+    where the series parasitics are closest to device under test,
     followed by the shunt parasitics. For more information, see [2]_
 
     References
     ------------
-    ..  [2] L. Nan, K. Mouthaan, Y.-Z. Xiong, J. Shi, S. C. Rustagi, and B.-L. Ooi, 
+    ..  [2] L. Nan, K. Mouthaan, Y.-Z. Xiong, J. Shi, S. C. Rustagi, and B.-L. Ooi,
         “Experimental Characterization of the Effect of Metal Dummy Fills on Spiral Inductors,”
         in 2007 IEEE Radio Frequency Integrated Circuits (RFIC) Symposium, Jun. 2007, pp. 307–310.
 
@@ -618,16 +617,17 @@ class SplitPi(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, thru = overlap_multi([ntwk, self.thru])
+        else:
+            thru = self.thru
 
-        # TODO: attempt to interpolate if frequencies do not match
-
-        left = self.thru.copy()
+        left = thru.copy()
         left_y = left.y
-        left_y[:,0,0] = (self.thru.y[:,0,0] - self.thru.y[:,1,0] + self.thru.y[:,1,1] - self.thru.y[:,0,1]) / 2
-        left_y[:,0,1] = self.thru.y[:,1,0] + self.thru.y[:,0,1]
-        left_y[:,1,0] = self.thru.y[:,1,0] + self.thru.y[:,0,1]
-        left_y[:,1,1] = - self.thru.y[:,1,0] - self.thru.y[:,0,1]
+        left_y[:,0,0] = (thru.y[:,0,0] - thru.y[:,1,0] + thru.y[:,1,1] - thru.y[:,0,1]) / 2
+        left_y[:,0,1] = thru.y[:,1,0] + thru.y[:,0,1]
+        left_y[:,1,0] = thru.y[:,1,0] + thru.y[:,0,1]
+        left_y[:,1,1] = - thru.y[:,1,0] - thru.y[:,0,1]
         left.y = left_y
         right = left.flipped()
         caled = left.inv ** ntwk ** right.inv
@@ -647,7 +647,7 @@ class SplitTee(Deembedding):
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the shunt parasitics are closest to device under test, 
+    where the shunt parasitics are closest to device under test,
     followed by the series parasitics. For more information, see [3]_
 
     References
@@ -708,7 +708,7 @@ class SplitTee(Deembedding):
         ntwk : :class:`~skrf.network.Network` object
             Network data of device measurement from which
             parasitics needs to be removed via de-embedding
-            
+
         Returns
         -------
         caled : :class:`~skrf.network.Network` object
@@ -717,16 +717,17 @@ class SplitTee(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, thru = overlap_multi([ntwk, self.thru])
+        else:
+            thru = self.thru
 
-        # TODO: attempt to interpolate if frequencies do not match
-
-        left = self.thru.copy()
+        left = thru.copy()
         left_z = left.z
-        left_z[:,0,0] = (self.thru.z[:,0,0] + self.thru.z[:,1,0] + self.thru.z[:,1,1] + self.thru.z[:,0,1]) / 2
-        left_z[:,0,1] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
-        left_z[:,1,0] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
-        left_z[:,1,1] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
+        left_z[:,0,0] = (thru.z[:,0,0] + thru.z[:,1,0] + thru.z[:,1,1] + thru.z[:,0,1]) / 2
+        left_z[:,0,1] = thru.z[:,1,0] + thru.z[:,0,1]
+        left_z[:,1,0] = thru.z[:,1,0] + thru.z[:,0,1]
+        left_z[:,1,1] = thru.z[:,1,0] + thru.z[:,0,1]
         left.z = left_z
         right = left.flipped()
         caled = left.inv ** ntwk ** right.inv
@@ -819,12 +820,13 @@ class AdmittanceCancel(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, thru = overlap_multi([ntwk, self.thru])
+        else:
+            thru = self.thru
 
         caled = ntwk.copy()
-        h = ntwk ** self.thru.inv
+        h = ntwk ** thru.inv
         h_ = h.flipped()
         caled.y = (h.y + h_.y) / 2
 
@@ -919,12 +921,13 @@ class ImpedanceCancel(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
-
-        # TODO: attempt to interpolate if frequencies do not match
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, thru = overlap_multi([ntwk, self.thru])
+        else:
+            thru = self.thru
 
         caled = ntwk.copy()
-        h = ntwk ** self.thru.inv
+        h = ntwk ** thru.inv
         h_ = h.flipped()
         caled.z = (h.z + h_.z) / 2
 
@@ -934,13 +937,13 @@ class ImpedanceCancel(Deembedding):
 class IEEEP370_SE_NZC_2xThru(Deembedding):
     """
     Creates error boxes from a test fixture 2xThru network.
-    
+
     Based on [ElSA20]_ and [I3E370]_.
 
     A deembedding object is created with a single 2xThru (FIX-FIX) network,
     which is split into left (FIX-1) and right (FIX-2) fixtures with IEEEP370
     2xThru method.
-    
+
     When :func:`Deembedding.deembed` is applied, the s-parameters of FIX-1 and
     FIX-2 are deembedded from the FIX_DUT_FIX network.
 
@@ -963,16 +966,16 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
     Apply deembedding to get the actual DUT network
 
     >>> dut = dm.deembed(fdf)
-    
+
     Note
     ----
     numbering diagram::
-        
+
          FIX-1    DUT      FIX-2
          +----+   +----+   +----+
         -|1  2|---|1  2|---|2  1|-
          +----+   +----+   +----+
-         
+
 
     Warning
     -------
@@ -981,7 +984,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         - FIX-2 is flipped (see diagram above)
         - A more robust root choice solution is used that avoids the apparition
           of 180° phase jumps in the fixtures in certain circumstances
-         
+
     References
     ----------
     .. [ElSA20] Ellison J, Smith SB, Agili S., "Using a 2x-thru standard to achieve
@@ -1001,13 +1004,13 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         dummy_2xthru : :class:`~skrf.network.Network` object
             2xThru (FIX-FIX) network.
-            
+
         z0 :
             reference impedance of the S-parameters (default: 50)
 
         name : string
             optional name of de-embedding object
-            
+
         use_z_instead_ifft:
             use z-transform instead ifft. This method is not documented in
             the paper but exists in the IEEE repo. It could be used if the
@@ -1017,7 +1020,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             response.
             Parameter `verbose` could be used for diagnostic in
             ifft mode. (default: False)
-            
+
         forced_z0_line:
             If specified, the value for the split plane impedance is forced to
             `forced_z0_line`.
@@ -1033,7 +1036,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             still include some reflections from the opposite side launch
             because there is not enough time resolution to separate them.
             (Default: None)
-        
+
         verbose :
             view the process (default: False)
 
@@ -1074,42 +1077,45 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
+            s_side1, s_side2 = self.split2xthru(s2xthru)
+        else:
+            s_side1 = self.s_side1
+            s_side2 = self.s_side2
 
-        # TODO: attempt to interpolate if frequencies do not match
+        return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
-        return self.s_side1.inv ** ntwk ** self.s_side2.flipped().inv
-    
     def dc_interp(self, s, f):
         """
         enforces symmetric upon the first 10 points and interpolates the DC
         point.
-        """ 
+        """
         sp = s[0:9]
         fp = f[0:9]
-        
+
         snp = concatenate((conj(flip(sp)), sp))
         fnp = concatenate((-1*flip(fp), fp))
         # mhuser : used cubic instead spline (not implemented)
         snew = interp1d(fnp, snp, axis=0, kind = 'cubic')
         return real(snew(0))
-    
+
     def COM_receiver_noise_filter(self, f,fr):
         """
         receiver filter in COM defined by eq 93A-20
-        """ 
+        """
         fdfr = f / fr
         # eq 93A-20
         return 1 / (1 - 3.414214 * fdfr**2 + fdfr**4 + 1j*2.613126*(fdfr - fdfr**3))
-    
-    
+
+
     def makeStep(self, impulse):
         #mhuser : no need to call step function here, cumsum will be enough and efficient
         #step = np.convolve(np.ones((len(impulse))), impulse)
         #return step[0:len(impulse)]
         return np.cumsum(impulse, axis=0)
-    
-    
+
+
     def makeSymmetric(self, nonsymmetric):
         """
         this takes the nonsymmetric frequency domain input and makes it
@@ -1119,7 +1125,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         symmetric_abs = concatenate((np.abs(nonsymmetric), flip(np.abs(nonsymmetric[1:]))))
         symmetric_ang = concatenate((angle(nonsymmetric), -flip(angle(nonsymmetric[1:]))))
         return symmetric_abs * exp(1j * symmetric_ang)
-    
+
     def DC(self, s, f):
         DCpoint = 0.002 # seed for the algorithm
         err = 1 # error seed
@@ -1139,12 +1145,12 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             err = np.abs(h1[ts] - 0)
             cnt += 1
         return DCpoint
-    
-    
+
+
     def split2xthru(self, s2xthru):
         f = s2xthru.frequency.f
         s = s2xthru.s
-        
+
         if not self.use_z_instead_ifft:
             # strip DC point if one exists
             if(f[0] == 0):
@@ -1157,7 +1163,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 s = s[1:]
             else:
                 flag_DC = False
-            
+
             # interpolate S-parameters if the frequency vector is not acceptable
             if(f[1] - f[0] != f[0]):
                 warnings.warn(
@@ -1180,25 +1186,25 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 f = fnew
                 s = stemp.s
                 del stemp
-                         
+
             else:
                 flag_df = False
-            
+
             n = len(f)
             s11 = s[:, 0, 0]
-            
+
             # get e001 and e002
             # e001
             s21 = s[:, 1, 0]
             dcs21 = self.dc_interp(s21, f)
             t21 = fftshift(irfft(concatenate(([dcs21], s21)), axis=0), axes=0)
             x = np.argmax(t21)
-            
+
             dcs11 = self.DC(s11,f)
             t11 = fftshift(irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
             step11 = self.makeStep(t11)
             z11 = -self.z0 * (step11 + 1) / (step11 - 1)
-            
+
             if self.forced_z0_line:
                 z11x = self.forced_z0_line
             else:
@@ -1219,34 +1225,34 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 ax2.set_xlim((x - 50, x + 50))
                 ax2.grid()
                 ax2.legend()
-            
+
             temp = Network(frequency = Frequency.from_f(f, 'Hz'), s = s, z0 = self.z0)
             temp.renormalize(z11x)
             sr = temp.s
             del temp
-            
+
             s11r = sr[:, 0, 0]
             s21r = sr[:, 1, 0]
             s12r = sr[:, 0, 1]
             s22r = sr[:, 1, 1]
-            
+
             dcs11r = self.DC(s11r, f)
             # irfft is equivalent to ifft(makeSymmetric(x))
             t11r = fftshift(irfft(concatenate(([dcs11r], s11r)), axis=0), axes=0)
             t11r[x:] = 0
             e001 = fft(ifftshift(t11r))
             e001 = e001[1:n+1]
-            
+
             dcs22r = self.DC(s22r, f)
             t22r = fftshift(irfft(concatenate(([dcs22r], s22r)), axis=0), axes=0)
             t22r[x:] = 0
             e002 = fft(ifftshift(t22r))
             e002 = e002[1:n+1]
-            
+
             # calc e111 and e112
             e111 = (s22r - e002) / s12r
             e112 = (s11r - e001) / s21r
-            
+
             # original implementation, 180° phase jumps in case of phase noise
             # # calc e01
             # k = 1
@@ -1258,7 +1264,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             #             k = -1 * k
             #     # mhuser : is it a problem with complex value cast to real here ?
             #     e01[i] = k * np.sqrt(s21r[i] * (1 - e111[i] * e112[i]))
-                    
+
             # # calc e10
             # k = 1
             # test = k * np.sqrt(s12r * (1 - e111 * e112))
@@ -1269,7 +1275,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             #             k = -1 * k
             #     # mhuser : is it a problem with complex value cast to real here ?
             #     e10[i] = k * np.sqrt(s12r[i] * (1 - e111[i] * e112[i]))
-            
+
             # calc e01 and e10
             # avoid 180° phase jumps in case of phase noise
             e01 = np.sqrt(s21r * (1 - e111 * e112))
@@ -1282,8 +1288,8 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 if i > 0:
                     if npy.abs(-e10[i] - e10[i-1]) < npy.abs(e10[i] - e10[i-1]):
                         e10[i] = - e10[i]
-                    
-            
+
+
             # revert to initial freq axis
             if flag_df:
                 interp_e001 = interp1d(f, e001, kind = 'cubic',
@@ -1311,7 +1317,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                                 assume_sorted = True)
                 e112 = interp_e112(f_original)
                 f = f_original
-                
+
             # dc point was included in the original file
             if flag_DC:
                 e001 = concatenate(([self.dc_interp(e001, f)], e001))
@@ -1321,7 +1327,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 e10 = concatenate(([self.dc_interp(e10, f)], e10))
                 e112 = concatenate(([self.dc_interp(e112, f)], e112))
                 f = concatenate(([0], f))
-            
+
             # S-parameters are now setup correctly
             n = len(f)
             fixture_model_1r = zeros((n, 2, 2), dtype = complex)
@@ -1329,28 +1335,28 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             fixture_model_1r[:, 1, 0] = e01
             fixture_model_1r[:, 0, 1] = e01
             fixture_model_1r[:, 1, 1] = e111
-            
+
             fixture_model_2r = zeros((n, 2, 2), dtype = complex)
             fixture_model_2r[:, 1, 1] = e002
             fixture_model_2r[:, 0, 1] = e10
             fixture_model_2r[:, 1, 0] = e10
             fixture_model_2r[:, 0, 0] = e112
-            
+
             # create the S-parameter objects for the errorboxes
             s_fixture_model_r1  = Network(frequency = Frequency.from_f(f, 'Hz'), s = fixture_model_1r, z0 = z11x)
             s_fixture_model_r2  = Network(frequency = Frequency.from_f(f, 'Hz'), s = fixture_model_2r, z0 = z11x)
-                
+
             # renormalize the S-parameter errorboxes to the original reference impedance
             s_fixture_model_r1.renormalize(self.z0)
             s_fixture_model_r2.renormalize(self.z0)
             s_side1 = s_fixture_model_r1
             s_side2 = s_fixture_model_r2.flipped() # FIX-2 is flipped in skrf
-            
+
         else:
             z = s2xthru.z
             ZL = zeros(z.shape, dtype = complex)
             ZR = zeros(z.shape, dtype = complex)
-            
+
             for i in range(len(f)):
                 ZL[i, :, :] = [
                     [z[i, 0, 0] + z[i, 1, 0], 2. * z[i, 1, 0]],
@@ -1360,57 +1366,57 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                     [2. * z[i, 0, 1], 2. * z[i, 0, 1]],
                     [2. * z[i, 0, 1], z[i, 1, 1] + z[i, 0, 1]]
                               ]
-                
+
             s_side1 = Network(frequency = s2xthru.frequency, z = ZL, z0 = self.z0)
             s_side2 = Network(frequency = s2xthru.frequency, z = ZR, z0 = self.z0)
             s_side2.flip() # FIX-2 is flipped in skrf
-        
+
         return (s_side1, s_side2)
 
 class IEEEP370_MM_NZC_2xThru(Deembedding):
     """
     Creates error boxes from a 4-port test fixture 2xThru.
-    
+
     Based on [ElSA20]_ and [I3E370]_.
 
     A deembedding object is created with a single 2xThru (FIX-FIX) network,
     which is split into left (FIX-1_2) and right (FIX-3_4) fixtures with
     IEEEP370 2xThru method.
-    
+
     When :func:`Deembedding.deembed` is applied, the s-parameters of FIX-1 and
     FIX-2 are deembedded from the FIX_DUT_FIX network.
 
     This method is applicable only when there is a 2x-Thru measurement.
-    
+
     Note
     ----
     The `port_order` ='first', means front-to-back also known as odd/even,
     while `port_order`='second' means left-to-right also known as sequential.
     `port_order`='third' means yet another numbering method.
     Next figure show example of port numbering with 4-port networks.
-    
+
     The `scikit-rf` cascade ** 2N-port operator use second scheme. This is very
     convenient to write compact deembedding and other expressions.
 
     numbering diagram::
-        
+
       port_order = 'first'
-           +---------+ 
+           +---------+
           -|0       1|-
           -|2       3|-
-           +---------+ 
-           
-      port_order = 'second' 
-           +---------+ 
+           +---------+
+
+      port_order = 'second'
+           +---------+
           -|0       2|-
           -|1       3|-
-           +---------+ 
-           
-      port_order = 'third' 
-           +---------+ 
+           +---------+
+
+      port_order = 'third'
+           +---------+
           -|0       3|-
           -|1       2|-
-           +---------+ 
+           +---------+
 
 
     use `Network.renumber` to change port ordering.
@@ -1432,17 +1438,17 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
     Apply deembedding to get the actual DUT network
 
     >>> dut = dm.deembed(fdf)
-    
+
     Note
     ----
     numbering diagram::
-        
+
          FIX-1_2  DUT      FIX-3_4
          +----+   +----+   +----+
         -|1  3|---|1  3|---|3  1|-
         -|2  4|---|2  4|---|4  2|-
          +----+   +----+   +----+
-    
+
 
     Warning
     -------
@@ -1451,7 +1457,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         - FIX-2 is flipped (see diagram above)
         - A more robust root choice solution is used that avoids the apparition
           of 180° phase jumps in the fixtures in certain circumstances
-    
+
     References
     ----------
     .. [ElSA20] Ellison J, Smith SB, Agili S., "Using a 2x-thru standard to achieve
@@ -1472,16 +1478,16 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
 
         dummy_2xthru : :class:`~skrf.network.Network` object
             2xThru (FIX-FIX) network.
-            
+
         z0 :
             reference impedance of the S-parameters (default: 50)
-            
+
         port_order : ['first', 'second', 'third']
             specify what numbering scheme to use. See above. (default: second)
 
         name : string
             optional name of de-embedding object
-            
+
         use_z_instead_ifft:
             use z-transform instead ifft. This method is not documented in
             the paper but exists in the IEEE repo. It could be used if the
@@ -1491,7 +1497,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             response.
             Parameter `verbose` could be used for diagnostic in
             ifft mode. (default: False)
-            
+
         forced_z0_line_dd:
             If specified, the value for the split plane impedance is forced to
             `forced_z0_line` for differential-mode.
@@ -1507,12 +1513,12 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             still include some reflections from the opposite side launch
             because there is not enough time resolution to separate them.
             (Default: None)
-            
+
         forced_z0_line_cc:
             Same behaviour as `forced_z0_line_dd`, but for the common-mode
             split plane impedance.
             (Default: None)
-        
+
         verbose :
             view the process (default: False)
 
@@ -1555,10 +1561,13 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
+            se_side1, se_side2 = self.split2xthru(s2xthru)
+        else:
+            se_side1 = self.se_side1
+            se_side2 = self.se_side2
 
-        # TODO: attempt to interpolate if frequencies do not match
-        
         # check if 4-port
         if ntwk.nports != 4:
             raise(ValueError('2xthru has to be a 4-port network.'))
@@ -1574,12 +1583,12 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
             ntwk.renumber(old_order, new_order)
 
-        deembedded = self.se_side1.inv ** ntwk ** self.se_side2.flipped().inv
+        deembedded = se_side1.inv ** ntwk ** se_side2.flipped().inv
         #renumber back if required
         if self.port_order != 'second':
             deembedded.renumber(new_order, old_order)
         return deembedded
-    
+
     def split2xthru(self, se_2xthru):
         # check if 4-port
         if se_2xthru.nports != 4:
@@ -1595,11 +1604,11 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             old_order = list(range(N))
             new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
             se_2xthru.renumber(old_order, new_order)
-            
+
         #convert to mixed-modes
         mm_2xthru = se_2xthru.copy()
         mm_2xthru.se2gmm(p = 2)
-        
+
         #extract common and differential mode and model fixtures for each
         sdd = subnetwork(mm_2xthru, [0, 1])
         scc = subnetwork(mm_2xthru, [2, 3])
@@ -1611,7 +1620,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
                                 use_z_instead_ifft = self.use_z_instead_ifft,
                                 verbose = self.verbose,
                                 forced_z0_line = self.forced_z0_line_cc)
-        
+
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
         se_side1 = mm_side1.copy()
@@ -1619,26 +1628,26 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         mm_side2 = concat_ports([dm_dd.s_side2, dm_cc.s_side2], port_order = 'first')
         se_side2 = mm_side2.copy()
         se_side2.gmm2se(p = 2)
-        
+
         return (se_side1, se_side2)
 
 
 class IEEEP370_SE_ZC_2xThru(Deembedding):
     """
     Creates error boxes from 2x-Thru and FIX-DUT-FIX networks.
-    
+
     Based on [I3E370]_.
 
     A deembedding object is created with 2x-Thru (FIX-FIX) and FIX-DUT-FIX
     measurements, which are split into left (FIX-1) and right (FIX-2) fixtures
     with IEEEP370 Zc2xThru method.
-    
+
     When :func:`Deembedding.deembed` is applied, the s-parameters of FIX-1 and
     FIX-2 are deembedded from FIX_DUT_FIX network.
 
     This method is applicable only when there is 2xThru and FIX_DUT_FIX
     networks.
-    
+
     The possible difference of impedance between 2x-Thru and FIX-DUT-FIX
     is corrected.
 
@@ -1663,29 +1672,29 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
     Apply deembedding to get the DUT
 
     >>> dut = dm.deembed(fdf)
-    
+
     Note
     ----
     numbering diagram::
-        
+
          FIX-1    DUT      FIX-2
          +----+   +----+   +----+
         -|1  2|---|1  2|---|2  1|-
          +----+   +----+   +----+
-         
+
 
     Warning
     -------
     There is one difference compared to the original matlab implementation
     [I3E370]:
         - FIX-2 is flipped (see diagram above)
-         
+
     References
     ----------
     .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370Zc2xThru.m
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
-    def __init__(self, dummy_2xthru, dummy_fix_dut_fix, name=None, 
+    def __init__(self, dummy_2xthru, dummy_fix_dut_fix, name=None,
                  z0 = 50, bandwidth_limit = 0,
                  pullback1 = 0, pullback2 = 0,
                  side1 = True, side2 = True,
@@ -1703,29 +1712,29 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         name : string
             optional name of de-embedding object
-        
+
         z0 :
             reference impedance of the S-parameters (default: 50)
-            
+
         bandwidth_limit :
             max frequency for a fitting function
             (default: 0, use all s-parameters without fit)
-            
+
         pullback1, pullback2 :
             a number of discrete points to leave in the fixture on side 1
             respectively on side 2 (default: 0 leave all)
-            
+
         side1, side2 :
             set to de-embed the side1 resp. side2 errorbox (default: True)
-            
+
         NRP_enable :
             set to enforce the Nyquist Rate Point during de-embedding and to
             add the appropriote delay to the errorboxes (default: True)
-        
+
         leadin :
             a number of discrete points before t = 0 that are non-zero from
             calibration error (default: 1)
-            
+
         verbose :
             view the process (default: False)
 
@@ -1775,12 +1784,16 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
+            s_side1, s_side2 = self.split2xthru(s2xthru,
+                                                      self.sfix_dut_fix)
+        else:
+            s_side1 = self.s_side1
+            s_side2 = self.s_side2
 
-        # TODO: attempt to interpolate if frequencies do not match
+        return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
-        return self.s_side1.inv ** ntwk ** self.s_side2.flipped().inv
-    
     def thru(self, n):
         out = n.copy();
         out.s[:, 0, 0] = 0
@@ -1788,11 +1801,11 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         out.s[:, 0, 1] = 1
         out.s[:, 1, 1] = 0
         return out
-    
+
     def add_dc(self, sin):
         s = sin.s
         f = sin.frequency.f
-        
+
         n = len(f)
         snew = zeros((n + 1, 2,2), dtype = complex)
         snew[1:,:,:] = s
@@ -1800,40 +1813,40 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         snew[0, 0, 1] = self.dc_interp(s[:, 0, 1], f)
         snew[0, 1, 0] = self.dc_interp(s[:, 1, 0], f)
         snew[0, 1, 1] = self.dc_interp(s[:, 1, 1], f)
-        
+
         f = concatenate(([0], f))
         return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew)
-    
+
     def dc_interp(self, s, f):
         """
         enforces symmetric upon the first 10 points and interpolates the DC
         point.
-        """ 
+        """
         sp = s[0:9]
         fp = f[0:9]
-        
+
         snp = concatenate((conj(flip(sp)), sp))
         fnp = concatenate((-1*flip(fp), fp))
         # mhuser : used cubic instead spline (not implemented)
         snew = interp1d(fnp, snp, axis=0, kind = 'cubic')
         return real(snew(0))
-    
+
     def COM_receiver_noise_filter(self, f,fr):
         """
         receiver filter in COM defined by eq 93A-20
-        """ 
+        """
         f = f / 1e9
         fdfr = f / fr
         # eq 93A-20
         return 1 / (1 - 3.414214 * fdfr**2 + fdfr**4 + 1j*2.613126*(fdfr - fdfr**3))
-    
-    
+
+
     def makeStep(self, impulse):
         #mhuser : no need to call step function here, cumsum will be enough and efficient
         #step = np.convolve(np.ones((len(impulse))), impulse)
         #return step[0:len(impulse)]
         return np.cumsum(impulse, axis=0)
-    
+
     def DC2(self, s, f):
         DCpoint = 0.002 # seed for the algorithm
         err = 1 # error seed
@@ -1853,7 +1866,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             err = np.abs(h1[ts] - 0)
             cnt += 1
         return DCpoint
-    
+
     def getz(self, s, f, z0):
         DC11 = self.DC2(s, f)
         t112x = irfft(concatenate(([DC11], s)))
@@ -1864,7 +1877,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         z = -z0 * (t112xStep + 1) / (t112xStep - 1)
         z = ifftshift(z) #impedance. Shift again to get the first point
         return z[0], z
-    
+
     def makeTL(self, zline, z0, gamma, l):
         # todo: use DefinedGammaZ0 media instead
         n = len(gamma)
@@ -1874,7 +1887,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         TL[:, 0, 1] = (2 * z0 * zline) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
         TL[:, 1, 1] = ((zline**2 - z0**2) * np.sinh(gamma * l)) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
         return TL
-    
+
     def NRP(self, nin, TD = None, port = None):
         p = nin.s
         f = nin.frequency.f
@@ -1928,7 +1941,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                     pd[:, i, i - X//2] = delay
                     spd = nin.copy()
                     spd.s = pd
-                    out = nin ** spd 
+                    out = nin ** spd
             else:
                 for i in range(X):
                     delay = np.exp(1j * 2. * np.pi * f * TD[i] / 2)
@@ -1949,9 +1962,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                         pd[:, i, i - X//2] = delay
                         spd = nin.copy()
                         spd.s = pd
-                        out = out ** spd 
+                        out = out ** spd
         return out, TD
-    
+
     def shiftOnePort(self, nin, N, port):
         f = nin.frequency.f
         n = len(f)
@@ -1965,15 +1978,15 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             pd[:, port + X//2, port] = delay
             spd = nin.copy()
             spd.s = pd
-            out = spd ** nin 
+            out = spd ** nin
         else:
             pd[:, port, port - X//2] = delay
             pd[:, port - X//2, port] = delay
             spd = nin.copy()
             spd.s = pd
-            out = nin ** spd 
+            out = nin ** spd
         return out
-    
+
     def shiftNPoints(self, nin, N):
         f = nin.frequency.f
         n = len(f)
@@ -1991,9 +2004,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 pd[:, port - X//2, port] = delay
                 spd = nin.copy()
                 spd.s = pd
-                out = nin ** spd 
+                out = nin ** spd
         return out
-    
+
     def peelNPointsLossless(self, nin, N):
         f = nin.frequency.f
         n = len(f)
@@ -2024,9 +2037,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             else:
                 eb1 = eb1 ** sTL1
                 eb2 = sTL2 ** eb2
-        
+
         return out, eb1, eb2
-    
+
     def makeErrorBox_v7(self, s_dut, s2x, gamma, z0, pullback):
         f = s2x.frequency.f
         n = len(f)
@@ -2088,7 +2101,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 axs[1, 0].plot(ifftshift(zdut1))
                 axs[1, 1].plot(ifftshift(zdut2))
         return errorbox1, errorbox2.flipped()
-    
+
     def makeErrorBox_v8(self, s_dut, s2x, gamma, z0, pullback):
         f = s2x.frequency.f
         n = len(f)
@@ -2127,13 +2140,13 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 axs[0].plot(zeb1)
                 axs[1].plot(ifftshift(zdut1))
         return errorbox1
-    
-    
+
+
     def split2xthru(self, s2xthru, sfix_dut_fix):
-        
+
         f = sfix_dut_fix.frequency.f
         s = sfix_dut_fix.s
-        
+
         # check for bad inputs
         # check for DC point
         if(f[0] == 0):
@@ -2146,7 +2159,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             s = s[1:]
             sfix_dut_fix = Network(frequency = Frequency.from_f(f, 'Hz'), s = s)
             s2xthru.interpolate_self(Frequency.from_f(f, 'Hz'))
-        
+
         # check for bad frequency vector
         df = f[1] - f[0]
         tol = 0.1 # allow a tolerance of 0.1 from delta-f to starting f (prevent non-issues from precision)
@@ -2163,9 +2176,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             sfix_dut_fix.interpolate_self(f_interp, kind = 'cubic',
                                    fill_value = 'extrapolate')
             s2xthru.interpolate_self(f_interp, kind = 'cubic',
-                                   fill_value = 'extrapolate')   
+                                   fill_value = 'extrapolate')
             f = fnew
-            
+
         # check if 2x-thru is not the same frequency vector as the
         # fixture-dut-fixture
         if(not np.array_equal(sfix_dut_fix.frequency.f, s2xthru.frequency.f)):
@@ -2175,18 +2188,18 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                "2x-thru does not have the same frequency vector as the fixture-dut-fixture. Interpolating to fix problem.",
                RuntimeWarning
                )
-        
+
         # enforce Nyquist rate point
         if self.NRP_enable:
             sfix_dut_fix, TD = self.NRP(sfix_dut_fix)
             s2xthru, _ = self.NRP(s2xthru, -TD)
-        
+
         # remove lead-in points
         if self.leadin > 0:
             _, temp1, temp2 = self.peelNPointsLossless(self.shiftNPoints(sfix_dut_fix, self.leadin), self.leadin)
             leadin1 = self.shiftOnePort(temp1, -self.leadin, 0)
             leadin2 = self.shiftOnePort(temp2, -self.leadin, 1)
-        
+
         # calculate gamma
         #grabbing s21
         s212x = s2xthru.s[:, 1, 0]
@@ -2205,26 +2218,26 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             alpha_per_length_fit = b[0] * np.sqrt(f) + b[1] * f + b[2] * f**2
             #divide by 2*n + 1 to get prop constant per discrete unit length
             gamma = alpha_per_length_fit + 1j * beta_per_length # gamma without DC
-             
+
         # extract error boxes
         # make the both error box
         s_side1 = self.thru(sfix_dut_fix)
         s_side2 = self.thru(sfix_dut_fix)
-        
+
         if self.pullback1 == self.pullback2 and self.side1 and self.side2:
             (s_side1, s_side2) = self.makeErrorBox_v7(sfix_dut_fix, s2xthru,
                                               gamma, self.z0, self.pullback1)
         elif self.side1 and self.side2:
             s_side1 = self.makeErrorBox_v8(sfix_dut_fix, s2xthru,
                                               gamma, self.z0, self.pullback1)
-            s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru, 
+            s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru,
                                               gamma, self.z0, self.pullback2)
-            # no need to flip FIX-2 as per IEEEP370 numbering recommandation 
+            # no need to flip FIX-2 as per IEEEP370 numbering recommandation
         elif self.side1:
             s_side1 = self.makeErrorBox_v8(sfix_dut_fix, s2xthru,
                                               gamma, self.z0, self.pullback1)
         elif self.side2:
-            s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru, 
+            s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru,
                                               gamma, self.z0, self.pullback2)
         else:
             warnings.warn(
@@ -2232,7 +2245,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                RuntimeWarning
                )
 
-        
+
         # interpolate to original frequency if needed
         # revert back to original frequency vector
         if self.flag_df:
@@ -2241,73 +2254,73 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                                    fill_value = 'extrapolate')
             s_side2.interpolate_self(f_interp, kind = 'cubic',
                                    fill_value = 'extrapolate')
-        
+
         # add DC back in
         if self.flag_DC:
             s_side1 = self.add_dc(s_side1)
             s_side2 = self.add_dc(s_side2)
-        
+
         # remove lead in
         if self.leadin > 0:
             s_side1 = leadin1 ** s_side1
             s_side2 = s_side2 ** leadin2
-            
+
         # if Nyquist Rate Point enforcement is enabled
         if self.NRP_enable:
             s_side1, _ = self.NRP(s_side1, TD, 0)
             s_side2, _ = self.NRP(s_side2, TD, 1)
-        
+
         return (s_side1, s_side2)
-    
-    
+
+
 class IEEEP370_MM_ZC_2xThru(Deembedding):
     """
     Creates error boxes from a 4-port from 2x-Thru and FIX-DUT-FIX networks.
-    
+
     Based on [I3E370]_.
 
     A deembedding object is created with 2x-Thru (FIX-FIX) and FIX-DUT-FIX
     measurements, which are split into left (FIX-1_2) and right (FIX-3_4)
     fixtures with IEEEP370 Zc2xThru method.
-    
+
     When :func:`Deembedding.deembed` is applied, the s-parameters of FIX-1_2
     and FIX-3_4 are deembedded from FIX_DUT_FIX network.
 
     This method is applicable only when there is 2xThru and FIX_DUT_FIX
     networks.
-    
+
     The possible difference of impedance between 2x-Thru and FIX-DUT-FIX
     is corrected.
-    
+
     Note
     ----
     The `port_order` ='first', means front-to-back also known as odd/even,
     while `port_order`='second' means left-to-right also known as sequential.
     `port_order`='third' means yet another numbering method.
     Next figure show example of port numbering with 4-port networks.
-    
+
     The `scikit-rf` cascade ** 2N-port operator use second scheme. This is very
     convenient to write compact deembedding and other expressions.
-    
+
     numbering diagram::
 
       port_order = 'first'
-           +---------+ 
+           +---------+
           -|0       1|-
           -|2       3|-
-           +---------+ 
-           
-      port_order = 'second' 
-           +---------+ 
+           +---------+
+
+      port_order = 'second'
+           +---------+
           -|0       2|-
           -|1       3|-
-           +---------+ 
-           
-      port_order = 'third' 
-           +---------+ 
+           +---------+
+
+      port_order = 'third'
+           +---------+
           -|0       3|-
           -|1       2|-
-           +---------+ 
+           +---------+
 
     use `Network.renumber` to change port ordering.
 
@@ -2329,35 +2342,35 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
                              pullback1 = 0, pullback2 = 0,
                              leadin = 0,
                              name = 'zc2xthru')
-    
+
     Apply deembedding to get the DUT
 
     >>> dut = dm.deembed(fdf)
-    
+
     Note
     ----
     numbering diagram::
-        
+
          FIX-1_2  DUT      FIX-3_4
          +----+   +----+   +----+
         -|1  3|---|1  3|---|3  1|-
         -|2  4|---|2  4|---|4  2|-
          +----+   +----+   +----+
-    
+
 
     Warning
     -------
     There is one difference compared to the original matlab implementation
     [I3E370]:
         - FIX-2 is flipped (see diagram above)
-    
+
     References
     ----------
     .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
-        
+
     """
-    def __init__(self, dummy_2xthru, dummy_fix_dut_fix, name=None, 
+    def __init__(self, dummy_2xthru, dummy_fix_dut_fix, name=None,
                  z0 = 50, port_order: str = 'second',
                  bandwidth_limit = 0,
                  pullback1 = 0, pullback2 = 0,
@@ -2376,32 +2389,32 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
 
         name : string
             optional name of de-embedding object
-        
+
         z0 :
             reference impedance of the S-parameters (default: 50)
-            
+
         port_order : ['first', 'second', 'third']
             specify what numbering scheme to use. See above. (default: second)
-            
+
         bandwidth_limit :
             max frequency for a fitting function
             (default: 0, use all s-parameters without fit)
-            
+
         pullback1, pullback2 :
             a number of discrete points to leave in the fixture on side 1
             respectively on side 2 (default: 0 leave all)
-            
+
         side1, side2 :
             set to de-embed the side1 resp. side2 errorbox (default: True)
-            
+
         NRP_enable :
             set to enforce the Nyquist Rate Point during de-embedding and to
             add the appropriote delay to the errorboxes (default: True)
-        
+
         leadin :
             a number of discrete points before t = 0 that are non-zero from
             calibration error (default: 1)
-            
+
         verbose :
             view the process (default: False)
 
@@ -2452,10 +2465,13 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
+            se_side1, se_side2 = self.split2xthru(s2xthru, self.sfix_dut_fix)
+        else:
+            se_side1 = self.se_side1
+            se_side2 = self.se_side2
 
-        # TODO: attempt to interpolate if frequencies do not match
-        
         # check if 4-port
         if ntwk.nports != 4:
             raise(ValueError('2xthru has to be a 4-port network.'))
@@ -2471,12 +2487,12 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
             new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
             ntwk.renumber(old_order, new_order)
 
-        deembedded = self.se_side1.inv ** ntwk ** self.se_side2.flipped().inv
+        deembedded = se_side1.inv ** ntwk ** se_side2.flipped().inv
         #renumber back if required
         if self.port_order != 'second':
             deembedded.renumber(new_order, old_order)
         return deembedded
-    
+
     def split2xthru(self, se_2xthru, se_fdf):
         # check if 4-port
         if se_2xthru.nports != 4 or se_fdf.nports != 4:
@@ -2494,13 +2510,13 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
             new_order = list(range(0, N//2)) + list(range(N-1, N//2-1, -1))
             se_2xthru.renumber(old_order, new_order)
             se_fdf.renumber(old_order, new_order)
-            
+
         #convert to mixed-modes
         mm_2xthru = se_2xthru.copy()
         mm_2xthru.se2gmm(p = 2)
         mm_fdf = se_fdf.copy()
         mm_fdf.se2gmm(p = 2)
-        
+
         #extract common and differential mode and model fixtures for each
         sdd = subnetwork(mm_2xthru, [0, 1])
         scc = subnetwork(mm_2xthru, [2, 3])
@@ -2528,7 +2544,7 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
                                   NRP_enable = self.NRP_enable,
                                   leadin = self.leadin,
                                   verbose = self.verbose)
-        
+
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
         se_side1 = mm_side1.copy()
@@ -2536,5 +2552,5 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         mm_side2 = concat_ports([dm_dd.s_side2, dm_cc.s_side2], port_order = 'first')
         se_side2 = mm_side2.copy()
         se_side2.gmm2se(p = 2)
-        
+
         return (se_side1, se_side2)

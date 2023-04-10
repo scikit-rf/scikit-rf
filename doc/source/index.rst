@@ -1,6 +1,6 @@
 .. _home:
     :github_url:
-    
+
 .. image:: _static/scikit-rf-title-flat.svg
     :target: scikitrf_
     :height: 100
@@ -11,10 +11,10 @@
 
 Documentation
 =============
-    
+
 .. toctree::
     :maxdepth: 2
-    
+
     tutorials/index.rst
     examples/index.rst
     api/index.rst
@@ -24,7 +24,7 @@ Documentation
 
 .. toctree::
     :maxdepth: 1
-    
+
     glossary
     license
 

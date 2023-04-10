@@ -217,6 +217,13 @@ class Citi():
         if not 'freq' in [it.lower() for it in self._params.keys()]:
             raise ValueError('Frequency points not found')
 
+        # no VAR except for freq has been found
+        # Create a dummy parameter to not return an empty list
+        if len(self._params.keys()) == 1 and 'freq' in self._params.keys():
+            self._params["dummy"] = {}
+            self._params["dummy"]['values'] = np.array([0])
+            self._params["dummy"]['occurences'] = 1
+
         freq = Frequency.from_f(self._params['freq']['values'], unit='Hz')
 
         # Network parameters: search for S, then Z or Y
@@ -230,21 +237,32 @@ class Citi():
         # deduce the rank of the Network
         rank = int(np.sqrt(len([it for it in self._data.keys() if it.startswith(ntwkprm)])))
 
-        # Network parameter generic array
-        p = np.zeros((len(freq), rank, rank), dtype=complex)
-        
         # occurences of each parameter and total number of frequency sets
         occurences = [self._params[name]['occurences'] for name in self.params]
         occ = np.prod(occurences)
-       
+
+        # Network parameter generic array
+        p = np.zeros((occ, len(freq), rank, rank), dtype=complex)
+
         # create a 2D array of all parameters sets
         if self.params:
-            params_sets = np.array(np.meshgrid(*[self._params[name]['values'] 
+            params_sets = np.array(np.meshgrid(*[self._params[name]['values']
                                            for name in self.params])).reshape(-1,len(self.params))
         else:
             params_sets = []
 
-        z0 = 50  # TODO extract from PortZ[port]
+        # extract from PortZ[port]
+        z0s = np.full((occ, len(freq), rank), 50, dtype=complex)
+        if any(k.upper().startswith('PORTZ') for k in self._data.keys()):
+            # could be PortZ or PORTZ depending CTI file
+            if any(k.startswith('PortZ') for k in self._data.keys()):
+                zname = 'PortZ'
+            else:
+                zname = 'PORTZ'
+
+            for m in range(rank):
+                for (idx_set, params_set) in enumerate(params_sets):
+                    z0s[idx_set,:,m] = self._data[f'{zname}[{m+1}]']['values'].reshape((int(occ), len(freq)))[idx_set,:]
 
         # create list of Networks assuming the following ordering:
         # val_param1_f1
@@ -258,26 +276,29 @@ class Citi():
             for n in range(rank):
                 # network param (m,n) for all params and all frequencies
                 if f'{ntwkprm}[{m+1},{n+1}]' in self._data.keys():
-                    pp = self._data[f'{ntwkprm}[{m+1},{n+1}]']['values'].reshape((len(freq), int(occ)))
+                    pp = self._data[f'{ntwkprm}[{m+1},{n+1}]']['values'].reshape((int(occ), len(freq)))
                 else:
                     # special case some CITI files for 1port
-                    pp = self._data['S']['values'].reshape((len(freq), int(occ)))
+                    pp = self._data['S']['values'].reshape((int(occ), len(freq)))
                     ntwkprm = 'S'
-                    
+
+                # network param (m,n) for the current set of params
                 for (idx_set, params_set) in enumerate(params_sets):
-                    # network param (m,n) for the current set of params 
-                    p[:,m,n] = pp[:,idx_set]
-                    # params dict {param1: val1, param2: val, etc}
-                    params = dict(zip(self.params, params_set))
-                    
-                    if ntwkprm == 'S':
-                        ntwk = Network(frequency=freq, s=p, params=params, z0=z0)
-                    elif ntwkprm == 'Z':
-                        ntwk = Network(frequency=freq, s=z2s(p, z0), params=params, z0=z0)
-                    else:
-                        raise NotImplementedError('Unknown Network Parameter')
-                    networks.append(ntwk)
-        
+                    p[idx_set,:,m,n] = pp[idx_set,:]
+
+        # generate networks from the network parameters and set of params
+        for (idx_set, params_set) in enumerate(params_sets):
+            # params dict {param1: val1, param2: val, etc}
+            params = dict(zip(self.params, params_set))
+
+            if ntwkprm == 'S':
+                ntwk = Network(frequency=freq, s=p[idx_set], params=params, z0=z0s[idx_set])
+            elif ntwkprm == 'Z':
+                ntwk = Network(frequency=freq, s=z2s(p[idx_set], z0s[idx_set]), params=params, z0=z0s[idx_set])
+            else:
+                raise NotImplementedError('Unknown Network Parameter')
+            networks.append(ntwk)
+
         return networks
 
 
@@ -288,6 +309,6 @@ class Citi():
         Returns
         -------
         ns : `skrf.networkset.NetworkSet`
-    
+
         """
         return NetworkSet(self.networks)

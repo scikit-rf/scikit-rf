@@ -123,4 +123,3 @@ Interactive
     :glob:
 
     interactive/*
-

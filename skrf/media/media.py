@@ -839,7 +839,7 @@ class Media(ABC):
         # The use of either traveling or pseudo waves s-parameters definition
         # is required here.
         # The definition of the reflection coefficient for power waves has
-        # conjugation. 
+        # conjugation.
         result = self.match(nports=2, s_def='traveling', **kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
@@ -991,6 +991,7 @@ class Media(ABC):
         shunt_delay_load
         shunt_delay_open
         shunt_delay_short
+        shunt_resistor
         shunt_capacitor
         shunt_inductor
         """
@@ -1021,6 +1022,7 @@ class Media(ABC):
         shunt
         shunt_delay_open
         shunt_delay_short
+        shunt_resistor
         shunt_capacitor
         shunt_inductor
         """
@@ -1051,6 +1053,7 @@ class Media(ABC):
         shunt
         shunt_delay_load
         shunt_delay_short
+        shunt_resistor
         shunt_capacitor
         shunt_inductor
         """
@@ -1086,6 +1089,40 @@ class Media(ABC):
         """
         return self.shunt(self.delay_short(*args, **kwargs), **kwargs)
 
+    def shunt_resistor(self, R: NumberLike, **kwargs) -> Network:
+        r"""
+        Shunted resistor.
+
+        Parameters
+        ----------
+        R : number, array-like
+            Resistor in Ohm.
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`resistor`
+
+        Returns
+        -------
+        shunt_resistor : :class:`~skrf.network.Network` object
+            shunted resistor (2-port)
+
+        Notes
+        -----
+        This calls::
+
+                shunt(resistor(R, **kwargs) ** short())
+
+        See Also
+        --------
+        shunt
+        shunt_delay_load
+        shunt_delay_open
+        shunt_delay_short
+        shunt_inductor
+        shunt_capacitor
+        """
+        return self.shunt(self.resistor(R=R, **kwargs) **
+                          self.short(**kwargs), **kwargs)
+
     def shunt_capacitor(self, C: NumberLike, **kwargs) -> Network:
         r"""
         Shunted capacitor.
@@ -1114,9 +1151,10 @@ class Media(ABC):
         shunt_delay_load
         shunt_delay_open
         shunt_delay_short
+        shunt_resistor
         shunt_inductor
         """
-        return self.shunt(self.capacitor(C=C, **kwargs) ** 
+        return self.shunt(self.capacitor(C=C, **kwargs) **
                           self.short(**kwargs), **kwargs)
 
     def shunt_inductor(self, L: NumberLike, **kwargs) -> Network:
@@ -1147,6 +1185,7 @@ class Media(ABC):
         shunt_delay_load
         shunt_delay_open
         shunt_delay_short
+        shunt_resistor
         shunt_capacitor
         """
         return self.shunt(self.inductor(L=L, **kwargs) **
@@ -1166,7 +1205,7 @@ class Media(ABC):
         d : number, optional
             length of attenuator. Default is 0.
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
-            the units of d.  See :func:`to_meters`, for details. 
+            the units of d.  See :func:`to_meters`, for details.
             Default is 'deg'
         name : str
             Name for the returned attenuator Network
@@ -1587,4 +1626,3 @@ def parse_z0(s: str) -> NumberLike:
     else:
         raise ValueError('couldnt parse z0 string')
     return out
-

@@ -54,7 +54,7 @@ class CircuitTestConstructor(unittest.TestCase):
         connections = [[(self.port1, 0), (self.ntwk1, 0)],
                        [(self.ntwk1, 1), (self.ntwk2, 0)],
                        [(self.ntwk2, 1), (self.port1, 0)]]
-        self.assertRaises(AttributeError, rf.Circuit, connections)        
+        self.assertRaises(AttributeError, rf.Circuit, connections)
 
     def test_s_active(self):
         """
@@ -87,9 +87,9 @@ class CircuitClassMethods(unittest.TestCase):
             gnd = rf.Circuit.Ground(self.freq)
 
         gnd = rf.Circuit.Ground(self.freq, 'gnd')
-        gnd_ref = rf.Network(frequency=self.freq, 
+        gnd_ref = rf.Network(frequency=self.freq,
                              s=np.tile(np.array([[-1, 0],
-                                                 [0, -1]]), 
+                                                 [0, -1]]),
                                        (len(self.freq),1,1)))
 
         assert_array_almost_equal(gnd.s, gnd_ref.s)
@@ -104,21 +104,21 @@ class CircuitClassMethods(unittest.TestCase):
             opn = rf.Circuit.Open(self.freq)
 
         opn = rf.Circuit.Open(self.freq, 'open')
-        opn_ref = rf.Network(frequency=self.freq, 
+        opn_ref = rf.Network(frequency=self.freq,
                              s=np.tile(np.array([[1, 0],
-                                                 [0, 1]]), 
+                                                 [0, 1]]),
                                        (len(self.freq),1,1)))
 
         assert_array_almost_equal(opn.s, opn_ref.s)
-    
+
     def test_series_impedance(self):
         Zs = [1, 1 + 1j, rf.INF]
         for Z in Zs:
             assert_array_almost_equal(
-                rf.Circuit.SeriesImpedance(self.freq, Z, 'imp').s, 
+                rf.Circuit.SeriesImpedance(self.freq, Z, 'imp').s,
                 self.media.resistor(Z).s
                 )
-            
+
         # Z=0 is a thru
         assert_array_almost_equal(
             rf.Circuit.SeriesImpedance(self.freq, Z=0, name='imp').s,
@@ -129,10 +129,10 @@ class CircuitClassMethods(unittest.TestCase):
         Ys = [1, 1 + 1j, rf.INF]
         for Y in Ys:
             assert_array_almost_equal(
-                rf.Circuit.ShuntAdmittance(self.freq, Y, 'imp').s, 
+                rf.Circuit.ShuntAdmittance(self.freq, Y, 'imp').s,
                 self.media.shunt(self.media.load(rf.zl_2_Gamma0(self.media.z0, 1/Y))).s
                 )
-        
+
         # Y=INF is a a 2-ports short, aka a ground
         assert_array_almost_equal(
             rf.Circuit.ShuntAdmittance(self.freq, rf.INF, 'imp').s,

@@ -15,7 +15,7 @@ This module holds Virtual Instruments.
 .. automodule:: skrf.vi.stages
 
 
-Creating A Driver 
+Creating A Driver
 +++++++++++++++++++
 
 
@@ -162,5 +162,3 @@ following manner inside vna object methods:
 """
 __test__=False
 all = ['vna','sa','stages']
-
-

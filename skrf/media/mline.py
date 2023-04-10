@@ -29,16 +29,16 @@ class MLine(Media):
     conductor resistivity and a tangential loss factor.
 
     This class is highly inspired from the technical documentation [#]_
-    and sources provided by the qucs project [#]_ . 
+    and sources provided by the qucs project [#]_ .
 
     In addition, Djordjevic [#]_ /Svensson [#]_  wideband debye dielectric
     model is considered to provide more realistic modelling of broadband
     microstrip with as causal time domain response.
-    
+
     A compatibility mode is provided to mimic the behaviour of QUCS or of
     Keysight ADS. There is known differences in the output of these
     simulators.
-    
+
     The quasi-static models of chercteristic impedance and effective
     permittivity give the value at zero frequency. The dispersion models
     compute a frequency-dependant values of these variables.
@@ -59,7 +59,7 @@ class MLine(Media):
         + (No dispersion)
 
     * Strip thickness correction model:
-        
+
         + all quasi-static models add a certain amount to W to accound for
           non-zero thickness of the strip. Computation with zero  thickness is
           possible.
@@ -88,7 +88,7 @@ class MLine(Media):
         * 'hammerstadjensen' (default)
         * 'schneider'
         * 'wheeler'
-        
+
     disp : str
         microstripline impedance and dielectric frequency dispersion model in:
 
@@ -98,13 +98,13 @@ class MLine(Media):
         * 'schneider'
         * 'yamashita'
         * 'none'
-        
+
     diel : str
         dielectric frequency dispersion model in:
-        
+
         * 'djordjevicsvensson' (default)
         * 'frequencyinvariant'
-        
+
     rho: number, or array-like, optional
         resistivity of conductor, ohm / m
     tand : number, or array-like
@@ -121,23 +121,23 @@ class MLine(Media):
         measurement frequency for ep_r and tand of dielectric, in Hz
     compatibility_mode: str or None (default)
         If set to 'qucs', following behavious happens :
-        
+
         * Characteristic impedance will be real (no imaginary part due to tand)
         * Quasi-static relative permittivity and impedance will by used for
           loss computation instead of frequency-dispersed values
         *  Kobayashi and Yamashita models will disperse permittivity but keep
            quasi-static impedance values
-        
+
     \*args, \*\*kwargs : arguments, keyword arguments
             passed to :class:`~skrf.media.media.Media`'s constructor
             (:func:`~skrf.media.media.Media.__init__`
-    
+
     Note
     ----
     In the case dispersion model only include effective permittivity, no
     dispersion is used for impedance in QUCS mode and Kirschning Jansen is
     used in ADS mode. QUCS mode is the default.
-    
+
     When the thickness of the strip is smaller than 3 skin depth, the losses
     model gives over-optimistic results and the media will issue a warning.
     At DC, the losses of the line could be smaller than its conductor
@@ -201,7 +201,7 @@ class MLine(Media):
                  f_epr_tand: NumberLike = 1e9,
                  compatibility_mode: Union[str, None] = None,
                  *args, **kwargs):
-        
+
         Media.__init__(self, frequency = frequency, z0 = z0)
 
         self.w, self.h, self.t = w, h, t
@@ -210,7 +210,7 @@ class MLine(Media):
         self.rho, self.tand, self.rough, self.disp =  rho, tand, rough, disp
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
         self.compatibility_mode = compatibility_mode
-        
+
         # variation ofeffective permittivity with frequency
         # Not implemented on QUCS but implemented on ADS.
         # 'frequencyinvariant' will give a constant complex value whith a real
@@ -219,7 +219,7 @@ class MLine(Media):
             self.ep_r, self.tand,
             self.f_low, self.f_high, self.f_epr_tand, self.frequency.f,
             self.diel)
-        
+
         # quasi-static effective permittivity of substrate + line and
         # the impedance of the microstrip line
         # qucs use real-valued ep_r giving real-valued impedance
@@ -231,7 +231,7 @@ class MLine(Media):
         else:
             self.zl_eff, self.ep_reff, self.w_eff = self.analyse_quasi_static(
                 self.ep_r_f, self.w, self.h, self.t, self.model)
-        
+
         # analyse dispersion of impedance and relatice permittivity
         # qucs use w here, but w_eff seems better
         if compatibility_mode == 'qucs':
@@ -244,7 +244,7 @@ class MLine(Media):
                 self.zl_eff, self.ep_reff, self.ep_r_f,
                 self.w_eff, self.w_eff, self.h, self.t,
                 self.frequency.f, self.disp)
-        
+
         # analyse losses of line
         # qucs use quasi-static values here, leading to a difference
         # against ads
@@ -278,26 +278,26 @@ class MLine(Media):
     def gamma(self):
         """
         Propagation constant.
-        
+
         Returns
         -------
         gamma : :class:`numpy.ndarray`
         """
         ep_reff, f = real(self.ep_reff_f), self.frequency.f
-        
+
         alpha = self.alpha_dielectric.copy()
         if self.rho is not None:
             alpha += self.alpha_conductor
-        
+
         beta  = 2 * pi * f* sqrt(ep_reff) / c
-        
+
         return alpha + 1j*beta
-    
+
     @property
     def Z0(self) -> npy.ndarray:
         """
         Characteristic Impedance.
-        
+
         Note
         ----
         Beware confusion with z0, the port impedance of media
@@ -307,13 +307,13 @@ class MLine(Media):
         Z0 : :class:`numpy.ndarray`
         """
         return self._z_characteristic
-    
+
     @property
     def Z0_f(self) -> npy.ndarray:
         """
         Alias fos Characteristic Impedance for backward compatibility.
         Deprecated, do not use.
-        
+
         Note
         ----
         Beware confusion with z0, the port impedance of media
@@ -327,7 +327,7 @@ class MLine(Media):
              DeprecationWarning, stacklevel = 2
         )
         return self._z_characteristic
-    
+
     def analyse_dielectric(self, ep_r: NumberLike, tand: NumberLike,
                           f_low: NumberLike, f_high: NumberLike,
                           f_epr_tand: NumberLike, f: NumberLike,
@@ -335,7 +335,7 @@ class MLine(Media):
         """
         This function calculate the frequency dependent relative permittivity
         of dielectric and and tangeantial loss factor.
-        
+
         References
         ----------
         .. [#] C. Svensson, G.E. Dermer,
@@ -345,7 +345,7 @@ class MLine(Media):
             Wideband frequency-domain characterization of FR-4 and time-domain
             causality,
             IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
-            
+
         Returns
         -------
         ep_r_f : :class:`numpy.ndarray`
@@ -367,10 +367,10 @@ class MLine(Media):
             tand_f = tand
         else:
             raise ValueError('Unknown dielectric dispersion model')
-        
+
         return ep_r_f, tand_f
-    
-    def analyse_quasi_static(self, ep_r: NumberLike, 
+
+    def analyse_quasi_static(self, ep_r: NumberLike,
                            w: NumberLike, h: NumberLike, t: NumberLike,
                            model: str):
         """
@@ -378,7 +378,7 @@ class MLine(Media):
         line, the value of the effective permittivity as per filling factor
         and the effective width due to the finite conductor thickness for the
         given microstrip line and substrate properties.
-        
+
         References
         ----------
         .. [#] E. Hammerstad and Ø. Jensen,
@@ -391,7 +391,7 @@ class MLine(Media):
         .. [#] M. V. Schneider,
             "Microstrip Lines for Microwave Integrated Circuits",
             The Bell System Technical Journal, vol. 48, pp. 1421-1444, May 1969.
-            
+
         Returns
         -------
         zl_eff : :class:`numpy.ndarray`
@@ -401,7 +401,7 @@ class MLine(Media):
         zl_eff = Z0
         ep_reff = ep_r
         w_eff = w
-        
+
         if model == 'wheeler':
             # compute strip thickness effect
             dw1 = 0
@@ -411,7 +411,7 @@ class MLine(Media):
             dwr = (1. + 1. / ep_r) / 2. * dw1
             wr = w + dwr
             w_eff = wr
-            
+
             # compute characteristic impedance
             if (w / h) < 3.3:
                 cp = log(4. * h / wr + sqrt((4 * h / wr)**2 + 2))
@@ -425,24 +425,24 @@ class MLine(Media):
                 x = 2. * log(2.) / pi + wr / h / 2. + (ep_r + 1.) / 2 / pi / \
                 ep_r * cp + d
                 zl_eff = Z0 / 2 / x / sqrt(ep_r)
-            
+
             # compute effective dielectric constant
             if (w / h) < 1.3:
                 a = log(8 * h / wr) + (wr / h)**2 / 32
                 b = (ep_r - 1.) / (ep_r + 1.) / \
                     2 * (log(pi / 2.) + log(4. / pi) / ep_r)
-                ep_reff = (ep_r + 1.) / 2. * (a / (a - b))**2 
+                ep_reff = (ep_r + 1.) / 2. * (a / (a - b))**2
             else:
                 # qucsator is 4.0137 but doc 0.94 * 2 = 1.88
                 d = (ep_r - 1.) / 2. / pi / ep_r * \
                     (log(2.1349 * wr / h + 4.0137) - 0.5169 / ep_r)
                 e = wr / h / 2 + 1. / pi * log(8.5397 * wr / h + 16.0547)
-                ep_reff = ep_r * ((e - d) / e)**2 
-                
+                ep_reff = ep_r * ((e - d) / e)**2
+
         elif model == 'schneider':
             u = w / h
             dw = 0
-            
+
             # consider strip thickness equations
             if t is not None and t > 0:
                 if t < (w / 2):
@@ -455,64 +455,64 @@ class MLine(Media):
                         dw = 0
             w_eff = w + dw
             u = w_eff / h
-                
+
             # effective dielectric constant
             ep_reff = (ep_r + 1.) / 2. + (ep_r - 1.) / 2. / sqrt (1. + 10. / u)
-            
+
             # characteristic impedance
             if u < 1.:
                 z = 1. / pi / 2. * log(8. / u + u / 4)
             else:
                 z = 1. / (u + 2.42 - 0.44 / u + (1. - 1. / u)**6)
             zl_eff = Z0 * z / sqrt(ep_reff)
-            
+
         elif model == 'hammerstadjensen':
             u = w / h
             if t is not None:
                 t = t/h
             du1 = 0.
-            
+
             # compute strip thickness effect
             if t is not None and t > 0:
                 # Qucs formula 11.22 is wrong, normalized w has to be used instead (see Hammerstad and Jensen Article)
                 # Normalized w is named u and is actually used in qucsator source code
                 # coth(alpha) = 1/tanh(alpha)
                 du1 = t / pi * log(1. + 4. * exp(1.) / t * tanh(sqrt(6.517 * u))**2)
-            
+
             # sech(alpha) = 1/cosh(alpha)
             dur =  du1 * (1. + 1. / cosh(sqrt(ep_r - 1.))) / 2.
-            
+
             u1 = u + du1
             ur = u + dur
             w_eff = ur * h
-            
+
             # compute impedances for homogeneous medium
             zr = hammerstad_zl(ur)
             z1 = hammerstad_zl(u1)
-            
+
             # compute effective dielectric constant
             a, b  = hammerstad_ab(ur, ep_r)
             e = hammerstad_er(ur, ep_r, a, b)
-            
+
             # compute final characteristic impedance and dielectric constant
             #including strip thickness effects
             zl_eff = zr / sqrt(e)
             ep_reff = e * (z1 / zr)**2
-            
+
         else:
             raise ValueError('Unknown microstripline quasi-static model')
-        
+
         return zl_eff, ep_reff, w_eff
-        
+
     def analyse_dispersion(self, zl_eff: NumberLike, ep_reff: NumberLike,
                           ep_r: NumberLike, wr: NumberLike, w_eff: NumberLike,
-                          h: NumberLike, t: NumberLike, f: NumberLike, 
+                          h: NumberLike, t: NumberLike, f: NumberLike,
                           disp: str):
          """
          This function compute the frequency dependent characteristic
          impedance and effective permittivity accounting for microstripline
          frequency dispersion.
-         
+
          References
          ----------
          .. [#] M. Kobayashi,
@@ -535,7 +535,7 @@ class MLine(Media):
              Computer Aided Design of Microwave Integrated Circuits",
              IEEE Trans. on Microwave Theory and Techniques, vol. 27,
              pp. 1036-1038, Dec. 1979.
-             
+
          Returns
          -------
          z : :class:`numpy.ndarray`
@@ -566,15 +566,15 @@ class MLine(Media):
              # qucs keep quasi-static impedance here
              if self.compatibility_mode == 'qucs':
                  z =  npy.ones(f.shape) * zl_eff
-             # use Kirschning Jansen for impedance dispersion by default 
+             # use Kirschning Jansen for impedance dispersion by default
              else:
                  fn = f * h * 1e-6
                  z, _ = kirsching_zl(wr / h, fn, ep_r, ep_reff, e, zl_eff)
          elif disp == 'kobayashi':
              fk = c * arctan(ep_r * sqrt((ep_reff - 1) / (ep_r - ep_reff)))/ \
                  (2 * pi * h * sqrt(ep_r - ep_reff))
-             fh = fk / (0.75 + (0.75 - 0.332 / (ep_r**1.73)) * u) 
-             no = 1 + 1 / (1 + sqrt(u)) + 0.32 * (1 / (1 + sqrt(u)))**3 
+             fh = fk / (0.75 + (0.75 - 0.332 / (ep_r**1.73)) * u)
+             no = 1 + 1 / (1 + sqrt(u)) + 0.32 * (1 / (1 + sqrt(u)))**3
              nc = npy.where(u < 0.7,
                  1 + 1.4 / (1 + u) * (0.15 - 0.235 * exp(-0.45 * f / fh)),
                  1)
@@ -583,33 +583,33 @@ class MLine(Media):
              # qucs keep quasi-static impedance here
              if self.compatibility_mode == 'qucs':
                  z =  npy.ones(f.shape) * zl_eff
-             # use Kirschning Jansen for impedance dispersion by default 
+             # use Kirschning Jansen for impedance dispersion by default
              else:
                  fn = f * h * 1e-6
                  z, _ = kirsching_zl(wr / h, fn, ep_r, ep_reff, e, zl_eff)
          elif disp == 'none':
              e = ones(f.shape) * ep_reff
              z = ones(f.shape) * zl_eff
-             
+
          else:
              raise ValueError('Unknown microstripline dispersion model')
-             
+
          return z, e
-         
-    def analyse_loss(self, ep_r: NumberLike, ep_reff: NumberLike, 
+
+    def analyse_loss(self, ep_r: NumberLike, ep_reff: NumberLike,
                     tand: NumberLike, rho: NumberLike, mu_r: NumberLike,
-                    zl_eff_f1: NumberLike, zl_eff_f2: NumberLike, 
+                    zl_eff_f1: NumberLike, zl_eff_f2: NumberLike,
                     f: NumberLike, w: NumberLike, t: NumberLike,
                     D: NumberLike):
         """
         The function calculates the conductor and dielectric losses of a
         single microstrip line using wheeler's incremental inductance rule.
-        
+
         References
         ----------
         .. [#] H. A. Wheeler, "Formulas for the Skin Effect,"
             Proceedings of the IRE, vol. 30, no. 9, pp. 412-424, Sept. 1942.
-            
+
         Returns
         -------
         a_conductor : :class:`numpy.ndarray`
@@ -639,12 +639,12 @@ class MLine(Media):
             a_conductor = Rs / (zl_eff_f1 * w) * Ki * Kr
         else:
             a_conductor = zeros(f.shape)
-        
+
         # dielectric losses
         l0 = c / f
         a_dielectric =  pi * ep_r / (ep_r - 1) * (ep_reff - 1) / \
             sqrt(ep_reff) * tand / l0
-            
+
         return a_conductor, a_dielectric
 
 def hammerstad_ab(u: NumberLike, ep_r: NumberLike) -> NumberLike:
@@ -653,9 +653,9 @@ def hammerstad_ab(u: NumberLike, ep_r: NumberLike) -> NumberLike:
     """
     a = 1. + log((u**4 + (u / 52.)**2) / (u**4 + 0.432)) / 49. \
         + log(1 + (u / 18.1)**3) / 18.7
-        
+
     b = 0.564 * ((ep_r - 0.9) / (ep_r + 3.))**0.053
-    
+
     return a, b
 
 def hammerstad_zl(u: NumberLike) -> NumberLike:
