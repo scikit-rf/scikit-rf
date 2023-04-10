@@ -33,5 +33,3 @@ try:
     sys.path.pop(0)
 except ImportError:
     pass
-
-

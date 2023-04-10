@@ -647,7 +647,7 @@ def voltage_current_propagation(v1: NumberLike, i1: NumberLike, z0: NumberLike, 
     """
     Voltages and currents calculated on electrical length theta of a transmission line.
 
-    Give voltage v2 and current i1 at theta, given voltage v1 
+    Give voltage v2 and current i1 at theta, given voltage v1
     and current i1 at theta=0 and given characteristic parameters gamma and z0.
 
     ::

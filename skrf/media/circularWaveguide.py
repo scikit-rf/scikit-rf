@@ -20,19 +20,19 @@ from typing import Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .. frequency import Frequency
-    
+
 
 class CircularWaveguide(Media):
     r"""
     A single mode of a homogeneously filled Circular Waveguide
-        
+
     Represents a single mode of a homogeneously filled circular
     waveguide of cross-section `r^2 pi`. The mode is determined by
-    `mode-type` (`'te'` or `'tm'`) and mode indices ( `m` and `n` ). 
-    Corrugated circular waveguides, which also support HE modes, are not 
+    `mode-type` (`'te'` or `'tm'`) and mode indices ( `m` and `n` ).
+    Corrugated circular waveguides, which also support HE modes, are not
     supported.
-    
-    
+
+
     ====================================  =============  ===============
     Quantity                              Symbol         Variable
     ====================================  =============  ===============
@@ -43,7 +43,7 @@ class CircularWaveguide(Media):
     Transverse Wave Number (b)            :math:`k_y`    :attr:`ky`
     Characteristic Impedance              :math:`z_0`    :attr:`z0`
     ====================================  =============  ===============
-    
+
     Parameters
     ----------
     frequency : :class:`~skrf.frequency.Frequency` object
@@ -69,17 +69,17 @@ class CircularWaveguide(Media):
         resistivity (ohm-m) of the conductor walls. If array-like
         must be same length as frequency. if str, it must be a key in
         `skrf.data.materials`.
-    
+
     \*args, \*\*kwargs : arguments, keyword arguments
         passed to :class:`~skrf.media.media.Media`'s constructor
         (:func:`~skrf.media.media.Media.__init__`
 
 
     Examples
-    --------   
-    In the following example an ideal waveguide of 2.39 mm diameter is 
+    --------
+    In the following example an ideal waveguide of 2.39 mm diameter is
     constructed for the high W band, operated in the fundamental TE11 mode.
-    If no conductivity is provided the walls are treated as perfect 
+    If no conductivity is provided the walls are treated as perfect
     electric conductors.
 
     >>> freq = rf.Frequency(88, 110, 101, 'ghz')
@@ -89,17 +89,17 @@ class CircularWaveguide(Media):
     def __init__(self, frequency: Union['Frequency', None] = None,
                  z0: Union[NumberLike, None] = None,
                  r: NumberLike = 1,
-                 mode_type: str = 'te', m: int = 1, n: int = 1, 
-                 ep_r: NumberLike = 1, mu_r: NumberLike = 1, 
+                 mode_type: str = 'te', m: int = 1, n: int = 1,
+                 ep_r: NumberLike = 1, mu_r: NumberLike = 1,
                  rho: Union[NumberLike, str, None] = None,
                  *args, **kwargs):
-        
+
         Media.__init__(self, frequency=frequency,z0=z0)
-        
+
         if mode_type.lower() not in ['te','tm']:
             raise ValueError('mode_type must be either \'te\' or \'tm\'')
 
-        
+
         self.r = r
         self.mode_type = mode_type.lower()
         self.m = m
@@ -107,7 +107,7 @@ class CircularWaveguide(Media):
         self.ep_r = ep_r
         self.mu_r = mu_r
         self.rho = rho
-        
+
     def __str__(self) -> str:
         f=self.frequency
         output =  \
@@ -120,22 +120,22 @@ class CircularWaveguide(Media):
     def __repr__(self) -> str:
         return self.__str__()
 
-    
+
     @classmethod
     def from_Z0(cls, frequency: 'Frequency', Z0: NumberLike,
-                f: NumberLike, ep_r: NumberLike = 1, mu_r: NumberLike = 1, 
+                f: NumberLike, ep_r: NumberLike = 1, mu_r: NumberLike = 1,
                 **kwargs):
         r"""
-        Initialize from specified impedance at a given frequency, assuming the 
+        Initialize from specified impedance at a given frequency, assuming the
         fundamental TE11 mode.
-        
+
         Parameters
         ----------
         frequency : Frequency Object
         Z0 : number /array
             characteristic impedance to create at `f`
-        f : number 
-            frequency (in Hz) at which the resultant waveguide has the 
+        f : number
+            frequency (in Hz) at which the resultant waveguide has the
             characteristic impedance Z0
         ep_r : number, array-like,
             filling material's relative permittivity
@@ -143,20 +143,20 @@ class CircularWaveguide(Media):
             filling material's relative permeability
         \*\*kwargs : arguments, keyword arguments
             passed to :class:`~skrf.media.media.Media`'s constructor
-            (:func:`~skrf.media.media.Media.__init__`            
+            (:func:`~skrf.media.media.Media.__init__`
         """
-        
+
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r
         w = 2*pi*f
         # if self.mode_type =="te":
-        u = jnp_zeros(1, 1)[-1] 
+        u = jnp_zeros(1, 1)[-1]
         r =u/(w*mu) * 1./sqrt(1/(Z0*1j)**2+ep/mu)
-        
+
         kwargs.update(dict(frequency=frequency, r=r, m=1, n=1, ep_r=ep_r, mu_r=mu_r))
-        
+
         return cls(**kwargs)
-    
+
     @property
     def ep(self) -> NumberLike:
         """
@@ -186,9 +186,9 @@ class CircularWaveguide(Media):
     def k0(self) -> NumberLike:
         r"""
         Characteristic wave number.
-        
+
         .. math::
-            
+
             k_0 = \omega \sqrt{\varepsilon \mu}
 
         Returns
@@ -197,7 +197,7 @@ class CircularWaveguide(Media):
             characteristic wave number
         """
         return 2*pi*self.frequency.f*sqrt(self.ep * self.mu)
-    
+
     @property
     def kc(self) -> NumberLike:
         r"""
@@ -220,9 +220,9 @@ class CircularWaveguide(Media):
             cut-off wavenumber
         """
         if self.mode_type =="te":
-            u = jnp_zeros(self.m, self.n)[-1] 
+            u = jnp_zeros(self.m, self.n)[-1]
         elif self.mode_type =="tm":
-            u = jn_zeros(self.m,self.n)[-1] 
+            u = jn_zeros(self.m,self.n)[-1]
         return u/self.r
 
     @property
@@ -243,7 +243,7 @@ class CircularWaveguide(Media):
         """
         v = 1/sqrt(self.ep*self.mu)
         return v* self.kc/(2*npy.pi)
-        
+
     @property
     def f_norm(self) -> NumberLike:
         """
@@ -269,7 +269,7 @@ class CircularWaveguide(Media):
         >>> wg.rho = 2.8e-8 * ones(len(wg.frequency))
         >>> wg.rho = 'al'
         >>> wg.rho = 'aluminum'
-        """        
+        """
         # if self.roughness != None:
         #     delta = skin_depth(self.frequency.f, self._rho, self.mu_r)
         #     k_w = 1. +exp(-(delta/(2*self.roughness))**1.6)
@@ -288,9 +288,9 @@ class CircularWaveguide(Media):
     def lambda_guide(self) -> NumberLike:
         r"""
         Guide wavelength.
-        
+
         .. math::
-            
+
             \lambda_g = 2\pi/\beta
 
         the distance in which the phase of the field increases by 2 pi.
@@ -337,34 +337,34 @@ class CircularWaveguide(Media):
         # This also holds for the circular waveguide
         ## haringtons form
         if False: #self.m==1 and self.n==0:
-            fs = Freespace(frequency=self.frequency, 
-                           ep_r=self.ep_r, 
+            fs = Freespace(frequency=self.frequency,
+                           ep_r=self.ep_r,
                            mu_r=self.mu_r)
-                           
+
             g= where(self.f_norm>1.,
                      sqrt(1-self.f_norm**(-2))*fs.gamma, # cutton
                  -1j*sqrt(1-self.f_norm**(2))*fs.gamma)# cutoff
-        
+
         else:
             # TODO:  fix this for lossy ep/mu (remove abs?)
             k0,kc = self.k0, self.kc
             g=  1j*sqrt(abs(k0**2 - kc**2)) * (k0>kc) +\
                     sqrt(abs(kc**2- k0**2))*(k0<kc) + \
-                    0*(kc==k0) 
+                    0*(kc==k0)
 
         g = g + self.alpha_c *(self.rho is not None)
-        
-        return g 
-        
-        
+
+        return g
+
+
     @property
     def alpha_c(self) -> NumberLike:
         """
-        Loss due to finite conductivity of the sidewalls for the fundamental mode TE11. Higher order 
+        Loss due to finite conductivity of the sidewalls for the fundamental mode TE11. Higher order
         modes are not implemented, as well as effects due to surface roughness.
 
         In units of Np/m
-        
+
         See property `rho` for setting conductivity.
 
         Effects of finite conductivity are taken from [#]_, but expressed in the same terms as in [#]_.
@@ -375,14 +375,14 @@ class CircularWaveguide(Media):
         .. [#] Eq. (3.133), Chapter 3.4, Microwave Engineering, Pozar David, 2011
         .. [#] Eq. (9.8.1), Chapter 9, Electromagnetic Waves and Antennas by Sophocles J. Orfanidis
             http://eceweb1.rutgers.edu/~orfanidi/ewa/
-            
+
         See Also
         --------
         rho
         """
 
         # TODO: Generalize to higher order modes
-        if (self.mode_type != "te") or (self.m != 1) or (self.n != 1): 
+        if (self.mode_type != "te") or (self.m != 1) or (self.n != 1):
             raise NotImplementedError
 
         if self.rho is None:

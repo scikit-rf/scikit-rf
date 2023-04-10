@@ -1,5 +1,1 @@
 .. automodule:: skrf.media.device
-
-
-
-

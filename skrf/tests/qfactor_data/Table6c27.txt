@@ -11,7 +11,7 @@
 % POWER: 0.0 dB   POINTS: 201   AVERAGING: 1
 %
 % CALIBRATION: Reflection S11
-% 
+%
 % FREQ         S11
 % GHz           Re.               Im.             Mg.             Ph.
 3.63954464    0.0620117   -0.9798584   0.9818187   -86.37879

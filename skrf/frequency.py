@@ -83,7 +83,7 @@ class Frequency:
             'thz': 'THz'
             }
     """
-    Dictionnary to convert unit string with correct capitalization for display.
+    Dictionary to convert unit string with correct capitalization for display.
     """
 
     multiplier_dict={
@@ -208,7 +208,6 @@ class Frequency:
         if isinstance(key, str):
 
             # they passed a string try and do some interpretation
-            re_numbers = re.compile(r'.*\d')
             re_hyphen = re.compile(r'\s*-\s*')
             re_letters = re.compile('[a-zA-Z]+')
 
@@ -279,7 +278,7 @@ class Frequency:
         if npy.isscalar(f):
             f = [f]
         temp_freq =  cls(0,0,0,*args, **kwargs)
-        temp_freq._f = npy.array(f) * temp_freq.multiplier
+        temp_freq._f = npy.asarray(f) * temp_freq.multiplier
         temp_freq.check_monotonic_increasing()
 
         return temp_freq
@@ -331,7 +330,7 @@ class Frequency:
         increase = npy.diff(self.f) > 0
         if not increase.all():
             warnings.warn("Frequency values are not monotonously increasing!\n"
-            "To get rid of the invalid values call `drop_non_monotonic_increasing`", 
+            "To get rid of the invalid values call `drop_non_monotonic_increasing`",
                 InvalidFrequencyWarning)
 
     def drop_non_monotonic_increasing(self) -> List[int]:
@@ -393,7 +392,7 @@ class Frequency:
         """
         warnings.warn('Possibility to set the npoints parameter will removed in the next release.',
              DeprecationWarning, stacklevel=2)
-        
+
         if self.sweep_type == 'lin':
             self.f = linspace(self.start, self.stop, n)
         elif self.sweep_type == 'log':
@@ -488,7 +487,7 @@ class Frequency:
         """
 
         return self._f
-    
+
     @f.setter
     def f(self,new_f: NumberLike) -> None:
         """
@@ -501,7 +500,7 @@ class Frequency:
         """
         warnings.warn('Possibility to set the f parameter will removed in the next release.',
              DeprecationWarning, stacklevel=2)
-        
+
         self._f = npy.array(new_f)
 
         self.check_monotonic_increasing()
@@ -529,14 +528,14 @@ class Frequency:
     def w(self) -> npy.ndarray:
         r"""
         Angular frequency in radians/s.
-        
+
         Angular frequency is defined as :math:`\omega=2\pi f` [#]_
 
         Returns
         -------
         w : :class:`numpy.ndarray`
             Angular frequency in rad/s
-            
+
         References
         ----------
         .. [#] https://en.wikipedia.org/wiki/Angular_frequency
@@ -552,7 +551,7 @@ class Frequency:
     def df(self) -> npy.ndarray:
         """
         The gradient of the frequency vector.
-        
+
         Note
         ----
         The gradient is calculated using::
@@ -594,14 +593,14 @@ class Frequency:
         Unit of this frequency band.
 
         Possible strings for this attribute are:
-        'hz', 'khz', 'mhz', 'ghz', 'thz'
+        'Hz', 'kHz', 'MHz', 'GHz', 'THz'
 
         Setting this attribute is not case sensitive.
 
         Returns
         -------
         unit : string
-            lower-case string representing the frequency units
+            String representing the frequency unit
         """
         return self.unit_dict[self._unit]
 
@@ -697,9 +696,9 @@ class Frequency:
             'lin' if linearly increasing, 'log' or 'unknown'.
 
         """
-        if npy.allclose(self.f, linspace(self.f[0], self.f[-1], self.npoints)):
+        if npy.allclose(self.f, linspace(self.f[0], self.f[-1], self.npoints), rtol=0.05):
             sweep_type = 'lin'
-        elif self.f[0] and npy.allclose(self.f, geomspace(self.f[0], self.f[-1], self.npoints)):
+        elif self.f[0] and npy.allclose(self.f, geomspace(self.f[0], self.f[-1], self.npoints), rtol=0.05):
             sweep_type = 'log'
         else:
             sweep_type = 'unknown'
