@@ -1903,7 +1903,7 @@ class Network:
         ntwk = Network(s=self.s,
                        frequency=self.frequency.copy(),
                        z0=self.z0, s_def=self.s_def,
-                       comments=self.comments, params=self.params
+                       comments=self.comments, params=self.params.copy()
                        )
 
         ntwk.name = self.name
