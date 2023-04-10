@@ -82,7 +82,7 @@ Graph representation
    Circuit.edge_labels
 
 """
-from . network import Network, a2s, s2s
+from . network import Network, s2s
 from . media import media
 from . constants import INF, NumberLike, S_DEF_DEFAULT
 
@@ -278,8 +278,7 @@ class Circuit:
         A[:, 0, 1] = Z
         A[:, 1, 0] = 0
         A[:, 1, 1] = 1
-        ntw = Network(frequency=frequency, z0=z0, name=name)
-        ntw.s = a2s(A)
+        ntw = Network(a=A, frequency=frequency, z0=z0, name=name)
         return ntw
 
     @classmethod
@@ -322,8 +321,7 @@ class Circuit:
         A[:, 0, 1] = 0
         A[:, 1, 0] = Y
         A[:, 1, 1] = 1
-        ntw = Network(frequency=frequency, z0=z0, name=name)
-        ntw.s = a2s(A)
+        ntw = Network(a=A, frequency=frequency, z0=z0, name=name)
         return ntw
 
     @classmethod
