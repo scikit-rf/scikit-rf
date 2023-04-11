@@ -1001,7 +1001,7 @@ Parameters
 m : int, optional
     first index of s-parameter matrix, if None will use all
 n : int, optional
-    secon index of the s-parameter matrix, if None will use all
+    second index of the s-parameter matrix, if None will use all
 ax : :class:`matplotlib.Axes` object, optional
     An existing Axes object to plot on
 show_legend : Boolean
@@ -1091,7 +1091,7 @@ Parameters
 m : int, optional
     first index of s-parameter matrix, if None will use all
 n : int, optional
-    secon index of the s-parameter matrix, if None will use all
+    second index of the s-parameter matrix, if None will use all
 ax : :class:`matplotlib.Axes` object, optional
     An existing Axes object to plot on
 show_legend : Boolean
@@ -1246,7 +1246,7 @@ Examples
     m : int, optional
         first index of s-parameter matrix, if None will use all
     n : int, optional
-        secon index of the s-parameter matrix, if None will use all
+        second index of the s-parameter matrix, if None will use all
     ax : :class:`matplotlib.Axes` object, optional
         An existing Axes object to plot on
     show_legend : Boolean
