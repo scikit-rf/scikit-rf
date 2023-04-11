@@ -1901,7 +1901,7 @@ class Network:
 
         """
         ntwk = Network(s=self.s,
-                       frequency=self.frequency.copy(),
+                       frequency=self.frequency,
                        z0=self.z0, s_def=self.s_def,
                        comments=self.comments
                        )
@@ -1912,9 +1912,6 @@ class Network:
         ntwk.name = self.name
 
         if self.noise is not None and self.noise_freq is not None:
-          if False :
-              ntwk.noise = npy.copy(self.noise)
-              ntwk.noise_freq = npy.copy(self.noise_freq)
           ntwk.noise = self.noise.copy()
           ntwk.noise_freq = self.noise_freq.copy()
 
