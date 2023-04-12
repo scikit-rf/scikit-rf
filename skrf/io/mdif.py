@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 .. module:: skrf.io.mdif
 
@@ -26,16 +25,16 @@ from itertools import product
 class Mdif():
     """
     Class to read Generalized MDIF N-port files.
-    
-    Used to read the Generalized MDIF (GMDIF) file format [#]_ (.mdf extension). 
-    These files are used store Network parameters which vary with frequency 
-    and with one or more named parameters. 
+
+    Used to read the Generalized MDIF (GMDIF) file format [#]_ (.mdf extension).
+    These files are used store Network parameters which vary with frequency
+    and with one or more named parameters.
 
     Parameters
     ----------
     file : str or file-object
         mdif file to load
-                                                        
+
     References
     ----------
     .. [#] https://awrcorp.com/download/faq/english/docs/Users_Guide/data_file_formats.html#generalized_mdif
@@ -50,13 +49,13 @@ class Mdif():
 
     >>> file = open('network.mdf')
     >>> m = rf.Mdif(file)
-    
+
     List of named parameters defined in the MDIF file
-    
+
     >>> m.params
-    
+
     Convert the MDIF to a NetworkSet
-    
+
     >>> m.to_networkset()
 
     Using the data as a `NetworkSet` allows you to select a set of Networks
@@ -64,15 +63,15 @@ class Mdif():
     See `skrf.networkset.NetworkSet`.
 
     """
-    
+
     def __init__(self, file: Union[str, TextIO]):
         """
         Constructor
-        
+
         Parameters
         ----------
         file : str or file-object
-            mdif file to load        
+            mdif file to load
         """
         with get_fid(file) as fid:
             self.filename = fid.name
@@ -110,7 +109,7 @@ class Mdif():
     def networks(self) -> list:
         """
         List of Networks.
-        
+
         Returns
         -------
         list : list of :class:`~skrf.network.Network`
@@ -193,7 +192,7 @@ class Mdif():
             elif line.startswith('!'):
                 if line[1:].startswith(' network name:'):
                     ntwk_name = line.split(':')[-1].strip()
-                    
+
 
             # Parameter kinds (s11, z21, ...) are described as
             #
@@ -242,9 +241,9 @@ class Mdif():
 
         # Nport as in AWR MDIF file-format description
         elif (parameter == 's') and all(k in kinds for k in ['n11x', 'n11y']):
-            rank = round(np.sqrt(sum('n' in s for s in kinds)/2))                 
+            rank = round(np.sqrt(sum('n' in s for s in kinds)/2))
             s = values[:,:rank**2].reshape(len(f), rank, rank)
-            # if rank is 2 and S21 before S12, swap S21 and S12 
+            # if rank is 2 and S21 before S12, swap S21 and S12
             if rank == 2 and (kinds.index('n21x') < kinds.index('n12x')):
                 s[:, 1, 0], s[:, 0, 1] =  s[:, 0, 1].copy(), s[:, 1, 0].copy()
 
@@ -255,7 +254,7 @@ class Mdif():
             z = np.zeros((len(f), rank, rank), dtype=complex)
             for m in range(rank):
                 for n in range(rank):
-                    z[:,m,n] = values[:, kinds.index(f'z[{m+1},{n+1}]') - 1]            
+                    z[:,m,n] = values[:, kinds.index(f'z[{m+1},{n+1}]') - 1]
             s = z2s(z, z0=z0)
 
         # no S nor Z-parameter are found. Maybe Y-param instead?
@@ -265,9 +264,9 @@ class Mdif():
             y = np.zeros((len(f), rank, rank), dtype=complex)
             for m in range(rank):
                 for n in range(rank):
-                    y[:,m,n] = values[:, kinds.index(f'y[{m+1},{n+1}]') - 1]            
+                    y[:,m,n] = values[:, kinds.index(f'y[{m+1},{n+1}]') - 1]
             s = y2s(z, z0=z0)
-            
+
         else:
             raise NotImplementedError('Unrecognized case, probably not implemented')
 
@@ -309,7 +308,7 @@ class Mdif():
             if line.lower().startswith('var'):
                 in_a_block = True
                 # current parameter
-                param_name, param_value = [s.strip() for s in line[3:].split('=')]
+                param_name, param_value = (s.strip() for s in line[3:].split('='))
                 # remove the datatype "(blah)" in "varname(blah)" if any
                 param_name = param_name.split('(')[0]
                 # try to convert the value as a number
@@ -351,7 +350,7 @@ class Mdif():
         Returns
         -------
         ns : :class:`~skrf.networkSet.NetworkSet`
-        
+
         See Also
         --------
         from_networkset : Write a MDIF file from a NetworkSet.
@@ -387,12 +386,12 @@ class Mdif():
         comments: list of strings
             Comments to add to output_file.
             Each list items is a separate comment line
-            
+
         See Also
         --------
         io.mdif.Mdif : MDIF file class
         to_networkset : Return the MDIF data as a NetworkSet
-        
+
         """
 
         if values is None:
@@ -456,7 +455,7 @@ class Mdif():
     def __eq__(self, other) -> bool:
         """
         Test if two Mdif objects are equals.
-        
+
         Test the equality between the NetworkSet under the hood.
 
         Parameters
@@ -470,7 +469,7 @@ class Mdif():
 
         """
         return self.to_networkset() == other.to_networkset()
-    
+
     @staticmethod
     def __create_optionstring(nports):
         """create the options string based on the number of ports. Used in the Touchstone and MDIF formats"""
@@ -506,4 +505,4 @@ class Mdif():
                     if i[1] == nports:
                         optionstring += "\n"
 
-        return optionstring    
+        return optionstring

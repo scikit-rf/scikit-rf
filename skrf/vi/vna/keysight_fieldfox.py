@@ -32,7 +32,7 @@ class FieldFox(abcvna.VNA):
         :param address:
         :param kwargs:
         """
-        super(FieldFox, self).__init__(address, **kwargs)
+        super().__init__(address, **kwargs)
         self.resource.timeout = kwargs.get("timeout", 2000)
         self.scpi = keysight_fieldfox_scpi.SCPI(self.resource)
         self.use_ascii()
@@ -363,8 +363,8 @@ class FieldFox(abcvna.VNA):
 
     def set_scale_all(self, bottom, top):
         for i in range(1, self.scpi.query_trace_count() + 1):
-            self.write("DISP:WIND:TRAC{:d}:Y:TOP {:}".format(i, top))
-            self.write("DISP:WIND:TRAC{:d}:Y:BOTT {:}".format(i, bottom))
+            self.write(f"DISP:WIND:TRAC{i:d}:Y:TOP {top}")
+            self.write(f"DISP:WIND:TRAC{i:d}:Y:BOTT {bottom}")
 
     def get_switch_terms(self, **kwargs):
         msg = """the Field Fox VNA does not allow the automatic setting of source ports and so one cannot automatically

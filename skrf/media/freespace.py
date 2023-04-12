@@ -1,5 +1,3 @@
-
-
 """
 freespace (:mod:`skrf.media.freespace`)
 ========================================
@@ -242,11 +240,11 @@ class Freespace(Media):
     def ep_with_rho(self) -> NumberLike:
         r"""
         Complex permittivity with resistivity absorbed into its imaginary component.
-                          
+
         .. math::
-            
+
             \varepsilon - j \frac{1}{\rho\omega}
-        
+
         See Also
         --------
         rho
@@ -265,7 +263,7 @@ class Freespace(Media):
         Defined as,
 
         .. math::
-            
+
                 \gamma =  \sqrt{ Z^{'}  Y^{'}}
 
         Returns
@@ -316,7 +314,7 @@ class Freespace(Media):
 
     def plot_ep_mu(self):
         """
-        Plot the real and imaginary part of the complex permittivity with resistivity.       
+        Plot the real and imaginary part of the complex permittivity with resistivity.
         """
         self.plot_ep()
         self.plot_mu()

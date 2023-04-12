@@ -61,7 +61,7 @@ class Touchstone:
         file : str or file-object
             touchstone file to load
         encoding : str, optional
-            define the file encoding to use. Default value is None, 
+            define the file encoding to use. Default value is None,
             meaning the encoding is guessed (ANSI, UTF-8 or Latin-1).
 
         Examples
@@ -69,18 +69,18 @@ class Touchstone:
         From filename
 
         >>> t = rf.Touchstone('network.s2p')
-        
+
         File encoding can be specified to help parsing the special characters:
-        
+
         >>> t = rf.Touchstone('network.s2p', encoding='ISO-8859-1')
 
         From file-object
 
         >>> file = open('network.s2p')
         >>> t = rf.Touchstone(file)
-        
+
         From a io.StringIO object
-        
+
         >>> link = 'https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/examples/basic_touchstone_plotting/horn antenna.s1p'
         >>> r = requests.get(link)
         >>> stringio = io.StringIO(r.text)
@@ -88,7 +88,7 @@ class Touchstone:
         >>> horn = rf.Touchstone(stringio)
 
         """
-        ## file format version. 
+        ## file format version.
         # Defined by default to 1.0, since version number can be omitted in V1.0 format
         self.version = '1.0'
         ## comments in the file header
@@ -208,13 +208,13 @@ class Touchstone:
                         garbage, index = port_string.strip().split('[', 1) #throws ValueError on unpack
                         index = int(index.rstrip(']')) #throws ValueError on not int-able
                         if index > self.rank or index <= 0:
-                            print("Port name {0} provided for port number {1} but that's out of range for a file with extension s{2}p".format(name, index, self.rank))
+                            print(f"Port name {name} provided for port number {index} but that's out of range for a file with extension s{self.rank}p")
                         else:
                             if self.port_names is None: #Initialize the array at the last minute
                                 self.port_names = [''] * self.rank
                             self.port_names[index - 1] = name
                     except ValueError as e:
-                        print("Error extracting port names from line: {0}".format(line))
+                        print(f"Error extracting port names from line: {line}")
                 elif line[1].strip().lower().startswith('port impedance'):
                     self.has_hfss_port_impedances = True
 
@@ -398,10 +398,16 @@ class Touchstone:
         if format == 'orig':
             format = self.format
         ext1, ext2 = {'ri':('R','I'),'ma':('M','A'), 'db':('DB','A')}.get(format)
+        file_name_ending = self.filename.split('.')[-1].lower()
         for r1 in range(self.rank):
             for r2 in range(self.rank):
-                names.append("S%i%i%s"%(r1+1,r2+1,ext1))
-                names.append("S%i%i%s"%(r1+1,r2+1,ext2))
+                # Transpose Touchstone V1 2-port files (.2p), as the order is (11) (21) (12) (22)
+                if self.rank == 2 and file_name_ending == "s2p":
+                    names.append(f"S{r2+1}{r1+1}{ext1}")
+                    names.append(f"S{r2+1}{r1+1}{ext2}")
+                else:
+                    names.append(f"S{r1+1}{r2+1}{ext1}")
+                    names.append(f"S{r1+1}{r2+1}{ext2}")
         return names
 
     def get_sparameter_data(self, format='ri'):
@@ -456,14 +462,6 @@ class Touchstone:
 
         for i,n in enumerate(self.get_sparameter_names(format=format)):
             ret[n] = values[:,i]
-
-        # transpose Touchstone V1 2-port files (.2p), as the order is (11) (21) (12) (22)
-        file_name_ending = self.filename.split('.')[-1].lower()
-        if self.rank == 2 and file_name_ending == "s2p":
-            swaps = [ k for k in ret if '21' in k]
-            for s in swaps:
-                true_s = s.replace('21', '12')
-                ret[s], ret[true_s] = ret[true_s], ret[s]
 
         return ret
 

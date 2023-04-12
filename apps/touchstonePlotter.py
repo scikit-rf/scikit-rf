@@ -63,7 +63,7 @@ class TouchstonePlotter(HasTraits):
 
 
         self.active_ntwk.__getattribute__(\
-            'plot_{}_{}'.format(self.param, form))(m=m, n=n)
+            f'plot_{self.param}_{form}')(m=m, n=n)
 
 
         plb.draw();plb.show()

@@ -1,5 +1,3 @@
-
-
 """
 .. module:: skrf.vi.vna
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -10,7 +8,7 @@ Vector Network Analyzers (:mod:`skrf.vi.vna`)
 
     As of 2017.02 a new architecture for vna drivers is being implemented.
 
-New VNA drivers 
+New VNA drivers
 ---------------
 
 - VNA drivers will now have a common high level functionality across all vendors implemented in an ABCVNA class.
@@ -138,7 +136,7 @@ class PNA(Driver):
             resource = address
 
         Driver.__init__(self,resource = resource, **kwargs)
-        
+
         self.channel=channel
         self.port = 1
         self.echo = echo
@@ -156,14 +154,14 @@ class PNA(Driver):
         return Driver.write(self,msg, *args, **kwargs)
 
     write.__doc__ = Driver.write.__doc__
-    
+
     @property
     def timeout(self):
         return self._interface.timeout/1000.
     @timeout.setter
     def timeout(self,val):
         self._interface.timeout=val*1000.
-        
+
     ## BASIC GPIB
     @property
     def idn(self):
@@ -1467,7 +1465,7 @@ class ZVA40(PNA):
         was_cont = self.continuous
         self.continuous = False
         self.write("INITiate%i:IMMediate;*WAI"%self.channel)
-        
+
         self.continuous = was_cont
 
     def get_meas_list(self):
@@ -1811,7 +1809,7 @@ class VectorStar(PNA):
         return int(self.ask(':calc%i:par:count?'%self.channel))
 
     def set_ntraces(self,val):
-        self.write((':calc%i:par:count %i'%(self.channel,int(val))))
+        self.write(':calc%i:par:count %i'%(self.channel,int(val)))
 
     ntraces = property(get_ntraces, set_ntraces)
 

@@ -1,5 +1,3 @@
-
-
 """
 .. module:: skrf.vi.sa
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -172,4 +170,3 @@ class HP8500(Driver):
         Recall current state to a given register
         """
         self.write('rcls %i'%reg_n)
-

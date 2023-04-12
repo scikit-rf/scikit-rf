@@ -1,5 +1,3 @@
-
-
 """
 distributedCircuit (:mod:`skrf.media.distributedCircuit`)
 ============================================================
@@ -110,8 +108,9 @@ class DistributedCircuit(Media):
                  C: NumberLike = 90e-12, L: NumberLike = 280e-9,
                  R: NumberLike = 0, G: NumberLike = 0,
                 *args, **kwargs):
-        super(DistributedCircuit, self).__init__(frequency=frequency,
+        super().__init__(frequency=frequency,
                                                  z0_port=z0_port)
+
         self.C, self.L, self.R, self.G = C,L,R,G
 
 
@@ -144,7 +143,7 @@ class DistributedCircuit(Media):
         ----------
         my_media : :class:`~skrf.media.media.Media` instance.
             the media object
-            
+
         See Also
         --------
         :class:`~skrf.media.media.Media`
@@ -178,7 +177,7 @@ class DistributedCircuit(Media):
         See Also
         --------
         write_csv
-        """        
+        """
         d = DefinedGammaZ0.from_csv(*args,**kw)
         return self.from_media(d)
 

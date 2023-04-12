@@ -22,19 +22,19 @@ class FrequencyTestCase(unittest.TestCase):
         freq = rf.Frequency(1,10,10,'ghz')
         self.assertTrue((freq.f == npy.linspace(1,10,10)*1e9).all())
         self.assertTrue((freq.f_scaled ==npy.linspace(1,10,10)).all())
-        self.assertTrue((freq.sweep_type == 'lin'))
+        self.assertTrue(freq.sweep_type == 'lin')
 
     def test_create_log_sweep(self):
         freq = rf.Frequency(1,10,10,'ghz', sweep_type='log')
         #Check end points
-        self.assertTrue((freq.f[0] == 1e9))
-        self.assertTrue((freq.f[-1] == 10e9))
+        self.assertTrue(freq.f[0] == 1e9)
+        self.assertTrue(freq.f[-1] == 10e9)
         spacing = [freq.f[i+1]/freq.f[i] for i in range(len(freq.f)-1)]
         #Check that frequency is increasing
         self.assertTrue(all(s > 1 for s in spacing))
         #Check that ratio of adjacent frequency points is identical
         self.assertTrue(all(abs(spacing[i] - spacing[0]) < 1e-10 for i in range(len(spacing))))
-        self.assertTrue((freq.sweep_type == 'log'))
+        self.assertTrue(freq.sweep_type == 'log')
 
     def test_create_rando_sweep(self):
         f = npy.array([1,5,200])
@@ -56,7 +56,7 @@ class FrequencyTestCase(unittest.TestCase):
             npy.array([1,4,10,20])).all())
 
     def test_slicer(self):
-        a = rf.Frequency.from_f([1,2,4,5,6])
+        a = rf.Frequency.from_f([1,2,4,5,6], unit='GHz')
 
         b = a['2-5ghz']
         tinyfloat = 1e-12
@@ -64,13 +64,13 @@ class FrequencyTestCase(unittest.TestCase):
 
     def test_frequency_check(self):
         with self.assertWarns(InvalidFrequencyWarning):
-            freq = rf.Frequency.from_f([2,1])
+            freq = rf.Frequency.from_f([2,1], unit='Hz')
 
         with self.assertWarns(InvalidFrequencyWarning):
-            freq = rf.Frequency.from_f([1,2,2])
-        
+            freq = rf.Frequency.from_f([1,2,2], unit='Hz')
+
         with self.assertWarns(InvalidFrequencyWarning):
-            freq = rf.Frequency.from_f([1,2,2], unit="Hz")
+            freq = rf.Frequency.from_f([1,2,2], unit='Hz')
             inv = freq.drop_non_monotonic_increasing()
             self.assertListEqual(inv, [2])
             self.assertTrue(npy.allclose(freq.f, [1,2]))
@@ -80,7 +80,7 @@ class FrequencyTestCase(unittest.TestCase):
         To avoid corner cases, it is not be possible to change the
         frequency points directly.
         """
-        a = rf.Frequency.from_f([1,2,4,5,6])
+        a = rf.Frequency.from_f([1,2,4,5,6], unit='Hz')
         # TODO : assertRaises(AttributeError) in next release
         with self.assertWarns(DeprecationWarning):
             a.f = [1, 2]

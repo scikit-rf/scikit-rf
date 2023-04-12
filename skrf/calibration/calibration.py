@@ -25,7 +25,7 @@ One-port
 
    OnePort
    SDDL
-   SDDLWeikle   
+   SDDLWeikle
    PHN
 
 Two-port
@@ -47,7 +47,16 @@ Two-port
    SixteenTerm
    LMR16
    Normalization
-   
+
+Multi-port
+--------
+
+.. autosummary::
+   :toctree: generated/
+
+   MultiportCal
+   MultiportSOLT
+
 Three Receiver (1.5 port)
 -------------------------
 
@@ -96,7 +105,8 @@ from ..networkSet import NetworkSet
 from .. import util
 from ..io.touchstone import read_zipped_touchstones
 from .. import __version__ as skrf__version__
-
+from collections import defaultdict
+from itertools import combinations
 
 global coefs_list_12term
 coefs_list_12term =[
@@ -147,7 +157,7 @@ coefs_list_3term = [
     ]
 
 
-class Calibration(object):
+class Calibration:
     """
     Base class for all Calibration objects.
 
@@ -254,7 +264,7 @@ class Calibration(object):
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
             if self.ideals[k].frequency != self.measured[0].frequency:
-                print('Warning: Frequency information doesn\'t match on ideals[{}], attempting to interpolate the ideal[{}] Network ..'.format(k,k))
+                print(f'Warning: Frequency information doesn\'t match on ideals[{k}], attempting to interpolate the ideal[{k}] Network ..')
                 try:
                     # try to resample our ideals network to match
                     # the measurement frequency
@@ -263,7 +273,7 @@ class Calibration(object):
                     print('Success')
 
                 except:
-                    raise(IndexError('Failed to interpolate. Check frequency of ideals[{}].'.format(k)))
+                    raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].'))
 
 
         # passed to calibration algorithm in run()
@@ -301,18 +311,18 @@ class Calibration(object):
         """
         raise NotImplementedError('The Subclass must implement this')
 
-    def apply_cal(self,ntwk):
+    def apply_cal(self, ntwk):
         """
         Apply correction to a Network.
         """
         raise NotImplementedError('The Subclass must implement this')
 
-    def apply_cal_to_list(self,ntwk_list):
+    def apply_cal_to_list(self, ntwk_list):
         """
-        Apply correction to list of dict of Networks.
+        Apply correction to list or dict of Networks.
         """
         if hasattr(ntwk_list, 'keys'):
-            return dict([(k, self.apply_cal(ntwk_list[k])) for k in ntwk_list])
+            return {k: self.apply_cal(nw) for k, nw in ntwk_list.items()}
         else:
             return [self.apply_cal(k) for k in ntwk_list]
 
@@ -378,11 +388,11 @@ class Calibration(object):
     def remove_and_cal(self, std):
         """
         Remove a cal standard and correct it, returning correct and ideal.
-        
-        This requires requires overdetermination. Useful in 
-        troubleshooting a calibration in which one standard is junk, but 
-        you dont know which. 
-        
+
+        This requires requires overdetermination. Useful in
+        troubleshooting a calibration in which one standard is junk, but
+        you dont know which.
+
         Parameters
         ----------
         std : int or str
@@ -394,7 +404,7 @@ class Calibration(object):
         ideal,corrected : tuple of skrf.Networks
             the ideal and corrected networks which were removed out of the
             calibration
-            
+
         """
         measured, ideals = copy(self.measured), copy(self.ideals)
         i,m  = self.pop(std)
@@ -580,11 +590,11 @@ class Calibration(object):
             * source match
             * reflection tracking'
         """
-        return dict([(k, self.coefs.get(k)) for k in [\
+        return {k: self.coefs.get(k) for k in [\
             'directivity',
             'source match',
             'reflection tracking',
-            ]])
+            ]}
 
     @property
     def coefs_3term_ntwks(self):
@@ -761,7 +771,7 @@ class Calibration(object):
         """
 
         residual_sets={}
-        std_names = list(set([k.name  for k in self.ideals ]))
+        std_names = list(set([k.name  for k in self.ideals]))
         for std_name in std_names:
             residual_sets[std_name] = NetworkSet(
                 [k for k in self.residual_ntwks if k.name.startswith(std_name)])
@@ -969,7 +979,7 @@ class OnePort(Calibration):
     respectively.
 
 
-    If more than three standards are supplied then a least square
+    If more than three standards are supplied, then a least square
     algorithm is applied.
 
     See [1]_  and [2]_
@@ -1023,13 +1033,18 @@ class OnePort(Calibration):
                              *args, **kwargs)
 
     def run(self):
-        """
+        """ Run the calibration algorithm.
         """
         numStds = self.nstandards
         numCoefs=3
 
-        mList = [self.measured[k].s.reshape((-1,1)) for k in list(range(numStds))]
-        iList = [self.ideals[k].s.reshape((-1,1)) for k in list(range(numStds))]
+        mList = [self.measured[k].s.reshape((-1,1)) for k in range(numStds)]
+        iList = [self.ideals[k].s.reshape((-1,1)) for k in range(numStds)]
+
+        if not all([n.number_of_ports==1 for n in self.ideals]):
+            raise RuntimeError(f'ideals for {self.family} should be 1-port Networks')
+        if not all([n.number_of_ports==1 for n in self.measured]):
+            raise RuntimeError(f'measured networks for {self.family} should be 1-port Networks')
 
         # ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
         fLength = len(mList[0])
@@ -1047,8 +1062,8 @@ class OnePort(Calibration):
         for f in list(range(fLength)):
             #create  m, i, and 1 vectors
             one = npy.ones(shape=(numStds,1))
-            m = npy.array([ mList[k][f] for k in list(range(numStds))]).reshape(-1,1)# m-vector at f
-            i = npy.array([ iList[k][f] for k in list(range(numStds))]).reshape(-1,1)# i-vector at f
+            m = npy.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
+            i = npy.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f
 
             # construct the matrix
             Q = npy.hstack([i, one, i*m])
@@ -1091,7 +1106,7 @@ class OnePort(Calibration):
         er_ntwk = Network(frequency = self.frequency, name=ntwk.name)
         tracking  = self.coefs['reflection tracking']
         s12 = npy.sqrt(tracking)
-        s21 = npy.sqrt(tracking)
+        s21 = s12
 
         s11 = self.coefs['directivity']
         s22 = self.coefs['source match']
@@ -1099,8 +1114,7 @@ class OnePort(Calibration):
         return er_ntwk.inv**ntwk
 
     def embed(self,ntwk):
-        embedded = ntwk.copy()
-        embedded = self.error_ntwk**embedded
+        embedded = self.error_ntwk ** ntwk
         embedded.name = ntwk.name
         return embedded
 
@@ -1533,12 +1547,12 @@ class TwelveTerm(Calibration):
         # update coefs
         coefs = {}
 
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
+        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
         eight_term_coefs = convert_12term_2_8term(coefs)
 
-        coefs.update(dict([(l, eight_term_coefs[l]) for l in \
-            ['forward switch term','reverse switch term','k'] ]))
+        coefs.update({l: eight_term_coefs[l] for l in \
+            ['forward switch term','reverse switch term','k'] })
         self._coefs = coefs
 
     def apply_cal(self,ntwk):
@@ -1755,21 +1769,21 @@ class SOLT(TwelveTerm):
             (1. - p2_coefs['source match']*p2_coefs['load match'])
         coefs = {}
 
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
+        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
         eight_term_coefs = convert_12term_2_8term(coefs)
 
-        coefs.update(dict([(l, eight_term_coefs[l]) for l in \
-            ['forward switch term','reverse switch term','k'] ]))
+        coefs.update({l: eight_term_coefs[l] for l in \
+            ['forward switch term','reverse switch term','k'] })
         self._coefs = coefs
 
 class TwoPortOnePath(TwelveTerm):
     """
     Two Port One Path Calibration (aka poor man's TwelveTerm).
 
-    Provides full error correction  on a switchless three receiver 
-    system, i.e. you can only measure the waves a1,b1,and b2. 
-    Given this architecture, the DUT must be flipped and measured 
+    Provides full error correction  on a switchless three receiver
+    system, i.e. you can only measure the waves a1,b1,and b2.
+    Given this architecture, the DUT must be flipped and measured
     twice to be fully corrected.
 
     To allow for this, the `apply_cal` method takes a tuple of
@@ -1859,8 +1873,8 @@ class TwoPortOnePath(TwelveTerm):
                 out_coefs[k_out] = self.coefs[k]
 
         eight_term_coefs = convert_12term_2_8term(out_coefs)
-        out_coefs.update(dict([(l, eight_term_coefs[l]) for l in \
-            ['forward switch term','reverse switch term','k'] ]))
+        out_coefs.update({l: eight_term_coefs[l] for l in \
+            ['forward switch term','reverse switch term','k'] })
         self._coefs = out_coefs
 
     def apply_cal(self, ntwk_tuple):
@@ -1869,22 +1883,22 @@ class TwoPortOnePath(TwelveTerm):
 
         Notes
         -----
-        Full correction is possible given you have measured your DUT 
-        in both orientations. Meaning, you have measured the device, 
-        then physically flipped the device and made a second measurement. 
-        
+        Full correction is possible given you have measured your DUT
+        in both orientations. Meaning, you have measured the device,
+        then physically flipped the device and made a second measurement.
+
         This tuple of 2-port Networks is what is meant by
         (forward,reverse), in the docstring below
-        
-        If you pass a single 2-port Network, then the measurement will 
-        only be partially corrected using what is known as the 
-        `EnhancedResponse` calibration. 
+
+        If you pass a single 2-port Network, then the measurement will
+        only be partially corrected using what is known as the
+        `EnhancedResponse` calibration.
 
         Parameters
         ----------
         network_tuple: tuple, or Network
-            tuple of 2-port Networks in order (forward, reverse) OR 
-            a single 2-port Network. 
+            tuple of 2-port Networks in order (forward, reverse) OR
+            a single 2-port Network.
 
 
 
@@ -1927,7 +1941,7 @@ class EnhancedResponse(TwoPortOnePath):
 
     For code-structuring reasons, this is a dummy placeholder class.
     Its just TwoPortOnePath, which defaults to enhancedresponse correction
-    when you apply the calibration to a single network, and not a tuple 
+    when you apply the calibration to a single network, and not a tuple
     of networks.
     """
     family = 'EnhancedResponse'
@@ -1960,7 +1974,7 @@ class EightTerm(Calibration):
     .. [2] Rytting, D. (1996) Network Analyzer Error Models and Calibration Methods. RF 8: Microwave Measurements for Wireless Applications (ARFTG/NIST Short Course Notes)
 
     """
-    
+
     family = 'EightTerm'
     def __init__(self, measured, ideals, switch_terms=None,
                 isolation=None, ut_hook=None,*args, **kwargs):
@@ -2008,9 +2022,9 @@ class EightTerm(Calibration):
             #Zero port matching so that networks can be simply subtracted
             self.isolation.s[:,0,0] = 0
             self.isolation.s[:,1,1] = 0
-        
+
         self.ut_hook=ut_hook
-        
+
         Calibration.__init__(self,
             measured = measured,
             ideals = ideals,
@@ -2027,15 +2041,15 @@ class EightTerm(Calibration):
         """
         if self.ut_hook is not None:
             return self.ut_hook(self,ntwk)
-        
+
         if self.switch_terms is not None:
             gamma_f, gamma_r = self.switch_terms
             return unterminate(ntwk, gamma_f, gamma_r)
 
         else:
             return ntwk
-        
-        
+
+
 
     def terminate(self, ntwk):
         """
@@ -2322,24 +2336,24 @@ class TRL(EightTerm):
         Initialize a TRL calibration.
 
         Note that the order of `measured` and `ideals` is strict.
-        It must be [Thru, Reflect, Line]. A multiline algorithms is 
+        It must be [Thru, Reflect, Line]. A multiline algorithms is
         used if more than one line is passed. A multi-reflect algorithm
         is used if multiple reflects are passed, see `n_reflects` argument.
 
         All of the `ideals` can be individually set to None, or the entire
-        list set to None (`ideals=None`). For each ideal set to None 
-        the following assumptions are made: 
-        
-        * thru : flush thru 
-        * reflect : flush shorts 
+        list set to None (`ideals=None`). For each ideal set to None
+        the following assumptions are made:
+
+        * thru : flush thru
+        * reflect : flush shorts
         * line : and approximately  90deg  matched line (can be lossy)
-        
-        The reflect ideals can also be given as a +-1. 
-        
-        Note you can also use the `estimate_line` option  to 
-        automatically  estimate the initial guess for the line length 
+
+        The reflect ideals can also be given as a +-1.
+
+        Note you can also use the `estimate_line` option  to
+        automatically  estimate the initial guess for the line length
         from measurements . This is sensible
-        if you have no idea what the line length is, but your **error 
+        if you have no idea what the line length is, but your **error
         networks** are well matched (E_ij >>E_ii).
 
 
@@ -2353,48 +2367,48 @@ class TRL(EightTerm):
         ----------
         measured : list of :class:`~skrf.network.Network`
             must be in order [Thru, Reflect[s], Line[s]]. if the number
-            of reflects is >1 then use `n_reflects` argument. 
+            of reflects is >1 then use `n_reflects` argument.
 
         ideals : list of :class:`~skrf.network.Network`, [+1,-1] , None
-            must be in order [Thru, Reflect, Line]. Each element in the 
-            list may be None, or equivalently, the list may be None. 
-            Also the reflects can be simply given as  +1 or -1. 
+            must be in order [Thru, Reflect, Line]. Each element in the
+            list may be None, or equivalently, the list may be None.
+            Also the reflects can be simply given as  +1 or -1.
 
         estimate_line : bool
-            should we estimates the length of the line standard from 
+            should we estimates the length of the line standard from
             raw measurements, if not we assume its about 90 deg.
-        
+
         solve_reflect : bool
-            Solve for the reflect or not. 
-        
+            Solve for the reflect or not.
+
         n_reflects :  1
-            number of reflective standards 
+            number of reflective standards
 
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
-    
+
         Examples
         --------
-        
+
         >>> thru = rf.Network('thru.s2p')
         >>> reflect = rf.Network('reflect.s2p')
         >>> line = rf.Network('line.s2p')
-        
+
         Ideals is None, so we assume it's close to a flush short:
-        
+
         >>> trl = TRL(measured=[thru,reflect,line], ideals=None)
-        
+
         Reflect is given as close to a flush short:
-        
+
         >>> trl = TRL(measured=[thru,reflect,line], ideals=[None,-1,None])
-        
+
         Reflect is given as close to a flush open:
-        
+
         >>> trl = TRL(measured=[thru,reflect,line], ideals=[None,+1,None])
-        
+
         See Also
         --------
-        determine_line 
+        determine_line
         determine_reflect
 
         """
@@ -2404,7 +2418,7 @@ class TRL(EightTerm):
         self.n_reflects = n_reflects
         self.estimate_line = estimate_line
         self.solve_reflect = solve_reflect
-        
+
         ## generate ideals, given various inputs
 
         if ideals is None:
@@ -2423,7 +2437,7 @@ class TRL(EightTerm):
             if ideals[k] is None:
                 # default  assume they are using flushshorts
                 ideals[k] =-1
-                
+
             if isinstance(ideals[k], Number):
                 ideal_reflect = measured[k].copy()
                 ideal_reflect.s[:,0,0] = ideals[k]
@@ -2431,7 +2445,7 @@ class TRL(EightTerm):
                 ideal_reflect.s[:,1,0] = 0
                 ideal_reflect.s[:,0,1] = 0
                 ideals[k] = ideal_reflect
-                
+
 
         for k in range(n_reflects+1,n_stds):
             if ideals[k] is None:
@@ -2646,7 +2660,7 @@ class NISTMultilineTRL(EightTerm):
             self.refl_offset = [self.refl_offset]
 
         if len(measured) != len(self.Grefls) + len(l):
-            raise ValueError("Amount of measurements doesn't match amount of line lengths and reflection coefficients")
+            raise ValueError(f"Amount of measurements {len(measured)} doesn't match amount of line lengths {len(l)} and reflection coefficients {len(self.Grefls)}")
 
         #Not used, but needed for Calibration class init
         ideals = measured
@@ -3125,7 +3139,7 @@ class NISTMultilineTRL(EightTerm):
                 R1 = S_thru[0,1]/denom
                 R2 = S_thru[1,0]/denom
             else:
-                raise ValueError('Unknown k_method: {}'.format(self.k_method))
+                raise ValueError(f'Unknown k_method: {self.k_method}')
 
             #Reference plane shift
             if self.ref_plane != 0:
@@ -3273,7 +3287,7 @@ class NISTMultilineTRL(EightTerm):
     def gamma(self):
         """
         Propagation constant of the solved line.
-        
+
         """
         try:
             return self._gamma
@@ -3439,7 +3453,7 @@ class UnknownThru(EightTerm):
 
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
-            The order must align with `ideals` list ( or use sloppy_input
+            The order must align with `ideals` list ( or use `sloppy_input`)
 
         switch_terms : tuple of :class:`~skrf.network.Network` objects
             the pair of switch terms in the order (forward, reverse)
@@ -3457,8 +3471,6 @@ class UnknownThru(EightTerm):
 
         thru_m = self.measured_unterminated[-1]
 
-        thru_approx  =  self.ideals[-1]
-
         # create one port calibration for all reflective standards
         port1_cal = OnePort(measured = p1_m, ideals = p1_i)
         port2_cal = OnePort(measured = p2_m, ideals = p2_i)
@@ -3469,8 +3481,6 @@ class UnknownThru(EightTerm):
 
         e_rf = port1_cal.coefs_ntwks['reflection tracking']
         e_rr = port2_cal.coefs_ntwks['reflection tracking']
-        X = port1_cal.error_ntwk
-        Y = port2_cal.error_ntwk
 
         # create a fully-determined 8-term cal just get estimate on k's sign
         # this is really inefficient, i need to work out the math on the
@@ -3496,8 +3506,8 @@ class UnknownThru(EightTerm):
         coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
+        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
 
         if self.switch_terms is not None:
             coefs.update({
@@ -4065,7 +4075,7 @@ class LRRM(EightTerm):
         elif self.match_fit == 'none' or self.match_fit is None:
             pass
         else:
-            raise ValueError('Unknown match_fit {}'.format(self.match_fit))
+            raise ValueError(f'Unknown match_fit {self.match_fit}')
 
         gamma_m = calc_gm(R, match_l, match_c)
 
@@ -4287,8 +4297,8 @@ class MRC(UnknownThru):
         # create single dictionary for all error terms
         coefs = {}
 
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
+        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
 
         coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
@@ -4929,12 +4939,510 @@ class LMR16(SixteenTerm):
 class Normalization(Calibration):
     """
     Simple Thru Normalization.
+
+    For calibration the S parameters of the network are divided by average of
+    the measured networks. The ideal networks are not used in the calibration.
     """
     def run(self):
         pass
     def apply_cal(self, input_ntwk):
         return input_ntwk/average(self.measured)
 
+class MultiportCal():
+    """
+    Multi-port VNA calibration using two-port calibration method.
+
+    cal_dict should be a dictionary with key being two-tuples of port numbers,
+    such as (0, 1), (0, 2), ...
+
+    For each key it should have another dictionary as value. The two required
+    keys are 'method' that should be the two-port calibration class that is used
+    to calibrate that two-port combination (for example SOLT, EightTerm, TRL)
+    and 'measured' which is a list of measured Networks. Other inputs required
+    by the two-port calibration should be given as additional keys (for example
+    'ideals', 'switch_terms', ...).
+
+    There should be one common port in all measurements. For example in case of
+    4-port calibration one possible choice would be to make three measurements
+    between ports: 0-1, 0-2, and 0-3.
+
+    The list of measured networks can be given as either two-ports, in which
+    case it's assumed that the two ports corresponds to the ports in the key, or
+    multi-ports in which case a subnetwork is taken for calibration according to
+    the key.
+
+    Example cal_dict for three port measurement:
+        {(0,1): {'method':SOLT, 'measured': [list of measured networks], 'ideals': [list of ideal networks]},
+         (0,2): {'method':SOLT, 'measured': [list of measured networks], 'ideals': [list of ideal networks]}
+        }
+
+    `isolation` is optional N-port network of all ports matched for isolation
+    calibration. If None, no isolation calibration is performed.
+
+    Parameters
+    --------------
+    cal_dict : dictionary
+        Dictionary of port pair keys as specified above.
+    isolation: :class:`~skrf.network.Network` or None
+        N-port measurement of all matched ports for isolation calibration.
+        None to skip isolation calibration.
+
+    See Also
+    --------
+    calibration.MultiportSOLT
+    """
+
+    family = 'Multiport'
+    def __init__(self, cal_dict, isolation=None):
+        if type(cal_dict) != dict:
+            raise ValueError("cal_dict not dictionary.")
+        nports = None
+        max_key_nports = 0
+        min_key_nports = float('inf')
+        z0 = None
+        frequency = None
+        for k, c in cal_dict.items():
+            if len(k) != 2:
+                raise ValueError("Invalid cal_dict key {}. Expected tuple of length two.".format(k))
+            if type(k[0]) != int or type(k[1]) != int:
+                raise ValueError("cal_dict key should be tuple of ints.")
+            max_key_nports = max(max_key_nports, max(k[0], k[1]))
+            min_key_nports = min(min_key_nports, min(k[0], k[1]))
+            if type(c) != dict:
+                raise ValueError("cal_dict[{}] not dictionary.".format(k))
+            if 'method' not in c:
+                raise ValueError("cal_dict[{}] missing key 'method'.".format(k))
+            if 'measured' not in c:
+                raise ValueError("cal_dict[{}] missing key 'measured'.".format(k))
+            for m in c['measured']:
+                if type(m) != Network:
+                    raise ValueError("Expected Network in cal_dict[{}]['measured']".format(k))
+                if nports is None:
+                    nports = m.nports
+                if m.nports not in [2, nports]:
+                    raise ValueError("Measurement have inconsistent number of ports.")
+                if z0 is None:
+                    z0 = m.z0[0,0]
+                elif m.z0[0,0] != z0:
+                    raise ValueError("Inconsistent z0 in measured.")
+                if frequency is None:
+                    frequency = m.frequency
+                elif m.frequency != frequency:
+                    raise ValueError("Inconsistent frequency in measured.")
+        self.nports = nports = max_key_nports + 1
+        if min_key_nports < 0:
+            raise ValueError("Negative port number found. Minimum should be zero.")
+        if min_key_nports != 0:
+            raise ValueError("Missing port 0. Make sure that ports are zero-indexed.")
+        if max_key_nports < 2:
+            raise ValueError("Less than three ports found. Use two-port or one-port calibration directly.")
+
+        if isolation is not None:
+            # Zero diagonal so that network can be simply subtracted
+            isolation = isolation.copy()
+            if isolation.nports != nports:
+                raise ValueError("Isolation network should have the same number of ports as measurements.")
+            for i in range(nports):
+                isolation.s[:,i,i] = 0
+        else:
+            s = npy.zeros((len(frequency), nports, nports), dtype=complex)
+            isolation = Network(s=s, z0=z0, frequency=frequency)
+        self.isolation = isolation
+        self.cal_dict = cal_dict
+        self.z0 = z0
+        self.frequency = frequency
+        self.cals = {}
+
+    def run(self):
+        """
+        Run the calibration algorithm.
+        """
+        nports = self.nports
+        p_count = defaultdict(int)
+        self.terminations = [None for i in range(nports)]
+        self._coefs = [{} for i in range(nports)]
+        for p in self.cal_dict.keys():
+            p_count[p[0]] += 1
+            p_count[p[1]] += 1
+        port_multiples = sorted(p_count.values())
+        if port_multiples[-2] != 1:
+            # It's easy to put `k` in non-repeated ports if one port is always used.
+            # I think this limitation could be removed if the `k` would be
+            # solved to be consistent in repeated ports.
+            raise ValueError("Invalid thru port combinations. One port should be common in all thru measurements.")
+        for e, p in enumerate(self.cal_dict.keys()):
+            c = self.cal_dict[p].copy()
+            if 'ideals' in c:
+                ideals = [i if i.nports == 2 else subnetwork(i, p) for i in c['ideals']]
+                c['ideals'] = ideals
+            c['measured'] = [m - subnetwork(self.isolation, p) if m.nports == 2 else subnetwork(m - self.isolation, p) for m in c['measured']]
+            k_side = 0
+            if p_count[p[0]] > p_count[p[1]]:
+                k_side = 1
+            method = c.pop('method')
+            self.run_2port(method, p, k_side, **c)
+
+    def run_2port(self, method, p, k_side, **kwargs):
+        r"""
+        Call the two-port calibration algorithm and populate multi-port error
+        coefficients for this port pair.
+
+        Parameters
+        ----------
+        method: Two-port calibration class
+            Use to calibrate the port pair.
+        p: tuple of int
+            Length two tuple of port indices in the pair.
+        k_side: int
+            Port to put 'k' coefficient in the pair.
+        \*\*kwargs: Keyword arguments
+            Passed to the calibration method.
+        """
+        cal = method(**kwargs)
+        cal.run()
+        self.cals[p] = cal
+
+        coefs = cal.coefs_8term
+        S1, S2 = self.coefs_to_ntwks(coefs, k_side=k_side)
+        one = npy.ones(coefs['k'].shape, dtype=complex)
+        for c in cal.coefs_8term:
+            if 'forward' in c:
+                c2 = c.replace('forward ', '')
+                if 'switch term' in c:
+                    self._coefs[p[1]][c2] = coefs[c]
+                else:
+                    self._coefs[p[0]][c2] = coefs[c]
+            elif 'reverse' in c:
+                c2 = c.replace('reverse ', '')
+                if 'switch term' in c:
+                    self._coefs[p[0]][c2] = coefs[c]
+                else:
+                    self._coefs[p[1]][c2] = coefs[c]
+            elif c == 'k':
+                self._coefs[p[k_side]][c] = coefs[c]
+                if 'k' not in self._coefs[p[not k_side]].keys():
+                    self._coefs[p[not k_side]][c] = one
+            else:
+                warn('Unknown coefficient in calibration {}'.format(c))
+
+        term1 = self.dut_termination(S1, coefs['reverse switch term'])
+        term2 = self.dut_termination(S2, coefs['forward switch term'])
+        f = self.frequency
+        self.terminations[p[0]] = Network(s=term1, z0=self.z0, frequency=f)
+        self.terminations[p[1]] = Network(s=term2, z0=self.z0, frequency=f)
+
+    @property
+    def coefs(self):
+        try:
+            return self._coefs
+        except(AttributeError):
+            self.run()
+            return self._coefs
+
+    @coefs.setter
+    def coefs(self, d):
+        self._coefs = d
+
+    def unterminate_2port(self, ntwk, p1, p2):
+        """
+        Unterminates switch terms from a raw measurement.
+
+        See Also
+        --------
+        calibration.unterminate
+        """
+        gamma_f = Network(s=self.coefs[p2]['switch term'])
+        gamma_r = Network(s=self.coefs[p1]['switch term'])
+        return unterminate(ntwk, gamma_f, gamma_r)
+
+    def terminate_2port(self, ntwk, p1, p2):
+        """
+        Terminate a network with switch terms.
+
+        See Also
+        --------
+        calibration.terminate
+        """
+        gamma_f = self.coefs[p2]['switch term']
+        gamma_r = self.coefs[p1]['switch term']
+        return terminate(ntwk, gamma_f, gamma_r)
+
+    def T_matrices(self, p1, p2):
+        """
+        Intermediate matrices used for embedding and de-embedding.
+
+        Returns
+        -------
+        T1,T2,T3,T4 : numpy ndarray
+        """
+        npoints = len(self.coefs[0]['k'])
+        one = npy.ones(npoints, dtype=complex)
+        zero = npy.zeros(npoints, dtype=complex)
+
+        Edf = self.coefs[p1]['directivity']
+        Esf = self.coefs[p1]['source match']
+        Erf = self.coefs[p1]['reflection tracking']
+        Edr = self.coefs[p2]['directivity']
+        Esr = self.coefs[p2]['source match']
+        Err = self.coefs[p2]['reflection tracking']
+        k1 = self.coefs[p1]['k']
+        k2 = self.coefs[p2]['k']
+
+        detX = Edf*Esf-Erf
+        detY = Edr*Esr-Err
+
+        T1 = npy.array([
+                [ -k1*detX, zero    ],
+                [ zero,  -k2*detY ]
+                ]).transpose(2,0,1)
+        T2 = npy.array([
+                [ k1*Edf,    zero ],
+                [ zero,  k2*Edr ]
+                ]).transpose(2,0,1)
+        T3 = npy.array([
+                [ -k1*Esf,   zero ],
+                [ zero, -k2*Esr ]
+                ]).transpose(2,0,1)
+        T4 = npy.array([
+                [ k1, zero ],
+                [ zero, k2   ]
+                ]).transpose(2,0,1)
+
+        return T1, T2, T3, T4
+
+    def apply_cal(self, ntwk):
+        """
+        Apply correction to a Network.
+        """
+        # A new copy of ntwk is created
+        ntwk = ntwk - self.isolation
+        caled = ntwk.copy()
+        # Use traveling definition since it can renormalize to negative real part impedance.
+        s_def = caled.s_def
+        caled.s_def = 'traveling'
+
+        fpoints = len(ntwk.frequency)
+        ports = npy.arange(self.nports)
+        port_combos = list(combinations(ports, 2))
+        for p in port_combos:
+            T1, T2, T3, T4 = self.T_matrices(p[0], p[1])
+
+            caled_2p = subnetwork(ntwk, p).copy()
+            caled_2p.s_def = 'traveling'
+
+            caled_2p = self.unterminate_2port(caled_2p, p[0], p[1])
+            caled_2p.s = linalg.inv(-caled_2p.s @ T3 + T1) @ (caled_2p.s @ T4 - T2)
+            z = npy.zeros((fpoints, 2), dtype=complex)
+            z[:,0] = self.terminations[p[0]].z[:,0,0]
+            z[:,1] = self.terminations[p[1]].z[:,0,0]
+            caled_2p.renormalize(z)
+            for ei, i in enumerate(p):
+                for ej, j in enumerate(p):
+                    caled.s[:, i, j] = caled_2p.s[:, ei, ej]
+
+        for i in range(self.nports):
+            caled.z0[:,i] = self.terminations[i].z[:,0,0]
+        caled.renormalize(ntwk.z0, s_def=s_def)
+
+        return caled
+
+    def embed(self, ntwk):
+        """
+        Embed an ideal response in the estimated error network[s]
+        """
+        fpoints = len(self.coefs[0]['k'])
+        nports = self.nports
+        nout = ntwk.copy()
+
+        Z = npy.zeros((fpoints, 2*nports, 2*nports), dtype=complex)
+
+        gammas = []
+        for e, c in enumerate(self.coefs):
+            gammas.append(Network(s=c['switch term'], frequency=nout.frequency, z0=50))
+            Z[:, e, e] = c['directivity']
+            Z[:, nports+e, nports+e] = c['source match']
+            Z[:, e, nports+e] = c['reflection tracking'] * c['k'] / self.coefs[0]['k']
+            Z[:, nports+e, e] = self.coefs[0]['k'] / c['k']
+
+        # Consistent internal port Z0.
+        nout.z0 = 50
+        Z = Network(s=Z, frequency=nout.frequency, z0=50)
+        nout = connect(Z, nports, nout, 0, nports)
+        nout = terminate_nport(nout, gammas)
+        nout += self.isolation
+        nout.z0 = ntwk.z0
+        return nout
+
+    def coefs_to_ntwks(self, coefs, k_side=0):
+        """
+        Two-port 8-term error coefficients to Networks.
+
+        Parameters
+        ----------
+        k_side: int, 0 or 1
+            Port to put 'k' coefficient.
+        """
+        npoints = len(coefs['k'])
+        one = npy.ones(npoints, dtype=complex)
+
+        Edf = coefs['forward directivity']
+        Esf = coefs['forward source match']
+        Erf = coefs['forward reflection tracking']
+        Edr = coefs['reverse directivity']
+        Esr = coefs['reverse source match']
+        Err = coefs['reverse reflection tracking']
+        k = coefs['k']
+
+        if k_side == 0:
+            S1 = npy.array([
+                    [ Edf,  Erf/k ],
+                    [ k,    Esf ]
+                    ]).transpose(2,0,1)
+
+            S2 = npy.array([
+                    [ Edr,  one ],
+                    [ Err,  Esr ]
+                    ]).transpose(2,0,1)
+        elif k_side == 1:
+            S1 = npy.array([
+                    [ Edf,  Erf ],
+                    [ one,    Esf ]
+                    ]).transpose(2,0,1)
+
+            S2 = npy.array([
+                    [ Edr,  one/k ],
+                    [ Err*k,  Esr ]
+                    ]).transpose(2,0,1)
+        else:
+            raise ValueError("Invalid k_side {}, expected 0 or 1.".format(k_side))
+        return (S1, S2)
+
+    def dut_termination(self, S, gamma):
+        """Impedance looking from DUT to VNA terminated with switch term."""
+        term = S[:,1,1] + (S[:,0,1] * S[:,1,0] * gamma) / (1 - S[:,0,0] * gamma)
+        return term
+
+class MultiportSOLT(MultiportCal):
+    """
+    Multi-port VNA calibration using two-port calibration method with one transmissive standard for each two-port pair.
+
+    `method` should be a two-port calibration method such as `EightTerm`,
+    `UnknownThru` or `SOLT`. This class calibrates a multi-port network using
+    the given two-port calibration method.
+
+    There should be `Nports - 1` thru standards and the number of other
+    standards depending on the number of standards required by the chosen
+    calibration method. Standards should be always given thrus first. Thru
+    standards are used to find the port connections during the calibration and
+    all standards should be N-ports.
+
+    There should be one common port in all thru measurements. For
+    example in case of 4-port calibration one possible choice would be to make
+    three thru measurements between ports: 0-1, 0-2, and 0-3.
+
+    If isolation calibration is used it should be not passed as an argument to
+    the two-port calibration and N-port isolation measurement should be instead
+    given as an argument for this class.
+
+    `switch_terms` should be a list of switch terms with nth entry being the
+    switch term an/bn with source from any other port. Note that in case of
+    two-port this is the reversed order than what two-port calibration would
+    require. If calibration is a 12-term calibration such as `SOLT` or
+    `TwelveTerm` no switch terms are required.
+
+    `thru_pos` argument can be used to change the order of thru given to the
+    calibration method. `auto` will try to determine it automatically from the
+    calibration method. Other options are `first` and `last`. Other standards
+    are given in the same order they are given to this class.
+
+    `cal_args` can be used to give addition arguments to the calibration method.
+    If no arguments are given it should be None, otherwise a dictionary of
+    arguments and values.
+
+    See Also
+    --------
+    calibration.MultiportCal
+        Lower level multi-port calibration class. This needs to be used for TRL
+        calibration as it has also lines between ports which doesn't fit the
+        interface of this class.
+    """
+
+    family = 'Multiport'
+    def __init__(self, method, measured, ideals, isolation=None, switch_terms=None, thru_pos='auto', cal_args=None):
+        self.ideals = ideals
+        self.measured = measured
+        self.nports = ideals[0].nports
+        nports = self.nports
+        if nports < 3:
+            raise ValueError("Too few ports in input networks. At least 3 required.")
+
+        self.switch_terms = switch_terms
+
+        if thru_pos == 'auto':
+            if method in [LRM, LRRM]:
+                thru_pos = 'first'
+            elif method in [SOLT, EightTerm, UnknownThru, MRC, TwelveTerm]:
+                thru_pos = 'last'
+            else:
+                raise ValueError("Unable to determine 'thru_pos' automatically. Set it manually to either 'first' or 'last'")
+        if thru_pos not in ['last', 'first']:
+            raise ValueError("thru_pos must be either 'first' or 'last'")
+
+        if cal_args is None:
+            cal_args = {}
+
+        for i in ideals:
+            if i.nports != self.nports:
+                raise ValueError("Inconsistent number of ports in ideals.")
+
+        if not issubclass(method, Calibration):
+            raise ValueError("method must be Calibration subclass.")
+        if issubclass(method, SixteenTerm):
+            warn("SixteenTerm calibration is reduced to 8-terms.")
+
+        if len(ideals) < nports - 1:
+            raise ValueError("Invalid number of ideals. Expected at least {} but got {}.".format(nports-1, len(ideals)))
+
+        self.thru_ports = []
+        for thru in ideals[:nports-1]:
+            nonzero = []
+            for i in range(nports):
+                for j in range(i+1, nports):
+                    if thru.s[-1, i, j] != 0:
+                        nonzero.append([i, j])
+            if len(nonzero) != 1:
+                raise ValueError("Invalid thru ideal. Thru should connect exactly two ports.")
+
+            self.thru_ports.append(tuple(nonzero[0]))
+
+        #Generate cal_dict in the format required by MultiportCal.
+        nports = self.nports
+        nthrus = nports - 1
+        cal_dict = {}
+        for e, p in enumerate(self.thru_ports):
+            ideals = [subnetwork(self.ideals[e], p)]
+            ideals_sol = [subnetwork(i, p) for i in self.ideals[nthrus:]]
+            ideals.extend(ideals_sol)
+            measured = [subnetwork(self.measured[e], p)]
+            measured_sol = [subnetwork(i, p) for i in self.measured[nthrus:]]
+            measured.extend(measured_sol)
+            if self.switch_terms is None:
+                sw_terms = None
+            else:
+                sw_terms = [self.switch_terms[i] for i in p][::-1]
+            if thru_pos == 'last':
+                ideals = ideals[1:] + [ideals[0]]
+                measured = measured[1:] + [measured[0]]
+            cal_dict[p] = {}
+            cal_dict[p]['method'] = method
+            cal_dict[p]['ideals'] = ideals
+            cal_dict[p]['measured'] = measured
+            if sw_terms is not None:
+                cal_dict[p]['switch_terms'] = sw_terms
+            for k, v in cal_args.items():
+                cal_dict[p][k] = v
+
+        super().__init__(cal_dict=cal_dict, isolation=isolation)
 
 ## Functions
 
@@ -5074,17 +5582,75 @@ def terminate(ntwk, gamma_f, gamma_r):
     m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0])
     return m
 
+def terminate_nport(ntwk, gammas):
+    """
+    Terminate N-port network with switch terms.
+
+    Note that for 2-port the order `gammas` is opposite of terminate.
+    Correct order for 2-port is [gamma_r, gamma_f].
+
+    See [1]_
+
+
+    Parameters
+    ----------
+    two_port : Network
+        an unterminated network.
+    gammas : list of 1-port Network
+        measured switch term.
+        gammas[i] = ai/bi sourced by any other port.
+
+    Returns
+    -------
+    ntwk :  Network object
+
+    See Also
+    --------
+    terminate
+
+    References
+    ----------
+
+    .. [1] "Formulations of the Basic Vector Network Analyzer Error
+            Model including Switch Terms" by Roger B. Marks
+    """
+    nin = ntwk.copy()
+    # Assign fixed z0 for connections for inner ports.
+    nin.z0 = 50
+    nout = ntwk.copy()
+    nports = ntwk.nports
+    fpoints = len(ntwk.frequency)
+    if len(gammas) != ntwk.nports:
+        raise ValueError("len(gammas) doesn't match the number of network ports")
+    zeros = npy.zeros(len(ntwk.s))
+    ones = npy.ones(len(ntwk.s))
+    for i in range(nports):
+        term = npy.zeros((fpoints, 2*nports, 2*nports), dtype=complex)
+        for j in range(nports):
+            if i == j:
+                term[:,nports+j,j] = ones
+                term[:,j,j+nports] = ones
+                continue
+            term[:,j,j] = gammas[j].s[:,0,0]
+            term[:,nports+j,j] = ones
+        net = Network(s=term, frequency=nin.frequency, z0=50)
+        net = connect(nin, 0, net, 0, nports)
+        for j in range(nports):
+            nout.s[:,j,i] = net.s[:,j,i]
+    nout.z0 = ntwk.z0
+    return nout
+
 def determine_line(thru_m, line_m, line_approx=None):
     r"""
     Determine S21 of a matched line.
 
     Given raw measurements of a `thru` and a matched `line` with unknown
-    s21, this will calculate the response of the line. This works for 
+    s21, this will calculate the response of the line. This works for
     lossy lines, and attenuators. The `line_approx`
     is an approximation to line, this used  to choose the correct
-    root sign. If left as None, it will be estimated from raw measurements, 
-    which requires your error networks to be well matched  (S_ij >>S_ii). 
-    
+    root sign. If left as None, it will be estimated from raw measurements,
+    which requires your error networks to be well matched  (S_ij >>S_ii).
+
 
     This is possible because two measurements can be combined to
     create a relationship of similar matrices, as shown below. Equating
@@ -5132,15 +5698,16 @@ def determine_line(thru_m, line_m, line_approx=None):
     if line_approx is None:
         # estimate line length, by assuming error networks are well
         # matched
-        line_approx = line_m/thru_m
-
+        line_approx_s21 = line_m.s[:,1,0] / thru_m.s[:,1,0]
+    else:
+        line_approx_s21 = line_approx.s[:,1,0]
 
     C = thru_m.inv**line_m
     # the eigen values of the matrix C, are equal to s12,s12^-1)
     # we need to choose the correct one
     w,v = linalg.eig(C.t)
     s12_0, s12_1 = w[:,0], w[:,1]
-    s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
+    s12 = find_correct_sign(s12_0, s12_1, line_approx_s21)
     found_line = line_m.copy()
     found_line.s = npy.array([[zero, s12],[s12,zero]]).transpose(2,0,1)
     return found_line
@@ -5150,30 +5717,33 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
                      line_approx=None, return_all=False):
     """
     Determine reflect from a thru, reflect, line measurements.
-    
-    This is used in the TRL algorithm, but is made modular for 
-    multi-line, multi-reflect options. 
-    
-    
+
+    This is used in the TRL algorithm, but is made modular for
+    multi-line, multi-reflect options.
+
+
     Parameters
     ----------
     thru_m : :class:`~skrf.network.Network`
         raw measurement of a thru
-    line_m : :class:`~skrf.network.Network`
-        raw measurement of a matched transmissive standard
     reflect_m: :class:`~skrf.network.Network`
         raw measurement of a reflect standard
+    line_m : :class:`~skrf.network.Network`
+        raw measurement of a matched transmissive standard
     reflect_approx : :class:`~skrf.network.Network`
         approximate One-port network for the reflect.  if None, then
         we assume its a flush short (gamma=-1)
     return_all: bool
         return all possible values fo reflect, one for each root-choice.
         useful for troubleshooting.
-        
+
     Returns
     -------
     reflect : :class:`~skrf.network.Network`
         a One-port network for the found reflect.
+
+    The equations are from "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual Six-Port Automatic Network Analyzer", G.F. Engen et al., 1979
+
     """
 
     #Call determine_line first to solve root choice of the propagation constant
@@ -5182,12 +5752,16 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     inv = linalg.inv
     rt = thru_m.t
     rd = line_m.t
+
+    # tt is equal to T from equation (24) in the paper
     tt = einsum('ijk,ikl -> ijl', rd, inv(rt))
 
     a = tt[:,1,0]
     b = tt[:,1,1]-tt[:,0,0]
     c = -tt[:,0,1]
 
+    # the sol1 and sol2 correspond to the ratios (r11/r21) and (r12/r22) from
+    # equations (30) and (31) in the paper
     sol1 = (-b-sqrt(b*b-4*a*c))/(2*a)
     sol2 = (-b+sqrt(b*b-4*a*c))/(2*a)
 

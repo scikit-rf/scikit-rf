@@ -1,11 +1,9 @@
 """
 skrf is an object-oriented approach to microwave engineering,
-implemented in Python. 
+implemented in Python.
 """
-# Python 3 compatibility
-from __future__ import absolute_import, print_function, division
 
-__version__ = '0.23.1'
+__version__ = '0.26.0'
 ## Import all  module names for coherent reference of name-space
 #import io
 
@@ -17,7 +15,6 @@ from . import media
 from . import circuit
 
 from . import calibration
-# from . import plotting
 from . import mathFunctions
 from . import tlineFunctions
 from . import taper
@@ -35,12 +32,11 @@ from .networkSet import *
 from .calibration import *
 from .util import *
 from .circuit import *
-# from .plotting import  *
 from .mathFunctions import *
 from .tlineFunctions import *
-from .io import * 
-from .constants import * 
-from .taper import * 
+from .io import *
+from .constants import *
+from .taper import *
 from .instances import *
 from .vectorFitting import *
 from .qfactor import *
@@ -52,12 +48,12 @@ try:
 except(ImportError):
     pass
 
-# try to import data but if it fails whatever. it fails if some pickles 
+# try to import data but if it fails whatever. it fails if some pickles
 # dont unpickle. but its not important
 try:
     from . import data
 except:
-    pass 
+    pass
 
 
 

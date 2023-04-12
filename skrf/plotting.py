@@ -62,25 +62,19 @@ import sys
 import getpass
 import warnings
 
-import matplotlib as mpl
-# if running on remote mode on a linux server which does not have a display (like Docker images for CI)
-# seems to cause problems only in Python2, so let's try reconfiguring the backend only in that case
-if os.name == 'posix' and not os.environ.get('DISPLAY', '') and mpl.rcParams['backend'] != 'agg' and sys.version.startswith('2'):
-    print('No display found. Using non-interactive Agg backend.')
-    # https://matplotlib.org/faq/usage_faq.html
-    if getpass.getuser() != 'jovyan':  # only if not running on Binder
-        mpl.use('Agg')
 import numpy as npy
+
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import ticker, rcParams
 from matplotlib.patches import Circle   # for drawing smith chart
 from matplotlib.pyplot import quiver
 from matplotlib.dates import date2num
+import matplotlib.tri as tri
 
 from . import network, frequency, calibration, networkSet, circuit
 from . import mathFunctions as mf
 from . util import now_string_2_dt
-import matplotlib.tri as tri
 
 try:
     import networkx as nx
@@ -88,7 +82,7 @@ except ImportError as e:
     pass
 
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
-SI_CONVERSION = dict([(key, 10**((8-i)*3)) for i, key in enumerate(SI_PREFIXES_ASCII)])
+SI_CONVERSION = {key: 10**((8-i)*3) for i, key in enumerate(SI_PREFIXES_ASCII)}
 
 
 def scale_frequency_ticks(ax: plt.Axes, funit: str):
@@ -114,8 +108,8 @@ def scale_frequency_ticks(ax: plt.Axes, funit: str):
         prefix = funit[0]
         scale = SI_CONVERSION[prefix]
     else:
-        raise ValueError("invalid funit {}".format(funit))
-    ticks_x = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * scale))
+        raise ValueError(f"invalid funit {funit}")
+    ticks_x = ticker.FuncFormatter(lambda x, pos: f'{x * scale:g}')
     ax.xaxis.set_major_formatter(ticks_x)
 
 
@@ -565,7 +559,7 @@ def plot_complex_polar(z: NumberLike,
 def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
                x_label: str = 'Real', y_label: str = 'Imaginary', title: str = 'Complex Plane',
                show_legend: bool = True, axis: str = 'equal', ax: Union[plt.Axes, None] = None,
-               force_chart: bool = False, draw_vswr: Union[List, bool, None] = None,
+               force_chart: bool = False, draw_vswr: Union[List, bool, None] = None, draw_labels: bool = False,
                *args, **kwargs):
     r"""
     plot complex data on smith chart.
@@ -597,6 +591,8 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
     draw_vswr : list of numbers, Boolean or None, optional
         draw VSWR circles. If True, default values are used.
         Default is None.
+    draw_labels : Boolean
+        annotate chart with impedance values
     \*args, \*\*kwargs : passed to pylab.plot
 
     See Also
@@ -614,7 +610,7 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
     # test if smith chart is already drawn
     if not force_chart:
         if len(ax.patches) == 0:
-            smith(ax=ax, smithR = smith_r, chart_type=chart_type, draw_vswr=draw_vswr)
+            smith(ax=ax, smithR = smith_r, chart_type=chart_type, draw_vswr=draw_vswr, draw_labels=draw_labels)
 
     plot_complex_rectangular(s, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,
@@ -705,7 +701,8 @@ def shade_bands(edges: NumberLike, y_range: Union[Tuple, None] = None,
     >>> rf.shade_bands([325,500,750,1100], alpha=.2)
     """
     cmap = plt.cm.get_cmap(cmap)
-    y_range=plt.gca().get_ylim()
+    if not isinstance(y_range, (tuple, list)) or (len(y_range) != 2):
+        y_range=plt.gca().get_ylim()
     axis = plt.axis()
     for k in range(len(edges)-1):
         plt.fill_between(
@@ -745,12 +742,12 @@ def save_all_figs(dir: str = './', format: Union[None, List[str]] = None,
         if format is None:
             plt.savefig(dir+fileName)
             if echo:
-                print((dir+fileName))
+                print(dir+fileName)
         else:
             for fmt in format:
                 plt.savefig(dir+fileName+'.'+fmt, format=fmt)
                 if echo:
-                    print((dir+fileName+'.'+fmt))
+                    print(dir+fileName+'.'+fmt)
 saf = save_all_figs
 
 
@@ -997,14 +994,14 @@ def __generate_plot_functions(self):
             #     plt.show()
 
         plot_prop_polar.__doc__ = r"""
-plot the Network attribute :attr:`%s` vs frequency.
+plot the Network attribute :attr:`{}` vs frequency.
 
 Parameters
 ----------
 m : int, optional
     first index of s-parameter matrix, if None will use all
 n : int, optional
-    secon index of the s-parameter matrix, if None will use all
+    second index of the s-parameter matrix, if None will use all
 ax : :class:`matplotlib.Axes` object, optional
     An existing Axes object to plot on
 show_legend : Boolean
@@ -1025,8 +1022,8 @@ initialization. This is accomplished by calling
 
 Examples
 --------
->>> myntwk.plot_%s(m=1,n=0,color='r')
-""" % (prop_name, prop_name)
+>>> myntwk.plot_{}(m=1,n=0,color='r')
+""".format(prop_name, prop_name)
         # setattr(self.__class__,'plot_%s_polar'%(prop_name), \
         setattr(self, 'plot_%s_polar'%(prop_name), plot_prop_polar)
 
@@ -1087,14 +1084,14 @@ Examples
             #    plt.show()
 
         plot_prop_rect.__doc__ = r"""
-plot the Network attribute :attr:`%s` vs frequency.
+plot the Network attribute :attr:`{}` vs frequency.
 
 Parameters
 ----------
 m : int, optional
     first index of s-parameter matrix, if None will use all
 n : int, optional
-    secon index of the s-parameter matrix, if None will use all
+    second index of the s-parameter matrix, if None will use all
 ax : :class:`matplotlib.Axes` object, optional
     An existing Axes object to plot on
 show_legend : Boolean
@@ -1115,8 +1112,8 @@ initialization. This is accomplished by calling
 
 Examples
 --------
->>> myntwk.plot_%s(m=1,n=0,color='r')
-""" % (prop_name, prop_name)
+>>> myntwk.plot_{}(m=1,n=0,color='r')
+""".format(prop_name, prop_name)
 
         # setattr(self.__class__,'plot_%s_complex'%(prop_name), \
         setattr(self,'plot_%s_complex'%(prop_name), \
@@ -1124,7 +1121,7 @@ Examples
 
 
         for func_name in COMPONENT_FUNC_DICT:
-            attribute = '%s_%s' % (prop_name, func_name)
+            attribute = f'{prop_name}_{func_name}'
             y_label = Y_LABEL_DICT[func_name]
 
             def plot_func(self,  m=None, n=None, ax=None,
@@ -1249,7 +1246,7 @@ Examples
     m : int, optional
         first index of s-parameter matrix, if None will use all
     n : int, optional
-        secon index of the s-parameter matrix, if None will use all
+        second index of the s-parameter matrix, if None will use all
     ax : :class:`matplotlib.Axes` object, optional
         An existing Axes object to plot on
     show_legend : Boolean

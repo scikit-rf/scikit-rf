@@ -33,7 +33,7 @@ class PNA(abcvna.VNA):
         :param address:
         :param kwargs:
         """
-        super(PNA, self).__init__(address, **kwargs)
+        super().__init__(address, **kwargs)
         self.resource.timeout = kwargs.get("timeout", 2000)
         self.scpi = keysight_pna_scpi.SCPI(self.resource)
         # self.use_binary()
@@ -173,7 +173,7 @@ class PNA(abcvna.VNA):
     def upload_twoport_calibration(self, cal, port1=1, port2=2, **kwargs):
         """
         upload a calibration to the vna, and set correction on all measurements
-        
+
         Parameters
         ----------
         cal : skrf.Calibration
@@ -185,12 +185,12 @@ class PNA(abcvna.VNA):
             "directivity": "EDIR",
             "source match": "ESRM",
             "reflection tracking": "ERFT",
-            
+
             # forward = (2, 1), reverse = (1, 2)
             "load match": "ELDM",
             "transmission tracking": "ETRT"
             "isolation": "EXTLK"
-        
+
         """
         self.active_channel = channel = kwargs.get("channel", self.active_channel)
 
@@ -246,7 +246,7 @@ class PNA(abcvna.VNA):
 
         ports = [int(port) for port in ports] if type(ports) in (list, tuple) else [int(ports)]
         if not name:
-            name = "{:}Port Network".format(len(ports))
+            name = f"{len(ports)}Port Network"
         if sweep:
             self.sweep(channel=channel)
 
@@ -291,7 +291,7 @@ class PNA(abcvna.VNA):
             meas_list = self.scpi.query_meas_name_list(channel)
             if len(meas_list) == 1:
                 continue  # if there isnt a single comma, then there aren't any measurements
-            parameters = dict([(meas_list[k], meas_list[k + 1]) for k in range(0, len(meas_list) - 1, 2)])
+            parameters = {meas_list[k]: meas_list[k + 1] for k in range(0, len(meas_list) - 1, 2)}
 
             meas_numbers = self.scpi.query_meas_number_list()
             for mnum in meas_numbers:
@@ -407,11 +407,11 @@ class PNA(abcvna.VNA):
             except ValueError:
                 pass
 
-        forward_name = "CH{:}_FS_P{:d}_{:d}".format(channel, p1, max_trace + 1)
-        reverse_name = "CH{:}_RS_P{:d}_{:d}".format(channel, p2, max_trace + 2)
+        forward_name = f"CH{channel}_FS_P{p1:d}_{max_trace + 1:d}"
+        reverse_name = f"CH{channel}_RS_P{p2:d}_{max_trace + 2:d}"
 
-        self.create_meas(forward_name, 'a{:}b{:},{:}'.format(p2, p2, p1))
-        self.create_meas(reverse_name, 'a{:}b{:},{:}'.format(p1, p1, p2))
+        self.create_meas(forward_name, f'a{p2}b{p2},{p1}')
+        self.create_meas(reverse_name, f'a{p1}b{p1},{p2}')
 
         self.sweep(channel=channel)
 

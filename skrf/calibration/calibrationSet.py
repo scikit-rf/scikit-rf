@@ -1,5 +1,3 @@
-
-
 """
 .. module:: skrf.calibration.calibrationSet
 ================================================================
@@ -48,7 +46,7 @@ def dot_product(ideals, measured_sets, *args, **kwargs):
 
     return cal_list
 
-class CalibrationSet(object):
+class CalibrationSet:
     """
     A set of Calibrations
 
@@ -105,10 +103,10 @@ class CalibrationSet(object):
         """
         """
         try:
-            [k.__getattribute__(prop).__getattribute__(func)\
+            [getattr(getattr(k, prop), func) \
                 (*args, **kwargs) for k in self.measured_sets]
         except (TypeError):
-            return [k.__getattribute__(prop).__getattribute__(func) \
+            return [getattr(getattr(k, prop), func) \
                 for k in self.measured_sets]
 
     def run(self):
@@ -140,6 +138,3 @@ class Dot(CalibrationSet):
             cal = self.cal_class(ideals=ideals, measured= measured,
                                  *args,**kwargs)
             self.cal_list.append(cal)
-
-
-

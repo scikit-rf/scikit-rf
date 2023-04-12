@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 coaxial (:mod:`skrf.media.coaxial`)
 ============================================================
@@ -49,7 +48,7 @@ class Coaxial(DistributedCircuit, Media):
     Dout : number, or array-like
         outer conductor diameter, in m
     epsilon_r : number, or array-like, optional
-        relative permittivity of the dielectric medium. 
+        relative permittivity of the dielectric medium.
         Default is 1.
     tan_delta : number, or array-like, optional
         loss tangent of the dielectric medium.
@@ -78,7 +77,6 @@ class Coaxial(DistributedCircuit, Media):
                  epsilon_r: NumberLike = 1, tan_delta: NumberLike = 0, 
                  sigma: NumberLike = INF,
                  *args, **kwargs):
-
         Media.__init__(self, frequency=frequency,z0_port=z0_port)
 
         self.Dint, self.Dout = Dint,Dout
@@ -119,7 +117,7 @@ class Coaxial(DistributedCircuit, Media):
         VF : number, or array-like. optional
             Velocity Factor VF [VF]_. The default is 1.
             If passed as an array, should be of same size than the frequency.
-            
+
         Returns
         -------
         media : :class:`~skrf.media.media.Media`
@@ -130,9 +128,9 @@ class Coaxial(DistributedCircuit, Media):
 
         """
         # test size of parameters
-        if size(array(att, dtype="object")) not in (1, size(array(frequency, dtype="object"))):
+        if size(array(att, dtype="object")) not in (1, size(frequency.f)):
             raise ValueError('Attenuation should be scalar or of same size that the frequency.')
-    
+
         # create gamma
         if unit in ('dB/m', 'db/m'):
             alpha = db_2_np(att)
@@ -191,7 +189,7 @@ class Coaxial(DistributedCircuit, Media):
 
         Returns
         -------
-        media : :class:`~skrf.media.media.Media`            
+        media : :class:`~skrf.media.media.Media`
         """
         ep= epsilon_0*epsilon_r
 
@@ -307,7 +305,7 @@ class Coaxial(DistributedCircuit, Media):
         Distributed conductance G, in S/m
 
         Returns
-        -------        
+        -------
         G : number, or array-like
             distributed conductance, in S/m
 

@@ -6,5 +6,3 @@ notebooks:
 	done
 	cd tutorials;ipython nbconvert --to rst *.ipynb
 	sed -i 's/``/`/g' tutorials/*.rst
-
-
