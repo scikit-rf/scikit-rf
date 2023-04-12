@@ -310,7 +310,7 @@ class RectangularWaveguide(Media):
         >>> wg.rho = 'al'
         >>> wg.rho = 'aluminum'
         """
-        if self.roughness != None:
+        if self.roughness is not None:
             delta = skin_depth(self.frequency.f, self._rho, self.mu_r)
             k_w = 1. +exp(-(delta/(2*self.roughness))**1.6)
             return self._rho*k_w**2

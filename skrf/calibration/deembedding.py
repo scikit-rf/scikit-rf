@@ -1927,7 +1927,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                     out = out ** spd
         else:
             pd = np.zeros((n, X, X), dtype = complex)
-            if port != None:
+            if port is not None:
                 i = port
                 delay = np.exp(1j * 2. * np.pi * f * TD[i] / 2.)
                 if i < X//2:

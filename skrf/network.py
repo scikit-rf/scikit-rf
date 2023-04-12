@@ -3921,7 +3921,7 @@ class Network:
             center_to_dc = not bandpass
         else:
             center_to_dc = None
-        if window != None:
+        if window is not None:
             w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
         else:
             w = self
@@ -5234,19 +5234,19 @@ def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool 
         p31 = p13.flipped()
         p32 = p23.flipped()
 
-    if p12 != None:
+    if p12 is not None:
         s11 = p12.s11
         s12 = p12.s12
         s21 = p12.s21
         s22 = p12.s22
 
-    if p13 != None:
+    if p13 is not None:
         s11 = p13.s11
         s13 = p13.s12
         s31 = p13.s21
         s33 = p13.s22
 
-    if p23 != None:
+    if p23 is not None:
         s22 = p23.s11
         s23 = p23.s12
         s32 = p23.s21
