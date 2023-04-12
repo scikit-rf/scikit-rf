@@ -285,11 +285,10 @@ class CPWTestCase(unittest.TestCase):
         # cpw line on 1.5mm FR-4 substrate
         freq = Frequency(1, 1, 1, 'MHz')
         with self.assertWarns(RuntimeWarning) as context:
-            cpw = CPW(frequency = freq, z0 = 50., w = 3.0e-3, s = 0.3e-3, t = 35e-6,
+            cpw = CPW(frequency = freq, z0_port = 50., w = 3.0e-3, s = 0.3e-3, t = 35e-6,
                        ep_r = 4.5, rho = 1.7e-8)
 
-            with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
-                line = cpw.line(d = 25e-3, unit = 'm', embed = True, z0 = cpw.Z0)
+            line = cpw.line(d = 25e-3, unit = 'm')
 
     def test_zero_thickness(self):
         """
