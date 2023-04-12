@@ -112,12 +112,14 @@ class CircuitClassMethods(unittest.TestCase):
         assert_array_almost_equal(opn.s, opn_ref.s)
 
     def test_series_impedance(self):
+        z0s = [1, 50]
         Zs = [1, 1 + 1j, rf.INF]
-        for Z in Zs:
-            assert_array_almost_equal(
-                rf.Circuit.SeriesImpedance(self.freq, Z, 'imp').s,
-                self.media.resistor(Z).s
-                )
+        for z0 in z0s:
+            for Z in Zs:
+                assert_array_almost_equal(
+                    rf.Circuit.SeriesImpedance(self.freq, Z, 'imp', z0=z0).s,
+                    self.media.resistor(Z, z0=z0).s
+                    )
 
         # Z=0 is a thru
         assert_array_almost_equal(
@@ -126,12 +128,14 @@ class CircuitClassMethods(unittest.TestCase):
             )
 
     def test_shunt_admittance(self):
+        z0s = [1, 50]
         Ys = [1, 1 + 1j, rf.INF]
-        for Y in Ys:
-            assert_array_almost_equal(
-                rf.Circuit.ShuntAdmittance(self.freq, Y, 'imp').s,
-                self.media.shunt(self.media.load(rf.zl_2_Gamma0(self.media.z0, 1/Y))).s
-                )
+        for z0 in z0s:
+            for Y in Ys:
+                assert_array_almost_equal(
+                    rf.Circuit.ShuntAdmittance(self.freq, Y, 'imp', z0=z0).s,
+                    self.media.shunt(self.media.load(rf.zl_2_Gamma0(z0, 1/Y))).s
+                    )
 
         # Y=INF is a a 2-ports short, aka a ground
         assert_array_almost_equal(

@@ -68,6 +68,16 @@ class NetworkTestCase(unittest.TestCase):
         self.DUT2 = rf.concat_ports([l2, l2, l2, l2], port_order='first')
         self.Meas2 = rf.concat_ports([l3, l3, l3, l3], port_order='first')
 
+    def test_network_copy(self):
+        n = self.ntwk1
+        n2 = n.copy()
+        self.assertEqual( n.frequency, n2.frequency)
+        self.assertNotEqual( id(n.frequency), id(n2.frequency))
+        self.assertNotEqual( id(n.frequency.f), id(n2.frequency.f))
+
+        n.frequency.f[0] = 0
+        self.assertNotEqual(n2.frequency.f[0], 0)
+
     def test_two_port_reflect(self):
         number_of_data_points = 10
         f = rf.Frequency.from_f(np.linspace(2e6, 3e6, number_of_data_points), unit="Hz")
