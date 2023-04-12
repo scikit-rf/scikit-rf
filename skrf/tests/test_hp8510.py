@@ -28,7 +28,7 @@ class TestHP8510SweepPlan(unittest.TestCase):
     def test_800pt_swp(self):
         """ Test: magic size - 1
         """
-        test_hz_0 = np.linspace(100,1000,801)
+        test_hz_0 = np.linspace(100,1000,800)
         test_sp_0 = SweepPlan.from_hz(test_hz_0)
         assert test_sp_0._matches_f_list(test_hz_0)
 
@@ -39,10 +39,10 @@ class TestHP8510SweepPlan(unittest.TestCase):
          test_sp_0 = SweepPlan.from_hz(test_hz_0)
          assert test_sp_0._matches_f_list(test_hz_0)
 
-    def test_801pt_swp(self):
+    def test_802pt_swp(self):
          """ Test: magic size + 1
          """
-         test_hz_0 = np.linspace(100,1000,801)
+         test_hz_0 = np.linspace(100,1000,802)
          test_sp_0 = SweepPlan.from_hz(test_hz_0)
          assert test_sp_0._matches_f_list(test_hz_0)
 

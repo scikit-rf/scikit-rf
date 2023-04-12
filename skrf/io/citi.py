@@ -14,8 +14,6 @@ Citi class and utilities
 
 """
 import numpy as np
-
-import numpy as np
 import typing
 from ..util import get_fid
 from ..frequency import Frequency

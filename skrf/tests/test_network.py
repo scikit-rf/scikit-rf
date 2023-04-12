@@ -124,7 +124,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(len(gated)== len(ntwk))
 
 
-    def test_time_transform(self):
+    def test_time_transform_v2(self):
         spb = (4, 5)
         data_rate = 5e9
         num_taps = (100, 101)

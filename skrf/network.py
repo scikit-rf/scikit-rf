@@ -167,7 +167,6 @@ import sys
 import re
 import zipfile
 from copy import deepcopy as copy
-from numbers import Number
 from itertools import product
 
 import numpy as npy

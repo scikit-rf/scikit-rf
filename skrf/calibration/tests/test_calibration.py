@@ -2,8 +2,6 @@ import unittest
 import os
 import warnings
 import pickle
-import pytest
-
 import skrf as rf
 import numpy as npy
 from numpy.random  import rand, uniform
