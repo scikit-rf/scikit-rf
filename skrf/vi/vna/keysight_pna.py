@@ -120,7 +120,7 @@ class PNA(abcvna.VNA):
         channels_to_sweep = kwargs.get("channels", None)
         if not channels_to_sweep:
             channels_to_sweep = kwargs.get("channel", "all")
-        if not type(channels_to_sweep) in (list, tuple):
+        if type(channels_to_sweep) not in (list, tuple):
             channels_to_sweep = [channels_to_sweep]
         channels = self.scpi.query_available_channels()
 

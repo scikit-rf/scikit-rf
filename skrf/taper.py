@@ -279,7 +279,8 @@ class SmoothStep(Taper1D):
         Smoothstep Taper Constructor.
         """
 
-        f = lambda x:  3*x**2 - 2*x**3
+        def f(x):
+            return 3 * x ** 2 - 2 * x ** 3
         opts = dict(f=f, f_is_normed=True)
         kw.update(opts)
         super().__init__(**kw)

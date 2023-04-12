@@ -214,7 +214,7 @@ class Citi():
         networks = []
 
         # should find the frequency parameter
-        if not 'freq' in [it.lower() for it in self._params.keys()]:
+        if 'freq' not in [it.lower() for it in self._params.keys()]:
             raise ValueError('Frequency points not found')
 
         # no VAR except for freq has been found

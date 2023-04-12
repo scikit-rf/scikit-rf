@@ -791,7 +791,7 @@ def zva_dat_2_ntwks(filename):
             elif 's22' in h.lower() and 're' in h.lower():
                 s[:,1,1] = d[:,k+1] #+ 1j*d[:,k+2]
 
-    elif 'db' in header.lower() and not 'deg' in header.lower():
+    elif 'db' in header.lower() and "deg" not in header.lower():
         # this is a cvs in db format (no deg values)
         # -> conversion required
         s = npy.zeros((len(f),2,2), dtype=complex)

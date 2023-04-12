@@ -467,8 +467,8 @@ class NetworkSet:
 
 
         """
-        fget = lambda self: fon(self.ntwk_set,func,network_property_name,\
-                name = self.name)
+        def fget(self):
+            return fon(self.ntwk_set, func, network_property_name, name=self.name)
         setattr(self.__class__,func.__name__+'_'+network_property_name,\
                 property(fget))
 
@@ -792,7 +792,8 @@ class NetworkSet:
         from numpy import frompyfunc
         from scipy import stats
 
-        gimme_norm = lambda x: stats.norm(loc=0,scale=x).rvs(1)[0]
+        def gimme_norm(x):
+            return stats.norm(loc=0, scale=x).rvs(1)[0]
         ugimme_norm = frompyfunc(gimme_norm,1,1)
 
         s_deg_rv = npy.array(map(ugimme_norm, self.std_s_deg.s_re), dtype=float)
@@ -1278,7 +1279,7 @@ class NetworkSet:
 
         """
         # checking interpolating param and values
-        if not param in self.params:
+        if param not in self.params:
             raise ValueError(f'Parameter {param} is not found in the NetworkSet params.')
         if isinstance(x, Number):
             if not (min(self.coords[param]) < x < max(self.coords[param])):
@@ -1294,7 +1295,7 @@ class NetworkSet:
                     raise ValueError(f'Parameter {p} is not found in the NetworkSet params.')
 
                 # check if each sub-param exist in the parameters
-                if not v in self.coords[p]:  # also deals with string case
+                if v not in self.coords[p]:  # also deals with string case
                     raise ValueError(f'Parameter {p} value {v} is not found in the NetworkSet params.')
 
 

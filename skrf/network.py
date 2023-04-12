@@ -4745,7 +4745,8 @@ def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
     # if ntwk list is longer than 2, recursively call myself
     # until we are done
     if len(ntwk_list) > 2:
-        f = lambda x, y: concat_ports([x, y], port_order='first')
+        def f(x, y):
+            return concat_ports([x, y], port_order='first')
         out = reduce(f, ntwk_list)
         # if we want to renumber ports, we have to wait
         # until after the recursive calls
