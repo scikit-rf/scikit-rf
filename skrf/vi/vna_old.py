@@ -1859,9 +1859,7 @@ class VectorStar(PNA):
             for k in translation_dict:
                 meas = meas.replace(k,translation_dict[k])
 
-            self.write('calc%i:par%i:def:usr %s,%s,port%s'%(self.channel,
-                                                            self.ntraces+1,
-                                                            meas, port))
+            self.write(f'calc{self.channel}:par{self.ntraces+1}:def:usr {meas},port{port}')
 
     def get_active_trace_num(self):
         return int(self.ask(':calc%i:par:sel?'%self.channel))
