@@ -762,6 +762,7 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
 
 
     def test_non_exact_float(self):
+        # see gh-895
         cal= NISTMultilineTRL(
             measured = self.measured[:3],
             Grefls = [-1],
