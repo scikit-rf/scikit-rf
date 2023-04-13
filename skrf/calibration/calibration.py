@@ -2340,13 +2340,16 @@ class TRL(EightTerm):
         used if more than one line is passed. A multi-reflect algorithm
         is used if multiple reflects are passed, see `n_reflects` argument.
 
-        All of the `ideals` can be individually set to None, or the entire
-        list set to None (`ideals=None`). For each ideal set to None
+        The algorithm requires a flush thru. For a TRL calibration with a
+        non-flush thru, use :class:`NISTMultilineTRL`.
+
+        All of the `ideals` can be individually set to `None`, or the entire
+        list set to `None` (`ideals=None`). For each ideal set to `None`,
         the following assumptions are made:
 
         * thru : flush thru
         * reflect : flush shorts
-        * line : and approximately  90deg  matched line (can be lossy)
+        * line : an approximately 90deg matched line (can be lossy)
 
         The reflect ideals can also be given as a +-1.
 
@@ -2410,6 +2413,7 @@ class TRL(EightTerm):
         --------
         determine_line
         determine_reflect
+        NISTMultilineTRL
 
         """
         #warn('Value of Reflect is not solved for yet.')
@@ -5647,8 +5651,8 @@ def determine_line(thru_m, line_m, line_approx=None):
     Given raw measurements of a `thru` and a matched `line` with unknown
     s21, this will calculate the response of the line. This works for
     lossy lines, and attenuators. The `line_approx`
-    is an approximation to line, this used  to choose the correct
-    root sign. If left as None, it will be estimated from raw measurements,
+    is an approximation to line, this used to choose the correct
+    root sign. If left as `None`, it will be estimated from raw measurements,
     which requires your error networks to be well matched  (S_ij >>S_ii).
 
 
@@ -5677,7 +5681,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     Parameters
     ----------
     thru_m : :class:`~skrf.network.Network`
-        raw measurement of a thru
+        raw measurement of a flush thru
     line_m : :class:`~skrf.network.Network`
         raw measurement of a matched transmissive standard
     line_approx : :class:`~skrf.network.Network`
