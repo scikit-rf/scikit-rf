@@ -3146,7 +3146,7 @@ class NISTMultilineTRL(EightTerm):
                 try:
                     shift1 = exp(-2*gamma[m]*self.ref_plane[0])
                     shift2 = exp(-2*gamma[m]*self.ref_plane[1])
-                except TypeError:
+                except (TypeError, IndexError):
                     shift1 = exp(-2*gamma[m]*self.ref_plane)
                     shift2 = exp(-2*gamma[m]*self.ref_plane)
                 A1 *= shift1
@@ -3163,7 +3163,7 @@ class NISTMultilineTRL(EightTerm):
                     raise ValueError('Only one of c0 or z0_line can be given.')
                 try:
                     c0m = self.c0[m]
-                except TypeError:
+                except (TypeError, IndexError):
                     c0m = self.c0
                 z0[m] = gamma[m]/(1j*2*npy.pi*freqs[m]*c0m)
             else:
@@ -3171,12 +3171,12 @@ class NISTMultilineTRL(EightTerm):
                 if self.z0_line is not None:
                     try:
                         z0[m] = self.z0_line[m]
-                    except TypeError:
+                    except (TypeError, IndexError):
                         z0[m] = self.z0_line
                 else:
                     try:
                         z0[m] = self.z0_ref[m]
-                    except TypeError:
+                    except (TypeError, IndexError):
                         z0[m] = self.z0_ref
 
             #Error matrices
