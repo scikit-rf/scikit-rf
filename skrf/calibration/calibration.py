@@ -2638,7 +2638,7 @@ class NISTMultilineTRL(EightTerm):
         self.refl_offset = refl_offset
         self.ref_plane = ref_plane
         self.er_est = er_est
-        self.l = l
+        self.l = [float(v) for v in l] # cast to float, see gh-
         self.Grefls = Grefls
         self.gamma_root_choice = gamma_root_choice
         self.k_method = k_method
