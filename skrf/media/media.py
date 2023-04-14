@@ -231,6 +231,10 @@ class Media(ABC):
     # left for backward compatibility
     @property
     def Z0(self):
+        # warns of deprecation
+        warnings.warn('Use of `Z0` (uppercase) is deprecated.\n'
+                      'Use `z0` (lowercase) instead.',
+          DeprecationWarning, stacklevel = 2)
         return self.z0
 
 
@@ -870,7 +874,7 @@ class Media(ABC):
         """
         if embed:
             # warns of deprecation
-            warnings.warn('Use of`embed` is deprecated.\n'
+            warnings.warn('Use of `embed` is deprecated.\n'
                           'Use the media port impedance `z0_port` instead.',
               DeprecationWarning, stacklevel = 2)
             

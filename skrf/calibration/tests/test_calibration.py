@@ -25,9 +25,9 @@ NPTS = 1
 # WR10/WG27/R900 75 to 110 GHz, 0.1x0.05 inch (2.54x1.27 mm)
 # z0 from 610 to 446 ohm
 WG_lossless = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'),
-                                      a=100*rf.mil, z0_transition=50)
+                                      a=100*rf.mil, z0_override=50)
 WG = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*rf.mil,
-                                      rho='gold', z0_transition=50)
+                                      rho='gold', z0_override=50)
 
 
 class DetermineTest(unittest.TestCase):

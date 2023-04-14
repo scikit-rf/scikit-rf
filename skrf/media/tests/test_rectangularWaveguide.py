@@ -31,7 +31,7 @@ class MediaTestCase(unittest.TestCase):
         wg = RectangularWaveguide(
             frequency = qucs_ntwk.frequency,
             a = 100*mil,
-            z_port = 50.
+            z0_override = 50.
             )
         skrf_ntwk = wg.line(200*mil,'m')
         self.assertEqual(qucs_ntwk, skrf_ntwk)
@@ -48,7 +48,7 @@ class MediaTestCase(unittest.TestCase):
         wg = RectangularWaveguide(
             frequency = ntwk.frequency,
             a=15*mil,
-            z0=50,
+            z0_override=50,
             rho = 1/(3.8e7),
             )
         self.assertTrue(
@@ -64,7 +64,7 @@ class MediaTestCase(unittest.TestCase):
         wg = RectangularWaveguide(
             ntwk.frequency,
             a=15*mil,
-            z0=50,
+            z0_override=50,
             rho = 1/(3.8e7),
             roughness = 100e-9,
             )
