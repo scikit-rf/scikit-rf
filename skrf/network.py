@@ -4279,7 +4279,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     if ntwkB.nports == 2 and ntwkA.nports > 2 and num == 1:
         from_ports = list(range(ntwkC.nports))
         to_ports = list(range(ntwkC.nports))
-        to_ports.pop(k);
+        to_ports.pop(k)
         to_ports.append(k)
 
         ntwkC.renumber(from_ports=from_ports,

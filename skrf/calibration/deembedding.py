@@ -1795,7 +1795,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
     def thru(self, n):
-        out = n.copy();
+        out = n.copy()
         out.s[:, 0, 0] = 0
         out.s[:, 1, 0] = 1
         out.s[:, 0, 1] = 1
