@@ -49,7 +49,8 @@ class PlotTool(HasTraits):
 
     def _apply_title_fired(self):
         plb.title(self.title)
-        plb.draw();plb.show()
+        plb.draw()
+        plb.show()
 
     view = View(
         Group(

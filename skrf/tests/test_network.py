@@ -1327,15 +1327,19 @@ class NetworkTestCase(unittest.TestCase):
     def test_noise_deembed(self):
 
 
-        f1_ =[75.5, 75.5] ; f2_=[75.5, 75.6] ; npt_ = [1,2]     # single freq and multifreq
+        f1_ =[75.5, 75.5]
+        f2_=[75.5, 75.6]
+        npt_ = [1,2]  # single freq and multifreq
         for f1,f2,npt in zip (f1_,f2_,npt_) :
           freq=rf.Frequency(f1,f2,npt,'ghz')
           ntwk4_n = rf.Network(os.path.join(self.test_dir,'ntwk4_n.s2p'), f_unit='GHz').interpolate(freq)
           ntwk4 = rf.Network(os.path.join(self.test_dir,'ntwk4.s2p'),f_unit='GHz').interpolate(freq)
           thru = rf.Network(os.path.join(self.test_dir,'thru.s2p'),f_unit='GHz').interpolate(freq)
 
-          ntwk4_thru = ntwk4 ** thru                  ;ntwk4_thru.name ='ntwk4_thru'
-          retrieve_thru =  ntwk4.inv ** ntwk4_thru    ;retrieve_thru.name ='retrieve_thru'
+          ntwk4_thru = ntwk4 ** thru
+          ntwk4_thru.name ='ntwk4_thru'
+          retrieve_thru =  ntwk4.inv ** ntwk4_thru
+          retrieve_thru.name ='retrieve_thru'
           self.assertEqual(retrieve_thru, thru)
           self.assertTrue(ntwk4_thru.noisy)
           self.assertTrue(retrieve_thru.noisy)
@@ -1343,8 +1347,10 @@ class NetworkTestCase(unittest.TestCase):
           self.assertTrue((abs(thru.rn    - retrieve_thru.rn)           < 1.e-6).all(), 'rn not retrieved by noise deembed')
           self.assertTrue((abs(thru.z_opt - retrieve_thru.z_opt)        < 1.e-6).all(), 'noise figure does not match original spec')
 
-          ntwk4_n_thru = ntwk4_n ** thru                    ;ntwk4_n_thru.name ='ntwk4_n_thru'
-          retrieve_n_thru =  ntwk4_n.inv ** ntwk4_n_thru    ;retrieve_n_thru.name ='retrieve_n_thru'
+          ntwk4_n_thru = ntwk4_n ** thru
+          ntwk4_n_thru.name ='ntwk4_n_thru'
+          retrieve_n_thru =  ntwk4_n.inv ** ntwk4_n_thru
+          retrieve_n_thru.name ='retrieve_n_thru'
           self.assertTrue(ntwk4_n_thru.noisy)
           self.assertEqual(retrieve_n_thru, thru)
           self.assertTrue(ntwk4_n_thru.noisy)
@@ -1355,7 +1361,9 @@ class NetworkTestCase(unittest.TestCase):
 
           tuner, x,y,g = tuner_constellation()
           newnetw = thru.copy()
-          nfmin_set=4.5; gamma_opt_set=complex(.7,-0.2); rn_set=1
+          nfmin_set=4.5
+          gamma_opt_set=complex(.7,-0.2)
+          rn_set=1
           newnetw.set_noise_a(thru.noise_freq, nfmin_db=nfmin_set, gamma_opt=gamma_opt_set, rn=rn_set )
           z = newnetw.nfdb_gs(g)[:,0]
           freq = thru.noise_freq.f[0]

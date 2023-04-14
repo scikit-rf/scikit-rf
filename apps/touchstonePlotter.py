@@ -66,7 +66,8 @@ class TouchstonePlotter(HasTraits):
             f'plot_{self.param}_{form}')(m=m, n=n)
 
 
-        plb.draw();plb.show()
+        plb.draw()
+        plb.show()
 
     view = View(
         Item('cur_dir'),
