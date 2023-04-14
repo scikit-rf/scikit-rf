@@ -5,7 +5,7 @@ import skrf
 
 try:
     from skrf.vi.vna import VectorStar
-except:
+except Exception:
     pytest.skip("visa failed to import, skipping")
 
 class VectorStarTestCase(unittest.TestCase):

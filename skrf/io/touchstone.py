@@ -350,11 +350,11 @@ class Touchstone:
         p2 = re.compile(r'\s*(\d*\.?\d*)\s*(\w*)')
         var_dict = {}
         for k in re.findall(p1, comments):
-            var, value = k.split('=')
-            var=var.rstrip()
             try:
+                var, value = k.split('=')
+                var=var.rstrip()
                 var_dict[var] = p2.match(value).groups()
-            except:
+            except ValueError:
                 pass
         return var_dict
 

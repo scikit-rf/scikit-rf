@@ -272,7 +272,7 @@ class Calibration:
                         self.measured[0].frequency)
                     print('Success')
 
-                except:
+                except Exception:
                     raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].'))
 
 
@@ -613,7 +613,7 @@ class Calibration:
         try:
             return self.coefs_ntwks['directivity']/\
                    self.coefs_ntwks['reflection tracking']
-        except:
+        except Exception:
             pass
         try:
             out = {}
@@ -622,7 +622,7 @@ class Calibration:
                     self.coefs_ntwks[direction + ' directivity']/\
                     self.coefs_ntwks[direction + ' reflection tracking']
             return out
-        except:
+        except Exception:
             raise ValueError('cant find error coefs')
 
 

@@ -6,7 +6,7 @@ import skrf
 
 try:
     from skrf.vi.sa import HP8500
-except:
+except Exception:
     pytest.skip("visa failed to import, skipping")
 
 class HP8500Test(unittest.TestCase):

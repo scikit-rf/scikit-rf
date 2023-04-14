@@ -5,7 +5,7 @@ import skrf
 
 try:
     from skrf.vi.vna import PNA
-except:
+except Exception:
     pytest.skip("visa failed to import, skipping")
 
 class PNATest(unittest.TestCase):

@@ -247,7 +247,7 @@ class NetworkSet:
                 n = Network.zipped_touchstone(filename, z)
                 ntwk_list.append(n)
                 continue
-            except:
+            except Exception:
                 pass
             try:  # Binary files (pickled Network)
                 fileobj = BytesIO(z.open(filename).read())
@@ -255,7 +255,7 @@ class NetworkSet:
                 n = Network(fileobj)
                 ntwk_list.append(n)
                 continue
-            except:
+            except Exception:
                 pass
 
         return cls(ntwk_list)

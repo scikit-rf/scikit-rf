@@ -1443,10 +1443,7 @@ class Network:
       """
       whether this network has noise
       """
-      try:
-        return self.noise is not None and self.noise_freq is not None
-      except:
-        return False
+      return self.noise is not None and self.noise_freq is not None
 
     @property
     def n(self) -> npy.ndarray:
@@ -2068,10 +2065,7 @@ class Network:
 
         self.comments = touchstoneFile.get_comments()
 
-        try:
-            self.variables = touchstoneFile.get_comment_variables()
-        except:
-            pass
+        self.variables = touchstoneFile.get_comment_variables()
 
         self.port_names = touchstoneFile.port_names
 
@@ -4293,10 +4287,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
 
     # if ntwkA and ntwkB are both 2port, and either one has noise, calculate ntwkC's noise
     either_are_noisy = False
-    try:
-      either_are_noisy = ntwkA.noisy or ntwkB.noisy
-    except:
-      pass
+    either_are_noisy = ntwkA.noisy or ntwkB.noisy
 
     if num == 1 and ntwkA.nports == 2 and ntwkB.nports == 2 and either_are_noisy:
       if ntwkA.noise_freq is not None and ntwkB.noise_freq is not None and ntwkA.noise_freq != ntwkB.noise_freq:

@@ -332,20 +332,20 @@ def read_all(dir: str ='.', sort = True, contains = None, f_unit = None, obj_typ
         try:
             out[keyname] = read(fullname)
             continue
-        except:
+        except Exception:
             pass
 
         try:
             out[keyname] = Network(fullname)
             continue
-        except:
+        except Exception:
             pass
 
     if f_unit is not None:
         for keyname in out:
             try:
                 out[keyname].frequency.unit = f_unit
-            except:
+            except Exception:
                 pass
 
     if obj_type is not None:
@@ -538,7 +538,7 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
             if extn[1]== 's' and extn[-1]=='p':
                 ntwkDict[keyname]=(Network(dir +'/'+f))
                 if f_unit is not None: ntwkDict[keyname].frequency.unit=f_unit
-        except:
+        except Exception:
             pass
     return ntwkDict
 

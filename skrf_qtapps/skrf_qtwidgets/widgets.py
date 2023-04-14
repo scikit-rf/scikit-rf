@@ -668,7 +668,7 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.spinBox_timeout.setMaximum(600000)
         try:
             self.spinBox_timeout.setValue(nwa.resource.timeout)
-        except:
+        except Exception:
             self.spinBox_timeout.setValue(3000)
         self.spinBox_timeout.setSingleStep(1000)
         self.horizontalLayout_timeout = QtWidgets.QHBoxLayout()

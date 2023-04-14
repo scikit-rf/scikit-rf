@@ -191,7 +191,7 @@ def pna_csv_2_ntwks2(filename, *args, **kwargs):
         ntwk = Network(f=f, s=s, name=name, comments=comments)
 
         return ntwk
-    except:
+    except  Exception:
         return ntwk_dict
 
 def pna_csv_2_ntwks3(filename):
@@ -269,13 +269,13 @@ def read_all_csv(dir='.', contains = None):
         try:
             out[keyname] = pna_csv_2_ntwks3(fullname)
             continue
-        except:
+        except Exception:
             pass
 
         try:
             out[keyname] = Network(fullname)
             continue
-        except:
+        except  Exception:
             pass
 
     return out
@@ -368,7 +368,7 @@ class AgilentCSV:
         cols = self.columns
         try:
             f_unit = cols[0].split('(')[1].split(')')[0]
-        except:
+        except  Exception:
             f_unit = 'hz'
 
         f = d[:,0]
@@ -648,7 +648,7 @@ def pna_csv_2_freq(filename):
     cols = pna_csv_header_split(filename)
     try:
         f_unit = cols[0].split('(')[1].split(')')[0]
-    except:
+    except  Exception:
         f_unit = 'hz'
 
     f = d[:,0]
@@ -683,7 +683,7 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
     #try to pull out frequency unit
     try:
         f_unit = cols[0].split('(')[1].split(')')[0]
-    except:
+    except  Exception:
         f_unit = 'hz'
 
     f = d[:,0]
@@ -839,13 +839,13 @@ def read_all_zva_dat(dir='.', contains = None):
         try:
             out[keyname] = zva_dat_2_ntwks(fullname)
             continue
-        except:
+        except  Exception:
             pass
 
         try:
             out[keyname] = Network(fullname)
             continue
-        except:
+        except  Exception:
             pass
 
     return out
