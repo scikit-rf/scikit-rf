@@ -15,8 +15,8 @@ class MediaTestCase():
     def test_gamma(self):
         self.media.gamma
 
-    def test_Z0_value(self):
-        self.media.Z0
+    def test_z0_value(self):
+        self.media.z0
 
     def test_match(self):
         self.media.match()

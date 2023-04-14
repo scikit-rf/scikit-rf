@@ -238,14 +238,14 @@ class CPWTestCase(unittest.TestCase):
             axs2[1, 1].get_legend().remove()
             fig2.tight_layout()
 
-    def test_Z0(self):
+    def test_z0(self):
         """
         Test the CPW Characteristic Impedances
 
         Values from http://wcalc.sourceforge.net/cgi-bin/coplanar.cgi
         """
         # values from http://wcalc.sourceforge.net/cgi-bin/coplanar.cgi
-        assert_array_almost_equal(self.cpw1.Z0, 77.93, decimal=2)
+        assert_array_almost_equal(self.cpw1.z0, 77.93, decimal=2)
 
     def test_ep_reff(self):
         """
@@ -255,27 +255,27 @@ class CPWTestCase(unittest.TestCase):
         assert_array_almost_equal(self.cpw1.ep_reff, 2.39, decimal=2)
         assert_array_almost_equal(self.cpw2.ep_reff, 6.94, decimal=2)
 
-    def test_Z0_vs_f(self):
+    def test_z0_vs_f(self):
         """
         Test the CPW Characteristic Impedance vs frequency.
 
         Reference data comes from Qucs Documentation (Fig 12.2)
         """
-        w_over_s_qucs, Z0_qucs = npy.loadtxt(
+        w_over_s_qucs, z0_qucs = npy.loadtxt(
             os.path.join(self.data_dir_qucs, 'cpw_qucs_ep_r9dot5.csv'),
             delimiter=';', unpack=True)
 
         w = 1
-        Z0 = []
+        z0 = []
         for w_o_s in w_over_s_qucs:
             # simulate infinite thickness by providing h >> w
             _cpw = CPW(frequency=self.freq[0], w=w, s=w/w_o_s, h=1e9, ep_r=9.5)
-            Z0.append(_cpw.Z0[0].real)
+            z0.append(_cpw.z0[0].real)
 
         # all to a 3% relative difference
         # this is quite a large discrepancy, but I extracted the ref values from the plot
         # one could do better eventually by extracting values from Qucs directly
-        rel_diff = (Z0_qucs-npy.array(Z0))/Z0_qucs
+        rel_diff = (z0_qucs-npy.array(z0))/z0_qucs
         self.assertTrue(npy.all(npy.abs(rel_diff) < 0.03))
 
     def test_alpha_warning(self):
