@@ -1073,7 +1073,8 @@ class PNA(Driver):
         """
         if not meas:
             meas = self.get_active_meas()
-        else: self.select_meas(meas)
+        else:
+            self.select_meas(meas)
         if write_memory:
             self.write('CALC:MATH:MEM')
         self.write('CALC:MATH:FUNC %s'%str(op))
@@ -1093,7 +1094,8 @@ class PNA(Driver):
         """
         if not meas:
             meas = self.get_active_meas()
-        else: self.select_meas(meas)
+        else:
+            self.select_meas(meas)
         self.write('CALC:TRAN:TIME:CENT %e'%center)
         self.write('CALC:TRAN:TIME:SPAN %e'%span)
         self.write('CALC:TRAN:TIME:STAT ON')
@@ -1113,7 +1115,8 @@ class PNA(Driver):
         """
         if not meas:
             meas = self.get_active_meas()
-        else: self.select_meas(meas)
+        else:
+            self.select_meas(meas)
         self.write('CALC:FILT:TIME:CENT %e'%center)
         self.write('CALC:FILT:TIME:SPAN %e'%span)
         self.write('CALC:FILT:TIME:STAT ON')
@@ -1130,7 +1133,8 @@ class PNA(Driver):
         """
         if not meas:
             meas = self.get_active_meas()
-        else: self.select_meas(meas)
+        else:
+            self.select_meas(meas)
         self.write('CALC:FILT:TIME:STAT OFF')
 
     def set_yscale(self, meas='', pdiv=5, rlev=0, rpos=8):

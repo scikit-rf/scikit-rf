@@ -537,7 +537,8 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
         try:
             if extn[1]== 's' and extn[-1]=='p':
                 ntwkDict[keyname]=(Network(dir +'/'+f))
-                if f_unit is not None: ntwkDict[keyname].frequency.unit=f_unit
+                if f_unit is not None:
+                    ntwkDict[keyname].frequency.unit=f_unit
         except Exception:
             pass
     return ntwkDict
