@@ -13,7 +13,7 @@ A coaxial transmission line defined from its electrical or geometrical/physical 
 
 #from copy import deepcopy
 from scipy.constants import  epsilon_0, mu_0, pi, c
-from numpy import sqrt, log, real, imag, exp, expm1, size, array
+from numpy import sqrt, log, real, imag, exp, expm1, size, array, ones, NaN
 from ..tlineFunctions import surface_resistivity, skin_depth
 from .distributedCircuit import DistributedCircuit
 from .media import Media, DefinedGammaZ0
@@ -315,24 +315,28 @@ class Coaxial(DistributedCircuit, Media):
 
     def __str__(self):
         f=self.frequency
+        f_s = f'Coaxial Media.  {f.f_scaled[0]}-{f.f_scaled[-1]}{f.unit}, '\
+                f'{f.npoints} points.'
+        z0 = self.z0
+        z0_s = f'z0 = ({z0[0].real:.1f}, {z0[0].imag:.1f}j)-'\
+                f'({z0[-1].real:.1f}, {z0[-1].imag:.1f}j) Ohm'
+        if self.z0_port is not None:
+            z0_port = self.z0_port
+            z0_port_s = \
+                f'z0_port = ({z0_port[0].real:.1f}, {z0_port[0].imag:.1f}j)-'\
+                f'({z0_port[-1].real:.1f}, {z0_port[-1].imag:.1f}j) Ohm\n'
+        else:
+            z0_port_s = 'z0_port is not defined.'
         try:
             output =  \
-                'Coaxial Transmission Line.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\nDint= %.2f mm, Dout= %.2f mm '% \
-                (self.Dint*1e3, self.Dout*1e3) +\
-                '\nCharacteristic Impedance z0=(%.1f,%.1fj)-(%.1f,%.1fj) Ohm'% \
-                (real(self.z0[0]), imag(self.z0[0]), real(self.z0[-1]), imag(self.z0[-1])) +\
-                '\nPort impedance z0_port=%.1s Ohm'% \
-                (self.z0_port)
+                f'Coaxial Media.  {f_s}\n'\
+                f'Dint = {self.Dint * 1e3:.2f} mm,'\
+                f' Dout = {self.Dout * 1e3:.2f} mm\n' \
+                f'{z0_s}\n{z0_port_s}'
         except(TypeError):
             output =  \
-                'Coaxial Transmission Line.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\nDint= %.2f mm, Dout= %.2f mm '% \
-                (self.Dint[0]*1e3, self.Dout[0]*1e3) +\
-                '\nCharacteristic Impedance z0=(%.1f,%.1fj)-(%.1f,%.1fj) Ohm'% \
-                (real(self.z0[0]), imag(self.z0[0]), real(self.z0[-1]), imag(self.z0[-1])) +\
-                '\nPort impedance z0_port=%.1s Ohm'% \
-                (self.z0_port)
+                f'Coaxial Media.  {f_s}\n'\
+                f'Dint = {self.Dint[0] * 1e3:.2f} mm,'\
+                f' Dout = {self.Dout[0] * 1e3:.2f} mm\n' \
+                f'{z0_s}\n{z0_port_s}'
         return output

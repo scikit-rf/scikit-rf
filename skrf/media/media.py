@@ -854,9 +854,7 @@ class Media(ABC):
             from self.z0. To set z0 in terms of normalized impedance,
             pass a string, like `z0='1+.2j'`
         embed : bool
-            if `Z0` is given, should the line be embedded in z0
-            environment? or left in a `z` environment. if embedded,
-            there will be reflections
+            deprecated parameter that only emmit a warning if set to true.
         \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
@@ -874,8 +872,10 @@ class Media(ABC):
         """
         if embed:
             # warns of deprecation
-            warnings.warn('Use of `embed` is deprecated.\n'
-                          'Use the media port impedance `z0_port` instead.',
+            warnings.warn(
+                'Use of `embed` is deprecated and has no effect.\n'
+                'Lines are renormalized to the media port impedance'
+                '`z0_port` by default.',
               DeprecationWarning, stacklevel = 2)
             
         if isinstance(z0,str):
