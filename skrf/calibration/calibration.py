@@ -2350,6 +2350,12 @@ class TRL(EightTerm):
 
         The reflect ideals can also be given as a +-1.
 
+        If thru is non-zero length calibration is done with zero length thru and
+        the ideal thru length is subtracted from the ideal lines. The resulting
+        calibration reference plane is at the center of the thru. If reflects
+        are passed as networks the correct reference plane is center of the
+        thru regardless of the thru length.
+
         Note you can also use the `estimate_line` option  to
         automatically  estimate the initial guess for the line length
         from measurements . This is sensible
@@ -2433,10 +2439,21 @@ class TRL(EightTerm):
             ideal_thru.s[:,0,1] = 1
             ideals[0] = ideal_thru
 
+        orig_ideal_thru = None
+
+        if npy.any(ideals[0].s[:,1,0] != 1) or npy.any(ideals[0].s[:,0,1] != 1):
+            # Don't modify the original network
+            orig_ideal_thru = ideals[0].copy()
+            ideals[0] = ideals[0].copy()
+            ideals[0].s[:,0,0] = 0
+            ideals[0].s[:,1,1] = 0
+            ideals[0].s[:,0,1] = 1
+            ideals[0].s[:,1,0] = 1
+
         for k in range(1,n_reflects+1):
             if ideals[k] is None:
                 # default  assume they are using flushshorts
-                ideals[k] =-1
+                ideals[k] = -1
 
             if isinstance(ideals[k], Number):
                 ideal_reflect = measured[k].copy()
@@ -2457,6 +2474,11 @@ class TRL(EightTerm):
                 ideal_line.s[:,0,1] = -1j
                 ideals[k] = ideal_line
 
+            if orig_ideal_thru is not None:
+                ideals[k] = ideals[k].copy()
+                # De-embed original thru
+                ideals[k].s[:,0,1] /= orig_ideal_thru.s[:,0,1]
+                ideals[k].s[:,1,0] /= orig_ideal_thru.s[:,1,0]
 
 
         EightTerm.__init__(self,
