@@ -5792,8 +5792,8 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     x2 = (tt[:,1,0]*sol2 + tt[:,1,1])/(tt[:,0,1]/sol1 + tt[:,0,0])
 
     e2 = line.s[:,0,1]**2
-    rootChoice0 = abs(x1 - e2) < abs(x2 - e2) # original choice for the root. see gh-870
-    rootChoice = npy.abs(x1) < npy.abs(x2) # criterium from eq (55)
+    rootChoice = abs(x1 - e2) < abs(x2 - e2) # see gh-870
+    #rootChoice = npy.abs(x1) < npy.abs(x2) # criterium from eq (55)
 
     y = sol1*invert(rootChoice) + sol2*rootChoice
     x = sol1*rootChoice + sol2*invert(rootChoice)
