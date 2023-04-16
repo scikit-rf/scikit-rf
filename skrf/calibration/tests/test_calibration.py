@@ -100,13 +100,11 @@ class DetermineTest(unittest.TestCase):
 
     def test_determine_reflect_regression(self):
         # this test case fails without the root choice abs(x1 - e2) < abs(x2 - e2), see gh-870
-        freq = rf.F(434615384.6153846, .7e9, 1, unit = 'Hz')
-
-        thru = rf.Network(freq=freq, s=[[[0,1] ,[1,0]] ])
-        s = npy.array([[[ 0.+0.j, (-0.012811542676311568-0.9593150869904133j)],
-                [ (-0.012811542676311568-0.9593150869904133j), 0.+0.j]]])
-        line = rf.Network(freq=freq, s=s)
-        short = rf.Network(freq=freq, s=[[[(-1.0099670216756622+0.017870117714376983j)] ] ])
+        freq = rf.F(434615384.6153846e-9, .7, 1, unit = 'GHz')
+        medium=Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
+        thru= medium.line(0, 'm')
+        line = medium.line(0.12, 'm')
+        short = rf.Network(f=freq.f, s=[[[(-1.+0.017870117714376983j)] ] ])
 
         r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
         npy.testing.assert_array_almost_equal( r.s, short.s)
