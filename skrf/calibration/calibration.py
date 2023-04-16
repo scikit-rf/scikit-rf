@@ -2340,9 +2340,6 @@ class TRL(EightTerm):
         used if more than one line is passed. A multi-reflect algorithm
         is used if multiple reflects are passed, see `n_reflects` argument.
 
-        The algorithm requires a flush thru. For a TRL calibration with a
-        non-flush thru, use :class:`NISTMultilineTRL`.
-
         All of the `ideals` can be individually set to `None`, or the entire
         list set to `None` (`ideals=None`). For each ideal set to `None`,
         the following assumptions are made:
@@ -2640,6 +2637,9 @@ class NISTMultilineTRL(EightTerm):
 
         """
         self.refl_offset = refl_offset
+
+        if npy.isscalar(ref_plane):
+                ref_plane = [ref_plane, ref_plane]
         self.ref_plane = ref_plane
         self.er_est = er_est
         self.l = [float(v) for v in l] # cast to float, see gh-895
@@ -2650,18 +2650,17 @@ class NISTMultilineTRL(EightTerm):
         self.c0 = c0
         self.z0_line = z0_line
 
-        try:
-            self.Grefls[0]
-        except TypeError:
+        if npy.isscalar(self.Grefls):
+            # assume a single reflect
             self.Grefls = [self.Grefls]
+
+        n_reflects = len(self.Grefls)
 
         if self.refl_offset is None:
             self.refl_offset = [0]*len(self.Grefls)
 
-        try:
-            self.refl_offset[0]
-        except TypeError:
-            self.refl_offset = [self.refl_offset]
+        if npy.isscalar(self.refl_offset):
+            self.refl_offset = [self.refl_offset] * n_reflects
 
         if len(measured) != len(self.Grefls) + len(l):
             raise ValueError(f"Amount of measurements {len(measured)} doesn't match amount of line lengths {len(l)} and reflection coefficients {len(self.Grefls)}")
@@ -2678,17 +2677,13 @@ class NISTMultilineTRL(EightTerm):
 
         m_sw = [k for k in self.measured_unterminated]
 
-        n_reflects = len(self.Grefls)
 
         self.measured_reflects = m_sw[1:1+n_reflects]
         self.measured_lines = [m_sw[0]]
         self.measured_lines.extend(m_sw[1+n_reflects:])
 
-        try:
-            self.ref_plane[0] -= l[0]/2
-            self.ref_plane[1] -= l[0]/2
-        except TypeError:
-            self.ref_plane -= l[0]/2
+        self.ref_plane[0] -= l[0]/2
+        self.ref_plane[1] -= l[0]/2
         self.refl_offset = [r - l[0]/2 for r in self.refl_offset]
 
         # The first line is thru
@@ -3146,13 +3141,9 @@ class NISTMultilineTRL(EightTerm):
                 raise ValueError(f'Unknown k_method: {self.k_method}')
 
             #Reference plane shift
-            if self.ref_plane != 0:
-                try:
-                    shift1 = exp(-2*gamma[m]*self.ref_plane[0])
-                    shift2 = exp(-2*gamma[m]*self.ref_plane[1])
-                except (TypeError, IndexError):
-                    shift1 = exp(-2*gamma[m]*self.ref_plane)
-                    shift2 = exp(-2*gamma[m]*self.ref_plane)
+            if npy.any(self.ref_plane):
+                shift1 = exp(-2*gamma[m]*self.ref_plane[0])
+                shift2 = exp(-2*gamma[m]*self.ref_plane[1])
                 A1 *= shift1
                 A2 *= shift2
                 C1 *= shift1
