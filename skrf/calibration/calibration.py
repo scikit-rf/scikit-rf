@@ -5780,9 +5780,6 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     # ratios (r11/r21) and (r12/r22) from equations (30) and (31) in the paper
     # The quadratic equation has solutions sol1 = (-b-sqrt(b*b-4*a*c))/(2*a), sol2 = (-b+sqrt(b*b-4*a*c))/(2*a)
     # For a=0 these become degenerate. Also the consequtive equations for x1 and x2 contain singularities for a=0 or c=0
-    # We address this by regularizing small values of a and the candidate solutions.
-    # The impact on the final solution is small as for small a one root of the equation goes to infinity,
-    # for the other the series expension in a is -c/b  - a c^2/b^3 + O(a^2)
 
     sol1 = (-b-sqrtD)/(2*a)
     sol2 = (-b+sqrtD)/(2*a)
@@ -5823,7 +5820,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
 
     closer = find_closest(out[0], out[1], reflect_approx.s11.s.flatten())
     reflect = reflect_approx.copy()
-    reflect.s[:,0,0]=closer
+    reflect.s[:,0,0] = closer
 
     return reflect.s11
 
