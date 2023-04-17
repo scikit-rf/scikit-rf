@@ -2350,7 +2350,7 @@ class TRL(EightTerm):
 
         The reflect ideals can also be given as a +-1.
 
-        If thru is non-zero length calibration is done with zero length thru and
+        If thru is non-zero length, the calibration is done with zero length thru and
         the ideal thru length is subtracted from the ideal lines. The resulting
         calibration reference plane is at the center of the thru. If reflects
         are passed as networks the correct reference plane is center of the
@@ -2442,8 +2442,7 @@ class TRL(EightTerm):
         orig_ideal_thru = None
 
         if npy.any(ideals[0].s[:,1,0] != 1) or npy.any(ideals[0].s[:,0,1] != 1):
-            # Don't modify the original network
-            orig_ideal_thru = ideals[0].copy()
+            orig_ideal_thru = ideals[0]
             ideals[0] = ideals[0].copy()
             ideals[0].s[:,0,0] = 0
             ideals[0].s[:,1,1] = 0
