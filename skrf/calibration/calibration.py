@@ -5784,9 +5784,8 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     # The impact on the final solution is small as for small a one root of the equation goes to infinity,
     # for the other the series expension in a is -c/b  - a c^2/b^3 + O(a^2)
 
-    denom = 2*a
-    sol1 = (-b-sqrtD)/denom
-    sol2 = (-b+sqrtD)/denom
+    sol1 = (-b-sqrtD)/(2*a)
+    sol2 = (-b+sqrtD)/(2*a)
 
     # equation (32)
     x1 = (tt[:,1,0]*sol1 + tt[:,1,1])/(tt[:,0,1]/sol2 + tt[:,0,0])
@@ -5794,7 +5793,6 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
 
     e2 = line.s[:,0,1]**2
     rootChoice = abs(x1 - e2) < abs(x2 - e2) # see gh-870
-    #rootChoice = npy.abs(x1) < npy.abs(x2) # criterium from eq (55)
 
     y = sol1*invert(rootChoice) + sol2*rootChoice
     x = sol1*rootChoice + sol2*invert(rootChoice)
