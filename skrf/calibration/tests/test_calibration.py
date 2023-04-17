@@ -104,7 +104,7 @@ class DetermineTest(unittest.TestCase):
         medium = Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
         thru= medium.line(0, 'm')
         line = medium.line(0.12, 'm')
-        short = rf.Network(f=freq.f, s=[[[(-1.+0.017870117714376983j)] ] ])
+        short = rf.Network(frequency=freq, s=[[[(-1.+0.017870117714376983j)] ] ])
 
         r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
         npy.testing.assert_array_almost_equal( r.s, short.s)

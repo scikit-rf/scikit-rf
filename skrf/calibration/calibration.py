@@ -5756,6 +5756,11 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
 
     """
 
+    # regularize the parameters in case of matched thru and line. see gh-870
+    thru_m = thru_m.copy()
+    thru_m.s[:, 0, 0] = _regularize_inplace(thru_m.s[:, 0, 0])
+    thru_m.s[:, 1, 1] = _regularize_inplace(thru_m.s[:, 1, 1])
+
     #Call determine_line first to solve root choice of the propagation constant
     line = determine_line(thru_m, line_m, line_approx)
 
@@ -5765,10 +5770,6 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
 
     # tt is equal to T from equation (24) in the paper
     tt = einsum('ijk,ikl -> ijl', rd, inv(rt))
-
-    # regularize the parameters in case of matched thru and line. see gh-870
-    tt[:,1,0] = _regularize_inplace(tt[:,1,0])
-    tt[:,0,1] = _regularize_inplace(tt[:,0,1])
 
     a = tt[:,1,0]
     b = tt[:,1,1]-tt[:,0,0]
