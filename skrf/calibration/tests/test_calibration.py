@@ -763,7 +763,7 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
 
     def test_numpy_float_arguments(self):
         # see gh-895
-        cal= NISTMultilineTRL(
+        cal = NISTMultilineTRL(
             measured = self.measured[:3],
             Grefls = [-1],
             l = [npy.float64(1000e-6), 1010e-6],
@@ -772,12 +772,12 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
         cal.run()
         cal.apply_cal(self.measured[0])
 
-        cal= NISTMultilineTRL(
+        cal = NISTMultilineTRL(
             measured = self.measured[:3],
             Grefls = [-1],
             l = [1000e-6, 1010e-6],
-            z0_ref=npy.float64(50),
-            z0_line=npy.float64(50),
+            z0_ref = npy.float64(50),
+            z0_line = npy.float64(50),
             switch_terms = (self.gamma_f, self.gamma_r),
             )
         cal.run()
