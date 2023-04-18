@@ -761,7 +761,7 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
             self.assertTrue(all(npy.abs(self.cal.coefs[k] - self.cal_shift.coefs[k]) < 1e-9))
 
 
-    def test_non_exact_float(self):
+    def test_numpy_float_arguments(self):
         # see gh-895
         cal= NISTMultilineTRL(
             measured = self.measured[:3],
