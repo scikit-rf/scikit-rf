@@ -99,7 +99,7 @@ class DetermineTest(unittest.TestCase):
 
 
     def test_determine_reflect_regression(self):
-        # this test case fails without the root choice abs(x1 - e2) < abs(x2 - e2), see gh-870
+        # this test case fails with only regularization on the t-parameters of thru ** line.inv, see gh-870
         freq = rf.F(434615384.6153846e-9, .7, 1, unit = 'GHz')
         medium = Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
         thru= medium.line(0, 'm')
