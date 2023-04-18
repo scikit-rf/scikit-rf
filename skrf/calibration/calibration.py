@@ -3234,9 +3234,7 @@ class NISTMultilineTRL(EightTerm):
         #Reference impedance renormalization
         if self.z0_ref is not None and npy.any(z0 != self.z0_ref):
             powerwave = self.kwargs.get('powerwave', False)
-            if npy.shape(self.z0_ref) != (fpoints,):
-                z0_ref = self.z0_ref*npy.ones(fpoints, dtype=complex)
-            self.renormalize(z0, z0_ref, powerwave=powerwave)
+            self.renormalize(z0, self.z0_ref, powerwave=powerwave)
 
     @classmethod
     def from_coefs(cls, frequency, coefs, **kwargs):
