@@ -2639,7 +2639,7 @@ class NISTMultilineTRL(EightTerm):
         self.refl_offset = refl_offset
 
         if npy.isscalar(ref_plane):
-                ref_plane = [ref_plane, ref_plane]
+            ref_plane = [ref_plane, ref_plane]
         self.ref_plane = ref_plane
         self.er_est = er_est
         self.l = [float(v) for v in l] # cast to float, see gh-895
@@ -2650,6 +2650,14 @@ class NISTMultilineTRL(EightTerm):
         self.c0 = c0
         self.z0_line = z0_line
 
+        fpoints = len(measured[0].frequency)
+        if npy.isscalar(self.z0_ref):
+            self.z0_ref = [self.z0_ref] * fpoints
+        if npy.isscalar(self.z0_line):
+            self.z0_line = [self.z0_line] * fpoints
+        if npy.isscalar(self.z0_ref):
+            self.c0 = [self.c0] * fpoints
+
         if npy.isscalar(self.Grefls):
             # assume a single reflect
             self.Grefls = [self.Grefls]
@@ -2657,7 +2665,7 @@ class NISTMultilineTRL(EightTerm):
         n_reflects = len(self.Grefls)
 
         if self.refl_offset is None:
-            self.refl_offset = [0]*len(self.Grefls)
+            self.refl_offset = [0] * len(self.Grefls)
 
         if npy.isscalar(self.refl_offset):
             self.refl_offset = [self.refl_offset] * n_reflects
@@ -2795,6 +2803,9 @@ class NISTMultilineTRL(EightTerm):
         b2_vec2 = npy.zeros(lines-1, dtype=complex)
         CoA1_vec2 = npy.zeros(lines-1, dtype=complex)
         CoA2_vec2 = npy.zeros(lines-1, dtype=complex)
+
+        if self.z0_line is not None and self.c0 is not None:
+            raise ValueError('Only one of c0 or z0_line can be given.')
 
         for m in range(fpoints):
             min_phi_eff = pi*npy.ones(lines)
@@ -3154,25 +3165,13 @@ class NISTMultilineTRL(EightTerm):
             if self.c0 is not None:
                 #Estimate the line characteristic impedance
                 #using known capacitance/length
-                if self.z0_line is not None:
-                    raise ValueError('Only one of c0 or z0_line can be given.')
-                try:
-                    c0m = self.c0[m]
-                except (TypeError, IndexError):
-                    c0m = self.c0
-                z0[m] = gamma[m]/(1j*2*npy.pi*freqs[m]*c0m)
+                z0[m] = gamma[m]/(1j*2*npy.pi*freqs[m]*self.c0[m])
             else:
                 #Set the known line characteristic impedance
                 if self.z0_line is not None:
-                    try:
-                        z0[m] = self.z0_line[m]
-                    except (TypeError, IndexError):
-                        z0[m] = self.z0_line
+                    z0[m] = self.z0_line[m]
                 else:
-                    try:
-                        z0[m] = self.z0_ref[m]
-                    except (TypeError, IndexError):
-                        z0[m] = self.z0_ref
+                    z0[m] = self.z0_ref[m]
 
             #Error matrices
             Tmat1[m,:,:] = R1*npy.array([[A1, B1],[C1, 1]])
