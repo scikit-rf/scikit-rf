@@ -2340,13 +2340,13 @@ class TRL(EightTerm):
         used if more than one line is passed. A multi-reflect algorithm
         is used if multiple reflects are passed, see `n_reflects` argument.
 
-        All of the `ideals` can be individually set to None, or the entire
-        list set to None (`ideals=None`). For each ideal set to None
+        All of the `ideals` can be individually set to `None`, or the entire
+        list set to `None` (`ideals=None`). For each ideal set to `None`,
         the following assumptions are made:
 
         * thru : flush thru
         * reflect : flush shorts
-        * line : and approximately  90deg  matched line (can be lossy)
+        * line : an approximately 90deg matched line (can be lossy)
 
         The reflect ideals can also be given as a +-1.
 
@@ -2410,6 +2410,7 @@ class TRL(EightTerm):
         --------
         determine_line
         determine_reflect
+        NISTMultilineTRL
 
         """
         #warn('Value of Reflect is not solved for yet.')
@@ -2636,9 +2637,12 @@ class NISTMultilineTRL(EightTerm):
 
         """
         self.refl_offset = refl_offset
+
+        if npy.isscalar(ref_plane):
+            ref_plane = [ref_plane, ref_plane]
         self.ref_plane = ref_plane
         self.er_est = er_est
-        self.l = l
+        self.l = [float(v) for v in l] # cast to float, see gh-895
         self.Grefls = Grefls
         self.gamma_root_choice = gamma_root_choice
         self.k_method = k_method
@@ -2646,18 +2650,25 @@ class NISTMultilineTRL(EightTerm):
         self.c0 = c0
         self.z0_line = z0_line
 
-        try:
-            self.Grefls[0]
-        except TypeError:
+        fpoints = len(measured[0].frequency)
+        if npy.isscalar(self.z0_ref):
+            self.z0_ref = [self.z0_ref] * fpoints
+        if npy.isscalar(self.z0_line):
+            self.z0_line = [self.z0_line] * fpoints
+        if npy.isscalar(self.z0_ref):
+            self.c0 = [self.c0] * fpoints
+
+        if npy.isscalar(self.Grefls):
+            # assume a single reflect
             self.Grefls = [self.Grefls]
 
-        if self.refl_offset is None:
-            self.refl_offset = [0]*len(self.Grefls)
+        n_reflects = len(self.Grefls)
 
-        try:
-            self.refl_offset[0]
-        except TypeError:
-            self.refl_offset = [self.refl_offset]
+        if self.refl_offset is None:
+            self.refl_offset = [0] * len(self.Grefls)
+
+        if npy.isscalar(self.refl_offset):
+            self.refl_offset = [self.refl_offset] * n_reflects
 
         if len(measured) != len(self.Grefls) + len(l):
             raise ValueError(f"Amount of measurements {len(measured)} doesn't match amount of line lengths {len(l)} and reflection coefficients {len(self.Grefls)}")
@@ -2674,17 +2685,13 @@ class NISTMultilineTRL(EightTerm):
 
         m_sw = [k for k in self.measured_unterminated]
 
-        n_reflects = len(self.Grefls)
 
         self.measured_reflects = m_sw[1:1+n_reflects]
         self.measured_lines = [m_sw[0]]
         self.measured_lines.extend(m_sw[1+n_reflects:])
 
-        try:
-            self.ref_plane[0] -= l[0]/2
-            self.ref_plane[1] -= l[0]/2
-        except TypeError:
-            self.ref_plane -= l[0]/2
+        self.ref_plane[0] -= l[0]/2
+        self.ref_plane[1] -= l[0]/2
         self.refl_offset = [r - l[0]/2 for r in self.refl_offset]
 
         # The first line is thru
@@ -2796,6 +2803,9 @@ class NISTMultilineTRL(EightTerm):
         b2_vec2 = npy.zeros(lines-1, dtype=complex)
         CoA1_vec2 = npy.zeros(lines-1, dtype=complex)
         CoA2_vec2 = npy.zeros(lines-1, dtype=complex)
+
+        if self.z0_line is not None and self.c0 is not None:
+            raise ValueError('Only one of c0 or z0_line can be given.')
 
         for m in range(fpoints):
             min_phi_eff = pi*npy.ones(lines)
@@ -3142,13 +3152,9 @@ class NISTMultilineTRL(EightTerm):
                 raise ValueError(f'Unknown k_method: {self.k_method}')
 
             #Reference plane shift
-            if self.ref_plane != 0:
-                try:
-                    shift1 = exp(-2*gamma[m]*self.ref_plane[0])
-                    shift2 = exp(-2*gamma[m]*self.ref_plane[1])
-                except TypeError:
-                    shift1 = exp(-2*gamma[m]*self.ref_plane)
-                    shift2 = exp(-2*gamma[m]*self.ref_plane)
+            if npy.any(self.ref_plane):
+                shift1 = exp(-2*gamma[m]*self.ref_plane[0])
+                shift2 = exp(-2*gamma[m]*self.ref_plane[1])
                 A1 *= shift1
                 A2 *= shift2
                 C1 *= shift1
@@ -3159,25 +3165,13 @@ class NISTMultilineTRL(EightTerm):
             if self.c0 is not None:
                 #Estimate the line characteristic impedance
                 #using known capacitance/length
-                if self.z0_line is not None:
-                    raise ValueError('Only one of c0 or z0_line can be given.')
-                try:
-                    c0m = self.c0[m]
-                except TypeError:
-                    c0m = self.c0
-                z0[m] = gamma[m]/(1j*2*npy.pi*freqs[m]*c0m)
+                z0[m] = gamma[m]/(1j*2*npy.pi*freqs[m]*self.c0[m])
             else:
                 #Set the known line characteristic impedance
                 if self.z0_line is not None:
-                    try:
-                        z0[m] = self.z0_line[m]
-                    except TypeError:
-                        z0[m] = self.z0_line
+                    z0[m] = self.z0_line[m]
                 else:
-                    try:
-                        z0[m] = self.z0_ref[m]
-                    except TypeError:
-                        z0[m] = self.z0_ref
+                    z0[m] = self.z0_ref[m]
 
             #Error matrices
             Tmat1[m,:,:] = R1*npy.array([[A1, B1],[C1, 1]])
@@ -3240,9 +3234,7 @@ class NISTMultilineTRL(EightTerm):
         #Reference impedance renormalization
         if self.z0_ref is not None and npy.any(z0 != self.z0_ref):
             powerwave = self.kwargs.get('powerwave', False)
-            if npy.shape(self.z0_ref) != (fpoints,):
-                z0_ref = self.z0_ref*npy.ones(fpoints, dtype=complex)
-            self.renormalize(z0, z0_ref, powerwave=powerwave)
+            self.renormalize(z0, self.z0_ref, powerwave=powerwave)
 
     @classmethod
     def from_coefs(cls, frequency, coefs, **kwargs):
@@ -5647,8 +5639,8 @@ def determine_line(thru_m, line_m, line_approx=None):
     Given raw measurements of a `thru` and a matched `line` with unknown
     s21, this will calculate the response of the line. This works for
     lossy lines, and attenuators. The `line_approx`
-    is an approximation to line, this used  to choose the correct
-    root sign. If left as None, it will be estimated from raw measurements,
+    is an approximation to line, this used to choose the correct
+    root sign. If left as `None`, it will be estimated from raw measurements,
     which requires your error networks to be well matched  (S_ij >>S_ii).
 
 
@@ -5677,7 +5669,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     Parameters
     ----------
     thru_m : :class:`~skrf.network.Network`
-        raw measurement of a thru
+        raw measurement of a flush thru
     line_m : :class:`~skrf.network.Network`
         raw measurement of a matched transmissive standard
     line_approx : :class:`~skrf.network.Network`
