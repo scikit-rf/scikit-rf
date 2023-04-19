@@ -2350,11 +2350,11 @@ class TRL(EightTerm):
 
         The reflect ideals can also be given as a +-1.
 
-        If thru is non-zero length, the calibration is done with zero length thru and
-        the ideal thru length is subtracted from the ideal lines. The resulting
-        calibration reference plane is at the center of the thru. If reflects
-        are passed as networks the correct reference plane is center of the
-        thru regardless of the thru length.
+        If thru is non-zero length, the calibration is done with zero length
+        thru and the ideal thru length is subtracted from the ideal lines. The
+        resulting calibration reference plane is at the center of the thru.
+        Ideal reflect standard reference plane is at the center of the thru even
+        if the ideal thru length is non-zero.
 
         Note you can also use the `estimate_line` option  to
         automatically  estimate the initial guess for the line length
