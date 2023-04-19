@@ -1,15 +1,13 @@
 import unittest
-import os
 import warnings
-import pickle
 import pytest
+
+import numpy as npy
+from numpy.random  import uniform
 
 import skrf as rf
-import numpy as npy
-from numpy.random  import rand, uniform
-import pytest
-
-from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate, terminate_nport, determine_line, determine_reflect, NISTMultilineTRL, MultiportCal, MultiportSOLT
+from skrf.media import Coaxial
+from skrf.calibration import PHN, SOLT, UnknownThru, TwoPortOnePath, TwelveTerm, terminate, terminate_nport, determine_line, determine_reflect, NISTMultilineTRL, MultiportCal, MultiportSOLT
 
 from skrf import two_port_reflect
 from skrf.networkSet import NetworkSet
@@ -70,6 +68,46 @@ class DetermineTest(unittest.TestCase):
 
         [ self.assertEqual(k,l) for k,l in zip(self.r, r_found)]
 
+    def test_determine_reflect_matched_thru_and_line_ideal_reflect(self):
+        freq = rf.F(.25, .7, 21, unit = 'GHz')
+        medium = Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
+
+        thru = medium.line(0, 'm')
+        line = medium.line(0.12, 'm')
+
+        short = rf.two_port_reflect(medium.short(), medium.short())
+        r = determine_reflect(thru, short, line)
+        npy.testing.assert_array_almost_equal( r.s, -npy.ones_like(r.s))
+
+        reflect = rf.two_port_reflect(medium.open(), medium.open())
+        r = determine_reflect(thru, reflect, line, reflect_approx = medium.open())
+        npy.testing.assert_array_almost_equal(r.s, npy.ones_like(r.s))
+
+    def test_determine_reflect_matched_thru_and_line(self):
+        freq = rf.F(.25, .7, 40, unit = 'GHz')
+        medium = Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
+
+        thru = medium.line(0, 'm')
+        line = medium.line(0.12, 'm')
+        short = medium.short()
+
+        rng = npy.random.default_rng(12)
+        short.s[:, 0, 0] = short.s[:, 0, 0]+rng.uniform(-.02, 0.02, freq.f.size) + rng.uniform(-.02, 0.02, freq.f.size)*1j
+
+        r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
+        npy.testing.assert_array_almost_equal( r.s, short.s)
+
+
+    def test_determine_reflect_regression(self):
+        # this test case fails with only regularization on the t-parameters of thru ** line.inv, see gh-870
+        freq = rf.F(434615384.6153846e-9, .7, 1, unit = 'GHz')
+        medium = Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
+        thru= medium.line(0, 'm')
+        line = medium.line(0.12, 'm')
+        short = rf.Network(frequency=freq, s=[[[(-1.+0.017870117714376983j)] ] ])
+
+        r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
+        npy.testing.assert_array_almost_equal( r.s, short.s)
 
 class CalibrationTest:
     """
