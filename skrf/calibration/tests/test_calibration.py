@@ -554,6 +554,70 @@ class TRLTest(EightTermTest):
         self.cal.run()
         self.assertTrue(self.cal.ideals[1]==self.actuals[1])
 
+class TRLLongThruTest(EightTermTest):
+    """
+    Test TRL calibration with non-zero length thru.
+    In this case calibration is done at thru center.
+    """
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name='Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
+        # make error networks have s21,s12 >> s11,s22 so that TRL
+        # can guess at line length
+        self.X.s[:,0,0] *= 1e-1
+        self.Y.s[:,0,0] *= 1e-1
+        self.X.s[:,1,1] *= 1e-1
+        self.Y.s[:,1,1] *= 1e-1
+
+        # Reflect reference plane is at the thru center
+        self.reflect = wg.load(-.9-.1j)
+        reflect_shifted = wg.line(50, 'um') ** self.reflect
+
+        actuals = [
+            wg.line(100, 'um', name='thru'),
+            rf.two_port_reflect(reflect_shifted, reflect_shifted),
+            wg.line(1100, 'um', name='thru'),
+            ]
+
+        self.actuals = actuals
+
+        ideals = [
+            actuals[0],
+            wg.short(nports=2, name='short'),
+            actuals[2]
+            ]
+
+        measured = [self.measure(k) for k in actuals]
+
+        # Calibration is done at the center of the thru
+        # Add half thru to error networks so that tests pass
+        self.X = self.X ** wg.line(50, 'um')
+        self.Y = wg.line(50, 'um') ** self.Y
+
+        self.cal = rf.TRL(
+            ideals = ideals,
+            measured = measured,
+            isolation = measured[1],
+            switch_terms = (self.gamma_f, self.gamma_r)
+            )
+
+    def test_found_line(self):
+        self.cal.run()
+        # Solved line is difference between line and thru
+        self.assertTrue(self.cal.ideals[2]==self.actuals[2] ** self.actuals[0].inv)
+
+    def test_found_reflect(self):
+        self.cal.run()
+        # Solved reflect is at the thru center
+        self.assertTrue(self.cal.ideals[1]==rf.two_port_reflect(self.reflect, self.reflect))
 
 class TRLWithNoIdealsTest(EightTermTest):
     def setUp(self):
