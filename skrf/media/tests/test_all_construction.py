@@ -97,10 +97,10 @@ class Z0InitDeprecationTestCase(unittest.TestCase):
         # 1-conductor waveguide media
         with self.assertWarns(DeprecationWarning) as context:
             cw = CircularWaveguide(self.frequency, z0 = 50)
-            self.assertTrue(np.all(cw.z0_override == 50))
+            self.assertTrue(np.all(cw.z0 == 50))
         with self.assertWarns(DeprecationWarning) as context:
             rw = RectangularWaveguide(self.frequency, z0 = 50)
-            self.assertTrue(np.all(rw.z0_override == 50))
+            self.assertTrue(np.all(rw.z0 == 50))
         # 2-conductor other media
         with self.assertWarns(DeprecationWarning) as context:
             coax = Coaxial(self.frequency, z0 = 50)
@@ -110,7 +110,7 @@ class Z0InitDeprecationTestCase(unittest.TestCase):
             self.assertTrue(np.all(cpw.z0_port == 50))
         with self.assertWarns(DeprecationWarning) as context:
             air = Freespace(self.frequency, z0 = 50)
-            self.assertTrue(np.all(air.z0_port == 50))
+            self.assertTrue(np.all(air.z0 == 50))
         with self.assertWarns(DeprecationWarning) as context:
             mlin = MLine(self.frequency, z0 = 50)
             self.assertTrue(np.all(mlin.z0_port == 50))
