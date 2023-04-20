@@ -232,8 +232,10 @@ class Media(ABC):
     @property
     def Z0(self):
         # warns of deprecation
-        warnings.warn('Use of `Z0` (uppercase) is deprecated.\n'
-                      'Use `z0` (lowercase) instead.',
+        warnings.warn(
+            'Use of `Z0` (uppercase) is deprecated and return `z0`.\n'
+            'Use characteristic impedance `z0` (lowercase) instead.\n'
+            '`Z0` will be removed in version 1.0.',
           DeprecationWarning, stacklevel = 2)
         return self.z0
 
@@ -873,9 +875,11 @@ class Media(ABC):
         if embed:
             # warns of deprecation
             warnings.warn(
-                'Use of `embed` is deprecated and has no effect.\n'
-                'Lines are renormalized to the media port impedance'
-                '`z0_port` by default.',
+                'Use of `embed` is deprecated and has no more effect.\n'
+                'Lines are renormalized to the media port impedance `z0_port`'
+                'if it is not None, otherwise they use characterisic'
+                'impedance `z0`.\n'
+                '`embed` will be removed in version 1.0',
               DeprecationWarning, stacklevel = 2)
             
         if isinstance(z0,str):

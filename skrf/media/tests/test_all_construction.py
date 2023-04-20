@@ -5,6 +5,7 @@ of all general circuit components
 """
 import unittest
 from scipy.constants import *
+from numpy.testing import run_module_suite
 
 import skrf as rf
 from skrf.media import Freespace, CPW, RectangularWaveguide, DistributedCircuit
@@ -76,6 +77,14 @@ class MediaTestCase():
 
     def test_shunt_inductor(self):
         self.media.shunt_inductor(1)
+    
+    def test_Z0_deprecation_warning(self):
+        with self.assertWarns(DeprecationWarning) as context:
+            self.media.Z0
+    
+    def test_embed_deprecation_warning(self):
+        with self.assertWarns(DeprecationWarning) as context:
+            self.media.line(1, unit = 'deg', embed = True)
 
 
 class FreespaceTestCase(MediaTestCase, unittest.TestCase):
@@ -131,3 +140,7 @@ suite.addTests([\
 
 #suite = unittest.TestLoader().loadTestsFromTestCase(FreespaceTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
+
+if __name__ == "__main__":
+    # Launch all tests
+    run_module_suite()
