@@ -1302,7 +1302,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(abs(a.z_opt[0] - 50.) < 1.e-6, 'optimal resistance was altered')
         self.assertTrue(abs(a.rn[0] - 0.1159*50.) < 1.e-6, 'equivalent resistance was altered')
 
-        tem = DistributedCircuit(z0=50)
+        tem = DistributedCircuit(z0_port = 50)
         inductor = tem.inductor(1e-9).interpolate(a.frequency)
 
         f = inductor ** a

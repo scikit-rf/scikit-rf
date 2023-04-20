@@ -106,7 +106,8 @@ class MediaTestCase(unittest.TestCase):
 
         rho = 1e-7
         dint = 0.44e-3
-        coax = Coaxial(freq, z0=50, Dint=dint, Dout=1.0e-3, sigma=1/rho)
+        coax = Coaxial(freq, z0_port = 50, Dint = dint, Dout = 1.0e-3,
+                       sigma = 1/rho)
 
         dc_res = rho / (npy.pi * (dint/2)**2)
 
