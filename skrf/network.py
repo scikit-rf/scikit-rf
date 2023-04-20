@@ -5621,7 +5621,7 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
     # test here for even number of ports.
     # s-parameter networks are square matrix, so x and y are equal.
     if(x % 2 != 0):
-        raise IndexError('Network don\'t have an even number of ports')
+        raise IndexError('Network does not have an even number of ports')
     t = npy.zeros((z, y, x), dtype=complex)
     yh = int(y/2)
     xh = int(x/2)
@@ -5629,12 +5629,13 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
     sinv = npy.linalg.inv(s[:, yh:y, 0:xh])
     # np.linalg.inv test for singularity (matrix not invertible)
     for k in range(len(s)):
-    # T_I,I = S_I,II - S_I,I . S_II,I^-1 . S_II,II
-        t[k, 0:yh, 0:xh] = s[k, 0:yh, xh:x] - s[k, 0:yh, 0:xh].dot(sinv[k].dot(s[k, yh:y, xh:x]))
+        w = sinv[k].dot(s[k, yh:y, xh:x])
+        # T_I,I = S_I,II - S_I,I . S_II,I^-1 . S_II,II
+        t[k, 0:yh, 0:xh] = s[k, 0:yh, xh:x] - s[k, 0:yh, 0:xh].dot(w)
         # T_I,II = S_I,I . S_II,I^-1
         t[k, 0:yh, xh:x] = s[k, 0:yh, 0:xh].dot(sinv[k])
         # T_II,I = -S_II,I^-1 . S_II,II
-        t[k, yh:y, 0:xh] = -sinv[k].dot(s[k, yh:y, xh:x])
+        t[k, yh:y, 0:xh] = -w
         # T_II,II = S_II,I^-1
         t[k, yh:y, xh:x] = sinv[k]
     return t
@@ -6344,7 +6345,7 @@ def t2s(t: npy.ndarray) -> npy.ndarray:
     # test here for even number of ports.
     # t-parameter networks are square matrix, so x and y are equal.
     if(x % 2 != 0):
-        raise IndexError('Network don\'t have an even number of ports')
+        raise IndexError('Network does not have an even number of ports')
     s = npy.zeros((z, y, x), dtype=complex)
     yh = int(y/2)
     xh = int(x/2)
