@@ -4,11 +4,14 @@ of all general circuit components
 
 """
 import unittest
+import numpy as np
 from scipy.constants import *
 from numpy.testing import run_module_suite
 
 import skrf as rf
-from skrf.media import Freespace, CPW, RectangularWaveguide, DistributedCircuit
+from skrf.media import Freespace, CircularWaveguide, RectangularWaveguide
+from skrf.media import Coaxial, DistributedCircuit
+from skrf.media import CPW, MLine
 
 
 class MediaTestCase():
@@ -86,10 +89,36 @@ class MediaTestCase():
         with self.assertWarns(DeprecationWarning) as context:
             self.media.line(1, unit = 'deg', embed = True)
 
+class Z0InitDeprecationTestCase(unittest.TestCase):
+    def setUp(self):
+        self.frequency = rf.Frequency(1,2,2,'GHz')
 
+    def testZ0InitDeprecation(self):
+        # 1-conductor waveguide media
+        with self.assertWarns(DeprecationWarning) as context:
+            cw = CircularWaveguide(self.frequency, z0 = 50)
+            self.assertTrue(np.all(cw.z0_override == 50))
+        with self.assertWarns(DeprecationWarning) as context:
+            rw = RectangularWaveguide(self.frequency, z0 = 50)
+            self.assertTrue(np.all(rw.z0_override == 50))
+        # 2-conductor other media
+        with self.assertWarns(DeprecationWarning) as context:
+            coax = Coaxial(self.frequency, z0 = 50)
+            self.assertTrue(np.all(coax.z0_port == 50))
+        with self.assertWarns(DeprecationWarning) as context:
+            cpw = CPW(self.frequency, z0 = 50)
+            self.assertTrue(np.all(cpw.z0_port == 50))
+        with self.assertWarns(DeprecationWarning) as context:
+            air = Freespace(self.frequency, z0 = 50)
+            self.assertTrue(np.all(air.z0_port == 50))
+        with self.assertWarns(DeprecationWarning) as context:
+            mlin = MLine(self.frequency, z0 = 50)
+            self.assertTrue(np.all(mlin.z0_port == 50))
+    
+    
 class FreespaceTestCase(MediaTestCase, unittest.TestCase):
     def setUp(self):
-        self.frequency = rf.Frequency(75,110,101,'ghz')
+        self.frequency = rf.Frequency(75,110,101,'GHz')
         self.media = Freespace(self.frequency)
 
     def test_z0_value(self):
@@ -99,7 +128,7 @@ class FreespaceTestCase(MediaTestCase, unittest.TestCase):
 
 class CPWTestCase(MediaTestCase, unittest.TestCase):
     def setUp(self):
-        self.frequency = rf.Frequency(75,110,101,'ghz')
+        self.frequency = rf.Frequency(75,110,101,'GHz')
         self.media = CPW(\
             frequency=self.frequency,
             w=10e-6,
@@ -111,7 +140,7 @@ class CPWTestCase(MediaTestCase, unittest.TestCase):
 
 class RectangularWaveguideTestCase(MediaTestCase, unittest.TestCase):
     def setUp(self):
-        self.frequency = rf.Frequency(75,110,101,'ghz')
+        self.frequency = rf.Frequency(75,110,101,'GHz')
         self.media = RectangularWaveguide(\
             frequency=self.frequency,
             a=100*mil,
@@ -120,7 +149,7 @@ class RectangularWaveguideTestCase(MediaTestCase, unittest.TestCase):
 
 class DistributedCircuitTestCase(MediaTestCase, unittest.TestCase):
     def setUp(self):
-        self.frequency = rf.Frequency(75,110,101,'ghz')
+        self.frequency = rf.Frequency(75,110,101,'GHz')
         self.media = DistributedCircuit(\
             frequency=self.frequency,
             L=1,C=1,R=0,G=0
@@ -136,6 +165,7 @@ suite.addTests([\
     loader.loadTestsFromTestCase(CPWTestCase),
     loader.loadTestsFromTestCase(RectangularWaveguideTestCase),
     loader.loadTestsFromTestCase(DistributedCircuitTestCase),
+    loader.loadTestsFromTestCase(Z0InitDeprecationTestCase),
     ])
 
 #suite = unittest.TestLoader().loadTestsFromTestCase(FreespaceTestCase)

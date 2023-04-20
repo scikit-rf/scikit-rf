@@ -76,6 +76,9 @@ class MLine(Media):
         Else if `z0_port` is None, the networks port impedances will be the raw
         characteristic impedance z0 of the media.
         (Default is None)
+    z0 : number, array-like, or None
+        deprecated parameter, alias to `z0_port` if `z0_port` is None.
+        Emmit a deprecation warning.
     w : number, or array-like
         width of conductor, in m
     h : number, or array-like
@@ -193,6 +196,7 @@ class MLine(Media):
     """
     def __init__(self, frequency: Union['Frequency', None] = None,
                  z0_port: Union[NumberLike, None] = None,
+                 z0: Union[NumberLike, None] = None,
                  w: NumberLike = 3, h: NumberLike = 1.6,
                  t: Union[NumberLike, None] = None,
                  ep_r: NumberLike = 4.5,
@@ -206,6 +210,15 @@ class MLine(Media):
                  f_epr_tand: NumberLike = 1e9,
                  compatibility_mode: Union[str, None] = None,
                  *args, **kwargs):
+        if z0 is not None:
+            # warns of deprecation
+            warnings.warn(
+                'Use of `z0` in Media init is deprecated.\n'
+                '`z0` alias with `z0_port if the last is not None`.\n'
+                '`z0` will be removed of Media init in version 1.0',
+              DeprecationWarning, stacklevel = 2)
+            if z0_port is None:
+                z0_port = z0
         Media.__init__(self, frequency = frequency, z0_port = z0_port)
 
         self.w, self.h, self.t = w, h, t

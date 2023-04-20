@@ -82,7 +82,7 @@ class DefinedAEpTandZ0(Media):
 
     tanD : number, array-like, default 0.0
         Dielectric relative permittivity loss tangent :math:`\tan\delta`. See `ep_r`.
-    Z0 : number, array-like, default 50.0
+    z0 : number, array-like, default 50.0
         Quasi-static characteristic impedance of the medium.
     f_low : number, default 1e3, optional
         Low frequency in Hz for  for Djirdjevic/Svennson dispersion model.

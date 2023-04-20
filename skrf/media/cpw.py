@@ -72,6 +72,9 @@ class CPW(Media):
         Else if `z0_port` is None, the networks port impedances will be the raw
         characteristic impedance z0 of the media.
         (Default is None)
+    z0 : number, array-like, or None
+        deprecated parameter, alias to `z0_port` if `z0_port` is None.
+        Emmit a deprecation warning.
     w : number, or array-like
         width of the center conductor, in m. Default is 3e-3 m.
     s : number, or array-like
@@ -166,6 +169,7 @@ class CPW(Media):
     """
     def __init__(self, frequency: Union['Frequency', None] = None,
                  z0_port: Union[NumberLike, None] = None,
+                 z0: Union[NumberLike, None] = None,
                  w: NumberLike = 3e-3, s: NumberLike = 0.3e-3,
                  h: NumberLike = 1.55,
                  ep_r: NumberLike = 4.5, t: Union[NumberLike, None] = None,
@@ -176,6 +180,15 @@ class CPW(Media):
                  has_metal_backside: bool = False,
                  compatibility_mode: Union[str, None] = None,
                  *args, **kwargs):
+        if z0 is not None:
+            # warns of deprecation
+            warnings.warn(
+                'Use of `z0` in Media init is deprecated.\n'
+                '`z0` alias with `z0_port if the last is not None`.\n'
+                '`z0` will be removed of Media init in version 1.0',
+              DeprecationWarning, stacklevel = 2)
+            if z0_port is None:
+                z0_port = z0
         Media.__init__(self, frequency=frequency,z0_port=z0_port)
 
         self.w, self.s, self.h, self.t, self.ep_r, self.tand, self.rho =\

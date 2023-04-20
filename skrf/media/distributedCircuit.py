@@ -12,6 +12,7 @@ A transmission line mode defined in terms of distributed impedance and admittanc
 """
 
 from numpy import sqrt, real, imag
+import warnings
 from .media import Media, DefinedGammaZ0
 from ..constants import NumberLike
 from typing import Union, TYPE_CHECKING
@@ -36,6 +37,9 @@ class DistributedCircuit(Media):
         Else if `z0_port` is None, the networks port impedances will be the raw
         characteristic impedance z0 of the media.
         (Default is None)
+    z0 : number, array-like, or None
+        deprecated parameter, alias to `z0_port` if `z0_port` is None.
+        Emmit a deprecation warning.
     C : number, or array-like
             distributed capacitance, in F/m
     L : number, or array-like
@@ -105,11 +109,20 @@ class DistributedCircuit(Media):
 
     def __init__(self, frequency: Union['Frequency', None] = None,
                  z0_port: Union[NumberLike, None] = None,
+                 z0: Union[NumberLike, None] = None,
                  C: NumberLike = 90e-12, L: NumberLike = 280e-9,
                  R: NumberLike = 0, G: NumberLike = 0,
                 *args, **kwargs):
-        super().__init__(frequency=frequency,
-                                                 z0_port=z0_port)
+        if z0 is not None:
+            # warns of deprecation
+            warnings.warn(
+                'Use of `z0` in Media init is deprecated.\n'
+                '`z0` alias with `z0_port if the last is not None`.\n'
+                '`z0` will be removed of Media init in version 1.0',
+              DeprecationWarning, stacklevel = 2)
+            if z0_port is None:
+                z0_port = z0
+        Media.__init__(self, frequency=frequency, z0_port=z0_port)
 
         self.C, self.L, self.R, self.G = C,L,R,G
 

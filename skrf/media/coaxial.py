@@ -13,7 +13,8 @@ A coaxial transmission line defined from its electrical or geometrical/physical 
 
 #from copy import deepcopy
 from scipy.constants import  epsilon_0, mu_0, pi, c
-from numpy import sqrt, log, real, imag, exp, expm1, size, array, ones, NaN
+from numpy import sqrt, log, imag, exp, expm1, size, array
+import warnings
 from ..tlineFunctions import surface_resistivity, skin_depth
 from .distributedCircuit import DistributedCircuit
 from .media import Media, DefinedGammaZ0
@@ -43,6 +44,9 @@ class Coaxial(DistributedCircuit, Media):
         Else if `z0_port` is None, the networks port impedances will be the raw
         characteristic impedance z0 of the media.
         (Default is None)
+    z0 : number, array-like, or None
+        deprecated parameter, alias to `z0_port` if `z0_port` is None.
+        Emmit a deprecation warning.
     Dint : number, or array-like
         inner conductor diameter, in m
     Dout : number, or array-like
@@ -72,11 +76,21 @@ class Coaxial(DistributedCircuit, Media):
     """
     ## CONSTRUCTOR
     def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None, 
+                 z0_port: Union[NumberLike, None] = None,
+                 z0: Union[NumberLike, None] = None,
                  Dint: NumberLike = .81e-3, Dout: NumberLike = 5e-3, 
                  epsilon_r: NumberLike = 1, tan_delta: NumberLike = 0, 
                  sigma: NumberLike = INF,
                  *args, **kwargs):
+        if z0 is not None:
+            # warns of deprecation
+            warnings.warn(
+                'Use of `z0` in Media init is deprecated.\n'
+                '`z0` alias with `z0_port if the last is not None`.\n'
+                '`z0` will be removed of Media init in version 1.0',
+              DeprecationWarning, stacklevel = 2)
+            if z0_port is None:
+                z0_port = z0
         Media.__init__(self, frequency=frequency,z0_port=z0_port)
 
         self.Dint, self.Dout = Dint,Dout

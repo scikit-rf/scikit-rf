@@ -15,6 +15,7 @@ the space's relative permittivity and relative permeability.
 
 """
 from scipy.constants import epsilon_0, mu_0
+import warnings
 from .media import Media
 from ..data import materials
 from ..constants import NumberLike
@@ -51,6 +52,9 @@ class Freespace(Media):
         Else if `z0_port` is None, the networks port impedances will be the raw
         characteristic impedance z0 of the media.
         (Default is None)
+    z0 : number, array-like, or None
+        deprecated parameter, alias to `z0_port` if `z0_port` is None.
+        Emmit a deprecation warning.
     ep_r : number, array-like
         complex relative permittivity. negative imaginary is lossy.
     mu_r : number, array-like
@@ -83,12 +87,21 @@ class Freespace(Media):
 
     def __init__(self, frequency: Union['Frequency', None] = None,
                  z0_port: Union[NumberLike, None] = None,
+                 z0: Union[NumberLike, None] = None,
                  ep_r: NumberLike = 1+0j, mu_r: NumberLike = 1+0j,
                  ep_loss_tan: Union[NumberLike, None] = None,
                  mu_loss_tan: Union[NumberLike, None] = None,
                  rho: Union[NumberLike, str, None] = None,
                  *args, **kwargs):
-
+        if z0 is not None:
+            # warns of deprecation
+            warnings.warn(
+                'Use of `z0` in Media init is deprecated.\n'
+                '`z0` alias with `z0_port if the last is not None`.\n'
+                '`z0` will be removed of Media init in version 1.0',
+              DeprecationWarning, stacklevel = 2)
+            if z0_port is None:
+                z0_port = z0
         Media.__init__(self, frequency=frequency, z0_port=z0_port)
         self.ep_r = ep_r
         self.mu_r = mu_r
