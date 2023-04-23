@@ -10,10 +10,10 @@ license = {text="LICENSE.txt"}
 readme = "README.md"
 
 keywords = [
-    "engineering",
-    "electronics",
-    "microwave-engineering",
-    "radio-frequency",
+    "engineering", 
+    "electronics", 
+    "microwave-engineering", 
+    "radio-frequency", 
     "touchstone"]
 
 classifiers = [
@@ -27,35 +27,35 @@ classifiers = [
     "Topic :: Scientific/Engineering"]
 
 dependencies = [
-    "numpy ~=1.21",
-    "scipy ~=1.7",
-    "pandas ~=1.1",
+    "numpy >=1.21",
+    "scipy >=1.7",
+    "pandas >=1.1",
 ]
 
 [project.optional-dependencies]
 test = [
     "tox >= 3.26.0",
-    "pytest ~=7.0",
-    "coverage ~=6.0",
-    "flake8 ~=5.0",
-    "pytest-cov ~=4.0",
-    "nbval ~=0.9"
+    "pytest >=7.0",
+    "coverage >=6.0",
+    "flake8 >=5.0",
+    "pytest-cov >=4.0",
+    "nbval >=0.9"
 ]
 
 plot = [
-    "matplotlib ~=3.5"
+    "matplotlib >=3.5"
 ]
 
 xlsx = [
-    "openpyxl ~=3.0"
+    "openpyxl >=3.0"
 ]
 
 netw = [
-    "networkx ~= 2.0"
+    "networkx >= 2.0"
 ]
 
 visa = [
-    "PyVISA ~= 1.12"
+    "PyVISA >= 1.12"
 ]
 
 docs = [
@@ -71,9 +71,9 @@ docs = [
 ]
 
 qtapps = [
-    "qtpy ~= 2.2",
-    "pyqtgraph ~= 0.13",
-    "pyqt5 ~= 5.15"
+    "qtpy >= 2.2",
+    "pyqtgraph >= 0.13",
+    "pyqt5 >= 5.15"
 ]
 
 [project.urls]
@@ -104,7 +104,7 @@ version = {attr = "skrf.__version__"}
 include = ["skrf*", "skrf_qtapps*"]
 
 [tool.setuptools.package-data]
-skrf = ["data/*.s*p", "data/*.cal", "data/*.mplstyle"]
+skrf = ["data/*.s*p", "data/*.cal", "data/*.mplstyle"] 
 skrf_qtapps = ["skrf_qtwidgets/images/*.*"]
 
 [tool.pytest.ini_options]

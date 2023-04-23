@@ -1,13 +1,13 @@
 import unittest
-import os
 import warnings
-import pickle
-import skrf as rf
-import numpy as npy
-from numpy.random  import rand, uniform
 import pytest
 
-from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate, terminate_nport, determine_line, determine_reflect, NISTMultilineTRL, MultiportCal, MultiportSOLT
+import numpy as npy
+from numpy.random  import uniform
+
+import skrf as rf
+from skrf.media import Coaxial
+from skrf.calibration import PHN, SOLT, UnknownThru, TwoPortOnePath, TwelveTerm, terminate, terminate_nport, determine_line, determine_reflect, NISTMultilineTRL, MultiportCal, MultiportSOLT
 
 from skrf import two_port_reflect
 from skrf.networkSet import NetworkSet
@@ -68,6 +68,46 @@ class DetermineTest(unittest.TestCase):
 
         [ self.assertEqual(k,l) for k,l in zip(self.r, r_found)]
 
+    def test_determine_reflect_matched_thru_and_line_ideal_reflect(self):
+        freq = rf.F(.25, .7, 21, unit = 'GHz')
+        medium = Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
+
+        thru = medium.line(0, 'm')
+        line = medium.line(0.12, 'm')
+
+        short = rf.two_port_reflect(medium.short(), medium.short())
+        r = determine_reflect(thru, short, line)
+        npy.testing.assert_array_almost_equal( r.s, -npy.ones_like(r.s))
+
+        reflect = rf.two_port_reflect(medium.open(), medium.open())
+        r = determine_reflect(thru, reflect, line, reflect_approx = medium.open())
+        npy.testing.assert_array_almost_equal(r.s, npy.ones_like(r.s))
+
+    def test_determine_reflect_matched_thru_and_line(self):
+        freq = rf.F(.25, .7, 40, unit = 'GHz')
+        medium = Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
+
+        thru = medium.line(0, 'm')
+        line = medium.line(0.12, 'm')
+        short = medium.short()
+
+        rng = npy.random.default_rng(12)
+        short.s[:, 0, 0] = short.s[:, 0, 0]+rng.uniform(-.02, 0.02, freq.f.size) + rng.uniform(-.02, 0.02, freq.f.size)*1j
+
+        r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
+        npy.testing.assert_array_almost_equal( r.s, short.s)
+
+
+    def test_determine_reflect_regression(self):
+        # this test case fails with only regularization on the t-parameters of thru ** line.inv, see gh-870
+        freq = rf.F(434615384.6153846e-9, .7, 1, unit = 'GHz')
+        medium = Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
+        thru= medium.line(0, 'm')
+        line = medium.line(0.12, 'm')
+        short = rf.Network(frequency=freq, s=[[[(-1.+0.017870117714376983j)] ] ])
+
+        r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
+        npy.testing.assert_array_almost_equal( r.s, short.s)
 
 class CalibrationTest:
     """
@@ -552,6 +592,70 @@ class TRLTest(EightTermTest):
         self.cal.run()
         self.assertTrue(self.cal.ideals[1]==self.actuals[1])
 
+class TRLLongThruTest(EightTermTest):
+    """
+    Test TRL calibration with non-zero length thru.
+    In this case calibration is done at thru center.
+    """
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name='Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
+        # make error networks have s21,s12 >> s11,s22 so that TRL
+        # can guess at line length
+        self.X.s[:,0,0] *= 1e-1
+        self.Y.s[:,0,0] *= 1e-1
+        self.X.s[:,1,1] *= 1e-1
+        self.Y.s[:,1,1] *= 1e-1
+
+        # Reflect reference plane is at the thru center
+        self.reflect = wg.load(-.9-.1j)
+        reflect_shifted = wg.line(50, 'um') ** self.reflect
+
+        actuals = [
+            wg.line(100, 'um', name='thru'),
+            rf.two_port_reflect(reflect_shifted, reflect_shifted),
+            wg.line(1100, 'um', name='thru'),
+            ]
+
+        self.actuals = actuals
+
+        ideals = [
+            actuals[0],
+            wg.short(nports=2, name='short'),
+            actuals[2]
+            ]
+
+        measured = [self.measure(k) for k in actuals]
+
+        # Calibration is done at the center of the thru
+        # Add half thru to error networks so that tests pass
+        self.X = self.X ** wg.line(50, 'um')
+        self.Y = wg.line(50, 'um') ** self.Y
+
+        self.cal = rf.TRL(
+            ideals = ideals,
+            measured = measured,
+            isolation = measured[1],
+            switch_terms = (self.gamma_f, self.gamma_r)
+            )
+
+    def test_found_line(self):
+        self.cal.run()
+        # Solved line is difference between line and thru
+        self.assertTrue(self.cal.ideals[2]==self.actuals[2] ** self.actuals[0].inv)
+
+    def test_found_reflect(self):
+        self.cal.run()
+        # Solved reflect is at the thru center
+        self.assertTrue(self.cal.ideals[1]==rf.two_port_reflect(self.reflect, self.reflect))
 
 class TRLWithNoIdealsTest(EightTermTest):
     def setUp(self):
@@ -757,6 +861,29 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
     def test_shift(self):
         for k in self.cal.coefs.keys():
             self.assertTrue(all(npy.abs(self.cal.coefs[k] - self.cal_shift.coefs[k]) < 1e-9))
+
+
+    def test_numpy_float_arguments(self):
+        # see gh-895
+        cal = NISTMultilineTRL(
+            measured = self.measured[:3],
+            Grefls = [-1],
+            l = [npy.float64(1000e-6), 1010e-6],
+            switch_terms = (self.gamma_f, self.gamma_r),
+            )
+        cal.run()
+        cal.apply_cal(self.measured[0])
+
+        cal = NISTMultilineTRL(
+            measured = self.measured[:3],
+            Grefls = [-1],
+            l = [1000e-6, 1010e-6],
+            z0_ref = npy.float64(50),
+            z0_line = npy.float64(50),
+            switch_terms = (self.gamma_f, self.gamma_r),
+            )
+        cal.run()
+        cal.apply_cal(self.measured[0])
 
 
 @pytest.mark.skip()
