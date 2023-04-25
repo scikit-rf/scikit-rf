@@ -2,17 +2,20 @@ version: 2
 updates:
 
 # Maintain dependencies for GitHub Actions
-- package-ecosystem: github-actions
-  directory: /
+- package-ecosystem: "github-actions"
+  directory: "/"
   schedule:
-    interval: weekly
+    interval: "monthly"
+  target-branch: "dependencies"
   assignees:
-  - jhillairet
+  - "jhillairet"
 
 # Maintain dependencies for python
-- package-ecosystem: pip
-  directory: /
+- package-ecosystem: "pip"
+  directory: "/"
   schedule:
-    interval: monthly
+    interval: "monthly"
+  target-branch: "dependencies"
+  versioning-strategy: "increase-if-necessary"
   assignees:
-  - jhillairet
+  - "jhillairet"
