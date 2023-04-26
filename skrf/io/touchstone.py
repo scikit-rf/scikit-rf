@@ -33,8 +33,7 @@ import numpy as npy
 
 from ..util import get_fid
 from ..network import Network
-from ..frequency import Frequency
-from ..media import Media, DefinedGammaZ0
+from ..media import DefinedGammaZ0
 from .. import mathFunctions as mf
 
 

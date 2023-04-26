@@ -10,10 +10,10 @@ license = {text="LICENSE.txt"}
 readme = "README.md"
 
 keywords = [
-    "engineering", 
-    "electronics", 
-    "microwave-engineering", 
-    "radio-frequency", 
+    "engineering",
+    "electronics",
+    "microwave-engineering",
+    "radio-frequency",
     "touchstone"]
 
 classifiers = [
@@ -104,7 +104,7 @@ version = {attr = "skrf.__version__"}
 include = ["skrf*", "skrf_qtapps*"]
 
 [tool.setuptools.package-data]
-skrf = ["data/*.s*p", "data/*.cal", "data/*.mplstyle"] 
+skrf = ["data/*.s*p", "data/*.cal", "data/*.mplstyle"]
 skrf_qtapps = ["skrf_qtwidgets/images/*.*"]
 
 [tool.pytest.ini_options]
@@ -128,11 +128,11 @@ filterwarnings = [
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 select = ["E", "F"]
 # E501: line length violations
-ignore = ["E501", "F405", "F401", "E741", "F841", "F403", "E712" ]
+ignore = ["E501", "F405", "E741", "F841", "F403", "E712" ]
 
 # Ignore E402 (import violations) in all `__init__.py` files
 [tool.ruff.per-file-ignores]
 # E402: imports at the beginning of file
-"__init__.py" = ["E402"]
+"__init__.py" = ["E402", "F401"]
 "doc/source/conf.py" = ["E402"]
 "doc/sphinxext/tests/test_docscrape.py" = ["E402"]

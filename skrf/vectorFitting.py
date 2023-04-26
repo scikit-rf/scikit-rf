@@ -7,8 +7,6 @@ from typing import Any, Tuple, TYPE_CHECKING
 import numpy as np
 
 try:
-    from . import plotting    # will perform the correct setup for matplotlib before it is called below
-    import matplotlib.pyplot as mplt
     from matplotlib.ticker import EngFormatter
 except ImportError:
     pass

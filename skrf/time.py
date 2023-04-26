@@ -16,7 +16,6 @@ Time domain functions
    indexes
 
 """
-import scipy.signal
 
 from .util import find_nearest_index
 from scipy import signal

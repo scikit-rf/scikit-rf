@@ -4,7 +4,7 @@ import time
 from .abcvna import VNA
 from ...frequency import *
 from ...network import *
-from .hp8510c_sweep_plan import SweepPlan, SweepSection
+from .hp8510c_sweep_plan import SweepPlan
 
 class HP8510C(VNA):
     '''

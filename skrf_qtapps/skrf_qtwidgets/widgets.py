@@ -2,7 +2,7 @@ import os
 import sys
 import traceback
 
-from qtpy import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore
 
 import skrf
 from . import numeric_inputs

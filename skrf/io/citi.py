@@ -17,7 +17,7 @@ import numpy as np
 import typing
 from ..util import get_fid
 from ..frequency import Frequency
-from ..network import Network, z2s, y2s
+from ..network import Network, z2s
 from ..networkSet import NetworkSet
 from ..mathFunctions import magdeg_2_reim
 

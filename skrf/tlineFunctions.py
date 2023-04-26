@@ -113,7 +113,7 @@ Transmission Line Physics
 
 from . constants import NumberLike, INF, ONE
 import numpy as npy
-from numpy import pi, sqrt, exp, array, imag, real
+from numpy import pi, sqrt, exp, array, real
 
 from scipy.constants import mu_0
 from . import mathFunctions as mf

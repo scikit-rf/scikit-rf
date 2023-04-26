@@ -13,7 +13,6 @@ author = 'scikit-rf team'
 import sys
 import os
 import sphinx_rtd_theme
-import nbsphinx
 import warnings
 warnings.filterwarnings('ignore')
 

@@ -3,7 +3,6 @@ import numpy as np
 import skrf
 import pyvisa
 from collections import OrderedDict
-from collections.abc import Iterable
 
 from . import abcvna
 from . import keysight_pna_scpi
@@ -151,7 +150,6 @@ class PNA(abcvna.VNA):
 
         try:
             for channel in channels:
-                import time
                 if "all" not in channels_to_sweep and channel["cnum"] not in channels_to_sweep:
                     continue  # default for sweep is all, else if we specify, then sweep
                 if not timeout:  # autoset timeout based on sweep time

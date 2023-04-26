@@ -160,10 +160,8 @@ import os
 import warnings
 import io
 from pathlib import Path
-import pickle
 from pickle import UnpicklingError
 
-import sys
 import re
 import zipfile
 from copy import deepcopy as copy
@@ -171,14 +169,13 @@ from itertools import product
 
 import numpy as npy
 from numpy.linalg import inv as npy_inv
-from numpy import fft, gradient, ndarray, reshape, shape, ones, std
+from numpy import gradient, ndarray, shape
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
-import unittest  # fotr unitest.skip
 
 from . import mathFunctions as mf
 from .frequency import Frequency
-from .util import get_fid, get_extn, find_nearest_index, slice_domain
+from .util import get_fid, get_extn, find_nearest_index
 from .time import time_gate
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import sys
 import optparse
 import pylab as plb
 

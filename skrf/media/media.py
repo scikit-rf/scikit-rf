@@ -18,12 +18,11 @@ import warnings
 import numpy as npy
 from numpy import real, imag, ones, any, gradient, array
 from scipy import stats
-from scipy.constants import  c, inch, mil
+from scipy.constants import  c
 
 from ..frequency import Frequency
 from ..network import Network, connect, impedance_mismatch
 
-from .. import tlineFunctions as tf
 from .. import mathFunctions as mf
 
 from ..constants import NumberLike, to_meters, ZERO

@@ -1,4 +1,3 @@
-import py
 import pytest
 from skrf.frequency import Frequency, InvalidFrequencyWarning
 import unittest

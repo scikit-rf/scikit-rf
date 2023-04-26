@@ -1,7 +1,5 @@
-from numpy.testing import dec
 import unittest
 import pytest
-import skrf
 
 try:
     from skrf.vi.vna import VectorStar

@@ -58,8 +58,6 @@ from . constants import NumberLike
 from numbers import Number
 from typing import Callable, Tuple, Union, List
 import os
-import sys
-import getpass
 import warnings
 
 import numpy as npy

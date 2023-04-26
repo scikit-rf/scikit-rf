@@ -1,6 +1,6 @@
 import dataclasses
 import numpy as np
-from typing import List, Union
+from typing import List
 from abc import ABC, abstractmethod
 
 

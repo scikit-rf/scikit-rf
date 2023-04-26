@@ -39,12 +39,11 @@ import numpy as npy
 #import visa
 #from visa import Driver
 from warnings import warn
-from itertools import product
 import re
 
 from ..frequency import *
 from ..network import *
-from ..calibration.calibration import Calibration, SOLT, OnePort, \
+from ..calibration.calibration import SOLT, OnePort, \
                                       convert_pnacoefs_2_skrf,\
                                       convert_skrfcoefs_2_pna
 from .. import mathFunctions as mf

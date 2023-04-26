@@ -149,7 +149,7 @@ def pna_csv_2_df(filename):
 
     """
     warn("deprecated", DeprecationWarning)
-    from pandas import Series, Index, DataFrame
+    from pandas import Index, DataFrame
     header, comments, d = read_pna_csv(filename)
     f_unit = header.split(',')[0].split(')')[0].split('(')[1]
 

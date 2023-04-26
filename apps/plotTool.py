@@ -2,8 +2,6 @@ from traits.api import *
 from traitsui.api import *#View, Item, ButtonEditor, Group, HSplit,
 from traitsui.menu import *
 
-import numpy as npy
-import os
 import pylab as plb
 import skrf as rf
 
