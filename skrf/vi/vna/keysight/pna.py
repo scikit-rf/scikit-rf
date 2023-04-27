@@ -237,39 +237,40 @@ class PNA(VNA):
 
         @property
         def calibration(self) -> skrf.Calibration:
-            orig_query_fmt = self.parent.query_format
-            self.parent.query_format = ValuesFormat.BINARY_64
+            raise NotImplementedError()
+            # orig_query_fmt = self.parent.query_format
+            # self.parent.query_format = ValuesFormat.BINARY_64
 
-            eterm_re = re.compile(r"(\w+)\((\d),(\d)\)")
-            cset_terms = self.query(f"SENS{self.cnum}:CORR:CSET:ETER:CAT?")
-            terms = re.findall(eterm_re, cset_terms)
+            # eterm_re = re.compile(r"(\w+)\((\d),(\d)\)")
+            # cset_terms = self.query(f"SENS{self.cnum}:CORR:CSET:ETER:CAT?")
+            # terms = re.findall(eterm_re, cset_terms)
 
-            if len(terms) == 3:
-                cal = skrf.OnePort
-            elif len(terms) == 12:
-                # cal = skrf.TwoPort
-                raise NotImplementedError()
-            else:
-                # cal = skrf.MultiPort
-                raise NotImplementedError()
+            # if len(terms) == 3:
+            #     cal = skrf.OnePort
+            # elif len(terms) == 12:
+            #     # cal = skrf.TwoPort
+            #     raise NotImplementedError()
+            # else:
+            #     # cal = skrf.MultiPort
+            #     raise NotImplementedError()
 
-            coeffs = {}
-            for term in terms:
-                pna_name = term[0]
-                skrf_name = re.sub(
-                    r"([A-Z])", lambda pat: f" {pat.group(1).lower()}", pna_name
-                ).strip()
+            # coeffs = {}
+            # for term in terms:
+            #     pna_name = term[0]
+            #     skrf_name = re.sub(
+            #         r"([A-Z])", lambda pat: f" {pat.group(1).lower()}", pna_name
+            #     ).strip()
 
-                coeffs[skrf_name] = self.query_values(
-                    f"SENS{self.cnum}:CORR:CSET:ETERM? '{pna_name}({a},{b})'",
-                    complex_values=True,
-                    container=np.array,
-                )
+            #     coeffs[skrf_name] = self.query_values(
+            #         f"SENS{self.cnum}:CORR:CSET:ETERM? '{pna_name}({a},{b})'",
+            #         complex_values=True,
+            #         container=np.array,
+            #     )
 
-            self.parent.query_format = orig_query_fmt
+            # self.parent.query_format = orig_query_fmt
 
-            freq = self.frequency
-            return cal.from_coefs(freq, coeffs)
+            # freq = self.frequency
+            # return cal.from_coefs(freq, coeffs)
 
         @calibration.setter
         def calibration(self, cal: skrf.Calibration) -> None:
