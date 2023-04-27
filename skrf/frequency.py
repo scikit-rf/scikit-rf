@@ -628,7 +628,7 @@ class Frequency:
         """
         Time vector in s.
 
-        t_period = (n-1)/f_step
+        t_period = 2*(n-1)/f_step
         """
         return npy.fft.fftshift(npy.fft.fftfreq(self.npoints, self.step))
 
@@ -637,7 +637,7 @@ class Frequency:
         """
         Time vector in ns.
 
-        t_period = (n-1)/f_step
+        t_period = 2*(n-1)/f_step
         """
         return self.t*1e9
 
