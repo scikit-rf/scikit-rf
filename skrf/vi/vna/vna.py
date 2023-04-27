@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional
 
-import functools
 import inspect
+import functools
 import re
 from abc import ABC
 from enum import Enum, auto
@@ -43,7 +43,7 @@ def _format_cmd(cmd: str, **kwargs) -> str:
 
 class ValuesFormat(Enum):
     """How values are written to and queried from the insturment"""
-    
+
     #: 32 bits per value
     BINARY_32 = auto()
     #: 64 bits per value
@@ -54,7 +54,7 @@ class ValuesFormat(Enum):
 
 class Channel:
     """
-    A single channel of the instrument. 
+    A single channel of the instrument.
 
     This is only for those instruments which support channels, and should be
     subclassed in those instrument classes.
@@ -62,8 +62,9 @@ class Channel:
     .. warning::
         This class should not be instantiated directly
     """
+
     def __init__(
-        self, parent, cnum: Optional[int] = None, cname: Optional[str]= None
+        self, parent, cnum: Optional[int] = None, cname: Optional[str] = None
     ) -> None:
         self.parent = parent
         self.cnum = cnum
@@ -93,7 +94,6 @@ class VNA(ABC):
 
         self.echo = False
 
-
     def __init_subclass__(cls):
         if "Channel" in [c[0] for c in inspect.getmembers(cls, inspect.isclass)]:
             cls._add_channel_support()
@@ -119,14 +119,20 @@ class VNA(ABC):
 
         def _channels(self) -> list[Channel]:
             return [
-                getattr(self, ch) 
-                for ch in dir(self) 
+                getattr(self, ch)
+                for ch in dir(self)
                 if re.fullmatch(r"ch\d+", ch)
             ]
+
+        def __getattr__(self, k):
+            if not hasattr(self.Channel, k):
+                raise AttributeError(f"{type(self).__name__} has no attribute {k}")
+            return getattr(self.ch1, k)
 
         setattr(cls, "create_channel", create_channel)
         setattr(cls, "delete_channel", delete_channel)
         setattr(cls, "channels", property(_channels))
+        setattr(cls, "__getattr__", __getattr__)
 
     def _setup_scpi(self) -> None:
         setattr(
@@ -134,10 +140,14 @@ class VNA(ABC):
             "wait_for_complete",
             lambda self: self.query("*OPC?"),
         )
-        setattr(self.__class__, "status", property(lambda self: self.query("*STB?")))
-        setattr(self.__class__, "options", property(lambda self: self.query("*OPT?")))
-        setattr(self.__class__, "id", property(lambda self: self.query("*IDN?")))
-        setattr(self.__class__, "clear_errors", lambda self: self.write("*CLS"))
+        setattr(self.__class__, "status", property(
+            lambda self: self.query("*STB?")))
+        setattr(self.__class__, "options", property(
+            lambda self: self.query("*OPT?")))
+        setattr(self.__class__, "id", property(
+            lambda self: self.query("*IDN?")))
+        setattr(self.__class__, "clear_errors",
+                lambda self: self.write("*CLS"))
 
         def errcheck(self) -> None:
             err = self.query("SYST:ERR?")
@@ -146,7 +156,7 @@ class VNA(ABC):
                 return
             else:
                 raise SCPIError(errno)
-                
+
         setattr(self.__class__, "check_errors", errcheck)
 
     @staticmethod
@@ -190,7 +200,7 @@ class VNA(ABC):
             If the values expected from the instrument are complex. If so, the
             values will be converted from [real[0], imag[0], real[1], imag[1], ...] 
             to [complex(real[0], imag[0]), complex(real[1], imag[1]), ...]
-            
+
         Returns
         -------
         property
@@ -204,7 +214,9 @@ class VNA(ABC):
 
             cmd = _format_cmd(get_cmd, self=self)
             if values:
-                arg = self.query_values(cmd, container=values_container, complex_values=complex_values)
+                arg = self.query_values(
+                    cmd, container=values_container, complex_values=complex_values
+                )
             else:
                 arg = self.query(cmd)
 
@@ -261,7 +273,7 @@ class VNA(ABC):
 
         fn(cmd, **kwargs)
 
-    def write_values(self, cmd, values, complex_values: bool=False, **kwargs) -> None:
+    def write_values(self, cmd, values, complex_values: bool = False, **kwargs) -> None:
         if self.echo:
             print(cmd)
 
@@ -274,8 +286,9 @@ class VNA(ABC):
             elif self._values_fmt == ValuesFormat.BINARY_32:
                 fn = self._resource.write_binary_values
             elif self._values_fmt == ValuesFormat.BINARY_64:
-                fn = functools.partial(self._resource.write_binary_values, datatype='d')
-            
+                fn = functools.partial(
+                    self._resource.write_binary_values, datatype='d')
+
         elif isinstance(self._resource, pyvisa.resources.RegisterBasedResource):
             raise NotImplementedError()
         else:
@@ -296,7 +309,7 @@ class VNA(ABC):
 
         return fn(cmd, **kwargs)
 
-    def query_values(self, cmd, complex_values: bool=False, **kwargs) -> None:
+    def query_values(self, cmd, complex_values: bool = False, **kwargs) -> None:
         if self.echo:
             print(cmd)
 
@@ -306,7 +319,8 @@ class VNA(ABC):
             elif self._values_fmt == ValuesFormat.BINARY_32:
                 fn = self._resource.query_binary_values
             elif self._values_fmt == ValuesFormat.BINARY_64:
-                fn = functools.partial(self._resource.query_binary_values, datatype='d')
+                fn = functools.partial(
+                    self._resource.query_binary_values, datatype='d')
         elif isinstance(self._resource, pyvisa.resources.RegisterBasedResource):
             raise NotImplementedError()
         else:
