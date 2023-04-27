@@ -1054,7 +1054,7 @@ def ifft(x: npy.ndarray) -> npy.ndarray:
     --------
     irfft
     """
-    return npy.fft.fftshift(npy.fft.ifft(x, axis=0), axes=0)
+    return npy.fft.fftshift(npy.fft.ifft(npy.fft.ifftshift(x, axes=0), axis=0), axes=0)
 
 
 def irfft(x: npy.ndarray, n:int = None) -> npy.ndarray:
