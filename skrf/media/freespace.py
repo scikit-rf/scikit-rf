@@ -58,7 +58,7 @@ class Freespace(Media):
         their characteristic impedance `z0` overrided by `z0_override`.
         (Default is None)
     z0 : number, array-like, or None
-        deprecated parameter, alias to `z0_port` if `z0_port` is None.
+        deprecated parameter, alias to `z0_override` if `z0_override` is None.
         Emmit a deprecation warning.
     ep_r : number, array-like
         complex relative permittivity. negative imaginary is lossy.
@@ -99,20 +99,8 @@ class Freespace(Media):
                  mu_loss_tan: Union[NumberLike, None] = None,
                  rho: Union[NumberLike, str, None] = None,
                  *args, **kwargs):
-        if z0 is not None:
-            # warns of deprecation
-            warnings.warn(
-                'Use of `z0` in Media init is deprecated.\n'
-                '`z0` alias with `z0_override if the last is not None`.\n'
-                '`z0` will be removed of Media init in version 1.0',
-              DeprecationWarning, stacklevel = 2)
-            if z0_override is None:
-                self.z0_override = z0
-            else:
-                self.z0_override = None
-        else:
-            self.z0_override = z0_override
-        Media.__init__(self, frequency=frequency, z0_port=z0_port)
+        Media.__init__(self, frequency = frequency,
+                       z0_port = z0_port, z0_override = z0_override, z0 = z0)
         self.ep_r = ep_r
         self.mu_r = mu_r
         self.rho = rho
@@ -324,6 +312,12 @@ class Freespace(Media):
     @property
     def z0(self) -> NumberLike:
         """
+        Characteristic Impedance
+        
+        Returns
+        -------
+        z0 : npy.ndarray
+            Characteristic Impedance in units of ohms
         """
         if self.z0_override is None:
             return self.z0_waveguide

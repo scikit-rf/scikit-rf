@@ -115,20 +115,8 @@ class RectangularWaveguide(Media):
                  rho: Union[None, NumberLike] = None,
                  roughness: Union[None, NumberLike] = None,
                  *args, **kwargs):
-        if z0 is not None:
-            # warns of deprecation
-            warnings.warn(
-                'Use of `z0` in Media init is deprecated.\n'
-                '`z0` alias with `z0_override if the last is not None`.\n'
-                '`z0` will be removed of Media init in version 1.0',
-              DeprecationWarning, stacklevel = 2)
-            if z0_override is None:
-                self.z0_override = z0
-            else:
-                self.z0_override = None
-        else:
-            self.z0_override = z0_override
-        Media.__init__(self, frequency=frequency,z0_port=z0_port)
+        Media.__init__(self, frequency = frequency,
+                       z0_port = z0_port, z0_override = z0_override, z0 = z0)
 
         if b is None:
             b = a/2.
@@ -495,6 +483,12 @@ class RectangularWaveguide(Media):
     @property
     def z0(self) -> NumberLike:
         """
+        Characteristic Impedance
+        
+        Returns
+        -------
+        z0 : npy.ndarray
+            Characteristic Impedance in units of ohms
         """
         if self.z0_override is None:
             return self.z0_waveguide

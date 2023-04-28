@@ -10,7 +10,7 @@ from numpy.testing import run_module_suite
 
 import skrf as rf
 from skrf.media import Freespace, CircularWaveguide, RectangularWaveguide
-from skrf.media import Coaxial, DistributedCircuit
+from skrf.media import Media, Coaxial, DistributedCircuit
 from skrf.media import CPW, MLine
 
 
@@ -104,16 +104,16 @@ class Z0InitDeprecationTestCase(unittest.TestCase):
         # 2-conductor other media
         with self.assertWarns(DeprecationWarning) as context:
             coax = Coaxial(self.frequency, z0 = 50)
-            self.assertTrue(np.all(coax.z0_port == 50))
+            self.assertTrue(np.all(coax.z0 == 50))
         with self.assertWarns(DeprecationWarning) as context:
             cpw = CPW(self.frequency, z0 = 50)
-            self.assertTrue(np.all(cpw.z0_port == 50))
+            self.assertTrue(np.all(cpw.z0 == 50))
         with self.assertWarns(DeprecationWarning) as context:
             air = Freespace(self.frequency, z0 = 50)
             self.assertTrue(np.all(air.z0 == 50))
         with self.assertWarns(DeprecationWarning) as context:
             mlin = MLine(self.frequency, z0 = 50)
-            self.assertTrue(np.all(mlin.z0_port == 50))
+            self.assertTrue(np.all(mlin.z0 == 50))
     
     
 class FreespaceTestCase(MediaTestCase, unittest.TestCase):

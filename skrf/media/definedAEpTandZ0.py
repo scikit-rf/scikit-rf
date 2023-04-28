@@ -215,6 +215,14 @@ class DefinedAEpTandZ0(Media):
 
     @property
     def z0(self) -> NumberLike:
+        """
+        Characteristic Impedance
+        
+        Returns
+        -------
+        z0 : npy.ndarray
+            Characteristic Impedance in units of ohms
+        """
         return self._z0
 
     @z0.setter

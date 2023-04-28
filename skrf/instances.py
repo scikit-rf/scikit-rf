@@ -57,7 +57,7 @@ References
 """
 
 from . frequency import Frequency
-from . media import RectangularWaveguide, Freespace, DefinedGammaZ0
+from . media import RectangularWaveguide, Freespace
 from .constants import mil
 
 air = Freespace()
