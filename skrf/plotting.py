@@ -1425,8 +1425,8 @@ def plot_reciprocity2(self, db=False, *args, **kwargs):
     plt.draw()
 
 
-def plot_s_db_time(self, window: Union[str, float, Tuple[str, float]]=('kaiser', 6),
-        normalize: bool = True, center_to_dc: bool = None, *args, **kwargs):
+def plot_s_db_time(self, *args, window: Union[str, float, Tuple[str, float]]=('kaiser', 6),
+        normalize: bool = True, center_to_dc: bool = None, **kwargs):
     return self.windowed(window, normalize, center_to_dc).plot_s_time_db(*args,**kwargs)
 
 
