@@ -263,16 +263,33 @@ class Media(ABC):
 
     @property
     @abstractmethod
+    def z0_characteristic(self):
+        """
+        Characteristic Impedance, :math:`z_0`.
+        This abstract method has to be defined in the Media Class.
+        
+        Returns
+        -------
+        z0_characteristic : npy.ndarray
+            Characteristic Impedance in units of ohms
+        """
+        return None
+    
+    @property
     def z0(self):
         """
-        Characteristic Impedance
+        Return Characteristic Impedance `z0_characteristic`.
+        If `z0_override` is not None, it is returned instead.
         
         Returns
         -------
         z0 : npy.ndarray
-            Characteristic Impedance in units of ohms
+            z0_characteristic or z0_override in units of ohms
         """
-        return self.z0_override
+        if self.z0_override is None:
+            return self.z0_characteristic
+        else:
+            return self.z0_override
     
     # left for backward compatibility
     @property
@@ -1589,7 +1606,7 @@ class DefinedGammaZ0(Media):
                                              z0_port=z0_port)
         
         self.gamma= gamma
-        self.z0 = z0
+        self.z0_characteristic = z0
 
     @classmethod
     def from_csv(cls, filename: str, *args, **kwargs) -> Media:
@@ -1660,19 +1677,19 @@ class DefinedGammaZ0(Media):
         self._frequency = val
 
     @property
-    def z0(self):
+    def z0_characteristic(self):
         """
-        Characteristic Impedance
+        Characteristic Impedance, :math:`z_0`.
         
         Returns
         -------
-        z0 : npy.ndarray
+        z0_characteristic : npy.ndarray
             Characteristic Impedance in units of ohms
         """
         return self._z0*ones(len(self))
 
-    @z0.setter
-    def z0(self, val):
+    @z0_characteristic.setter
+    def z0_characteristic(self, val):
         self._z0 = val
 
     @property

@@ -407,42 +407,20 @@ class CircularWaveguide(Media):
         u= self.kc*r
         return 1./r * sqrt( (w*ep)/(2./rho) ) * ( (1/f_n)**2 + 1/(u**2 - 1) ) \
             /sqrt(1-(1/f_n)**2)
-
-    @property
-    def z0_waveguide(self) -> NumberLike:
-        """
-        The characteristic impedance.
-        """
-        omega = self.frequency.w
-        impedance_dict = {'te':   1j*omega*self.mu/(self.gamma),
-                          'tm':   -1j*self.gamma/(omega*self.ep),\
-                         }
-
-        return impedance_dict[self.mode_type]
     
     @property
-    def z0_waveguide(self) -> NumberLike:
+    def z0_characteristic(self) -> NumberLike:
         """
-        The characteristic impedance.
-        """
-        omega = self.frequency.w
-        impedance_dict = {'te':   1j*omega*self.mu/(self.gamma),
-                          'tm':   -1j*self.gamma/(omega*self.ep),\
-                         }
-
-        return impedance_dict[self.mode_type]
-    
-    @property
-    def z0(self) -> NumberLike:
-        """
-        Characteristic Impedance
+        The characteristic impedance, :math:`z_0`.
         
         Returns
         -------
-        z0 : npy.ndarray
+        z0_characteristic : npy.ndarray
             Characteristic Impedance in units of ohms
         """
-        if self.z0_override is None:
-            return self.z0_waveguide
-        else:
-            return self.z0_override
+        omega = self.frequency.w
+        impedance_dict = {'te':   1j*omega*self.mu/(self.gamma),
+                          'tm':   -1j*self.gamma/(omega*self.ep),\
+                         }
+
+        return impedance_dict[self.mode_type]

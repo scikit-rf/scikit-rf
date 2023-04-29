@@ -467,11 +467,16 @@ class RectangularWaveguide(Media):
             sqrt(1-(1/f_n)**2)
 
     @property
-    def z0_waveguide(self) -> NumberLike:
+    def z0_characteristic(self) -> NumberLike:
         """
-        The characteristic impedance.
+        The characteristic impedance, :math:`z_0`.
 
         The characteristic impedance depends of the mode ('te' or 'tm').
+        
+        Returns
+        -------
+        z0_characteristic : npy.ndarray
+            Characteristic Impedance in units of ohms
         """
         omega = self.frequency.w
         impedance_dict = {'te':   1j*omega*self.mu/(self.gamma),
@@ -479,18 +484,3 @@ class RectangularWaveguide(Media):
                          }
 
         return impedance_dict[self.mode_type]
-    
-    @property
-    def z0(self) -> NumberLike:
-        """
-        Characteristic Impedance
-        
-        Returns
-        -------
-        z0 : npy.ndarray
-            Characteristic Impedance in units of ohms
-        """
-        if self.z0_override is None:
-            return self.z0_waveguide
-        else:
-            return self.z0_override

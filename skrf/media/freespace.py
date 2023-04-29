@@ -293,9 +293,9 @@ class Freespace(Media):
         return 1j*self.frequency.w * sqrt(ep*self.mu)
 
     @property
-    def z0_waveguide(self) -> NumberLike:
+    def z0_characteristic(self) -> NumberLike:
         r"""
-        Characteristic Impedance, :math:`z0`.
+        Characteristic Impedance, :math:`z_0`.
 
         .. math::
 
@@ -303,26 +303,11 @@ class Freespace(Media):
 
         Returns
         -------
-        z0 : npy.ndarray
+        z0_characteristic : npy.ndarray
             Characteristic Impedance in units of ohms
         """
         ep = self.ep_with_rho
         return sqrt(self.mu/ep)*ones(len(self))
-
-    @property
-    def z0(self) -> NumberLike:
-        """
-        Characteristic Impedance
-        
-        Returns
-        -------
-        z0 : npy.ndarray
-            Characteristic Impedance in units of ohms
-        """
-        if self.z0_override is None:
-            return self.z0_waveguide
-        else:
-            return self.z0_override
 
     def plot_ep(self):
         """

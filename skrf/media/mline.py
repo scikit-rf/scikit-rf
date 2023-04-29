@@ -309,13 +309,13 @@ class MLine(Media):
         return alpha + 1j*beta
 
     @property
-    def z0(self) -> npy.ndarray:
+    def z0_characteristic(self) -> npy.ndarray:
         """
-        Characteristic Impedance
+        Characteristic Impedance, :math:`z_0`
         
         Returns
         -------
-        z0 : npy.ndarray
+        z0_characteristic : npy.ndarray
             Characteristic Impedance in units of ohms
         """
         if self.z0_override is None:

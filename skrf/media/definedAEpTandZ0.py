@@ -104,9 +104,9 @@ class DefinedAEpTandZ0(Media):
     >>> from skrf.media.definedAEpTandZ0 import DefinedAEpTandZ0
     >>> from skrf.frequency import Frequency
     >>> f = Frequency(75,110,101,'ghz')
-    >>> DefinedAEpTandZ0(frequency=f, A=1, f_A=1e9, ep_r=3, Z0=50)
-    >>> DefinedAEpTandZ0(frequency=f, A=1, f_A=1e9, ep_r=3, tand=0.02, Z0=50)
-    >>> DefinedAEpTandZ0(frequency=f, A=1, f_A=1e9, ep_r=3, tand=0.02, Z0=50,
+    >>> DefinedAEpTandZ0(frequency=f, A=1, f_A=1e9, ep_r=3, z0=50)
+    >>> DefinedAEpTandZ0(frequency=f, A=1, f_A=1e9, ep_r=3, tand=0.02, z0=50)
+    >>> DefinedAEpTandZ0(frequency=f, A=1, f_A=1e9, ep_r=3, tand=0.02, z0=50,
                         f_low=1e3, f_high=1e12, f_Ep=1e9,
                         model='djordjevicsvensson')
 
@@ -133,7 +133,7 @@ class DefinedAEpTandZ0(Media):
         Media.__init__(self, frequency=frequency, z0_port=z0_port)
         self.A, self.f_A = A, f_A
         self.ep_r, self.tanD = ep_r, tanD
-        self._z0 = z0
+        self.z0_characteristic = z0
         self.f_low, self.f_high, self.f_ep = f_low, f_high, f_ep
         self.model = model
 
@@ -214,17 +214,17 @@ class DefinedAEpTandZ0(Media):
         return alpha + 1j*beta
 
     @property
-    def z0(self) -> NumberLike:
+    def z0_characteristic(self) -> NumberLike:
         """
-        Characteristic Impedance
+        Characteristic Impedance, :math:`z_0`
         
         Returns
         -------
-        z0 : npy.ndarray
+        z0_characteristic : npy.ndarray
             Characteristic Impedance in units of ohms
         """
         return self._z0
 
-    @z0.setter
-    def z0(self, val):
+    @z0_characteristic.setter
+    def z0_characteristic(self, val):
         self._z0 = val

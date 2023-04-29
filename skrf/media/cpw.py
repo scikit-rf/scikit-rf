@@ -251,19 +251,16 @@ class CPW(Media):
         return self.__str__()
 
     @property
-    def z0(self) -> NumberLike:
+    def z0_characteristic(self) -> NumberLike:
         """
-        Characteristic Impedance
+        Characteristic Impedance, :math:`z_0`.
         
         Returns
         -------
-        z0 : npy.ndarray
+        z0_characteristic : npy.ndarray
             Characteristic Impedance in units of ohms
         """
-        if self.z0_override is None:
-            return self._z_characteristic
-        else:
-            return self.z0_override
+        return self._z_characteristic
 
     @property
     def gamma(self) -> NumberLike:

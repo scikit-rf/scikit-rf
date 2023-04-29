@@ -240,9 +240,9 @@ class DistributedCircuit(Media):
         return Y
 
     @property
-    def z0(self) -> NumberLike:
+    def z0_characteristic(self) -> NumberLike:
         r"""
-        Characteristic Impedance, :math:`Z0`
+        Characteristic Impedance, :math:`z_0`
 
         .. math::
 
@@ -250,13 +250,10 @@ class DistributedCircuit(Media):
 
         Returns
         -------
-        z0 : npy.ndarray
+        z0_characteristic : npy.ndarray
             Characteristic Impedance in units of ohms
         """
-        if self.z0_override is None:
-            return sqrt(self.Z/self.Y)
-        else:
-            return self.z0_override
+        return sqrt(self.Z/self.Y)
 
     @property
     def gamma(self) -> NumberLike:
