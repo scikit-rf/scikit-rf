@@ -1597,16 +1597,27 @@ class DefinedGammaZ0(Media):
     z0 : number or array-like, optional.
         complex characteristic impedance of the media.
         Default is 50 ohm.
+    Z0 : number, array-like, or None
+        deprecated parameter, only emmit a deprecation warning.
     """
 
     def __init__(self, frequency: Union[Frequency, None] = None,
-                 z0_port: Union[NumberLike, None] = None, z0: NumberLike = 50,
+                 z0_port: Union[NumberLike, None] = None,
+                 z0: NumberLike = 50,
+                 Z0: Union[NumberLike, None] = None,
                  gamma: NumberLike = 1j):
-        super().__init__(frequency=frequency,
-                                             z0_port=z0_port)
+        super().__init__(frequency=frequency, z0_port=z0_port)
         
         self.gamma= gamma
         self.z0_characteristic = z0
+        
+        if Z0 is not None:
+            # warns of deprecation
+            warnings.warn(
+                'Use of `Z0` in DefinedGammaZ0 initialization is deprecated.\n'
+                '`Z0` has no effect. Use `z0` instead\n'
+                '`Z0` will be removed in version 1.0',
+              DeprecationWarning, stacklevel = 2)
 
     @classmethod
     def from_csv(cls, filename: str, *args, **kwargs) -> Media:

@@ -17,6 +17,7 @@ behaviour is frequency invariant.
 """
 from numbers import Number
 from typing import Union
+import warnings
 from scipy.constants import  epsilon_0, c
 from numpy import real, imag, sqrt, ones, zeros, pi, log
 from .. constants import NumberLike
@@ -84,6 +85,8 @@ class DefinedAEpTandZ0(Media):
         Dielectric relative permittivity loss tangent :math:`\tan\delta`. See `ep_r`.
     z0 : number, array-like, default 50.0
         Quasi-static characteristic impedance of the medium.
+    Z0 : number, array-like, or None
+        deprecated parameter, only emmit a deprecation warning.
     f_low : number, default 1e3, optional
         Low frequency in Hz for  for Djirdjevic/Svennson dispersion model.
         See `ep_r`.
@@ -127,6 +130,7 @@ class DefinedAEpTandZ0(Media):
                  ep_r: NumberLike = 1.0, tanD: NumberLike = 0.0,
                  z0_port: Union[NumberLike, None] = None,
                  z0: float = 50.0,
+                 Z0: Union[NumberLike, None] = None,
                  f_low: float = 1.0e3, f_high: float = 1.0e12, f_ep: float = 1.0e9,
                  model: str = 'frequencyinvariant', *args, **kwargs):
 
@@ -136,6 +140,14 @@ class DefinedAEpTandZ0(Media):
         self.z0_characteristic = z0
         self.f_low, self.f_high, self.f_ep = f_low, f_high, f_ep
         self.model = model
+        
+        if Z0 is not None:
+            # warns of deprecation
+            warnings.warn(
+                'Use of `Z0` in DefinedAEpTandZ0 initialization is deprecated.\n'
+                '`Z0` has no effect. Use `z0` instead\n'
+                '`Z0` will be removed in version 1.0',
+              DeprecationWarning, stacklevel = 2)
 
     def __str__(self):
         f = self.frequency
