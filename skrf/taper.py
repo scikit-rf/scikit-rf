@@ -141,7 +141,7 @@ class Taper1D:
 
     @property
     def value_vector(self):
-        if self.f_is_normed ==True:
+        if self.f_is_normed:
             x = linspace(0,1,self.n_sections)
             y = self.f(x, **self.f_kw)*(self.stop-self.start) + self.start
         else:

@@ -151,8 +151,7 @@ class NetworkSet:
             raise(ValueError('All elements in list of Networks must have same number of ports'))
 
         # is all frequency information the same?
-        if npy.all([(ntwk_set[0].frequency == ntwk.frequency) \
-                for ntwk in ntwk_set]) == False:
+        if not npy.all([(ntwk_set[0].frequency == ntwk.frequency) for ntwk in ntwk_set]):
             raise(ValueError('All elements in list of Networks must have same frequency information'))
 
         ## initialization

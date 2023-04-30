@@ -2212,7 +2212,7 @@ class Network:
 
         ntwk = self.copy()
 
-        if r_ref is None and write_z0 == False:
+        if r_ref is None and not write_z0:
             if not equal_z0:
                 raise ValueError((
                     "Network has unequal port impedances but reference impedance for renormalization"
@@ -4270,7 +4270,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     # mismatch, which takes into account the effect of differing port
     # impedances.
     # import pdb;pdb.set_trace()
-    if assert_z0_at_ports_equal(ntwkA, k, ntwkB, l) == False:
+    if not assert_z0_at_ports_equal(ntwkA, k, ntwkB, l):
         ntwkC.s = connect_s(
             ntwkA.s, k,
             impedance_mismatch(ntwkA.z0[:, k], ntwkB.z0[:, l], s_def), 0)
@@ -7006,7 +7006,7 @@ def check_frequency_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
     checks if two Networks have same frequency
     """
-    if assert_frequency_equal(ntwkA, ntwkB) == False:
+    if assert_frequency_equal(ntwkA, ntwkB) is False:
         raise IndexError('Networks don\'t have matching frequency. See `Network.interpolate`')
 
 
@@ -7014,7 +7014,7 @@ def check_frequency_exist(ntwk) -> None:
     """
     Check if a Network has a non-zero Frequency.
     """
-    if assert_frequency_exist(ntwk) == False:
+    if assert_frequency_exist(ntwk) is False:
         raise ValueError('Network has no Frequency. Frequency points must be defined.')
 
 
@@ -7023,7 +7023,7 @@ def check_z0_equal(ntwkA: Network, ntwkB: Network) -> None:
     checks if two Networks have same port impedances
     """
     # note you should check frequency equal before you call this
-    if assert_z0_equal(ntwkA, ntwkB) == False:
+    if assert_z0_equal(ntwkA, ntwkB) is False:
         raise ValueError('Networks don\'t have matching z0.')
 
 
@@ -7031,7 +7031,7 @@ def check_nports_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
     checks if two Networks have same number of ports
     """
-    if assert_nports_equal(ntwkA, ntwkB) == False:
+    if assert_nports_equal(ntwkA, ntwkB) is False:
         raise ValueError('Networks don\'t have matching number of ports.')
 
 

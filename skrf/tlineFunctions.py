@@ -317,9 +317,9 @@ def electrical_length(gamma: NumberLike, f: NumberLike, d: NumberLike, deg: bool
     f = array(f, dtype=float).reshape(-1)
     d = array(d, dtype=float).reshape(-1)
 
-    if deg == False:
+    if not deg:
         return  gamma(f)*d
-    elif deg == True:
+    else:
         return  mf.radian_2_degree(gamma(f)*d )
 
 

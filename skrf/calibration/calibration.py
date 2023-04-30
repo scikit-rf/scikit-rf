@@ -237,13 +237,13 @@ class Calibration:
         # lets make an ideal flush thru for them :
         if hasattr(measured, 'keys'):
             measured = measured.values()
-            if sloppy_input == False:
+            if not sloppy_input:
                 warn('dictionary passed, sloppy_input automatically activated')
                 sloppy_input = True
 
         if hasattr(ideals, 'keys'):
             ideals = ideals.values()
-            if sloppy_input == False:
+            if not sloppy_input:
                 warn('dictionary passed, sloppy_input automatically activated')
                 sloppy_input = True
 
@@ -257,7 +257,7 @@ class Calibration:
                 align_measured_ideals(self.measured, self.ideals)
 
         self.self_calibration = self_calibration
-        if self_calibration == False and len(self.measured) != len(self.ideals):
+        if not self_calibration and len(self.measured) != len(self.ideals):
             raise(IndexError(dedent(
                 """
                 The length of measured and ideals lists are different.
@@ -1493,7 +1493,7 @@ class TwelveTerm(Calibration):
         # if they didntly give explicit order, lets try and put the
         # more transmissive standards last, by sorted measured/ideals
         # based on mean s21
-        if self.sloppy_input is True:
+        if self.sloppy_input:
             trans = [npy.mean(k.s21.s_mag) for k in self.ideals]
             # see http://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
             # get order of indices of sorted means s21
@@ -4763,7 +4763,7 @@ class LMR16(SixteenTerm):
             ideals = [ideals]
         if len(ideals) != 1:
             raise ValueError("One ideal must be given: Through or reflect definition.")
-        if ideal_is_reflect == False:
+        if not ideal_is_reflect:
             self.through = ideals[0].copy()
             self.reflect = None
             self._solved_through = self.through
