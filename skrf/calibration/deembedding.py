@@ -1167,7 +1167,8 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             # interpolate S-parameters if the frequency vector is not acceptable
             if(f[1] - f[0] != f[0]):
                 warnings.warn(
-                   "Non-uniform frequency vector detected. An interpolated S-parameter matrix will be created for this calculation. The output results will be re-interpolated to the original vector.",
+                   """Non-uniform frequency vector detected. An interpolated S-parameter matrix will be created for this calculation.
+                   The output results will be re-interpolated to the original vector.""",
                    RuntimeWarning
                    )
                 flag_df = True
@@ -2165,7 +2166,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         tol = 0.1 # allow a tolerance of 0.1 from delta-f to starting f (prevent non-issues from precision)
         if(np.abs(f[0] - df) > tol):
             warnings.warn(
-               "Non-uniform frequency vector detected. An interpolated S-parameter matrix will be created for this calculation. The output results will be re-interpolated to the original vector.",
+               """Non-uniform frequency vector detected. An interpolated S-parameter matrix will be created for
+               this calculation. The output results will be re-interpolated to the original vector.""",
                RuntimeWarning
                )
             self.flag_df = True
@@ -2185,7 +2187,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             s2xthru.interpolate(sfix_dut_fix.frequency, kind = 'cubic',
                                    fill_value = 'extrapolate')
             warnings.warn(
-               "2x-thru does not have the same frequency vector as the fixture-dut-fixture. Interpolating to fix problem.",
+               """2x-thru does not have the same frequency vector as the fixture-dut-fixture.
+               Interpolating to fix problem.""",
                RuntimeWarning
                )
 

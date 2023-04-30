@@ -290,7 +290,6 @@ class Network:
             npy.angle(x))),
         'arcl_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)) * \
                                     npy.abs(x),
-        # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
         'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
         'time': mf.ifft,
         'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
@@ -1389,7 +1388,8 @@ class Network:
         a :class:`Network` object with 'inverse' s-parameters.
 
         This is used for de-embedding.
-        It is defined such that the inverse of the s-matrix cascaded with itself is a unity scattering transfer parameter (T) matrix.
+        It is defined such that the inverse of the s-matrix cascaded with itself
+        is a unity scattering transfer parameter (T) matrix.
 
         Returns
         -------
@@ -2171,15 +2171,20 @@ class Network:
             format to write data:
             'db': db, deg. 'ma': mag, deg. 'ri': real, imag.
         format_spec_A : string, optional
-            Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
-            This specifies the formatting in the resulting touchstone file for the A part of the S parameter, (e.g. the dB magnitude for 'db' format, the linear
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the A part of the S parameter,
+            (e.g. the dB magnitude for 'db' format, the linear
             magnitude for 'ma' format, or the real part for 'ri' format)
         format_spec_B : string, optional
-            Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
-            This specifies the formatting in the resulting touchstone file for the B part of the S parameter, (e.g. the angle in degrees for 'db' format,
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the B part of the S parameter,
+            (e.g. the angle in degrees for 'db' format,
             the angle in degrees for 'ma' format, or the imaginary part for 'ri' format)
         format_spec_freq : string, optional
-            Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
             This specifies the formatting in the resulting touchstone file for the frequency.
         r_ref : float
             Reference impedance to renormalize the network.
@@ -2209,9 +2214,15 @@ class Network:
 
         if r_ref is None and write_z0 == False:
             if not equal_z0:
-                raise ValueError("Network has unequal port impedances but reference impedance for renormalization 'r_ref' is not specified.")
+                raise ValueError((
+                    "Network has unequal port impedances but reference impedance for renormalization"
+                    " 'r_ref' is not specified.")
+                    )
             if have_complex_ports:
-                raise ValueError("Network port impedances are complex but reference impedance for renormalization 'r_ref' is not specified.")
+                raise ValueError(
+                    ("Network port impedances are complex but reference impedance for renormalization"
+                     " 'r_ref' is not specified.")
+                    )
             r_ref = ntwk.z0[0, 0]
         elif r_ref is not None:
             if not npy.isscalar(r_ref):
@@ -2251,11 +2262,11 @@ class Network:
 
         # add formatting to funcA and funcB so we don't have to write it out many many times.
         def c2str_A(c: NumberLike) -> str:
-            """Function which takes a complex number for the A part of param and returns an appropriately formatted string"""
+            """Take a complex number for the A part of param and return an appropriately formatted string"""
             return format_spec_A.format(funcA(c))
 
         def c2str_B(c: NumberLike) -> str:
-            """Function which takes a complex number for B part of param and returns an appropriately formatted string"""
+            """Take a complex number for B part of param and return an appropriately formatted string"""
             return format_spec_B.format(funcB(c))
 
         def get_buffer() -> io.StringIO:
@@ -3597,8 +3608,12 @@ class Network:
         ----------
         .. [#] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
             Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
-        .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-        .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+        .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+            IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+        .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+            Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
         See Also
         --------
@@ -3725,8 +3740,12 @@ class Network:
         ----------
         .. [#] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
             Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
-        .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-        .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+        .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+            IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+        .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+            Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
         See Also
         --------
@@ -3922,7 +3941,9 @@ class Network:
 
         return t, ir
 
-    def step_response(self, window: str = 'hamming', n: int = None, pad: int = 1000, squeeze: bool = True) -> Tuple[npy.ndarray, npy.ndarray]:
+    def step_response(
+            self, window: str = 'hamming', n: int = None, pad: int = 1000, squeeze: bool = True
+            ) -> Tuple[npy.ndarray, npy.ndarray]:
         """Calculates time-domain step response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -5344,9 +5365,13 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
 
     References
     ----------
-    .. [#] Compton, R.C.; , "Perspectives in microwave circuit analysis," Circuits and Systems, 1989., Proceedings of the 32nd Midwest Symposium on , vol., no., pp.716-718 vol.2, 14-16 Aug 1989. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=101955&isnumber=3167
+    .. [#] Compton, R.C.; , "Perspectives in microwave circuit analysis," Circuits and Systems, 1989.,
+        Proceedings of the 32nd Midwest Symposium on , vol., no., pp.716-718 vol.2, 14-16 Aug 1989.
+        URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=101955&isnumber=3167
 
-    .. [#] Filipsson, Gunnar; , "A New General Computer Algorithm for S-Matrix Calculation of Interconnected Multiports," Microwave Conference, 1981. 11th European , vol., no., pp.700-704, 7-11 Sept. 1981. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4131699&isnumber=4131585
+    .. [#] Filipsson, Gunnar; , "A New General Computer Algorithm for S-Matrix Calculation of Interconnected Multiports,"
+        Microwave Conference, 1981. 11th European , vol., no., pp.700-704, 7-11 Sept. 1981.
+        URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4131699&isnumber=4131585
 
 
     """
@@ -5413,14 +5438,17 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
     z : complex array-like
         impedance parameters
 
-
-
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
+
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
-    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+        IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+        Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
     """
     nfreqs, nports, nports = s.shape
@@ -5511,9 +5539,15 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
+
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
-    .. [#] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [#] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+    .. [#] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+        IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+    .. [#] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+        Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
     """
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
@@ -5600,7 +5634,9 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
+
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
+
     .. [#] Janusz A. Dobrowolski, "Scattering Parameter in RF and Microwave Circuit Analysis and Design",
            Artech House, 2016, pp. 65-68
     """
@@ -5662,8 +5698,12 @@ def s2s(s: NumberLike, z0: NumberLike, s_def_new: str, s_def_old: str):
 
     References
     ----------
-    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+        IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+        Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
     """
     if s_def_new == s_def_old:
         # Nothing to do.
@@ -5769,9 +5809,14 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
+
     .. [#] http://en.wikipedia.org/wiki/S-parameters
-    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+        IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+        Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
     """
     nfreqs, nports, nports = z.shape
@@ -6146,9 +6191,15 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
+
     .. [#] http://en.wikipedia.org/wiki/S-parameters
-    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+        IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+        Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
     """
     nfreqs, nports, nports = y.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
@@ -6673,7 +6724,10 @@ def reciprocity(s: npy.ndarray) -> npy.ndarray:
 
 
 ## renormalize
-def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:str = S_DEF_DEFAULT, s_def_old: Union[str, None] = None) -> npy.ndarray:
+def renormalize_s(
+        s: npy.ndarray, z_old: NumberLike, z_new: NumberLike,
+        s_def:str = S_DEF_DEFAULT, s_def_old: Union[str, None] = None
+        ) -> npy.ndarray:
 
     """
     Renormalize a s-parameter matrix given old and new port impedances.
@@ -6735,9 +6789,11 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
 
     References
     ----------
-    .. [#Marks] R. B. Marks and D. F. Williams, "A general waveguide circuit theory," Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
+    .. [#Marks] R. B. Marks and D. F. Williams, "A general waveguide circuit theory,"
+        Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
 
-    .. [#Anritsu] Anritsu Application Note: Arbitrary Impedance, https://web.archive.org/web/20200111134414/https://archive.eetasia.com/www.eetasia.com/ARTICLES/2002MAY/2002MAY02_AMD_ID_NTES_AN.PDF?SOURCES=DOWNLOAD
+    .. [#Anritsu] Anritsu Application Note: Arbitrary Impedance,
+        https://web.archive.org/web/20200111134414/https://archive.eetasia.com/www.eetasia.com/ARTICLES/2002MAY/2002MAY02_AMD_ID_NTES_AN.PDF?SOURCES=DOWNLOAD
 
     Examples
     --------

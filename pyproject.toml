@@ -127,8 +127,9 @@ filterwarnings = [
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 select = ["E", "F"]
-# E501: line length violations
-ignore = ["E501", "F405", "E741", "F841", "F403", "E712" ]
+# larger line length for rule E501 (default is 88)
+line-length = 120
+ignore = ["F405", "E741", "F841", "F403", "E712" ]
 
 # Ignore E402 (import violations) in all `__init__.py` files
 [tool.ruff.per-file-ignores]
