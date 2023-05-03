@@ -407,19 +407,18 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     ntwk_gated.s[:, 0, 0] = ntwk_gated.s[:, 0, 0] * window_fd
 
     # create time vector
-    t = npy.linspace(-0.5 / df, 0.5 / df, n_td)
-
+    t = npy.fft.fftshift(npy.fft.fftfreq(n_td, df))
     # find start/stop gate indices
     start_idx = find_nearest_index(t, start)
     stop_idx = find_nearest_index(t, stop)
 
     # create gating window
-    window_width = abs(stop_idx - start_idx)
+    window_width = abs(stop_idx - start_idx) + 1
     window = signal.get_window(window, window_width)
 
     # create the gate by padding the window with zeros
     gate = npy.zeros_like(t)
-    gate[start_idx:stop_idx] = window
+    gate[start_idx:stop_idx+1] = window
 
     if method == 'convolution':
         # frequency-domain gating
