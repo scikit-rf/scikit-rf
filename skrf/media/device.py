@@ -29,7 +29,7 @@ Example Devices
 
 
 import numpy as npy
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractproperty
 from .. import mathFunctions as mf
 from ..network  import connect
 from numpy import sqrt,exp

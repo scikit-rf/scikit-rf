@@ -10,9 +10,9 @@ author = 'scikit-rf team'
 
 # -- General configuration ---------------------------------------------------
 
-import sys, os
+import sys
+import os
 import sphinx_rtd_theme
-import nbsphinx
 import warnings
 warnings.filterwarnings('ignore')
 

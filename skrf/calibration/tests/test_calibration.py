@@ -2017,8 +2017,10 @@ class MultiportCalTest(unittest.TestCase):
         for i in range(nports):
             self.isolation.s[:, i, i] = 0
 
-        port_type = lambda n: 'VNA' if n < nports else 'DUT'
-        port_number = lambda n: n if n < nports else n - nports
+        def port_type(n):
+            return 'VNA' if n < nports else 'DUT'
+        def port_number(n):
+            return n if n < nports else n - nports
         # Remove leakage terms
         for i in range(2*nports):
             for j in range(i+1, 2*nports):

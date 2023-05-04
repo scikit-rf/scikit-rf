@@ -2,8 +2,6 @@ import unittest
 import os
 import numpy as np
 import skrf as rf
-from pathlib import Path
-from zipfile import ZipFile
 
 class CitiTestCase(unittest.TestCase):
     """

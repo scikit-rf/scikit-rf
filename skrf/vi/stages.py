@@ -11,8 +11,6 @@ Stages  (:mod:`skrf.vi.stages`)
     ESP300
 
 """
-from time import sleep
-import numpy as npy
 
 from . ivihack import Driver
 

@@ -109,6 +109,7 @@ from ..io.touchstone import read_zipped_touchstones
 from .. import __version__ as skrf__version__
 from collections import defaultdict
 from itertools import combinations
+from textwrap import dedent
 
 ComplexArray = npy.typing.NDArray[complex]
 
@@ -236,13 +237,13 @@ class Calibration:
         # lets make an ideal flush thru for them :
         if hasattr(measured, 'keys'):
             measured = measured.values()
-            if sloppy_input == False:
+            if not sloppy_input:
                 warn('dictionary passed, sloppy_input automatically activated')
                 sloppy_input = True
 
         if hasattr(ideals, 'keys'):
             ideals = ideals.values()
-            if sloppy_input == False:
+            if not sloppy_input:
                 warn('dictionary passed, sloppy_input automatically activated')
                 sloppy_input = True
 
@@ -256,9 +257,14 @@ class Calibration:
                 align_measured_ideals(self.measured, self.ideals)
 
         self.self_calibration = self_calibration
-        if self_calibration == False and len(self.measured) != len(self.ideals):
-            raise(IndexError('The length of measured and ideals lists are different. Number of ideals must equal the number of measured. If you are using `sloppy_input` ensure the names are uniquely alignable.'))
-
+        if not self_calibration and len(self.measured) != len(self.ideals):
+            raise(IndexError(dedent(
+                """
+                The length of measured and ideals lists are different.
+                Number of ideals must equal the number of measured.
+                If you are using `sloppy_input` ensure the names are uniquely alignable.
+                """
+                )))
 
         # ensure all the measured Networks' frequency's are the same
         for measure in self.measured:
@@ -268,7 +274,9 @@ class Calibration:
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
             if self.ideals[k].frequency != self.measured[0].frequency:
-                print(f'Warning: Frequency information doesn\'t match on ideals[{k}], attempting to interpolate the ideal[{k}] Network ..')
+                print(deden(
+                    f"""Warning: Frequency information doesn\'t match on ideals[{k}],
+                    attempting to interpolate the ideal[{k}] Network .."""))
                 try:
                     # try to resample our ideals network to match
                     # the measurement frequency
@@ -276,7 +284,7 @@ class Calibration:
                         self.measured[0].frequency)
                     print('Success')
 
-                except:
+                except Exception:
                     raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].'))
 
 
@@ -617,7 +625,7 @@ class Calibration:
         try:
             return self.coefs_ntwks['directivity']/\
                    self.coefs_ntwks['reflection tracking']
-        except:
+        except Exception:
             pass
         try:
             out = {}
@@ -626,7 +634,7 @@ class Calibration:
                     self.coefs_ntwks[direction + ' directivity']/\
                     self.coefs_ntwks[direction + ' reflection tracking']
             return out
-        except:
+        except Exception:
             raise ValueError('cant find error coefs')
 
 
@@ -993,9 +1001,11 @@ class OnePort(Calibration):
 
     .. [1] http://na.tm.agilent.com/vnahelp/tip20.html
 
-    .. [2] Bauer, R.F., Jr.; Penfield, Paul, "De-Embedding and Unterminating," Microwave Theory and Techniques, IEEE Transactions on , vol.22, no.3, pp.282,288, Mar 1974
+    .. [2] Bauer, R.F., Jr.; Penfield, Paul, "De-Embedding and Unterminating,"
+        Microwave Theory and Techniques, IEEE Transactions on , vol.22, no.3, pp.282,288, Mar 1974
         doi: 10.1109/TMTT.1974.1128212
         URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1128212&isnumber=25001
+
     """
 
     family = 'OnePort'
@@ -1134,7 +1144,9 @@ class SDDLWeikle(OnePort):
 
     References
     ----------
-    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment,"
+        Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+
     """
 
     family = 'SDDL'
@@ -1228,7 +1240,9 @@ class SDDL(OnePort):
 
     References
     ----------
-    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment,"
+        Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+
     """
 
     family = 'SDDL'
@@ -1471,13 +1485,15 @@ class TwelveTerm(Calibration):
 
 
             if n_thrus ==0:
-                raise ValueError('couldnt find a transmissive standard. check your data, or explicitly use `n_thrus` argument')
+                raise ValueError(
+                    'couldnt find a transmissive standard. check your data, or explicitly use `n_thrus` argument'
+                    )
         self.n_thrus = n_thrus
 
         # if they didntly give explicit order, lets try and put the
         # more transmissive standards last, by sorted measured/ideals
         # based on mean s21
-        if self.sloppy_input is True:
+        if self.sloppy_input:
             trans = [npy.mean(k.s21.s_mag) for k in self.ideals]
             # see http://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
             # get order of indices of sorted means s21
@@ -1660,7 +1676,9 @@ class SOLT(TwelveTerm):
 
     References
     ------------
-    .. [1] W. Kruppa and K. F. Sodomsky, "An Explicit Solution for the Scattering Parameters of a Linear Two-Port Measured with an Imperfect Test Set (Correspondence)," IEEE Transactions on Microwave Theory and Techniques, vol. 19, no. 1, pp. 122-123, Jan. 1971.
+    .. [1] W. Kruppa and K. F. Sodomsky, "An Explicit Solution for the Scattering Parameters of a Linear Two-Port
+        Measured with an Imperfect Test Set (Correspondence)," IEEE Transactions on Microwave Theory and Techniques,
+        vol. 19, no. 1, pp. 122-123, Jan. 1971.
 
 
     See Also
@@ -1720,7 +1738,9 @@ class SOLT(TwelveTerm):
             if ideals[k] is None:
                 if (n_thrus is None) or (hasattr(ideals, 'keys')) or \
                    (hasattr(measured, 'keys')):
-                    raise ValueError('Cant use sloppy_input and have the ideal thru be None. measured and ideals must be lists, or dont use None for the thru ideal.')
+                    raise ValueError(dedent(
+                        """Can't use sloppy_input and have the ideal thru be None.
+                        Measured and ideals must be lists, or dont use None for the thru ideal."""))
 
                 ideal_thru = measured[0].copy()
                 ideal_thru.s[:,0,0] = 0
@@ -1973,9 +1993,14 @@ class EightTerm(Calibration):
     References
     ----------
 
-    .. [1] Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors," Microwave Theory and Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115, Dec 1977. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282&isnumber=25047
+    .. [1] Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer Calibration Procedure,
+        Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors,"
+        Microwave Theory and Techniques, IEEE Transactions on,
+        vol.25, no.12, pp. 1100- 1115, Dec 1977.
+        URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282&isnumber=25047
 
-    .. [2] Rytting, D. (1996) Network Analyzer Error Models and Calibration Methods. RF 8: Microwave Measurements for Wireless Applications (ARFTG/NIST Short Course Notes)
+    .. [2] Rytting, D. (1996) Network Analyzer Error Models and Calibration Methods.
+        RF 8: Microwave Measurements for Wireless Applications (ARFTG/NIST Short Course Notes)
 
     """
 
@@ -2327,9 +2352,13 @@ class TRL(EightTerm):
 
     References
     ----------
-    .. [1] G. F. Engen and C. A. Hoer, "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual Six-Port Automatic Network Analyzer," IEEE Transactions on Microwave Theory and Techniques, vol. 27, no. 12, pp. 987-993, 1979.
+    .. [1] G. F. Engen and C. A. Hoer, "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual
+        Six-Port Automatic Network Analyzer,"
+        IEEE Transactions on Microwave Theory and Techniques, vol. 27, no. 12, pp. 987-993, 1979.
 
-    .. [2] H.-J. Eul and B. Schiek, "A generalized theory and new calibration procedures for network analyzer self-calibration," IEEE Transactions on Microwave Theory and Techniques, vol. 39, no. 4, pp. 724-731, 1991.
+    .. [2] H.-J. Eul and B. Schiek, "A generalized theory and new calibration procedures for network analyzer
+        self-calibration,"
+        IEEE Transactions on Microwave Theory and Techniques, vol. 39, no. 4, pp. 724-731, 1991.
 
 
     """
@@ -2545,9 +2574,12 @@ class NISTMultilineTRL(EightTerm):
 
     References
     ----------
-    .. [0] D. C. DeGroot, J. A. Jargon and R. B. Marks, "Multiline TRL revealed," 60th ARFTG Conference Digest, Fall 2002., Washington, DC, USA, 2002, pp. 131-155.
+    .. [0] D. C. DeGroot, J. A. Jargon and R. B. Marks, "Multiline TRL revealed,"
+        60th ARFTG Conference Digest, Fall 2002., Washington, DC, USA, 2002, pp. 131-155.
 
-    .. [1] K. Yau "On the metrology of nanoscale Silicon transistors above 100 GHz" Ph.D. dissertation, Dept. Elec. Eng. and Comp. Eng., University of Toronto, Toronto, Canada, 2011.
+    .. [1] K. Yau "On the metrology of nanoscale Silicon transistors above 100 GHz"
+        Ph.D. dissertation, Dept. Elec. Eng. and Comp. Eng., University of Toronto, Toronto, Canada, 2011.
+
     """
 
     family = 'TRL'
@@ -2696,7 +2728,9 @@ class NISTMultilineTRL(EightTerm):
             self.refl_offset = [self.refl_offset] * n_reflects
 
         if len(measured) != len(self.Grefls) + len(l):
-            raise ValueError(f"Amount of measurements {len(measured)} doesn't match amount of line lengths {len(l)} and reflection coefficients {len(self.Grefls)}")
+            raise ValueError(dedent(
+                f"""Amount of measurements {len(measured)} doesn't match amount of line lengths {len(l)}
+                and reflection coefficients {len(self.Grefls)}"""))
 
         #Not used, but needed for Calibration class init
         ideals = measured
@@ -3449,7 +3483,8 @@ class UnknownThru(EightTerm):
 
     References
     ----------
-    .. [1] A. Ferrero and U. Pisani, "Two-port network analyzer calibration using an unknown `thru,`" IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
+    .. [1] A. Ferrero and U. Pisani, "Two-port network analyzer calibration using an unknown `thru,`"
+        IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
 
     """
     family = 'UnknownThru'
@@ -4230,9 +4265,11 @@ class MRC(UnknownThru):
 
     References
     ----------
-    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment,"
+        Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
 
-    .. [2] A. Ferrero and U. Pisani, "Two-port network analyzer calibration using an unknown `thru,`" IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
+    .. [2] A. Ferrero and U. Pisani, "Two-port network analyzer calibration using an unknown `thru,`"
+        IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
 
 
     """
@@ -4351,7 +4388,8 @@ class SixteenTerm(Calibration):
 
     References
     -----------
-    .. [1] K. J. Silvonen, "Calibration of 16-term error model (microwave measurement)," in Electronics Letters, vol. 29, no. 17, pp. 1544-1545, 19 Aug. 1993.
+    .. [1] K. J. Silvonen, "Calibration of 16-term error model (microwave measurement),"
+        in Electronics Letters, vol. 29, no. 17, pp. 1544-1545, 19 Aug. 1993.
     """
 
     family = 'SixteenTerm'
@@ -4683,8 +4721,10 @@ class LMR16(SixteenTerm):
 
     References
     ------------
-    .. [1] K. Silvonen, "LMR 16-a self-calibration procedure for a leaky network analyzer," in IEEE Transactions on Microwave Theory and Techniques, vol. 45, no. 7, pp. 1041-1049, Jul 1997
-        """
+    .. [1] K. Silvonen, "LMR 16-a self-calibration procedure for a leaky network analyzer,"
+        in IEEE Transactions on Microwave Theory and Techniques, vol. 45, no. 7, pp. 1041-1049, Jul 1997
+
+    """
 
     family = 'SixteenTerm'
     def __init__(self, measured, ideals, ideal_is_reflect=True, sign=None,
@@ -4723,7 +4763,7 @@ class LMR16(SixteenTerm):
             ideals = [ideals]
         if len(ideals) != 1:
             raise ValueError("One ideal must be given: Through or reflect definition.")
-        if ideal_is_reflect == False:
+        if not ideal_is_reflect:
             self.through = ideals[0].copy()
             self.reflect = None
             self._solved_through = self.through
@@ -5092,7 +5132,8 @@ class MultiportCal():
             if 'ideals' in c:
                 ideals = [i if i.nports == 2 else subnetwork(i, p) for i in c['ideals']]
                 c['ideals'] = ideals
-            c['measured'] = [m - subnetwork(self.isolation, p) if m.nports == 2 else subnetwork(m - self.isolation, p) for m in c['measured']]
+            c['measured'] = [m - subnetwork(self.isolation, p) if m.nports == 2 else subnetwork(m - self.isolation, p)
+                             for m in c['measured']]
             k_side = 0
             if p_count[p[0]] > p_count[p[1]]:
                 k_side = 1
@@ -5401,7 +5442,9 @@ class MultiportSOLT(MultiportCal):
             elif method in [SOLT, EightTerm, UnknownThru, MRC, TwelveTerm]:
                 thru_pos = 'last'
             else:
-                raise ValueError("Unable to determine 'thru_pos' automatically. Set it manually to either 'first' or 'last'")
+                raise ValueError(
+                    "Unable to determine 'thru_pos' automatically. Set it manually to either 'first' or 'last'"
+                    )
         if thru_pos not in ['last', 'first']:
             raise ValueError("thru_pos must be either 'first' or 'last'")
 
@@ -5765,7 +5808,8 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     reflect : :class:`~skrf.network.Network`
         a One-port network for the found reflect.
 
-    The equations are from "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual Six-Port Automatic Network Analyzer", G.F. Engen et al., 1979
+    The equations are from "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual Six-Port
+    Automatic Network Analyzer", G.F. Engen et al., 1979
 
     """
 
@@ -5848,7 +5892,10 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     References
     ----------
 
-    .. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
+    .. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms,"
+        ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997.
+        URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
+
     """
 
     # Nomenclature taken from Roger Marks

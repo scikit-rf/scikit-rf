@@ -4,7 +4,7 @@ import time
 from .abcvna import VNA
 from ...frequency import *
 from ...network import *
-from .hp8510c_sweep_plan import SweepPlan, SweepSection
+from .hp8510c_sweep_plan import SweepPlan
 
 class HP8510C(VNA):
     '''
@@ -75,7 +75,7 @@ class HP8510C(VNA):
         # raw_data = kwargs.get("raw_data", True)
         if ports==(1,):
             self.write('s11;')
-            return self.one_port(fresh_sweep=sweep);
+            return self.one_port(fresh_sweep=sweep)
         elif ports==(2,):
             self.write('s22;')
             return self.one_port(fresh_sweep=sweep)

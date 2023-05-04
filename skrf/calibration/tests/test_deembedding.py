@@ -3,7 +3,7 @@ import skrf as rf
 import unittest
 import os
 import numpy as np
-from numpy.testing import assert_equal, run_module_suite, assert_almost_equal
+from numpy.testing import run_module_suite
 
 
 class DeembeddingTestCase(unittest.TestCase):

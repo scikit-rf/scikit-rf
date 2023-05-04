@@ -1,5 +1,4 @@
 import os
-import sys
 
 this_dir = os.path.normpath(os.path.dirname(__file__))
 images_dir = os.path.join(this_dir, "images/")

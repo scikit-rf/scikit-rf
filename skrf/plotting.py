@@ -58,8 +58,6 @@ from . constants import NumberLike
 from numbers import Number
 from typing import Callable, Tuple, Union, List
 import os
-import sys
-import getpass
 import warnings
 
 import numpy as npy
@@ -1725,7 +1723,7 @@ def animate(self, attr: str = 's_deg', ylims: Tuple = (-5, 5),
         if xlims is not None:
             plt.xlim(xlims)
         # rf.legend_off()
-        plt.draw();
+        plt.draw()
         if show:
             plt.show()
         if savefigs:
@@ -2339,10 +2337,10 @@ def plot_contour(freq: frequency.Frequency,
         min or max.
 
     """
-    ri =  npy.linspace(0,1, 50);
-    ti =  npy.linspace(0,2*npy.pi, 150);
+    ri =  npy.linspace(0,1, 50)
+    ti =  npy.linspace(0,2*npy.pi, 150)
     Ri , Ti = npy.meshgrid(ri, ti)
-    xi = npy.linspace(-1,1, 50);
+    xi = npy.linspace(-1,1, 50)
     Xi, Yi = npy.meshgrid(xi, xi)
     triang = tri.Triangulation(x, y)
     interpolator = tri.LinearTriInterpolator(triang, z)

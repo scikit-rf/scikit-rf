@@ -1,6 +1,6 @@
 import skrf as rf
 import unittest
-from numpy import real, imag, linspace, pi, tanh, array, conj
+from numpy import real, imag, linspace, pi, array
 from numpy.random import rand
 from numpy.testing import assert_equal, run_module_suite, assert_almost_equal
 

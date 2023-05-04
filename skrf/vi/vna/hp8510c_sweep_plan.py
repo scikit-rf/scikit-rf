@@ -1,6 +1,6 @@
 import dataclasses
 import numpy as np
-from typing import List, Union
+from typing import List
 from abc import ABC, abstractmethod
 
 
@@ -177,7 +177,7 @@ class SweepPlan:
         """
         plan_hz = np.array(sorted(self.get_hz()))
         if len(golden_hz) != len(plan_hz):
-            print(f"Planner output has different length.")
+            print("Planner output has different length.")
             return False
         good = True
         for h in golden_hz:
