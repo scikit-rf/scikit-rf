@@ -1751,7 +1751,7 @@ class Network:
 
         K = self.stability
         K_clipped = npy.clip(K, 1, None)
-        gmax = self.max_stable_gain / (K_clipped + npy.sqrt(npy.square(K_clipped) - 1))
+        gmax = self.max_stable_gain * (K_clipped - npy.sqrt(npy.square(K_clipped) - 1))
         return gmax
     
     @property
