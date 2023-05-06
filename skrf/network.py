@@ -1712,32 +1712,46 @@ class Network:
     @property
     def max_stable_gain(self) -> npy.ndarray:
         """
-        Maximum stable power gain in linear value
+        Maximum stable power gain in linear value.
 
         .. math::
 
-                msg = |S_{21}| / |S_{12}|
+                G_{ms} = |S_{21}| / |S_{12}|
 
         Returns
         -------
-        msg : :class:`numpy.ndarray` of shape `f`
+        gms : :class:`numpy.ndarray` of shape `f`
 
         References
         ----------
         M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited," in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
+
+        See Also
+        --------
+        max_gain : Maximum available and stable power gain
+        unilateral_gain : Mason's unilateral power gain
+        stability : Stability factor
+
         """
         assert self.nports == 2, "Maximum stable gain is only defined for two ports"
-        msg = npy.abs(self.s[:, 1, 0]) / npy.abs(self.s[:, 0, 1])
-        return msg
+        gms = npy.abs(self.s[:, 1, 0]) / npy.abs(self.s[:, 0, 1])
+        return gms
     
     @property
     def max_gain(self) -> npy.ndarray:
         """
-        Returns maximum stable power gain for K < 1 or Maximum avalable power gain for K >= 1 in linear value
+        Maximum available power gain for K > 1 and maximum stable power gain for K <= 1 in linear value.
 
         .. math::
 
-                gmax = |S_{21}| / |S_{12}| * (K - sqrt(K^2 - 1))
+                G_{max} = \frac{|S_{21}|}{|S_{12}|} \times (K - \sqrt{K^2 - 1}) (for K > 1),
+                G_{max} = \frac{|S_{21}|}{|S_{12}|} (for K <= 1)
+
+        Note
+        ----
+        The maximum available power gain is defined for a unconditionally stable network (i.e. K > 1).
+        For K <= 1, this property returns the maximum stable gain instead.
+        This behavior is similarly to the max_gain() function in Keysight's Advanced Desigh System (but differs in decibel or linear).
 
         Returns
         -------
@@ -1745,7 +1759,15 @@ class Network:
 
         References
         ----------
-        M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited," in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
+        1. M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited," in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
+        2. https://edadocs.software.keysight.com/pages/viewpage.action?pageId=5920581
+
+        See Also
+        --------
+        max_stable_gain : Maximum stable power gain
+        unilateral_gain : Mason's unilateral power gain
+        stability : Stability factor
+
         """
         assert self.nports == 2, "Max gain is only defined for two ports"
 
@@ -1770,12 +1792,19 @@ class Network:
         References
         ----------
         M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited," in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
+
+        See Also
+        --------
+        max_stable_gain : Maximum stable power gain
+        max_gain : Maximum available and stable power gain
+        stability : Stability factor
+
         """
         assert self.nports == 2, "Unilateral gain is only defined for two ports"
 
         K = self.stability
-        msg = self.max_stable_gain
-        U = npy.abs((self.s[:, 1, 0] / self.s[:, 0, 1]) - 1) ** 2 / (2 * K * msg - 2 * npy.real(self.s[:, 1, 0] / self.s[:, 0, 1]))
+        gms = self.max_stable_gain
+        U = npy.abs((self.s[:, 1, 0] / self.s[:, 0, 1]) - 1) ** 2 / (2 * K * gms - 2 * npy.real(self.s[:, 1, 0] / self.s[:, 0, 1]))
         return U
 
     @property
