@@ -1710,6 +1710,75 @@ class Network:
         return K
 
     @property
+    def max_stable_gain(self) -> npy.ndarray:
+        """
+        Maximum stable power gain in linear value
+
+        .. math::
+
+                msg = |S_{21}| / |S_{12}|
+
+        Returns
+        -------
+        msg : :class:`numpy.ndarray` of shape `f`
+
+        References
+        ----------
+        M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited," in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
+        """
+        assert self.nports == 2, "Maximum stable gain is only defined for two ports"
+        msg = npy.abs(self.s[:, 1, 0]) / npy.abs(self.s[:, 0, 1])
+        return msg
+    
+    @property
+    def max_gain(self) -> npy.ndarray:
+        """
+        Returns maximum stable power gain for K < 1 or Maximum avalable power gain for K >= 1 in linear value
+
+        .. math::
+
+                gmax = |S_{21}| / |S_{12}| * (K - sqrt(K^2 - 1))
+
+        Returns
+        -------
+        gmax : :class:`numpy.ndarray` of shape `f`
+
+        References
+        ----------
+        M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited," in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
+        """
+        assert self.nports == 2, "Max gain is only defined for two ports"
+
+        K = self.stability
+        K_clipped = npy.clip(K, 1, None)
+        gmax = self.max_stable_gain / (K_clipped + npy.sqrt(npy.square(K_clipped) - 1))
+        return gmax
+    
+    @property
+    def unilateral_gain(self) -> npy.ndarray:
+        """
+        Mason's unilateral power gain in linear value
+
+        .. math::
+
+                U = |S_{21} / S_{11} - 1| ^ 2 / (2 * K * |S_{21}| / |S_{12}| - 2 * Re[S_{21} / S_{12}])
+
+        Returns
+        -------
+        U : :class:`numpy.ndarray` of shape `f`
+
+        References
+        ----------
+        M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited," in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
+        """
+        assert self.nports == 2, "Unilateral gain is only defined for two ports"
+
+        K = self.stability
+        msg = self.max_stable_gain
+        U = npy.abs((self.s[:, 1, 0] / self.s[:, 0, 1]) - 1) ** 2 / (2 * K * msg - 2 * npy.real(self.s[:, 1, 0] / self.s[:, 0, 1]))
+        return U
+
+    @property
     def group_delay(self) -> npy.ndarray:
         """
         The group delay
