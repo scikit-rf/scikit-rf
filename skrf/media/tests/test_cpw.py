@@ -3,10 +3,9 @@ import os
 import numpy as npy
 
 from skrf.media import CPW
-from skrf.network import Network
 from skrf.frequency import Frequency
 import skrf as rf
-from numpy.testing import assert_array_almost_equal, assert_allclose, run_module_suite
+from numpy.testing import assert_array_almost_equal, run_module_suite
 from matplotlib import pyplot as plt
 import pytest
 

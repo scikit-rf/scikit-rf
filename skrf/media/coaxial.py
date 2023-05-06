@@ -23,7 +23,6 @@ from typing import Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .. frequency import Frequency
-    from .. network import Network
 
 
 class Coaxial(DistributedCircuit, Media):

@@ -2,9 +2,7 @@ import unittest
 import os
 import numpy as npy
 from pathlib import Path
-from zipfile import ZipFile
 
-import skrf as rf
 from skrf.io.touchstone import Touchstone
 
 

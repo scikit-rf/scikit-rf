@@ -1,7 +1,7 @@
 from .frequency import Frequency
 from .mathFunctions import *
 from .plotting import plot_complex_rectangular,plot_rectangular, smith
-from .util import get_fid, get_extn, find_nearest_index,slice_domain
+from .util import find_nearest_index,slice_domain
 
 from scipy import  signal
 import numpy as npy
@@ -11,8 +11,6 @@ import matplotlib.pyplot as plb
 from IPython.display import Image
 from IPython.core.pylabtools import print_figure
 
-from abc import ABCMeta, abstractmethod
-from copy import deepcopy
 import re
 
 

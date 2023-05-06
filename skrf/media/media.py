@@ -18,12 +18,11 @@ import warnings
 import numpy as npy
 from numpy import real, imag, ones, any, gradient, array
 from scipy import stats
-from scipy.constants import  c, inch, mil
+from scipy.constants import  c
 
 from ..frequency import Frequency
 from ..network import Network, connect, impedance_mismatch
 
-from .. import tlineFunctions as tf
 from .. import mathFunctions as mf
 
 from ..constants import NumberLike, to_meters, ZERO
@@ -333,7 +332,7 @@ class Media(ABC):
             physical distance in meters
 
         """
-        if deg == True:
+        if deg:
             theta = mf.degree_2_radian(theta)
 
         gamma = self.gamma
@@ -364,9 +363,9 @@ class Media(ABC):
         """
         gamma = self.gamma
 
-        if deg == False:
+        if not deg:
             return gamma*d
-        elif deg == True:
+        else:
             return  mf.radian_2_degree(gamma*d)
 
     ## Network creation

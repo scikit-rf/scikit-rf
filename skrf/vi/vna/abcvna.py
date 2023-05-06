@@ -2,14 +2,9 @@
 This is a model module.  It will not function correctly to pull data, but needs
 to be subclassed.
 """
-import copy
-import warnings
-from typing import Iterable
 
-import numpy as np
 import pyvisa
 
-from ...network import Network
 from ...frequency import Frequency
 
 

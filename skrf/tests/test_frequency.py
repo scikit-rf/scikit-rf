@@ -1,9 +1,7 @@
 import os
 import unittest
-import warnings
 
 import numpy as npy
-import pytest
 
 import skrf as rf
 from skrf.frequency import InvalidFrequencyWarning

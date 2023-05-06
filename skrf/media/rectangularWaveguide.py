@@ -24,10 +24,8 @@ Characteristic Impedance              :math:`z_0`    :attr:`Z0`
    RectangularWaveguide
 
 """
-from ast import Num
 from numbers import Number
-from numpy.lib.arraysetops import unique
-from scipy.constants import  epsilon_0, mu_0, pi, c
+from scipy.constants import  epsilon_0, mu_0, pi
 from numpy import sqrt, exp, where
 import numpy as npy
 from .media import Media
@@ -39,7 +37,6 @@ from typing import Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .. frequency import Frequency
-    from .. network import Network
 
 
 class RectangularWaveguide(Media):
@@ -310,7 +307,7 @@ class RectangularWaveguide(Media):
         >>> wg.rho = 'al'
         >>> wg.rho = 'aluminum'
         """
-        if self.roughness != None:
+        if self.roughness is not None:
             delta = skin_depth(self.frequency.f, self._rho, self.mu_r)
             k_w = 1. +exp(-(delta/(2*self.roughness))**1.6)
             return self._rho*k_w**2

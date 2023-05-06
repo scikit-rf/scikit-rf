@@ -113,7 +113,7 @@ class WarningMsgBox(QtWidgets.QDialog):
 
 
 def error_popup(error):
-    if not type(error) is str:
+    if type(error) is not str:
         etype, value, tb = sys.exc_info()
         error = "\n".join(traceback.format_exception(etype, value, tb))
     WarningMsgBox(error).exec_()

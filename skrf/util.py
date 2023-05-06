@@ -63,7 +63,7 @@ import re
 from subprocess import Popen, PIPE
 import sys
 from functools import wraps
-from .constants import Number, NumberLike
+from .constants import Number
 
 try:
     from matplotlib.figure import Figure

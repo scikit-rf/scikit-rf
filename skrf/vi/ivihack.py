@@ -14,7 +14,7 @@ import numpy as npy
 try:
     # rename the ivi method so our legacy VI's still work
     Driver.ask_for_values = Driver._ask_for_values
-except:
+except Exception:
     # if they dont have git version of python-ivi
     def ask_for_values(self,msg, delim=',', converter=float, array = True):
         s = self._ask(msg)

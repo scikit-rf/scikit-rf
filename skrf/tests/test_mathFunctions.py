@@ -2,10 +2,10 @@ from skrf.mathFunctions import LOG_OF_NEG
 import skrf as rf
 import unittest
 import numpy as npy
-from numpy import e, log, pi, isnan, inf
+from numpy import log, pi, isnan, inf
 from numpy.testing import assert_equal, run_module_suite, assert_almost_equal
 import pytest
-from skrf.constants import EIG_COND, EIG_MIN
+from skrf.constants import EIG_MIN
 
 class TestUnitConversions(unittest.TestCase):
     """
