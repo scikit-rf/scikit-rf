@@ -160,26 +160,22 @@ import os
 import warnings
 import io
 from pathlib import Path
-import pickle
 from pickle import UnpicklingError
 
-import sys
 import re
 import zipfile
 from copy import deepcopy as copy
-from numbers import Number
 from itertools import product
 
 import numpy as npy
 from numpy.linalg import inv as npy_inv
-from numpy import fft, gradient, ndarray, reshape, shape, ones, std
+from numpy import gradient, ndarray, shape
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
-import unittest  # fotr unitest.skip
 
 from . import mathFunctions as mf
 from .frequency import Frequency
-from .util import get_fid, get_extn, find_nearest_index, slice_domain
+from .util import get_fid, get_extn, find_nearest_index
 from .time import time_gate
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
@@ -294,7 +290,6 @@ class Network:
             npy.angle(x))),
         'arcl_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)) * \
                                     npy.abs(x),
-        # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
         'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
         'time': mf.ifft,
         'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
@@ -1393,7 +1388,8 @@ class Network:
         a :class:`Network` object with 'inverse' s-parameters.
 
         This is used for de-embedding.
-        It is defined such that the inverse of the s-matrix cascaded with itself is a unity scattering transfer parameter (T) matrix.
+        It is defined such that the inverse of the s-matrix cascaded with itself
+        is a unity scattering transfer parameter (T) matrix.
 
         Returns
         -------
@@ -1444,10 +1440,7 @@ class Network:
       """
       whether this network has noise
       """
-      try:
-        return self.noise is not None and self.noise_freq is not None
-      except:
-        return False
+      return self.noise is not None and self.noise_freq is not None
 
     @property
     def n(self) -> npy.ndarray:
@@ -2069,10 +2062,7 @@ class Network:
 
         self.comments = touchstoneFile.get_comments()
 
-        try:
-            self.variables = touchstoneFile.get_comment_variables()
-        except:
-            pass
+        self.variables = touchstoneFile.get_comment_variables()
 
         self.port_names = touchstoneFile.port_names
 
@@ -2181,15 +2171,20 @@ class Network:
             format to write data:
             'db': db, deg. 'ma': mag, deg. 'ri': real, imag.
         format_spec_A : string, optional
-            Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
-            This specifies the formatting in the resulting touchstone file for the A part of the S parameter, (e.g. the dB magnitude for 'db' format, the linear
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the A part of the S parameter,
+            (e.g. the dB magnitude for 'db' format, the linear
             magnitude for 'ma' format, or the real part for 'ri' format)
         format_spec_B : string, optional
-            Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
-            This specifies the formatting in the resulting touchstone file for the B part of the S parameter, (e.g. the angle in degrees for 'db' format,
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the B part of the S parameter,
+            (e.g. the angle in degrees for 'db' format,
             the angle in degrees for 'ma' format, or the imaginary part for 'ri' format)
         format_spec_freq : string, optional
-            Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
             This specifies the formatting in the resulting touchstone file for the frequency.
         r_ref : float
             Reference impedance to renormalize the network.
@@ -2217,11 +2212,17 @@ class Network:
 
         ntwk = self.copy()
 
-        if r_ref is None and write_z0 == False:
+        if r_ref is None and not write_z0:
             if not equal_z0:
-                raise ValueError("Network has unequal port impedances but reference impedance for renormalization 'r_ref' is not specified.")
+                raise ValueError((
+                    "Network has unequal port impedances but reference impedance for renormalization"
+                    " 'r_ref' is not specified.")
+                    )
             if have_complex_ports:
-                raise ValueError("Network port impedances are complex but reference impedance for renormalization 'r_ref' is not specified.")
+                raise ValueError(
+                    ("Network port impedances are complex but reference impedance for renormalization"
+                     " 'r_ref' is not specified.")
+                    )
             r_ref = ntwk.z0[0, 0]
         elif r_ref is not None:
             if not npy.isscalar(r_ref):
@@ -2261,11 +2262,11 @@ class Network:
 
         # add formatting to funcA and funcB so we don't have to write it out many many times.
         def c2str_A(c: NumberLike) -> str:
-            """Function which takes a complex number for the A part of param and returns an appropriately formatted string"""
+            """Take a complex number for the A part of param and return an appropriately formatted string"""
             return format_spec_A.format(funcA(c))
 
         def c2str_B(c: NumberLike) -> str:
-            """Function which takes a complex number for B part of param and returns an appropriately formatted string"""
+            """Take a complex number for B part of param and return an appropriately formatted string"""
             return format_spec_B.format(funcB(c))
 
         def get_buffer() -> io.StringIO:
@@ -3608,8 +3609,12 @@ class Network:
         ----------
         .. [#] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
             Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
-        .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-        .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+        .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+            IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+        .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+            Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
         See Also
         --------
@@ -3736,8 +3741,12 @@ class Network:
         ----------
         .. [#] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
             Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
-        .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-        .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+        .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+            IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+        .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+            Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
         See Also
         --------
@@ -3922,7 +3931,7 @@ class Network:
             center_to_dc = not bandpass
         else:
             center_to_dc = None
-        if window != None:
+        if window is not None:
             w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
         else:
             w = self
@@ -3933,7 +3942,9 @@ class Network:
 
         return t, ir
 
-    def step_response(self, window: str = 'hamming', n: int = None, pad: int = 1000, squeeze: bool = True) -> Tuple[npy.ndarray, npy.ndarray]:
+    def step_response(
+            self, window: str = 'hamming', n: int = None, pad: int = 1000, squeeze: bool = True
+            ) -> Tuple[npy.ndarray, npy.ndarray]:
         """Calculates time-domain step response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -4260,7 +4271,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     # mismatch, which takes into account the effect of differing port
     # impedances.
     # import pdb;pdb.set_trace()
-    if assert_z0_at_ports_equal(ntwkA, k, ntwkB, l) == False:
+    if not assert_z0_at_ports_equal(ntwkA, k, ntwkB, l):
         ntwkC.s = connect_s(
             ntwkA.s, k,
             impedance_mismatch(ntwkA.z0[:, k], ntwkB.z0[:, l], s_def), 0)
@@ -4287,7 +4298,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     if ntwkB.nports == 2 and ntwkA.nports > 2 and num == 1:
         from_ports = list(range(ntwkC.nports))
         to_ports = list(range(ntwkC.nports))
-        to_ports.pop(k);
+        to_ports.pop(k)
         to_ports.append(k)
 
         ntwkC.renumber(from_ports=from_ports,
@@ -4295,10 +4306,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
 
     # if ntwkA and ntwkB are both 2port, and either one has noise, calculate ntwkC's noise
     either_are_noisy = False
-    try:
-      either_are_noisy = ntwkA.noisy or ntwkB.noisy
-    except:
-      pass
+    either_are_noisy = ntwkA.noisy or ntwkB.noisy
 
     if num == 1 and ntwkA.nports == 2 and ntwkB.nports == 2 and either_are_noisy:
       if ntwkA.noise_freq is not None and ntwkB.noise_freq is not None and ntwkA.noise_freq != ntwkB.noise_freq:
@@ -4746,7 +4754,8 @@ def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
     # if ntwk list is longer than 2, recursively call myself
     # until we are done
     if len(ntwk_list) > 2:
-        f = lambda x, y: concat_ports([x, y], port_order='first')
+        def f(x, y):
+            return concat_ports([x, y], port_order='first')
         out = reduce(f, ntwk_list)
         # if we want to renumber ports, we have to wait
         # until after the recursive calls
@@ -5234,19 +5243,19 @@ def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool 
         p31 = p13.flipped()
         p32 = p23.flipped()
 
-    if p12 != None:
+    if p12 is not None:
         s11 = p12.s11
         s12 = p12.s12
         s21 = p12.s21
         s22 = p12.s22
 
-    if p13 != None:
+    if p13 is not None:
         s11 = p13.s11
         s13 = p13.s12
         s31 = p13.s21
         s33 = p13.s22
 
-    if p23 != None:
+    if p23 is not None:
         s22 = p23.s11
         s23 = p23.s12
         s32 = p23.s21
@@ -5357,9 +5366,13 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
 
     References
     ----------
-    .. [#] Compton, R.C.; , "Perspectives in microwave circuit analysis," Circuits and Systems, 1989., Proceedings of the 32nd Midwest Symposium on , vol., no., pp.716-718 vol.2, 14-16 Aug 1989. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=101955&isnumber=3167
+    .. [#] Compton, R.C.; , "Perspectives in microwave circuit analysis," Circuits and Systems, 1989.,
+        Proceedings of the 32nd Midwest Symposium on , vol., no., pp.716-718 vol.2, 14-16 Aug 1989.
+        URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=101955&isnumber=3167
 
-    .. [#] Filipsson, Gunnar; , "A New General Computer Algorithm for S-Matrix Calculation of Interconnected Multiports," Microwave Conference, 1981. 11th European , vol., no., pp.700-704, 7-11 Sept. 1981. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4131699&isnumber=4131585
+    .. [#] Filipsson, Gunnar; , "A New General Computer Algorithm for S-Matrix Calculation of Interconnected Multiports,"
+        Microwave Conference, 1981. 11th European , vol., no., pp.700-704, 7-11 Sept. 1981.
+        URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4131699&isnumber=4131585
 
 
     """
@@ -5426,14 +5439,17 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
     z : complex array-like
         impedance parameters
 
-
-
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
+
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
-    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+        IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+        Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
     """
     nfreqs, nports, nports = s.shape
@@ -5524,9 +5540,15 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
+
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
-    .. [#] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [#] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+    .. [#] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+        IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+    .. [#] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+        Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
     """
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
@@ -5613,7 +5635,9 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
+
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
+
     .. [#] Janusz A. Dobrowolski, "Scattering Parameter in RF and Microwave Circuit Analysis and Design",
            Artech House, 2016, pp. 65-68
     """
@@ -5675,8 +5699,12 @@ def s2s(s: NumberLike, z0: NumberLike, s_def_new: str, s_def_old: str):
 
     References
     ----------
-    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+        IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+        Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
     """
     if s_def_new == s_def_old:
         # Nothing to do.
@@ -5782,9 +5810,14 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
+
     .. [#] http://en.wikipedia.org/wiki/S-parameters
-    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+        IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+        Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
     """
     nfreqs, nports, nports = z.shape
@@ -6159,9 +6192,15 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
+
     .. [#] http://en.wikipedia.org/wiki/S-parameters
-    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix",
+        IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory",
+        Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
     """
     nfreqs, nports, nports = y.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
@@ -6686,7 +6725,10 @@ def reciprocity(s: npy.ndarray) -> npy.ndarray:
 
 
 ## renormalize
-def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:str = S_DEF_DEFAULT, s_def_old: Union[str, None] = None) -> npy.ndarray:
+def renormalize_s(
+        s: npy.ndarray, z_old: NumberLike, z_new: NumberLike,
+        s_def:str = S_DEF_DEFAULT, s_def_old: Union[str, None] = None
+        ) -> npy.ndarray:
 
     """
     Renormalize a s-parameter matrix given old and new port impedances.
@@ -6748,9 +6790,11 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
 
     References
     ----------
-    .. [#Marks] R. B. Marks and D. F. Williams, "A general waveguide circuit theory," Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
+    .. [#Marks] R. B. Marks and D. F. Williams, "A general waveguide circuit theory,"
+        Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
 
-    .. [#Anritsu] Anritsu Application Note: Arbitrary Impedance, https://web.archive.org/web/20200111134414/https://archive.eetasia.com/www.eetasia.com/ARTICLES/2002MAY/2002MAY02_AMD_ID_NTES_AN.PDF?SOURCES=DOWNLOAD
+    .. [#Anritsu] Anritsu Application Note: Arbitrary Impedance,
+        https://web.archive.org/web/20200111134414/https://archive.eetasia.com/www.eetasia.com/ARTICLES/2002MAY/2002MAY02_AMD_ID_NTES_AN.PDF?SOURCES=DOWNLOAD
 
     Examples
     --------
@@ -6963,7 +7007,7 @@ def check_frequency_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
     checks if two Networks have same frequency
     """
-    if assert_frequency_equal(ntwkA, ntwkB) == False:
+    if assert_frequency_equal(ntwkA, ntwkB) is False:
         raise IndexError('Networks don\'t have matching frequency. See `Network.interpolate`')
 
 
@@ -6971,7 +7015,7 @@ def check_frequency_exist(ntwk) -> None:
     """
     Check if a Network has a non-zero Frequency.
     """
-    if assert_frequency_exist(ntwk) == False:
+    if assert_frequency_exist(ntwk) is False:
         raise ValueError('Network has no Frequency. Frequency points must be defined.')
 
 
@@ -6980,7 +7024,7 @@ def check_z0_equal(ntwkA: Network, ntwkB: Network) -> None:
     checks if two Networks have same port impedances
     """
     # note you should check frequency equal before you call this
-    if assert_z0_equal(ntwkA, ntwkB) == False:
+    if assert_z0_equal(ntwkA, ntwkB) is False:
         raise ValueError('Networks don\'t have matching z0.')
 
 
@@ -6988,7 +7032,7 @@ def check_nports_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
     checks if two Networks have same number of ports
     """
-    if assert_nports_equal(ntwkA, ntwkB) == False:
+    if assert_nports_equal(ntwkA, ntwkB) is False:
         raise ValueError('Networks don\'t have matching number of ports.')
 
 

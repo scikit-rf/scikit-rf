@@ -16,7 +16,7 @@ CalibrationSet Class
    CalibrationSet
 
 """
-from itertools import product, combinations, permutations
+from itertools import product
 from .calibration import Calibration
 from ..networkSet import NetworkSet
 

@@ -628,16 +628,16 @@ class Frequency:
         """
         Time vector in s.
 
-        t_period = 1/f_step
+        t_period = 2*(n-1)/f_step
         """
-        return linspace(-.5/self.step , .5/self.step, self.npoints)
+        return npy.fft.fftshift(npy.fft.fftfreq(self.npoints, self.step))
 
     @property
     def t_ns(self) -> npy.ndarray:
         """
         Time vector in ns.
 
-        t_period = 1/f_step
+        t_period = 2*(n-1)/f_step
         """
         return self.t*1e9
 

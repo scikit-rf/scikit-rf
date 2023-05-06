@@ -1,9 +1,8 @@
 import unittest
 
 import skrf as rf
-import numpy as npy
 from skrf.calibration.calibrationSet import Dot
-from skrf.calibration import OnePort, TRL, SOLT, EightTerm
+from skrf.calibration import OnePort, EightTerm
 from skrf.util import suppress_warning_decorator
 
 

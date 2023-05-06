@@ -418,7 +418,7 @@ class Media(ABC):
             physical distance in meters
 
         """
-        if deg == True:
+        if deg:
             theta = mf.degree_2_radian(theta)
 
         gamma = self.gamma
@@ -449,9 +449,9 @@ class Media(ABC):
         """
         gamma = self.gamma
 
-        if deg == False:
+        if not deg:
             return gamma*d
-        elif deg == True:
+        else:
             return  mf.radian_2_degree(gamma*d)
 
     ## Network creation

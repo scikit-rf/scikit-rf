@@ -45,14 +45,14 @@ from .qfactor import *
 try:
     import vi
     from vi import *
-except(ImportError):
+except ImportError:
     pass
 
 # try to import data but if it fails whatever. it fails if some pickles
 # dont unpickle. but its not important
 try:
     from . import data
-except:
+except Exception:
     pass
 
 

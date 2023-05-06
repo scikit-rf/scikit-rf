@@ -113,7 +113,7 @@ if __name__ == '__main__':
     # directory, and then copy the html tree in there
     shutil.rmtree(dest, ignore_errors=True)
     shutil.copytree(html_dir, dest)
-    if copy_pdf == True:
+    if copy_pdf:
         shutil.copy(pjoin(pdf_dir, pdf_filename), pjoin(dest, pdf_filename))
         pass
 

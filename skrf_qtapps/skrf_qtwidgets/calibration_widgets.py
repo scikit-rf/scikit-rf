@@ -3,7 +3,7 @@ import pyqtgraph as pg
 import skrf
 import numpy as np
 
-from . import qt, networkListWidget, numeric_inputs, widgets, util
+from . import qt, networkListWidget, numeric_inputs, widgets
 
 
 class CalibratedMeasurementsWidget(QtWidgets.QWidget):

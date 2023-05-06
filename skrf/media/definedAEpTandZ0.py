@@ -15,11 +15,10 @@ behaviour is frequency invariant.
 
    DefinedAEpTandZ0
 """
-from numbers import Number
 from typing import Union
 import warnings
-from scipy.constants import  epsilon_0, c
-from numpy import real, imag, sqrt, ones, zeros, pi, log
+from scipy.constants import  c
+from numpy import real, imag, sqrt, ones, pi, log
 from .. constants import NumberLike
 from .. frequency import Frequency
 from .media import Media

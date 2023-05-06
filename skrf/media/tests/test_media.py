@@ -4,11 +4,9 @@ import numpy as npy
 from numpy.testing import run_module_suite
 
 
-from skrf.media import DefinedGammaZ0, Media
+from skrf.media import DefinedGammaZ0
 from skrf.network import Network
 from skrf.frequency import Frequency
-from numpy.testing import run_module_suite
-import skrf
 
 
 class DefinedGammaZ0TestCase(unittest.TestCase):
