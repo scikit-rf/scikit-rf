@@ -1711,8 +1711,8 @@ class Network:
 
     @property
     def max_stable_gain(self) -> npy.ndarray:
-        """
-        Maximum stable power gain in linear value.
+        r"""
+        Maximum stable power gain in linear value
 
         .. math::
 
@@ -1739,23 +1739,24 @@ class Network:
     
     @property
     def max_gain(self) -> npy.ndarray:
-        """
-        Maximum available power gain for K > 1 and maximum stable power gain for K <= 1 in linear value.
+        r"""
+        Maximum available power gain for K > 1 and maximum stable power gain for K <= 1 in linear value
 
         .. math::
 
-                G_{max} = \frac{|S_{21}|}{|S_{12}|} \times (K - \sqrt{K^2 - 1}) (for K > 1),
-                G_{max} = \frac{|S_{21}|}{|S_{12}|} (for K <= 1)
+                G_{max}|_{K>1} = \frac{|S_{21}|}{|S_{12}|} \times (K - \sqrt{K^2 - 1})
 
-        Note
-        ----
-        The maximum available power gain is defined for a unconditionally stable network (i.e. K > 1).
-        For K <= 1, this property returns the maximum stable gain instead.
-        This behavior is similarly to the max_gain() function in Keysight's Advanced Desigh System (but differs in decibel or linear).
+                G_{max}|_{K<=1} = \frac{|S_{21}|}{|S_{12}|}
 
         Returns
         -------
         gmax : :class:`numpy.ndarray` of shape `f`
+
+        Note
+        ----
+        The maximum available power gain is defined for a unconditionally stable network (K > 1).
+        For K <= 1, this property returns the maximum stable gain instead.
+        This behavior is similarly to the max_gain() function in Keysight's Advanced Desigh System (but differs in decibel or linear).
 
         References
         ----------
@@ -1778,12 +1779,12 @@ class Network:
     
     @property
     def unilateral_gain(self) -> npy.ndarray:
-        """
+        r"""
         Mason's unilateral power gain in linear value
 
         .. math::
 
-                U = |S_{21} / S_{11} - 1| ^ 2 / (2 * K * |S_{21}| / |S_{12}| - 2 * Re[S_{21} / S_{12}])
+                U = \frac{| \frac{S_{21}}{S_{12}} - 1| ^ 2}{2K \frac{|S_{21}|}{|S_{12}|} - 2Re(\frac{S_{21}}{S_{12}})}
 
         Returns
         -------
