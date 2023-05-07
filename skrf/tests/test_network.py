@@ -66,6 +66,7 @@ class NetworkTestCase(unittest.TestCase):
         self.Fix2 = rf.concat_ports([l1, l1, l1, l1], port_order='first')
         self.DUT2 = rf.concat_ports([l2, l2, l2, l2], port_order='first')
         self.Meas2 = rf.concat_ports([l3, l3, l3, l3], port_order='first')
+        self.fet = rf.Network(os.path.join(self.test_dir, 'fet.s2p'))
 
     def test_network_copy(self):
         n = self.ntwk1
@@ -552,6 +553,37 @@ class NetworkTestCase(unittest.TestCase):
                 npy.testing.assert_almost_equal(net.s, net[0].s)
                 self.assertTrue((net.z0 == net[0].z0).all())
                 self.assertTrue(net.s_def != net[0].s_def)
+
+    def test_max_stable_gain(self):
+        y12 = self.fet.y[:, 0, 1]
+        y21 = self.fet.y[:, 1, 0]
+        gms_y = npy.abs(y21) / npy.abs(y12)
+        self.assertTrue(
+            npy.all(
+                npy.abs(self.fet.max_stable_gain - gms_y) < 1e-6
+            )
+        )
+
+    def test_max_gain(self):
+        maxgain_ads = npy.loadtxt('./maxgain_ads.csv', encoding='utf-8', delimiter=',')
+        self.assertTrue(
+            npy.all(
+                npy.abs(10 * npy.log10(self.fet.max_gain) - maxgain_ads[:,1]) < 1e-6
+            )
+        )
+
+    def test_unilateral_gain(self):
+        y11 = self.fet.y[:, 0, 0]
+        y12 = self.fet.y[:, 0, 1]
+        y21 = self.fet.y[:, 1, 0]
+        y22 = self.fet.y[:, 1, 1]
+        U_y = (npy.abs(y21 - y12) ** 2) \
+              / (4 * (npy.real(y11) * npy.real(y22) - npy.real(y12) * npy.real(y21)))
+        self.assertTrue(
+            npy.all(
+                npy.abs(self.fet.unilateral_gain - U_y) < 1e-6
+            )
+        )
 
     def test_delay(self):
         ntwk1_delayed = self.ntwk1.delay(1,'ns',port=0)
