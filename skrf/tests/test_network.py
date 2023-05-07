@@ -1644,6 +1644,17 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(npy.allclose(net.s, s[:4]))
         self.assertFalse(npy.allclose(net.s.shape, s.shape))
 
+    def test_stability(self):
+        net = rf.Network(f=[1], s=[[0, 1],[0, 0]], z0=50)
+        self.assertTrue(net.stability == [npy.inf])
+
+        net = rf.Network(f=[1], s=[[0, 1],[1, 0]], z0=50)
+        self.assertTrue(net.stability == [1])
+
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.stability
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
