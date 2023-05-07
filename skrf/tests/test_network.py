@@ -574,7 +574,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_max_gain(self):
         # Max gain calculated with ADS
-        maxgain_ads = npy.loadtxt('./maxgain_ads.csv', encoding='utf-8', delimiter=',')
+        maxgain_ads = npy.loadtxt(os.path.join(self.test_dir, 'maxgain_ads.csv'), encoding='utf-8', delimiter=',')
         self.assertTrue(
             npy.all(
                 npy.abs(10 * npy.log10(self.fet.max_gain) - maxgain_ads[:,1]) < 1e-6
