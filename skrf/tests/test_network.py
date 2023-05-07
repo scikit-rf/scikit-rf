@@ -564,6 +564,13 @@ class NetworkTestCase(unittest.TestCase):
             )
         )
 
+        net = rf.Network(f=[1], s=[[0, 0],[0, 0]], z0=50)
+        self.assertRaises(RuntimeWarning)
+
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.max_stable_gain
+
     def test_max_gain(self):
         maxgain_ads = npy.loadtxt('./maxgain_ads.csv', encoding='utf-8', delimiter=',')
         self.assertTrue(
@@ -571,6 +578,13 @@ class NetworkTestCase(unittest.TestCase):
                 npy.abs(10 * npy.log10(self.fet.max_gain) - maxgain_ads[:,1]) < 1e-6
             )
         )
+
+        net = rf.Network(f=[1], s=[[0, 0],[0, 0]], z0=50)
+        self.assertRaises(RuntimeWarning)
+        
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.max_gain
 
     def test_unilateral_gain(self):
         y11 = self.fet.y[:, 0, 0]
@@ -584,6 +598,13 @@ class NetworkTestCase(unittest.TestCase):
                 npy.abs(self.fet.unilateral_gain - U_y) < 1e-6
             )
         )
+
+        net = rf.Network(f=[1], s=[[0, 0],[0, 0]], z0=50)
+        self.assertRaises(RuntimeWarning)
+
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.unilateral_gain
 
     def test_delay(self):
         ntwk1_delayed = self.ntwk1.delay(1,'ns',port=0)
