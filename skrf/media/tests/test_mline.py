@@ -80,14 +80,14 @@ class MLineTestCase(unittest.TestCase):
         self.f_et = 1e9
 
 
-    def test_Z0_ep_reff(self):
+    def test_z0_ep_reff(self):
         """
         Test against characterisitc impedance from another calculator using
         Hammerstadt-Jensen model
         http://web.mit.edu/~geda/arch/i386_rhel3/versions/20050830/html/mcalc-1.5/
         """
         freq = Frequency(1, 1, 1, 'GHz')
-        mline1 = MLine(frequency = freq, z0 = 50.,
+        mline1 = MLine(frequency = freq, z0_port = 50.,
                        w = self.w, h = self.h, t = self.t,
                        ep_r = self.ep_r, rho = self.rho,
                        tand = self.tand, rough = self.d,
@@ -95,7 +95,7 @@ class MLineTestCase(unittest.TestCase):
                        compatibility_mode = 'qucs')
 
         # without t (t = None)
-        mline2 = MLine(frequency = freq, z0 = 50.,
+        mline2 = MLine(frequency = freq, z0_port = 50.,
                        w = self.w, h = self.h,
                        ep_r = self.ep_r, rho = self.rho,
                        tand = self.tand, rough = self.d,
@@ -103,14 +103,14 @@ class MLineTestCase(unittest.TestCase):
                        compatibility_mode = 'qucs')
 
         # with t = 0
-        mline3 = MLine(frequency = freq, z0 = 50.,
+        mline3 = MLine(frequency = freq, z0_port = 50.,
                        w = self.w, h = self.h, t = 0,
                        ep_r = self.ep_r, rho = self.rho,
                        tand = self.tand, rough = self.d,
                        diel = 'frequencyinvariant', disp = 'hammerstadjensen',
                        compatibility_mode = 'qucs')
 
-        self.assertTrue(npy.abs((mline1.Z0[0] - 49.142) / 49.142) < 0.01)
+        self.assertTrue(npy.abs((mline1.z0[0] - 49.142) / 49.142) < 0.01)
         self.assertTrue(npy.abs((mline1.ep_reff_f[0] - 3.324) / 3.324) < 0.01)
         self.assertTrue(npy.abs(mline2.w_eff - mline2.w) < 1e-16)
         self.assertTrue(npy.abs(mline2.alpha_conductor) < 1e-16)
@@ -132,15 +132,14 @@ class MLineTestCase(unittest.TestCase):
         limit_deg = 1.
 
         for ref in self.ref_qucs:
-            mline = MLine(frequency = ref['n'].frequency, z0 = 50.,
+            mline = MLine(frequency = ref['n'].frequency, z0_port = 50.,
                             w = self.w, h = self.h, t = self.t,
                             ep_r = self.ep_r, rho = self.rho,
                             tand = self.tand, rough = self.d,
                             model = ref['model'], disp = ref['disp'],
                             diel = 'frequencyinvariant',
                             compatibility_mode = 'qucs')
-            with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
-                line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
+            line = mline.line(d=self.l, unit='m')
             line.name = 'skrf,qucs'
 
             # residuals
@@ -205,14 +204,13 @@ class MLineTestCase(unittest.TestCase):
         limit_deg = 1.
 
         for ref in self.ref_ads:
-            mline = MLine(frequency = ref['n'].frequency, z0 = 50.,
+            mline = MLine(frequency = ref['n'].frequency, z0_port = 50.,
                             w = self.w, h = self.h, t = self.t,
                             ep_r = self.ep_r, rho = self.rho,
                             tand = self.tand, rough = self.d,
                             model = 'hammerstadjensen', disp = ref['disp'],
                             diel = ref['diel'])
-            with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
-                line = mline.line(d=self.l, unit='m', embed = True, z0=mline.Z0)
+            line = mline.line(d=self.l, unit='m')
             line.name = 'skrf,ads'
 
             # residuals
@@ -274,7 +272,7 @@ class MLineTestCase(unittest.TestCase):
         """
         freq = Frequency(1, 1, 1, 'MHz')
         with self.assertWarns(RuntimeWarning) as context:
-            mline = MLine(frequency = freq, z0 = 50.,
+            mline = MLine(frequency = freq, z0_port = 50.,
                        w = self.w, h = self.h, t = self.t,
                        ep_r = self.ep_r, rho = self.rho,
                        tand = self.tand, rough = self.d,
