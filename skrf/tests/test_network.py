@@ -557,6 +557,7 @@ class NetworkTestCase(unittest.TestCase):
     def test_max_stable_gain(self):
         y12 = self.fet.y[:, 0, 1]
         y21 = self.fet.y[:, 1, 0]
+        # Maximum stable gain derived from Y-parameters
         gms_y = npy.abs(y21) / npy.abs(y12)
         self.assertTrue(
             npy.all(
@@ -572,6 +573,7 @@ class NetworkTestCase(unittest.TestCase):
             net.max_stable_gain
 
     def test_max_gain(self):
+        # Max gain calculated with ADS
         maxgain_ads = npy.loadtxt('./maxgain_ads.csv', encoding='utf-8', delimiter=',')
         self.assertTrue(
             npy.all(
@@ -591,6 +593,7 @@ class NetworkTestCase(unittest.TestCase):
         y12 = self.fet.y[:, 0, 1]
         y21 = self.fet.y[:, 1, 0]
         y22 = self.fet.y[:, 1, 1]
+        # Unilateral gain derived from Y-parameters
         U_y = (npy.abs(y21 - y12) ** 2) \
               / (4 * (npy.real(y11) * npy.real(y22) - npy.real(y12) * npy.real(y21)))
         self.assertTrue(
