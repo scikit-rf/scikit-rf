@@ -1702,11 +1702,15 @@ class Network:
         K : :class:`numpy.ndarray` of shape `f`
 
         """
-        assert self.nports == 2, "Stability factor K is only defined for two ports"
+        if self.nports != 2:
+            raise ValueError("Stability factor K is only defined for two ports")
 
         D = self.s[:, 0, 0] * self.s[:, 1, 1] - self.s[:, 0, 1] * self.s[:, 1, 0]
-        K = (1 - npy.abs(self.s[:, 0, 0]) ** 2 - npy.abs(self.s[:, 1, 1]) ** 2 + npy.abs(D) ** 2) / (
-        2 * npy.abs(self.s[:, 0, 1]) * npy.abs(self.s[:, 1, 0]))
+        denom = 2 * npy.abs(self.s[:, 0, 1]) * npy.abs(self.s[:, 1, 0])
+        num = (1 - npy.abs(self.s[:, 0, 0]) ** 2 - npy.abs(self.s[:, 1, 1]) ** 2 + npy.abs(D) ** 2)
+        infs = npy.full(num.shape, npy.inf)
+        # Handle divide by zero
+        K = npy.divide(num, denom, out=infs, where=denom!=0)
         return K
 
     @property
