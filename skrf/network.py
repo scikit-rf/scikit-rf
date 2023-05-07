@@ -1733,7 +1733,9 @@ class Network:
         stability : Stability factor
 
         """
-        assert self.nports == 2, "Maximum stable gain is only defined for two ports"
+        if self.nports != 2:
+            raise ValueError("Maximum stable gain is only defined for two ports")
+
         gms = npy.abs(self.s[:, 1, 0]) / npy.abs(self.s[:, 0, 1])
         return gms
     
@@ -1770,7 +1772,8 @@ class Network:
         stability : Stability factor
 
         """
-        assert self.nports == 2, "Max gain is only defined for two ports"
+        if self.nports != 2:
+            raise ValueError("Max gain is only defined for two ports")
 
         K = self.stability
         K_clipped = npy.clip(K, 1, None)
@@ -1801,7 +1804,8 @@ class Network:
         stability : Stability factor
 
         """
-        assert self.nports == 2, "Unilateral gain is only defined for two ports"
+        if self.nports != 2:
+            raise ValueError("Unilateral gain is only defined for two ports")
 
         K = self.stability
         gms = self.max_stable_gain
