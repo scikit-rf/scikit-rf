@@ -555,6 +555,7 @@ class NetworkTestCase(unittest.TestCase):
                 self.assertTrue(net.s_def != net[0].s_def)
 
     def test_max_stable_gain(self):
+        # Check whether the maximum stable gain agrees with that derived from Y-parameters
         y12 = self.fet.y[:, 0, 1]
         y21 = self.fet.y[:, 1, 0]
         # Maximum stable gain derived from Y-parameters
@@ -565,15 +566,18 @@ class NetworkTestCase(unittest.TestCase):
             )
         )
 
+        # Check whether a runtime warning is raised when zero division occurs
         net = rf.Network(f=[1], s=[[0, 0],[0, 0]], z0=50)
-        self.assertRaises(RuntimeWarning)
+        with pytest.raises(RuntimeWarning):
+            net.max_stable_gain
 
+        # Check whether an error is raised when the network is not 2 port.
         net = rf.Network(f=[1], s=npy.eye(3), z0=50)
         with pytest.raises(ValueError):
             net.max_stable_gain
 
     def test_max_gain(self):
-        # Max gain calculated with ADS
+        # Check whether the max gain agrees with that calculated with ADS
         maxgain_ads = npy.loadtxt(os.path.join(self.test_dir, 'maxgain_ads.csv'), encoding='utf-8', delimiter=',')
         self.assertTrue(
             npy.all(
@@ -581,14 +585,18 @@ class NetworkTestCase(unittest.TestCase):
             )
         )
 
+        # Check whether a runtime warning is raised when zero division occurs
         net = rf.Network(f=[1], s=[[0, 0],[0, 0]], z0=50)
-        self.assertRaises(RuntimeWarning)
-        
+        with pytest.raises(RuntimeWarning):
+            net.max_gain
+
+        # Check whether an error is raised when the network is not 2 port.
         net = rf.Network(f=[1], s=npy.eye(3), z0=50)
         with pytest.raises(ValueError):
             net.max_gain
 
     def test_unilateral_gain(self):
+        # Check whether the unilateral gain agrees with that derived from Y-parameters
         y11 = self.fet.y[:, 0, 0]
         y12 = self.fet.y[:, 0, 1]
         y21 = self.fet.y[:, 1, 0]
@@ -602,9 +610,12 @@ class NetworkTestCase(unittest.TestCase):
             )
         )
 
+        # Check whether a runtime warning is raised when zero division occurs
         net = rf.Network(f=[1], s=[[0, 0],[0, 0]], z0=50)
-        self.assertRaises(RuntimeWarning)
+        with pytest.raises(RuntimeWarning):
+            net.unilateral_gain
 
+        # Check whether an error is raised when the network is not 2 port.
         net = rf.Network(f=[1], s=npy.eye(3), z0=50)
         with pytest.raises(ValueError):
             net.unilateral_gain
