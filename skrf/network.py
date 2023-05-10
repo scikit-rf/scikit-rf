@@ -2363,8 +2363,10 @@ class Network:
 
                 # write noise data if it exists
                 if ntwk.noisy:
-                   for f, nf, g_opt, rn, z0 in zip(ntwk.f_noise.f_scaled, ntwk.nfmin_db, ntwk.g_opt, ntwk.rn, ntwk.z0):
-                       output.write(f"{f} {nf} {mf.complex_2_magnitude(g_opt)} {mf.complex_2_degree(g_opt)} {rn/z0[0].real}\n") 
+                    new = ntwk.copy()
+                    new.resample(ntwk.f_noise) # only write data from original noise freqs
+                    for f, nf, g_opt, rn, z0 in zip(new.f_noise.f_scaled, new.nfmin_db, new.g_opt, new.rn, new.z0):
+                        output.write(f"{f} {nf} {mf.complex_2_magnitude(g_opt)} {mf.complex_2_degree(g_opt)} {rn/z0[0].real}\n") 
 
             elif ntwk.number_of_ports == 3:
                 # 3-port is written over 3 lines / matrix order
