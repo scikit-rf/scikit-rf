@@ -17,7 +17,7 @@ present a standard interface for each.
 
 Basically, creating a driver consists of the following:
 
-1. Creating an instrument class that inherits from it's abstract base class
+1. Creating an instrument class that inherits from its abstract base class
 2. Consulting the device's datasheet to find the command for each method in the
    abstract base class
 
