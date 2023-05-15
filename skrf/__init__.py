@@ -3,7 +3,7 @@ skrf is an object-oriented approach to microwave engineering,
 implemented in Python.
 """
 
-__version__ = '0.26.0'
+__version__ = '0.27.1'
 ## Import all  module names for coherent reference of name-space
 #import io
 
@@ -45,14 +45,14 @@ from .qfactor import *
 try:
     import vi
     from vi import *
-except(ImportError):
+except ImportError:
     pass
 
 # try to import data but if it fails whatever. it fails if some pickles
 # dont unpickle. but its not important
 try:
     from . import data
-except:
+except Exception:
     pass
 
 

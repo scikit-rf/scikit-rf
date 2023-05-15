@@ -45,13 +45,10 @@ class Network2TestCase(unittest.TestCase):
     def test_z(self):
         self.n.z
 
-    def test_z(self):
+    def test_y(self):
         self.n.y
 
-    def test_z(self):
-        self.n.y
-
-    def test_z(self):
+    def test_s_time(self):
         self.n.s_time
 
     ## existence of parameters

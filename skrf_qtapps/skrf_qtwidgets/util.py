@@ -1,7 +1,4 @@
 import re
-import copy
-from collections.abc import Iterable
-import zipfile
 
 import numpy as np
 import skrf

@@ -31,11 +31,11 @@ class MediaTestCase(unittest.TestCase):
 
         a_media = Coaxial(
             frequency = qucs_ntwk.frequency,
-            Dint=1e-3, Dout=3e-3, epsilon_r=2.29, \
-            tan_delta=4e-4, sigma=1./1.68e-8 \
+            Dint=1e-3, Dout=3e-3, epsilon_r=2.29,
+            tan_delta=4e-4, sigma=1./1.68e-8,
+            z0_port = 50.
             )
-        skrf_ntwk = a_media.thru(z0=50)**a_media.line(200e-3,'m')\
-                    **a_media.thru(z0=50)
+        skrf_ntwk = a_media.line(200e-3,'m')
         # Equal assertion fails if tan_delta or resistivity are non-zero
         #self.assertEqual(qucs_ntwk, skrf_ntwk)
         self.assertTrue(
@@ -106,7 +106,8 @@ class MediaTestCase(unittest.TestCase):
 
         rho = 1e-7
         dint = 0.44e-3
-        coax = Coaxial(freq, z0=50, Dint=dint, Dout=1.0e-3, sigma=1/rho)
+        coax = Coaxial(freq, z0_port = 50, Dint = dint, Dout = 1.0e-3,
+                       sigma = 1/rho)
 
         dc_res = rho / (npy.pi * (dint/2)**2)
 

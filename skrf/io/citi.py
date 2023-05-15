@@ -14,12 +14,10 @@ Citi class and utilities
 
 """
 import numpy as np
-
-import numpy as np
 import typing
 from ..util import get_fid
 from ..frequency import Frequency
-from ..network import Network, z2s, y2s
+from ..network import Network, z2s
 from ..networkSet import NetworkSet
 from ..mathFunctions import magdeg_2_reim
 
@@ -214,7 +212,7 @@ class Citi():
         networks = []
 
         # should find the frequency parameter
-        if not 'freq' in [it.lower() for it in self._params.keys()]:
+        if 'freq' not in [it.lower() for it in self._params.keys()]:
             raise ValueError('Frequency points not found')
 
         # no VAR except for freq has been found

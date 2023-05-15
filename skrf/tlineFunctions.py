@@ -113,7 +113,7 @@ Transmission Line Physics
 
 from . constants import NumberLike, INF, ONE
 import numpy as npy
-from numpy import pi, sqrt, exp, array, imag, real
+from numpy import pi, sqrt, exp, array, real
 
 from scipy.constants import mu_0
 from . import mathFunctions as mf
@@ -317,9 +317,9 @@ def electrical_length(gamma: NumberLike, f: NumberLike, d: NumberLike, deg: bool
     f = array(f, dtype=float).reshape(-1)
     d = array(d, dtype=float).reshape(-1)
 
-    if deg == False:
+    if not deg:
         return  gamma(f)*d
-    elif deg == True:
+    else:
         return  mf.radian_2_degree(gamma(f)*d )
 
 

@@ -43,7 +43,7 @@ Pre-commit
 You can use pre-commit_ to automate your code quality checks and perform
 automated fixes in **scikit-rf**.
 
-To enable pre-commit on your computer (make sure it is installed first), open a terminal and Navigate to 
+To enable pre-commit on your computer (make sure it is installed first), open a terminal and Navigate to
 the :file:`scikit-rf/` directory that contains your clone of scikit-rf's repository, then run:
 
 .. code-block:: bash

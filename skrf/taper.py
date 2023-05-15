@@ -141,7 +141,7 @@ class Taper1D:
 
     @property
     def value_vector(self):
-        if self.f_is_normed ==True:
+        if self.f_is_normed:
             x = linspace(0,1,self.n_sections)
             y = self.f(x, **self.f_kw)*(self.stop-self.start) + self.start
         else:
@@ -279,7 +279,8 @@ class SmoothStep(Taper1D):
         Smoothstep Taper Constructor.
         """
 
-        f = lambda x:  3*x**2 - 2*x**3
+        def f(x):
+            return 3 * x ** 2 - 2 * x ** 3
         opts = dict(f=f, f_is_normed=True)
         kw.update(opts)
         super().__init__(**kw)

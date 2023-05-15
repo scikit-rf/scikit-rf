@@ -20,8 +20,12 @@ from skrf.media import DistributedCircuit
 global NPTS
 NPTS = 1
 
-WG_lossless = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*rf.mil, z0=50)
-WG = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*rf.mil, z0=50, rho='gold')
+# WR10/WG27/R900 75 to 110 GHz, 0.1x0.05 inch (2.54x1.27 mm)
+# z0 from 610 to 446 ohm
+WG_lossless = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'),
+                                      a=100*rf.mil, z0_override=50)
+WG = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*rf.mil,
+                                      rho='gold', z0_override=50)
 
 
 class DetermineTest(unittest.TestCase):
@@ -51,7 +55,7 @@ class DetermineTest(unittest.TestCase):
 
         short= wg.short()
         open = wg.open()
-        self.r_estimate = [short, short,short, short, open ,open, open ,open]
+        self.r_estimate = [short, short, short, short, open, open, open ,open]
         self.R_m = [self.embed(k) for k in self.R]
 
     def embed(self,x):
@@ -1375,8 +1379,9 @@ class LRRMTest(EightTermTest):
         o_i = wg.load(1, nports=1, name='open')
         s_i = wg.short(nports=1, name='short')
         m_i = wg.load(0.1, nports=1, name='load')
-        with pytest.warns(FutureWarning, match="`embed` will be deprecated"):
-            thru = wg.line(d=50, z0=75, unit='um', name='thru', embed=True)
+        thru = wg.line(d=50, z0=75, unit='um', name='thru')
+        thru.renormalize(wg.z0)
+
         # Make sure calibration works with non-symmetric thru
         thru.s[:,1,1] += 0.02 + 0.05j
 
@@ -2017,8 +2022,10 @@ class MultiportCalTest(unittest.TestCase):
         for i in range(nports):
             self.isolation.s[:, i, i] = 0
 
-        port_type = lambda n: 'VNA' if n < nports else 'DUT'
-        port_number = lambda n: n if n < nports else n - nports
+        def port_type(n):
+            return 'VNA' if n < nports else 'DUT'
+        def port_number(n):
+            return n if n < nports else n - nports
         # Remove leakage terms
         for i in range(2*nports):
             for j in range(i+1, 2*nports):
