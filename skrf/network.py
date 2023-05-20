@@ -5,7 +5,7 @@ network (:mod:`skrf.network`)
 ========================================
 
 
-Provides an n-port network class and associated functions.
+Provide an n-port network class and associated functions.
 
 Much of the functionality in this module is provided as methods and
 properties of the :class:`Network` Class.
@@ -796,7 +796,7 @@ class Network:
 
     def __getitem__(self, key:Union[str, int, slice, Sized]) -> 'Network':
         """
-        Slices a Network object based on an index, or human readable string.
+        Slice a Network object based on an index, or human readable string.
 
         Parameters
         ----------
@@ -915,7 +915,7 @@ class Network:
     # INTERNAL CODE GENERATION METHODS
     def __compatable_for_scalar_operation_test(self, other:'Network') -> None:
         """
-        tests to make sure other network's s-matrix is of same shape
+        test to make sure other network's s-matrix is of same shape
         """
         if other.frequency != self.frequency:
             raise IndexError('Networks must have same frequency. See `Network.interpolate`')
@@ -1372,7 +1372,7 @@ class Network:
     @frequency.setter
     def frequency(self, new_frequency: Union[Frequency, int, Sequence[float], npy.ndarray]) -> None:
         """
-        takes a Frequency object, see  frequency.py
+        take a Frequency object, see frequency.py
         """
         if isinstance(new_frequency, Frequency):
             self._frequency = new_frequency.copy()
@@ -1874,7 +1874,7 @@ class Network:
 
     def is_symmetric(self, n: int = 1, port_order: Dict[int, int] = {}, tol: float = mf.ALMOST_ZERO) -> bool:
         """
-        Returns whether the 2N-port network has n-th order reflection symmetry by checking.
+        Return whether the 2N-port network has n-th order reflection symmetry by checking.
         :math:`S_{i,i} == S_{j,j}` for appropriate pair(s) of :math:`i` and :math:`j`.
 
         Parameters
@@ -1993,7 +1993,7 @@ class Network:
     ## CLASS METHODS
     def copy(self) -> 'Network':
         """
-        Returns a copy of this Network.
+        Return a copy of this Network.
 
         Needed to allow pass-by-value for a Network instead of
         pass-by-reference
@@ -2027,7 +2027,7 @@ class Network:
 
     def copy_from(self, other: 'Network') -> None:
         """
-        Copies the contents of another Network into self.
+        Copy the contents of another Network into self.
 
         Uses copy, so that the data is passed-by-value, not reference
 
@@ -2047,7 +2047,7 @@ class Network:
 
     def copy_subset(self, key: npy.ndarray) -> 'Network':
         """
-        Returns a copy of a frequency subset of this Network.
+        Return a copy of a frequency subset of this Network.
 
         Needed to allow pass-by-value for a subset Network instead of
         pass-by-reference
@@ -2121,7 +2121,7 @@ class Network:
     def set_noise_a(self, noise_freq: Frequency = None, nfmin_db: float = 0,
         gamma_opt: float = 0, rn: NumberLike = 1 ) -> None:
           """
-          Sets the "A" (ie cascade) representation of the correlation matrix, based on the
+          Set the "A" (ie cascade) representation of the correlation matrix, based on the
           noise frequency and input parameters.
           """
           sh_fr = noise_freq.f.shape
@@ -2147,7 +2147,7 @@ class Network:
     def read_touchstone(self, filename: Union[str, TextIO],
                         encoding: Union[str, None] = None) -> None:
         """
-        Loads values from a touchstone file.
+        Load values from a touchstone file.
 
         The work of this function is done through the
         :class:`~skrf.io.touchstone` class.
@@ -2972,7 +2972,7 @@ class Network:
 
     def subnetwork(self, ports: Sequence[int], offby: int = 1) -> 'Network':
         """
-        Returns a subnetwork of a the Network from a list of port numbers.
+        Return a subnetwork of a the Network from a list of port numbers.
 
         A subnetwork is Network which S-parameters corresponds to selected ports,
         with all non-selected ports considered matched.
@@ -3093,7 +3093,7 @@ class Network:
 
     def flip(self) -> None:
         """
-        Swaps the ports of a 2n-port Network (inplace).
+        Swap the ports of a 2n-port Network (inplace).
 
         In case the network is 2n-port and n > 1, 'second' numbering scheme is
         assumed to be consistent with the ** cascade operator::
@@ -3190,7 +3190,7 @@ class Network:
 
     def renumber(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> None:
         """
-        Renumbers ports of a Network (inplace).
+        Renumber ports of a Network (inplace).
 
         Parameters
         ----------
@@ -3293,7 +3293,7 @@ class Network:
 
     def renumbered(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> 'Network':
         """
-        Returns a renumbered Network, leave self alone.
+        Return a renumbered Network, leave self alone.
 
         Parameters
         ----------
@@ -3490,9 +3490,9 @@ class Network:
 
     def multiply_noise(self, mag_dev: float, phase_dev: float, **kwargs) -> None:
         """
-        Multiplies a complex bivariate gaussian white-noise signal
+        Multiply a complex bivariate gaussian white-noise signal
         of given standard deviations for magnitude and phase.
-        magnitude mean is 1, phase mean is 0.
+        The mean of the magnitude is 1, and the mena of the phase is 0.
 
         Parameters
         ----------
@@ -3538,7 +3538,7 @@ class Network:
     # other
     def func_on_parameter(self, func: Callable, attr: str = 's', *args, **kwargs) -> 'Network':
         r"""
-        Applies a function parameter matrix, one frequency slice at a time.
+        Apply a function parameter matrix, one frequency slice at a time.
 
         This is useful for functions that can only operate on 2d arrays,
         like numpy.linalg.inv. This loops over f and calls
@@ -3984,7 +3984,7 @@ class Network:
 
     def impulse_response(self, window: str = 'hamming', n: int = None, pad: int = 1000,
                         bandpass: bool = None, squeeze: bool = True) -> Tuple[npy.ndarray, npy.ndarray]:
-        """Calculates time-domain impulse response of one-port.
+        """Calculate time-domain impulse response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
         the frequency step must be uniform. Positions of the reflections are
@@ -4057,7 +4057,7 @@ class Network:
     def step_response(
             self, window: str = 'hamming', n: int = None, pad: int = 1000, squeeze: bool = True
             ) -> Tuple[npy.ndarray, npy.ndarray]:
-        """Calculates time-domain step response of one-port.
+        """Calculate time-domain step response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
         the frequency step must be uniform.
@@ -4161,7 +4161,7 @@ class Network:
 
     def z_active(self, a: npy.ndarray) -> npy.ndarray:
         r"""
-        Returns the active Z-parameters of the network for a defined wave excitation a.
+        Return the active Z-parameters of the network for a defined wave excitation a.
 
         The active Z-parameters are defined by:
 
@@ -4192,7 +4192,7 @@ class Network:
 
     def y_active(self, a: npy.ndarray) -> npy.ndarray:
         r"""
-        Returns the active Y-parameters of the network for a defined wave excitation a.
+        Return the active Y-parameters of the network for a defined wave excitation a.
 
         The active Y-parameters are defined by:
 
@@ -4223,7 +4223,7 @@ class Network:
 
     def vswr_active(self, a: npy.ndarray) -> npy.ndarray:
         r"""
-        Returns the active VSWR of the network for a defined wave excitation a.
+        Return the active VSWR of the network for a defined wave excitation a.
 
         The active VSWR is defined by :
 
@@ -4710,7 +4710,7 @@ def de_embed(ntwkA: Network, ntwkB: Network) -> Network:
 
 def stitch(ntwkA: Network, ntwkB: Network, **kwargs) -> Network:
     r"""
-    Stitches ntwkA and ntwkB together.
+    Stitch ntwkA and ntwkB together.
 
     Concatenates two networks' data. Given two networks that cover
     different frequency bands this can be used to combine their data
@@ -4750,7 +4750,7 @@ def stitch(ntwkA: Network, ntwkB: Network, **kwargs) -> Network:
 
 def overlap(ntwkA: Network, ntwkB: Network) -> Tuple[Network, Network]:
     """
-    Returns the overlapping parts of two Networks, interpolating if needed.
+    Return the overlapping parts of two Networks, interpolating if needed.
 
     If frequency vectors for each ntwk don't perfectly overlap, then
     ntwkB is interpolated so that the resultant networks have identical
@@ -4784,7 +4784,7 @@ def overlap(ntwkA: Network, ntwkB: Network) -> Tuple[Network, Network]:
 
 def overlap_multi(ntwk_list: Sequence[Network]):
     """
-    Returns the overlapping parts of multiple Networks, interpolating if needed.
+    Return the overlapping parts of multiple Networks, interpolating if needed.
 
     If frequency vectors for each ntwk don't perfectly overlap, then
     all networks after the first are interpolated so that the resultant networks
@@ -4907,7 +4907,7 @@ def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
 
 def average(list_of_networks: Sequence[Network], polar: bool = False) -> Network:
     """
-    Calculates the average network from a list of Networks.
+    Calculate the average network from a list of Networks.
 
     This is complex average of the s-parameters for a  list of Networks.
 
@@ -4952,7 +4952,7 @@ def average(list_of_networks: Sequence[Network], polar: bool = False) -> Network
 
 def stdev(list_of_networks: Sequence[Network], attr: str = 's') -> npy.ndarray:
     """
-    Calculates the standard deviation of a network attribute from a list of Networks.
+    Calculate the standard deviation of a network attribute from a list of Networks.
 
     This is the standard deviation for complex values of the s-parameters and other related attributes
     for a list of Networks.
@@ -4981,7 +4981,7 @@ def stdev(list_of_networks: Sequence[Network], attr: str = 's') -> npy.ndarray:
 
 def one_port_2_two_port(ntwk: Network) -> Network:
     """
-    Calculates the 2-port network given a symmetric, reciprocal and lossless 1-port network.
+    Calculate the 2-port network given a symmetric, reciprocal and lossless 1-port network.
 
     Parameters
     ----------
@@ -5010,7 +5010,7 @@ def one_port_2_two_port(ntwk: Network) -> Network:
 
 def chopinhalf(ntwk: Network, *args, **kwargs) -> Network:
     r"""
-    Chops a sandwich of identical, reciprocal 2-ports in half.
+    Chop a sandwich of identical, reciprocal 2-ports in half.
 
     Given two identical, reciprocal 2-ports measured in series,
     this returns one.
@@ -5121,7 +5121,7 @@ def evenodd2delta(n: Network, z0: NumberLike = 50, renormalize: bool = True,
 
 def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
     """
-    Returns a subnetwork of a given Network from a list of port numbers.
+    Return a subnetwork of a given Network from a list of port numbers.
 
     A subnetwork is Network which S-parameters corresponds to selected ports,
     with all non-selected ports considered matched.
@@ -5174,7 +5174,7 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network:
     r"""
-    Builds an N-port Network from list of N one-ports.
+    Build an N-port Network from list of N one-ports.
 
     Parameters
     ----------
@@ -5204,7 +5204,7 @@ def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network
 def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
         offby:int = 1, **kwargs) -> Network:
     r"""
-    Builds an N-port Network from list of two-ports.
+    Build an N-port Network from list of two-ports.
 
     This  method was made to reconstruct an n-port network from 2-port
     subnetworks as measured by a 2-port VNA. So, for example, given a
@@ -5260,7 +5260,7 @@ def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
 
 def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Network, *args, **kwargs) -> Network:
     r"""
-    Builds a 2-port Network from list of four 1-ports.
+    Build a 2-port Network from list of four 1-ports.
 
     Parameters
     ----------
@@ -5291,7 +5291,7 @@ def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Netwo
 def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool = True, *args,
                                **kwargs) -> Network:
     r"""
-    Creates 3-port from  three 2-port Networks.
+    Create 3-port from  three 2-port Networks.
 
     This function provides a convenient way to build a 3-port Network
     from a set of 2-port measurements. Which may occur when measuring
@@ -5706,7 +5706,7 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
 
 def s2t(s: npy.ndarray) -> npy.ndarray:
     """
-    Converts scattering parameters [#]_ to scattering transfer parameters [#]_.
+    Convert scattering parameters [#]_ to scattering transfer parameters [#]_.
 
     transfer parameters are also referred to as
     'wave cascading matrix' [#]_, this function only operates on 2N-ports
@@ -6108,7 +6108,7 @@ def a2s(a: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
 
 def a2z(a: npy.ndarray) -> npy.ndarray:
     """
-    Converts abcd parameters to z parameters [#]_.
+    Convert abcd parameters to z parameters [#]_.
 
 
     Parameters
@@ -6201,7 +6201,7 @@ def z2a(z: npy.ndarray) -> npy.ndarray:
 
 def s2a(s: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
     """
-    Converts scattering parameters to abcd parameters [#]_.
+    Convert scattering parameters to abcd parameters [#]_.
 
     Parameters
     ----------
@@ -6605,7 +6605,7 @@ def t2y(t: npy.ndarray) -> NoReturn:
 
 def h2z(h: npy.ndarray) -> npy.ndarray:
     """
-    Converts hybrid parameters to z parameters [#]_.
+    Convert hybrid parameters to z parameters [#]_.
 
 
     Parameters
@@ -6698,7 +6698,7 @@ def s2h(s: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
 
 def z2h(z: npy.ndarray) -> npy.ndarray:
     """
-    Converts impedance parameters to hybrid parameters [#]_.
+    Convert impedance parameters to hybrid parameters [#]_.
 
 
     Parameters
@@ -6926,7 +6926,7 @@ def renormalize_s(
 
 def fix_param_shape(p: NumberLike):
     """
-    Attempts to broadcast p to satisfy.
+    Attempt to broadcast p to satisfy.
         npy.shape(p) == (nfreqs, nports, nports)
 
     Parameters
@@ -7024,7 +7024,7 @@ def fix_z0_shape(z0: NumberLike, nfreqs: int, nports: int) -> npy.ndarray:
 ## cascading assistance functions
 def inv(s: npy.ndarray) -> npy.ndarray:
     """
-    Calculates 'inverse' s-parameter matrix, used for de-embedding.
+    Calculate 'inverse' s-parameter matrix, used for de-embedding.
 
     This is not literally the inverse of the s-parameter matrix.
     Instead, it is defined such that the inverse of the s-matrix cascaded
@@ -7117,7 +7117,7 @@ def flip(a: npy.ndarray) -> npy.ndarray:
 ## COMMON CHECKS (raise exceptions)
 def check_frequency_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
-    Checks if two Networks have same frequency.
+    Check if two Networks have same frequency.
     """
     if assert_frequency_equal(ntwkA, ntwkB) is False:
         raise IndexError('Networks don\'t have matching frequency. See `Network.interpolate`')
@@ -7133,7 +7133,7 @@ def check_frequency_exist(ntwk) -> None:
 
 def check_z0_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
-    Checks if two Networks have same port impedances.
+    Check if two Networks have same port impedances.
     """
     # note you should check frequency equal before you call this
     if assert_z0_equal(ntwkA, ntwkB) is False:
@@ -7142,7 +7142,7 @@ def check_z0_equal(ntwkA: Network, ntwkB: Network) -> None:
 
 def check_nports_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
-    Checks if two Networks have same number of ports.
+    Check if two Networks have same number of ports.
     """
     if assert_nports_equal(ntwkA, ntwkB) is False:
         raise ValueError('Networks don\'t have matching number of ports.')
@@ -7190,7 +7190,7 @@ def assert_nports_equal(ntwkA: Network, ntwkB: Network) -> bool:
 # this is needed for port impedance mismatches
 def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling') -> npy.ndarray:
     """
-    Creates a two-port s-matrix for a impedance mis-match.
+    Create a two-port s-matrix for a impedance mis-match.
 
     Parameters
     ----------
@@ -7243,7 +7243,7 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling')
 
 def two_port_reflect(ntwk1: Network, ntwk2: Network = None, name : Optional[str] = None) -> Network:
     """
-    Generates a two-port reflective two-port, from two one-ports.
+    Generate a two-port reflective two-port, from two one-ports.
 
 
     Parameters
@@ -7295,7 +7295,7 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None, name : Optional[str]
 
 def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
     r"""
-    Returns active s-parameters for a defined wave excitation a.
+    Return active s-parameters for a defined wave excitation a.
 
     The active s-parameter at a port is the reflection coefficients
     when other ports are excited. It is an important quantity for active
@@ -7342,7 +7342,7 @@ def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
 
 def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     r"""
-    Returns the active Z-parameters for a defined wave excitation a.
+    Return the active Z-parameters for a defined wave excitation a.
 
     The active Z-parameters are defined by:
 
@@ -7385,7 +7385,7 @@ def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
 
 def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     r"""
-    Returns the active Y-parameters for a defined wave excitation a.
+    Return the active Y-parameters for a defined wave excitation a.
 
     The active Y-parameters are defined by:
 
@@ -7426,7 +7426,7 @@ def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
 
 def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
     r"""
-    Returns the active VSWR for a defined wave excitation a..
+    Return the active VSWR for a defined wave excitation a..
 
     The active VSWR is defined by :
 
