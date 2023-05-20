@@ -915,7 +915,7 @@ class Network:
     # INTERNAL CODE GENERATION METHODS
     def __compatable_for_scalar_operation_test(self, other:'Network') -> None:
         """
-        test to make sure other network's s-matrix is of same shape
+        Test to make sure other network's s-matrix is of same shape.
         """
         if other.frequency != self.frequency:
             raise IndexError('Networks must have same frequency. See `Network.interpolate`')
@@ -1372,7 +1372,7 @@ class Network:
     @frequency.setter
     def frequency(self, new_frequency: Union[Frequency, int, Sequence[float], npy.ndarray]) -> None:
         """
-        take a Frequency object, see frequency.py
+        Take a Frequency object, see frequency.py.
         """
         if isinstance(new_frequency, Frequency):
             self._frequency = new_frequency.copy()
@@ -3470,7 +3470,7 @@ class Network:
 
     def add_noise_polar_flatband(self, mag_dev: float, phase_dev: float, **kwargs) -> None:
         """
-        Adds a flatband complex zero-mean gaussian white-noise signal of
+        Add a flatband complex zero-mean gaussian white-noise signal of
         given standard deviations for magnitude and phase.
 
         Parameters
