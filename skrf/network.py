@@ -202,9 +202,9 @@ class Network:
     =====================  =============================================
     Property               Meaning
     =====================  =============================================
-    :attr:`s`              scattering parameter matrix
-    :attr:`z0`             characteristic impedance matrix
-    :attr:`f`              frequency vector
+    :attr:`s`              Scattering parameter matrix.
+    :attr:`z0`             Characteristic impedance matrix.
+    :attr:`f`              Frequency vector.
     =====================  =============================================
 
     Although these docs focus on s-parameters, other equivalent network
@@ -216,11 +216,11 @@ class Network:
     =====================  =============================================
     Property               Meaning
     =====================  =============================================
-    :attr:`s_re`           real part of the s-matrix
-    :attr:`s_im`           imaginary part of the s-matrix
-    :attr:`s_mag`          magnitude of the s-matrix
-    :attr:`s_db`           magnitude in log scale of the s-matrix
-    :attr:`s_deg`          phase of the s-matrix in degrees
+    :attr:`s_re`           Real part of the s-matrix.
+    :attr:`s_im`           Imaginary part of the s-matrix.
+    :attr:`s_mag`          Magnitude of the s-matrix.
+    :attr:`s_db`           Magnitude in log scale of the s-matrix.
+    :attr:`s_deg`          Phase of the s-matrix in degrees.
     =====================  =============================================
 
     The following operations act on the networks s-matrix.
@@ -228,12 +228,12 @@ class Network:
     =====================  =============================================
     Operator               Function
     =====================  =============================================
-    \+                     element-wise addition of the s-matrix
-    \-                     element-wise difference of the s-matrix
-    \*                     element-wise multiplication of the s-matrix
-    \/                     element-wise division of the s-matrix
-    \*\*                   cascading (only for 2-ports)
-    \//                    de-embedding (for 2-ports, see :attr:`inv`)
+    \+                     Element-wise addition of the s-matrix.
+    \-                     Element-wise difference of the s-matrix.
+    \*                     Element-wise multiplication of the s-matrix.
+    \/                     Element-wise division of the s-matrix.
+    \*\*                   Cascading (only for 2-ports).
+    \//                    De-embedding (for 2-ports, see :attr:`inv`).
     =====================  =============================================
 
     Different components of the :class:`Network` can be visualized
@@ -244,17 +244,17 @@ class Network:
     =========================  =============================================
     Method                     Meaning
     =========================  =============================================
-    :func:`plot_s_smith`       plot complex s-parameters on smith chart
-    :func:`plot_s_re`          plot real part of s-parameters vs frequency
-    :func:`plot_s_im`          plot imaginary part of s-parameters vs frequency
-    :func:`plot_s_mag`         plot magnitude of s-parameters vs frequency
-    :func:`plot_s_db`          plot magnitude (in dB) of s-parameters vs frequency
-    :func:`plot_s_deg`         plot phase of s-parameters (in degrees) vs frequency
-    :func:`plot_s_deg_unwrap`  plot phase of s-parameters (in unwrapped degrees) vs frequency
+    :func:`plot_s_smith`       Plot complex s-parameters on smith chart.
+    :func:`plot_s_re`          Plot real part of s-parameters vs frequency.
+    :func:`plot_s_im`          Plot imaginary part of s-parameters vs frequency.
+    :func:`plot_s_mag`         Plot magnitude of s-parameters vs frequency.
+    :func:`plot_s_db`          Plot magnitude (in dB) of s-parameters vs frequency.
+    :func:`plot_s_deg`         Plot phase of s-parameters (in degrees) vs frequency.
+    :func:`plot_s_deg_unwrap`  Plot phase of s-parameters (in unwrapped degrees) vs frequency.
 
     =========================  =============================================
 
-    :class:`Network`  objects can be  created from a touchstone or pickle
+    :class:`Network`  objects can be created from a touchstone or pickle
     file  (see :func:`__init__`), by a
     :class:`~skrf.media.media.Media` object, or manually by assigning the
     network properties directly. :class:`Network`  objects
@@ -334,7 +334,7 @@ class Network:
         'time_step': 'Magnitude',
     }
     """
-    y-axis labels to the plotting functions
+    Y-axis labels to the plotting functions.
     """
 
     noise_interp_kind = 'linear'
@@ -1614,10 +1614,10 @@ class Network:
         power received at all ports, normalized to the power at a single
         excitement port.
 
-        mathematically, this is a test for unitary-ness of the
+        Mathematically, this is a test for unitary-ness of the
         s-parameter matrix [#]_.
 
-        for two port this is
+        For two port this is
 
         .. math::
 
@@ -1650,7 +1650,7 @@ class Network:
         This returns the difference between the s-parameter matrix
         and its transpose.
 
-        for two port this is
+        For two port this is
 
         .. math::
 
@@ -2631,7 +2631,7 @@ class Network:
 
     def to_dataframe(self, *args, **kwargs) -> 'pd.DataFrame':
         """
-        Convert attributes of a Network to a pandas DataFrame
+        Convert attributes of a Network to a pandas DataFrame.
 
         Use the same parameters than :func:`skrf.io.general.network_2_dataframe`
 
@@ -4255,7 +4255,7 @@ for func_name, (_func, prop_name, conversion) in Network._generated_functions().
 
     func_name = f"{prop_name}_{conversion}"
     doc = f"""
-        The {conversion} component of the {prop_name}-matrix
+        The {conversion} component of the {prop_name}-matrix.
 
         See Also
         --------
