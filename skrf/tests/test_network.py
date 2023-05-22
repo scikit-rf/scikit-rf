@@ -370,6 +370,27 @@ class NetworkTestCase(unittest.TestCase):
         # Writing complex characteristic impedance should fail
         with pytest.raises(ValueError) as e_info:
             snp = ntwk.write_touchstone(return_string=True)
+        
+    def test_write_touchstone_noisy(self):
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
+
+        # Read back the written touchstone
+        ntwkstr = ntwk.write_touchstone(return_string=True)
+        strio = io.StringIO(ntwkstr)
+        strio.name = f'StringIO.s2p'
+        new_ntwk = rf.Network(strio)
+
+        # Only compare to original noise data, not interpolated
+        ntwk.resample(ntwk.f_noise)
+        new_ntwk.resample(new_ntwk.f_noise)
+        
+        # Newly written noise properties should match the original
+        npy.testing.assert_allclose(ntwk.f_noise.f_scaled, new_ntwk.f_noise.f_scaled)
+        npy.testing.assert_allclose(ntwk.nfmin, new_ntwk.nfmin)
+        npy.testing.assert_allclose(ntwk.nfmin_db, new_ntwk.nfmin_db)
+        npy.testing.assert_allclose(ntwk.g_opt, new_ntwk.g_opt)
+        npy.testing.assert_allclose(ntwk.rn, new_ntwk.rn)
+        npy.testing.assert_allclose(ntwk.z0, new_ntwk.z0)
 
     def test_pickling(self):
         original_ntwk = self.ntwk1
