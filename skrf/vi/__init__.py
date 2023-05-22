@@ -10,8 +10,8 @@ types of instruments used in RF measurements and experiments.
 Creating A Driver
 =================
 
-Drivers are classes that from the respective instrument type's abstract base
-class and define methods specfic to each instrument. This syntax can be complex
+Drivers are classes inherited from the respective instrument type's abstract base
+class and define methods specific to each instrument. This syntax can be complex
 and vary wildly between devices and manufacturers. The vi module attempts to
 present a standard interface for each.
 
