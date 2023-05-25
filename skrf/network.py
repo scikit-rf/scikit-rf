@@ -2075,7 +2075,7 @@ class Network:
 
         if self.noise is not None and self.noise_freq is not None:
             ntwk.noise = npy.copy(self.noise[key,:])
-            ntwk.noise_freq = npy.copy(self.noise_freq[key])
+            ntwk.noise_freq = copy(self.noise_freq[key])
 
         try:
             ntwk.port_names = copy(self.port_names)
