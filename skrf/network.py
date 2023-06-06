@@ -786,11 +786,14 @@ class Network:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, self.__class__):
             return False
-        if npy.all(npy.abs(self.s - other.s) < ZERO):
-            return True
-        else:
+        if not (self.f == other.f).all():
             return False
-
+        for prop in self.PRIMARY_PROPERTIES:
+            if npy.all(npy.abs(getattr(self,prop)-getattr(other,prop))< ZERO):
+                return True
+            else:
+                return False
+        
     def __ne__(self, other:object) -> bool:
         return (not self.__eq__(other))
 
