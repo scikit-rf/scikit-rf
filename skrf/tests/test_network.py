@@ -1743,6 +1743,28 @@ class NetworkTestCase(unittest.TestCase):
         with pytest.raises(ValueError):
             net.stability
 
+    def test_equality(self):
+        s = np.random.randn(10, 2, 2)
+        f1 = np.arange(10)
+        f2 = np.arange(10)
+        n1 = rf.Network(s=s,f=f1)
+        n2 = rf.Network(s=s,f=f2)
+        self.assertTrue(n1 == n2)
+
+        f2 = np.arange(11)
+        n2 = rf.Network(s=s,f=f2)
+        self.assertFalse(n1 == n2)
+
+        f2 = np.arange(10)
+        n2 = rf.Network(s=s,f=f2)
+        n2.s_def = 'pseudo'
+        self.assertTrue(n1 == n2)
+
+        n2.z0 = n2.z0 +np.array([0+0.00001j])
+        self.assertTrue(n1 == n2)
+
+        n2.z0 = n2.z0 +np.array([1+0j])
+        self.assertFalse(n1 == n2)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
