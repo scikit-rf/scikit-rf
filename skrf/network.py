@@ -795,11 +795,8 @@ class Network:
         if ((npy.imag(self.z0) != 0).all()) or ((npy.imag(other.z0) != 0).all()):
             if self.s_def == other.s_def:
                 return True
-            else:            
-                if npy.all(npy.abs(npy.real(self.z0)) - npy.abs(npy.real(other.z0)) < ZERO):
-                    return True 
-                else:
-                    return False
+            else:
+                return npy.allclose(self.z0.real, other.z0.real, atol = ZERO)            
         else:
             return True
 

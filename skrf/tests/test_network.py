@@ -1766,5 +1766,9 @@ class NetworkTestCase(unittest.TestCase):
         n2.z0 = n2.z0 +npy.array([1+0j])
         self.assertFalse(n1 == n2)
 
+        f2 = 10 * f1
+        n2 = rf.Network(s=s,f=f2)
+        self.assertFalse(n1 == n2)
+
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
