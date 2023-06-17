@@ -1006,6 +1006,61 @@ class CircuitTestVoltagesCurrents(unittest.TestCase):
         # (toward the Circuit's Port)
         np.testing.assert_allclose(self.I_out, -1*I_ports[:,1])
 
+class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
+    def test_isolator(self):
+        # Isolator that passes from port 1 to 2
+        freq = rf.Frequency.from_f([1], unit='GHz')
+        s = np.array([[[0, 0], [1, 0]]])
+        network = rf.Network(frequency=freq, s=s, name='isolator')
+        port1 = rf.Circuit.Port(frequency=freq, name='port1', z0=50)
+        port2 = rf.Circuit.Port(frequency=freq, name='port2', z0=50)
+        cnx = [
+            [(network,0),(port1,0)],
+            [(network,1),(port2,0)]
+        ]
+        crt = rf.Circuit(cnx)
+        np.testing.assert_allclose(crt.s_external, s)
+
+        power = [1,0] # 1 Watt at port 1
+        phase = [0,0]
+        V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
+        np.testing.assert_allclose(V_at_ports, [[10+0j, 10+0j]])
+        # Positive current entering into port
+        np.testing.assert_allclose(I_at_ports, [[0.2+0j, -0.2+0j]])
+
+        power = [0,1] # 1 Watt at port 2
+        V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
+        np.testing.assert_allclose(V_at_ports, [[0+0j, 10+0j]])
+        np.testing.assert_allclose(I_at_ports, [[0+0j, 0.2+0j]])
+
+    def test_isolator_reverse(self):
+        # Isolator that passes from port 2 to 1
+        freq = rf.Frequency.from_f([1], unit='GHz')
+        s = np.array([[[0, 1], [0, 0]]])
+        network = rf.Network(frequency=freq, s=s, name='isolator')
+        port1 = rf.Circuit.Port(frequency=freq, name='port1', z0=50)
+        port2 = rf.Circuit.Port(frequency=freq, name='port2', z0=50)
+        cnx = [
+            [(network,0),(port1,0)],
+            [(network,1),(port2,0)]
+        ]
+        crt = rf.Circuit(cnx)
+        np.testing.assert_allclose(crt.s_external, s)
+
+        power = [1,0] # 1 Watt at port 1
+        phase = [0,0]
+        V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
+        np.testing.assert_allclose(V_at_ports, [[10+0j, 0+0j]])
+        np.testing.assert_allclose(I_at_ports, [[0.2+0j, 0+0j]])
+
+        power = [0,1] # 1 Watt at port 2
+        V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
+        np.testing.assert_allclose(V_at_ports, [[10+0j, 10+0j]])
+        np.testing.assert_allclose(I_at_ports, [[-0.2+0j, 0.2+0j]])
 
 if __name__ == "__main__":
     # Launch all tests
