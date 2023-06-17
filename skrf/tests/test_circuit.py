@@ -1020,13 +1020,20 @@ class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
         ]
         crt = rf.Circuit(cnx)
         np.testing.assert_allclose(crt.s_external, s)
+
         power = [1,0] # 1 Watt at port 1
         phase = [0,0]
         V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
         np.testing.assert_allclose(V_at_ports, [[10+0j, 10+0j]])
+        # Positive current entering into port
+        np.testing.assert_allclose(I_at_ports, [[0.2+0j, -0.2+0j]])
+
         power = [0,1] # 1 Watt at port 2
         V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
         np.testing.assert_allclose(V_at_ports, [[0+0j, 10+0j]])
+        np.testing.assert_allclose(I_at_ports, [[0+0j, 0.2+0j]])
 
     def test_isolator_reverse(self):
         # Isolator that passes from port 2 to 1
@@ -1041,13 +1048,19 @@ class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
         ]
         crt = rf.Circuit(cnx)
         np.testing.assert_allclose(crt.s_external, s)
+
         power = [1,0] # 1 Watt at port 1
         phase = [0,0]
         V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
         np.testing.assert_allclose(V_at_ports, [[10+0j, 0+0j]])
+        np.testing.assert_allclose(I_at_ports, [[0.2+0j, 0+0j]])
+
         power = [0,1] # 1 Watt at port 2
         V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
         np.testing.assert_allclose(V_at_ports, [[10+0j, 10+0j]])
+        np.testing.assert_allclose(I_at_ports, [[-0.2+0j, 0.2+0j]])
 
 if __name__ == "__main__":
     # Launch all tests
