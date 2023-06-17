@@ -1,7 +1,14 @@
 import unittest
 import numpy as np
-from skrf.vi.vna.hp8510c_sweep_plan import SweepPlan
+import pytest
+import sys
 
+try:
+    from skrf.vi.vna.hp8510c_sweep_plan import SweepPlan
+except ImportError:
+    pass
+
+@pytest.mark.skipif("pyvisa" not in sys.modules, reason="Requires pyvisa in sys.modules.")
 class TestHP8510SweepPlan(unittest.TestCase):
     """
     The user requests a big sweep with different spacings in different frequency
