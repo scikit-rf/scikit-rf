@@ -82,7 +82,7 @@ Graph representation
    Circuit.edge_labels
 
 """
-from . network import Network, a2s, s2s
+from . network import Network, s2s
 from . media import media
 from . constants import INF, NumberLike, S_DEF_DEFAULT
 from . util import subplots
@@ -205,12 +205,12 @@ class Circuit:
                 raise AttributeError('All Networks must have same frequencies')
         # All frequencies are the same, Circuit frequency can be any of the ntw
         self.frequency = ntws[0].frequency
-        
+
         # Check that a (ntwk, port) combination appears only once in the connexion map
         nodes = [(ntwk.name, port) for (con_idx, (ntwk, port)) in [con for con in self.connections_list]]
         if len(nodes) > len(set(nodes)):
             raise AttributeError('A (network, port) node appears twice in the connection description.')
-        
+
 
     def _is_named(self, ntw):
         """
@@ -296,8 +296,7 @@ class Circuit:
         A[:, 0, 1] = Z
         A[:, 1, 0] = 0
         A[:, 1, 1] = 1
-        ntw = Network(frequency=frequency, z0=z0, name=name)
-        ntw.s = a2s(A)
+        ntw = Network(a=A, frequency=frequency, z0=z0, name=name)
         return ntw
 
     @classmethod
@@ -340,8 +339,7 @@ class Circuit:
         A[:, 0, 1] = 0
         A[:, 1, 0] = Y
         A[:, 1, 1] = 1
-        ntw = Network(frequency=frequency, z0=z0, name=name)
-        ntw.s = a2s(A)
+        ntw = Network(a=A, frequency=frequency, z0=z0, name=name)
         return ntw
 
     @classmethod
@@ -757,7 +755,7 @@ class Circuit:
         for Xk in Xks:
             Xf[:, off[0]:off[0] + Xk.shape[1], off[1]:off[1]+Xk.shape[2]] = Xk
             off += Xk.shape[1:]
-        
+
         return Xf
 
     @property
@@ -810,11 +808,7 @@ class Circuit:
         S : :class:`numpy.ndarray`
             global scattering parameters of the circuit.
         """
-        # transpose is necessary to get expected result
-        #return np.transpose(self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X), axes=(0,2,1))
-        # does not use the @ operator for backward Python version compatibility
-        return np.transpose(np.matmul(self.X, np.linalg.inv(np.identity(self.dim) - np.matmul(self.C, self.X))), axes=(0,2,1))
-
+        return self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X)
 
     @property
     def port_indexes(self) -> list:
@@ -881,7 +875,7 @@ class Circuit:
             Shape `f x nb_ports x nb_ports`
         """
         port_indexes = self.port_indexes
-        a, b = np.meshgrid(port_indexes, port_indexes)
+        a, b = np.meshgrid(port_indexes, port_indexes, indexing='ij')
         S_ext = self.s[:, a, b]
         S_ext = s2s(S_ext, self.port_z0, S_DEF_DEFAULT, 'traveling')
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
@@ -1158,8 +1152,7 @@ class Circuit:
         phase excitation at "external" ports using `_a(power, phase)` method.
 
         """
-        # return self.s @ a_internal
-        return np.matmul(self.s, a_internal)
+        return self.s @ a_internal
 
     def currents(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
         """

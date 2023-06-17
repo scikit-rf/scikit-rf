@@ -70,8 +70,9 @@ import pickle
 from pickle import UnpicklingError
 import sys
 import warnings
-
 import numpy as npy
+from pandas import DataFrame, Series, ExcelWriter
+from io import StringIO
 
 from ..util import get_extn, get_fid
 from ..network import Network
@@ -117,7 +118,7 @@ def read(file, *args, **kwargs):
 
         * a file-object, it is left open
 
-        * a filename, then a file-object is opened and closed. 
+        * a filename, then a file-object is opened and closed.
 
         * a file-object and reading fails, then the position is reset back to 0 using seek if possible.
 
@@ -320,7 +321,7 @@ def read_all(dir: str ='.', sort = True, contains = None, f_unit = None, obj_typ
             filelist.append(filename)
     else:
         filelist.extend(files)
-         
+
     if sort is True:
         filelist.sort()
 
@@ -332,20 +333,20 @@ def read_all(dir: str ='.', sort = True, contains = None, f_unit = None, obj_typ
         try:
             out[keyname] = read(fullname)
             continue
-        except:
+        except Exception:
             pass
 
         try:
             out[keyname] = Network(fullname)
             continue
-        except:
+        except Exception:
             pass
 
     if f_unit is not None:
         for keyname in out:
             try:
                 out[keyname].frequency.unit = f_unit
-            except:
+            except Exception:
                 pass
 
     if obj_type is not None:
@@ -416,7 +417,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
     """
     if not os.path.exists('.'):
         raise OSError('No such directory: %s'%dir)
-         
+
 
 
     for k in dict_objs:
@@ -501,7 +502,7 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 
     Notes
     -------
-    
+
 
     Parameters
     -----------
@@ -537,8 +538,9 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
         try:
             if extn[1]== 's' and extn[-1]=='p':
                 ntwkDict[keyname]=(Network(dir +'/'+f))
-                if f_unit is not None: ntwkDict[keyname].frequency.unit=f_unit
-        except:
+                if f_unit is not None:
+                    ntwkDict[keyname].frequency.unit=f_unit
+        except Exception:
             pass
     return ntwkDict
 
@@ -671,7 +673,6 @@ def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     --------
     networkset_2_spreadsheet : writes a spreadsheet for many networks
     """
-    from pandas import DataFrame, Series # delayed because its not a requirement
     file_extns = {'csv':'csv','excel':'xls','html':'html'}
 
     form = form.lower()
@@ -733,8 +734,6 @@ def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
     -------
     df : pandas DataFrame Object
     """
-    from pandas import DataFrame, Series # delayed because its not a requirement
-
     if ports is None:
         ports = ntwk.port_tuples
 
@@ -784,7 +783,6 @@ def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_
     --------
     networkset_2_spreadsheet : writes a spreadsheet for many networks
     """
-    from pandas import DataFrame, Series, ExcelWriter # delayed because its not a requirement
     if ntwkset.name is None and file_name is None:
         raise(ValueError('Either ntwkset must have name or give a file_name'))
     if file_name is None:
@@ -800,7 +798,6 @@ def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
 
 
-from io import StringIO
 StringBuffer = StringIO
 
 

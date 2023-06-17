@@ -3,7 +3,6 @@ import numpy as np
 import skrf
 import pyvisa
 from collections import OrderedDict
-from collections.abc import Iterable
 
 from . import abcvna
 from . import keysight_pna_scpi
@@ -120,7 +119,7 @@ class PNA(abcvna.VNA):
         channels_to_sweep = kwargs.get("channels", None)
         if not channels_to_sweep:
             channels_to_sweep = kwargs.get("channel", "all")
-        if not type(channels_to_sweep) in (list, tuple):
+        if type(channels_to_sweep) not in (list, tuple):
             channels_to_sweep = [channels_to_sweep]
         channels = self.scpi.query_available_channels()
 
@@ -151,7 +150,6 @@ class PNA(abcvna.VNA):
 
         try:
             for channel in channels:
-                import time
                 if "all" not in channels_to_sweep and channel["cnum"] not in channels_to_sweep:
                     continue  # default for sweep is all, else if we specify, then sweep
                 if not timeout:  # autoset timeout based on sweep time
@@ -173,7 +171,7 @@ class PNA(abcvna.VNA):
     def upload_twoport_calibration(self, cal, port1=1, port2=2, **kwargs):
         """
         upload a calibration to the vna, and set correction on all measurements
-        
+
         Parameters
         ----------
         cal : skrf.Calibration
@@ -185,12 +183,12 @@ class PNA(abcvna.VNA):
             "directivity": "EDIR",
             "source match": "ESRM",
             "reflection tracking": "ERFT",
-            
+
             # forward = (2, 1), reverse = (1, 2)
             "load match": "ELDM",
             "transmission tracking": "ETRT"
             "isolation": "EXTLK"
-        
+
         """
         self.active_channel = channel = kwargs.get("channel", self.active_channel)
 

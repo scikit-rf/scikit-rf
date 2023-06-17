@@ -16,7 +16,6 @@ Time domain functions
    indexes
 
 """
-import scipy.signal
 
 from .util import find_nearest_index
 from scipy import signal
@@ -191,10 +190,10 @@ def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
     ----------
     ntwk : :class:`~skrf.network.Network`
         network to get data from
-    
+
     t_unit : str
         Time unit for start, stop, center and span arguments, defaults to nanoseconds (ns).
-        
+
         Possible values:
             * 's': seconds
             * 'ms': milliseconds
@@ -294,10 +293,10 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         the boundaries. This has a large effect on the generation of gating artefacts due to boundary effects. The
         optimal mode depends on the data. See the parameter description of `scipy.ndimage.convolve1d` for the available
         options.
-    
+
     t_unit : str
         Time unit for start, stop, center and span arguments, defaults to nanoseconds (ns).
-        
+
         Possible values:
             * 's': seconds
             * 'ms': milliseconds
@@ -407,19 +406,18 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     ntwk_gated.s[:, 0, 0] = ntwk_gated.s[:, 0, 0] * window_fd
 
     # create time vector
-    t = npy.linspace(-0.5 / df, 0.5 / df, n_td)
-
+    t = npy.fft.fftshift(npy.fft.fftfreq(n_td, df))
     # find start/stop gate indices
     start_idx = find_nearest_index(t, start)
     stop_idx = find_nearest_index(t, stop)
 
     # create gating window
-    window_width = abs(stop_idx - start_idx)
+    window_width = abs(stop_idx - start_idx) + 1
     window = signal.get_window(window, window_width)
 
     # create the gate by padding the window with zeros
     gate = npy.zeros_like(t)
-    gate[start_idx:stop_idx] = window
+    gate[start_idx:stop_idx+1] = window
 
     if method == 'convolution':
         # frequency-domain gating

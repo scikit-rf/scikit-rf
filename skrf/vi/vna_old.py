@@ -8,7 +8,7 @@ Vector Network Analyzers (:mod:`skrf.vi.vna`)
 
     As of 2017.02 a new architecture for vna drivers is being implemented.
 
-New VNA drivers 
+New VNA drivers
 ---------------
 
 - VNA drivers will now have a common high level functionality across all vendors implemented in an ABCVNA class.
@@ -39,12 +39,11 @@ import numpy as npy
 #import visa
 #from visa import Driver
 from warnings import warn
-from itertools import product
 import re
 
 from ..frequency import *
 from ..network import *
-from ..calibration.calibration import Calibration, SOLT, OnePort, \
+from ..calibration.calibration import SOLT, OnePort, \
                                       convert_pnacoefs_2_skrf,\
                                       convert_skrfcoefs_2_pna
 from .. import mathFunctions as mf
@@ -136,7 +135,7 @@ class PNA(Driver):
             resource = address
 
         Driver.__init__(self,resource = resource, **kwargs)
-        
+
         self.channel=channel
         self.port = 1
         self.echo = echo
@@ -154,14 +153,14 @@ class PNA(Driver):
         return Driver.write(self,msg, *args, **kwargs)
 
     write.__doc__ = Driver.write.__doc__
-    
+
     @property
     def timeout(self):
         return self._interface.timeout/1000.
     @timeout.setter
     def timeout(self,val):
         self._interface.timeout=val*1000.
-        
+
     ## BASIC GPIB
     @property
     def idn(self):
@@ -1073,7 +1072,8 @@ class PNA(Driver):
         """
         if not meas:
             meas = self.get_active_meas()
-        else: self.select_meas(meas)
+        else:
+            self.select_meas(meas)
         if write_memory:
             self.write('CALC:MATH:MEM')
         self.write('CALC:MATH:FUNC %s'%str(op))
@@ -1093,7 +1093,8 @@ class PNA(Driver):
         """
         if not meas:
             meas = self.get_active_meas()
-        else: self.select_meas(meas)
+        else:
+            self.select_meas(meas)
         self.write('CALC:TRAN:TIME:CENT %e'%center)
         self.write('CALC:TRAN:TIME:SPAN %e'%span)
         self.write('CALC:TRAN:TIME:STAT ON')
@@ -1113,7 +1114,8 @@ class PNA(Driver):
         """
         if not meas:
             meas = self.get_active_meas()
-        else: self.select_meas(meas)
+        else:
+            self.select_meas(meas)
         self.write('CALC:FILT:TIME:CENT %e'%center)
         self.write('CALC:FILT:TIME:SPAN %e'%span)
         self.write('CALC:FILT:TIME:STAT ON')
@@ -1130,7 +1132,8 @@ class PNA(Driver):
         """
         if not meas:
             meas = self.get_active_meas()
-        else: self.select_meas(meas)
+        else:
+            self.select_meas(meas)
         self.write('CALC:FILT:TIME:STAT OFF')
 
     def set_yscale(self, meas='', pdiv=5, rlev=0, rpos=8):
@@ -1465,7 +1468,7 @@ class ZVA40(PNA):
         was_cont = self.continuous
         self.continuous = False
         self.write("INITiate%i:IMMediate;*WAI"%self.channel)
-        
+
         self.continuous = was_cont
 
     def get_meas_list(self):
@@ -1859,9 +1862,7 @@ class VectorStar(PNA):
             for k in translation_dict:
                 meas = meas.replace(k,translation_dict[k])
 
-            self.write('calc%i:par%i:def:usr %s,%s,port%s'%(self.channel,
-                                                            self.ntraces+1,
-                                                            meas, port))
+            self.write(f'calc{self.channel}:par{self.ntraces+1}:def:usr {meas},port{port}')
 
     def get_active_trace_num(self):
         return int(self.ask(':calc%i:par:sel?'%self.channel))

@@ -25,7 +25,7 @@ One-port
 
    OnePort
    SDDL
-   SDDLWeikle   
+   SDDLWeikle
    PHN
 
 Two-port
@@ -95,18 +95,23 @@ import json
 from numbers import Number
 from collections import OrderedDict
 from copy import copy
+import warnings
 from warnings import warn
 
 from ..mathFunctions import sqrt_phase_unwrap, \
     find_correct_sign, find_closest,  ALMOST_ZERO, rand_c, cross_ratio
 from ..frequency import *
 from ..network import *
+from ..network import Network
 from ..networkSet import NetworkSet
 from .. import util
 from ..io.touchstone import read_zipped_touchstones
 from .. import __version__ as skrf__version__
 from collections import defaultdict
 from itertools import combinations
+from textwrap import dedent
+
+ComplexArray = npy.typing.NDArray[complex]
 
 global coefs_list_12term
 coefs_list_12term =[
@@ -232,13 +237,13 @@ class Calibration:
         # lets make an ideal flush thru for them :
         if hasattr(measured, 'keys'):
             measured = measured.values()
-            if sloppy_input == False:
+            if not sloppy_input:
                 warn('dictionary passed, sloppy_input automatically activated')
                 sloppy_input = True
 
         if hasattr(ideals, 'keys'):
             ideals = ideals.values()
-            if sloppy_input == False:
+            if not sloppy_input:
                 warn('dictionary passed, sloppy_input automatically activated')
                 sloppy_input = True
 
@@ -252,9 +257,14 @@ class Calibration:
                 align_measured_ideals(self.measured, self.ideals)
 
         self.self_calibration = self_calibration
-        if self_calibration == False and len(self.measured) != len(self.ideals):
-            raise(IndexError('The length of measured and ideals lists are different. Number of ideals must equal the number of measured. If you are using `sloppy_input` ensure the names are uniquely alignable.'))
-
+        if not self_calibration and len(self.measured) != len(self.ideals):
+            raise(IndexError(dedent(
+                """
+                The length of measured and ideals lists are different.
+                Number of ideals must equal the number of measured.
+                If you are using `sloppy_input` ensure the names are uniquely alignable.
+                """
+                )))
 
         # ensure all the measured Networks' frequency's are the same
         for measure in self.measured:
@@ -264,7 +274,9 @@ class Calibration:
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
             if self.ideals[k].frequency != self.measured[0].frequency:
-                print(f'Warning: Frequency information doesn\'t match on ideals[{k}], attempting to interpolate the ideal[{k}] Network ..')
+                print(deden(
+                    f"""Warning: Frequency information doesn\'t match on ideals[{k}],
+                    attempting to interpolate the ideal[{k}] Network .."""))
                 try:
                     # try to resample our ideals network to match
                     # the measurement frequency
@@ -272,7 +284,7 @@ class Calibration:
                         self.measured[0].frequency)
                     print('Success')
 
-                except:
+                except Exception:
                     raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].'))
 
 
@@ -388,11 +400,11 @@ class Calibration:
     def remove_and_cal(self, std):
         """
         Remove a cal standard and correct it, returning correct and ideal.
-        
-        This requires requires overdetermination. Useful in 
-        troubleshooting a calibration in which one standard is junk, but 
-        you dont know which. 
-        
+
+        This requires requires overdetermination. Useful in
+        troubleshooting a calibration in which one standard is junk, but
+        you dont know which.
+
         Parameters
         ----------
         std : int or str
@@ -404,7 +416,7 @@ class Calibration:
         ideal,corrected : tuple of skrf.Networks
             the ideal and corrected networks which were removed out of the
             calibration
-            
+
         """
         measured, ideals = copy(self.measured), copy(self.ideals)
         i,m  = self.pop(std)
@@ -613,7 +625,7 @@ class Calibration:
         try:
             return self.coefs_ntwks['directivity']/\
                    self.coefs_ntwks['reflection tracking']
-        except:
+        except Exception:
             pass
         try:
             out = {}
@@ -622,7 +634,7 @@ class Calibration:
                     self.coefs_ntwks[direction + ' directivity']/\
                     self.coefs_ntwks[direction + ' reflection tracking']
             return out
-        except:
+        except Exception:
             raise ValueError('cant find error coefs')
 
 
@@ -1064,9 +1076,11 @@ class OnePort(Calibration):
 
     .. [1] http://na.tm.agilent.com/vnahelp/tip20.html
 
-    .. [2] Bauer, R.F., Jr.; Penfield, Paul, "De-Embedding and Unterminating," Microwave Theory and Techniques, IEEE Transactions on , vol.22, no.3, pp.282,288, Mar 1974
+    .. [2] Bauer, R.F., Jr.; Penfield, Paul, "De-Embedding and Unterminating,"
+        Microwave Theory and Techniques, IEEE Transactions on , vol.22, no.3, pp.282,288, Mar 1974
         doi: 10.1109/TMTT.1974.1128212
         URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1128212&isnumber=25001
+
     """
 
     family = 'OnePort'
@@ -1205,7 +1219,9 @@ class SDDLWeikle(OnePort):
 
     References
     ----------
-    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment,"
+        Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+
     """
 
     family = 'SDDL'
@@ -1299,7 +1315,9 @@ class SDDL(OnePort):
 
     References
     ----------
-    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment,"
+        Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+
     """
 
     family = 'SDDL'
@@ -1542,13 +1560,15 @@ class TwelveTerm(Calibration):
 
 
             if n_thrus ==0:
-                raise ValueError('couldnt find a transmissive standard. check your data, or explicitly use `n_thrus` argument')
+                raise ValueError(
+                    'couldnt find a transmissive standard. check your data, or explicitly use `n_thrus` argument'
+                    )
         self.n_thrus = n_thrus
 
         # if they didntly give explicit order, lets try and put the
         # more transmissive standards last, by sorted measured/ideals
         # based on mean s21
-        if self.sloppy_input is True:
+        if self.sloppy_input:
             trans = [npy.mean(k.s21.s_mag) for k in self.ideals]
             # see http://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
             # get order of indices of sorted means s21
@@ -1731,7 +1751,9 @@ class SOLT(TwelveTerm):
 
     References
     ------------
-    .. [1] W. Kruppa and K. F. Sodomsky, "An Explicit Solution for the Scattering Parameters of a Linear Two-Port Measured with an Imperfect Test Set (Correspondence)," IEEE Transactions on Microwave Theory and Techniques, vol. 19, no. 1, pp. 122-123, Jan. 1971.
+    .. [1] W. Kruppa and K. F. Sodomsky, "An Explicit Solution for the Scattering Parameters of a Linear Two-Port
+        Measured with an Imperfect Test Set (Correspondence)," IEEE Transactions on Microwave Theory and Techniques,
+        vol. 19, no. 1, pp. 122-123, Jan. 1971.
 
 
     See Also
@@ -1791,7 +1813,9 @@ class SOLT(TwelveTerm):
             if ideals[k] is None:
                 if (n_thrus is None) or (hasattr(ideals, 'keys')) or \
                    (hasattr(measured, 'keys')):
-                    raise ValueError('Cant use sloppy_input and have the ideal thru be None. measured and ideals must be lists, or dont use None for the thru ideal.')
+                    raise ValueError(dedent(
+                        """Can't use sloppy_input and have the ideal thru be None.
+                        Measured and ideals must be lists, or dont use None for the thru ideal."""))
 
                 ideal_thru = measured[0].copy()
                 ideal_thru.s[:,0,0] = 0
@@ -1856,9 +1880,9 @@ class TwoPortOnePath(TwelveTerm):
     """
     Two Port One Path Calibration (aka poor man's TwelveTerm).
 
-    Provides full error correction  on a switchless three receiver 
-    system, i.e. you can only measure the waves a1,b1,and b2. 
-    Given this architecture, the DUT must be flipped and measured 
+    Provides full error correction  on a switchless three receiver
+    system, i.e. you can only measure the waves a1,b1,and b2.
+    Given this architecture, the DUT must be flipped and measured
     twice to be fully corrected.
 
     To allow for this, the `apply_cal` method takes a tuple of
@@ -1958,22 +1982,22 @@ class TwoPortOnePath(TwelveTerm):
 
         Notes
         -----
-        Full correction is possible given you have measured your DUT 
-        in both orientations. Meaning, you have measured the device, 
-        then physically flipped the device and made a second measurement. 
-        
+        Full correction is possible given you have measured your DUT
+        in both orientations. Meaning, you have measured the device,
+        then physically flipped the device and made a second measurement.
+
         This tuple of 2-port Networks is what is meant by
         (forward,reverse), in the docstring below
-        
-        If you pass a single 2-port Network, then the measurement will 
-        only be partially corrected using what is known as the 
-        `EnhancedResponse` calibration. 
+
+        If you pass a single 2-port Network, then the measurement will
+        only be partially corrected using what is known as the
+        `EnhancedResponse` calibration.
 
         Parameters
         ----------
         network_tuple: tuple, or Network
-            tuple of 2-port Networks in order (forward, reverse) OR 
-            a single 2-port Network. 
+            tuple of 2-port Networks in order (forward, reverse) OR
+            a single 2-port Network.
 
 
 
@@ -2016,7 +2040,7 @@ class EnhancedResponse(TwoPortOnePath):
 
     For code-structuring reasons, this is a dummy placeholder class.
     Its just TwoPortOnePath, which defaults to enhancedresponse correction
-    when you apply the calibration to a single network, and not a tuple 
+    when you apply the calibration to a single network, and not a tuple
     of networks.
     """
     family = 'EnhancedResponse'
@@ -2044,12 +2068,17 @@ class EightTerm(Calibration):
     References
     ----------
 
-    .. [1] Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors," Microwave Theory and Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115, Dec 1977. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282&isnumber=25047
+    .. [1] Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer Calibration Procedure,
+        Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors,"
+        Microwave Theory and Techniques, IEEE Transactions on,
+        vol.25, no.12, pp. 1100- 1115, Dec 1977.
+        URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282&isnumber=25047
 
-    .. [2] Rytting, D. (1996) Network Analyzer Error Models and Calibration Methods. RF 8: Microwave Measurements for Wireless Applications (ARFTG/NIST Short Course Notes)
+    .. [2] Rytting, D. (1996) Network Analyzer Error Models and Calibration Methods.
+        RF 8: Microwave Measurements for Wireless Applications (ARFTG/NIST Short Course Notes)
 
     """
-    
+
     family = 'EightTerm'
     def __init__(self, measured, ideals, switch_terms=None,
                 isolation=None, ut_hook=None,*args, **kwargs):
@@ -2097,9 +2126,9 @@ class EightTerm(Calibration):
             #Zero port matching so that networks can be simply subtracted
             self.isolation.s[:,0,0] = 0
             self.isolation.s[:,1,1] = 0
-        
+
         self.ut_hook=ut_hook
-        
+
         Calibration.__init__(self,
             measured = measured,
             ideals = ideals,
@@ -2116,15 +2145,15 @@ class EightTerm(Calibration):
         """
         if self.ut_hook is not None:
             return self.ut_hook(self,ntwk)
-        
+
         if self.switch_terms is not None:
             gamma_f, gamma_r = self.switch_terms
             return unterminate(ntwk, gamma_f, gamma_r)
 
         else:
             return ntwk
-        
-        
+
+
 
     def terminate(self, ntwk):
         """
@@ -2398,9 +2427,13 @@ class TRL(EightTerm):
 
     References
     ----------
-    .. [1] G. F. Engen and C. A. Hoer, "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual Six-Port Automatic Network Analyzer," IEEE Transactions on Microwave Theory and Techniques, vol. 27, no. 12, pp. 987-993, 1979.
+    .. [1] G. F. Engen and C. A. Hoer, "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual
+        Six-Port Automatic Network Analyzer,"
+        IEEE Transactions on Microwave Theory and Techniques, vol. 27, no. 12, pp. 987-993, 1979.
 
-    .. [2] H.-J. Eul and B. Schiek, "A generalized theory and new calibration procedures for network analyzer self-calibration," IEEE Transactions on Microwave Theory and Techniques, vol. 39, no. 4, pp. 724-731, 1991.
+    .. [2] H.-J. Eul and B. Schiek, "A generalized theory and new calibration procedures for network analyzer
+        self-calibration,"
+        IEEE Transactions on Microwave Theory and Techniques, vol. 39, no. 4, pp. 724-731, 1991.
 
 
     """
@@ -2411,24 +2444,30 @@ class TRL(EightTerm):
         Initialize a TRL calibration.
 
         Note that the order of `measured` and `ideals` is strict.
-        It must be [Thru, Reflect, Line]. A multiline algorithms is 
+        It must be [Thru, Reflect, Line]. A multiline algorithms is
         used if more than one line is passed. A multi-reflect algorithm
         is used if multiple reflects are passed, see `n_reflects` argument.
 
-        All of the `ideals` can be individually set to None, or the entire
-        list set to None (`ideals=None`). For each ideal set to None 
-        the following assumptions are made: 
-        
-        * thru : flush thru 
-        * reflect : flush shorts 
-        * line : and approximately  90deg  matched line (can be lossy)
-        
-        The reflect ideals can also be given as a +-1. 
-        
-        Note you can also use the `estimate_line` option  to 
-        automatically  estimate the initial guess for the line length 
+        All of the `ideals` can be individually set to `None`, or the entire
+        list set to `None` (`ideals=None`). For each ideal set to `None`,
+        the following assumptions are made:
+
+        * thru : flush thru
+        * reflect : flush shorts
+        * line : an approximately 90deg matched line (can be lossy)
+
+        The reflect ideals can also be given as a +-1.
+
+        If thru is non-zero length, the calibration is done with zero length
+        thru and the ideal thru length is subtracted from the ideal lines. The
+        resulting calibration reference plane is at the center of the thru.
+        Ideal reflect standard reference plane is at the center of the thru even
+        if the ideal thru length is non-zero.
+
+        Note you can also use the `estimate_line` option  to
+        automatically  estimate the initial guess for the line length
         from measurements . This is sensible
-        if you have no idea what the line length is, but your **error 
+        if you have no idea what the line length is, but your **error
         networks** are well matched (E_ij >>E_ii).
 
 
@@ -2442,49 +2481,50 @@ class TRL(EightTerm):
         ----------
         measured : list of :class:`~skrf.network.Network`
             must be in order [Thru, Reflect[s], Line[s]]. if the number
-            of reflects is >1 then use `n_reflects` argument. 
+            of reflects is >1 then use `n_reflects` argument.
 
         ideals : list of :class:`~skrf.network.Network`, [+1,-1] , None
-            must be in order [Thru, Reflect, Line]. Each element in the 
-            list may be None, or equivalently, the list may be None. 
-            Also the reflects can be simply given as  +1 or -1. 
+            must be in order [Thru, Reflect, Line]. Each element in the
+            list may be None, or equivalently, the list may be None.
+            Also the reflects can be simply given as  +1 or -1.
 
         estimate_line : bool
-            should we estimates the length of the line standard from 
+            should we estimates the length of the line standard from
             raw measurements, if not we assume its about 90 deg.
-        
+
         solve_reflect : bool
-            Solve for the reflect or not. 
-        
+            Solve for the reflect or not.
+
         n_reflects :  1
-            number of reflective standards 
+            number of reflective standards
 
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
-    
+
         Examples
         --------
-        
+
         >>> thru = rf.Network('thru.s2p')
         >>> reflect = rf.Network('reflect.s2p')
         >>> line = rf.Network('line.s2p')
-        
+
         Ideals is None, so we assume it's close to a flush short:
-        
+
         >>> trl = TRL(measured=[thru,reflect,line], ideals=None)
-        
+
         Reflect is given as close to a flush short:
-        
+
         >>> trl = TRL(measured=[thru,reflect,line], ideals=[None,-1,None])
-        
+
         Reflect is given as close to a flush open:
-        
+
         >>> trl = TRL(measured=[thru,reflect,line], ideals=[None,+1,None])
-        
+
         See Also
         --------
-        determine_line 
+        determine_line
         determine_reflect
+        NISTMultilineTRL
 
         """
         #warn('Value of Reflect is not solved for yet.')
@@ -2493,7 +2533,7 @@ class TRL(EightTerm):
         self.n_reflects = n_reflects
         self.estimate_line = estimate_line
         self.solve_reflect = solve_reflect
-        
+
         ## generate ideals, given various inputs
 
         if ideals is None:
@@ -2508,11 +2548,21 @@ class TRL(EightTerm):
             ideal_thru.s[:,0,1] = 1
             ideals[0] = ideal_thru
 
+        orig_ideal_thru = None
+
+        if npy.any(ideals[0].s[:,1,0] != 1) or npy.any(ideals[0].s[:,0,1] != 1):
+            orig_ideal_thru = ideals[0]
+            ideals[0] = ideals[0].copy()
+            ideals[0].s[:,0,0] = 0
+            ideals[0].s[:,1,1] = 0
+            ideals[0].s[:,0,1] = 1
+            ideals[0].s[:,1,0] = 1
+
         for k in range(1,n_reflects+1):
             if ideals[k] is None:
                 # default  assume they are using flushshorts
-                ideals[k] =-1
-                
+                ideals[k] = -1
+
             if isinstance(ideals[k], Number):
                 ideal_reflect = measured[k].copy()
                 ideal_reflect.s[:,0,0] = ideals[k]
@@ -2520,7 +2570,7 @@ class TRL(EightTerm):
                 ideal_reflect.s[:,1,0] = 0
                 ideal_reflect.s[:,0,1] = 0
                 ideals[k] = ideal_reflect
-                
+
 
         for k in range(n_reflects+1,n_stds):
             if ideals[k] is None:
@@ -2532,6 +2582,11 @@ class TRL(EightTerm):
                 ideal_line.s[:,0,1] = -1j
                 ideals[k] = ideal_line
 
+            if orig_ideal_thru is not None:
+                ideals[k] = ideals[k].copy()
+                # De-embed original thru
+                ideals[k].s[:,0,1] /= orig_ideal_thru.s[:,0,1]
+                ideals[k].s[:,1,0] /= orig_ideal_thru.s[:,1,0]
 
 
         EightTerm.__init__(self,
@@ -2594,9 +2649,12 @@ class NISTMultilineTRL(EightTerm):
 
     References
     ----------
-    .. [0] D. C. DeGroot, J. A. Jargon and R. B. Marks, "Multiline TRL revealed," 60th ARFTG Conference Digest, Fall 2002., Washington, DC, USA, 2002, pp. 131-155.
+    .. [0] D. C. DeGroot, J. A. Jargon and R. B. Marks, "Multiline TRL revealed,"
+        60th ARFTG Conference Digest, Fall 2002., Washington, DC, USA, 2002, pp. 131-155.
 
-    .. [1] K. Yau "On the metrology of nanoscale Silicon transistors above 100 GHz" Ph.D. dissertation, Dept. Elec. Eng. and Comp. Eng., University of Toronto, Toronto, Canada, 2011.
+    .. [1] K. Yau "On the metrology of nanoscale Silicon transistors above 100 GHz"
+        Ph.D. dissertation, Dept. Elec. Eng. and Comp. Eng., University of Toronto, Toronto, Canada, 2011.
+
     """
 
     family = 'TRL'
@@ -2711,9 +2769,12 @@ class NISTMultilineTRL(EightTerm):
 
         """
         self.refl_offset = refl_offset
+
+        if npy.isscalar(ref_plane):
+            ref_plane = [ref_plane, ref_plane]
         self.ref_plane = ref_plane
         self.er_est = er_est
-        self.l = l
+        self.l = [float(v) for v in l] # cast to float, see gh-895
         self.Grefls = Grefls
         self.gamma_root_choice = gamma_root_choice
         self.k_method = k_method
@@ -2721,21 +2782,30 @@ class NISTMultilineTRL(EightTerm):
         self.c0 = c0
         self.z0_line = z0_line
 
-        try:
-            self.Grefls[0]
-        except TypeError:
+        fpoints = len(measured[0].frequency)
+        if npy.isscalar(self.z0_ref):
+            self.z0_ref = [self.z0_ref] * fpoints
+        if npy.isscalar(self.z0_line):
+            self.z0_line = [self.z0_line] * fpoints
+        if npy.isscalar(self.z0_ref):
+            self.c0 = [self.c0] * fpoints
+
+        if npy.isscalar(self.Grefls):
+            # assume a single reflect
             self.Grefls = [self.Grefls]
 
-        if self.refl_offset is None:
-            self.refl_offset = [0]*len(self.Grefls)
+        n_reflects = len(self.Grefls)
 
-        try:
-            self.refl_offset[0]
-        except TypeError:
-            self.refl_offset = [self.refl_offset]
+        if self.refl_offset is None:
+            self.refl_offset = [0] * len(self.Grefls)
+
+        if npy.isscalar(self.refl_offset):
+            self.refl_offset = [self.refl_offset] * n_reflects
 
         if len(measured) != len(self.Grefls) + len(l):
-            raise ValueError(f"Amount of measurements {len(measured)} doesn't match amount of line lengths {len(l)} and reflection coefficients {len(self.Grefls)}")
+            raise ValueError(dedent(
+                f"""Amount of measurements {len(measured)} doesn't match amount of line lengths {len(l)}
+                and reflection coefficients {len(self.Grefls)}"""))
 
         #Not used, but needed for Calibration class init
         ideals = measured
@@ -2749,17 +2819,13 @@ class NISTMultilineTRL(EightTerm):
 
         m_sw = [k for k in self.measured_unterminated]
 
-        n_reflects = len(self.Grefls)
 
         self.measured_reflects = m_sw[1:1+n_reflects]
         self.measured_lines = [m_sw[0]]
         self.measured_lines.extend(m_sw[1+n_reflects:])
 
-        try:
-            self.ref_plane[0] -= l[0]/2
-            self.ref_plane[1] -= l[0]/2
-        except TypeError:
-            self.ref_plane -= l[0]/2
+        self.ref_plane[0] -= l[0]/2
+        self.ref_plane[1] -= l[0]/2
         self.refl_offset = [r - l[0]/2 for r in self.refl_offset]
 
         # The first line is thru
@@ -2871,6 +2937,9 @@ class NISTMultilineTRL(EightTerm):
         b2_vec2 = npy.zeros(lines-1, dtype=complex)
         CoA1_vec2 = npy.zeros(lines-1, dtype=complex)
         CoA2_vec2 = npy.zeros(lines-1, dtype=complex)
+
+        if self.z0_line is not None and self.c0 is not None:
+            raise ValueError('Only one of c0 or z0_line can be given.')
 
         for m in range(fpoints):
             min_phi_eff = pi*npy.ones(lines)
@@ -3217,13 +3286,9 @@ class NISTMultilineTRL(EightTerm):
                 raise ValueError(f'Unknown k_method: {self.k_method}')
 
             #Reference plane shift
-            if self.ref_plane != 0:
-                try:
-                    shift1 = exp(-2*gamma[m]*self.ref_plane[0])
-                    shift2 = exp(-2*gamma[m]*self.ref_plane[1])
-                except TypeError:
-                    shift1 = exp(-2*gamma[m]*self.ref_plane)
-                    shift2 = exp(-2*gamma[m]*self.ref_plane)
+            if npy.any(self.ref_plane):
+                shift1 = exp(-2*gamma[m]*self.ref_plane[0])
+                shift2 = exp(-2*gamma[m]*self.ref_plane[1])
                 A1 *= shift1
                 A2 *= shift2
                 C1 *= shift1
@@ -3234,25 +3299,13 @@ class NISTMultilineTRL(EightTerm):
             if self.c0 is not None:
                 #Estimate the line characteristic impedance
                 #using known capacitance/length
-                if self.z0_line is not None:
-                    raise ValueError('Only one of c0 or z0_line can be given.')
-                try:
-                    c0m = self.c0[m]
-                except TypeError:
-                    c0m = self.c0
-                z0[m] = gamma[m]/(1j*2*npy.pi*freqs[m]*c0m)
+                z0[m] = gamma[m]/(1j*2*npy.pi*freqs[m]*self.c0[m])
             else:
                 #Set the known line characteristic impedance
                 if self.z0_line is not None:
-                    try:
-                        z0[m] = self.z0_line[m]
-                    except TypeError:
-                        z0[m] = self.z0_line
+                    z0[m] = self.z0_line[m]
                 else:
-                    try:
-                        z0[m] = self.z0_ref[m]
-                    except TypeError:
-                        z0[m] = self.z0_ref
+                    z0[m] = self.z0_ref[m]
 
             #Error matrices
             Tmat1[m,:,:] = R1*npy.array([[A1, B1],[C1, 1]])
@@ -3315,9 +3368,7 @@ class NISTMultilineTRL(EightTerm):
         #Reference impedance renormalization
         if self.z0_ref is not None and npy.any(z0 != self.z0_ref):
             powerwave = self.kwargs.get('powerwave', False)
-            if npy.shape(self.z0_ref) != (fpoints,):
-                z0_ref = self.z0_ref*npy.ones(fpoints, dtype=complex)
-            self.renormalize(z0, z0_ref, powerwave=powerwave)
+            self.renormalize(z0, self.z0_ref, powerwave=powerwave)
 
     @classmethod
     def from_coefs(cls, frequency, coefs, **kwargs):
@@ -3362,7 +3413,7 @@ class NISTMultilineTRL(EightTerm):
     def gamma(self):
         """
         Propagation constant of the solved line.
-        
+
         """
         try:
             return self._gamma
@@ -3507,7 +3558,8 @@ class UnknownThru(EightTerm):
 
     References
     ----------
-    .. [1] A. Ferrero and U. Pisani, "Two-port network analyzer calibration using an unknown `thru,`" IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
+    .. [1] A. Ferrero and U. Pisani, "Two-port network analyzer calibration using an unknown `thru,`"
+        IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
 
     """
     family = 'UnknownThru'
@@ -4288,9 +4340,11 @@ class MRC(UnknownThru):
 
     References
     ----------
-    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment,"
+        Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
 
-    .. [2] A. Ferrero and U. Pisani, "Two-port network analyzer calibration using an unknown `thru,`" IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
+    .. [2] A. Ferrero and U. Pisani, "Two-port network analyzer calibration using an unknown `thru,`"
+        IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
 
 
     """
@@ -4409,7 +4463,8 @@ class SixteenTerm(Calibration):
 
     References
     -----------
-    .. [1] K. J. Silvonen, "Calibration of 16-term error model (microwave measurement)," in Electronics Letters, vol. 29, no. 17, pp. 1544-1545, 19 Aug. 1993.
+    .. [1] K. J. Silvonen, "Calibration of 16-term error model (microwave measurement),"
+        in Electronics Letters, vol. 29, no. 17, pp. 1544-1545, 19 Aug. 1993.
     """
 
     family = 'SixteenTerm'
@@ -4741,8 +4796,10 @@ class LMR16(SixteenTerm):
 
     References
     ------------
-    .. [1] K. Silvonen, "LMR 16-a self-calibration procedure for a leaky network analyzer," in IEEE Transactions on Microwave Theory and Techniques, vol. 45, no. 7, pp. 1041-1049, Jul 1997
-        """
+    .. [1] K. Silvonen, "LMR 16-a self-calibration procedure for a leaky network analyzer,"
+        in IEEE Transactions on Microwave Theory and Techniques, vol. 45, no. 7, pp. 1041-1049, Jul 1997
+
+    """
 
     family = 'SixteenTerm'
     def __init__(self, measured, ideals, ideal_is_reflect=True, sign=None,
@@ -4781,7 +4838,7 @@ class LMR16(SixteenTerm):
             ideals = [ideals]
         if len(ideals) != 1:
             raise ValueError("One ideal must be given: Through or reflect definition.")
-        if ideal_is_reflect == False:
+        if not ideal_is_reflect:
             self.through = ideals[0].copy()
             self.reflect = None
             self._solved_through = self.through
@@ -5150,7 +5207,8 @@ class MultiportCal():
             if 'ideals' in c:
                 ideals = [i if i.nports == 2 else subnetwork(i, p) for i in c['ideals']]
                 c['ideals'] = ideals
-            c['measured'] = [m - subnetwork(self.isolation, p) if m.nports == 2 else subnetwork(m - self.isolation, p) for m in c['measured']]
+            c['measured'] = [m - subnetwork(self.isolation, p) if m.nports == 2 else subnetwork(m - self.isolation, p)
+                             for m in c['measured']]
             k_side = 0
             if p_count[p[0]] > p_count[p[1]]:
                 k_side = 1
@@ -5459,7 +5517,9 @@ class MultiportSOLT(MultiportCal):
             elif method in [SOLT, EightTerm, UnknownThru, MRC, TwelveTerm]:
                 thru_pos = 'last'
             else:
-                raise ValueError("Unable to determine 'thru_pos' automatically. Set it manually to either 'first' or 'last'")
+                raise ValueError(
+                    "Unable to determine 'thru_pos' automatically. Set it manually to either 'first' or 'last'"
+                    )
         if thru_pos not in ['last', 'first']:
             raise ValueError("thru_pos must be either 'first' or 'last'")
 
@@ -5720,12 +5780,12 @@ def determine_line(thru_m, line_m, line_approx=None):
     Determine S21 of a matched line.
 
     Given raw measurements of a `thru` and a matched `line` with unknown
-    s21, this will calculate the response of the line. This works for 
+    s21, this will calculate the response of the line. This works for
     lossy lines, and attenuators. The `line_approx`
-    is an approximation to line, this used  to choose the correct
-    root sign. If left as None, it will be estimated from raw measurements, 
-    which requires your error networks to be well matched  (S_ij >>S_ii). 
-    
+    is an approximation to line, this used to choose the correct
+    root sign. If left as `None`, it will be estimated from raw measurements,
+    which requires your error networks to be well matched  (S_ij >>S_ii).
+
 
     This is possible because two measurements can be combined to
     create a relationship of similar matrices, as shown below. Equating
@@ -5752,7 +5812,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     Parameters
     ----------
     thru_m : :class:`~skrf.network.Network`
-        raw measurement of a thru
+        raw measurement of a flush thru
     line_m : :class:`~skrf.network.Network`
         raw measurement of a matched transmissive standard
     line_approx : :class:`~skrf.network.Network`
@@ -5788,15 +5848,21 @@ def determine_line(thru_m, line_m, line_approx=None):
     return found_line
 
 
+def _regularize_inplace(z : ComplexArray, epsilon : float=1e-7) -> ComplexArray:
+    """ Regularize an array inplace around zero """
+    zero_idx = npy.abs(z)<epsilon
+    z[zero_idx] = .5*(epsilon * npy.exp(npy.angle(z[zero_idx])*1j)+z[zero_idx])
+    return z
+
 def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
                      line_approx=None, return_all=False):
     """
     Determine reflect from a thru, reflect, line measurements.
-    
-    This is used in the TRL algorithm, but is made modular for 
-    multi-line, multi-reflect options. 
-    
-    
+
+    This is used in the TRL algorithm, but is made modular for
+    multi-line, multi-reflect options.
+
+
     Parameters
     ----------
     thru_m : :class:`~skrf.network.Network`
@@ -5811,15 +5877,21 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     return_all: bool
         return all possible values fo reflect, one for each root-choice.
         useful for troubleshooting.
-        
+
     Returns
     -------
     reflect : :class:`~skrf.network.Network`
         a One-port network for the found reflect.
 
-    The equations are from "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual Six-Port Automatic Network Analyzer", G.F. Engen et al., 1979
-    
+    The equations are from "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual Six-Port
+    Automatic Network Analyzer", G.F. Engen et al., 1979
+
     """
+
+    # regularize the parameters in case of matched thru and line. see gh-870
+    thru_m = thru_m.copy()
+    thru_m.s[:, 0, 0] = _regularize_inplace(thru_m.s[:, 0, 0])
+    thru_m.s[:, 1, 1] = _regularize_inplace(thru_m.s[:, 1, 1])
 
     #Call determine_line first to solve root choice of the propagation constant
     line = determine_line(thru_m, line_m, line_approx)
@@ -5834,18 +5906,22 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     a = tt[:,1,0]
     b = tt[:,1,1]-tt[:,0,0]
     c = -tt[:,0,1]
+    sqrtD = sqrt(b*b-4*a*c)
 
-    # the sol1 and sol2 correspond to the ratios (r11/r21) and (r12/r22) from 
-    # equations (30) and (31) in the paper
-    sol1 = (-b-sqrt(b*b-4*a*c))/(2*a)
-    sol2 = (-b+sqrt(b*b-4*a*c))/(2*a)
+    # The variables a, b, c define a quadratic equation for which the solutions sol1 and sol2 correspond to the
+    # ratios (r11/r21) and (r12/r22) from equations (30) and (31) in the paper
+    # The quadratic equation has solutions sol1 = (-b-sqrt(b*b-4*a*c))/(2*a), sol2 = (-b+sqrt(b*b-4*a*c))/(2*a)
+    # For a=0 these become degenerate. Also the consequtive equations for x1 and x2 contain singularities for a=0 or c=0
 
-    e2 = line.s[:,0,1]**2
+    sol1 = (-b-sqrtD)/(2*a)
+    sol2 = (-b+sqrtD)/(2*a)
 
+    # equation (32)
     x1 = (tt[:,1,0]*sol1 + tt[:,1,1])/(tt[:,0,1]/sol2 + tt[:,0,0])
     x2 = (tt[:,1,0]*sol2 + tt[:,1,1])/(tt[:,0,1]/sol1 + tt[:,0,0])
 
-    rootChoice = [abs(x1[i] - e2[i]) < abs(x2[i] - e2[i]) for i in range(len(x1))]
+    e2 = line.s[:,0,1]**2
+    rootChoice = abs(x1 - e2) < abs(x2 - e2) # see gh-870
 
     y = sol1*invert(rootChoice) + sol2*rootChoice
     x = sol1*rootChoice + sol2*invert(rootChoice)
@@ -5855,20 +5931,17 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     d = -det(thru_m.s)
     f = -thru_m.s[:,1,1]
 
-    gam = (f-d/x)/(1-e/x)
-    b_A = (e-y)/(d-b*f)
+    gam = (f-d/x)/(1-e/x) # equation (40)
+    b_A = (e-b)/(d-b*f)  # equation (41): beta/alpha
 
     w1 = reflect_m.s[:,0,0]
     w2 = reflect_m.s[:,1,1]
 
-    a = sqrt(((w1-y)*(1+w2*b_A)*(d-y*f))/\
+    # equation (45)
+    a = sqrt(((w1-b)*(1+w2*b_A)*(d-b*f))/\
             ((w2+gam)*(1-w1/x)*(1-e/x)))
 
-    out = []
-    for rootChoice2 in [1,-1] :
-        a= a*rootChoice2
-        unknownReflectS = (w1-y)/(a*(1-w1/x))
-        out.append(unknownReflectS)
+    out = [(w1-b)/(a*(1-w1/x)), (w1-b)/(-a*(1-w1/x))] # equation (47)
 
     if return_all:
         return [Network(frequency=thru_m.frequency, s = k) for k in out]
@@ -5878,15 +5951,10 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
         reflect_approx.s[:,0,0]=-1
 
     closer = find_closest(out[0], out[1], reflect_approx.s11.s.flatten())
-
     reflect = reflect_approx.copy()
-    reflect.s[:,0,0]=closer
+    reflect.s[:,0,0] = closer
 
     return reflect.s11
-
-
-
-
 
 
 def convert_12term_2_8term(coefs_12term, redundant_k = False):
@@ -5899,7 +5967,10 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     References
     ----------
 
-    .. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
+    .. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms,"
+        ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997.
+        URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
+
     """
 
     # Nomenclature taken from Roger Marks

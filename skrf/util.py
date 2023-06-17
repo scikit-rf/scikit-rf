@@ -63,7 +63,7 @@ import re
 from subprocess import Popen, PIPE
 import sys
 from functools import wraps
-from .constants import Number, NumberLike
+from .constants import Number
 
 try:
     from matplotlib.figure import Figure
@@ -79,7 +79,7 @@ def plotting_available() -> bool:
 
 def axes_kwarg(func):
     """
-    This decorator checks if a :class:`matplotlib.axes.Axes` object is passed, 
+    This decorator checks if a :class:`matplotlib.axes.Axes` object is passed,
     if not the current axis will be gathered through :func:`plt.gca`.
 
     Raises

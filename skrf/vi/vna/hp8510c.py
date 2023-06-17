@@ -4,7 +4,7 @@ import time
 from .abcvna import VNA
 from ...frequency import *
 from ...network import *
-from .hp8510c_sweep_plan import SweepPlan, SweepSection
+from .hp8510c_sweep_plan import SweepPlan
 
 class HP8510C(VNA):
     '''
@@ -44,13 +44,13 @@ class HP8510C(VNA):
         ''' Preset instrument. '''
         self.write("FACTPRES;")
         self.wait_until_finished()
-    
+
     def clear(self):
         self.resource.clear()
 
     def wait_until_finished(self):
         self.query("OUTPIDEN;")
-    
+
     def get_list_of_traces(self,**kwargs):
         ''' The 8510 doesn't really support multiple traces, so we just list S params. '''
         return ["S11", "S21", "S12", "S22"]
@@ -75,7 +75,7 @@ class HP8510C(VNA):
         # raw_data = kwargs.get("raw_data", True)
         if ports==(1,):
             self.write('s11;')
-            return self.one_port(fresh_sweep=sweep);
+            return self.one_port(fresh_sweep=sweep)
         elif ports==(2,):
             self.write('s22;')
             return self.one_port(fresh_sweep=sweep)
@@ -131,7 +131,7 @@ class HP8510C(VNA):
                 int(float(self.query('poin;outpacti;'))),'hz')
         freq.unit = unit
         return freq
-    
+
     def get_ssn(self):
         ''' Get (start_hz, stop_hz, n_points) tuple '''
         return (
@@ -139,7 +139,7 @@ class HP8510C(VNA):
             float(self.query('stop;outpacti;')),
             int(float(self.query('poin;outpacti;')))
         )
-    
+
     def set_frequency_ramp(self, hz_start, hz_stop, npoint=801):
         ''' Ramp (fast, not synthesized) sweep. Must have standard npoint. '''
         self.delay_seconds_before_readback = 0  # These sweeps are fast and don't need extra wait beyond timeout
@@ -147,14 +147,14 @@ class HP8510C(VNA):
             print("Warning: 8510C only supports NPOINT in [51,101,201,401,801]")
         self.resource.clear()
         self.write('RAMP; STAR %f; STOP %f; POIN%i;'%(hz_start,hz_stop,npoint))
-    
+
     def _instrument_natively_supports_steps(self, npoint):
         if npoint in [51,101,201,401,801]:
             return True
         if npoint<=792:
             return True
         return False
-    
+
     def _set_instrument_step_state(self, hz_start, hz_stop, npoint=801):
         assert(self._instrument_natively_supports_steps(npoint))
         self.resource.clear()
@@ -173,7 +173,7 @@ class HP8510C(VNA):
             self.write('SADD;')
             self.write('STAR %f; STOP %f; POIN %i;'%(hz_start,hz_stop,npoint))
             self.write('SDON; EDITDONE; LISFREQ;')
-    
+
     def set_hz(self, hz):
         ''' List sweep using hz, an array of frequencies. If hz is too long, multiple sweeps will automatically be performed.'''
         hz = npy.array(hz)
@@ -266,7 +266,7 @@ class HP8510C(VNA):
         ntwk.frequency= self.get_frequency()
 
         return ntwk
-    
+
     def two_port(self, **kwargs):
         ''' Performs one or more sweeps per set_frequency_*, returns network. '''
         if self.sweep_plan is None:
@@ -334,4 +334,3 @@ class HP8510C(VNA):
         reverse.name = 'reverse switch term'
 
         return (forward,reverse)
-

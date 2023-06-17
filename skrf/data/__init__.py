@@ -59,10 +59,10 @@ ro_2 = Network(os.path.join(pwd, 'ro,2.s1p'))
 ro_3 = Network(os.path.join(pwd, 'ro,3.s1p'))
 
 """
-The following networks have been saved using Python2 Pickler. 
-Numpy arrays pickled in Python2 can't be reopened using Python3, 
+The following networks have been saved using Python2 Pickler.
+Numpy arrays pickled in Python2 can't be reopened using Python3,
 as a consequence (?) of the utf8 support in Python3.
-So the following lines shall only work with Python2.  
+So the following lines shall only work with Python2.
 """
 one_port_cal = read(os.path.join(pwd, 'one_port.cal'), encoding='latin1')
 

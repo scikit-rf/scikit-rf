@@ -557,7 +557,7 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
                force_chart: bool = False, draw_vswr: Union[List, bool, None] = None, draw_labels: bool = False,
                **kwargs):
     r"""
-    plot complex data on smith chart.
+    Plot complex data on smith chart.
 
     Parameters
     ------------
@@ -784,7 +784,7 @@ def legend_off(ax: plt.Axes = None):
     """
     Turn off the legend for a given axes.
 
-    if no axes is given then it will use current axes.
+    If no axes is given then it will use current axes.
 
     Parameters
     ----------
@@ -830,7 +830,7 @@ def func_on_all_figs(func: Callable, *args, **kwargs):
     r"""
     Run a function after making all open figures current.
 
-    useful if you need to change the properties of many open figures
+    Useful if you need to change the properties of many open figures
     at once, like turn off the grid.
 
     Parameters
@@ -951,7 +951,7 @@ def plot_reciprocity2(netw: BaseNetwork, db=False, *args, **kwargs):
     """
     Plot reciprocity metric #2.
 
-    this is distance of the determinant of the wave-cascading matrix
+    This is distance of the determinant of the wave-cascading matrix
     from unity.
 
     .. math::
@@ -978,17 +978,18 @@ def plot_reciprocity2(netw: BaseNetwork, db=False, *args, **kwargs):
     plt.draw()
 
 
-def plot_s_db_time(netw: BaseNetwork, center_to_dc=None,*args,**kwargs):
-    return netw.windowed(center_to_dc=center_to_dc).plot_s_time_db(*args,**kwargs)
+def plot_s_db_time(self, *args, window: Union[str, float, Tuple[str, float]]=('kaiser', 6),
+        normalize: bool = True, center_to_dc: bool = None, **kwargs):
+    return self.windowed(window, normalize, center_to_dc).plot_s_time_db(*args,**kwargs)
 
 
 # plotting
 def plot_s_smith(netw: BaseNetwork, m=None, n=None,r=1, ax=None, show_legend=True,\
         chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):
     r"""
-    plots the scattering parameter on a smith chart
+    Plots the scattering parameter on a smith chart.
 
-    plots indices `m`, `n`, where `m` and `n` can be integers or
+    Plots indices `m`, `n`, where `m` and `n` can be integers or
     lists of integers.
 
 
@@ -1241,7 +1242,7 @@ def plot_uncertainty_bounds_component(
 
         mean(|s|) \pm std(|s|)
 
-    the order of mean and abs is important.
+    The order of mean and abs is important.
 
 
     Parameters
@@ -1277,7 +1278,7 @@ def plot_uncertainty_bounds_component(
 
     Note
     ----
-    for phase uncertainty you probably want s_deg_unwrap, or
+    For phase uncertainty you probably want s_deg_unwrap, or
     similar. uncertainty for wrapped phase blows up at +-pi.
 
     """
@@ -1351,16 +1352,16 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
                                  ppf: bool = None, kwargs_error: dict = None,
                                  **kwargs):
     r"""
-    plots mean value of the NetworkSet with +/- uncertainty bounds in an Network's attribute.
+    Plots mean value of the NetworkSet with +/- uncertainty bounds in an Network's attribute.
 
-    This is designed to represent uncertainty in a scalar component of the s-parameter. for example
+    This is designed to represent uncertainty in a scalar component of the s-parameter. For example
     plotting the uncertainty in the magnitude would be expressed by
 
     .. math::
 
         mean(|s|) \pm std(|s|)
 
-    the order of mean and abs is important.
+    The order of mean and abs is important.
 
     Parameters
     ----------
@@ -1395,8 +1396,8 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
 
     Note
     ----
-    for phase uncertainty you probably want s_deg_unwrap, or
-    similar.  uncertainty for wrapped phase blows up at +-pi.
+    For phase uncertainty you probably want s_deg_unwrap, or
+    similar.  Uncertainty for wrapped phase blows up at +-pi.
 
     """
 
@@ -1451,7 +1452,7 @@ def plot_uncertainty_bounds_s_db(self: NetworkSet, *args, **kwargs):
     """
     Call ``plot_uncertainty_bounds(attribute='s_mag','ppf':mf.magnitude_2_db*args,**kwargs)``.
 
-    see plot_uncertainty_bounds for help
+    See plot_uncertainty_bounds for help.
 
     """
     kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
@@ -1461,7 +1462,7 @@ def plot_minmax_bounds_s_db(self: NetworkSet, *args, **kwargs):
     """
     Call ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``.
 
-    see plot_uncertainty_bounds for help
+    See plot_uncertainty_bounds for help.
 
     """
     kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
@@ -1481,7 +1482,7 @@ def plot_uncertainty_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
     """
     Call ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``.
 
-    see plot_uncertainty_bounds for help
+    See plot_uncertainty_bounds for help.
 
     """
     kwargs.update({'attribute':'s_time_mag','ppf':mf.magnitude_2_db})
@@ -1491,7 +1492,7 @@ def plot_minmax_bounds_s_time_db(self, *args, **kwargs):
     """
     Call ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``.
 
-    see plot_uncertainty_bounds for help
+    See plot_uncertainty_bounds for help.
 
     """
     kwargs.update({'attribute':'s_time_mag','ppf':mf.magnitude_2_db})

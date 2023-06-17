@@ -29,10 +29,10 @@ This module contains constants, numerical approximations, and unit conversions
 
 .. data:: S_DEFINITIONS
 
-    S-parameter definition labels: 
-        - 'power' for power-waves definition, 
-        - 'pseudo' for pseudo-waves definition. 
-        - 'traveling' corresponds to the initial implementation. 
+    S-parameter definition labels:
+        - 'power' for power-waves definition,
+        - 'pseudo' for pseudo-waves definition.
+        - 'traveling' corresponds to the initial implementation.
 
 .. data:: S_DEF_DEFAULT
 
@@ -51,7 +51,7 @@ This module contains constants, numerical approximations, and unit conversions
 from numbers import Number
 from typing import Sequence, Union
 import numpy as npy
-from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi
+from scipy.constants import c, mil, inch
 
 # used as substitutes to handle mathematical singularities.
 INF = 1e99

@@ -149,7 +149,7 @@ def pna_csv_2_df(filename):
 
     """
     warn("deprecated", DeprecationWarning)
-    from pandas import Series, Index, DataFrame
+    from pandas import Index, DataFrame
     header, comments, d = read_pna_csv(filename)
     f_unit = header.split(',')[0].split(')')[0].split('(')[1]
 
@@ -191,7 +191,7 @@ def pna_csv_2_ntwks2(filename, *args, **kwargs):
         ntwk = Network(f=f, s=s, name=name, comments=comments)
 
         return ntwk
-    except:
+    except  Exception:
         return ntwk_dict
 
 def pna_csv_2_ntwks3(filename):
@@ -269,13 +269,13 @@ def read_all_csv(dir='.', contains = None):
         try:
             out[keyname] = pna_csv_2_ntwks3(fullname)
             continue
-        except:
+        except Exception:
             pass
 
         try:
             out[keyname] = Network(fullname)
             continue
-        except:
+        except  Exception:
             pass
 
     return out
@@ -368,7 +368,7 @@ class AgilentCSV:
         cols = self.columns
         try:
             f_unit = cols[0].split('(')[1].split(')')[0]
-        except:
+        except  Exception:
             f_unit = 'hz'
 
         f = d[:,0]
@@ -391,7 +391,7 @@ class AgilentCSV:
 
         If splitting the header fails, then a suitable list is returned of
         the correct length, which looks like::
-            
+
             ['Freq(?)','filename-0','filename-1',..]
         """
         header,  d = self.header, self.data
@@ -457,8 +457,8 @@ class AgilentCSV:
     def networks(self):
         """
         Reads a PNAX csv file, and returns a list of one-port Networks.
-        
-        
+
+
         .. note::
             Note this only works if csv is save in Real/Imaginary format for now
 
@@ -505,7 +505,7 @@ class AgilentCSV:
     def dict(self):
         """
         Dictionnary representation of csv file.
-        
+
         Returns
         -------
         dict : dict
@@ -588,7 +588,7 @@ def pna_csv_2_ntwks(filename):
         Use :func:`pna_csv_2_ntwks3` instead.
 
 
-    .. note::    
+    .. note::
         Note this only works if csv is save in Real/Imaginary format for now
 
 
@@ -648,7 +648,7 @@ def pna_csv_2_freq(filename):
     cols = pna_csv_header_split(filename)
     try:
         f_unit = cols[0].split('(')[1].split(')')[0]
-    except:
+    except  Exception:
         f_unit = 'hz'
 
     f = d[:,0]
@@ -683,7 +683,7 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
     #try to pull out frequency unit
     try:
         f_unit = cols[0].split('(')[1].split(')')[0]
-    except:
+    except  Exception:
         f_unit = 'hz'
 
     f = d[:,0]
@@ -791,7 +791,7 @@ def zva_dat_2_ntwks(filename):
             elif 's22' in h.lower() and 're' in h.lower():
                 s[:,1,1] = d[:,k+1] #+ 1j*d[:,k+2]
 
-    elif 'db' in header.lower() and not 'deg' in header.lower():
+    elif 'db' in header.lower() and "deg" not in header.lower():
         # this is a cvs in db format (no deg values)
         # -> conversion required
         s = npy.zeros((len(f),2,2), dtype=complex)
@@ -839,13 +839,13 @@ def read_all_zva_dat(dir='.', contains = None):
         try:
             out[keyname] = zva_dat_2_ntwks(fullname)
             continue
-        except:
+        except  Exception:
             pass
 
         try:
             out[keyname] = Network(fullname)
             continue
-        except:
+        except  Exception:
             pass
 
     return out
@@ -893,7 +893,7 @@ def vectorstar_csv_2_ntwks(filename):
     """
     Reads a vectorstar csv file, and returns a list of one-port Networks.
 
-    
+
     .. note::
         Note this only works if csv is save in Real/Imaginary format for now
 
@@ -922,5 +922,3 @@ def vectorstar_csv_2_ntwks(filename):
         name = names[k].rstrip(),
         comments = comments,
         ) for k in range(d.shape[1]/3)]
-
-

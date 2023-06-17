@@ -83,7 +83,7 @@ class Frequency:
             'thz': 'THz'
             }
     """
-    Dictionnary to convert unit string with correct capitalization for display.
+    Dictionary to convert unit string with correct capitalization for display.
     """
 
     multiplier_dict={
@@ -330,7 +330,7 @@ class Frequency:
         increase = npy.diff(self.f) > 0
         if not increase.all():
             warnings.warn("Frequency values are not monotonously increasing!\n"
-            "To get rid of the invalid values call `drop_non_monotonic_increasing`", 
+            "To get rid of the invalid values call `drop_non_monotonic_increasing`",
                 InvalidFrequencyWarning)
 
     def drop_non_monotonic_increasing(self) -> List[int]:
@@ -339,15 +339,7 @@ class Frequency:
         Returns:
             list[int]: The dropped indices
         """
-        invalid = npy.zeros(len(self.f), dtype=bool)
-        for i, val in enumerate(self.f):
-            if not i:
-                last_valid = val
-            else:
-                if val > last_valid:
-                    last_valid = val
-                else:
-                    invalid[i] = True
+        invalid = npy.diff(self.f, prepend=self.f[0]-1) <= 0
         self._f = self._f[~invalid]
         return list(npy.flatnonzero(invalid))
 
@@ -384,22 +376,6 @@ class Frequency:
         Number of points in the frequency.
         """
         return len(self.f)
-
-    @npoints.setter
-    def npoints(self, n: int) -> None:
-        """
-        Set the number of points in the frequency.
-        """
-        warnings.warn('Possibility to set the npoints parameter will removed in the next release.',
-             DeprecationWarning, stacklevel=2)
-        
-        if self.sweep_type == 'lin':
-            self.f = linspace(self.start, self.stop, n)
-        elif self.sweep_type == 'log':
-            self.f = geomspace(self.start, self.stop, n)
-        else:
-            raise ValueError(
-                'Unable to change number of points for sweep type', self.sweep_type)
 
     @property
     def center(self) -> float:
@@ -487,24 +463,6 @@ class Frequency:
         """
 
         return self._f
-    
-    @f.setter
-    def f(self,new_f: NumberLike) -> None:
-        """
-        Sets the frequency object by passing a vector in Hz.
-
-        Raises
-        ------
-        InvalidFrequencyWarning:
-            If frequency points are not monotonously increasing
-        """
-        warnings.warn('Possibility to set the f parameter will removed in the next release.',
-             DeprecationWarning, stacklevel=2)
-        
-        self._f = npy.array(new_f)
-
-        self.check_monotonic_increasing()
-
 
 
     @property
@@ -528,14 +486,14 @@ class Frequency:
     def w(self) -> npy.ndarray:
         r"""
         Angular frequency in radians/s.
-        
+
         Angular frequency is defined as :math:`\omega=2\pi f` [#]_
 
         Returns
         -------
         w : :class:`numpy.ndarray`
             Angular frequency in rad/s
-            
+
         References
         ----------
         .. [#] https://en.wikipedia.org/wiki/Angular_frequency
@@ -551,7 +509,7 @@ class Frequency:
     def df(self) -> npy.ndarray:
         """
         The gradient of the frequency vector.
-        
+
         Note
         ----
         The gradient is calculated using::
@@ -593,14 +551,14 @@ class Frequency:
         Unit of this frequency band.
 
         Possible strings for this attribute are:
-        'hz', 'khz', 'mhz', 'ghz', 'thz'
+        'Hz', 'kHz', 'MHz', 'GHz', 'THz'
 
         Setting this attribute is not case sensitive.
 
         Returns
         -------
         unit : string
-            lower-case string representing the frequency units
+            String representing the frequency unit
         """
         return self.unit_dict[self._unit]
 
@@ -636,16 +594,16 @@ class Frequency:
         """
         Time vector in s.
 
-        t_period = 1/f_step
+        t_period = 2*(n-1)/f_step
         """
-        return linspace(-.5/self.step , .5/self.step, self.npoints)
+        return npy.fft.fftshift(npy.fft.fftfreq(self.npoints, self.step))
 
     @property
     def t_ns(self) -> npy.ndarray:
         """
         Time vector in ns.
 
-        t_period = 1/f_step
+        t_period = 2*(n-1)/f_step
         """
         return self.t*1e9
 

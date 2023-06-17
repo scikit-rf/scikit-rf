@@ -13,7 +13,7 @@ Contributing to scikit-rf
 
 Sponsoring the Project
 ----------------------
-It is possible to sponsor the maintainers and developers of the scikit-rf package, using the GitHub Sponsor option ("Sponsor this project") visible in the `scikit-rf GitHub page <https://github.com/scikit-rf/scikit-rf>`_. 
+It is possible to sponsor the maintainers and developers of the scikit-rf package, using the GitHub Sponsor option ("Sponsor this project") visible in the `scikit-rf GitHub page <https://github.com/scikit-rf/scikit-rf>`_.
 
 Sponsoring is one more way to contribute to open source: financially supporting the people who build and maintain it. Funding individuals helps them keep doing important work, expands opportunities to participate, and gives developers the recognition they deserve.
 
@@ -21,47 +21,73 @@ Sponsoring is one more way to contribute to open source: financially supporting 
 Contributing to the Code
 ------------------------
 
-.. note:: if you feel that the instructions on this page are too complicated, but you still would like to contribute, do not hesitate email us on the `scikit-rf mailing list <https://groups.google.com/forum/#!forum/scikit-rf>`_ or join us in the `scikit-rf Slack channel <https://join.slack.com/t/scikit-rf/shared_invite/zt-d82b62wg-0bdSJjZVhHBKf6687V80Jg>`_ to get some help.
+.. note:: if you feel that the instructions on this page are too complicated, but you still would like to contribute, do not hesitate email us on the `scikit-rf mailing list <https://groups.google.com/forum/#!forum/scikit-rf>`_ or join us in the `scikit-rf Slack channel <https://join.slack.com/t/scikit-rf/shared_invite/zt-d82b62wg-0bdSJjZVhHBKf6687V80Jg>`_ or the `scikit-rf Matrix/Element channel <https://app.element.io/#/room/#scikit-rf:matrix.org>`_ to get some help.
 
 
-**skrf** uses the "Fork + Pull" collaborative development model. If this new to you, see GitHub's articles on  `forking <https://help.github.com/articles/fork-a-repo>`_ and `pull requests <https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_. 
+**skrf** uses the "Fork + Pull" collaborative development model. If this new to you, see GitHub's articles on  `forking <https://help.github.com/articles/fork-a-repo>`_ and `pull requests <https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_.
 
 Basically, you will:
 
-1. `Fork <https://help.github.com/articles/fork-a-repo>`_ the `GitHub scikit-rf repository <https://github.com/scikit-rf/scikit-rf>`_, 
+1. `Fork <https://help.github.com/articles/fork-a-repo>`_ the `GitHub scikit-rf repository <https://github.com/scikit-rf/scikit-rf>`_,
 
-2. Make your modifications. 
+2. Make your modifications.
 
 3. Then send a `pull request (PR) <https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_ for your additions to be merged into the main scikit-rf repository. Your proposal will be reviewed or discussed and you may receive some comments which only aim to make your contribution as great as possible!
 
 
 .. tip:: When making your modification locally, you may need to work into a dedicated development environment in order to not interfere with the scikit-rf package that you have `already installed <../tutorials/Installation.html>`_. You can use for example `anaconda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_. In order for the anaconda environment to find your local scikit-rf repo, use the convenient `conda-develop <https://docs.conda.io/projects/conda-build/en/latest/resources/commands/conda-develop.html>`_ command.
 
+Pre-commit
+++++++++++
+
+You can use pre-commit_ to automate your code quality checks and perform
+automated fixes in **scikit-rf**.
+
+To enable pre-commit on your computer (make sure it is installed first), open a terminal and Navigate to
+the :file:`scikit-rf/` directory that contains your clone of scikit-rf's repository, then run:
+
+.. code-block:: bash
+
+    pre-commit install
+
+.. note::
+
+   Once pre-commit has been installed for a repository, pre-commit will
+   run every time you try to commit a change. If any pre-commit checks
+   fail, or if pre-commit changes any files, it will be necessary to
+   redo `git add` on the changed files and `git commit` once
+   again.
+
+.. tip::
+
+   To commit a change without running pre-commit, use the `-n` or
+   `--no-verify` flag with git.
+
 
 Basic git command-line workflow
 +++++++++++++++++++++++++++++++
 
-The following is a basic example of the git commands that can be used to contribute to the code.  
+The following is a basic example of the git commands that can be used to contribute to the code.
 
 .. code-block:: sh
 
     # create your own fork of scikit-rf in the GitHub interface, say ME/scikit-rf
 
     # clone your new fork locally, using either:
-    git clone ME@github.com:ME/scikit-rf.git 
-    
+    git clone ME@github.com:ME/scikit-rf.git
+
     # if you have ssh keys setup, or if not:
     git clone https://github.com/scikit-rf/scikit-rf.git
-    
+
     # ... make your changes...
-    
+
     # commit changes locally
-    git commit -a 
-    
+    git commit -a
+
     # push changes to your repo
-    git push origin 
-    
-    # create a pull request on github.com 
+    git push origin
+
+    # create a pull request on github.com
 
 
 Staying Synchronized
@@ -75,7 +101,7 @@ To keep your local version synchronized (up-to date) with the scikit-rf reposito
 
     # Fetch any new changes from the original repo
     git fetch upstream
-    
+
     # Merges any changes fetched into your working files
     git merge upstream/master
 
@@ -88,7 +114,7 @@ Tests are vital for software reliability and maintainability. Writing tests ofte
 
 Before making a Pull Request, we advise contributors to run the tests locally to check if nothing has been broken following their modifications. In addition, we highly recommend to provide new tests when adding new features.
 
-The structure of the testing generally follows the conventions of `numpy/scipy <https://github.com/numpy/numpy/blob/master/doc/TESTS.rst.txt>`_. Test cases live in the module, or submodule, which they are testing, and are located in a directory called `tests`. So, the tests of the media module are located at `skrf/media/tests/`. 
+The structure of the testing generally follows the conventions of `numpy/scipy <https://github.com/numpy/numpy/blob/master/doc/TESTS.rst.txt>`_. Test cases live in the module, or submodule, which they are testing, and are located in a directory called `tests`. So, the tests of the media module are located at `skrf/media/tests/`.
 Tests can be run most easily with `pytest <https://docs.pytest.org/en/latest/index.html>`_.
 
 You probably **don't** want to run the tests for the virtual instruments ``skrf.vi`` with the rest of the tests, so these tests are excluded by default.
@@ -98,16 +124,16 @@ To run all the tests (except the virtual instruments)
 .. code-block:: sh
 
     cd scikit-rf
-    pytest 
+    pytest
 
-Or, to run tests for every installed python installation in an isolated environment. 
+Or, to run tests for every installed python installation in an isolated environment.
 
 .. code-block:: sh
 
-    tox 
+    tox
 
 
-If you want to test a single file or directory, you need to override the default pytest configuration (defined in the tox.ini file) and to indicate the test path. By example, to run only the tests associated to the Network object (-v to increase the verbosity):   
+If you want to test a single file or directory, you need to override the default pytest configuration (defined in the tox.ini file) and to indicate the test path. By example, to run only the tests associated to the Network object (-v to increase the verbosity):
 
 .. code-block:: sh
 
@@ -130,19 +156,19 @@ Contributing to the Documentation
 Examples and Tutorials
 ++++++++++++++++++++++
 
-Usage examples of scikit-rf are welcomed, especially when adding new features. We are using `Jupyter Notebooks <https://jupyter.org/>`_ to write the examples and the tutorials, which are located in the ``scikit-rf/docs/source/examples/`` and ``doc/source/examples`` directories. These notebooks are then converted into webpages with the sphinx extension called `nbsphinx <http://nbsphinx.readthedocs.io/>`_. 
+Usage examples of scikit-rf are welcomed, especially when adding new features. We are using `Jupyter Notebooks <https://jupyter.org/>`_ to write the examples and the tutorials, which are located in the ``scikit-rf/docs/source/examples/`` and ``doc/source/examples`` directories. These notebooks are then converted into webpages with the sphinx extension called `nbsphinx <http://nbsphinx.readthedocs.io/>`_.
 
-The docs are automatically built and `served by readthedocs <https://scikit-rf.readthedocs.io/en/latest/>`_ when a Pull Request is accepted. The python package requirements to build the docs are kept in ``scikit-rf/requirements.txt``. 
+The docs are automatically built and `served by readthedocs <https://scikit-rf.readthedocs.io/en/latest/>`_ when a Pull Request is accepted. The python package requirements to build the docs are kept in ``scikit-rf/requirements.txt``.
 
-.. important:: Before pushing to your repo and making a pull request, at a minimum you will need to clear the notebook outputs using the "Clear All Output" command in the notebook (or install `nbstripout <https://pypi.python.org/pypi/nbstripout>`_ so that the output is not tracked in git (or the repo size would grow infinitely). 
+.. important:: Before pushing to your repo and making a pull request, at a minimum you will need to clear the notebook outputs using the "Clear All Output" command in the notebook (or install `nbstripout <https://pypi.python.org/pypi/nbstripout>`_ so that the output is not tracked in git (or the repo size would grow infinitely).
 
 
 Reference (API) or static documentation
 +++++++++++++++++++++++++++++++++++++++
 
-The documentation source files can be found in ``doc/source/``. 
+The documentation source files can be found in ``doc/source/``.
 
-The reference documentation for the functions, classes, and submodules are documented in docstrings following the conventions put forth by `Numpy/Scipy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html>`_. The documentation as a whole is generated using sphinx, and  written using reStructed (.rst) Text. 
+The reference documentation for the functions, classes, and submodules are documented in docstrings following the conventions put forth by `Numpy/Scipy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html>`_. The documentation as a whole is generated using sphinx, and  written using reStructed (.rst) Text.
 
 .. tip:: If you want to write some .rst file yourself, please use a RST format editor and checker (ex: `<https://livesphinx.herokuapp.com/>`_), as Sphinx is (very) picky with the syntax...
 

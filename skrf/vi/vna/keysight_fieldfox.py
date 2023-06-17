@@ -2,7 +2,6 @@ import warnings
 import numpy as np
 import skrf
 from collections import OrderedDict
-from collections.abc import Iterable
 
 from . import abcvna
 from . import keysight_fieldfox_scpi

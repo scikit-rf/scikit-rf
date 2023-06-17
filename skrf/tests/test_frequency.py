@@ -1,9 +1,7 @@
 import os
 import unittest
-import warnings
 
 import numpy as npy
-import pytest
 
 import skrf as rf
 from skrf.frequency import InvalidFrequencyWarning
@@ -68,7 +66,7 @@ class FrequencyTestCase(unittest.TestCase):
 
         with self.assertWarns(InvalidFrequencyWarning):
             freq = rf.Frequency.from_f([1,2,2], unit='Hz')
-        
+
         with self.assertWarns(InvalidFrequencyWarning):
             freq = rf.Frequency.from_f([1,2,2], unit='Hz')
             inv = freq.drop_non_monotonic_increasing()
@@ -81,10 +79,9 @@ class FrequencyTestCase(unittest.TestCase):
         frequency points directly.
         """
         a = rf.Frequency.from_f([1,2,4,5,6], unit='Hz')
-        # TODO : assertRaises(AttributeError) in next release
-        with self.assertWarns(DeprecationWarning):
+        with self.assertRaises(AttributeError):
             a.f = [1, 2]
-        with self.assertWarns(DeprecationWarning):
+        with self.assertRaises(AttributeError):
             a.npoints = 10
         with self. assertRaises(AttributeError):
             a.start = 2

@@ -1,4 +1,3 @@
-import py
 import pytest
 from skrf.frequency import Frequency, InvalidFrequencyWarning
 import unittest
@@ -67,6 +66,17 @@ class NetworkTestCase(unittest.TestCase):
         self.Fix2 = rf.concat_ports([l1, l1, l1, l1], port_order='first')
         self.DUT2 = rf.concat_ports([l2, l2, l2, l2], port_order='first')
         self.Meas2 = rf.concat_ports([l3, l3, l3, l3], port_order='first')
+        self.fet = rf.Network(os.path.join(self.test_dir, 'fet.s2p'))
+
+    def test_network_copy(self):
+        n = self.ntwk1
+        n2 = n.copy()
+        self.assertEqual( n.frequency, n2.frequency)
+        self.assertNotEqual( id(n.frequency), id(n2.frequency))
+        self.assertNotEqual( id(n.frequency.f), id(n2.frequency.f))
+
+        n.frequency.f[0] = 0
+        self.assertNotEqual(n2.frequency.f[0], 0)
 
     def test_two_port_reflect(self):
         number_of_data_points = 10
@@ -85,7 +95,7 @@ class NetworkTestCase(unittest.TestCase):
         t = self.ntwk1.s11.s_time
         s = self.ntwk1.s11.s
         self.assertTrue(len(t)== len(s))
-    
+
     def test_time_gate(self):
         ntwk = self.ntwk1
         gated = self.ntwk1.s11.time_gate(0,.2, t_unit='ns')
@@ -113,8 +123,8 @@ class NetworkTestCase(unittest.TestCase):
         gated = ntwk.s11.time_gate()
         self.assertTrue(len(gated)== len(ntwk))
 
-    
-    def test_time_transform(self):
+
+    def test_time_transform_v2(self):
         spb = (4, 5)
         data_rate = 5e9
         num_taps = (100, 101)
@@ -360,6 +370,27 @@ class NetworkTestCase(unittest.TestCase):
         # Writing complex characteristic impedance should fail
         with pytest.raises(ValueError) as e_info:
             snp = ntwk.write_touchstone(return_string=True)
+        
+    def test_write_touchstone_noisy(self):
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
+
+        # Read back the written touchstone
+        ntwkstr = ntwk.write_touchstone(return_string=True)
+        strio = io.StringIO(ntwkstr)
+        strio.name = f'StringIO.s2p'
+        new_ntwk = rf.Network(strio)
+
+        # Only compare to original noise data, not interpolated
+        ntwk.resample(ntwk.f_noise)
+        new_ntwk.resample(new_ntwk.f_noise)
+        
+        # Newly written noise properties should match the original
+        npy.testing.assert_allclose(ntwk.f_noise.f_scaled, new_ntwk.f_noise.f_scaled)
+        npy.testing.assert_allclose(ntwk.nfmin, new_ntwk.nfmin)
+        npy.testing.assert_allclose(ntwk.nfmin_db, new_ntwk.nfmin_db)
+        npy.testing.assert_allclose(ntwk.g_opt, new_ntwk.g_opt)
+        npy.testing.assert_allclose(ntwk.rn, new_ntwk.rn)
+        npy.testing.assert_allclose(ntwk.z0, new_ntwk.z0)
 
     def test_pickling(self):
         original_ntwk = self.ntwk1
@@ -544,6 +575,72 @@ class NetworkTestCase(unittest.TestCase):
                 self.assertTrue((net.z0 == net[0].z0).all())
                 self.assertTrue(net.s_def != net[0].s_def)
 
+    def test_max_stable_gain(self):
+        # Check whether the maximum stable gain agrees with that derived from Y-parameters
+        y12 = self.fet.y[:, 0, 1]
+        y21 = self.fet.y[:, 1, 0]
+        # Maximum stable gain derived from Y-parameters
+        gms_y = npy.abs(y21) / npy.abs(y12)
+        self.assertTrue(
+            npy.all(
+                npy.abs(self.fet.max_stable_gain - gms_y) < 1e-6
+            )
+        )
+
+        # Check whether a runtime warning is raised when zero division occurs
+        net = rf.Network(f=[1], s=[[0, 0],[0, 0]], z0=50)
+        with pytest.raises(RuntimeWarning):
+            net.max_stable_gain
+
+        # Check whether an error is raised when the network is not 2 port.
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.max_stable_gain
+
+    def test_max_gain(self):
+        # Check whether the max gain agrees with that calculated with ADS
+        maxgain_ads = npy.loadtxt(os.path.join(self.test_dir, 'maxgain_ads.csv'), encoding='utf-8', delimiter=',')
+        self.assertTrue(
+            npy.all(
+                npy.abs(10 * npy.log10(self.fet.max_gain) - maxgain_ads[:,1]) < 1e-6
+            )
+        )
+
+        # Check whether a runtime warning is raised when zero division occurs
+        net = rf.Network(f=[1], s=[[0, 0],[0, 0]], z0=50)
+        with pytest.raises(RuntimeWarning):
+            net.max_gain
+
+        # Check whether an error is raised when the network is not 2 port.
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.max_gain
+
+    def test_unilateral_gain(self):
+        # Check whether the unilateral gain agrees with that derived from Y-parameters
+        y11 = self.fet.y[:, 0, 0]
+        y12 = self.fet.y[:, 0, 1]
+        y21 = self.fet.y[:, 1, 0]
+        y22 = self.fet.y[:, 1, 1]
+        # Unilateral gain derived from Y-parameters
+        U_y = (npy.abs(y21 - y12) ** 2) \
+              / (4 * (npy.real(y11) * npy.real(y22) - npy.real(y12) * npy.real(y21)))
+        self.assertTrue(
+            npy.all(
+                npy.abs(self.fet.unilateral_gain - U_y) < 1e-6
+            )
+        )
+
+        # Check whether a runtime warning is raised when zero division occurs
+        net = rf.Network(f=[1], s=[[0, 0],[0, 0]], z0=50)
+        with pytest.raises(RuntimeWarning):
+            net.unilateral_gain
+
+        # Check whether an error is raised when the network is not 2 port.
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.unilateral_gain
+
     def test_delay(self):
         ntwk1_delayed = self.ntwk1.delay(1,'ns',port=0)
         self.assertTrue(
@@ -655,12 +752,17 @@ class NetworkTestCase(unittest.TestCase):
         # Test that they are close with loose accuracy tolerance.
         for net in networks:
             for s_def in rf.S_DEFINITIONS:
-                npy.testing.assert_allclose(rf.z2s(rf.s2z(net.s, net.z0, s_def=s_def), net.z0, s_def=s_def), net.s, atol=1e-3)
-                npy.testing.assert_allclose(rf.y2s(rf.s2y(net.s, net.z0, s_def=s_def), net.z0, s_def=s_def), net.s, atol=1e-3)
+                npy.testing.assert_allclose(
+                    rf.z2s(rf.s2z(net.s, net.z0, s_def=s_def), net.z0, s_def=s_def), net.s, atol=1e-3
+                    )
+                npy.testing.assert_allclose(
+                    rf.y2s(rf.s2y(net.s, net.z0, s_def=s_def), net.z0, s_def=s_def), net.s, atol=1e-3
+                    )
 
     def test_conversions(self):
         #Converting to other format and back to S-parameters should return the original network
-        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
+        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) +\
+                   1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
         ntwk_random = rf.Network(s=s_random, frequency=self.freq)
         for test_z0 in (50, 10, 90+10j, 4-100j):
             for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3, ntwk_random):
@@ -675,15 +777,20 @@ class NetworkTestCase(unittest.TestCase):
     def test_multiport_conversions(self):
         #Converting to other format and back to S-parameters should return the original network
         for ports in range(3, 6):
-            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
+            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) +\
+                       1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
             test_ntwk = rf.Network(s=s_random, frequency=self.freq)
             random_z0 = npy.random.uniform(1, 100, (self.freq.npoints, ports)) +\
-            1j * npy.random.uniform(-100, 100, (self.freq.npoints, ports))
+                        1j * npy.random.uniform(-100, 100, (self.freq.npoints, ports))
             for test_z0 in (50, random_z0):
                 for s_def in rf.S_DEFINITIONS:
                     ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0, s_def=s_def)
-                    npy.testing.assert_allclose(rf.z2s(rf.s2z(ntwk.s, test_z0, s_def=s_def), test_z0, s_def=s_def), ntwk.s)
-                    npy.testing.assert_allclose(rf.y2s(rf.s2y(ntwk.s, test_z0, s_def=s_def), test_z0, s_def=s_def), ntwk.s)
+                    npy.testing.assert_allclose(
+                        rf.z2s(rf.s2z(ntwk.s, test_z0, s_def=s_def), test_z0, s_def=s_def), ntwk.s
+                        )
+                    npy.testing.assert_allclose(
+                        rf.y2s(rf.s2y(ntwk.s, test_z0, s_def=s_def), test_z0, s_def=s_def), ntwk.s
+                        )
 
     def test_y_z_compatability(self):
         # Test that npy.linalg.inv(Z) == Y
@@ -719,7 +826,8 @@ class NetworkTestCase(unittest.TestCase):
     def test_sparam_renormalize(self):
         #Converting to other format and back to S-parameters should return the original network
         for ports in range(2, 6):
-            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
+            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) +\
+                       1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
             test_ntwk = rf.Network(s=s_random, frequency=self.freq)
             random_z0 = npy.random.uniform(1, 100, size=(self.freq.npoints, ports)) +\
                         1j*npy.random.uniform(-100, 100, size=(self.freq.npoints, ports))
@@ -736,7 +844,8 @@ class NetworkTestCase(unittest.TestCase):
         Test changing S-parameter definition with complex ports
         """
         for ports in range(2, 6):
-            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
+            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) +\
+                       1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
             test_ntwk = rf.Network(s=s_random, frequency=self.freq)
             random_z0 = npy.random.uniform(1, 100, size=(self.freq.npoints, ports)) +\
                         1j*npy.random.uniform(-100, 100, size=(self.freq.npoints, ports))
@@ -757,7 +866,8 @@ class NetworkTestCase(unittest.TestCase):
         after conversion with different method.
         """
         for ports in range(2, 6):
-            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
+            s_random = npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports)) +\
+                       1j * npy.random.uniform(-10, 10, (self.freq.npoints, ports, ports))
             test_ntwk = rf.Network(s=s_random, frequency=self.freq)
             random_z0 = npy.random.uniform(1, 100, size=(self.freq.npoints, ports)) +\
                         1j*npy.random.uniform(-100, 100, size=(self.freq.npoints, ports))
@@ -774,7 +884,8 @@ class NetworkTestCase(unittest.TestCase):
                     npy.testing.assert_allclose(ntwk_renorm.z0, ntwk.z0)
 
     def test_setters(self):
-        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
+        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) +\
+                   1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
         ntwk = rf.Network(s=s_random, frequency=self.freq)
         ntwk.z0 = npy.random.uniform(1, 100, len(ntwk.z0)) + 1j*npy.random.uniform(-100, 100, len(ntwk.z0))
         ntwk.s = ntwk.s
@@ -799,7 +910,7 @@ class NetworkTestCase(unittest.TestCase):
             1j*npy.random.uniform(-100, 100, self.freq.npoints)
         z0_array_freq_port = npy.random.uniform(1, 100, (self.freq.npoints,2)) +\
             1j*npy.random.uniform(-100, 100, (self.freq.npoints,2))
-            
+
         for z0 in [z0_scalar, z0_array_port, z0_array_freq, z0_array_freq_port]:
             ntwk = rf.Network(s=s_random, frequency=self.freq, z0=z0)
 
@@ -813,7 +924,7 @@ class NetworkTestCase(unittest.TestCase):
             npy.testing.assert_allclose(ntwk.s, s_random)
             ntwk.s_pseudo = s_pseudo
             npy.testing.assert_allclose(ntwk.s, s_random)
-    
+
             npy.testing.assert_allclose(ntwk.s_traveling, s_traveling)
             npy.testing.assert_allclose(ntwk.s_power, s_power)
             npy.testing.assert_allclose(ntwk.s_pseudo, s_pseudo)
@@ -904,20 +1015,20 @@ class NetworkTestCase(unittest.TestCase):
         pwfile = 'hfss_oneport_powerwave.s1p'
         pwfile_skrf = 'tmp_skrf_oneport_powerwave.s1p'
 
-        # s_def must be explicitely passed as 'power', 
+        # s_def must be explicitely passed as 'power',
         # otherwise 'traveling' would have been assumed (being default HFSS setting)
         ntwk_orig = rf.Network(os.path.join(self.test_dir, pwfile))
         self.assertEqual(ntwk_orig.s_def, S_DEF_HFSS_DEFAULT)
-                
+
         ntwk_orig = rf.Network(os.path.join(self.test_dir, pwfile), s_def='power')
         self.assertEqual(ntwk_orig.s_def, 'power')
-        
+
         # write Touchstone file and read it. Results should be the same
         ntwk_orig.write_touchstone(os.path.join(self.test_dir, pwfile_skrf), write_z0=True, form='RI')
         ntwk_skrf = rf.Network(os.path.join(self.test_dir, pwfile_skrf))
-        
+
         self.assertTrue(ntwk_orig == ntwk_skrf)
-        
+
     def test_network_from_z_or_y(self):
         ' Construct a network from its z or y parameters '
         # test for both real and complex char. impedance
@@ -1070,7 +1181,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue( ((a+2+2j).s == npy.array([[[3+4j]],[[5+6j]]])).all())
         # operating on list
         self.assertTrue( ((a+[1+1j,2+2j]).s == npy.array([[[2+3j]],[[5+6j]]])).all())
-     
+
 
     def test_interpolate(self):
         a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
@@ -1261,7 +1372,8 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(abs(a.nfmin[0] - nf) < 1.e-6, 'noise figure does not match original spec')
         self.assertTrue(abs(a.z_opt[0] - 50.) < 1.e-6, 'optimal resistance does not match original spec')
         self.assertTrue(abs(a.rn[0] - 0.1159*50.) < 1.e-6, 'equivalent resistance does not match original spec')
-        self.assertTrue(npy.all(abs(a.g_opt) < 1.e-6), 'calculated optimal reflection coefficient does not match original coefficients')
+        self.assertTrue(npy.all(abs(a.g_opt) < 1.e-6),
+                        'calculated optimal reflection coefficient does not match original coefficients')
 
         b = rf.Network(f=[1, 2],
                        s=[[[0, 1], [1, 0]], [[0, 1], [1, 0]]],
@@ -1292,7 +1404,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(abs(a.z_opt[0] - 50.) < 1.e-6, 'optimal resistance was altered')
         self.assertTrue(abs(a.rn[0] - 0.1159*50.) < 1.e-6, 'equivalent resistance was altered')
 
-        tem = DistributedCircuit(z0=50)
+        tem = DistributedCircuit(z0_port = 50)
         inductor = tem.inductor(1e-9).interpolate(a.frequency)
 
         f = inductor ** a
@@ -1317,35 +1429,49 @@ class NetworkTestCase(unittest.TestCase):
     def test_noise_deembed(self):
 
 
-        f1_ =[75.5, 75.5] ; f2_=[75.5, 75.6] ; npt_ = [1,2]     # single freq and multifreq
+        f1_ =[75.5, 75.5]
+        f2_=[75.5, 75.6]
+        npt_ = [1,2]  # single freq and multifreq
         for f1,f2,npt in zip (f1_,f2_,npt_) :
           freq=rf.Frequency(f1,f2,npt,'ghz')
           ntwk4_n = rf.Network(os.path.join(self.test_dir,'ntwk4_n.s2p'), f_unit='GHz').interpolate(freq)
           ntwk4 = rf.Network(os.path.join(self.test_dir,'ntwk4.s2p'),f_unit='GHz').interpolate(freq)
           thru = rf.Network(os.path.join(self.test_dir,'thru.s2p'),f_unit='GHz').interpolate(freq)
 
-          ntwk4_thru = ntwk4 ** thru                  ;ntwk4_thru.name ='ntwk4_thru'
-          retrieve_thru =  ntwk4.inv ** ntwk4_thru    ;retrieve_thru.name ='retrieve_thru'
+          ntwk4_thru = ntwk4 ** thru
+          ntwk4_thru.name ='ntwk4_thru'
+          retrieve_thru =  ntwk4.inv ** ntwk4_thru
+          retrieve_thru.name ='retrieve_thru'
           self.assertEqual(retrieve_thru, thru)
           self.assertTrue(ntwk4_thru.noisy)
           self.assertTrue(retrieve_thru.noisy)
-          self.assertTrue((abs(thru.nfmin - retrieve_thru.nfmin)        < 1.e-6).all(), 'nf not retrieved by noise deembed')
-          self.assertTrue((abs(thru.rn    - retrieve_thru.rn)           < 1.e-6).all(), 'rn not retrieved by noise deembed')
-          self.assertTrue((abs(thru.z_opt - retrieve_thru.z_opt)        < 1.e-6).all(), 'noise figure does not match original spec')
+          self.assertTrue((abs(thru.nfmin - retrieve_thru.nfmin)        < 1.e-6).all(),
+                          'nf not retrieved by noise deembed')
+          self.assertTrue((abs(thru.rn    - retrieve_thru.rn)           < 1.e-6).all(),
+                          'rn not retrieved by noise deembed')
+          self.assertTrue((abs(thru.z_opt - retrieve_thru.z_opt)        < 1.e-6).all(),
+                          'noise figure does not match original spec')
 
-          ntwk4_n_thru = ntwk4_n ** thru                    ;ntwk4_n_thru.name ='ntwk4_n_thru'
-          retrieve_n_thru =  ntwk4_n.inv ** ntwk4_n_thru    ;retrieve_n_thru.name ='retrieve_n_thru'
+          ntwk4_n_thru = ntwk4_n ** thru
+          ntwk4_n_thru.name ='ntwk4_n_thru'
+          retrieve_n_thru =  ntwk4_n.inv ** ntwk4_n_thru
+          retrieve_n_thru.name ='retrieve_n_thru'
           self.assertTrue(ntwk4_n_thru.noisy)
           self.assertEqual(retrieve_n_thru, thru)
           self.assertTrue(ntwk4_n_thru.noisy)
           self.assertTrue(retrieve_n_thru.noisy)
-          self.assertTrue((abs(thru.nfmin - retrieve_n_thru.nfmin) < 1.e-6).all(), 'nf not retrieved by noise deembed')
-          self.assertTrue((abs(thru.rn    - retrieve_n_thru.rn)    < 1.e-6).all(), 'rn not retrieved by noise deembed')
-          self.assertTrue((abs(thru.z_opt - retrieve_n_thru.z_opt) < 1.e-6).all(), 'noise figure does not match original spec')
+          self.assertTrue((abs(thru.nfmin - retrieve_n_thru.nfmin) < 1.e-6).all(),
+                          'nf not retrieved by noise deembed')
+          self.assertTrue((abs(thru.rn    - retrieve_n_thru.rn)    < 1.e-6).all(),
+                          'rn not retrieved by noise deembed')
+          self.assertTrue((abs(thru.z_opt - retrieve_n_thru.z_opt) < 1.e-6).all(),
+                          'noise figure does not match original spec')
 
           tuner, x,y,g = tuner_constellation()
           newnetw = thru.copy()
-          nfmin_set=4.5; gamma_opt_set=complex(.7,-0.2); rn_set=1
+          nfmin_set=4.5
+          gamma_opt_set=complex(.7,-0.2)
+          rn_set=1
           newnetw.set_noise_a(thru.noise_freq, nfmin_db=nfmin_set, gamma_opt=gamma_opt_set, rn=rn_set )
           z = newnetw.nfdb_gs(g)[:,0]
           freq = thru.noise_freq.f[0]
@@ -1605,6 +1731,17 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(npy.allclose(net.f, freq.f[:4]))
         self.assertTrue(npy.allclose(net.s, s[:4]))
         self.assertFalse(npy.allclose(net.s.shape, s.shape))
+
+    def test_stability(self):
+        net = rf.Network(f=[1], s=[[0, 1],[0, 0]], z0=50)
+        self.assertTrue(net.stability == [npy.inf])
+
+        net = rf.Network(f=[1], s=[[0, 1],[1, 0]], z0=50)
+        self.assertTrue(net.stability == [1])
+
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.stability
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)

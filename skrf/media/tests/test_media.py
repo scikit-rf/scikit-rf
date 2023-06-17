@@ -4,10 +4,9 @@ import numpy as npy
 from numpy.testing import run_module_suite
 
 
-from skrf.media import DefinedGammaZ0, Media
+from skrf.media import DefinedGammaZ0
 from skrf.network import Network
 from skrf.frequency import Frequency
-import skrf
 
 
 class DefinedGammaZ0TestCase(unittest.TestCase):
@@ -574,21 +573,21 @@ class DefinedGammaZ0_s_def(unittest.TestCase):
         m = DefinedGammaZ0(
             frequency = Frequency(1, 1, 1, unit='ghz'),
             gamma=1j,
-            z0 = 50,
-            Z0 = 10+20j,
+            z0_port = 50,
+            z0 = 10+20j,
             )
-        self.assertTrue(m.Z0.imag != 0)
+        self.assertTrue(m.z0.imag != 0)
 
         # Powerwave short is -Z0.conj()/Z0
-        short = m.short(z0=m.Z0, s_def='power')
+        short = m.short(z0=m.z0, s_def='power')
         self.assertTrue(short.s != -1)
         # Should be -1 when converted to traveling s_def
         npy.testing.assert_allclose(short.s_traveling, -1)
 
-        short = m.short(z0=m.Z0, s_def='traveling')
+        short = m.short(z0=m.z0, s_def='traveling')
         npy.testing.assert_allclose(short.s, -1)
 
-        short = m.short(z0=m.Z0, s_def='pseudo')
+        short = m.short(z0=m.z0, s_def='pseudo')
         npy.testing.assert_allclose(short.s, -1)
 
         # Mismatches agree with real port impedances

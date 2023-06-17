@@ -33,8 +33,7 @@ import numpy as npy
 
 from ..util import get_fid
 from ..network import Network
-from ..frequency import Frequency
-from ..media import Media, DefinedGammaZ0
+from ..media import DefinedGammaZ0
 from .. import mathFunctions as mf
 
 
@@ -61,7 +60,7 @@ class Touchstone:
         file : str or file-object
             touchstone file to load
         encoding : str, optional
-            define the file encoding to use. Default value is None, 
+            define the file encoding to use. Default value is None,
             meaning the encoding is guessed (ANSI, UTF-8 or Latin-1).
 
         Examples
@@ -69,18 +68,18 @@ class Touchstone:
         From filename
 
         >>> t = rf.Touchstone('network.s2p')
-        
+
         File encoding can be specified to help parsing the special characters:
-        
+
         >>> t = rf.Touchstone('network.s2p', encoding='ISO-8859-1')
 
         From file-object
 
         >>> file = open('network.s2p')
         >>> t = rf.Touchstone(file)
-        
+
         From a io.StringIO object
-        
+
         >>> link = 'https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/examples/basic_touchstone_plotting/horn antenna.s1p'
         >>> r = requests.get(link)
         >>> stringio = io.StringIO(r.text)
@@ -88,7 +87,7 @@ class Touchstone:
         >>> horn = rf.Touchstone(stringio)
 
         """
-        ## file format version. 
+        ## file format version.
         # Defined by default to 1.0, since version number can be omitted in V1.0 format
         self.version = '1.0'
         ## comments in the file header
@@ -350,11 +349,11 @@ class Touchstone:
         p2 = re.compile(r'\s*(\d*\.?\d*)\s*(\w*)')
         var_dict = {}
         for k in re.findall(p1, comments):
-            var, value = k.split('=')
-            var=var.rstrip()
             try:
+                var, value = k.split('=')
+                var=var.rstrip()
                 var_dict[var] = p2.match(value).groups()
-            except:
+            except ValueError:
                 pass
         return var_dict
 

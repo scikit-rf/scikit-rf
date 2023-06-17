@@ -10,9 +10,9 @@ author = 'scikit-rf team'
 
 # -- General configuration ---------------------------------------------------
 
-import sys, os
+import sys
+import os
 import sphinx_rtd_theme
-import nbsphinx
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -21,7 +21,7 @@ warnings.filterwarnings('ignore')
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../'))
 
-import skrf as rf 
+import skrf as rf
 rf.setup_pylab()
 
 # Add any Sphinx extension module names here, as strings. They can be

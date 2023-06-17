@@ -3,7 +3,7 @@ import pyqtgraph as pg
 import skrf
 import numpy as np
 
-from . import qt, networkListWidget, numeric_inputs, widgets, util
+from . import qt, networkListWidget, numeric_inputs, widgets
 
 
 class CalibratedMeasurementsWidget(QtWidgets.QWidget):
@@ -115,7 +115,7 @@ class TRLStandardsWidget(QtWidgets.QWidget):
     THRU_ID = "thru"
     SWITCH_TERMS_ID_FORWARD = "forward switch terms"
     SWITCH_TERMS_ID_REVERSE = "reverse switch terms"
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -269,7 +269,7 @@ class TRLStandardsWidget(QtWidgets.QWidget):
             switch_terms = (forward_switch_terms.ntwk, reverse_switch_terms.ntwk)
         else:
             switch_terms = None
-        
+
         if isinstance(thru, skrf.Network):
             measured.append(thru)
         else:
@@ -280,7 +280,7 @@ class TRLStandardsWidget(QtWidgets.QWidget):
             error_messages.append("missing reflect standards")
         else:
             measured.extend(reflects)
-        
+
         lines = self.listWidget_line.get_all_networks()
         if len(lines) == 0:
             error_messages.append("missing line standards")

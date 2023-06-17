@@ -85,9 +85,8 @@ Various Utility Functions
 """
 from typing import Callable, Union
 import numpy as npy
-from numpy import pi, angle, unwrap, real, imag, array
+from numpy import pi, unwrap, real, imag
 from scipy import signal
-from scipy.interpolate import interp1d
 
 from . constants import NumberLike, INF, ALMOST_ZERO, LOG_OF_NEG, EIG_COND, EIG_MIN
 
@@ -1054,7 +1053,7 @@ def ifft(x: npy.ndarray) -> npy.ndarray:
     --------
     irfft
     """
-    return npy.fft.fftshift(npy.fft.ifft(x, axis=0), axes=0)
+    return npy.fft.fftshift(npy.fft.ifft(npy.fft.ifftshift(x, axes=0), axis=0), axes=0)
 
 
 def irfft(x: npy.ndarray, n:int = None) -> npy.ndarray:
@@ -1296,7 +1295,7 @@ def nudge_eig(mat: npy.ndarray,
     mat : npy.ndarray
         Matrices to nudge
     cond : float, optional
-        Minimum eigenvalue ratio compared to the maximum eigenvalue. 
+        Minimum eigenvalue ratio compared to the maximum eigenvalue.
         Default value is set by `skrf.constants.EIG_COND`.
     min_eig : float, optional
         Minimum eigenvalue.

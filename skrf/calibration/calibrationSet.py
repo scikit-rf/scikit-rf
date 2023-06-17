@@ -16,7 +16,7 @@ CalibrationSet Class
    CalibrationSet
 
 """
-from itertools import product, combinations, permutations
+from itertools import product
 from .calibration import Calibration
 from ..networkSet import NetworkSet
 
@@ -138,6 +138,3 @@ class Dot(CalibrationSet):
             cal = self.cal_class(ideals=ideals, measured= measured,
                                  *args,**kwargs)
             self.cal_list.append(cal)
-
-
-

@@ -1,7 +1,8 @@
 import skrf as rf
 import numpy as np
 import unittest
-import os, sys
+import os
+import sys
 from numpy.testing import assert_array_almost_equal, run_module_suite
 
 class CircuitTestConstructor(unittest.TestCase):
@@ -54,7 +55,7 @@ class CircuitTestConstructor(unittest.TestCase):
         connections = [[(self.port1, 0), (self.ntwk1, 0)],
                        [(self.ntwk1, 1), (self.ntwk2, 0)],
                        [(self.ntwk2, 1), (self.port1, 0)]]
-        self.assertRaises(AttributeError, rf.Circuit, connections)        
+        self.assertRaises(AttributeError, rf.Circuit, connections)
 
     def test_s_active(self):
         """
@@ -87,9 +88,9 @@ class CircuitClassMethods(unittest.TestCase):
             gnd = rf.Circuit.Ground(self.freq)
 
         gnd = rf.Circuit.Ground(self.freq, 'gnd')
-        gnd_ref = rf.Network(frequency=self.freq, 
+        gnd_ref = rf.Network(frequency=self.freq,
                              s=np.tile(np.array([[-1, 0],
-                                                 [0, -1]]), 
+                                                 [0, -1]]),
                                        (len(self.freq),1,1)))
 
         assert_array_almost_equal(gnd.s, gnd_ref.s)
@@ -104,21 +105,23 @@ class CircuitClassMethods(unittest.TestCase):
             opn = rf.Circuit.Open(self.freq)
 
         opn = rf.Circuit.Open(self.freq, 'open')
-        opn_ref = rf.Network(frequency=self.freq, 
+        opn_ref = rf.Network(frequency=self.freq,
                              s=np.tile(np.array([[1, 0],
-                                                 [0, 1]]), 
+                                                 [0, 1]]),
                                        (len(self.freq),1,1)))
 
         assert_array_almost_equal(opn.s, opn_ref.s)
-    
+
     def test_series_impedance(self):
+        z0s = [1, 50]
         Zs = [1, 1 + 1j, rf.INF]
-        for Z in Zs:
-            assert_array_almost_equal(
-                rf.Circuit.SeriesImpedance(self.freq, Z, 'imp').s, 
-                self.media.resistor(Z).s
-                )
-            
+        for z0 in z0s:
+            for Z in Zs:
+                assert_array_almost_equal(
+                    rf.Circuit.SeriesImpedance(self.freq, Z, 'imp', z0=z0).s,
+                    self.media.resistor(Z, z0=z0).s
+                    )
+
         # Z=0 is a thru
         assert_array_almost_equal(
             rf.Circuit.SeriesImpedance(self.freq, Z=0, name='imp').s,
@@ -126,13 +129,15 @@ class CircuitClassMethods(unittest.TestCase):
             )
 
     def test_shunt_admittance(self):
+        z0s = [1, 50]
         Ys = [1, 1 + 1j, rf.INF]
-        for Y in Ys:
-            assert_array_almost_equal(
-                rf.Circuit.ShuntAdmittance(self.freq, Y, 'imp').s, 
-                self.media.shunt(self.media.load(rf.zl_2_Gamma0(self.media.z0, 1/Y))).s
-                )
-        
+        for z0 in z0s:
+            for Y in Ys:
+                assert_array_almost_equal(
+                    rf.Circuit.ShuntAdmittance(self.freq, Y, 'imp', z0=z0).s,
+                    self.media.shunt(self.media.load(rf.zl_2_Gamma0(z0, 1/Y))).s
+                    )
+
         # Y=INF is a a 2-ports short, aka a ground
         assert_array_almost_equal(
             rf.Circuit.ShuntAdmittance(self.freq, rf.INF, 'imp').s,
@@ -162,12 +167,12 @@ class CircuitTestWilkinson(unittest.TestCase):
 
         # resistor
         self.R = 100
-        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, Z0=self.R)
+        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, z0=self.R)
         self.resistor = self.line_resistor.resistor(self.R, name='resistor')
 
         # branches
         Z0_branches = np.sqrt(2)*Z0_ports
-        self.line_branches = rf.media.DefinedGammaZ0(frequency=self.freq, Z0=Z0_branches)
+        self.line_branches = rf.media.DefinedGammaZ0(frequency=self.freq, z0=Z0_branches)
         self.branch1 = self.line_branches.line(90, unit='deg', name='branch1')
         self.branch2 = self.line_branches.line(90, unit='deg', name='branch2')
 
@@ -820,7 +825,7 @@ class CircuitTestGraph(unittest.TestCase):
 
         # dummy components
         self.R = 100
-        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, Z0=self.R)
+        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, z0=self.R)
         resistor1 = self.line_resistor.resistor(self.R, name='resistor1')
         resistor2 = self.line_resistor.resistor(self.R, name='resistor2')
         resistor3 = self.line_resistor.resistor(self.R, name='resistor3')
@@ -998,6 +1003,61 @@ class CircuitTestVoltagesCurrents(unittest.TestCase):
         # (toward the Circuit's Port)
         np.testing.assert_allclose(self.I_out, -1*I_ports[:,1])
 
+class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
+    def test_isolator(self):
+        # Isolator that passes from port 1 to 2
+        freq = rf.Frequency.from_f([1], unit='GHz')
+        s = np.array([[[0, 0], [1, 0]]])
+        network = rf.Network(frequency=freq, s=s, name='isolator')
+        port1 = rf.Circuit.Port(frequency=freq, name='port1', z0=50)
+        port2 = rf.Circuit.Port(frequency=freq, name='port2', z0=50)
+        cnx = [
+            [(network,0),(port1,0)],
+            [(network,1),(port2,0)]
+        ]
+        crt = rf.Circuit(cnx)
+        np.testing.assert_allclose(crt.s_external, s)
+
+        power = [1,0] # 1 Watt at port 1
+        phase = [0,0]
+        V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
+        np.testing.assert_allclose(V_at_ports, [[10+0j, 10+0j]])
+        # Positive current entering into port
+        np.testing.assert_allclose(I_at_ports, [[0.2+0j, -0.2+0j]])
+
+        power = [0,1] # 1 Watt at port 2
+        V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
+        np.testing.assert_allclose(V_at_ports, [[0+0j, 10+0j]])
+        np.testing.assert_allclose(I_at_ports, [[0+0j, 0.2+0j]])
+
+    def test_isolator_reverse(self):
+        # Isolator that passes from port 2 to 1
+        freq = rf.Frequency.from_f([1], unit='GHz')
+        s = np.array([[[0, 1], [0, 0]]])
+        network = rf.Network(frequency=freq, s=s, name='isolator')
+        port1 = rf.Circuit.Port(frequency=freq, name='port1', z0=50)
+        port2 = rf.Circuit.Port(frequency=freq, name='port2', z0=50)
+        cnx = [
+            [(network,0),(port1,0)],
+            [(network,1),(port2,0)]
+        ]
+        crt = rf.Circuit(cnx)
+        np.testing.assert_allclose(crt.s_external, s)
+
+        power = [1,0] # 1 Watt at port 1
+        phase = [0,0]
+        V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
+        np.testing.assert_allclose(V_at_ports, [[10+0j, 0+0j]])
+        np.testing.assert_allclose(I_at_ports, [[0.2+0j, 0+0j]])
+
+        power = [0,1] # 1 Watt at port 2
+        V_at_ports = crt.voltages_external(power, phase)
+        I_at_ports = crt.currents_external(power, phase)
+        np.testing.assert_allclose(V_at_ports, [[10+0j, 10+0j]])
+        np.testing.assert_allclose(I_at_ports, [[-0.2+0j, 0.2+0j]])
 
 if __name__ == "__main__":
     # Launch all tests
