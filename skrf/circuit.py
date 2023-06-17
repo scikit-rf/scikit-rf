@@ -1402,5 +1402,5 @@ class Circuit:
                                         font_size=edge_fontsize, ax=ax)
         # remove x and y axis and labels
         ax.axis('off')
-        ax.tight_layout()
+        fig.tight_layout()
 

@@ -978,9 +978,9 @@ def plot_reciprocity2(netw: BaseNetwork, db=False, *args, **kwargs):
     plt.draw()
 
 
-def plot_s_db_time(self, *args, window: Union[str, float, Tuple[str, float]]=('kaiser', 6),
+def plot_s_db_time(netw: BaseNetwork, *args, window: Union[str, float, Tuple[str, float]]=('kaiser', 6),
         normalize: bool = True, center_to_dc: bool = None, **kwargs):
-    return self.windowed(window, normalize, center_to_dc).plot_s_time_db(*args,**kwargs)
+    return netw.windowed(window, normalize, center_to_dc).plot_s_time_db(*args,**kwargs)
 
 
 # plotting
@@ -1808,34 +1808,24 @@ class PlottingMixin(BaseNetwork):
                             (attribute[0].upper(),m+1,n+1)
                     kwargs['label'] = label_string
 
-                # quick and dirty way to plot step and impulse response
-                if 'time_impulse' in attribute:
-                    xlabel = 'Time (ns)'
+                if conversion in ["time_impulse", "time_step"]:
+                    xlabel = "Time (ns)"
+                    
+                    t_func_kwargs = {}
+                    for key in {"window", "n", "pad", "bandpass"} & kwargs.keys():
+                        t_func_kwargs[key] = kwargs.pop(key)
 
-                    x,y = self.impulse_response(**kwargs)
-                    # default is reflexion coefficient axis
-                    if attribute[0].lower() == 'z':
-                        # if they want impedance axis, give it to them
-                        y_label = 'Z (ohm)'
+                    if conversion == "time_impulse":
+                        x, y = self.impulse_response(**t_func_kwargs)
+                    else:
+                        x, y = self.step_response(**t_func_kwargs)
+                    
+                    if attribute[0].lower() == "z":
+                        y_label = "Z (Ohm)"
                         y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
                         y[x == -1.] = -1. + 1e-12  # solve numerical singularity
-                        y = self.z0 * (1+y) / (1-y)
-                    plot_rectangular(x=x * 1e9,
-                                        y=y,
-                                        x_label=xlabel,
-                                        y_label=y_label,
-                                        show_legend=show_legend, ax=ax,
-                                        **kwargs)
-                elif 'time_step' in attribute:
-                    xlabel = 'Time (ns)'
-                    x, y = self.step_response(**kwargs)
-                    # default is reflexion coefficient axis
-                    if attribute[0].lower() == 'z':
-                        # if they want impedance axis, give it to them
-                        y_label = 'Z (ohm)'
-                        y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
-                        y[x == -1.] = -1. + 1e-12  # solve numerical singularity
-                        y = self.z0 * (1+y) / (1-y)
+                        y = self.z0[0,0].real * (1+y) / (1-y)
+                    
                     plot_rectangular(x=x * 1e9,
                                         y=y,
                                         x_label=xlabel,
