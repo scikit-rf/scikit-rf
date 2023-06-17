@@ -1143,8 +1143,7 @@ class Circuit:
         phase excitation at "external" ports using `_a(power, phase)` method.
 
         """
-        # return self.s @ a_internal
-        return np.matmul(self.s, a_internal)
+        return self.s @ a_internal
 
     def currents(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
         """
