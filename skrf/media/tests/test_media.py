@@ -28,6 +28,9 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         """
         name = 'impedanceMismatch,50to25'
         qucs_ntwk = Network(os.path.join(self.files_dir, name + '.s2p'))
+        # sNp-files store the same impedance for every port, so to compare the
+        # networks, the port impedance has to be set manually to [50,25]
+        qucs_ntwk.z0 = [50,25]
         self.dummy_media.frequency = qucs_ntwk.frequency
         skrf_ntwk = self.dummy_media.thru(z0=50, name = name)**\
             self.dummy_media.thru(z0=25)
