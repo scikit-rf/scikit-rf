@@ -342,8 +342,8 @@ class Qfactor:
             result = self._optimise_fit8(self.N)
 
         # overwrite results in self
-        self.Q_L = float(result.Q_L)
-        self.f_L = float(result.f_L)
+        self.Q_L = result.Q_L[0]
+        self.f_L = result.f_L[0]
         self.fitted = True
         self.opt_res = result
 
@@ -462,12 +462,12 @@ class Qfactor:
             t = 2.0 * (self.f[i] / f_L0 - 1.0)
             y = 1.0 / complex(1.0, Q_L0 * t)
             v = t * y
-            v1 = y * self.s[i]
+            v1 = y * self.s[i, 0, 0]
             G[i] = v1.real
             G[i2] = v1.imag
             v2 = v1 * t
-            M[i, :] = np.array([v.real, -v.imag, y.real, -y.imag, v2.imag], dtype="object")
-            M[i2, :] = np.array([v.imag, v.real, y.imag, y.real, -v2.real], dtype="object")
+            M[i, :] = np.array([v.real, -v.imag, y.real, -y.imag, v2.imag])
+            M[i2, :] = np.array([v.imag, v.real, y.imag, y.real, -v2.real])
 
         T = M.transpose()  # unweighted
         C = T @ M
@@ -527,7 +527,7 @@ class Qfactor:
         ## Loop through all of the operations specified in loop_plan
         for op in self.loop_plan:
             if op == "w":
-                PV = self.angular_weights(self.f, Flwst * float(m5) / float(m6), float(m5))
+                PV = self.angular_weights(self.f, Flwst * m5[0] / m6[0], m5[0])
                 # PV = self.angular_weights(m5)
                 weighting_ratio = max(PV) / min(PV)
                 PV2 = np.concatenate((PV, PV))
@@ -545,12 +545,12 @@ class Qfactor:
                 number_iterations += 1
                 M = np.zeros([N2, 6])  # X is the transpose of M
                 G = np.zeros(N2)[:, np.newaxis]
-                c1 = complex(-m4, m3)
-                c2 = complex(m1, m2)
-                c3 = complex(m3, m4)
+                c1 = complex(-m4[0], m3[0])
+                c2 = complex(m1[0], m2[0])
+                c3 = complex(m3[0], m4[0])
                 for i in range(N):
                     i2 = i + N
-                    y = 1.0 / complex(1.0, 2 * (m6 * self.f[i] / Flwst - m5))
+                    y = 1.0 / complex(1.0, 2 * (m6[0] * self.f[i] / Flwst - m5[0]))
                     u = c1 * y * y * 2
                     u2 = -u * self.f[i] / Flwst
                     M[i, :] = 1.0, 0.0, y.real, -y.imag, u.real, u2.real
@@ -579,9 +579,9 @@ class Qfactor:
                 SumNum = 0.0
                 SumDen = 0.0
                 for i in range(N):
-                    den = complex(1.0, 2 * (m6 * self.f[i] / Flwst - m5))
+                    den = complex(1.0, 2 * (m6[0] * self.f[i] / Flwst - m5[0]))
                     ip = PV[i]
-                    E = self.s[i] - complex(m1, m2) - complex(m3, m4) / den
+                    E = self.s[i] - complex(m1[0], m2[0]) - complex(m3[0], m4[0]) / den
                     SumNum = SumNum + ip * (E.real * E.real + E.imag * E.imag)
                     SumDen = SumDen + ip
                 RMS_Error = np.sqrt(SumNum / SumDen)
@@ -671,10 +671,10 @@ class Qfactor:
         m2 = -self._a.real / self.Q_L
         m3 = self._b.real - m1
         m4 = self._b.imag - m2
-        m5 = self.Q_L
+        m5 = np.atleast_1d(self.Q_L)
         Flwst = self.f[0]  # lowest freq. is a convenient normalisation factor.
-        m6 = Flwst * self.Q_L / self.f_L
-        m7 = 0.0
+        m6 = np.atleast_1d(Flwst * self.Q_L / self.f_L)
+        m7 = np.array([0.0])
         last_op = "n"
         weighting_ratio = None
         number_iterations = 0
@@ -683,7 +683,7 @@ class Qfactor:
         for op in self.loop_plan:
 
             if op == "w":
-                PV = self.angular_weights(self.f, Flwst * m5 / m6, m5)
+                PV = self.angular_weights(self.f, Flwst * m5[0] / m6[0], m5[0])
                 weighting_ratio = max(PV) / min(PV)
                 PV2 = np.concatenate((PV, PV))
                 if self.verbose:
@@ -703,14 +703,14 @@ class Qfactor:
                 number_iterations += 1
                 M = np.zeros([N2, 7])
                 G = np.zeros(N2)[:, np.newaxis]
-                c1 = complex(-m4, m3)
-                c2 = complex(m1, m2)
-                c3 = complex(m3, m4)
+                c1 = complex(-m4[0], m3[0])
+                c2 = complex(m1[0], m2[0])
+                c3 = complex(m3[0], m4[0])
                 for i in range(N):
                     i2 = i + N
-                    y = 1.0 / complex(1.0, 2 * (m6 * self.f[i] / Flwst - m5))
+                    y = 1.0 / complex(1.0, 2 * (m6[0] * self.f[i] / Flwst - m5[0]))
                     fdn = self.f[i] / Flwst - m5 / m6
-                    pj = complex(0.0, m7 * fdn)
+                    pj = complex(0.0, m7[0] * fdn[0])
                     expm7 = np.exp(pj)
                     ym = y * expm7
                     u = c1 * y * ym * 2
@@ -724,7 +724,7 @@ class Qfactor:
                         -ym.imag,
                         u.real,
                         u2.real,
-                        -u3.imag], dtype="object"
+                        -u3[0].imag], dtype="object"
                     )
                     M[i2, :] = np.array(
                         [expm7.imag,
@@ -733,7 +733,7 @@ class Qfactor:
                         ym.real,
                         u.imag,
                         u2.imag,
-                        u3.real], dtype="object"
+                        u3[0].real], dtype="object"
                     )
                     r = self.s[i] - v  # residual
                     G[i] = r.real
@@ -761,8 +761,8 @@ class Qfactor:
                 SumDen = 0.0
                 for i in range(N):
                     fdn = self.f[i] / Flwst - m5 / m6
-                    den = complex(1.0, 2 * (m6 * self.f[i] / Flwst - m5))
-                    pj = complex(0.0, m7 * fdn)
+                    den = complex(1.0, 2 * (m6[0] * self.f[i] / Flwst - m5[0]))
+                    pj = complex(0.0, m7[0] * fdn[0])
                     E = self.s[i] - (c2 + c3 / den) * np.exp(pj)
                     ip = PV[i]
                     SumNum = SumNum + ip * (E.real * E.real + E.imag * E.imag)
@@ -867,7 +867,7 @@ class Qfactor:
         for op in self.loop_plan:
 
             if op == "w":  # Fr                       QL
-                PV = self.angular_weights(self.f, Flwst * float(m5) / float(m6), float(m5))
+                PV = self.angular_weights(self.f, Flwst * m5[0] / m6[0], m5[0])
                 weighting_ratio = max(PV) / min(PV)
                 PV2 = np.concatenate((PV, PV))
                 if self.verbose:
@@ -887,15 +887,15 @@ class Qfactor:
                 number_iterations += 1
                 M = np.zeros([N2, 8])
                 G = np.zeros(N2)[:, np.newaxis]
-                c1 = complex(-m4, m3)
-                c2 = complex(m1, m2)
-                c3 = complex(m3, m4)
+                c1 = complex(-m4[0], m3[0])
+                c2 = complex(m1[0], m2[0])
+                c3 = complex(m3[0], m4[0])
                 for i in range(N):
                     i2 = i + N
-                    y = 1.0 / complex(1.0, 2 * (m6 * self.f[i] / Flwst - m5))
+                    y = 1.0 / complex(1.0, 2 * (m6[0] * self.f[i] / Flwst - m5[0]))
                     u = c1 * y * y * 2
                     u2 = -u * self.f[i] / Flwst
-                    FL = Flwst * m5 / m6
+                    FL = Flwst * m5[0] / m6[0]
                     t = 2 * (self.f[i] - FL) / FL
                     M[i, :] = np.array([1.0, 0.0, y.real, -y.imag, u.real, u2.real, t, 0.0], dtype="object")
                     M[i2, :] = np.array([0.0, 1.0, y.imag, y.real, u.imag, u2.imag, 0.0, t], dtype="object")
@@ -926,15 +926,15 @@ class Qfactor:
                 SumNum = 0.0
                 SumDen = 0.0
                 for i in range(N):
-                    den = complex(1.0, 2 * (m6 * self.f[i] / Flwst - m5))
+                    den = complex(1.0, 2 * (m6[0] * self.f[i] / Flwst - m5[0]))
                     FL = Flwst * m5 / m6
                     t = 2 * (self.f[i] - FL) / FL
                     ip = PV[i]
                     E = (
                         self.s[i]
-                        - complex(m1, m2)
-                        - complex(m8, m9) * t
-                        - complex(m3, m4) / den
+                        - complex(m1[0], m2[0])
+                        - complex(m8[0], m9[0]) * t
+                        - complex(m3[0], m4[0]) / den
                     )
                     SumNum = SumNum + ip * (E.real * E.real + E.imag * E.imag)
                     SumDen = SumDen + ip
@@ -1018,14 +1018,14 @@ class Qfactor:
         m1, m2, m3, m4 = (opt_res[key] for key in ['m1', 'm2', 'm3', 'm4'])
 
         if A is None:
-            A = 1.0 / abs(complex(m1, m2))  # scale to S_V
+            A = 1.0 / abs(complex(m1[0], m2[0]))  # scale to S_V
         elif not isinstance(A, (int, float)):
             raise ValueError("A should be a float or None")
 
-        aqratio = complex(m1, m2)
-        b = complex(m1 + m3, m2 + m4)
+        aqratio = complex(m1[0], m2[0])
+        b = complex(m1[0] + m3[0], m2[0] + m4[0])
         diam = abs(b - aqratio) * A
-        S_V = complex(m1, m2) * A
+        S_V = complex(m1[0], m2[0]) * A
         S_T = b * A
         return diam, S_V, S_T
 
@@ -1090,7 +1090,7 @@ class Qfactor:
             if auto_flag:
                 if self.verbose:
                     print('A is undefined: using fitted data to estimate it')
-                A = 1.0 / abs(complex(m1, m2))  # scale to S_V if A not defined
+                A = 1.0 / abs(complex(m1[0], m2[0]))  # scale to S_V if A not defined
             cal_diam, S_V, S_T = self.Q_circle(opt_res, A)
             cal_touching_circle_diam = 2.0
             if self.verbose:
@@ -1121,7 +1121,7 @@ class Qfactor:
                         'Notch/absorption Qo calculation: using fitted data to estimate scaling factor'
                     )
                 # scale to S_V if A is undefined
-                A = 1.0 / abs(complex(m1, m2))
+                A = 1.0 / abs(complex(m1[0], m2[0]))
             cal_diam, S_V, S_T = self.Q_circle(opt_res, A)
             if self.verbose:
                 print(f"Q-circle diam = {cal_diam}")
