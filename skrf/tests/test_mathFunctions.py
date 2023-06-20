@@ -3,7 +3,7 @@ import skrf as rf
 import unittest
 import numpy as npy
 from numpy import log, pi, isnan, inf
-from numpy.testing import assert_equal, run_module_suite, assert_almost_equal
+from numpy.testing import assert_equal, assert_almost_equal
 import pytest
 from skrf.constants import EIG_MIN
 
@@ -203,8 +203,3 @@ class TestUnitConversions(unittest.TestCase):
         npy.testing.assert_allclose(A2[:,0,0], EIG_MIN)
         A3 = rf.nudge_eig(A, min_eig=1e-10)
         npy.testing.assert_allclose(A3[:,0,0], 1e-10)
-
-
-if __name__ == "__main__":
-    # Launch all tests
-    run_module_suite()

@@ -6,7 +6,6 @@ of all general circuit components
 import unittest
 import numpy as np
 from scipy.constants import *
-from numpy.testing import run_module_suite
 
 import skrf as rf
 from skrf.media import Freespace, CircularWaveguide, RectangularWaveguide
@@ -170,7 +169,3 @@ suite.addTests([\
 
 #suite = unittest.TestLoader().loadTestsFromTestCase(FreespaceTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
-
-if __name__ == "__main__":
-    # Launch all tests
-    run_module_suite()
