@@ -799,11 +799,7 @@ class Circuit:
         S : :class:`numpy.ndarray`
             global scattering parameters of the circuit.
         """
-        # transpose is necessary to get expected result
-        #return np.transpose(self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X), axes=(0,2,1))
-        # does not use the @ operator for backward Python version compatibility
-        return np.transpose(np.matmul(self.X, np.linalg.inv(np.identity(self.dim) - np.matmul(self.C, self.X))), axes=(0,2,1))
-
+        return self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X)
 
     @property
     def port_indexes(self) -> list:
@@ -870,7 +866,7 @@ class Circuit:
             Shape `f x nb_ports x nb_ports`
         """
         port_indexes = self.port_indexes
-        a, b = np.meshgrid(port_indexes, port_indexes)
+        a, b = np.meshgrid(port_indexes, port_indexes, indexing='ij')
         S_ext = self.s[:, a, b]
         S_ext = s2s(S_ext, self.port_z0, S_DEF_DEFAULT, 'traveling')
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
@@ -1147,8 +1143,7 @@ class Circuit:
         phase excitation at "external" ports using `_a(power, phase)` method.
 
         """
-        # return self.s @ a_internal
-        return np.matmul(self.s, a_internal)
+        return self.s @ a_internal
 
     def currents(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
         """
