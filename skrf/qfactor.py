@@ -342,8 +342,8 @@ class Qfactor:
             result = self._optimise_fit8(self.N)
 
         # overwrite results in self
-        self.Q_L = float(result.Q_L)
-        self.f_L = float(result.f_L)
+        self.Q_L = result.Q_L
+        self.f_L = result.f_L
         self.fitted = True
         self.opt_res = result
 
@@ -462,12 +462,12 @@ class Qfactor:
             t = 2.0 * (self.f[i] / f_L0 - 1.0)
             y = 1.0 / complex(1.0, Q_L0 * t)
             v = t * y
-            v1 = y * self.s[i]
+            v1 = y * self.s[i, 0, 0]
             G[i] = v1.real
             G[i2] = v1.imag
             v2 = v1 * t
-            M[i, :] = np.array([v.real, -v.imag, y.real, -y.imag, v2.imag], dtype="object")
-            M[i2, :] = np.array([v.imag, v.real, y.imag, y.real, -v2.real], dtype="object")
+            M[i, :] = np.array([v.real, -v.imag, y.real, -y.imag, v2.imag])
+            M[i2, :] = np.array([v.imag, v.real, y.imag, y.real, -v2.real])
 
         T = M.transpose()  # unweighted
         C = T @ M
@@ -475,9 +475,9 @@ class Qfactor:
         sv = np.linalg.solve(C, q)
         a_re, a_im, b_re, b_im, Q_L = sv
 
-        self._a = a_re + 1j*a_im
-        self._b = b_re + 1j*b_im
-        self.Q_L = Q_L
+        self._a = (a_re + 1j*a_im)[0]
+        self._b = (b_re + 1j*b_im)[0]
+        self.Q_L = Q_L[0]
         self.f_L = f_L0
 
         if self.verbose:
@@ -563,7 +563,7 @@ class Qfactor:
                 T = np.multiply(X, PV2)
                 C = np.dot(T, M)
                 q = np.dot(T, G)
-                dm = np.linalg.solve(C, q)
+                dm = np.linalg.solve(C, q)[:,0]
                 m1 += dm[0]
                 m2 += dm[1]
                 m3 += dm[2]
@@ -724,7 +724,7 @@ class Qfactor:
                         -ym.imag,
                         u.real,
                         u2.real,
-                        -u3.imag], dtype="object"
+                        -u3.imag]
                     )
                     M[i2, :] = np.array(
                         [expm7.imag,
@@ -733,7 +733,7 @@ class Qfactor:
                         ym.real,
                         u.imag,
                         u2.imag,
-                        u3.real], dtype="object"
+                        u3.real]
                     )
                     r = self.s[i] - v  # residual
                     G[i] = r.real
@@ -742,7 +742,7 @@ class Qfactor:
                 T = np.multiply(X, PV2)
                 C = np.dot(T, M)
                 q = np.dot(T, G)
-                dm = np.linalg.solve(C, q)
+                dm = np.linalg.solve(C, q)[:,0]
                 m1 += dm[0]
                 m2 += dm[1]
                 m3 += dm[2]
@@ -897,8 +897,8 @@ class Qfactor:
                     u2 = -u * self.f[i] / Flwst
                     FL = Flwst * m5 / m6
                     t = 2 * (self.f[i] - FL) / FL
-                    M[i, :] = np.array([1.0, 0.0, y.real, -y.imag, u.real, u2.real, t, 0.0], dtype="object")
-                    M[i2, :] = np.array([0.0, 1.0, y.imag, y.real, u.imag, u2.imag, 0.0, t], dtype="object")
+                    M[i, :] = np.array([1.0, 0.0, y.real, -y.imag, u.real, u2.real, t, 0.0])
+                    M[i2, :] = np.array([0.0, 1.0, y.imag, y.real, u.imag, u2.imag, 0.0, t])
                     v = c2 + c3 * y + (m8 + 1j * m9) * t
                     r = self.s[i] - v  # residual
                     G[i] = r.real
@@ -907,7 +907,7 @@ class Qfactor:
                 T = np.multiply(X, PV2)
                 C = np.dot(T, M)
                 q = np.dot(T, G)
-                dm = np.linalg.solve(C, q)
+                dm = np.linalg.solve(C, q)[:,0]
                 m1 += dm[0]
                 m2 += dm[1]
                 m3 += dm[2]

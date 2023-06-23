@@ -154,9 +154,3 @@ class ConvenienceTestCase(unittest.TestCase):
                                     [-9.748145748042028E-6, 5.737806652221101E-6, -7.283138400961303E-1,  -7.202238521877286E-6]))
         self.assertTrue(npy.allclose(ntwk.s_im[0][2], # check s3n_im
                                     [4.457944078457155E-6, 5.341399484369366E-6, -4.531402467395991E-1, 5.667857998796495E-7]))
-
-
-if __name__ == "__main__":
-    from numpy.testing import run_module_suite
-    # Launch all tests
-    run_module_suite()
