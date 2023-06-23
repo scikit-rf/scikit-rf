@@ -2,7 +2,7 @@ import skrf as rf
 import unittest
 from numpy import real, imag, linspace, pi, array
 from numpy.random import rand
-from numpy.testing import assert_equal, run_module_suite, assert_almost_equal
+from numpy.testing import assert_equal, assert_almost_equal
 
 
 class TestBasicTransmissionLine(unittest.TestCase):
@@ -176,8 +176,3 @@ class TestVoltageCurrentPropagation(unittest.TestCase):
 
         assert_almost_equal(v2, -v1)
         assert_almost_equal(i2, -i1)
-
-
-if __name__ == "__main__":
-    # Launch all tests
-    run_module_suite()

@@ -5,7 +5,7 @@ import numpy as npy
 from skrf.media import CPW
 from skrf.frequency import Frequency
 import skrf as rf
-from numpy.testing import assert_array_almost_equal, run_module_suite
+from numpy.testing import assert_array_almost_equal
 
 try:
     from matplotlib import pyplot as plt
@@ -300,7 +300,3 @@ class CPWTestCase(unittest.TestCase):
         """
         assert_array_almost_equal(self.cpw4.alpha_conductor, 0.00, decimal=6)
         assert_array_almost_equal(self.cpw5.alpha_conductor, 0.00, decimal=6)
-
-if __name__ == "__main__":
-    # Launch all tests
-    run_module_suite()

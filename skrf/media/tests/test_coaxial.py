@@ -5,7 +5,7 @@ import pytest
 import skrf as rf
 from skrf.media import Coaxial
 import numpy as npy
-from numpy.testing import assert_almost_equal, assert_array_almost_equal, run_module_suite
+from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 class MediaTestCase(unittest.TestCase):
     """
@@ -118,7 +118,3 @@ class MediaTestCase(unittest.TestCase):
 
             self.assertTrue(abs(1 - coax.R[0]/dc_res) < 1e-2)
             self.assertTrue(abs(1 - coax.R[1]/R_simple[1]) < 1e-2)
-
-if __name__ == "__main__":
-    # Launch all tests
-    run_module_suite()
