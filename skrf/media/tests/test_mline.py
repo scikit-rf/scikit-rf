@@ -6,7 +6,6 @@ import pytest
 from skrf.media import MLine
 from skrf.frequency import Frequency
 import skrf as rf
-from numpy.testing import run_module_suite
 from matplotlib import pyplot as plt
 rf.stylely()
 
@@ -277,8 +276,3 @@ class MLineTestCase(unittest.TestCase):
                        ep_r = self.ep_r, rho = self.rho,
                        tand = self.tand, rough = self.d,
                        diel = 'frequencyinvariant', disp = 'hammerstadjensen')
-
-
-if __name__ == "__main__":
-    # Launch all tests
-    run_module_suite()

@@ -3,7 +3,7 @@ import numpy as np
 import unittest
 import os
 import sys
-from numpy.testing import assert_array_almost_equal, run_module_suite
+from numpy.testing import assert_array_almost_equal
 
 class CircuitTestConstructor(unittest.TestCase):
     """
@@ -1061,7 +1061,3 @@ class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
         I_at_ports = crt.currents_external(power, phase)
         np.testing.assert_allclose(V_at_ports, [[10+0j, 10+0j]])
         np.testing.assert_allclose(I_at_ports, [[-0.2+0j, 0.2+0j]])
-
-if __name__ == "__main__":
-    # Launch all tests
-    run_module_suite()
