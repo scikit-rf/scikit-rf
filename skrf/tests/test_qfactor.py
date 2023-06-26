@@ -4,7 +4,7 @@ import unittest
 import os
 from numpy.testing import (
     assert_almost_equal, assert_allclose,
-    assert_array_equal, run_module_suite
+    assert_array_equal
     )
 
 
@@ -322,8 +322,3 @@ class QfactorTests(unittest.TestCase):
         with self.assertWarns(Warning):
             BW = Q.BW
             BW_scaled = Q.BW_scaled
-
-
-if __name__ == "__main__":
-    # Launch all tests
-    run_module_suite()

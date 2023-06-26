@@ -370,6 +370,27 @@ class NetworkTestCase(unittest.TestCase):
         # Writing complex characteristic impedance should fail
         with pytest.raises(ValueError) as e_info:
             snp = ntwk.write_touchstone(return_string=True)
+        
+    def test_write_touchstone_noisy(self):
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
+
+        # Read back the written touchstone
+        ntwkstr = ntwk.write_touchstone(return_string=True)
+        strio = io.StringIO(ntwkstr)
+        strio.name = f'StringIO.s2p'
+        new_ntwk = rf.Network(strio)
+
+        # Only compare to original noise data, not interpolated
+        ntwk.resample(ntwk.f_noise)
+        new_ntwk.resample(new_ntwk.f_noise)
+        
+        # Newly written noise properties should match the original
+        npy.testing.assert_allclose(ntwk.f_noise.f_scaled, new_ntwk.f_noise.f_scaled)
+        npy.testing.assert_allclose(ntwk.nfmin, new_ntwk.nfmin)
+        npy.testing.assert_allclose(ntwk.nfmin_db, new_ntwk.nfmin_db)
+        npy.testing.assert_allclose(ntwk.g_opt, new_ntwk.g_opt)
+        npy.testing.assert_allclose(ntwk.rn, new_ntwk.rn)
+        npy.testing.assert_allclose(ntwk.z0, new_ntwk.z0)
 
     def test_pickling(self):
         original_ntwk = self.ntwk1
@@ -1722,6 +1743,32 @@ class NetworkTestCase(unittest.TestCase):
         with pytest.raises(ValueError):
             net.stability
 
+    def test_equality(self):
+        s = npy.random.randn(10, 2, 2)
+        f1 = npy.arange(10)
+        f2 = npy.arange(10)
+        n1 = rf.Network(s=s,f=f1)
+        n2 = rf.Network(s=s,f=f2)
+        self.assertTrue(n1 == n2)
+
+        f2 = npy.arange(11)
+        n2 = rf.Network(s=s,f=f2)
+        self.assertFalse(n1 == n2)
+
+        f2 = npy.arange(10)
+        n2 = rf.Network(s=s,f=f2)
+        n2.s_def = 'pseudo'
+        self.assertTrue(n1 == n2)
+
+        n2.z0 = n2.z0 +npy.array([0+0.00001j])
+        self.assertTrue(n1 == n2)
+
+        n2.z0 = n2.z0 +npy.array([1+0j])
+        self.assertFalse(n1 == n2)
+
+        f2 = 10 * f1
+        n2 = rf.Network(s=s,f=f2)
+        self.assertFalse(n1 == n2)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

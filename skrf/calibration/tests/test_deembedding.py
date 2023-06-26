@@ -3,8 +3,6 @@ import skrf as rf
 import unittest
 import os
 import numpy as np
-from numpy.testing import run_module_suite
-
 
 class DeembeddingTestCase(unittest.TestCase):
     """
@@ -497,7 +495,3 @@ class DeembeddingTestCase(unittest.TestCase):
         # insertion loss phase deviate from 0 degree from less than 1 degree
         il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
         self.assertTrue(np.max(np.abs(il_phase)) <= 1.0, 'residual IL Phase')
-
-if __name__ == "__main__":
-    # Launch all tests
-    run_module_suite()

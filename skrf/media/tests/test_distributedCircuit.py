@@ -2,7 +2,6 @@ import unittest
 import os
 from skrf.media import DistributedCircuit
 from skrf.network import Network
-from numpy.testing import run_module_suite
 
 class MediaTestCase(unittest.TestCase):
     """
@@ -54,8 +53,3 @@ class MediaTestCase(unittest.TestCase):
         a_media = DistributedCircuit.from_csv(fname)
         self.assertEqual(a_media,self.a_media)
         os.remove(fname)
-
-if __name__ == "__main__":
-    # Launch all tests
-    run_module_suite()
-    
