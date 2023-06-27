@@ -176,7 +176,7 @@ from scipy.interpolate import interp1d  # for Network.interpolate()
 from . import mathFunctions as mf
 from .frequency import Frequency
 from .util import get_fid, get_extn, find_nearest_index
-from .time import time_gate
+from .time import time_gate, get_window
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT, S_DEF_HFSS_DEFAULT
@@ -3382,7 +3382,7 @@ class Network:
         l =media.line(d=d, unit=unit,**kw)
         return connect(self, port, l, 0)
 
-    def windowed(self, window: Union[str, float, Tuple[str, float]]=('kaiser', 6),
+    def windowed(self, window: Union[str, float, Tuple[str, float], Callable]=('kaiser', 6),
             normalize: bool = True, center_to_dc: bool = None) -> 'Network':
         """
         Return a windowed version of s-matrix. Used in time-domain analysis.
@@ -3393,11 +3393,12 @@ class Network:
         compensate for the band-pass nature of a spectrum [#]_.
 
         This function calls :func:`scipy.signal.get_window` which gives
-        more details about the windowing.
+        more details about the windowing or a custom window function with
+        the required length as parameter.
 
         Parameters
         ----------
-        window : string, float, or tuple
+        window : string, float, tuple or callable
             The type of window to create. See :func:`scipy.signal.get_window`
             for details.
         normalize : bool
@@ -3431,9 +3432,9 @@ class Network:
             center_to_dc = self.frequency.f[0] == 0
 
         if center_to_dc:
-            window = signal.get_window(window, 2*len(self))[len(self):]
+            window = get_window(window, 2*len(self))[len(self):]
         else:
-            window = signal.get_window(window, len(self))
+            window = get_window(window, len(self))
 
         window = window.reshape(-1, 1, 1) * npy.ones((len(self),
                                                       self.nports,
