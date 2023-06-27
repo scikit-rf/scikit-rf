@@ -25,7 +25,7 @@ from scipy.ndimage import convolve1d
 import warnings
 
 # imports for type hinting
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Union, Callable
 if TYPE_CHECKING:
     from .network import Network
 
@@ -225,7 +225,22 @@ def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
 
     return span / time_lookup_dict[t_unit]
 
+def get_window(window: Union[str, tuple, Callable], Nx: int, **kwargs) -> npy.ndarray:
+    """Calls a custom window function or `scipy.signal.get_window()` depending on the window argument.
 
+    Args:
+        window (Union[str, tuple, Callable]): The callable window function or a valid window string
+            for `scipy.signal.get_window()`.
+        Nx (int): Number of samples
+
+    Returns:
+        npy.ndarray: Window samples
+    """
+    
+    if callable(window):
+        return window(Nx, **kwargs)
+    else:
+        return signal.get_window(window, Nx=Nx, **kwargs)
 
 def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
               mode: str = 'bandpass', window=('kaiser', 6),
@@ -241,6 +256,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     * 6 # integers are interpreted as kaiser beta-values
     * 'hamming'
     * 'boxcar'  # a straight up rect
+    * Callable function which accepts integer with window size as argument
 
     If no parameters are passed this will try to auto-gate the largest
     peak.
@@ -262,7 +278,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     mode : ['bandpass', 'bandstop']
         mode of gate
     window : string, float, or tuple
-        passed to `window` arg of `scipy.signal.get_window()`
+        passed to `window` arg of `scipy.signal.get_window()` or callable function
     method : str
         Gating method. There are 3 option: 'convolution', 'fft', 'rfft'.
 
@@ -377,7 +393,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         n_td = n_fd
         if fft_window is not None:
             # create band-pass window (zero on both lower and upper limit, one at center)
-            window_fd = signal.get_window(fft_window, n_fd)
+            window_fd = get_window(fft_window, n_fd)
         else:
             # create dummy-window
             window_fd = npy.ones(n_fd)
@@ -393,7 +409,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         n_td = 2 * n_fd - 1
         if fft_window is not None:
             # create low-pass window (one at lower limit at f=0, zero on upper limit)
-            window_fd = signal.get_window(fft_window, 2 * n_fd)
+            window_fd = get_window(fft_window, 2 * n_fd)
             window_fd = window_fd[n_fd:]
         else:
             # create dummy-window
@@ -413,7 +429,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
 
     # create gating window
     window_width = abs(stop_idx - start_idx) + 1
-    window = signal.get_window(window, window_width)
+    window = get_window(window, window_width)
 
     # create the gate by padding the window with zeros
     gate = npy.zeros_like(t)

@@ -107,8 +107,7 @@ class NetworkTestCase(unittest.TestCase):
             gated1 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=window, fft_window=window)
 
             def get_window(*args, **kwargs):
-                assert args[0] == window
-                return signal.get_window(*args, **kwargs)
+                return signal.get_window(window, *args, **kwargs)
         
             gated2 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=get_window, fft_window=get_window)
             assert gated1 == gated2
