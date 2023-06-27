@@ -7,6 +7,7 @@ import tempfile
 import zipfile
 import sys
 import numpy as npy
+from scipy import signal
 from pathlib import Path
 import pickle
 import skrf as rf
@@ -100,6 +101,17 @@ class NetworkTestCase(unittest.TestCase):
         ntwk = self.ntwk1
         gated = self.ntwk1.s11.time_gate(0,.2, t_unit='ns')
         self.assertTrue(len(gated)== len(ntwk))
+
+    def test_time_gate_custom_window(self):
+        for window in ["hamming", ('kaiser', 6)]:
+            gated1 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=window, fft_window=window)
+
+            def get_window(*args, **kwargs):
+                assert args[0] == window
+                return signal.get_window(*args, **kwargs)
+        
+            gated2 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=get_window, fft_window=get_window)
+            assert gated1 == gated2
 
     def test_time_gate_raises(self):
         ntwk = self.ntwk1
