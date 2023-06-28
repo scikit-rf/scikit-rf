@@ -228,13 +228,18 @@ def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
 def get_window(window: Union[str, tuple, Callable], Nx: int, **kwargs) -> npy.ndarray:
     """Calls a custom window function or `scipy.signal.get_window()` depending on the window argument.
 
-    Args:
-        window (Union[str, tuple, Callable]): The callable window function or a valid window string
-            for `scipy.signal.get_window()`.
-        Nx (int): Number of samples
+    Parameters
+    ----------
+    window : str, tuple or Callable
+        The callable window function or a valid window string
+        for `scipy.signal.get_window()`.
+    Nx : int
+        Number of samples
 
-    Returns:
-        npy.ndarray: Window samples
+    Returns
+    -------
+    window : npy.ndarray
+        Window samples.
     """
     
     if callable(window):
