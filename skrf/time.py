@@ -14,6 +14,7 @@ Time domain functions
    detect_span
    find_n_peaks
    indexes
+   get_window
 
 """
 
