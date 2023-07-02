@@ -6114,6 +6114,56 @@ def terminate_nport(ntwk, gammas):
     nout.z0 = ntwk.z0
     return nout
 
+def compute_switch_terms(ntwks):
+    """
+    A method for indirectly computing the switch terms of a VNA using measurements of at least three transmissive reciprocal devices. 
+    The VNA does not need to be calibrated and more than three reciprocal devices can be used. 
+    The accuracy of the calculated switch terms depends on the uniqueness of the measured reciprocal devices.
+
+    See [1]_ and [2]_
+
+    Parameters
+    ----------
+    ntwks : List of networks
+        measured reciprocal devices. At least 3 required.
+
+    Returns
+    -------
+    gammas : List of one-port networks of the switch terms.
+        The order is [Gamma21, Gamma12]. Gamma21 is forward and Gamma12 is reverse.
+
+    References
+    ----------
+    .. [1] Z. Hatab, M. E. Gadringer, and W. Bösch, "Indirect Measurement of Switch Terms of a Vector Network Analyzer with Reciprocal Devices," 
+        2023, e-print: <https://arxiv.org/abs/2306.07066>.
+
+    .. [2] <https://ziadhatab.github.io/posts/vna-switch-terms>
+
+    See Also
+    --------
+    terminate
+    unterminate
+
+    """
+    if len(ntwks) < 3:
+        raise ValueError("At least three networks are required.")
+    
+    fpoints = len(ntwks[0].frequency)
+    Gamma21_fill = npy.zeros(shape=(fpoints,), dtype=complex)  # forward switch term
+    Gamma12_fill = npy.zeros(shape=(fpoints,), dtype=complex)  # reverse switch term 
+    for inx in range(fpoints): # iterate through all frequency points
+        # create the system matrix
+        H = npy.array([ [-ntwk.s[inx,0,0]*ntwk.s[inx,0,1]/ntwk.s[inx,1,0], -ntwk.s[inx,1,1], 1, ntwk.s[inx,0,1]/ntwk.s[inx,1,0]] for ntwk in ntwks])
+        _,_,vh = npy.linalg.svd(H)    # compute the SVD
+        nullspace = vh[-1,:].conj()   # get the nullspace        
+        Gamma21_fill[inx] = nullspace[1]/nullspace[2]
+        Gamma12_fill[inx] = nullspace[0]/nullspace[3]
+
+    Gamma21 = Network(s=Gamma21_fill, frequency=ntwks[0].frequency, name='Gamma21')
+    Gamma12 = Network(s=Gamma12_fill, frequency=ntwks[0].frequency, name='Gamma12')
+
+    return [Gamma21, Gamma12]
+
 def determine_line(thru_m, line_m, line_approx=None):
     r"""
     Determine S21 of a matched line.
