@@ -3483,13 +3483,12 @@ class TUGMultilineTRL(EightTerm):
     by solving a single 4x4 weighted eigenvalue problem.
 
     The overall algorithm is based on [1]_, but the weighting matrix calculation is based on [2]_. 
-    You can read the mathematical details of the method [online](https://ziadhatab.github.io/posts/multiline-trl-calibration/). 
-    It should be noted, that this method uses a completely different approach than that used in NIST multiline TRL. 
+    You can read the mathematical details online at [3]_.
 
     The calibration reference plane is at the edges of the first line. 
     By default, the reference impedance of the calibration is the characteristic impedance 
     of the transmission lines. If the characteristic impedance is known, 
-    the reference impedance can be renormalized by running the method `renormalize(z0_old, z0_new)`.
+    the reference impedance can be renormalized afterwards by running the method `renormalize()`.
 
     References
     ----------
@@ -3498,19 +3497,21 @@ class TUGMultilineTRL(EightTerm):
         doi: [10.1109/ARFTG52954.2022.9844064](https://doi.org/10.1109/ARFTG52954.2022.9844064).
 
     .. [2] Z. Hatab, M. Gadringer and W. Bösch, "Propagation of Linear Uncertainties through Multiline Thru-Reflect-Line Calibration," 
-            2023, e-print: <https://arxiv.org/abs/2301.09126>.
-
+            2023, e-print: < https://arxiv.org/abs/2301.09126 >.
+            
+    .. [3] < https://ziadhatab.github.io/posts/multiline-trl-calibration/ >.
     """
 
     family = 'TRL'
     def __init__(self, line_meas, line_lengths, ereff_est=1-.0j, 
-                reflect_meas=None, reflect_est=None, reflect_offset=0,
+                reflect_meas=None, reflect_est=None, reflect_offset=0, ref_plane=0,
                 *args, **kwargs):
         r"""
         TUGMultilineTRL initializer.
 
         The order of the lines in `line_meas` and `line_lengths` should be the same.
-        Also, the first line is defined as thru. If non-zero, the calibration plane is shifted by half of its length.
+        Also, the first line is defined as thru. If non-zero, the calibration plane is 
+        shifted by half of its length using the extracted propagation constant.
 
         You can perform calibration without reflect measurements, but this will only provide you with the 
         propagation constant and relative effective permittivity. Without reflect measurements, you can 
@@ -3547,6 +3548,13 @@ class TUGMultilineTRL(EightTerm):
         reflect_offset : float or list of float
             Offset of the reflect standards from the reference plane. 
             Units are in meters.
+            
+        ref_plane : float or list of float
+            Reference plane shift after the calibration.
+            Negative length is towards the VNA. Units are in meters.
+
+            Different shifts can be given to different ports by giving a two element list.
+            First element is shift of port 1 and second is shift of port 2.
 
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
@@ -3558,17 +3566,20 @@ class TUGMultilineTRL(EightTerm):
         >>> line2 = rf.Network('line2.s2p')
         >>> line3 = rf.Network('line3.s2p')
         >>> short = rf.Network('short.s2p')
+        >>> dut   = rf.Network('dut.s2p')
 
         Normal multiline TRL calibration:
 
         >>> cal = rf.TUGMultilineTRL(line_meas=[line1,line2,line3], line_lengths=[0, 1e-3, 5e-3], ereff_est=4-.0j, 
         >>>        reflect_meas=short, reflect_est=-1, reflect_offset=0)
         >>> cal.run()
+        >>> dut_cal = cal.apply_cal(dut)
 
         Case of not using reflect measurements:
 
         >>> cal = rf.TUGMultilineTRL(line_meas=[line1,line2,line3], line_lengths=[0, 1e-3, 5e-3], ereff_est=4-.0j)
         >>> cal.run()
+        >>> dut_cal = cal.apply_cal(dut)  # only S21 and S12 are correct
 
         See Also
         --------
@@ -3605,7 +3616,9 @@ class TUGMultilineTRL(EightTerm):
         n_lines = len(self.line_lengths)
         self.line_meas = self.measured_unterminated[:n_lines] # switch term corrected
         self.reflect_meas = self.reflect_meas if reflect_meas is None else self.measured_unterminated[n_lines:] # switch term corrected
-
+        
+        self.ref_plane = npy.atleast_1d(ref_plane)*npy.ones(2)
+        
     def run(self):
         # Constants
         c0 = 299792458  # speed of light in vacuum (m/s)
@@ -3614,7 +3627,7 @@ class TUGMultilineTRL(EightTerm):
         
         # Functions used throughout the calibration
         gamma2ereff = lambda x,f: -(c0/2/npy.pi/f*x)**2
-        ereff2gamma = lambda x,f: 2*npy.pi*f/c0*npy.sqrt(-(x-1j*npy.finfo(complex).eps))  # eps to ensure positive square-root
+        ereff2gamma = lambda x,f: 2*npy.pi*f/c0*npy.sqrt(-x)
 
         def s2t_single(S, pseudo=False):
             T = S.copy()
@@ -3663,7 +3676,7 @@ class TUGMultilineTRL(EightTerm):
             EX = (X_inv@M)[[0,-1],:]             # extract z and y columns
             EX = npy.diag(1/EX[:,inx])@EX        # normalize to a reference line based on index `inx` (can be any)            
             del_inx = npy.arange(len(lengths)) != inx  # get rid of the reference line
-
+            
             # solve for alpha
             l = -2*lengths[del_inx]
             gamma_l = npy.log(EX[0,:]/EX[-1,:])[del_inx]
@@ -3676,7 +3689,7 @@ class TUGMultilineTRL(EightTerm):
             gamma_l = gamma_l - 1j*2*npy.pi*n # unwrap
             beta = WLS(l, gamma_l.imag, Vgl(len(l)+1))
             return alpha + 1j*beta 
-
+            
         def solve_quadratic(v1, v2, inx, x_est):
             # This is realted to solving the normalized error terms using nullspace approach.
             # The variable `inx` allowes to reuse the function to shuffel the coeffiecient to get other error terms.
@@ -3713,6 +3726,7 @@ class TUGMultilineTRL(EightTerm):
         Xs = npy.zeros(shape=(fpoints, 4, 4), dtype=complex)  # to store the combined error boxes (6 error terms)
         ks = npy.zeros(shape=(fpoints,), dtype=complex)       # to store the 7th transmission error terms
         ereffs = npy.zeros(shape=(fpoints,), dtype=complex)
+        gammas = npy.zeros(shape=(fpoints,), dtype=complex)
         lambds = npy.zeros(shape=(fpoints,), dtype=float)     # to store the eigenvalue of the weighted eigendecomposition
 
         # compute the calibration at each frequency point
@@ -3728,7 +3742,7 @@ class TUGMultilineTRL(EightTerm):
 
             gamma_est = ereff2gamma(ereff_est, f)
             gamma_est = abs(gamma_est.real) + 1j*abs(gamma_est.imag)  # this to avoid sign inconsistencies 
-                
+            
             z_est = npy.exp(-gamma_est*lengths)
             y_est = 1/z_est
             W_est = (npy.outer(y_est,z_est) - npy.outer(z_est,y_est)).conj()
@@ -3764,15 +3778,15 @@ class TUGMultilineTRL(EightTerm):
             
             X_inv = npy.linalg.inv(X_)
             
-            ## Compute propagation constant
+            ## compute propagation constant
             gamma = compute_gamma(X_inv, M, lengths, gamma_est)
             ereff_est = gamma2ereff(gamma, f) # new estimate of ereff
             
             ## solve a11b11 and k from thru measurement (first line in the list)
             ka11b11,_,_,k = X_inv@M[:,0]
             a11b11 = ka11b11/k
-            a11b11 = a11b11*npy.exp(-2*gamma*lengths[0]) # shift plane to edges of the thru standard
-            k      = k/npy.exp(gamma*lengths[0])         # shift plane to edges of the thru standard
+            a11b11 = a11b11*npy.exp(2*gamma*(lengths[0] - self.ref_plane.sum())) # shift plane to edges of the thru standard plus defined reference plane
+            k      = k*npy.exp(-gamma*(lengths[0] - self.ref_plane.sum()))       # shift plane to edges of the thru standard plus defined reference plane
 
             if npy.isnan(reflect_meas_S[0,m,0,0]):
                 # no reflect measurement available.
@@ -3780,45 +3794,40 @@ class TUGMultilineTRL(EightTerm):
                 b11 = a11
             else:
                 # solve for a11/b11, a11 and b11 (use redundant reflect measurement, if available)
-                reflect_est = reflect_est*npy.exp(-2*gamma*reflect_offset) # shift estimated reflect
-                Mr = npy.array([s2t_single(x, pseudo=True).flatten('F') for x in reflect_meas_S[:,m,:,:]]).T
-                T  = X_inv@Mr
-                a11_b11 = -T[2,:]/T[1,:]
+                reflect_est_offset = reflect_est*npy.exp(-2*gamma*reflect_offset) # shift estimated reflect
+                a11_b11 = (reflect_meas_S[:,m,0,0] - a12)/(1 - reflect_meas_S[:,m,0,0]*a21_a11) * (1 + reflect_meas_S[:,m,1,1]*b12_b11)/(reflect_meas_S[:,m,1,1] + b21)
                 a11 = npy.sqrt(a11_b11*a11b11)
                 b11 = a11b11/a11
                 G_cal = ( (reflect_meas_S[:,m,0,0] - a12)/(1 - reflect_meas_S[:,m,0,0]*a21_a11)/a11 + (reflect_meas_S[:,m,1,1] + b21)/(1 + reflect_meas_S[:,m,1,1]*b12_b11)/b11 )/2  # average
-                for inx,(Gcal,Gest) in enumerate(zip(G_cal, reflect_est)):
+                for inx,(Gcal,Gest) in enumerate(zip(G_cal, reflect_est_offset)):
                     if abs(Gcal - Gest) > abs(Gcal + Gest):
                         a11[inx]   = -a11[inx]
                         b11[inx]   = -b11[inx]
                         G_cal[inx] = -G_cal[inx]
                 a11 = a11.mean()
                 b11 = b11.mean()
-                reflect_est = G_cal*npy.exp(2*gamma*reflect_offset)  # obtain new estimate for the reflect
 
             X  = X_@npy.diag([a11b11, b11, a11, 1]) # build the calibration matrix (de-normalize)
 
             Xs[m] = X
             ks[m] = k
+            gammas[m] = gamma
             ereffs[m] = ereff_est
             lambds[m] = lambd
 
-        self._X = Xs
-        self._k = ks
         self._ereff = ereffs
-        self._gamma = ereff2gamma(ereffs, self.freq.f)
+        self._gamma = gammas
         self._lambd = lambds
 
         e = npy.zeros(shape=(len(self.freq.f), 7), dtype=complex)
-
-        e[:,0] = self._X[:,2,3]
-        e[:,1] = -self._X[:,3,2]
-        e[:,2] = -self._X[:,2,2]
-        e[:,3] = -self._X[:,1,3]
-        e[:,4] = self._X[:,3,1]
-        e[:,5] = -self._X[:,1,1]
-        e[:,6] = 1/(e[:,4]*e[:,3]-e[:,5])/self._k
-
+        e[:,0] =  Xs[:,2,3]
+        e[:,1] = -Xs[:,3,2]
+        e[:,2] = -Xs[:,2,2]
+        e[:,3] = -Xs[:,1,3]
+        e[:,4] =  Xs[:,3,1]
+        e[:,5] = -Xs[:,1,1]
+        e[:,6] =  1/ks/(e[:,4]*e[:,3]-e[:,5])
+        
         self._coefs = {\
                 'forward directivity':e[:,0],
                 'forward source match':e[:,1],
@@ -6116,9 +6125,11 @@ def terminate_nport(ntwk, gammas):
 
 def compute_switch_terms(ntwks):
     """
-    A method for indirectly computing the switch terms of a VNA using measurements of at least three transmissive reciprocal devices. 
-    The VNA does not need to be calibrated and more than three reciprocal devices can be used. 
-    The accuracy of the calculated switch terms depends on the uniqueness of the measured reciprocal devices.
+    A method for indirectly computing the switch terms of a VNA using measurements of at least three transmissive 
+    reciprocal devices. The VNA does not need to be calibrated, and more than three reciprocal devices can be used. 
+    However, the accuracy of the computed switch terms depends on the uniqueness of the measured reciprocal devices. 
+    Devices with asymmetric structure and semi-reflective properties can help ensure the conditioning of the system 
+    matrix, which solves the switch terms.   
 
     See [1]_ and [2]_
 
@@ -6129,15 +6140,15 @@ def compute_switch_terms(ntwks):
 
     Returns
     -------
-    gammas : List of one-port networks of the switch terms.
+    Gammas : List of one-port networks of the switch terms.
         The order is [Gamma21, Gamma12]. Gamma21 is forward and Gamma12 is reverse.
 
     References
     ----------
     .. [1] Z. Hatab, M. E. Gadringer, and W. Bösch, "Indirect Measurement of Switch Terms of a Vector Network Analyzer with Reciprocal Devices," 
-        2023, e-print: <https://arxiv.org/abs/2306.07066>.
+        2023, e-print: < https://arxiv.org/abs/2306.07066 >.
 
-    .. [2] <https://ziadhatab.github.io/posts/vna-switch-terms>
+    .. [2] < https://ziadhatab.github.io/posts/vna-switch-terms/ >
 
     See Also
     --------
