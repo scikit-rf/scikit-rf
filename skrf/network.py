@@ -787,10 +787,19 @@ class Network(PlottingMixin):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, self.__class__):
             return False
-        if npy.all(npy.abs(self.s - other.s) < ZERO):
-            return True
-        else:
+        if len(self.f) != len(other.f):
             return False
+        for prop in ['f','s','z0']:
+            if not npy.all(npy.abs(getattr(self,prop)-getattr(other,prop))< ZERO):
+                return False
+        # if z0 is imaginary s_def is compared. If real of z0 is equal but s_def differs, networks are still equal
+        if ((npy.imag(self.z0) != 0).all()) or ((npy.imag(other.z0) != 0).all()):
+            if self.s_def == other.s_def:
+                return True
+            else:
+                return npy.allclose(self.z0.real, other.z0.real, atol = ZERO)            
+        else:
+            return True
 
     def __ne__(self, other:object) -> bool:
         return (not self.__eq__(other))
