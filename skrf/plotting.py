@@ -939,8 +939,7 @@ def plot_reciprocity(netw: BaseNetwork, db=False, *args, **kwargs):
                 if 'label' not in kwargs.keys():
                     kwargs['label'] = 'ports %i%i' % (m, n)
                 y = netw.reciprocity[:, m, n].flatten()
-                if db:
-                    y = mf.complex_2_db(y)
+                y = mf.complex_2_db(y) if db else npy.abs(y)
                 netw.frequency.plot(y, *args, **kwargs)
 
     plt.legend()
@@ -1114,6 +1113,7 @@ def plot_it_all(netw: BaseNetwork, *args, **kwargs):
     >>> from skrf.data import ring_slot
     >>> ring_slot.plot_it_all()
     """
+    plt.clf()
     plt.subplot(221)
     netw.plot_s_db(*args, **kwargs)
     plt.subplot(222)
@@ -1827,7 +1827,7 @@ class PlottingMixin(BaseNetwork):
                         y = self.z0[0,0].real * (1+y) / (1-y)
                     
                     plot_rectangular(x=x * 1e9,
-                                        y=y,
+                                        y=y[:, m, n],
                                         x_label=xlabel,
                                         y_label=y_label,
                                         show_legend=show_legend, ax=ax,
@@ -1835,14 +1835,16 @@ class PlottingMixin(BaseNetwork):
 
                 else:
                     # plot the desired attribute vs frequency
-                    if 'time' in attribute:
+                    if conversion == "time":
                         xlabel = 'Time (ns)'
                         x = self.frequency.t_ns
+                        y=npy.abs(self.attribute(attribute, conversion)[:, m, n])
 
                     else:
                         xlabel = 'Frequency (%s)' % self.frequency.unit
                         # x = self.frequency.f_scaled
                         x = self.frequency.f  # always plot f, and then scale the ticks instead
+                        y = self.attribute(attribute, conversion)[:, m, n]
 
                         # scale the ticklabels according to the frequency unit and set log-scale if desired:
                         if logx:
@@ -1853,7 +1855,7 @@ class PlottingMixin(BaseNetwork):
 
 
                     plot_rectangular(x=x,
-                                        y=self.attribute(attribute, conversion)[:, m, n],
+                                        y=y,
                                         x_label=xlabel,
                                         y_label=y_label,
                                         show_legend=show_legend, ax=ax,
