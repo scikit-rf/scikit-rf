@@ -3477,7 +3477,7 @@ class NISTMultilineTRL(EightTerm):
 
 class TUGMultilineTRL(EightTerm):
     """
-    TUG multiline TRL calibration.
+    TUG Multiline TRL calibration.
 
     An improved multiline TRL calibration procedure that generalizes the calibration process 
     by solving a single 4x4 weighted eigenvalue problem.
@@ -3490,16 +3490,40 @@ class TUGMultilineTRL(EightTerm):
     of the transmission lines. If the characteristic impedance is known, 
     the reference impedance can be renormalized afterwards by running the method `renormalize()`.
 
+    Examples
+    --------
+
+    >>> line1 = rf.Network('line1.s2p')
+    >>> line2 = rf.Network('line2.s2p')
+    >>> line3 = rf.Network('line3.s2p')
+    >>> short = rf.Network('short.s2p')
+    >>> dut   = rf.Network('dut.s2p')
+
+    Normal multiline TRL calibration:
+
+    >>> cal = rf.TUGMultilineTRL(line_meas=[line1,line2,line3], line_lengths=[0, 1e-3, 5e-3], ereff_est=4-.0j, 
+    >>>        reflect_meas=short, reflect_est=-1, reflect_offset=0)
+    >>> dut_cal = cal.apply_cal(dut)
+
+    Case of not using reflect measurements:
+
+    >>> cal = rf.TUGMultilineTRL(line_meas=[line1,line2,line3], line_lengths=[0, 1e-3, 5e-3], ereff_est=4-.0j)
+    >>> dut_cal = cal.apply_cal(dut)  # only S21 and S12 are correct
+
     References
     ----------
     .. [1] Z. Hatab, M. Gadringer and W. Bösch, "Improving The Reliability of The Multiline TRL Calibration Algorithm," 
         _2022 98th ARFTG Microwave Measurement Conference (ARFTG)_, Las Vegas, NV, USA, 2022, pp. 1-5, 
-        doi: [10.1109/ARFTG52954.2022.9844064](https://doi.org/10.1109/ARFTG52954.2022.9844064).
+        doi: https://doi.org/10.1109/ARFTG52954.2022.9844064
 
     .. [2] Z. Hatab, M. Gadringer and W. Bösch, "Propagation of Linear Uncertainties through Multiline Thru-Reflect-Line Calibration," 
-            2023, e-print: < https://arxiv.org/abs/2301.09126 >.
+            2023, e-print: https://arxiv.org/abs/2301.09126
             
-    .. [3] < https://ziadhatab.github.io/posts/multiline-trl-calibration/ >.
+    .. [3] https://ziadhatab.github.io/posts/multiline-trl-calibration/
+
+    See Also
+    --------
+    NISTMultilineTRL
     """
 
     family = 'TRL'
@@ -3559,36 +3583,11 @@ class TUGMultilineTRL(EightTerm):
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
 
-        Examples
-        --------
-
-        >>> line1 = rf.Network('line1.s2p')
-        >>> line2 = rf.Network('line2.s2p')
-        >>> line3 = rf.Network('line3.s2p')
-        >>> short = rf.Network('short.s2p')
-        >>> dut   = rf.Network('dut.s2p')
-
-        Normal multiline TRL calibration:
-
-        >>> cal = rf.TUGMultilineTRL(line_meas=[line1,line2,line3], line_lengths=[0, 1e-3, 5e-3], ereff_est=4-.0j, 
-        >>>        reflect_meas=short, reflect_est=-1, reflect_offset=0)
-        >>> cal.run()
-        >>> dut_cal = cal.apply_cal(dut)
-
-        Case of not using reflect measurements:
-
-        >>> cal = rf.TUGMultilineTRL(line_meas=[line1,line2,line3], line_lengths=[0, 1e-3, 5e-3], ereff_est=4-.0j)
-        >>> cal.run()
-        >>> dut_cal = cal.apply_cal(dut)  # only S21 and S12 are correct
-
-        See Also
-        --------
-        NISTMultilineTRL
         """
 
         self.line_meas    = line_meas
         self.line_lengths = line_lengths
-        self.ereff_est    = ereff_est
+        self.ereff_est    = ereff_est*(1+0j)  # make complex
         if len(self.line_lengths) != len(self.line_meas):
             raise ValueError("Different amount of measured lines and line lengths found.")
 
@@ -6146,9 +6145,9 @@ def compute_switch_terms(ntwks):
     References
     ----------
     .. [1] Z. Hatab, M. E. Gadringer, and W. Bösch, "Indirect Measurement of Switch Terms of a Vector Network Analyzer with Reciprocal Devices," 
-        2023, e-print: < https://arxiv.org/abs/2306.07066 >.
+        2023, e-print: https://arxiv.org/abs/2306.07066
 
-    .. [2] < https://ziadhatab.github.io/posts/vna-switch-terms/ >
+    .. [2] https://ziadhatab.github.io/posts/vna-switch-terms/
 
     See Also
     --------
