@@ -922,7 +922,8 @@ def plot_passivity(netw: BaseNetwork, port=None, label_prefix=None, **kwargs):
                             **kwargs)
 
     plt.legend()
-    plt.draw()
+    if plt.isinteractive():
+        plt.draw()
 
 
 def plot_reciprocity(netw: BaseNetwork, db=False, *args, **kwargs):
@@ -943,7 +944,8 @@ def plot_reciprocity(netw: BaseNetwork, db=False, *args, **kwargs):
                 netw.frequency.plot(y, *args, **kwargs)
 
     plt.legend()
-    plt.draw()
+    if plt.isinteractive():
+        plt.draw()
 
 
 def plot_reciprocity2(netw: BaseNetwork, db=False, *args, **kwargs):
@@ -974,7 +976,8 @@ def plot_reciprocity2(netw: BaseNetwork, db=False, *args, **kwargs):
                 netw.frequency.plot(y, *args, **kwargs)
 
     plt.legend()
-    plt.draw()
+    if plt.isinteractive():
+        plt.draw()
 
 
 def plot_s_db_time(netw: BaseNetwork, *args, window: Union[str, float, Tuple[str, float]]=('kaiser', 6),

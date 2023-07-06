@@ -26,19 +26,19 @@ def test_generated_function_plots(generated_functions):
     fig = getattr(ntwk1, method)()
 
 def test_plot_passivity():
-    return ntwk1.plot_passivity()
+    ntwk1.plot_passivity()
 
 def test_plot_reciprocity():
-    return ntwk1.plot_reciprocity()
+    ntwk1.plot_reciprocity()
 
 def test_plot_reciprocity2():
-    return ntwk1.plot_reciprocity2()
+    ntwk1.plot_reciprocity2()
 
 def test_plot_s_db_time():
-    return ntwk1.plot_s_db_time()
+    ntwk1.plot_s_db_time()
 
 def test_plot_s_smith():
-    return ntwk1.plot_s_smith()
+    ntwk1.plot_s_smith()
 
 def test_plot_it_all():
-    return ntwk1.plot_it_all()
+    ntwk1.plot_it_all()
