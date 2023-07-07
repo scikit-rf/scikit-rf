@@ -1814,7 +1814,7 @@ class PlottingMixin(BaseNetwork):
                 if conversion in ["time_impulse", "time_step"]:
                     xlabel = "Time (ns)"
                     
-                    t_func_kwargs = {}
+                    t_func_kwargs = {"squeeze": False}
                     for key in {"window", "n", "pad", "bandpass"} & kwargs.keys():
                         t_func_kwargs[key] = kwargs.pop(key)
 
