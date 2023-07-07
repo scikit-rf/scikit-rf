@@ -3795,7 +3795,6 @@ class TUGMultilineTRL(EightTerm):
             else:
                 # solve for a11/b11, a11 and b11 (use redundant reflect measurement, if available)
                 reflect_est_offset = reflect_est*npy.exp(-2*gamma*reflect_offset) # shift estimated reflect
-                # a11_b11 = (reflect_meas_S[:,m,0,0] - a12)/(1 - reflect_meas_S[:,m,0,0]*a21_a11) * (1 + reflect_meas_S[:,m,1,1]*b12_b11)/(reflect_meas_S[:,m,1,1] + b21)
                 Mr = npy.array([s2t_single(x, pseudo=True).flatten('F') for x in reflect_meas_S[:,m,:,:]]).T
                 T  = X_inv@Mr
                 a11_b11 = -T[2,:]/T[1,:]
