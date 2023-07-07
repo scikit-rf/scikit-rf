@@ -129,7 +129,7 @@ class ComputeSwitchTermsTest(unittest.TestCase):
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
 
-        # Reciprocal devices: asymmtric and both transmissive and reflective devices 
+        # Reciprocal devices: asymmetric and both transmissive and reflective devices 
         Rs = [25, 50, 100, ] 
         stands = [wg.resistor(R)**wg.shunt_resistor(R) for R in Rs]
         stands_meas = [terminate(self.X**k**self.Y, self.gamma_f, self.gamma_r) for k in stands]
@@ -948,7 +948,7 @@ class TUGMultilineTest(EightTermTest):
         self.cal = TUGMultilineTRL(
             line_meas = [measured[0]] + measured[3:], 
             line_lengths = [0, 100e-6, 200e-6, 900e-6], 
-            ereff_est = 1, 
+            er_est = 1, 
             reflect_meas = measured[1:3], 
             reflect_est = [-1, 1],
             isolation = measured[1],

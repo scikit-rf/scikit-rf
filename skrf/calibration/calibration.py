@@ -3501,13 +3501,13 @@ class TUGMultilineTRL(EightTerm):
 
     Normal multiline TRL calibration:
 
-    >>> cal = rf.TUGMultilineTRL(line_meas=[line1,line2,line3], line_lengths=[0, 1e-3, 5e-3], ereff_est=4-.0j, 
+    >>> cal = rf.TUGMultilineTRL(line_meas=[line1,line2,line3], line_lengths=[0, 1e-3, 5e-3], er_est=4-.0j, 
     >>>        reflect_meas=short, reflect_est=-1, reflect_offset=0)
     >>> dut_cal = cal.apply_cal(dut)
 
     Case of not using reflect measurements:
 
-    >>> cal = rf.TUGMultilineTRL(line_meas=[line1,line2,line3], line_lengths=[0, 1e-3, 5e-3], ereff_est=4-.0j)
+    >>> cal = rf.TUGMultilineTRL(line_meas=[line1,line2,line3], line_lengths=[0, 1e-3, 5e-3], er_est=4-.0j)
     >>> dut_cal = cal.apply_cal(dut)  # only S21 and S12 are correct
 
     References
@@ -3527,7 +3527,7 @@ class TUGMultilineTRL(EightTerm):
     """
 
     family = 'TRL'
-    def __init__(self, line_meas, line_lengths, ereff_est=1-.0j, 
+    def __init__(self, line_meas, line_lengths, er_est=1-.0j, 
                 reflect_meas=None, reflect_est=None, reflect_offset=0, ref_plane=0,
                 *args, **kwargs):
         r"""
@@ -3557,8 +3557,8 @@ class TUGMultilineTRL(EightTerm):
             shifted by half of its length using the solved propagation constant.
             Units are in meters.
 
-        ereff_est : complex
-            Estimated effective permittivity of the lines at first frequency point of the measurement.
+        er_est : complex
+            Estimated permittivity of the lines at first frequency point of the measurement.
             Negative imaginary part indicates losses.
 
         reflect_meas : a two-port :class:`~skrf.network.Network` or a list of two-port :class:`~skrf.network.Network`
@@ -3587,7 +3587,7 @@ class TUGMultilineTRL(EightTerm):
 
         self.line_meas    = line_meas
         self.line_lengths = line_lengths
-        self.ereff_est    = ereff_est*(1+0j)  # make complex
+        self.er_est = er_est*(1+0j)  # make complex
         if len(self.line_lengths) != len(self.line_meas):
             raise ValueError("Different amount of measured lines and line lengths found.")
 
@@ -3717,14 +3717,14 @@ class TUGMultilineTRL(EightTerm):
         line_meas_S    = npy.array([x.s for x in self.line_meas])    # get the S-parameters
         reflect_meas_S = npy.array([x.s for x in self.reflect_meas]) # get the S-parameters
         lengths = npy.atleast_1d( self.line_lengths )  # make numpy array
-        ereff_est = self.ereff_est
+        er_est = self.er_est
         reflect_est = self.reflect_est
         reflect_offset = self.reflect_offset
 
         fpoints = len(self.freq.f)
         Xs = npy.zeros(shape=(fpoints, 4, 4), dtype=complex)  # to store the combined error boxes (6 error terms)
         ks = npy.zeros(shape=(fpoints,), dtype=complex)       # to store the 7th transmission error terms
-        ereffs = npy.zeros(shape=(fpoints,), dtype=complex)
+        er_effs = npy.zeros(shape=(fpoints,), dtype=complex)
         gammas = npy.zeros(shape=(fpoints,), dtype=complex)
         lambds = npy.zeros(shape=(fpoints,), dtype=float)     # to store the eigenvalue of the weighted eigendecomposition
 
@@ -3739,7 +3739,7 @@ class TUGMultilineTRL(EightTerm):
             G, lambd = compute_G_with_takagi(Dinv@M.T@P@Q@M)
             W = (G@npy.array([[0,1j],[-1j,0]])@G.T).conj()
 
-            gamma_est = ereff2gamma(ereff_est, f)
+            gamma_est = ereff2gamma(er_est, f)
             gamma_est = abs(gamma_est.real) + 1j*abs(gamma_est.imag)  # this to avoid sign inconsistencies 
             
             z_est = npy.exp(-gamma_est*lengths)
@@ -3779,8 +3779,9 @@ class TUGMultilineTRL(EightTerm):
             
             ## compute propagation constant
             gamma = compute_gamma(X_inv, M, lengths, gamma_est)
-            ereff_est = gamma2ereff(gamma, f) # new estimate of ereff
-            
+            er_eff = gamma2ereff(gamma, f) # new estimate of er_eff
+            er_est = er_eff
+
             ## solve a11b11 and k from thru measurement (first line in the list)
             ka11b11,_,_,k = X_inv@M[:,0]
             a11b11 = ka11b11/k
@@ -3794,7 +3795,10 @@ class TUGMultilineTRL(EightTerm):
             else:
                 # solve for a11/b11, a11 and b11 (use redundant reflect measurement, if available)
                 reflect_est_offset = reflect_est*npy.exp(-2*gamma*reflect_offset) # shift estimated reflect
-                a11_b11 = (reflect_meas_S[:,m,0,0] - a12)/(1 - reflect_meas_S[:,m,0,0]*a21_a11) * (1 + reflect_meas_S[:,m,1,1]*b12_b11)/(reflect_meas_S[:,m,1,1] + b21)
+                # a11_b11 = (reflect_meas_S[:,m,0,0] - a12)/(1 - reflect_meas_S[:,m,0,0]*a21_a11) * (1 + reflect_meas_S[:,m,1,1]*b12_b11)/(reflect_meas_S[:,m,1,1] + b21)
+                Mr = npy.array([s2t_single(x, pseudo=True).flatten('F') for x in reflect_meas_S[:,m,:,:]]).T
+                T  = X_inv@Mr
+                a11_b11 = -T[2,:]/T[1,:]
                 a11 = npy.sqrt(a11_b11*a11b11)
                 b11 = a11b11/a11
                 G_cal = ( (reflect_meas_S[:,m,0,0] - a12)/(1 - reflect_meas_S[:,m,0,0]*a21_a11)/a11 + (reflect_meas_S[:,m,1,1] + b21)/(1 + reflect_meas_S[:,m,1,1]*b12_b11)/b11 )/2  # average
@@ -3810,13 +3814,13 @@ class TUGMultilineTRL(EightTerm):
 
             Xs[m] = X
             ks[m] = k
-            gammas[m] = gamma
-            ereffs[m] = ereff_est
-            lambds[m] = lambd
+            gammas[m]  = gamma
+            er_effs[m] = er_eff
+            lambds[m]  = lambd
 
-        self._ereff = ereffs
-        self._gamma = gammas
-        self._lambd = lambds
+        self._er_eff = er_effs
+        self._gamma  = gammas
+        self._lambd  = lambds
 
         e = npy.zeros(shape=(len(self.freq.f), 7), dtype=complex)
         e[:,0] =  Xs[:,2,3]
@@ -3867,16 +3871,16 @@ class TUGMultilineTRL(EightTerm):
             return self._gamma
 
     @property
-    def ereff(self):
+    def er_eff(self):
         """
         Relative effective permittivity of the solved line.
 
         """
         try:
-            return self._ereff
+            return self._er_eff
         except(AttributeError):
             self.run()
-            return self._ereff
+            return self._er_eff
 
     @property
     def lambd(self):
