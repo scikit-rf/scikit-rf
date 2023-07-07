@@ -1,6 +1,10 @@
 import pytest
+import sys
 
 import skrf as rf
+
+if "matplotlib" not in sys.modules:
+    pytest.skip(allow_module_level=True)
 
 ntwk1 = rf.Network("skrf/tests/ntwk1.s2p")
 ntwk1 = ntwk1.extrapolate_to_dc()
