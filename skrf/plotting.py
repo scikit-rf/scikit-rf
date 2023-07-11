@@ -76,7 +76,7 @@ from . import mathFunctions as mf
 from .base_network import BaseNetwork
 from .constants import NumberLike
 from .frequency import Frequency
-from .util import axes_kwarg, copy_doc, now_string_2_dt
+from .util import axes_kwarg, copy_doc, now_string_2_dt, partial_with_docs
 
 if TYPE_CHECKING:
     from . import NetworkSet
@@ -1744,22 +1744,13 @@ def plot_contour(freq: Frequency,
 
 class PlottingMixin(BaseNetwork):
 
-    @axes_kwarg
-    def plot_attribute(self,
-                            attribute: str,
-                            conversion: str,
-                            m=None,
-                            n=None,
-                            ax: plt.Axes=None,
-                            show_legend=True,
-                            y_label=None,
-                            logx=False, **kwargs):
-        """plot Network's `conversion`(`attribute`) component vs frequency or time.
+    _plot_attribute_doc = """
+    plot Network's `{conversion}`(`{attribute}`) component vs frequency or time.
 
         Args:
             netw (network.Network): _description_
-            attribute (str): _description_
-            conversion (str): _description_
+            {attribute} (str): _description_
+            {conversion} (str): _description_
             m : int, optional
                 first index of s-parameter matrix, if None will use all
             n : int, optional
@@ -1772,7 +1763,20 @@ class PlottingMixin(BaseNetwork):
                 the y-axis label
             logx : Boolean, optional
                 Enable logarithmic x-axis, default off
-        """
+    
+    """
+
+    @axes_kwarg
+    def plot_attribute(     self: BaseNetwork,
+                            attribute: str,
+                            conversion: str,
+                            m=None,
+                            n=None,
+                            ax: plt.Axes=None,
+                            show_legend=True,
+                            y_label=None,
+                            logx=False, **kwargs):
+        
 
         # create index lists, if not provided by user
         if m is None:
@@ -1863,6 +1867,8 @@ class PlottingMixin(BaseNetwork):
                                         y_label=y_label,
                                         show_legend=show_legend, ax=ax,
                                         **kwargs)
+    
+    plot_attribute.__doc__ = _plot_attribute_doc.format(attribute="test", conversion="abc")
 
 
     def plot_prop_polar(self, prop_name: str,
@@ -2055,10 +2061,14 @@ class PlottingMixin(BaseNetwork):
     def __init_subclass__(cls) -> None:
 
         for func_name, (_func, prop_name, conversion) in cls._generated_functions().items():
-            setattr(cls, f"plot_{func_name}", partialmethod(cls.plot_attribute, prop_name, conversion))
+            plotfunc = partial_with_docs(cls.plot_attribute, prop_name, conversion)
+            plotfunc.__doc__ = cls._plot_attribute_doc.format(attribute=prop_name, conversion=conversion)
+            
+            setattr(cls, f"plot_{func_name}", plotfunc)
+
 
         for prop_name in cls.PRIMARY_PROPERTIES:
-            setattr(cls, f"plot_{prop_name}_polar", partialmethod(cls.plot_prop_polar, prop_name))
-            setattr(cls, f"plot_{prop_name}_complex", partialmethod(cls.plot_prop_complex, prop_name))
+            setattr(cls, f"plot_{prop_name}_polar", partial_with_docs(cls.plot_prop_polar, prop_name))
+            setattr(cls, f"plot_{prop_name}_complex", partial_with_docs(cls.plot_prop_complex, prop_name))
 
         return super().__init_subclass__()

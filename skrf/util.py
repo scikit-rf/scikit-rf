@@ -77,6 +77,12 @@ except ImportError:
 def plotting_available() -> bool:
     return "matplotlib" in sys.modules
 
+def partial_with_docs(func, *args1, **kwargs1):
+    @wraps(func)
+    def method(self, *args2, **kwargs2):
+        return func(self, *args1, *args2, **kwargs1, **kwargs2)
+    return method
+
 def axes_kwarg(func):
     """
     This decorator checks if a :class:`matplotlib.axes.Axes` object is passed,
