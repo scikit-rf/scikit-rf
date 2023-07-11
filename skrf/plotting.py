@@ -1745,16 +1745,13 @@ def plot_contour(freq: Frequency,
 class PlottingMixin(BaseNetwork):
 
     _plot_attribute_doc = """
-    plot Network's `{conversion}`(`{attribute}`) component vs frequency or time.
+    plot Network's {conversion}({attribute}) component vs {x_axis}.
 
         Args:
-            netw (network.Network): _description_
-            {attribute} (str): _description_
-            {conversion} (str): _description_
             m : int, optional
                 first index of s-parameter matrix, if None will use all
             n : int, optional
-                secon index of the s-parameter matrix, if None will use all
+                second index of the s-parameter matrix, if None will use all
             ax : :class:`matplotlib.Axes` object, optional
                 An existing Axes object to plot on
             show_legend : Boolean
@@ -1868,7 +1865,7 @@ class PlottingMixin(BaseNetwork):
                                         show_legend=show_legend, ax=ax,
                                         **kwargs)
     
-    plot_attribute.__doc__ = _plot_attribute_doc.format(attribute="test", conversion="abc")
+    plot_attribute.__doc__ = _plot_attribute_doc.format(attribute="conversion", conversion="attribute", x_axis="frequency or time")
 
 
     def plot_prop_polar(self, prop_name: str,
@@ -2062,7 +2059,10 @@ class PlottingMixin(BaseNetwork):
 
         for func_name, (_func, prop_name, conversion) in cls._generated_functions().items():
             plotfunc = partial_with_docs(cls.plot_attribute, prop_name, conversion)
-            plotfunc.__doc__ = cls._plot_attribute_doc.format(attribute=prop_name, conversion=conversion)
+            plotfunc.__doc__ = cls._plot_attribute_doc.format(
+                attribute=prop_name, 
+                conversion=conversion, 
+                x_axis="time" if "time" in conversion else "frequency")
             
             setattr(cls, f"plot_{func_name}", plotfunc)
 

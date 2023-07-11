@@ -184,3 +184,14 @@ intersphinx_mapping = {
     'pd': ('https://pandas.pydata.org/docs', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
 }
+
+def process_signature(app, what, name, obj, options, signature, return_annotation):
+
+    func_name = name.split(".")[-1]
+    if func_name.startswith("plot_") and func_name[5:] in rf.Network._generated_functions().keys():
+        return signature[2:], return_annotation
+
+    return signature, return_annotation
+
+def setup(app):
+    app.connect("autodoc-process-signature", process_signature)
