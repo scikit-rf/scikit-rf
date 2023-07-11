@@ -189,7 +189,8 @@ def process_signature(app, what, name, obj, options, signature, return_annotatio
 
     func_name = name.split(".")[-1]
     if func_name.startswith("plot_") and func_name[5:] in rf.Network._generated_functions().keys():
-        return signature[2:], return_annotation
+        signature = signature.split(",")[2:]
+        return "(" + ", ".join(signature), return_annotation
 
     return signature, return_annotation
 
