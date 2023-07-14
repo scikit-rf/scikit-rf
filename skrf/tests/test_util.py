@@ -1,6 +1,5 @@
 import skrf as rf
 import unittest
-from numpy.testing import run_module_suite
 
 class HomoDictTest(unittest.TestCase):
     """
@@ -38,8 +37,3 @@ class HomoListTest(unittest.TestCase):
     def test_boolean_mask(self):
         match_idx = [idx for idx in range(len(self.h)) if self.h.startswith('a')]
         self.assertEqual(self.h[match_idx], 'asdf')
-
-
-if __name__ == "__main__":
-    # Launch all tests
-    run_module_suite()

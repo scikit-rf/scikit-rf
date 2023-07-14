@@ -274,7 +274,7 @@ class Calibration:
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
             if self.ideals[k].frequency != self.measured[0].frequency:
-                print(deden(
+                print(dedent(
                     f"""Warning: Frequency information doesn\'t match on ideals[{k}],
                     attempting to interpolate the ideal[{k}] Network .."""))
                 try:

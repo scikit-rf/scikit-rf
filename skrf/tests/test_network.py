@@ -7,6 +7,7 @@ import tempfile
 import zipfile
 import sys
 import numpy as npy
+from scipy import signal
 from pathlib import Path
 import pickle
 import skrf as rf
@@ -100,6 +101,16 @@ class NetworkTestCase(unittest.TestCase):
         ntwk = self.ntwk1
         gated = self.ntwk1.s11.time_gate(0,.2, t_unit='ns')
         self.assertTrue(len(gated)== len(ntwk))
+
+    def test_time_gate_custom_window(self):
+        for window in ["hamming", ('kaiser', 6)]:
+            gated1 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=window, fft_window=window)
+
+            def get_window(*args, **kwargs):
+                return signal.get_window(window, *args, **kwargs)
+        
+            gated2 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=get_window, fft_window=get_window)
+            assert gated1 == gated2
 
     def test_time_gate_raises(self):
         ntwk = self.ntwk1
@@ -1743,6 +1754,32 @@ class NetworkTestCase(unittest.TestCase):
         with pytest.raises(ValueError):
             net.stability
 
+    def test_equality(self):
+        s = npy.random.randn(10, 2, 2)
+        f1 = npy.arange(10)
+        f2 = npy.arange(10)
+        n1 = rf.Network(s=s,f=f1)
+        n2 = rf.Network(s=s,f=f2)
+        self.assertTrue(n1 == n2)
+
+        f2 = npy.arange(11)
+        n2 = rf.Network(s=s,f=f2)
+        self.assertFalse(n1 == n2)
+
+        f2 = npy.arange(10)
+        n2 = rf.Network(s=s,f=f2)
+        n2.s_def = 'pseudo'
+        self.assertTrue(n1 == n2)
+
+        n2.z0 = n2.z0 +npy.array([0+0.00001j])
+        self.assertTrue(n1 == n2)
+
+        n2.z0 = n2.z0 +npy.array([1+0j])
+        self.assertFalse(n1 == n2)
+
+        f2 = 10 * f1
+        n2 = rf.Network(s=s,f=f2)
+        self.assertFalse(n1 == n2)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
