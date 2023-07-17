@@ -173,22 +173,25 @@ from numpy import gradient, ndarray, shape
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 
-from .base_network import BaseNetwork
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    pass
+
 from . import mathFunctions as mf
 from .frequency import Frequency
-from .util import get_fid, get_extn, find_nearest_index
+from . import plotting as rfplt
+from .util import get_fid, get_extn, find_nearest_index, axes_kwarg, copy_doc, partial_with_docs
 from .time import time_gate
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT, S_DEF_HFSS_DEFAULT
 
-from .plotting import PlottingMixin
-
 if TYPE_CHECKING:
     import pandas as pd
 
 
-class Network(PlottingMixin):
+class Network:
     r"""
     An n-port electrical network.
 
@@ -2233,7 +2236,7 @@ class Network(PlottingMixin):
                 # get the name from the touchstone file
                 try:
                     self.name = os.path.basename(os.path.splitext(touchstoneFile.filename)[0])
-                except():
+                except:
                     print('warning: couldn\'t inspect network name')
                     self.name = ''
                 pass
@@ -4267,6 +4270,168 @@ class Network(PlottingMixin):
         """
         return s2vswr_active(self.s, a)
 
+    
+    _plot_attribute_doc = """
+    plot Network's {conversion}({attribute}) component vs {x_axis}.
+
+        Args:
+            m : int, optional
+                first index of s-parameter matrix, if None will use all
+            n : int, optional
+                second index of the s-parameter matrix, if None will use all
+            ax : :class:`matplotlib.Axes` object, optional
+                An existing Axes object to plot on
+            show_legend : Boolean
+                draw legend or not
+            y_label : string, optional
+                the y-axis label
+            logx : Boolean, optional
+                Enable logarithmic x-axis, default off
+    
+    """
+
+    @axes_kwarg
+    def plot_attribute(     self,
+                            attribute: str,
+                            conversion: str,
+                            m=None,
+                            n=None,
+                            ax: plt.Axes=None,
+                            show_legend=True,
+                            y_label=None,
+                            logx=False, **kwargs):
+        
+
+        # create index lists, if not provided by user
+        if m is None:
+            M = range(self.number_of_ports)
+        else:
+            M = [m]
+        if n is None:
+            N = range(self.number_of_ports)
+        else:
+            N = [n]
+
+        if 'label' not in kwargs.keys():
+            gen_label = True
+        else:
+            gen_label = False
+
+        for m in M:
+            for n in N:
+                # set the legend label for this trace to the networks
+                # name if it exists, and they didn't pass a name key in
+                # the kwargs
+                if gen_label:
+                    if self.name is None:
+                        if plt.rcParams['text.usetex']:
+                            label_string = '$%s_{%i%i}$'%\
+                            (attribute[0].upper(),m+1,n+1)
+                        else:
+                            label_string = '%s%i%i'%\
+                            (attribute[0].upper(),m+1,n+1)
+                    else:
+                        if plt.rcParams['text.usetex']:
+                            label_string = self.name+', $%s_{%i%i}$'%\
+                            (attribute[0].upper(),m+1,n+1)
+                        else:
+                            label_string = self.name+', %s%i%i'%\
+                            (attribute[0].upper(),m+1,n+1)
+                    kwargs['label'] = label_string
+
+                if conversion in ["time_impulse", "time_step"]:
+                    xlabel = "Time (ns)"
+                    
+                    t_func_kwargs = {"squeeze": False}
+                    for key in {"window", "n", "pad", "bandpass"} & kwargs.keys():
+                        t_func_kwargs[key] = kwargs.pop(key)
+
+                    if conversion == "time_impulse":
+                        x, y = self.impulse_response(**t_func_kwargs)
+                    else:
+                        x, y = self.step_response(**t_func_kwargs)
+                    
+                    if attribute[0].lower() == "z":
+                        y_label = "Z (Ohm)"
+                        y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
+                        y[x == -1.] = -1. + 1e-12  # solve numerical singularity
+                        y = self.z0[0,0].real * (1+y) / (1-y)
+                    
+                    rfplt.plot_rectangular(x=x * 1e9,
+                                        y=y[:, m, n],
+                                        x_label=xlabel,
+                                        y_label=y_label,
+                                        show_legend=show_legend, ax=ax,
+                                        **kwargs)
+
+                else:
+                    # plot the desired attribute vs frequency
+                    if conversion == "time":
+                        xlabel = 'Time (ns)'
+                        x = self.frequency.t_ns
+                        y=npy.abs(self.attribute(attribute, conversion)[:, m, n])
+
+                    else:
+                        xlabel = 'Frequency (%s)' % self.frequency.unit
+                        # x = self.frequency.f_scaled
+                        x = self.frequency.f  # always plot f, and then scale the ticks instead
+                        y = self.attribute(attribute, conversion)[:, m, n]
+
+                        # scale the ticklabels according to the frequency unit and set log-scale if desired:
+                        if logx:
+                            ax.set_xscale('log')
+
+                        rfplt.scale_frequency_ticks(ax, self.frequency.unit)
+
+
+
+                    rfplt.plot_rectangular(x=x,
+                                        y=y,
+                                        x_label=xlabel,
+                                        y_label=y_label,
+                                        show_legend=show_legend, ax=ax,
+                                        **kwargs)
+    
+    plot_attribute.__doc__ = _plot_attribute_doc.format(attribute="conversion", conversion="attribute", x_axis="frequency or time")
+
+    @copy_doc(rfplt.plot)
+    def plot(self, *args, **kwargs):
+        return rfplt.plot(self, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_passivity)
+    def plot_passivity(self, port=None, label_prefix=None, *args, **kwargs):
+        return rfplt.plot_passivity(self, port, label_prefix, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_reciprocity)
+    def plot_reciprocity(self, db=False, *args, **kwargs):
+        return rfplt.plot_reciprocity(self, db, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_reciprocity2)
+    def plot_reciprocity2(self, db=False, *args, **kwargs):
+        return rfplt.plot_reciprocity2(self, db, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_s_db_time)
+    def plot_s_db_time(self, center_to_dc=None, *args, **kwargs):
+        return rfplt.plot_s_db_time(self, center_to_dc, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_s_smith)
+    def plot_s_smith(self, m=None, n=None,r=1, ax=None, show_legend=True,\
+        chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):
+        return rfplt.plot_s_smith(self, m, n, r, ax, show_legend, chart_type,
+                            draw_labels, label_axes, draw_vswr, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_it_all)
+    def plot_it_all(self, *args, **kwargs):
+        return rfplt.plot_it_all(self, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_prop_complex)
+    def plot_prop_complex(self, *args, **kwargs):
+        return rfplt.plot_prop_complex(self, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_prop_polar)
+    def plot_prop_polar(self, *args, **kwargs):
+        return rfplt.plot_prop_polar(self, *args, **kwargs)
+
 for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
 
     func_name = f"{prop_name}_{conversion}"
@@ -4284,6 +4449,20 @@ for func_name, (_func, prop_name, conversion) in Network._generated_functions().
             conversion=conversion:
 
             self.attribute(prop_name, conversion), doc=doc))
+
+    for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
+        plotfunc = partial_with_docs(Network.plot_attribute, prop_name, conversion)
+        plotfunc.__doc__ = Network._plot_attribute_doc.format(
+            attribute=prop_name, 
+            conversion=conversion, 
+            x_axis="time" if "time" in conversion else "frequency")
+        
+        setattr(Network, f"plot_{func_name}", plotfunc)
+
+
+    for prop_name in Network.PRIMARY_PROPERTIES:
+        setattr(Network, f"plot_{prop_name}_polar", partial_with_docs(Network.plot_prop_polar, prop_name))
+        setattr(Network, f"plot_{prop_name}_complex", partial_with_docs(Network.plot_prop_complex, prop_name))
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
 PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES

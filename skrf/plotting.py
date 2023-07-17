@@ -73,13 +73,12 @@ except ImportError:
 import numpy as npy
 
 from . import mathFunctions as mf
-from .base_network import BaseNetwork
 from .constants import NumberLike
 from .frequency import Frequency
 from .util import axes_kwarg, copy_doc, now_string_2_dt, partial_with_docs
 
 if TYPE_CHECKING:
-    from . import NetworkSet
+    from . import Network, NetworkSet
 
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
 SI_CONVERSION = {key: 10**((8-i)*3) for i, key in enumerate(SI_PREFIXES_ASCII)}
@@ -885,14 +884,14 @@ def colors() -> List[str]:
 
 
 ## specific plotting functions
-def plot(netw: BaseNetwork, *args, **kw):
+def plot(netw: Network, *args, **kw):
     """
     Plot something vs frequency
     """
     return netw.frequency.plot(*args, **kw)
 
 
-def plot_passivity(netw: BaseNetwork, port=None, label_prefix=None, **kwargs):
+def plot_passivity(netw: Network, port=None, label_prefix=None, **kwargs):
     """
     Plot dB(diag(passivity metric)) vs frequency.
 
@@ -926,7 +925,7 @@ def plot_passivity(netw: BaseNetwork, port=None, label_prefix=None, **kwargs):
         plt.draw()
 
 
-def plot_reciprocity(netw: BaseNetwork, db=False, *args, **kwargs):
+def plot_reciprocity(netw: Network, db=False, *args, **kwargs):
     """
     Plot reciprocity metric.
 
@@ -948,7 +947,7 @@ def plot_reciprocity(netw: BaseNetwork, db=False, *args, **kwargs):
         plt.draw()
 
 
-def plot_reciprocity2(netw: BaseNetwork, db=False, *args, **kwargs):
+def plot_reciprocity2(netw: Network, db=False, *args, **kwargs):
     """
     Plot reciprocity metric #2.
 
@@ -980,13 +979,13 @@ def plot_reciprocity2(netw: BaseNetwork, db=False, *args, **kwargs):
         plt.draw()
 
 
-def plot_s_db_time(netw: BaseNetwork, *args, window: Union[str, float, Tuple[str, float]]=('kaiser', 6),
+def plot_s_db_time(netw: Network, *args, window: Union[str, float, Tuple[str, float]]=('kaiser', 6),
         normalize: bool = True, center_to_dc: bool = None, **kwargs):
     return netw.windowed(window, normalize, center_to_dc).plot_s_time_db(*args,**kwargs)
 
 
 # plotting
-def plot_s_smith(netw: BaseNetwork, m=None, n=None,r=1, ax=None, show_legend=True,\
+def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
         chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):
     r"""
     Plots the scattering parameter on a smith chart.
@@ -1089,7 +1088,7 @@ def plot_s_smith(netw: BaseNetwork, m=None, n=None,r=1, ax=None, show_legend=Tru
         ax.set_ylabel('Imaginary')
 
 
-def plot_it_all(netw: BaseNetwork, *args, **kwargs):
+def plot_it_all(netw: Network, *args, **kwargs):
     r"""
     Plot dB, deg, smith, and complex in subplots.
 
@@ -1742,333 +1741,160 @@ def plot_contour(freq: Frequency,
         plt.show()
     return GAMopt, VALopt
 
-class PlottingMixin(BaseNetwork):
+def plot_prop_complex(netw: Network, prop_name: str,
+                    m=None, n=None, ax=None,
+                    show_legend=True, **kwargs):
+    r"""
+    plot the Network attribute :attr:`{}` vs frequency.
 
-    _plot_attribute_doc = """
-    plot Network's {conversion}({attribute}) component vs {x_axis}.
+    Parameters
+    ----------
+    attribute : string
+        Network attribute to plot
+    m : int, optional
+        first index of s-parameter matrix, if None will use all
+    n : int, optional
+        secon index of the s-parameter matrix, if None will use all
+    ax : :class:`matplotlib.Axes` object, optional
+        An existing Axes object to plot on
+    show_legend : Boolean
+        draw legend or not
+    y_label : string, optional
+        the y-axis label
 
-        Args:
-            m : int, optional
-                first index of s-parameter matrix, if None will use all
-            n : int, optional
-                second index of the s-parameter matrix, if None will use all
-            ax : :class:`matplotlib.Axes` object, optional
-                An existing Axes object to plot on
-            show_legend : Boolean
-                draw legend or not
-            y_label : string, optional
-                the y-axis label
-            logx : Boolean, optional
-                Enable logarithmic x-axis, default off
-    
+    \*args,\**kwargs : arguments, keyword arguments
+        passed to :func:`matplotlib.plot`
+
+    Note
+    ----
+    This function is dynamically generated upon Network
+    initialization. This is accomplished by calling
+    :func:`plot_vs_frequency_generic`
+
+    Examples
+    --------
+    >>> myntwk.plot_{}(m=1,n=0,color='r')
     """
 
-    @axes_kwarg
-    def plot_attribute(     self: BaseNetwork,
-                            attribute: str,
-                            conversion: str,
-                            m=None,
-                            n=None,
-                            ax: plt.Axes=None,
-                            show_legend=True,
-                            y_label=None,
-                            logx=False, **kwargs):
-        
+    # create index lists, if not provided by user
+    if m is None:
+        M = range(netw.number_of_ports)
+    else:
+        M = [m]
+    if n is None:
+        N = range(netw.number_of_ports)
+    else:
+        N = [n]
 
-        # create index lists, if not provided by user
-        if m is None:
-            M = range(self.number_of_ports)
-        else:
-            M = [m]
-        if n is None:
-            N = range(self.number_of_ports)
-        else:
-            N = [n]
+    if 'label'  not in kwargs.keys():
+        gen_label = True
+    else:
+        gen_label = False
 
-        if 'label' not in kwargs.keys():
-            gen_label = True
-        else:
-            gen_label = False
-
-        for m in M:
-            for n in N:
-                # set the legend label for this trace to the networks
-                # name if it exists, and they didn't pass a name key in
-                # the kwargs
-                if gen_label:
-                    if self.name is None:
-                        if plt.rcParams['text.usetex']:
-                            label_string = '$%s_{%i%i}$'%\
-                            (attribute[0].upper(),m+1,n+1)
-                        else:
-                            label_string = '%s%i%i'%\
-                            (attribute[0].upper(),m+1,n+1)
+    for m in M:
+        for n in N:
+            # set the legend label for this trace to the networks
+            # name if it exists, and they didn't pass a name key in
+            # the kwargs
+            if gen_label:
+                if netw.name is None:
+                    if plt.rcParams['text.usetex']:
+                        label_string = '$%s_{%i%i}$'%\
+                        (prop_name[0].upper(),m+1,n+1)
                     else:
-                        if plt.rcParams['text.usetex']:
-                            label_string = self.name+', $%s_{%i%i}$'%\
-                            (attribute[0].upper(),m+1,n+1)
-                        else:
-                            label_string = self.name+', %s%i%i'%\
-                            (attribute[0].upper(),m+1,n+1)
-                    kwargs['label'] = label_string
-
-                if conversion in ["time_impulse", "time_step"]:
-                    xlabel = "Time (ns)"
-                    
-                    t_func_kwargs = {"squeeze": False}
-                    for key in {"window", "n", "pad", "bandpass"} & kwargs.keys():
-                        t_func_kwargs[key] = kwargs.pop(key)
-
-                    if conversion == "time_impulse":
-                        x, y = self.impulse_response(**t_func_kwargs)
-                    else:
-                        x, y = self.step_response(**t_func_kwargs)
-                    
-                    if attribute[0].lower() == "z":
-                        y_label = "Z (Ohm)"
-                        y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
-                        y[x == -1.] = -1. + 1e-12  # solve numerical singularity
-                        y = self.z0[0,0].real * (1+y) / (1-y)
-                    
-                    plot_rectangular(x=x * 1e9,
-                                        y=y[:, m, n],
-                                        x_label=xlabel,
-                                        y_label=y_label,
-                                        show_legend=show_legend, ax=ax,
-                                        **kwargs)
-
+                        label_string = '%s%i%i'%\
+                        (prop_name[0].upper(),m+1,n+1)
                 else:
-                    # plot the desired attribute vs frequency
-                    if conversion == "time":
-                        xlabel = 'Time (ns)'
-                        x = self.frequency.t_ns
-                        y=npy.abs(self.attribute(attribute, conversion)[:, m, n])
-
+                    if plt.rcParams['text.usetex']:
+                        label_string = netw.name+', $%s_{%i%i}$'%\
+                        (prop_name[0].upper(),m+1,n+1)
                     else:
-                        xlabel = 'Frequency (%s)' % self.frequency.unit
-                        # x = self.frequency.f_scaled
-                        x = self.frequency.f  # always plot f, and then scale the ticks instead
-                        y = self.attribute(attribute, conversion)[:, m, n]
+                        label_string = netw.name+', %s%i%i'%\
+                        (prop_name[0].upper(),m+1,n+1)
+                kwargs['label'] = label_string
 
-                        # scale the ticklabels according to the frequency unit and set log-scale if desired:
-                        if logx:
-                            ax.set_xscale('log')
+            # plot the desired attribute vs frequency
+            plot_complex_rectangular(
+                z=getattr(netw, prop_name)[:, m, n],
+                show_legend=show_legend, ax=ax,
+                **kwargs)
 
-                        scale_frequency_ticks(ax, self.frequency.unit)
+def plot_prop_polar(netw: Network, prop_name: str,
+                    m=None, n=None, ax=None,
+                    show_legend=True, **kwargs):
 
+    r"""
+    plot the Network attribute :attr:`{}` vs frequency.
 
+    Parameters
+    ----------
+    attribute : string
+        Network attribute to plot
+    m : int, optional
+        first index of s-parameter matrix, if None will use all
+    n : int, optional
+        secon index of the s-parameter matrix, if None will use all
+    ax : :class:`matplotlib.Axes` object, optional
+        An existing Axes object to plot on
+    show_legend : Boolean
+        draw legend or not
+    y_label : string, optional
+        the y-axis label
 
-                    plot_rectangular(x=x,
-                                        y=y,
-                                        x_label=xlabel,
-                                        y_label=y_label,
-                                        show_legend=show_legend, ax=ax,
-                                        **kwargs)
-    
-    plot_attribute.__doc__ = _plot_attribute_doc.format(attribute="conversion", conversion="attribute", x_axis="frequency or time")
+    \*args,\**kwargs : arguments, keyword arguments
+        passed to :func:`matplotlib.plot`
 
+    Note
+    ----
+    This function is dynamically generated upon Network
+    initialization. This is accomplished by calling
+    :func:`plot_vs_frequency_generic`
 
-    def plot_prop_polar(self, prop_name: str,
-                        m=None, n=None, ax=None,
-                        show_legend=True, **kwargs):
+    Examples
+    --------
+    >>> myntwk.plot_{}(m=1,n=0,color='r')
+    """
 
-        r"""
-        plot the Network attribute :attr:`{}` vs frequency.
+    # create index lists, if not provided by user
+    if m is None:
+        M = range(netw.number_of_ports)
+    else:
+        M = [m]
+    if n is None:
+        N = range(netw.number_of_ports)
+    else:
+        N = [n]
 
-        Parameters
-        ----------
-        attribute : string
-            Network attribute to plot
-        m : int, optional
-            first index of s-parameter matrix, if None will use all
-        n : int, optional
-            secon index of the s-parameter matrix, if None will use all
-        ax : :class:`matplotlib.Axes` object, optional
-            An existing Axes object to plot on
-        show_legend : Boolean
-            draw legend or not
-        y_label : string, optional
-            the y-axis label
+    if 'label'  not in kwargs.keys():
+        gen_label = True
+    else:
+        gen_label = False
 
-        \*args,\**kwargs : arguments, keyword arguments
-            passed to :func:`matplotlib.plot`
-
-        Note
-        ----
-        This function is dynamically generated upon Network
-        initialization. This is accomplished by calling
-        :func:`plot_vs_frequency_generic`
-
-        Examples
-        --------
-        >>> myntwk.plot_{}(m=1,n=0,color='r')
-        """
-
-        # create index lists, if not provided by user
-        if m is None:
-            M = range(self.number_of_ports)
-        else:
-            M = [m]
-        if n is None:
-            N = range(self.number_of_ports)
-        else:
-            N = [n]
-
-        if 'label'  not in kwargs.keys():
-            gen_label = True
-        else:
-            gen_label = False
-
-        for m in M:
-            for n in N:
-                # set the legend label for this trace to the networks
-                # name if it exists, and they didn't pass a name key in
-                # the kwargs
-                if gen_label:
-                    if self.name is None:
-                        if plt.rcParams['text.usetex']:
-                            label_string = '$%s_{%i%i}$'%\
-                            (prop_name[0].upper(),m+1,n+1)
-                        else:
-                            label_string = '%s%i%i'%\
-                            (prop_name[0].upper(),m+1,n+1)
+    for m in M:
+        for n in N:
+            # set the legend label for this trace to the networks
+            # name if it exists, and they didn't pass a name key in
+            # the kwargs
+            if gen_label:
+                if netw.name is None:
+                    if plt.rcParams['text.usetex']:
+                        label_string = '$%s_{%i%i}$'%\
+                        (prop_name[0].upper(),m+1,n+1)
                     else:
-                        if plt.rcParams['text.usetex']:
-                            label_string = self.name+', $%s_{%i%i}$'%\
-                            (prop_name[0].upper(),m+1,n+1)
-                        else:
-                            label_string = self.name+', %s%i%i'%\
-                            (prop_name[0].upper(),m+1,n+1)
-                    kwargs['label'] = label_string
-
-                # plot the desired attribute vs frequency
-                plot_complex_polar(
-                    z = getattr(self,prop_name)[:,m,n],
-                    show_legend = show_legend, ax = ax,
-                    **kwargs)
-
-    def plot_prop_complex(self, prop_name: str,
-                       m=None, n=None, ax=None,
-                       show_legend=True, **kwargs):
-        r"""
-        plot the Network attribute :attr:`{}` vs frequency.
-
-        Parameters
-        ----------
-        attribute : string
-            Network attribute to plot
-        m : int, optional
-            first index of s-parameter matrix, if None will use all
-        n : int, optional
-            secon index of the s-parameter matrix, if None will use all
-        ax : :class:`matplotlib.Axes` object, optional
-            An existing Axes object to plot on
-        show_legend : Boolean
-            draw legend or not
-        y_label : string, optional
-            the y-axis label
-
-        \*args,\**kwargs : arguments, keyword arguments
-            passed to :func:`matplotlib.plot`
-
-        Note
-        ----
-        This function is dynamically generated upon Network
-        initialization. This is accomplished by calling
-        :func:`plot_vs_frequency_generic`
-
-        Examples
-        --------
-        >>> myntwk.plot_{}(m=1,n=0,color='r')
-        """
-
-        # create index lists, if not provided by user
-        if m is None:
-            M = range(self.number_of_ports)
-        else:
-            M = [m]
-        if n is None:
-            N = range(self.number_of_ports)
-        else:
-            N = [n]
-
-        if 'label'  not in kwargs.keys():
-            gen_label = True
-        else:
-            gen_label = False
-
-        for m in M:
-            for n in N:
-                # set the legend label for this trace to the networks
-                # name if it exists, and they didn't pass a name key in
-                # the kwargs
-                if gen_label:
-                    if self.name is None:
-                        if plt.rcParams['text.usetex']:
-                            label_string = '$%s_{%i%i}$'%\
-                            (prop_name[0].upper(),m+1,n+1)
-                        else:
-                            label_string = '%s%i%i'%\
-                            (prop_name[0].upper(),m+1,n+1)
+                        label_string = '%s%i%i'%\
+                        (prop_name[0].upper(),m+1,n+1)
+                else:
+                    if plt.rcParams['text.usetex']:
+                        label_string = netw.name+', $%s_{%i%i}$'%\
+                        (prop_name[0].upper(),m+1,n+1)
                     else:
-                        if plt.rcParams['text.usetex']:
-                            label_string = self.name+', $%s_{%i%i}$'%\
-                            (prop_name[0].upper(),m+1,n+1)
-                        else:
-                            label_string = self.name+', %s%i%i'%\
-                            (prop_name[0].upper(),m+1,n+1)
-                    kwargs['label'] = label_string
+                        label_string = netw.name+', %s%i%i'%\
+                        (prop_name[0].upper(),m+1,n+1)
+                kwargs['label'] = label_string
 
-                # plot the desired attribute vs frequency
-                plot_complex_rectangular(
-                    z=getattr(self, prop_name)[:, m, n],
-                    show_legend=show_legend, ax=ax,
-                    **kwargs)
+            # plot the desired attribute vs frequency
+            plot_complex_polar(
+                z = getattr(netw,prop_name)[:,m,n],
+                show_legend = show_legend, ax = ax,
+                **kwargs)
 
-    @copy_doc(plot)
-    def plot(self, *args, **kwargs):
-        return plot(self, *args, **kwargs)
-
-    @copy_doc(plot_passivity)
-    def plot_passivity(self, port=None, label_prefix=None, *args, **kwargs):
-        return plot_passivity(self, port, label_prefix, *args, **kwargs)
-
-    @copy_doc(plot_reciprocity)
-    def plot_reciprocity(self, db=False, *args, **kwargs):
-        return plot_reciprocity(self, db, *args, **kwargs)
-
-    @copy_doc(plot_reciprocity2)
-    def plot_reciprocity2(self, db=False, *args, **kwargs):
-        return plot_reciprocity2(self, db, *args, **kwargs)
-
-    @copy_doc(plot_s_db_time)
-    def plot_s_db_time(self, center_to_dc=None, *args, **kwargs):
-        return plot_s_db_time(self, center_to_dc, *args, **kwargs)
-
-    @copy_doc(plot_s_smith)
-    def plot_s_smith(self, m=None, n=None,r=1, ax=None, show_legend=True,\
-        chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):
-        return plot_s_smith(self, m, n, r, ax, show_legend, chart_type,
-                            draw_labels, label_axes, draw_vswr, *args, **kwargs)
-
-    @copy_doc(plot_it_all)
-    def plot_it_all(self, *args, **kwargs):
-        return plot_it_all(self, *args, **kwargs)
-
-    def __init_subclass__(cls) -> None:
-
-        for func_name, (_func, prop_name, conversion) in cls._generated_functions().items():
-            plotfunc = partial_with_docs(cls.plot_attribute, prop_name, conversion)
-            plotfunc.__doc__ = cls._plot_attribute_doc.format(
-                attribute=prop_name, 
-                conversion=conversion, 
-                x_axis="time" if "time" in conversion else "frequency")
-            
-            setattr(cls, f"plot_{func_name}", plotfunc)
-
-
-        for prop_name in cls.PRIMARY_PROPERTIES:
-            setattr(cls, f"plot_{prop_name}_polar", partial_with_docs(cls.plot_prop_polar, prop_name))
-            setattr(cls, f"plot_{prop_name}_complex", partial_with_docs(cls.plot_prop_complex, prop_name))
-
-        return super().__init_subclass__()
