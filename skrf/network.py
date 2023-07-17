@@ -181,7 +181,7 @@ except ImportError:
 from . import mathFunctions as mf
 from .frequency import Frequency
 from . import plotting as rfplt
-from .util import get_fid, get_extn, find_nearest_index, axes_kwarg, copy_doc, partial_with_docs
+from .util import get_fid, get_extn, find_nearest_index, axes_kwarg, copy_doc, partial_with_docs, Axes
 from .time import time_gate, get_window
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
@@ -4297,7 +4297,7 @@ class Network:
                             conversion: str,
                             m=None,
                             n=None,
-                            ax: plt.Axes=None,
+                            ax: Axes=None,
                             show_legend=True,
                             y_label=None,
                             logx=False, **kwargs):
