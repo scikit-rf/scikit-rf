@@ -1310,7 +1310,7 @@ class Media(ABC):
         return self.shunt(self.inductor(L=L, **kwargs) **
                           self.short(**kwargs), **kwargs)
 
-    def capacitor_q(self, C: NumberLike, f: NumberLike, q_factor: NumberLike, **kwargs) -> Network:
+    def capacitor_q(self, C: NumberLike, f_0: NumberLike, q_factor: NumberLike, **kwargs) -> Network:
         r"""
         Capacitor with Q factor.
 
@@ -1318,7 +1318,7 @@ class Media(ABC):
         ----------
         C : number, array-like
             Capacitance in Farads.
-        f : number
+        f_0 : number
             Frequency at which Q is defined, in Hz.
         q_factor : number
             Q-factor of capacitor
@@ -1331,8 +1331,8 @@ class Media(ABC):
             capacitor_q (2-port)
 
         """
-        idea_cap = self.shunt(self.capacitor(C=C))
-        rac = q_factor / (C * 2 * npy.pi * f)
+        idea_cap = self.shunt(self.capacitor(C=C, **kwargs))
+        rac = q_factor / (C * 2 * npy.pi * f_0)
         idea_res = self.shunt(self.resistor(R=rac))
 
         return innerconnect(connect(idea_cap, 1, idea_res, 2), 1, 3)
@@ -1357,7 +1357,7 @@ class Media(ABC):
         
         """
         rac = self.frequency.w * L / q_factor
-        return self.inductor(L=L) ** self.resistor(R=rac)
+        return self.inductor(L=L, **kwargs) ** self.resistor(R=rac)
 
     def attenuator(self, s21: NumberLike, db: bool = True, d: Number = 0,
                    unit: str = 'deg', name: str = '', **kwargs) -> Network:
