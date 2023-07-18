@@ -1319,7 +1319,7 @@ class Media(ABC):
         C : number, array-like
             Capacitance in Farads.
         f : number
-            Frequency at which Q is defined
+            Frequency at which Q is defined, in Hz.
         q_factor : number
             Q-factor of capacitor
         \*\*kwargs : arguments, keyword arguments
