@@ -188,14 +188,6 @@ class PNA(VNA):
             validator=IntValidator(1, int(2e6)),
         )
 
-        active_trace_sdata = VNA.command(
-            get_cmd="CALC<self:cnum>:DATA? SDATA",
-            set_cmd=None,
-            doc="""Get the current trace's s-values as a numpy array""",
-            values=True,
-            complex_values=True,
-        )
-
         @property
         def freq_step(self) -> int:
             # Not all instruments support SENS:FREQ:STEP
@@ -276,6 +268,17 @@ class PNA(VNA):
         def calibration(self, cal: skrf.Calibration) -> None:
             raise NotImplementedError()
 
+        @property
+        def active_trace_sdata(self) -> np.ndarray:
+            active_measurement = (
+                self.query(f"CALC{self.cnum}:PAR:SEL?").replace('"', "").split(",")[0]
+            )
+            if active_measurement == "":
+                raise RuntimeError("No trace is active. Must select measurement first.")
+            return self.query_values(
+                f"CALC{self.cnum}:DATA? SDATA", complex_values=True
+            )
+
         def clear_averaging(self) -> None:
             self.write(f"SENS{self.cnum}:AVER:CLE")
 
@@ -283,7 +286,7 @@ class PNA(VNA):
             self.write(f"CALC{self.cnum}:PAR:EXT '{name}',{parameter}")
             # Not all instruments support DISP:WIND:TRAC:NEXT
             traces = self.query("DISP:WIND:CAT?").replace('"', "")
-            traces = [int(tr) for tr in traces.split(",")]
+            traces = [int(tr) for tr in traces.split(",")] if traces != "EMPTY" else [0]
             next_tr = traces[-1] + 1
             self.write(f"DISP:WIND:TRAC{next_tr}:FEED '{name}'")
 
