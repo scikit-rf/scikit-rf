@@ -7,7 +7,7 @@ from numpy.random  import uniform
 
 import skrf as rf
 from skrf.media import Coaxial
-from skrf.calibration import PHN, SOLT, UnknownThru, TwoPortOnePath, TwelveTerm, terminate, terminate_nport, determine_line, determine_reflect, NISTMultilineTRL, MultiportCal, MultiportSOLT
+from skrf.calibration import PHN, SOLT, UnknownThru, TwoPortOnePath, TwelveTerm, terminate, terminate_nport, determine_line, determine_reflect, compute_switch_terms, NISTMultilineTRL, MultiportCal, MultiportSOLT, TUGMultilineTRL
 
 from skrf import two_port_reflect
 from skrf.networkSet import NetworkSet
@@ -112,6 +112,35 @@ class DetermineTest(unittest.TestCase):
 
         r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
         npy.testing.assert_array_almost_equal( r.s, short.s)
+
+class ComputeSwitchTermsTest(unittest.TestCase):
+    '''
+    test the indirect method of computing the switch terms 
+    with at least three reciprocal devices
+    '''
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name='Y')
+
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
+
+        # Reciprocal devices: asymmetric and both transmissive and reflective devices 
+        Rs = [25, 50, 100, ] 
+        stands = [wg.resistor(R)**wg.shunt_resistor(R) for R in Rs]
+        stands_meas = [terminate(self.X**k**self.Y, self.gamma_f, self.gamma_r) for k in stands]
+        
+        self.gamma_f_indirect, self.gamma_r_indirect = compute_switch_terms(stands_meas)
+
+    def test_gamma_f(self):
+        self.assertTrue(all(npy.abs(self.gamma_f_indirect.s - self.gamma_f.s) < 1e-9))
+    
+    def test_gamma_r(self):
+        self.assertTrue(all(npy.abs(self.gamma_r_indirect.s - self.gamma_r.s) < 1e-9))
 
 class CalibrationTest:
     """
@@ -889,6 +918,45 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
         cal.run()
         cal.apply_cal(self.measured[0])
 
+class TUGMultilineTest(EightTermTest):
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = WG
+        wg= self.wg
+
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name = 'Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
+
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
+
+        actuals = [
+            wg.thru(),
+            rf.two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
+            rf.two_port_reflect(wg.load(.99+0.05j),wg.load(.99+0.05j)),
+            wg.line(100,'um'),
+            wg.line(200,'um'),
+            wg.line(900,'um'),
+            ]
+
+        self.actuals=actuals
+
+        measured = [self.measure(k) for k in actuals]
+
+        self.cal = TUGMultilineTRL(
+            line_meas = [measured[0]] + measured[3:], 
+            line_lengths = [0, 100e-6, 200e-6, 900e-6], 
+            er_est = 1, 
+            reflect_meas = measured[1:3], 
+            reflect_est = [-1, 1],
+            isolation = measured[1],
+            switch_terms = (self.gamma_f, self.gamma_r)
+            )
+
+    def test_gamma(self):
+        self.assertTrue(max(npy.abs(self.wg.gamma-self.cal.gamma)) < 1e-3)
 
 @pytest.mark.skip()
 class TREightTermTest(unittest.TestCase, CalibrationTest):
