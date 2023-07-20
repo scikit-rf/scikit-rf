@@ -1337,7 +1337,7 @@ class Media(ABC):
 
         return innerconnect(connect(idea_cap, 1, idea_res, 2), 1, 3)
 
-    def inductor_q(self, L: NumberLike, q_factor: NumberLike, **kwargs) -> Network:
+    def inductor_q(self, L: NumberLike, f_0: NumberLike, q_factor: NumberLike, rdc: NumberLike = 0.0, **kwargs) -> Network:
         r"""
         Inductor with Q factor.
 
@@ -1345,6 +1345,10 @@ class Media(ABC):
         ----------
         L : number, array-like
             Inductance in Henries.
+        rdc: number
+            DC resistance, in Ohms.
+        f_0 : number
+            Frequency at which Q is defined, in Hz.
         q_factor : number
             Q-factor of inductor
         \*\*kwargs : arguments, keyword arguments
@@ -1356,8 +1360,18 @@ class Media(ABC):
             inductor_q (2-port)
         
         """
-        rac = self.frequency.w * L / q_factor
-        return self.inductor(L=L, **kwargs) ** self.resistor(R=rac)
+        if rdc == 0.0:
+            rdc = f_0 * 0.05 * (2 * npy.pi) * L / q_factor
+
+        omega = self.frequency.w
+        w_q = 2 * npy.pi * f_0
+        rq1 = w_q * L / q_factor
+        rq2 = npy.sqrt(rq1**2 - rdc**2)
+        qt = w_q * L / rq2
+        rac = omega * L / qt
+        r1 = npy.sqrt(rdc**2 + rac**2)
+        
+        return self.inductor(L=L, **kwargs) ** self.resistor(R=r1)
 
     def attenuator(self, s21: NumberLike, db: bool = True, d: Number = 0,
                    unit: str = 'deg', name: str = '', **kwargs) -> Network:
