@@ -59,7 +59,7 @@ There is multiple ways to contribute to an open-source project like scikit-rf!
 * [Sponsoring the project](https://scikit-rf.readthedocs.io/en/latest/contributing/index.html#sponsoring-the-project)
 * [Contributing to the code](https://scikit-rf.readthedocs.io/en/latest/contributing/index.html#contributing-to-the-code)
 * [Contributing to the Documentation](https://scikit-rf.readthedocs.io/en/latest/contributing/index.html#contributing-to-the-documentation)
-
+* [Getting some erchandises to express your love](https://scikit-rf.org/merch.html)
 
 ![skrfshirt](https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/logo/skrfshirtwhite.png)
 
