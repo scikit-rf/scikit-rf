@@ -219,7 +219,11 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'capacitor_q'
-        ads_ntwk = Network(os.path.join(self.files_dir, name + '.s2p'))
+        ads_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'ads'
+            )
+        ads_ntwk = Network(os.path.join(ads_path, name + '.s2p'))
         self.dummy_media.frequency = ads_ntwk.frequency
         skrf_ntwk = self.dummy_media.capacitor_q(C=1.0e-12, f_0=1.0e9, q_factor=30.0, name = name)
         self.assertEqual(ads_ntwk, skrf_ntwk)
@@ -282,7 +286,11 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         topology of networks, they should have unique names.
         """
         name = 'inductor_q'
-        ads_ntwk = Network(os.path.join(self.files_dir, name + '.s2p'))
+        ads_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'ads'
+            )
+        ads_ntwk = Network(os.path.join(ads_path, name + '.s2p'))
         self.dummy_media.frequency = ads_ntwk.frequency
         skrf_ntwk = self.dummy_media.inductor_q(L=1.0e-9, f_0=1.0e9, q_factor=30.0, name = name)
         self.assertEqual(ads_ntwk, skrf_ntwk)
