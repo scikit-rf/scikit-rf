@@ -36,10 +36,14 @@ class MediaTestCase():
     def test_capacitor(self):
         self.media.capacitor(1)
 
+    def test_capacitor_q(self):
+        self.media.capacitor_q(1, 2, 3)
 
     def test_inductor(self):
         self.media.inductor(1)
 
+    def test_inductor_q(self):
+        self.media.capacitor_q(1, 2, 3)
 
     def test_impedance_mismatch(self):
         self.media.impedance_mismatch(1, 2)
