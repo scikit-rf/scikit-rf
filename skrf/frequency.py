@@ -119,7 +119,7 @@ class Frequency:
             Frequency unit of the band: 'hz', 'khz', 'mhz', 'ghz', 'thz'.
             This is used to create the attribute :attr:`f_scaled`.
             It is also used by the :class:`~skrf.network.Network` class
-            for plots vs. frequency. Default is 'ghz'.
+            for plots vs. frequency. Default is 'hz'.
         sweep_type : string, optional
             Type of the sweep: 'lin' or 'log'.
             'lin' for linear and 'log' for logarithmic. Default is 'lin'.
@@ -142,18 +142,16 @@ class Frequency:
 
         Examples
         --------
-        >>> wr1p5band = Frequency(500, 750, 401, 'ghz')
+        >>> wr1p5band = Frequency(start=500, stop=750, npoints=401, unit='ghz')
+        >>> logband = Frequency(1, 1e9, 301, sweep_type='log')
 
         """
         if unit is None:
             warnings.warn('''
-                          Frequency unit not passed: currently uses 'GHz' per default.
-                          The future versions of scikit-rf will use 'Hz' per default instead,
-                          so it is recommended to specify explicitly the frequency unit
-                          to obtain similar results with future versions.
+                          Frequency unit not passed: uses 'Hz' per default.
                           ''',
                           DeprecationWarning, stacklevel=2)
-            unit = 'ghz'
+            unit = 'hz'
         self._unit = unit.lower()
 
         start =  self.multiplier * start
