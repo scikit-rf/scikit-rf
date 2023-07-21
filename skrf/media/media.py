@@ -1331,9 +1331,9 @@ class Media(ABC):
             capacitor_q (2-port)
 
         """
-        idea_cap = self.shunt(self.capacitor(C=C, **kwargs))
+        idea_cap = self.shunt(self.capacitor(C=C, **kwargs), **kwargs)
         rac = q_factor / (C * 2 * npy.pi * f_0)
-        idea_res = self.shunt(self.resistor(R=rac))
+        idea_res = self.shunt(self.resistor(R=rac), **kwargs)
 
         return innerconnect(connect(idea_cap, 1, idea_res, 2), 1, 3)
 
