@@ -1345,12 +1345,12 @@ class Media(ABC):
         ----------
         L : number, array-like
             Inductance in Henries.
-        rdc: number
-            DC resistance, in Ohms.
         f_0 : number
             Frequency at which Q is defined, in Hz.
         q_factor : number
-            Q-factor of inductor
+            Q-factor of inductor        
+        rdc: number, optional
+            DC resistance, in Ohms. Default is 0 Ohm.
         \*\*kwargs : arguments, keyword arguments
             passed to func:`inductor`
 
@@ -1360,15 +1360,15 @@ class Media(ABC):
             inductor_q (2-port)
         
         """
-        if rdc == 0.0:
-            rdc = f_0 * 0.05 * (2 * npy.pi) * L / q_factor
-
-        omega = self.frequency.w
         w_q = 2 * npy.pi * f_0
+        
+        if rdc == 0.0:
+            rdc = 0.05 * w_q * L / q_factor
+
         rq1 = w_q * L / q_factor
         rq2 = npy.sqrt(rq1**2 - rdc**2)
         qt = w_q * L / rq2
-        rac = omega * L / qt
+        rac = self.frequency.w * L / qt
         r1 = npy.sqrt(rdc**2 + rac**2)
         
         return self.inductor(L=L, **kwargs) ** self.resistor(R=r1)
