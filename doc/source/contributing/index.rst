@@ -132,7 +132,7 @@ Or, to run tests for every installed python installation in an isolated environm
 
     tox
 
-To run all tests *and* all tutorial and example notebooks (recommanded before making a pull request):
+To run all tests *and* all tutorials and example notebooks (recommanded before making a pull request):
 
 .. code-block:: sh
 
