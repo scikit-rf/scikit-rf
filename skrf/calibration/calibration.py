@@ -6058,11 +6058,9 @@ def terminate(ntwk, gamma_f, gamma_r):
     """
 
     m = ntwk.copy()
-    ntwk_flip = ntwk.copy()
-    ntwk_flip.flip()
 
-    m.s[:,0,0] = (ntwk**gamma_f).s[:,0,0]
-    m.s[:,1,1] = (ntwk_flip**gamma_r).s[:,0,0]
+    m.s[:,0,0] = ntwk.s[:,0,0] + ntwk.s[:,1,0]*ntwk.s[:,0,1]*gamma_f.s[:,0,0]/(1-ntwk.s[:,1,1]*gamma_f.s[:,0,0])
+    m.s[:,1,1] = ntwk.s[:,1,1] + ntwk.s[:,1,0]*ntwk.s[:,0,1]*gamma_r.s[:,0,0]/(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0])
     m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*gamma_f.s[:,0,0])
     m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0])
     return m
