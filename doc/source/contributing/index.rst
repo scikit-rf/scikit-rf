@@ -132,6 +132,12 @@ Or, to run tests for every installed python installation in an isolated environm
 
     tox
 
+To run all tests *and* all tutorials and example notebooks (recommanded before making a pull request):
+
+.. code-block:: sh
+
+    tox -- --nbval-lax
+
 
 If you want to test a single file or directory, you need to override the default pytest configuration (defined in the tox.ini file) and to indicate the test path. By example, to run only the tests associated to the Network object (-v to increase the verbosity):
 
@@ -158,7 +164,7 @@ Examples and Tutorials
 
 Usage examples of scikit-rf are welcomed, especially when adding new features. We are using `Jupyter Notebooks <https://jupyter.org/>`_ to write the examples and the tutorials, which are located in the ``scikit-rf/docs/source/examples/`` and ``doc/source/examples`` directories. These notebooks are then converted into webpages with the sphinx extension called `nbsphinx <http://nbsphinx.readthedocs.io/>`_.
 
-The docs are automatically built and `served by readthedocs <https://scikit-rf.readthedocs.io/en/latest/>`_ when a Pull Request is accepted. The python package requirements to build the docs are kept in ``scikit-rf/requirements.txt``.
+The docs are automatically built and `served by readthedocs <https://scikit-rf.readthedocs.io/en/latest/>`_ when a Pull Request is accepted. The python package requirements to build the docs are kept in ``scikit-rf/pyproject.toml``.
 
 .. important:: Before pushing to your repo and making a pull request, at a minimum you will need to clear the notebook outputs using the "Clear All Output" command in the notebook (or install `nbstripout <https://pypi.python.org/pypi/nbstripout>`_ so that the output is not tracked in git (or the repo size would grow infinitely).
 
@@ -191,6 +197,8 @@ The built docs then reside in ``doc/build/html``.
 
 Join the **scikit-rf** team!
 ----------------------------
+
+Do you like using scikit-rf? `Merchandise is available for you to express your love <https://scikit-rf.org/merch.html>`_.
 
 .. image:: https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/logo/skrfshirtwhite.png
     :height: 400

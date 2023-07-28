@@ -711,7 +711,7 @@ def unique_name(name: str, names: list, exclude: int = -1) -> str:
 
         for num in range(suffix, 100, 1):
             name = f"{name_base:s}_{num:02d}"
-            if has_duplicate_value(name, names, exclude) is False:
+            if not has_duplicate_value(name, names, exclude):
                 break
     return name
 

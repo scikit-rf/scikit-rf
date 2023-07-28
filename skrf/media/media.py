@@ -21,7 +21,7 @@ from scipy import stats
 from scipy.constants import  c
 
 from ..frequency import Frequency
-from ..network import Network, connect, impedance_mismatch
+from ..network import Network, connect, impedance_mismatch, innerconnect
 
 from .. import mathFunctions as mf
 
@@ -1309,6 +1309,69 @@ class Media(ABC):
         """
         return self.shunt(self.inductor(L=L, **kwargs) **
                           self.short(**kwargs), **kwargs)
+
+    def capacitor_q(self, C: NumberLike, f_0: NumberLike, q_factor: NumberLike, **kwargs) -> Network:
+        r"""
+        Capacitor with Q factor.
+
+        Parameters
+        ----------
+        C : number, array-like
+            Capacitance in Farads.
+        f_0 : number
+            Frequency at which Q is defined, in Hz.
+        q_factor : number
+            Q-factor of capacitor
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`capacitor`
+
+        Returns
+        -------
+        capacitor_q : :class:`~skrf.network.Network` object
+            capacitor_q (2-port)
+
+        """
+        idea_cap = self.shunt(self.capacitor(C=C, **kwargs), **kwargs)
+        rac = q_factor / (C * 2 * npy.pi * f_0)
+        idea_res = self.shunt(self.resistor(R=rac), **kwargs)
+
+        return innerconnect(connect(idea_cap, 1, idea_res, 2), 1, 3)
+
+    def inductor_q(self, L: NumberLike, f_0: NumberLike, q_factor: NumberLike, rdc: NumberLike = 0.0, **kwargs) -> Network:
+        r"""
+        Inductor with Q factor.
+
+        Parameters
+        ----------
+        L : number, array-like
+            Inductance in Henries.
+        f_0 : number
+            Frequency at which Q is defined, in Hz.
+        q_factor : number
+            Q-factor of inductor        
+        rdc: number, optional
+            DC resistance, in Ohms. Default is 0 Ohm.
+        \*\*kwargs : arguments, keyword arguments
+            passed to func:`inductor`
+
+        Returns
+        -------
+        inductor_q : :class:`~skrf.network.Network` object
+            inductor_q (2-port)
+        
+        """
+        w_q = 2 * npy.pi * f_0
+        
+        if rdc == 0.0:
+            rdc = 0.05 * w_q * L / q_factor
+
+        rq1 = w_q * L / q_factor
+        rq2 = npy.sqrt(rq1**2 - rdc**2)
+        qt = w_q * L / rq2
+        rac = self.frequency.w * L / qt
+        r1 = npy.sqrt(rdc**2 + rac**2)
+        
+        return self.inductor(L=L, **kwargs) ** self.resistor(R=r1)
 
     def attenuator(self, s21: NumberLike, db: bool = True, d: Number = 0,
                    unit: str = 'deg', name: str = '', **kwargs) -> Network:
