@@ -622,9 +622,9 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
             touchstone header written to first beginning of file
 
     """
-    if new_file_name is None:
+    remove_tmp_file = new_file_name is None
+    if remove_tmp_file:
         new_file_name = 'tmp-'+file_name
-        remove_tmp_file = True
 
     # This breaks compatibility with python 2.6 and older
     with open(file_name) as old_file, open(new_file_name, 'w') as new_file:
@@ -632,7 +632,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
         for line in old_file:
             new_file.write(line)
 
-    if remove_tmp_file is True:
+    if remove_tmp_file:
         os.rename(new_file_name,file_name)
 
 def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
