@@ -1,11 +1,16 @@
 import numpy as np
 import pytest
+import sys
 
 import skrf
-from skrf.vi import vna
-from skrf.vi.validators import ValidationError
-from skrf.vi.vna import ValuesFormat, hp
+try:
+    from skrf.vi.validators import ValidationError
+    from skrf.vi.vna import ValuesFormat, hp
+except ImportError:
+    pass
 
+if "matplotlib" not in sys.modules:
+    pytest.skip(allow_module_level=True)
 
 @pytest.fixture
 def mocked_ff(mocker):

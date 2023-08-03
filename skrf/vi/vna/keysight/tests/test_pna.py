@@ -1,11 +1,17 @@
 
 import numpy as np
 import pytest
+import sys
 
 import skrf
-from skrf.vi.vna import ValuesFormat, keysight
-from skrf.vi.vna.keysight.pna import SweepMode, SweepType
+try:
+    from skrf.vi.vna import ValuesFormat, keysight
+    from skrf.vi.vna.keysight.pna import SweepMode, SweepType
+except ImportError:
+    pass
 
+if "matplotlib" not in sys.modules:
+    pytest.skip(allow_module_level=True)
 
 @pytest.fixture
 def mocked_ff(mocker):
