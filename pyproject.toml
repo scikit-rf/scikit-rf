@@ -36,6 +36,7 @@ dependencies = [
 test = [
     "tox >= 3.26.0",
     "pytest >=7.0",
+    "pytest-mock >= 3.10",
     "coverage >=6.0",
     "flake8 >=5.0",
     "pytest-cov >=4.0",
@@ -55,7 +56,8 @@ netw = [
 ]
 
 visa = [
-    "PyVISA >= 1.12"
+    "PyVISA >= 1.12",
+    "pyvisa-py >= 0.6"
 ]
 
 docs = [
@@ -115,7 +117,6 @@ testpaths = [
 ]
 addopts = "--cov=skrf --ignore-glob='*.ipynb_checkpoints'"
 norecursedirs = [
-    "skrf/vi",
     "skrf/src",
     "doc/source/examples/instrumentcontrol"
 ]

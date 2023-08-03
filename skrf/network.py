@@ -7315,7 +7315,7 @@ def check_frequency_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
     Check if two Networks have same frequency.
     """
-    if assert_frequency_equal(ntwkA, ntwkB) is False:
+    if not assert_frequency_equal(ntwkA, ntwkB):
         raise IndexError('Networks don\'t have matching frequency. See `Network.interpolate`')
 
 
@@ -7323,7 +7323,7 @@ def check_frequency_exist(ntwk) -> None:
     """
     Check if a Network has a non-zero Frequency.
     """
-    if assert_frequency_exist(ntwk) is False:
+    if not assert_frequency_exist(ntwk):
         raise ValueError('Network has no Frequency. Frequency points must be defined.')
 
 
@@ -7332,7 +7332,7 @@ def check_z0_equal(ntwkA: Network, ntwkB: Network) -> None:
     Check if two Networks have same port impedances.
     """
     # note you should check frequency equal before you call this
-    if assert_z0_equal(ntwkA, ntwkB) is False:
+    if not assert_z0_equal(ntwkA, ntwkB):
         raise ValueError('Networks don\'t have matching z0.')
 
 
@@ -7340,7 +7340,7 @@ def check_nports_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
     Check if two Networks have same number of ports.
     """
-    if assert_nports_equal(ntwkA, ntwkB) is False:
+    if not assert_nports_equal(ntwkA, ntwkB):
         raise ValueError('Networks don\'t have matching number of ports.')
 
 

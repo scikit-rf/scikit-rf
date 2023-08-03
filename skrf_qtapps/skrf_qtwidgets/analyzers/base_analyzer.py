@@ -1,7 +1,7 @@
 """
 This is a model module.  It will not function correctly to pull data.
 """
-from skrf.vi.vna.abcvna import VNA
+from skrf.vi.vna.vna import VNA
 
 
 class Analyzer(VNA):
