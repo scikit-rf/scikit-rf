@@ -4272,7 +4272,7 @@ class Network:
         return s2vswr_active(self.s, a)
 
     
-    _plot_attribute_doc = """
+    _plot_attribute_doc = r"""
     plot the Network attribute :attr:`{attribute}_{conversion}` component vs {x_axis}.
 
     Parameters
