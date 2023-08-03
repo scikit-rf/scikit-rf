@@ -4273,22 +4273,35 @@ class Network:
 
     
     _plot_attribute_doc = """
-    plot Network's {conversion}({attribute}) component vs {x_axis}.
+    plot the Network attribute :attr:`{attribute}_{conversion}` component vs {x_axis}.
 
-        Args:
-            m : int, optional
-                first index of s-parameter matrix, if None will use all
-            n : int, optional
-                second index of the s-parameter matrix, if None will use all
-            ax : :class:`matplotlib.Axes` object, optional
-                An existing Axes object to plot on
-            show_legend : Boolean
-                draw legend or not
-            y_label : string, optional
-                the y-axis label
-            logx : Boolean, optional
-                Enable logarithmic x-axis, default off
-    
+    Parameters
+    ----------
+    m : int, optional
+        first index of s-parameter matrix, if None will use all
+    n : int, optional
+        second index of the s-parameter matrix, if None will use all
+    ax : :class:`matplotlib.Axes` object, optional
+        An existing Axes object to plot on
+    show_legend : Boolean
+        draw legend or not
+    y_label : string, optional
+        the y-axis label
+    logx : Boolean, optional
+        Enable logarithmic x-axis, default off
+    \**kwargs : arguments, keyword arguments
+        passed to :func:`matplotlib.plot`
+
+    Note
+    ----
+    This function is dynamically generated upon Network
+    initialization. This is accomplished by calling
+    :func:`Network.plot_attribute`
+
+    Examples
+    --------
+    >>> myntwk.plot_{attribute}_{conversion}(m=1,n=0,color='r')
+        
     """
 
     @axes_kwarg
