@@ -1781,5 +1781,52 @@ class NetworkTestCase(unittest.TestCase):
         n2 = rf.Network(s=s,f=f2)
         self.assertFalse(n1 == n2)
 
+    def test_load_stability_circle(self):
+        # Check whether the load stability circle agrees with that calculated with ADS
+        load_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'load_stability_circle_ads.csv'), encoding='utf-8', delimiter=',')
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_magnitude(self.fet.load_stability_circle(npoints=51)[0]) - load_stability_circle_ads[:,0]) < 1e-6
+            )
+        )
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_degree(self.fet.load_stability_circle(npoints=51)[0]) - load_stability_circle_ads[:,1]) < 1e-6
+            )
+        )
+
+        # Check whether an error is raised when the network is not 2 port.
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.load_stability_circle()
+
+        # Check whether an error is raised when the number of points is not positive.
+        with pytest.raises(ValueError):
+            net.source_stability_circle(npoints=0)
+
+    def test_source_stability_circle(self):
+        # Check whether the load stability circle agrees with that calculated with ADS
+        source_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'source_stability_circle_ads.csv'), encoding='utf-8', delimiter=',')
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_magnitude(self.fet.source_stability_circle(npoints=51)[0]) - source_stability_circle_ads[:,0]) < 1e-6
+            )
+        )
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_degree(self.fet.source_stability_circle(npoints=51)[0]) - source_stability_circle_ads[:,1]) < 1e-6
+            )
+        )
+
+        # Check whether an error is raised when the network is not 2 port.
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.source_stability_circle()
+
+        # Check whether an error is raised when the number of points is not positive.
+        with pytest.raises(ValueError):
+            net.source_stability_circle(npoints=0)
+
+
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
