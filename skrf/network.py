@@ -4268,7 +4268,7 @@ class Network:
         """
         return s2vswr_active(self.s, a)
     
-    def load_stability_circle(self, npoints: int = 181) -> 'numpy.ndarray':
+    def load_stability_circle(self, npoints: int = 181) -> npy.ndarray:
         r"""
         Returns a load (output) stability circle in complex numbers.
         The center and radius are calculated by the following equation.
@@ -4352,7 +4352,7 @@ class Network:
         lsc = lsc_real + 1j * lsc_imag
         return lsc.T
 
-    def source_stability_circle(self, npoints: int = 181) -> 'numpy.ndarray':
+    def source_stability_circle(self, npoints: int = 181) -> npy.ndarray:
         r"""
         Returns a source (input) stability circle in complex numbers.
         The center and radius are calculated by the following equation.
