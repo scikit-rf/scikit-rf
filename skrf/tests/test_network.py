@@ -1786,12 +1786,12 @@ class NetworkTestCase(unittest.TestCase):
         load_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'load_stability_circle_ads.csv'), encoding='utf-8', delimiter=',')
         self.assertTrue(
             npy.all(
-                npy.abs(rf.complex_2_magnitude(self.fet.load_stability_circle(npoints=51)[0]) - load_stability_circle_ads[:,0]) < 1e-6
+                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].load_stability_circle(npoints=51)[0]) - load_stability_circle_ads[:,0]) < 1e-6
             )
         )
         self.assertTrue(
             npy.all(
-                npy.abs(rf.complex_2_degree(self.fet.load_stability_circle(npoints=51)[0]) - load_stability_circle_ads[:,1]) < 1e-6
+                npy.abs(rf.complex_2_degree(self.fet['30GHz'].load_stability_circle(npoints=51)[0]) - load_stability_circle_ads[:,1]) < 1e-6
             )
         )
 
@@ -1809,12 +1809,12 @@ class NetworkTestCase(unittest.TestCase):
         source_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'source_stability_circle_ads.csv'), encoding='utf-8', delimiter=',')
         self.assertTrue(
             npy.all(
-                npy.abs(rf.complex_2_magnitude(self.fet.source_stability_circle(npoints=51)[0]) - source_stability_circle_ads[:,0]) < 1e-6
+                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].source_stability_circle(npoints=51)) - source_stability_circle_ads[:,0]) < 1e-6
             )
         )
         self.assertTrue(
             npy.all(
-                npy.abs(rf.complex_2_degree(self.fet.source_stability_circle(npoints=51)[0]) - source_stability_circle_ads[:,1]) < 1e-6
+                npy.abs(rf.complex_2_degree(self.fet['30GHz'].source_stability_circle(npoints=51)) - source_stability_circle_ads[:,1]) < 1e-6
             )
         )
 
