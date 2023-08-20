@@ -7509,3 +7509,95 @@ def twoport_to_nport(ntwk, port1, port2, nports, **kwargs):
     nport.z0[:,port1] = ntwk.z0[:,0]
     nport.z0[:,port2] = ntwk.z0[:,1]
     return nport
+
+def load_stability_circle(self, npoints: int = 181) -> 'numpy.ndarray':
+    """
+    Returns a load (output) stability circle.
+
+    Parameters
+    ----------
+    npoints : int
+            The number of points on the circumference of the circle.
+            More points result in a smoother circle, but require more computation. Default is 181.
+
+    Returns
+    -------
+    ntwk : :class:`numpy.ndarray` (shape fxnpoints)
+        load (output) stability circle
+
+    See Also
+    --------
+    stability
+    source_stability_circle
+
+    """
+
+    if self.nports != 2:
+        raise ValueError("Stability circle is only defined for two ports")
+    
+    if npoints <= 0:
+        raise ValueError("npoints must be a positive integer")
+
+    # Calculate the determinant of the scattering matrix
+    D = self.s[:, 0, 0] * self.s[:, 1, 1] - self.s[:, 0, 1] * self.s[:, 1, 0]
+
+    # Calculate the center and radius of the load stability circle
+    lsc_center = (self.s[:, 1, 1] - self.s[:, 0, 0].conjugate() * D).conjugate() / (npy.abs(self.s[:, 1, 1]) ** 2 - npy.abs(D) ** 2)
+    lsc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] / (npy.abs(self.s[:, 1, 1] ) ** 2 - npy.abs(D) ** 2))
+
+    # Generate theta values for the points on the circle
+    theta = npy.linspace(0, 2 * npy.pi, npoints)
+
+    # Calculate real and imaginary parts of points on the load stability circle
+    lsc_real = npy.outer(lsc_center.real, npy.ones(npoints)) + npy.outer(lsc_radius, npy.cos(theta))
+    lsc_imag = npy.outer(lsc_center.imag, npy.ones(npoints)) + npy.outer(lsc_radius, npy.sin(theta))
+
+    # Combine real and imaginary parts to create the load stability circle
+    lsc = lsc_real + 1j * lsc_imag
+    return lsc
+
+def source_stability_circle(self, npoints: int = 181) -> 'numpy.ndarray':
+    """
+    Returns a source (input) stability circle.
+
+    Parameters
+    ----------
+    npoints : int
+            The number of points on the circumference of the circle.
+            More points result in a smoother circle, but require more computation. Default is 181.
+
+    Returns
+    -------
+    ntwk : :class:`numpy.ndarray` (shape fxnpoints)
+        soruce (input) stability circle
+
+    See Also
+    --------
+    stability
+    load_stability_circle
+
+    """
+
+    if self.nports != 2:
+        raise ValueError("Stability circle is only defined for two ports")
+    
+    if npoints <= 0:
+        raise ValueError("npoints must be a positive integer")
+
+    # Calculate the determinant of the scattering matrix
+    D = self.s[:, 0, 0] * self.s[:, 1, 1] - self.s[:, 0, 1] * self.s[:, 1, 0]
+
+    # Calculate the center and radius of the source stability circle
+    ssc_center = (self.s[:, 0, 0] - self.s[:, 1, 1].conjugate() * D).conjugate() / (npy.abs(self.s[:, 0, 0]) ** 2 - npy.abs(D) ** 2)
+    ssc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] / (npy.abs(self.s[:, 0, 0] ) ** 2 - npy.abs(D) ** 2))
+
+    # Generate theta values for the points on the circle
+    theta = npy.linspace(0, 2 * npy.pi, npoints)
+
+    # Calculate real and imaginary parts of points on the source stability circle
+    ssc_real = npy.outer(ssc_center.real, npy.ones(npoints)) + npy.outer(ssc_radius, npy.cos(theta))
+    ssc_imag = npy.outer(ssc_center.imag, npy.ones(npoints)) + npy.outer(ssc_radius, npy.sin(theta))
+
+    # Combine real and imaginary parts to create the source stability circle
+    ssc = ssc_real + 1j * ssc_imag
+    return ssc
