@@ -4305,17 +4305,17 @@ class Network:
 
         Calculate the stability circles for all the frequencies
 
-        >>> ssc = ntwk.source_stability_circle()
+        >>> lsc = ntwk.load_stability_circle()
 
         Plot the circles on the smith chart
 
-        >>> rf.plotting.plot_smith(s=ssc, smith_r=5)
+        >>> rf.plotting.plot_smith(s=lsc, smith_r=5)
         >>> plt.show()
 
         Slicing the network allows you to specify a frequency
 
-        >>> ssc = ntwk['1GHz'].load_stability_circle()
-        >>> rf.plotting.plot_smith(s=ssc, smith_r=5)
+        >>> lsc = ntwk['1GHz'].load_stability_circle()
+        >>> rf.plotting.plot_smith(s=lsc, smith_r=5)
         >>> plt.show()
 
         References
