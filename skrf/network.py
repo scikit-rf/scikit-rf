@@ -1710,6 +1710,11 @@ class Network:
         -------
         K : :class:`numpy.ndarray` of shape `f`
 
+        See Also
+        --------
+        load_stability_circle
+        source_stability_circle
+
         """
         if self.nports != 2:
             raise ValueError("Stability factor K is only defined for two ports")
