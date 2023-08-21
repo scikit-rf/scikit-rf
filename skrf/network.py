@@ -4297,6 +4297,7 @@ class Network:
         Example
         --------
         >>> import skrf as rf
+        >>> import matplotlib.pyplot as plt
 
         Create a network object
 
@@ -4308,13 +4309,13 @@ class Network:
 
         Plot the circles on the smith chart
 
-        >>> rf.plotting.plot_smith(s=ssc)
+        >>> rf.plotting.plot_smith(s=ssc, smith_r=5)
         >>> plt.show()
 
         Slicing the network allows you to specify a frequency
 
         >>> ssc = ntwk['1GHz'].load_stability_circle()
-        >>> rf.plotting.plot_smith(s=ssc)
+        >>> rf.plotting.plot_smith(s=ssc, smith_r=5)
         >>> plt.show()
 
         References
@@ -4381,6 +4382,7 @@ class Network:
         Example
         --------
         >>> import skrf as rf
+        >>> import matplotlib.pyplot as plt
 
         Create a network object
 
@@ -4392,13 +4394,13 @@ class Network:
 
         Plot the circles on the smith chart
 
-        >>> rf.plotting.plot_smith(s=ssc)
+        >>> rf.plotting.plot_smith(s=ssc, smith_r=5)
         >>> plt.show()
 
         Slicing the network allows you to specify a frequency
 
         >>> ssc = ntwk['1GHz'].source_stability_circle()
-        >>> rf.plotting.plot_smith(s=ssc)
+        >>> rf.plotting.plot_smith(s=ssc, smith_r=5)
         >>> plt.show()
 
         References
