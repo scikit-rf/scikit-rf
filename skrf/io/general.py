@@ -62,6 +62,7 @@ JSON
 
 
 """
+from typing import TYPE_CHECKING
 import glob
 import inspect
 import json
@@ -84,10 +85,7 @@ from ..calibration.calibration import Calibration
 from copy import copy
 dir_ = copy(dir)
 
-# delayed import: from pandas import DataFrame, Series for ntwk_2_spreadsheet
-
 # file extension conventions for skrf objects.
-global OBJ_EXTN
 OBJ_EXTN = [
     [Frequency, 'freq'],
     [Network, 'ntwk'],
@@ -635,8 +633,8 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
     if remove_tmp_file:
         os.rename(new_file_name,file_name)
 
-def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
-    *args, **kwargs):
+def network_2_spreadsheet(ntwk: Network, file_name: str = None, 
+        file_type: str = 'excel', form: str ='db', *args, **kwargs):
     r"""
     Write a Network object to a spreadsheet, for your boss.
 
@@ -691,7 +689,7 @@ def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
         file_name = ntwk.name + '.'+file_extns[file_type]
 
     d = {}
-    index =ntwk.frequency.f_scaled
+    index =ntwk.frequency.f
 
     if form =='db':
         for m,n in ntwk.port_tuples:
@@ -716,7 +714,7 @@ def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     df.__getattribute__('to_%s'%file_type)(file_name,
         index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
 
-def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
+def network_2_dataframe(ntwk: Network, attrs: list[str] =['s_db'], ports: list[tuple[int, int]] = None):
     """
     Convert one or more attributes of a network to a pandas DataFrame.
 
@@ -742,7 +740,7 @@ def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
         attr_array = getattr(ntwk, attr)
         for m, n in ports:
             d[f'{attr} {m+1}{n+1}'] = attr_array[:, m, n]
-    return DataFrame(d, index=ntwk.frequency.f_scaled)
+    return DataFrame(d, index=ntwk.frequency.f)
 
 def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_type: str = 'excel',
     *args, **kwargs):
