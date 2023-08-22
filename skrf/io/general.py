@@ -62,7 +62,6 @@ JSON
 
 
 """
-from typing import TYPE_CHECKING
 import glob
 import inspect
 import json
