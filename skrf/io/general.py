@@ -62,6 +62,8 @@ JSON
 
 
 """
+from typing import List, Tuple
+
 import glob
 import inspect
 import json
@@ -713,7 +715,7 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
     df.__getattribute__('to_%s'%file_type)(file_name,
         index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
 
-def network_2_dataframe(ntwk: Network, attrs: list[str] =['s_db'], ports: list[tuple[int, int]] = None):
+def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'], ports: List[Tuple[int, int]] = None):
     """
     Convert one or more attributes of a network to a pandas DataFrame.
 
@@ -725,7 +727,7 @@ def network_2_dataframe(ntwk: Network, attrs: list[str] =['s_db'], ports: list[t
         like ['s_db','s_deg']
     ports : list of tuples
         list of port pairs to write. defaults to ntwk.port_tuples
-        (like [[0,0]])
+        (like [(0,0)])
 
     Returns
     -------
