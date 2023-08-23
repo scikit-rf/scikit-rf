@@ -83,9 +83,6 @@ from ..media import Media
 from ..networkSet import NetworkSet
 from ..calibration.calibration import Calibration
 
-from copy import copy
-dir_ = copy(dir)
-
 # file extension conventions for skrf objects.
 OBJ_EXTN = [
     [Frequency, 'freq'],
