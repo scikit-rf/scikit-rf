@@ -6,10 +6,15 @@ from skrf.media import CPW
 from skrf.frequency import Frequency
 import skrf as rf
 from numpy.testing import assert_array_almost_equal
-from matplotlib import pyplot as plt
+
+try:
+    from matplotlib import pyplot as plt
+    rf.stylely()
+except ImportError:
+    pass
+
 import pytest
 
-rf.stylely()
 
 
 class CPWTestCase(unittest.TestCase):

@@ -85,13 +85,13 @@ Graph representation
 from . network import Network, s2s
 from . media import media
 from . constants import INF, NumberLike, S_DEF_DEFAULT
+from . util import subplots
 
 import numpy as np
 
 from itertools import chain, product
 
 from typing import List, TYPE_CHECKING, Tuple
-
 
 if TYPE_CHECKING:
     from .frequency import Frequency
@@ -113,6 +113,24 @@ class Circuit:
     .. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
 
     """
+    @staticmethod
+    def _get_nx():
+        """Returns networkx module if available.
+
+        Raises:
+        -------
+            ImportError: If networkx module is not installed
+
+        Returns:
+        --------
+            networkx module
+        """
+        try:
+            import networkx as nx
+            return nx
+        except ImportError as err:
+            raise ImportError('networkx package as not been installed and is required.') from err
+
     def __init__(self, connections: List[List[Tuple]]) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
@@ -510,11 +528,8 @@ class Circuit:
         ----------
         .. [#] https://networkx.github.io/
         """
-        try:
-            import networkx as nx
-        except ImportError as e:
-            raise ImportError('networkx package as not been installed and is required. ')
 
+        nx = self._get_nx()
         G = nx.Graph()
         # Adding network nodes
         G.add_nodes_from([it for it in self.networks_dict(self.connections)])
@@ -535,15 +550,9 @@ class Circuit:
 
         Check if every pair of vertices in the graph is connected.
         """
-        # Get the circuit graph. Will raise an error if the networkx package
-        # is not installed.
-        G = self.G
 
-        try:
-            import networkx as nx
-            return nx.algorithms.components.is_connected(G)
-        except ImportError as e:
-            raise ImportError('networkx package as not been installed and is required. ')
+        nx = self._get_nx()
+        return nx.algorithms.components.is_connected(self.G)
 
 
     @property
@@ -1283,3 +1292,115 @@ class Circuit:
         for port_idx in self.port_indexes:
             Vs.append((a[port_idx] + b[:,port_idx])*np.sqrt(z0s[:,port_idx]))
         return np.array(Vs).T
+
+    def plot_graph(self, **kwargs):
+        """
+        Plot the graph of the circuit using networkx drawing capabilities.
+
+        Customisation options with default values:
+        ::
+            'network_shape': 's'
+            'network_color': 'gray'
+            'network_size', 300
+            'network_fontsize': 7
+            'inter_shape': 'o'
+            'inter_color': 'lightblue'
+            'inter_size', 300
+            'port_shape': '>'
+            'port_color': 'red'
+            'port_size', 300
+            'port_fontsize': 7
+            'edges_fontsize': 5
+            'network_labels': False
+            'edge_labels': False
+            'inter_labels': False
+            'port_labels': False
+            'label_shift_x': 0
+            'label_shift_y': 0
+
+        """
+
+        nx = self._get_nx()
+        G = self.G
+
+        # default values
+        network_labels = kwargs.pop('network_labels', False)
+        network_shape = kwargs.pop('network_shape', 's')
+        network_color = kwargs.pop('network_color', 'gray')
+        network_fontsize = kwargs.pop('network_fontsize', 7)
+        network_size = kwargs.pop('network_size', 300)
+        inter_labels = kwargs.pop('inter_labels', False)
+        inter_shape = kwargs.pop('inter_shape', 'o')
+        inter_color = kwargs.pop('inter_color', 'lightblue')
+        inter_size = kwargs.pop('inter_size', 300)
+        port_labels = kwargs.pop('port_labels', False)
+        port_shape = kwargs.pop('port_shape', '>')
+        port_color = kwargs.pop('port_color', 'red')
+        port_size = kwargs.pop('port_size', 300)
+        port_fontsize = kwargs.pop('port_fontsize', 7)
+        edge_labels = kwargs.pop('edge_labels', False)
+        edge_fontsize = kwargs.pop('edge_fontsize', 5)
+        label_shift_x = kwargs.pop('label_shift_x', 0)
+        label_shift_y = kwargs.pop('label_shift_y', 0)
+
+
+        # sort between network nodes and port nodes
+        all_ntw_names = [ntw.name for ntw in self.networks_list()]
+        port_names = [ntw_name for ntw_name in all_ntw_names if 'port' in ntw_name]
+        ntw_names = [ntw_name for ntw_name in all_ntw_names if 'port' not in ntw_name]
+        # generate connecting nodes names
+        int_names = ['X'+str(k) for k in range(self.connections_nb)]
+
+        fig, ax = subplots(figsize=(10,8))
+
+        pos = nx.spring_layout(G)
+
+        # draw Networks
+        nx.draw_networkx_nodes(G, pos, port_names, ax=ax,
+                            node_size=port_size,
+                            node_color=port_color, node_shape=port_shape)
+        nx.draw_networkx_nodes(G, pos, ntw_names, ax=ax,
+                            node_size=network_size,
+                            node_color=network_color, node_shape=network_shape)
+        # draw intersections
+        nx.draw_networkx_nodes(G, pos, int_names, ax=ax,
+                            node_size=inter_size,
+                            node_color=inter_color, node_shape=inter_shape)
+        # labels shifts
+        pos_labels = {}
+        for node, coords in pos.items():
+            pos_labels[node] = (coords[0] + label_shift_x,
+                                coords[1] + label_shift_y)
+
+        # network labels
+        if network_labels:
+            network_labels = {lab:lab for lab in ntw_names}
+
+            nx.draw_networkx_labels(G, pos_labels, labels=network_labels,
+                                    font_size=network_fontsize, ax=ax)
+
+        # intersection labels
+        if inter_labels:
+            inter_labels = {'X'+str(k):'X'+str(k) for k in range(self.connections_nb)}
+
+            nx.draw_networkx_labels(G, pos_labels, labels=inter_labels,
+                                    font_size=network_fontsize, ax=ax)
+
+        # port labels
+        if port_labels:
+            port_labels = {lab:lab for lab in port_names}
+
+            nx.draw_networkx_labels(G, pos_labels, labels=port_labels,
+                                    font_size=port_fontsize, ax=ax)
+
+        # draw edges
+        nx.draw_networkx_edges(G, pos, ax=ax)
+        if edge_labels:
+            edge_labels = self.edge_labels
+            nx.draw_networkx_edge_labels(G, pos,
+                                        edge_labels=edge_labels, label_pos=0.5,
+                                        font_size=edge_fontsize, ax=ax)
+        # remove x and y axis and labels
+        ax.axis('off')
+        fig.tight_layout()
+

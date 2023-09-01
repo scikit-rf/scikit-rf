@@ -180,8 +180,20 @@ man_pages = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/objects.inv', None),
+    'python': ('https://docs.python.org/3', None),
     'numpy': ('https://numpy.org/doc/stable', None),
     'pd': ('https://pandas.pydata.org/docs', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
 }
+
+def process_signature(app, what, name, obj, options, signature, return_annotation):
+
+    func_name = name.split(".")[-1]
+    if func_name.startswith("plot_") and func_name[5:] in rf.Network._generated_functions().keys():
+        signature = signature.split(",")[2:]
+        return "(" + ", ".join(signature), return_annotation
+
+    return signature, return_annotation
+
+def setup(app):
+    app.connect("autodoc-process-signature", process_signature)
