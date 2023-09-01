@@ -971,6 +971,81 @@ class Calibration:
 
         write(file,self, *args, **kwargs)
 
+    @util.axes_kwarg
+    def plot_calibration_errors(self, *args, ax: util.Axes = None, **kwargs):
+        """
+        Plot biased, unbiased and total error in dB scaled.
+
+        See Also
+        --------
+        biased_error
+        unbiased_error
+        total_error
+        """
+
+
+        port_list = self.biased_error.port_tuples
+        for m,n in port_list:
+            ax.set_title('S%i%i'%(m+1,n+1))
+            self.unbiased_error.plot_s_db(m,n,**kwargs)
+            self.biased_error.plot_s_db(m,n,**kwargs)
+            self.total_error.plot_s_db(m,n,**kwargs)
+            ax.set_ylim(-100,0)
+
+
+    def plot_caled_ntwks(self, attr: str = 's_smith', show_legend: bool = False, **kwargs):
+        r"""
+        Plot corrected calibration standards.
+
+        Given that the calibration is overdetermined, this may be used
+        as a heuristic verification of calibration quality.
+
+        Parameters
+        ----------
+        attr : str
+            Network property to plot, ie 's_db', 's_smith', etc.
+            Default is 's_smith'
+        show_legend : bool, optional
+            draw a legend or not. Default is False.
+        \*\*kwargs : kwargs
+            passed to the plot method of Network
+        """
+        nports = ns[0].nports
+        fig, axes = util.subplots(figsize=(8,8))
+
+        ns = NetworkSet(self.caled_ntwks)
+        kwargs.update({'show_legend':show_legend})
+
+        for ax ,mn in zip(axes, ns[0].port_tuples):
+            ax.set_title('S%i%i'%(mn[0]+1,mn[1]+1))
+            ns.__getattribute__('plot_'+attr)(*mn, **kwargs)
+
+        fig.tight_layout()
+
+
+    def plot_residuals(self, attr: str = 's_db', **kwargs):
+        r"""
+        Plot residual networks.
+
+        Given that the calibration is overdetermined, this may be used
+        as a metric of the calibration's *goodness of fit*
+
+        Parameters
+        ----------
+        attr : str, optional.
+            Network property to plot, ie 's_db', 's_smith', etc.
+            Default is 's_db'
+        \*\*kwargs : kwargs
+            passed to the plot method of Network
+
+        See Also
+        --------
+        Calibration.residual_networks
+        """
+
+        NetworkSet(self.residual_ntwks).__getattribute__('plot_'+attr)(**kwargs)
+
+
 
 class OnePort(Calibration):
     r"""

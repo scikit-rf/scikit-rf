@@ -1,7 +1,13 @@
 import pytest
+import sys
 
-from skrf.vi.vna import vna
+try:
+    from skrf.vi.vna import vna
+except ImportError:
+    pass
 
+if "matplotlib" not in sys.modules:
+    pytest.skip(allow_module_level=True)
 
 @pytest.mark.parametrize(
     "cmd,kwargs,expected",

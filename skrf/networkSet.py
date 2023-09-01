@@ -54,12 +54,16 @@ from scipy.interpolate import interp1d
 from . import mathFunctions as mf
 from .network import (COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency,
                       Network)
-from .util import now_string_2_dt
+from .util import now_string_2_dt, copy_doc
 
 try:
     from numpy.typing import ArrayLike
 except ImportError:
     ArrayLike = Any
+
+from . import plotting as skrf_plt
+
+
 
 class NetworkSet:
     """
@@ -1305,7 +1309,55 @@ class NetworkSet:
                                                       x, interp_kind)
 
         return interp_ntwk
+    
+    @copy_doc(skrf_plt.animate)
+    def animate(self, *args, **kwargs):
+        skrf_plt.animate(self, *args, **kwargs)
 
+    @copy_doc(skrf_plt.plot_uncertainty_bounds_component)
+    def plot_uncertainty_bounds_component(self, *args, **kwargs):
+        skrf_plt.plot_uncertainty_bounds_component(self, *args, **kwargs)
+
+    @copy_doc(skrf_plt.plot_minmax_bounds_component)
+    def plot_minmax_bounds_component(self, *args, **kwargs):
+        skrf_plt.plot_minmax_bounds_component(self, *args, **kwargs)
+
+    @copy_doc(skrf_plt.plot_uncertainty_bounds_s_db)
+    def plot_uncertainty_bounds_s_db(self, *args, **kwargs):
+        skrf_plt.plot_uncertainty_bounds_s_db(self, *args, **kwargs)
+
+    @copy_doc(skrf_plt.plot_minmax_bounds_s_db)
+    def plot_minmax_bounds_s_db(self, *args, **kwargs):
+        skrf_plt.plot_minmax_bounds_s_db(self, *args, **kwargs)
+
+    @copy_doc(skrf_plt.plot_minmax_bounds_s_db10)
+    def plot_minmax_bounds_s_db10(self, *args, **kwargs):
+        skrf_plt.plot_minmax_bounds_s_db10(self, *args, **kwargs)
+
+    @copy_doc(skrf_plt.plot_uncertainty_bounds_s_time_db)
+    def plot_uncertainty_bounds_s_time_db(self, *args, **kwargs):
+        skrf_plt.plot_uncertainty_bounds_s_time_db(self, *args, **kwargs)
+
+    @copy_doc(skrf_plt.plot_minmax_bounds_s_time_db)
+    def plot_minmax_bounds_s_time_db(self, *args, **kwargs):
+        skrf_plt.plot_minmax_bounds_s_time_db(self, *args, **kwargs)
+
+    @copy_doc(skrf_plt.plot_uncertainty_decomposition)
+    def plot_uncertainty_decomposition(self, *args, **kwargs):
+        skrf_plt.plot_uncertainty_decomposition(self, *args, **kwargs)
+
+    @copy_doc(skrf_plt.plot_uncertainty_bounds_s)
+    def plot_uncertainty_bounds_s(self, *args, **kwargs):
+        skrf_plt.plot_uncertainty_bounds_s(self, *args, **kwargs)
+
+    @copy_doc(skrf_plt.plot_logsigma)
+    def plot_logsigma(self, *args, **kwargs):
+        skrf_plt.plot_logsigma(self, *args, **kwargs)
+
+    @copy_doc(skrf_plt.signature)
+    def signature(self, *args, **kwargs):
+        skrf_plt.signature(self, *args, **kwargs)
+        
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):

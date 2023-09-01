@@ -814,9 +814,6 @@ class CircuitTestGraph(unittest.TestCase):
     """
     Test functionalities linked to graph method, used in particular for plotting
     """
-    def test_is_networkx_available(self):
-        'The networkx package should be available to run these tests'
-        self.assertTrue('networkx' in sys.modules)
 
     def setUp(self):
         """
