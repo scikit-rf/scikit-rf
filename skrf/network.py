@@ -1713,6 +1713,10 @@ class Network:
         -------
         K : :class:`numpy.ndarray` of shape `f`
 
+        See Also
+        --------
+        stability_circle
+
         """
         if self.nports != 2:
             raise ValueError("Stability factor K is only defined for two ports")
@@ -4270,6 +4274,106 @@ class Network:
             y_active : active Y-parameters
         """
         return s2vswr_active(self.s, a)
+    
+    def stability_circle(self, target_port: str, npoints: int = 181) -> npy.ndarray:
+        r"""
+        Returns a complex number of stability circles for a given port ('load' or 'source').
+        The center and radius of the load stability circle are calculated by the following equations.
+
+        .. math::
+
+                C_{L} = \frac{(S_{22} - DS_{11}^*)^*}{|S_{22}|^{2} - |D|^{2}}
+
+                R_{L} = |\frac{S_{12}S_{21}}{|S_{22}|^2 - |D|^{2}}|
+
+                with
+
+                D = S_{11} S_{22} - S_{12} S_{21}
+
+        Similarly, those of the source side are calculated by the following equations.
+
+        .. math::
+
+                C_{S} = \frac{(S_{11} - DS_{22}^*)^*}{|S_{11}|^{2} - |D|^{2}}
+
+                R_{S} = |\frac{S_{12}S_{21}}{|S_{11}|^2 - |D|^{2}}|
+
+        Parameters
+        ----------
+        target_port : str
+            Specifies the 'load' or 'source' side to caluculate stability circles.
+        npoints : int, optional
+            The number of points on the circumference of the circle.
+            More points result in a smoother circle, but require more computation. Default is 181.
+
+        Returns
+        -------
+        ntwk : :class:`numpy.ndarray` (shape is `npoints x f`)
+            Stability circle in complex numbers
+
+        Example
+        --------
+        >>> import skrf as rf
+        >>> import matplotlib.pyplot as plt
+
+        Create a network object
+
+        >>> ntwk = rf.Network('fet.s2p')
+
+        Calculate the load stability circles for all the frequencies
+
+        >>> lsc = ntwk.stability_circle(target_port='load')
+
+        Plot the circles on the smith chart
+
+        >>> rf.plotting.plot_smith(s=lsc, smith_r=5)
+        >>> plt.show()
+
+        Slicing the network allows you to specify a frequency
+
+        >>> lsc = ntwk['1GHz'].stability_circle(target_port='load')
+        >>> rf.plotting.plot_smith(s=lsc, smith_r=5)
+        >>> plt.show()
+
+        References
+        ----------
+        ..  [1] David. M. Pozar, "Microwave Engineering, Fource Edition," Wiley, p. 566, 2011.
+
+        See Also
+        --------
+        stability
+
+        """
+
+        if self.nports != 2:
+            raise ValueError("Stability circle is only defined for two ports")
+        
+        if npoints <= 0:
+            raise ValueError("npoints must be a positive integer")
+
+        # Calculate the determinant of the scattering matrix
+        D = self.s[:, 0, 0] * self.s[:, 1, 1] - self.s[:, 0, 1] * self.s[:, 1, 0]
+
+        # Calculate the center and radius of the stability circle
+        if target_port == 'load':
+            sc_center = (self.s[:, 1, 1] - self.s[:, 0, 0].conjugate() * D).conjugate() / (npy.abs(self.s[:, 1, 1]) ** 2 - npy.abs(D) ** 2)
+            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] / (npy.abs(self.s[:, 1, 1] ) ** 2 - npy.abs(D) ** 2))
+        elif target_port == 'source':
+            sc_center = (self.s[:, 0, 0] - self.s[:, 1, 1].conjugate() * D).conjugate() / (npy.abs(self.s[:, 0, 0]) ** 2 - npy.abs(D) ** 2)
+            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] / (npy.abs(self.s[:, 0, 0] ) ** 2 - npy.abs(D) ** 2))
+        else:
+            raise ValueError("Invalid target_port. Use 'load' or 'source'.")
+
+        # Generate theta values for the points on the circle
+        theta = npy.linspace(0, 2 * npy.pi, npoints)
+
+        # Calculate real and imaginary parts of points on the load stability circle
+        sc_real = npy.outer(sc_center.real, npy.ones(npoints)) + npy.outer(sc_radius, npy.cos(theta))
+        sc_imag = npy.outer(sc_center.imag, npy.ones(npoints)) + npy.outer(sc_radius, npy.sin(theta))
+
+        # Combine real and imaginary parts to create the load stability circle
+        sc = sc_real + 1j * sc_imag
+        return sc.T
 
     
     _plot_attribute_doc = r"""

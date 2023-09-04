@@ -1781,5 +1781,45 @@ class NetworkTestCase(unittest.TestCase):
         n2 = rf.Network(s=s,f=f2)
         self.assertFalse(n1 == n2)
 
+    def test_stability_circle(self):
+        # Check whether the load stability circle agrees with that calculated with ADS
+        load_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'load_stability_circle_ads.csv'), encoding='utf-8', delimiter=',')
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].stability_circle(target_port='load', npoints=6)[:,0]) - load_stability_circle_ads[:,0]) / load_stability_circle_ads[:,0] < 1e-4
+            )
+        )
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_degree(self.fet['30GHz'].stability_circle(target_port='load', npoints=6)[:,0]) - load_stability_circle_ads[:,1]) / load_stability_circle_ads[:,1] < 1e-4
+            )
+        )
+
+        # Check whether the source stability circle agrees with that calculated with ADS
+        source_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'source_stability_circle_ads.csv'), encoding='utf-8', delimiter=',')
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].stability_circle(target_port='source', npoints=6)[:,0]) - source_stability_circle_ads[:,0]) / source_stability_circle_ads[:,0] < 1e-4
+            )
+        )
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_degree(self.fet['30GHz'].stability_circle(target_port='source', npoints=6)[:,0]) - source_stability_circle_ads[:,1]) / source_stability_circle_ads[:,1] < 1e-4
+            )
+        )
+
+        # Check whether an error is raised when the network is not 2 port.
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.stability_circle(target_port='load')
+
+        # Check whether an error is raised when the number of points is not positive.
+        with pytest.raises(ValueError):
+            net.stability_circle(target_port='load', npoints=0)
+
+        # Check whether an error is raised when an incorrect target_port is specified.
+        with pytest.raises(ValueError):
+            net.stability_circle(target_port='foobar')
+
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
