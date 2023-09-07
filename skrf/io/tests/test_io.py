@@ -6,6 +6,7 @@ import skrf as rf
 from skrf.io import Touchstone
 from skrf.io import network_2_dataframe
 
+import pytest
 
 class IOTestCase(unittest.TestCase):
     """
@@ -177,5 +178,27 @@ class IOTestCase(unittest.TestCase):
         f = [1]
         netw = rf.Network(s=s, f=f)
 
-        s2 = netw.to_dataframe().values
-        assert s.size == s2.size
+        df = netw.to_dataframe()
+        assert s.size == df.values.size
+        assert "s_db 1_11" in df.columns
+        assert "s_db 11_1" in df.columns
+
+    def test_network_2_dataframe_port_sep(self):
+        for port_sep in ["", "_", ","]:
+            df = self.ntwk1.to_dataframe(port_sep=port_sep)
+
+            assert len(df.columns == self.ntwk1.nports ** 2)
+            assert f"s_db 2{port_sep}1" in df.columns
+
+    def test_network_2_dataframe_port_sep_auto(self):
+        f = [1]
+        for ports in [1, 2, 4, 8, 16]:
+            s = npy.random.standard_normal((1, ports, ports))
+            netw = rf.Network(s=s, f=f)
+
+            df = netw.to_dataframe()
+            
+            if ports < 10:
+                assert f"s_db 11" in df.columns
+            else:
+                assert f"s_db 1_1" in df.columns

@@ -62,7 +62,7 @@ JSON
 
 
 """
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import glob
 import inspect
@@ -712,7 +712,8 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
     df.__getattribute__('to_%s'%file_type)(file_name,
         index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
 
-def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'], ports: List[Tuple[int, int]] = None):
+def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'], 
+        ports: List[Tuple[int, int]] = None, port_sep: Optional[str] = None):
     """
     Convert one or more attributes of a network to a pandas DataFrame.
 
@@ -725,6 +726,11 @@ def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'], ports: List[T
     ports : list of tuples
         list of port pairs to write. defaults to ntwk.port_tuples
         (like [(0,0)])
+    port_sep : string
+        defaults to None, which means a empty string "" is used for 
+        networks with lower than 10 ports. (s_db 11, s_db 21)
+        For more than ten ports a "_" is used to avoid ambiguity.
+        (s_db 1_1, s_db 2_1)    
 
     Returns
     -------
@@ -733,11 +739,14 @@ def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'], ports: List[T
     if ports is None:
         ports = ntwk.port_tuples
 
+    if port_sep is None:
+        port_sep = "_" if ntwk.nports >= 10 else ""
+
     d = {}
     for attr in attrs:
         attr_array = getattr(ntwk, attr)
         for m, n in ports:
-            d[f'{attr} {m+1}{n+1}'] = attr_array[:, m, n]
+            d[f'{attr} {m+1}{port_sep}{n+1}'] = attr_array[:, m, n]
     return DataFrame(d, index=ntwk.frequency.f)
 
 def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_type: str = 'excel',
