@@ -192,13 +192,13 @@ class IOTestCase(unittest.TestCase):
 
     def test_network_2_dataframe_port_sep_auto(self):
         f = [1]
-        for ports in [1, 2, 4, 8, 16]:
+        for ports in [1, 2, 4, 8, 10, 11, 16]:
             s = npy.random.standard_normal((1, ports, ports))
             netw = rf.Network(s=s, f=f)
 
             df = netw.to_dataframe()
             
-            if ports < 10:
+            if ports <= 10:
                 assert f"s_db 11" in df.columns
             else:
                 assert f"s_db 1_1" in df.columns

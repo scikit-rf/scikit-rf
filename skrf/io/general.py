@@ -740,7 +740,7 @@ def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'],
         ports = ntwk.port_tuples
 
     if port_sep is None:
-        port_sep = "_" if ntwk.nports >= 10 else ""
+        port_sep = "_" if ntwk.nports > 10 else ""
 
     d = {}
     for attr in attrs:
