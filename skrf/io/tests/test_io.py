@@ -4,6 +4,7 @@ import numpy as npy
 
 import skrf as rf
 from skrf.io import Touchstone
+from skrf.io import network_2_dataframe
 
 
 class IOTestCase(unittest.TestCase):
@@ -164,3 +165,17 @@ class IOTestCase(unittest.TestCase):
         given = {'p1': ('.03', ''), 'p2': ('0.03', ''), 'p3': ('100', ''), 'p4': ('2.5', 'um')}
         actual = Touchstone(self.ntwk_comments_file).get_comment_variables()
         self.assertEqual(given, actual)
+
+    def test_network_2_dataframe_equal(self):
+        df_method = self.ntwk1.to_dataframe()
+        df_function = network_2_dataframe(self.ntwk1)
+
+        assert df_method.equals(df_function)
+
+    def test_network_2_dataframe_columns(self):
+        s = npy.random.standard_normal((1, 11, 11))
+        f = [1]
+        netw = rf.Network(s=s, f=f)
+
+        s2 = netw.to_dataframe().values
+        assert s.size == s2.size
