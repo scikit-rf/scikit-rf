@@ -2652,7 +2652,8 @@ class Network:
         from .io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
 
-    def to_dataframe(self, *args, **kwargs) -> 'pd.DataFrame':
+    def to_dataframe(self, attrs: List[str] =['s_db'], 
+            ports: List[Tuple[int, int]] = None, port_sep: Optional[str] = None):
         """
         Convert attributes of a Network to a pandas DataFrame.
 
@@ -2665,6 +2666,13 @@ class Network:
         ports : list of tuples
             list of port pairs to write. defaults to ntwk.port_tuples
             (like [[0,0]])
+        port_sep : string
+            defaults to None, which means a empty string "" is used for 
+            networks with lower than 10 ports. (s_db 11, s_db 21)
+            For more than ten ports a "_" is used to avoid ambiguity.
+            (s_db 1_1, s_db 2_1)
+            For consistent behaviour it's recommended to specify "_" or
+            "," explicitly.
 
         Returns
         -------
@@ -2676,7 +2684,7 @@ class Network:
         skrf.io.general.network_2_dataframe
         """
         from .io.general import network_2_dataframe
-        return network_2_dataframe(self, *args, **kwargs)
+        return network_2_dataframe(self, attrs=attrs, ports=ports, port_sep=port_sep)
 
     def write_to_json_string(self) -> str:
         """
