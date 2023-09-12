@@ -413,7 +413,6 @@ class Network:
         write : write a network to a file, using pickle
         write_touchstone : write a network to a touchstone file
         """
-        print("run init")
         # allow for old kwarg for backward compatibility
         if 'touchstone_filename' in kwargs:
             file = kwargs['touchstone_filename']
