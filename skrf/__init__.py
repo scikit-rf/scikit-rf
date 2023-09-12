@@ -51,7 +51,7 @@ except ImportError:
 # try to import data but if it fails whatever. it fails if some pickles
 # dont unpickle. but its not important
 try:
-    from . import data
+    from .data import StaticData as data
 except Exception:
     pass
 
