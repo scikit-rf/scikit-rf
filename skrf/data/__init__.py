@@ -29,89 +29,90 @@ import os
 
 from ..network import Network
 from ..io.general import read
-from ..util import staticproperty
 
 pwd = os.path.dirname(os.path.abspath(__file__))
 
 class StaticData:
     
-    @staticproperty
-    def ntwk1() -> Network:
+    @property
+    def ntwk1(self) -> Network:
         return Network(os.path.join(pwd, 'ntwk1.s2p'))
 
-    @staticproperty
-    def line() -> Network:
+    @property
+    def line(self) -> Network:
         """ 2-Port Network: 'line',  75.0-110.0 GHz, 201 pts, z0=[50.+0.j 50.+0.j] """
         return Network(os.path.join(pwd, 'line.s2p'))
 
-    @staticproperty
-    def open_2p() -> Network:
+    @property
+    def open_2p(self) -> Network:
         """ 2-Port Network: 'open',  1000000000.0-10000000000.0 Hz, 10 pts, z0=[50.+0.j 50.+0.j] """
         return Network(os.path.join(pwd, 'open.s2p'))
 
-    @staticproperty
-    def short_2p() -> Network:
+    @property
+    def short_2p(self) -> Network:
         """ 2-Port Network: 'short',  1000000000.0-10000000000.0 Hz, 10 pts, z0=[50.+0.j 50.+0.j] """
         return Network(os.path.join(pwd, 'short.s2p'))
 
-    @staticproperty
-    def ind() -> Network:
+    @property
+    def ind(self) -> Network:
         """ Measured 1 nH series inductor (with parasitics) """
         return Network(os.path.join(pwd, 'ind.s2p'))
 
-    @staticproperty
-    def ring_slot() -> Network:
+    @property
+    def ring_slot(self) -> Network:
         """ 2-Port Network: 'ring slot',  75.0-110.0 GHz, 201 pts, z0=[50.+0.j 50.+0.j] """
         return Network(os.path.join(pwd, 'ring slot.s2p'))
 
-    @staticproperty
-    def tee() -> Network:
+    @property
+    def tee(self) -> Network:
         """ 3-Port Network: 'tee',  330.0-500.0 GHz, 201 pts, z0=[50.+0.j 50.+0.j 50.+0.j] """
         return Network(os.path.join(pwd, 'tee.s3p'))
 
-    @staticproperty
-    def ring_slot_meas() -> Network:
+    @property
+    def ring_slot_meas(self) -> Network:
         """  1-Port Network: 'ring slot measured',  75.0-109.999999992 GHz, 101 pts, z0=[50.+0.j] """
         return Network(os.path.join(pwd, 'ring slot measured.s1p'))
 
-    @staticproperty
-    def wr2p2_line() -> Network:
+    @property
+    def wr2p2_line(self) -> Network:
         return Network(os.path.join(pwd, 'wr2p2,line.s2p'))
 
-    @staticproperty
-    def wr2p2_line1() -> Network:
+    @property
+    def wr2p2_line1(self) -> Network:
         return Network(os.path.join(pwd, 'wr2p2,line1.s2p'))
 
-    @staticproperty
-    def wr2p2_delayshort() -> Network:
+    @property
+    def wr2p2_delayshort(self) -> Network:
         return Network(os.path.join(pwd, 'wr2p2,delayshort.s1p'))
 
-    @staticproperty
-    def wr2p2_short() -> Network:
+    @property
+    def wr2p2_short(self) -> Network:
         return Network(os.path.join(pwd, 'wr2p2,short.s1p'))
 
-    @staticproperty
-    def wr1p5_line() -> Network:
+    @property
+    def wr1p5_line(self) -> Network:
         return Network(os.path.join(pwd, 'wr1p5,line.s2p'))
 
-    @staticproperty
-    def wr1p5_short() -> Network:
+    @property
+    def wr1p5_short(self) -> Network:
         return Network(os.path.join(pwd, 'wr1p5,short.s1p'))
 
-    @staticproperty
-    def ro_1() -> Network:
+    @property
+    def ro_1(self) -> Network:
         return Network(os.path.join(pwd, 'ro,1.s1p'))
 
-    @staticproperty
-    def ro_2() -> Network:
+    @property
+    def ro_2(self) -> Network:
         return Network(os.path.join(pwd, 'ro,2.s1p'))
 
-    @staticproperty
-    def ro_3() -> Network:
+    @property
+    def ro_3(self) -> Network:
         return Network(os.path.join(pwd, 'ro,3.s1p'))
 
+_data = StaticData()
+
 def __getattr__(name):
-    return getattr(StaticData, name)
+    return getattr(_data, name)
 
 one_port_cal = read(os.path.join(pwd, 'one_port.cal'), encoding='latin1')
 

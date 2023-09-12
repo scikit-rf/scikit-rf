@@ -56,7 +56,7 @@ except Exception:
     pass
 
 def __getattr__(name: str):
-    return getattr(StaticInstances, name)
+    return getattr(instances._instances, name)
 
 ## built-in imports
 from copy import deepcopy as copy

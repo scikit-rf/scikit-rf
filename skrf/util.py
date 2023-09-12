@@ -53,7 +53,7 @@ General Purpose Objects
 import contextlib
 import fnmatch
 import os
-from typing import Iterable, Tuple, List, Union, Any, TypeVar, Callable, Generic
+from typing import Iterable, Tuple, List, Union, Any, TypeVar, Callable
 import warnings
 import numpy as npy
 from datetime import datetime
@@ -112,20 +112,6 @@ def copy_doc(copy_func: Callable) -> Callable:
         func.__doc__ = copy_func.__doc__
         return func
     return wrapper
-
-
-R = TypeVar("R")
-
-class staticproperty(Generic[R]):
-    def __init__(self, getter: Callable[[], R]) -> None:
-        self.__getter = getter
-
-    def __get__(self, obj: object, objtype: type) -> R:
-        return self.__getter()
-
-    @staticmethod
-    def __call__(getter_fn: Callable[[], R]) -> "staticproperty[R]":
-        return staticproperty(getter_fn)
 
 
 def subplots(*args, **kwargs) -> Tuple[Figure, npy.ndarray]:
