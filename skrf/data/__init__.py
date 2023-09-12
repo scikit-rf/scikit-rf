@@ -29,12 +29,9 @@ import os
 
 from ..network import Network
 from ..io.general import read
+from ..util import staticproperty
 
 pwd = os.path.dirname(os.path.abspath(__file__))
-
-class staticproperty(property):
-  def __get__(self, owner_self, owner_cls):         
-    return self.fget()
 
 class StaticData:
     
@@ -112,6 +109,9 @@ class StaticData:
     @staticproperty
     def ro_3() -> Network:
         return Network(os.path.join(pwd, 'ro,3.s1p'))
+
+def __getattr__(name):
+    return getattr(StaticData, name)
 
 one_port_cal = read(os.path.join(pwd, 'one_port.cal'), encoding='latin1')
 

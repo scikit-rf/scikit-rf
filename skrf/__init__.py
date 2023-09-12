@@ -51,11 +51,12 @@ except ImportError:
 # try to import data but if it fails whatever. it fails if some pickles
 # dont unpickle. but its not important
 try:
-    from .data import StaticData as data
+    from . import data
 except Exception:
     pass
 
-
+def __getattr__(name: str):
+    return getattr(StaticInstances, name)
 
 ## built-in imports
 from copy import deepcopy as copy
