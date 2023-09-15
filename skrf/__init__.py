@@ -3,7 +3,7 @@ skrf is an object-oriented approach to microwave engineering,
 implemented in Python.
 """
 
-__version__ = '0.28.0'
+__version__ = '0.29.0'
 ## Import all  module names for coherent reference of name-space
 #import io
 
@@ -72,7 +72,7 @@ saf = None
 stylely = None
 
 
-def setup_pylab():
+def setup_pylab() -> bool:
     try:
         import matplotlib
     except ImportError:
@@ -80,7 +80,6 @@ def setup_pylab():
         return False
 
     from . import plotting
-    plotting.setup_matplotlib_plotting()
 
     global saf, stylely
     saf = plotting.save_all_figs
@@ -99,4 +98,4 @@ def setup_plotting():
     # elif some different plotting environment
         # set that up
 
-setup_plotting()
+plotting_available = setup_plotting()

@@ -193,7 +193,7 @@ def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
         network to get data from
 
     t_unit : str
-        Time unit for start, stop, center and span arguments, defaults to nanoseconds (ns).
+        Time unit for start, stop, center and span arguments, defaults to seconds (s).
 
         Possible values:
             * 's': seconds
@@ -211,13 +211,10 @@ def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
     if t_unit == "":
         # Do not raise in autogate mode, where all parameters are None
         warnings.warn('''
-                        Time unit not passed: currently uses 'ns' per default.
-                        The future versions of scikit-rf will use 's' per default instead,
-                        so it is recommended to specify explicitly the time unit
-                        to obtain similar results with future versions.
+                        Time unit not passed: uses 's' per default.
                         ''',
                         DeprecationWarning, stacklevel=2)
-        t_unit = 'ns'
+        t_unit = 's'
 
     x = ntwk.s_time_db.flatten()
     p1, p2 = find_n_peaks(x, n=2)
@@ -242,7 +239,7 @@ def get_window(window: Union[str, tuple, Callable], Nx: int, **kwargs) -> npy.nd
     window : npy.ndarray
         Window samples.
     """
-    
+
     if callable(window):
         return window(Nx, **kwargs)
     else:
@@ -254,8 +251,8 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
     """
     Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
-    The gate can be defined with start/stop times, or by center/span. All times are in units of nanoseconds but
-    can be changed using the `t_unit` parameter. The default unit will change to `s` in **scikit-rf** version 1.0.
+    The gate can be defined with start/stop times, or by center/span. All times are in units of seconds but
+    can be changed using the `t_unit` parameter.
     Common windows are:
 
     * ('kaiser', 6)
@@ -317,7 +314,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         options.
 
     t_unit : str
-        Time unit for start, stop, center and span arguments, defaults to nanoseconds (ns).
+        Time unit for start, stop, center and span arguments, defaults to seconds (s).
 
         Possible values:
             * 's': seconds
@@ -353,13 +350,10 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
         if not all([e is None for e in [start, stop, center, span]]):
             # Do not raise in autogate mode, where all parameters are None
             warnings.warn('''
-                            Time unit not passed: currently uses 'ns' per default.
-                            The future versions of scikit-rf will use 's' per default instead,
-                            so it is recommended to specify explicitly the time unit
-                            to obtain similar results with future versions.
+                            Time unit not passed: uses 's' per default.
                             ''',
                             DeprecationWarning, stacklevel=2)
-        t_unit = 'ns'
+        t_unit = 's'
 
     t_mult = time_lookup_dict[t_unit]
 

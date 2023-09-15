@@ -154,7 +154,7 @@ Misc Functions
 from typing import (Any, NoReturn, Optional, Sequence,
     Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List, TextIO)
 from numbers import Number
-from functools import reduce, lru_cache
+from functools import reduce
 
 import os
 import warnings
@@ -173,9 +173,15 @@ from numpy import gradient, ndarray, shape
 from scipy import stats  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    pass
+
 from . import mathFunctions as mf
 from .frequency import Frequency
-from .util import get_fid, get_extn, find_nearest_index
+from . import plotting as rfplt
+from .util import get_fid, get_extn, find_nearest_index, axes_kwarg, copy_doc, partial_with_docs, Axes
 from .time import time_gate, get_window
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
@@ -268,7 +274,6 @@ class Network:
     References
     ----------
     .. [#TwoPortWiki] http://en.wikipedia.org/wiki/Two-port_network
-
     """
 
     PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 't']
@@ -303,7 +308,6 @@ class Network:
     """
 
     @classmethod
-    @lru_cache()
     def _generated_functions(cls) -> Dict[str, Tuple[Callable, str, str]]:
         return {f"{p}_{func_name}": (func, p, func_name)
             for p in cls.PRIMARY_PROPERTIES
@@ -933,7 +937,6 @@ class Network:
             raise IndexError('Networks must have same number of ports.')
 
     def __getattr__(self, name: str) -> 'Network':
-
         m = re.match(r"s(\d+)_(\d+)", name)
         if not m:
             m = re.match(r"s(\d)(\d)", name)
@@ -949,11 +952,11 @@ class Network:
 
     def __dir__(self):
         ret = super().__dir__()
+        
+        s_properties = [f"s{t1+1}_{t2+1}" for t1 in range(self.nports) for t2 in range(self.nports)]
+        s_properties += [f"s{t1+1}{t2+1}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
 
-        s_properties = [f"s{t1}_{t2}" for t1 in range(self.nports) for t2 in range(self.nports)]
-        s_properties += [f"s{t1}{t2}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
-
-        return ret + s_properties + list(self._generated_functions().keys())
+        return ret + s_properties
 
     def attribute(self, prop_name: str, conversion: str) -> npy.ndarray:
         prop = getattr(self, prop_name)
@@ -1710,6 +1713,10 @@ class Network:
         -------
         K : :class:`numpy.ndarray` of shape `f`
 
+        See Also
+        --------
+        stability_circle
+
         """
         if self.nports != 2:
             raise ValueError("Stability factor K is only defined for two ports")
@@ -2233,7 +2240,7 @@ class Network:
                 # get the name from the touchstone file
                 try:
                     self.name = os.path.basename(os.path.splitext(touchstoneFile.filename)[0])
-                except():
+                except:
                     print('warning: couldn\'t inspect network name')
                     self.name = ''
                 pass
@@ -2645,7 +2652,8 @@ class Network:
         from .io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
 
-    def to_dataframe(self, *args, **kwargs) -> 'pd.DataFrame':
+    def to_dataframe(self, attrs: List[str] =['s_db'], 
+            ports: List[Tuple[int, int]] = None, port_sep: Optional[str] = None):
         """
         Convert attributes of a Network to a pandas DataFrame.
 
@@ -2658,6 +2666,13 @@ class Network:
         ports : list of tuples
             list of port pairs to write. defaults to ntwk.port_tuples
             (like [[0,0]])
+        port_sep : string
+            defaults to None, which means a empty string "" is used for 
+            networks with lower than 10 ports. (s_db 11, s_db 21)
+            For more than ten ports a "_" is used to avoid ambiguity.
+            (s_db 1_1, s_db 2_1)
+            For consistent behaviour it's recommended to specify "_" or
+            "," explicitly.
 
         Returns
         -------
@@ -2669,7 +2684,7 @@ class Network:
         skrf.io.general.network_2_dataframe
         """
         from .io.general import network_2_dataframe
-        return network_2_dataframe(self, *args, **kwargs)
+        return network_2_dataframe(self, attrs=attrs, ports=ports, port_sep=port_sep)
 
     def write_to_json_string(self) -> str:
         """
@@ -4267,6 +4282,281 @@ class Network:
             y_active : active Y-parameters
         """
         return s2vswr_active(self.s, a)
+    
+    def stability_circle(self, target_port: str, npoints: int = 181) -> npy.ndarray:
+        r"""
+        Returns a complex number of stability circles for a given port ('load' or 'source').
+        The center and radius of the load stability circle are calculated by the following equations.
+
+        .. math::
+
+                C_{L} = \frac{(S_{22} - DS_{11}^*)^*}{|S_{22}|^{2} - |D|^{2}}
+
+                R_{L} = |\frac{S_{12}S_{21}}{|S_{22}|^2 - |D|^{2}}|
+
+                with
+
+                D = S_{11} S_{22} - S_{12} S_{21}
+
+        Similarly, those of the source side are calculated by the following equations.
+
+        .. math::
+
+                C_{S} = \frac{(S_{11} - DS_{22}^*)^*}{|S_{11}|^{2} - |D|^{2}}
+
+                R_{S} = |\frac{S_{12}S_{21}}{|S_{11}|^2 - |D|^{2}}|
+
+        Parameters
+        ----------
+        target_port : str
+            Specifies the 'load' or 'source' side to caluculate stability circles.
+        npoints : int, optional
+            The number of points on the circumference of the circle.
+            More points result in a smoother circle, but require more computation. Default is 181.
+
+        Returns
+        -------
+        ntwk : :class:`numpy.ndarray` (shape is `npoints x f`)
+            Stability circle in complex numbers
+
+        Example
+        --------
+        >>> import skrf as rf
+        >>> import matplotlib.pyplot as plt
+
+        Create a network object
+
+        >>> ntwk = rf.Network('fet.s2p')
+
+        Calculate the load stability circles for all the frequencies
+
+        >>> lsc = ntwk.stability_circle(target_port='load')
+
+        Plot the circles on the smith chart
+
+        >>> rf.plotting.plot_smith(s=lsc, smith_r=5)
+        >>> plt.show()
+
+        Slicing the network allows you to specify a frequency
+
+        >>> lsc = ntwk['1GHz'].stability_circle(target_port='load')
+        >>> rf.plotting.plot_smith(s=lsc, smith_r=5)
+        >>> plt.show()
+
+        References
+        ----------
+        ..  [1] David. M. Pozar, "Microwave Engineering, Fource Edition," Wiley, p. 566, 2011.
+
+        See Also
+        --------
+        stability
+
+        """
+
+        if self.nports != 2:
+            raise ValueError("Stability circle is only defined for two ports")
+        
+        if npoints <= 0:
+            raise ValueError("npoints must be a positive integer")
+
+        # Calculate the determinant of the scattering matrix
+        D = self.s[:, 0, 0] * self.s[:, 1, 1] - self.s[:, 0, 1] * self.s[:, 1, 0]
+
+        # Calculate the center and radius of the stability circle
+        if target_port == 'load':
+            sc_center = (self.s[:, 1, 1] - self.s[:, 0, 0].conjugate() * D).conjugate() / (npy.abs(self.s[:, 1, 1]) ** 2 - npy.abs(D) ** 2)
+            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] / (npy.abs(self.s[:, 1, 1] ) ** 2 - npy.abs(D) ** 2))
+        elif target_port == 'source':
+            sc_center = (self.s[:, 0, 0] - self.s[:, 1, 1].conjugate() * D).conjugate() / (npy.abs(self.s[:, 0, 0]) ** 2 - npy.abs(D) ** 2)
+            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] / (npy.abs(self.s[:, 0, 0] ) ** 2 - npy.abs(D) ** 2))
+        else:
+            raise ValueError("Invalid target_port. Use 'load' or 'source'.")
+
+        # Generate theta values for the points on the circle
+        theta = npy.linspace(0, 2 * npy.pi, npoints)
+
+        # Calculate real and imaginary parts of points on the load stability circle
+        sc_real = npy.outer(sc_center.real, npy.ones(npoints)) + npy.outer(sc_radius, npy.cos(theta))
+        sc_imag = npy.outer(sc_center.imag, npy.ones(npoints)) + npy.outer(sc_radius, npy.sin(theta))
+
+        # Combine real and imaginary parts to create the load stability circle
+        sc = sc_real + 1j * sc_imag
+        return sc.T
+
+    
+    _plot_attribute_doc = r"""
+    plot the Network attribute :attr:`{attribute}_{conversion}` component vs {x_axis}.
+
+    Parameters
+    ----------
+    m : int, optional
+        first index of s-parameter matrix, if None will use all
+    n : int, optional
+        second index of the s-parameter matrix, if None will use all
+    ax : :class:`matplotlib.Axes` object, optional
+        An existing Axes object to plot on
+    show_legend : Boolean
+        draw legend or not
+    y_label : string, optional
+        the y-axis label
+    logx : Boolean, optional
+        Enable logarithmic x-axis, default off
+    \**kwargs : arguments, keyword arguments
+        passed to :func:`matplotlib.plot`
+
+    Note
+    ----
+    This function is dynamically generated upon Network
+    initialization. This is accomplished by calling
+    :func:`Network.plot_attribute`
+
+    Examples
+    --------
+    >>> myntwk.plot_{attribute}_{conversion}(m=1,n=0,color='r')
+        
+    """
+
+    @axes_kwarg
+    def plot_attribute(     self,
+                            attribute: str,
+                            conversion: str,
+                            m=None,
+                            n=None,
+                            ax: Axes=None,
+                            show_legend=True,
+                            y_label=None,
+                            logx=False, **kwargs):
+        
+
+        # create index lists, if not provided by user
+        if m is None:
+            M = range(self.number_of_ports)
+        else:
+            M = [m]
+        if n is None:
+            N = range(self.number_of_ports)
+        else:
+            N = [n]
+
+        if 'label' not in kwargs.keys():
+            gen_label = True
+        else:
+            gen_label = False
+
+        for m in M:
+            for n in N:
+                # set the legend label for this trace to the networks
+                # name if it exists, and they didn't pass a name key in
+                # the kwargs
+                if gen_label:
+                    if self.name is None:
+                        if plt.rcParams['text.usetex']:
+                            label_string = '$%s_{%i%i}$'%\
+                            (attribute[0].upper(),m+1,n+1)
+                        else:
+                            label_string = '%s%i%i'%\
+                            (attribute[0].upper(),m+1,n+1)
+                    else:
+                        if plt.rcParams['text.usetex']:
+                            label_string = self.name+', $%s_{%i%i}$'%\
+                            (attribute[0].upper(),m+1,n+1)
+                        else:
+                            label_string = self.name+', %s%i%i'%\
+                            (attribute[0].upper(),m+1,n+1)
+                    kwargs['label'] = label_string
+
+                if conversion in ["time_impulse", "time_step"]:
+                    xlabel = "Time (ns)"
+                    
+                    t_func_kwargs = {"squeeze": False}
+                    for key in {"window", "n", "pad", "bandpass"} & kwargs.keys():
+                        t_func_kwargs[key] = kwargs.pop(key)
+
+                    if conversion == "time_impulse":
+                        x, y = self.impulse_response(**t_func_kwargs)
+                    else:
+                        x, y = self.step_response(**t_func_kwargs)
+                    
+                    if attribute[0].lower() == "z":
+                        y_label = "Z (Ohm)"
+                        y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
+                        y[x == -1.] = -1. + 1e-12  # solve numerical singularity
+                        y = self.z0[0,0].real * (1+y) / (1-y)
+                    
+                    rfplt.plot_rectangular(x=x * 1e9,
+                                        y=y[:, m, n],
+                                        x_label=xlabel,
+                                        y_label=y_label,
+                                        show_legend=show_legend, ax=ax,
+                                        **kwargs)
+
+                else:
+                    # plot the desired attribute vs frequency
+                    if conversion == "time":
+                        xlabel = 'Time (ns)'
+                        x = self.frequency.t_ns
+                        y=npy.abs(self.attribute(attribute, conversion)[:, m, n])
+
+                    else:
+                        xlabel = 'Frequency (%s)' % self.frequency.unit
+                        # x = self.frequency.f_scaled
+                        x = self.frequency.f  # always plot f, and then scale the ticks instead
+                        y = self.attribute(attribute, conversion)[:, m, n]
+
+                        # scale the ticklabels according to the frequency unit and set log-scale if desired:
+                        if logx:
+                            ax.set_xscale('log')
+
+                        rfplt.scale_frequency_ticks(ax, self.frequency.unit)
+
+
+
+                    rfplt.plot_rectangular(x=x,
+                                        y=y,
+                                        x_label=xlabel,
+                                        y_label=y_label,
+                                        show_legend=show_legend, ax=ax,
+                                        **kwargs)
+    
+    plot_attribute.__doc__ = _plot_attribute_doc.format(attribute="conversion", conversion="attribute", x_axis="frequency or time")
+
+    @copy_doc(rfplt.plot)
+    def plot(self, *args, **kwargs):
+        return rfplt.plot(self, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_passivity)
+    def plot_passivity(self, port=None, label_prefix=None, *args, **kwargs):
+        return rfplt.plot_passivity(self, port, label_prefix, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_reciprocity)
+    def plot_reciprocity(self, db=False, *args, **kwargs):
+        return rfplt.plot_reciprocity(self, db, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_reciprocity2)
+    def plot_reciprocity2(self, db=False, *args, **kwargs):
+        return rfplt.plot_reciprocity2(self, db, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_s_db_time)
+    def plot_s_db_time(self, center_to_dc=None, *args, **kwargs):
+        return rfplt.plot_s_db_time(self, center_to_dc, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_s_smith)
+    def plot_s_smith(self, m=None, n=None,r=1, ax=None, show_legend=True,\
+        chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):
+        return rfplt.plot_s_smith(self, m, n, r, ax, show_legend, chart_type,
+                            draw_labels, label_axes, draw_vswr, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_it_all)
+    def plot_it_all(self, *args, **kwargs):
+        return rfplt.plot_it_all(self, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_prop_complex)
+    def plot_prop_complex(self, *args, **kwargs):
+        return rfplt.plot_prop_complex(self, *args, **kwargs)
+
+    @copy_doc(rfplt.plot_prop_polar)
+    def plot_prop_polar(self, *args, **kwargs):
+        return rfplt.plot_prop_polar(self, *args, **kwargs)
 
 for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
 
@@ -4285,6 +4575,20 @@ for func_name, (_func, prop_name, conversion) in Network._generated_functions().
             conversion=conversion:
 
             self.attribute(prop_name, conversion), doc=doc))
+
+    for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
+        plotfunc = partial_with_docs(Network.plot_attribute, prop_name, conversion)
+        plotfunc.__doc__ = Network._plot_attribute_doc.format(
+            attribute=prop_name, 
+            conversion=conversion, 
+            x_axis="time" if "time" in conversion else "frequency")
+        
+        setattr(Network, f"plot_{func_name}", plotfunc)
+
+
+    for prop_name in Network.PRIMARY_PROPERTIES:
+        setattr(Network, f"plot_{prop_name}_polar", partial_with_docs(Network.plot_prop_polar, prop_name))
+        setattr(Network, f"plot_{prop_name}_complex", partial_with_docs(Network.plot_prop_complex, prop_name))
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
 PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
@@ -7136,7 +7440,7 @@ def check_frequency_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
     Check if two Networks have same frequency.
     """
-    if assert_frequency_equal(ntwkA, ntwkB) is False:
+    if not assert_frequency_equal(ntwkA, ntwkB):
         raise IndexError('Networks don\'t have matching frequency. See `Network.interpolate`')
 
 
@@ -7144,7 +7448,7 @@ def check_frequency_exist(ntwk) -> None:
     """
     Check if a Network has a non-zero Frequency.
     """
-    if assert_frequency_exist(ntwk) is False:
+    if not assert_frequency_exist(ntwk):
         raise ValueError('Network has no Frequency. Frequency points must be defined.')
 
 
@@ -7153,7 +7457,7 @@ def check_z0_equal(ntwkA: Network, ntwkB: Network) -> None:
     Check if two Networks have same port impedances.
     """
     # note you should check frequency equal before you call this
-    if assert_z0_equal(ntwkA, ntwkB) is False:
+    if not assert_z0_equal(ntwkA, ntwkB):
         raise ValueError('Networks don\'t have matching z0.')
 
 
@@ -7161,7 +7465,7 @@ def check_nports_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
     Check if two Networks have same number of ports.
     """
-    if assert_nports_equal(ntwkA, ntwkB) is False:
+    if not assert_nports_equal(ntwkA, ntwkB):
         raise ValueError('Networks don\'t have matching number of ports.')
 
 

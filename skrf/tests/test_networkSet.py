@@ -3,6 +3,8 @@ import os
 import numpy as np
 import skrf as rf
 import glob
+import sys
+import pytest
 
 class NetworkSetTestCase(unittest.TestCase):
     """
@@ -204,7 +206,8 @@ class NetworkSetTestCase(unittest.TestCase):
         ns.name = 'testing'
         ns.write()  # write 'testing.ns'
         os.remove('testing.ns')
-
+    
+    @pytest.mark.skipif("openpyxl" not in sys.modules, reason="Requires openpyxl in sys.modules.")
     def test_write_spreadsheet(self):
         """
         Test the `write_spreadsheet` method.

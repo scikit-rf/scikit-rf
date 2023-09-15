@@ -4,7 +4,7 @@ import numpy as npy
 
 import skrf as rf
 from skrf.io import Touchstone
-
+from skrf.io import network_2_dataframe
 
 class IOTestCase(unittest.TestCase):
     """
@@ -164,3 +164,39 @@ class IOTestCase(unittest.TestCase):
         given = {'p1': ('.03', ''), 'p2': ('0.03', ''), 'p3': ('100', ''), 'p4': ('2.5', 'um')}
         actual = Touchstone(self.ntwk_comments_file).get_comment_variables()
         self.assertEqual(given, actual)
+
+    def test_network_2_dataframe_equal(self):
+        df_method = self.ntwk1.to_dataframe()
+        df_function = network_2_dataframe(self.ntwk1)
+
+        assert df_method.equals(df_function)
+
+    def test_network_2_dataframe_columns(self):
+        s = npy.random.standard_normal((1, 11, 11))
+        f = [1]
+        netw = rf.Network(s=s, f=f)
+
+        df = netw.to_dataframe()
+        assert s.size == df.values.size
+        assert "s_db 1_11" in df.columns
+        assert "s_db 11_1" in df.columns
+
+    def test_network_2_dataframe_port_sep(self):
+        for port_sep in ["", "_", ","]:
+            df = self.ntwk1.to_dataframe(port_sep=port_sep)
+
+            assert len(df.columns == self.ntwk1.nports ** 2)
+            assert f"s_db 2{port_sep}1" in df.columns
+
+    def test_network_2_dataframe_port_sep_auto(self):
+        f = [1]
+        for ports in [1, 2, 4, 8, 10, 11, 16]:
+            s = npy.random.standard_normal((1, ports, ports))
+            netw = rf.Network(s=s, f=f)
+
+            df = netw.to_dataframe()
+            
+            if ports <= 10:
+                assert "s_db 11" in df.columns
+            else:
+                assert "s_db 1_1" in df.columns
