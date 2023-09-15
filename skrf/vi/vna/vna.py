@@ -241,6 +241,14 @@ class VNA(ABC):
 
         return property(fget=fget, fset=fset)
 
+    @property
+    def timeout(self) -> Optional[int]:
+        return self._resource.timeout
+
+    @timeout.setter
+    def timeout(self, timeout: Optional[int]) -> None:
+        self._resource.timeout = timeout
+
     def read(self, **kwargs) -> None:
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             fn = self._resource.read
