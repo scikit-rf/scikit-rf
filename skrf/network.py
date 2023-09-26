@@ -4492,10 +4492,12 @@ class Network:
 
                 else:
                     # plot the desired attribute vs frequency
-                    if conversion == "time":
+                    if "time" in conversion:
                         xlabel = 'Time (ns)'
                         x = self.frequency.t_ns
-                        y=npy.abs(self.attribute(attribute, conversion)[:, m, n])
+                        y=self.attribute(attribute, conversion)[:, m, n]
+                        if conversion in ["time_mag", "time"]:
+                            y = npy.abs(y)
 
                     else:
                         xlabel = 'Frequency (%s)' % self.frequency.unit
