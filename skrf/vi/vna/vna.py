@@ -81,9 +81,11 @@ class Channel:
 class VNA(ABC):
     _scpi = True  # Set to false in subclasses that don't use SCPI
 
-    def __init__(self, address: str, backend: str = "@py") -> None:
+    def __init__(
+        self, address: str, backend: str = "@py", timeout: Optional[int] = None
+    ) -> None:
         rm = pyvisa.ResourceManager(backend)
-        self._resource = rm.open_resource(address)
+        self._resource = rm.open_resource(address, timeout=timeout)
 
         # Reading and setting the query values format is instrument specific
         # and must be done for each subclass. We default to using ASCII
@@ -113,16 +115,12 @@ class VNA(ABC):
             if not hasattr(self, ch_id):
                 return
             ch = getattr(self, ch_id)
-            if hasattr(ch, '_on_delete'):
+            if hasattr(ch, "_on_delete"):
                 ch._on_delete()
             delattr(self, ch_id)
 
         def _channels(self) -> list[Channel]:
-            return [
-                getattr(self, ch)
-                for ch in dir(self)
-                if re.fullmatch(r"ch\d+", ch)
-            ]
+            return [getattr(self, ch) for ch in dir(self) if re.fullmatch(r"ch\d+", ch)]
 
         def __getattr__(self, k):
             if not hasattr(self.Channel, k):
@@ -140,18 +138,14 @@ class VNA(ABC):
             "wait_for_complete",
             lambda self: self.query("*OPC?"),
         )
-        setattr(self.__class__, "status", property(
-            lambda self: self.query("*STB?")))
-        setattr(self.__class__, "options", property(
-            lambda self: self.query("*OPT?")))
-        setattr(self.__class__, "id", property(
-            lambda self: self.query("*IDN?")))
-        setattr(self.__class__, "clear_errors",
-                lambda self: self.write("*CLS"))
+        setattr(self.__class__, "status", property(lambda self: self.query("*STB?")))
+        setattr(self.__class__, "options", property(lambda self: self.query("*OPT?")))
+        setattr(self.__class__, "id", property(lambda self: self.query("*IDN?")))
+        setattr(self.__class__, "clear_errors", lambda self: self.write("*CLS"))
 
         def errcheck(self) -> None:
             err = self.query("SYST:ERR?")
-            errno = int(err.split(',')[0])
+            errno = int(err.split(",")[0])
             if errno == 0:
                 return
             else:
@@ -167,7 +161,7 @@ class VNA(ABC):
         validator: Optional[Validator] = None,
         values: bool = False,
         values_container: Optional[type] = np.array,
-        complex_values: bool = False
+        complex_values: bool = False,
     ) -> property:
         """
         Create a property for the instrument.
@@ -198,7 +192,7 @@ class VNA(ABC):
             array.
         complex_values:
             If the values expected from the instrument are complex. If so, the
-            values will be converted from [real[0], imag[0], real[1], imag[1], ...] 
+            values will be converted from [real[0], imag[0], real[1], imag[1], ...]
             to [complex(real[0], imag[0]), complex(real[1], imag[1]), ...]
 
         Returns
@@ -220,7 +214,7 @@ class VNA(ABC):
             else:
                 arg = self.query(cmd)
 
-            if hasattr(self, 'wait_for_complete'):
+            if hasattr(self, "wait_for_complete"):
                 self.wait_for_complete()
 
             if validator:
@@ -238,7 +232,7 @@ class VNA(ABC):
             cmd = _format_cmd(set_cmd, self=self, arg=arg)
             self.write(cmd)
 
-            if hasattr(self, 'wait_for_complete'):
+            if hasattr(self, "wait_for_complete"):
                 self.wait_for_complete()
 
         fget.__doc__ = doc
@@ -246,6 +240,14 @@ class VNA(ABC):
         # the generated docs, but keep the code less verbose?
 
         return property(fget=fget, fset=fset)
+
+    @property
+    def timeout(self) -> Optional[int]:
+        return self._resource.timeout
+
+    @timeout.setter
+    def timeout(self, timeout: Optional[int]) -> None:
+        self._resource.timeout = timeout
 
     def read(self, **kwargs) -> None:
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
@@ -286,8 +288,7 @@ class VNA(ABC):
             elif self._values_fmt == ValuesFormat.BINARY_32:
                 fn = self._resource.write_binary_values
             elif self._values_fmt == ValuesFormat.BINARY_64:
-                fn = functools.partial(
-                    self._resource.write_binary_values, datatype='d')
+                fn = functools.partial(self._resource.write_binary_values, datatype="d")
 
         elif isinstance(self._resource, pyvisa.resources.RegisterBasedResource):
             raise NotImplementedError()
@@ -319,8 +320,7 @@ class VNA(ABC):
             elif self._values_fmt == ValuesFormat.BINARY_32:
                 fn = self._resource.query_binary_values
             elif self._values_fmt == ValuesFormat.BINARY_64:
-                fn = functools.partial(
-                    self._resource.query_binary_values, datatype='d')
+                fn = functools.partial(self._resource.query_binary_values, datatype="d")
         elif isinstance(self._resource, pyvisa.resources.RegisterBasedResource):
             raise NotImplementedError()
         else:

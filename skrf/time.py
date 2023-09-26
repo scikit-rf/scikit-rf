@@ -290,7 +290,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
 
         With *'fft'* (default), the data gets transformed into time-domain using inverse FFT and the gating is achieved
         by multiplication with the time-domain gate. The gated time-domain signal is then transformed back into
-        frequency-domain using inverse FFT. As only positive signal frequencies are considered for the inverse FFT
+        frequency-domain using FFT. As only positive signal frequencies are considered for the inverse FFT
         (with or without a dc component), the resulting time-domain signal has the same number of samples as in the
         frequency-domain, but is complex-valued. This method is also know as *time-domain band-pass mode*.
 
