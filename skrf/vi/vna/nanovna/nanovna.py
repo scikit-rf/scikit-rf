@@ -203,6 +203,6 @@ class NanoVNA(vna.VNA):
         s11.frequency = self._freq.copy()
         s21.frequency = self._freq.copy()
 
-        s11.s, s21.s = self._convert_bytes_to_sparams(n, raw)
+        s11.s, s21.s = NanoVNA._convert_bytes_to_sparams(n, raw)
 
         return s11, s21
