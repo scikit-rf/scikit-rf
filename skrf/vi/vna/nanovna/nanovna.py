@@ -111,7 +111,7 @@ class NanoVNA(vna.VNA):
 
     @freq_start.setter
     def freq_start(self, f: int) -> None:
-        self.write(f"WRITE8;SWEEP_START;8;{f}")
+        self.write(OP.WRITE8, REG_ADDR.SWEEP_START, 8, f)
         self._freq.start = f
 
     @property
@@ -120,7 +120,7 @@ class NanoVNA(vna.VNA):
 
     @freq_stop.setter
     def freq_stop(self, f: int) -> None:
-        self.write(f"WRITE8;SWEEP_STOP;8;{f}")
+        self.write(OP.WRITE8, REG_ADDR.SWEEP_STOP, 8, f)
         self._freq.stop = f
 
     @property
@@ -132,7 +132,7 @@ class NanoVNA(vna.VNA):
         self._freq = skrf.Frequency.from_f(
             range(self._freq.start, self._freq.stop + f, f)
         )
-        self.write(f"WRITE2;SWEEP_POINTS;2;{self._freq.npoints}")
+        self.write(OP.WRITE2, REG_ADDR.SWEEP_POINTS, 2, self._freq.npoints)
 
     @property
     def npoints(self) -> int:
@@ -140,7 +140,7 @@ class NanoVNA(vna.VNA):
 
     @npoints.setter
     def npoints(self, n: int) -> None:
-        self.write(f"WRITE2;SWEEP_POINTS;2;{n}")
+        self.write(OP.WRITE2, REG_ADDR.SWEEP_POINTS, 2, n)
         self._freq.npoints = n
 
     @property
@@ -149,13 +149,13 @@ class NanoVNA(vna.VNA):
 
     @frequency.setter
     def frequency(self, f: skrf.Frequency):
-        self.write(f"WRITE8;SWEEP_START;8;{f.start}")
-        self.write(f"WRITE8;SWEEP_STOP;8;{f.stop}")
-        self.write(f"WRITE2;SWEEP_POINTS;2;{f.npoints}")
+        self.write(OP.WRITE8, REG_ADDR.SWEEP_START, 8, f.start)
+        self.write(OP.WRITE8, REG_ADDR.SWEEP_STOP, 8, f.stop)
+        self.write(OP.WRITE2, REG_ADDR.SWEEP_POINTS, 2, f.npoints)
         self._freq = f
 
     def clear_fifo(self) -> None:
-        self.write("WRITE;VALS_FIFO;1;0")
+        self.write(OP.WRITE, REG_ADDR.VALS_FIFO, 1, 0)
 
     def _convert_bytes_to_sparams(n: int, raw: bytearray) -> tuple[np.ndarray, np.ndarray]:
         s11 = np.zeros(n, dtype=complex)
@@ -196,7 +196,7 @@ class NanoVNA(vna.VNA):
         while n_remaining > 0:
             len_segment = 255 if n_remaining > 255 else n_remaining
             n_remaining = n_remaining - len_segment
-            self.write(f"READFIFO;VALS_FIFO;{len_segment}")
+            self.write(OP.READFIFO, REG_ADDR.VALS_FIFO, 1, len_segment)
             raw.extend(self.read_bytes(32 * len_segment))
 
         s11, s21 = skrf.Network(), skrf.Network()
