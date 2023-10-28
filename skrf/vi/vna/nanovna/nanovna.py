@@ -57,8 +57,9 @@ class NanoVNA(vna.VNA):
         self.read_bytes = self._resource.read_bytes
         self.write_raw = self._resource.write_raw
 
-        self._freq = skrf.Frequency(start=1e6, stop=10e6, npoints=201)
         self._reset_protocol()
+
+        self.frequency = skrf.Frequency(start=1e6, stop=10e6, npoints=201)
 
     def _reset_protocol(self):
         self.write_raw(b"\x00\x00\x00\x00\x00\x00\x00\x00")
