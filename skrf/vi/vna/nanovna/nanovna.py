@@ -112,7 +112,7 @@ class NanoVNA(vna.VNA):
     @freq_start.setter
     def freq_start(self, f: int) -> None:
         self.write(OP.WRITE8, REG_ADDR.SWEEP_START, 8, f)
-        self._freq.start = f
+        self._freq = skrf.Frequency(start=f, stop=self._freq.stop, npoints=self._freq.npoints)
 
     @property
     def freq_stop(self) -> float:
@@ -120,7 +120,7 @@ class NanoVNA(vna.VNA):
 
     @freq_stop.setter
     def freq_stop(self, f: int) -> None:
-        self._freq.stop = f
+        self._freq = skrf.Frequency(start=self._freq.start, stop=f, npoints=self._freq.npoints)
         self.write(OP.WRITE8, REG_ADDR.SWEEP_STEP, 8, self._freq.step)
 
     @property
@@ -141,7 +141,7 @@ class NanoVNA(vna.VNA):
     @npoints.setter
     def npoints(self, n: int) -> None:
         self.write(OP.WRITE2, REG_ADDR.SWEEP_POINTS, 2, n)
-        self._freq.npoints = n
+        self._freq = skrf.Frequency(start=self._freq.start, stop=self._freq.stop, npoints=n)
 
     @property
     def frequency(self) -> skrf.Frequency:
