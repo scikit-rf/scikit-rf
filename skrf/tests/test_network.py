@@ -1821,5 +1821,13 @@ class NetworkTestCase(unittest.TestCase):
         with pytest.raises(ValueError):
             net.stability_circle(target_port='foobar')
 
+    def test_de_embed_by_floordiv(self):
+        ntwk_result_1 = self.ntwk1 // self.ntwk2
+        ntwk_result_2 = self.ntwk1 // (self.ntwk2)
+        np.testing.assert_array_equal(ntwk_result_1.s, ntwk_result_2.s)
+
+        with pytest.warns(None):
+            ntwk_result_3 = self.ntwk1 // (self.ntwk2, self.ntwk3)
+
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

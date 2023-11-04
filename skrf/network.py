@@ -622,7 +622,7 @@ class Network:
                     "Number of networks greater than 2. Truncating!",
                     RuntimeWarning
                 )
-                other_tpl = other[:2]
+            other_tpl = other[:2]
         else:
             other_tpl = (other, )
 
