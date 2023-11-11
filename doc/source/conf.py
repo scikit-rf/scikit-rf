@@ -12,7 +12,6 @@ author = 'scikit-rf team'
 
 import sys
 import os
-import sphinx_rtd_theme
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -40,6 +39,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
+    'sphinx_rtd_theme',
     'nbsphinx',
     #'inheritance_diagram',
     'IPython.sphinxext.ipython_directive',
@@ -96,11 +96,10 @@ pygments_style = 'sphinx'
 # further.  For a list of options available for each theme, see the
 # documentation.
 
-# Add any paths that contain custom themes here, relative to this directory.
-
 html_theme = "sphinx_rtd_theme"
 
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+# Add any paths that contain custom themes here, relative to this directory.
+# html_theme_path = []
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
