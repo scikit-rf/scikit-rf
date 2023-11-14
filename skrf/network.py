@@ -618,11 +618,8 @@ class Network:
 
         if isinstance(other, (list, tuple)):
             if len(other) >= 3:
-                warnings.warn(
-                    "Number of networks greater than 2. Truncating!",
-                    RuntimeWarning
-                )
-                other_tpl = other[:2]
+                raise ValueError('Incorrect number of networks.')
+            other_tpl = other[:2]
         else:
             other_tpl = (other, )
 
