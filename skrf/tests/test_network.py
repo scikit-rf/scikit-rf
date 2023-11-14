@@ -1826,8 +1826,16 @@ class NetworkTestCase(unittest.TestCase):
         ntwk_result_2 = self.ntwk1 // (self.ntwk2)
         np.testing.assert_array_equal(ntwk_result_1.s, ntwk_result_2.s)
 
-        with pytest.warns(None):
-            ntwk_result_3 = self.ntwk1 // (self.ntwk2, self.ntwk3)
+        # By definition A // B      => B.inv * A
+        # By definition A // [B, C] => B.inv * A * C.inv
+        # So, A // [B, C] should be equal to (A // B) * C.inv
+        ntwk_result_3 = self.ntwk1 // (self.ntwk2, self.ntwk3)
+        ntwk_result_4 = (self.ntwk1 // self.ntwk2) ** self.ntwk3.inv
+        np.testing.assert_array_almost_equal(ntwk_result_3.s, ntwk_result_4.s)
+
+        # Check weather an error is raised when more than two networks are specified
+        with pytest.raises(ValueError):
+            ntwk_result_3 = self.ntwk1 // (self.ntwk1, self.ntwk2, self.ntwk3)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
