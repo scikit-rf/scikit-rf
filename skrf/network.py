@@ -6335,7 +6335,14 @@ def z2y(z: npy.ndarray) -> npy.ndarray:
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     """
-    return npy.linalg.inv(z)
+
+    if npy.amin(npy.linalg.matrix_rank(z)) < npy.shape(z)[1]:
+        # matrix is deficient, direct inversion not possible
+        # try detour via S parameters
+        return s2y(z2s(z))
+    else:
+        # matrix has full rank, direct inversion possible
+        return npy.linalg.inv(z)
 
 def z2t(z: npy.ndarray) -> NoReturn:
     """
@@ -6566,7 +6573,7 @@ def s2a(s: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
     return a
 
 
-def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Network:
+def y2s(y: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Network:
     r"""
     Convert admittance parameters [#]_ to scattering parameters [#]_.
 
@@ -6722,7 +6729,14 @@ def y2z(y: npy.ndarray) -> npy.ndarray:
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     """
-    return npy.linalg.inv(y)
+
+    if npy.amin(npy.linalg.matrix_rank(y)) < npy.shape(y)[1]:
+        # matrix is deficient, direct inversion not possible
+        # try detour via S parameters
+        return s2z(y2s(y))
+    else:
+        # matrix has full rank, direct inversion possible
+        return npy.linalg.inv(y)
 
 
 def y2t(y: npy.ndarray) -> NoReturn:
