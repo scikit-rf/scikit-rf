@@ -342,6 +342,8 @@ class PNA(VNA):
             orig_query_fmt = self.parent.query_format
             self.parent.query_format = ValuesFormat.BINARY_64
             self.parent.active_channel = self
+            orig_snp_fmt = self.query("MMEM:STOR:TRAC:FORM:SNP?")
+            self.write("MMEM:STOR:TRACE:FORM:SNP RI") # Expect Real/Imaginary data
 
             msmnt_params = [f"S{a}{b}" for a, b in itertools.product(ports, repeat=2)]
 
@@ -391,6 +393,7 @@ class PNA(VNA):
                     ntwk.s[:, n, m] = real_rows[i] + 1j * imag_rows[i]
 
             self.parent.query_format = orig_query_fmt
+            self.write("MMEM:STOR:TRACE:FORM:SNP %s" % orig_snp_fmt)
 
             return ntwk
 
