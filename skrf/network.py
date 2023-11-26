@@ -6339,6 +6339,8 @@ def z2y(z: npy.ndarray) -> npy.ndarray:
     if npy.amin(npy.linalg.matrix_rank(z)) < npy.shape(z)[1]:
         # matrix is deficient, direct inversion not possible
         # try detour via S parameters
+        warnings.warn('The Z matrix is singular. Conversion to Y parameters could be invalid. Trying s2y(z2s(z)).',
+                      UserWarning, stacklevel=2)
         return s2y(z2s(z))
     else:
         # matrix has full rank, direct inversion possible
@@ -6733,6 +6735,8 @@ def y2z(y: npy.ndarray) -> npy.ndarray:
     if npy.amin(npy.linalg.matrix_rank(y)) < npy.shape(y)[1]:
         # matrix is deficient, direct inversion not possible
         # try detour via S parameters
+        warnings.warn('The Y matrix is singular. Conversion to Z parameters could be invalid. Trying s2z(y2s(y)).',
+                      UserWarning, stacklevel=2)
         return s2z(y2s(y))
     else:
         # matrix has full rank, direct inversion possible
