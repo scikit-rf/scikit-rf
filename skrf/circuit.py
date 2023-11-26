@@ -131,7 +131,7 @@ class Circuit:
         except ImportError as err:
             raise ImportError('networkx package as not been installed and is required.') from err
 
-    def __init__(self, connections: List[List[Tuple]]) -> None:
+    def __init__(self, connections: List[List[Tuple]], name: str = None,) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -142,6 +142,9 @@ class Circuit:
             Each connection is a described by a list of tuple.
             Each tuple contains (network, network_port_nb).
             Port number indexing starts from zero.
+            
+        name : string
+            Name assigned to the circuit (network).
 
 
         Examples
@@ -188,6 +191,7 @@ class Circuit:
 
         """
         self.connections = connections
+        self.name = name
 
         # check if all networks have a name
         for cnx in self.connections:
@@ -894,6 +898,7 @@ class Circuit:
         ntw.frequency = self.frequency
         ntw.z0 = self.port_z0
         ntw.s = self.s_external
+        ntw.name = self.name
         return ntw
 
 
