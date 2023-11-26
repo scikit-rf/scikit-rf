@@ -142,9 +142,8 @@ class Circuit:
             Each connection is a described by a list of tuple.
             Each tuple contains (network, network_port_nb).
             Port number indexing starts from zero.
-            
-        name : string
-            Name assigned to the circuit (network).
+        name : string, optional
+            Name assigned to the circuit (Network). Default is None.
 
 
         Examples
