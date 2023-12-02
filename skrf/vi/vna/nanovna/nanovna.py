@@ -57,8 +57,9 @@ class NanoVNA(vna.VNA):
         self.read_bytes = self._resource.read_bytes
         self.write_raw = self._resource.write_raw
 
-        self._freq = skrf.Frequency(start=1e6, stop=10e6, npoints=201)
         self._reset_protocol()
+
+        self.frequency = skrf.Frequency(start=1e6, stop=10e6, npoints=201)
 
     def _reset_protocol(self):
         self.write_raw(b"\x00\x00\x00\x00\x00\x00\x00\x00")
@@ -111,8 +112,8 @@ class NanoVNA(vna.VNA):
 
     @freq_start.setter
     def freq_start(self, f: int) -> None:
-        self.write(f"WRITE8;SWEEP_START;8;{f}")
-        self._freq.start = f
+        self.write(OP.WRITE8, REG_ADDR.SWEEP_START, 8, f)
+        self._freq = skrf.Frequency(start=f, stop=self._freq.stop, npoints=self._freq.npoints)
 
     @property
     def freq_stop(self) -> float:
@@ -120,8 +121,8 @@ class NanoVNA(vna.VNA):
 
     @freq_stop.setter
     def freq_stop(self, f: int) -> None:
-        self.write(f"WRITE8;SWEEP_STOP;8;{f}")
-        self._freq.stop = f
+        self._freq = skrf.Frequency(start=self._freq.start, stop=f, npoints=self._freq.npoints)
+        self.write(OP.WRITE8, REG_ADDR.SWEEP_STEP, 8, self._freq.step)
 
     @property
     def freq_step(self) -> float:
@@ -129,10 +130,10 @@ class NanoVNA(vna.VNA):
 
     @freq_step.setter
     def freq_step(self, f: int) -> None:
-        self._freq = skrf.Frequency.from_f(
-            range(self._freq.start, self._freq.stop + f, f)
-        )
-        self.write(f"WRITE2;SWEEP_POINTS;2;{self._freq.npoints}")
+        npoints = (self._freq.stop - self._freq.start + f) / f
+        npoints = int(npoints.round())
+        self._freq = skrf.Frequency(start=self._freq.start, stop=self._freq.stop, npoints=npoints)
+        self.write(OP.WRITE2, REG_ADDR.SWEEP_POINTS, 2, npoints)
 
     @property
     def npoints(self) -> int:
@@ -140,8 +141,8 @@ class NanoVNA(vna.VNA):
 
     @npoints.setter
     def npoints(self, n: int) -> None:
-        self.write(f"WRITE2;SWEEP_POINTS;2;{n}")
-        self._freq.npoints = n
+        self.write(OP.WRITE2, REG_ADDR.SWEEP_POINTS, 2, n)
+        self._freq = skrf.Frequency(start=self._freq.start, stop=self._freq.stop, npoints=n)
 
     @property
     def frequency(self) -> skrf.Frequency:
@@ -149,13 +150,13 @@ class NanoVNA(vna.VNA):
 
     @frequency.setter
     def frequency(self, f: skrf.Frequency):
-        self.write(f"WRITE8;SWEEP_START;8;{f.start}")
-        self.write(f"WRITE8;SWEEP_STOP;8;{f.stop}")
-        self.write(f"WRITE2;SWEEP_POINTS;2;{f.npoints}")
+        self.write(OP.WRITE8, REG_ADDR.SWEEP_START, 8, f.start)
+        self.write(OP.WRITE8, REG_ADDR.SWEEP_STEP, 8, f.step)
+        self.write(OP.WRITE2, REG_ADDR.SWEEP_POINTS, 2, f.npoints)
         self._freq = f
 
     def clear_fifo(self) -> None:
-        self.write("WRITE;VALS_FIFO;1;0")
+        self.write(OP.WRITE, REG_ADDR.VALS_FIFO, 1, 0)
 
     def _convert_bytes_to_sparams(n: int, raw: bytearray) -> tuple[np.ndarray, np.ndarray]:
         s11 = np.zeros(n, dtype=complex)
@@ -196,13 +197,13 @@ class NanoVNA(vna.VNA):
         while n_remaining > 0:
             len_segment = 255 if n_remaining > 255 else n_remaining
             n_remaining = n_remaining - len_segment
-            self.write(f"READFIFO;VALS_FIFO;{len_segment}")
+            self.write(OP.READFIFO, REG_ADDR.VALS_FIFO, 1, len_segment)
             raw.extend(self.read_bytes(32 * len_segment))
 
         s11, s21 = skrf.Network(), skrf.Network()
         s11.frequency = self._freq.copy()
         s21.frequency = self._freq.copy()
 
-        s11.s, s21.s = self._convert_bytes_to_sparams(n, raw)
+        s11.s, s21.s = NanoVNA._convert_bytes_to_sparams(n, raw)
 
         return s11, s21
