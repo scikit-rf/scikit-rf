@@ -1842,6 +1842,7 @@ class SOLT(TwelveTerm):
         p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
         p2_i = [k.s22 for k in self.ideals[:-n_thrus]]
         thru = NetworkSet(self.measured[-n_thrus:]).mean_s
+        thru_i = NetworkSet(self.ideals[-n_thrus:]).mean_s
 
         # create one port calibration for reflective standards
         port1_cal = OnePort(measured = p1_m, ideals = p1_i)
@@ -1861,12 +1862,23 @@ class SOLT(TwelveTerm):
         p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
         p2_coefs['load match'] = port2_cal.apply_cal(thru.s22).s.flatten()
 
+        det_s = thru_i.s11.s.flatten()*thru_i.s22.s.flatten() - \
+                thru_i.s21.s.flatten() * thru_i.s12.s.flatten()
+
         p1_coefs['transmission tracking'] = \
-            (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
-            (1. - p1_coefs['source match']*p1_coefs['load match'])
+            ((thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
+            (1. -  p1_coefs['source match']*thru_i.s11.s.flatten()\
+             - p1_coefs['load match']*thru_i.s22.s.flatten()\
+             - p1_coefs['source match']*p1_coefs['load match']*det_s))/ \
+            thru_i.s21.s.flatten()
+
         p2_coefs['transmission tracking'] = \
-            (thru.s12.s.flatten() - p2_coefs.get('isolation',0))*\
-            (1. - p2_coefs['source match']*p2_coefs['load match'])
+            ((thru.s12.s.flatten() - p2_coefs.get('isolation',0))*\
+            (1. -  p2_coefs['source match']*thru_i.s22.s.flatten()\
+             - p2_coefs['load match']*thru_i.s11.s.flatten()\
+             - p2_coefs['source match']*p2_coefs['load match']*det_s))/ \
+            thru_i.s12.s.flatten()
+
         coefs = {}
 
         coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
