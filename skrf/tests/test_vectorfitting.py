@@ -44,14 +44,14 @@ class VectorFittingTestCase(unittest.TestCase):
 
     def test_190ghz_measured(self):
         # perform the fit without proportional term
-        nw = skrf.network.Network('./doc/source/examples/vectorfitting/190ghz_tx_measured.S2P')
+        nw = skrf.network.Network('./../../doc/source/examples/vectorfitting/190ghz_tx_measured.S2P')
         vf = skrf.vectorFitting.VectorFitting(nw)
         vf.vector_fit(n_poles_real=4, n_poles_cmplx=4, fit_proportional=False, fit_constant=True)
         self.assertLess(vf.get_rms_error(), 0.02)
 
     def test_no_convergence(self):
         # perform a bad fit that does not converge and check if a RuntimeWarning is given
-        nw = skrf.network.Network('./doc/source/examples/vectorfitting/190ghz_tx_measured.S2P')
+        nw = skrf.network.Network('./../../doc/source/examples/vectorfitting/190ghz_tx_measured.S2P')
         vf = skrf.vectorFitting.VectorFitting(nw)
 
         with pytest.warns(RuntimeWarning) as record:
@@ -61,7 +61,7 @@ class VectorFittingTestCase(unittest.TestCase):
 
     def test_dc(self):
         # perform the fit on data including a dc sample (0 Hz)
-        nw = skrf.Network('./skrf/tests/cst_example_4ports.s4p')
+        nw = skrf.Network('./cst_example_4ports.s4p')
         vf = skrf.VectorFitting(nw)
         vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
         # quality of the fit is not important in this test; it only needs to finish
