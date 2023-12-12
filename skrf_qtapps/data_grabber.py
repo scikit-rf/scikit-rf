@@ -1,7 +1,7 @@
 from skrf_qtapps.skrf_qtwidgets import NetworkListWidget, NetworkPlotWidget, qt, widgets
 from qtpy import QtWidgets, QtCore
 
-
+print("Test labeler ")
 class DataGrabber(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
