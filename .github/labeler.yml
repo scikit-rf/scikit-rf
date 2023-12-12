@@ -1,23 +1,50 @@
-Continuous integration: .github/**/*
+ContinuousIntegration:
+- changed-files:
+  - any-glob-to-any-file: .github/**/*
 
-Network: skrf/network.py
+Network:
+- changed-files:
+  - any-glob-to-any-file: skrf/network.py
 
-VectorFitting: skrf/vectorFitting.py
+VectorFitting:
+- changed-files:
+  - any-glob-to-any-file: skrf/vectorFitting.py
 
-Circuit: skrf/circuit.py
+Circuit:
+- changed-files:
+  - any-glob-to-any-file: skrf/circuit.py
 
-Plotting: skrf/plotting.py
+Plotting:
+- changed-files:
+  - any-glob-to-any-file: skrf/plotting.py
 
-Time: skrf/time.py
+Time:
+- changed-files:
+  - any-glob-to-any-file: skrf/time.py
 
-TransmissionLines: skrf/tlineFunctions.py
+TransmissionLines:
+- changed-files:
+  - any-glob-to-any-file: skrf/tlineFunctions.py
 
-qtapps: qtapps/**/*
+qtapps:
+- changed-files:
+  - any-glob-to-any-file: qtapps/**/*
 
-Calibration: skrf/calibration/**/*
+Calibration:
+- changed-files:
+  - any-glob-to-any-file: skrf/calibration/**/*
 
-IO: skrf/io/**/*
+IO:
+- changed-files:
+  - any-glob-to-any-file: skrf/io/**/*
 
-Media: skrf/media/**/*
+Media:
+- changed-files:
+  - any-glob-to-any-file: skrf/media/**/*
 
-Documentation: doc/**/*
+Documentation:
+- changed-files:
+  - any-glob-to-any-file: doc/**/*
+
+Release:
+- base-branch: main
