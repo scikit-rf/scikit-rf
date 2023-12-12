@@ -1,4 +1,4 @@
-Continuous integration:
+Continuous-Integration:
 - changed-files:
   - any-glob-to-any-file: .github/**/*
 
