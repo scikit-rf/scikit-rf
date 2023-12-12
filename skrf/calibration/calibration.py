@@ -1744,9 +1744,6 @@ class SOLT(TwelveTerm):
     more than 3 reflect standards are provided a least-squares solution
     is implemented for the one-port stage of the calibration.
 
-    If your `thru` is not flush you need to use `TwelveTerm` instead of
-    SOLT.
-
     Redundant flush thru measurements can also be used, through the `n_thrus`
     parameter. See :func:`__init__`
 
@@ -1772,11 +1769,10 @@ class SOLT(TwelveTerm):
 
         If `n_thrus!=None`, then the thru standard[s] must be last in
         the list. The `n_thrus` argument can be used to allow  multiple
-        measurements of the flush thru standard.
+        measurements of the (arbitrary) thru standard.
 
         If the ideal element for the thru is set to None, a flush thru
-        is assumed. If your `thru` is not flush you need
-        to use `TwelveTerm` instead of SOLT. Use
+        is assumed.
 
         Notes
         -----
@@ -1859,26 +1855,35 @@ class SOLT(TwelveTerm):
             p1_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
             p2_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
 
-        p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
-        p2_coefs['load match'] = port2_cal.apply_cal(thru.s22).s.flatten()
+        det_s = thru_i.s11.s.flatten()*thru_i.s22.s.flatten() -\
+                thru_i.s21.s.flatten()*thru_i.s12.s.flatten()
 
-        det_s = thru_i.s11.s.flatten()*thru_i.s22.s.flatten() - \
-                thru_i.s21.s.flatten() * thru_i.s12.s.flatten()
+        # e10e01 = p1_coefs['reflection tracking']
+        # S11 = thru_i.s11.s.flatten()
+        # S22 = thru_i.s22.s.flatten()
+        # S11M = thru.s11.s.flatten()
+        # e00 = p1_coefs['directivity']
+        # e11 = p1_coefs['source match']
+        #
+        # p1_coefs['load match'] = (e10e01 * S11 - S11M + e11*S11*S11M + e00 - e00*e11*S11) / \
+        #                          (e00*S22 - S22*S11M - det_s*(e00*e11-e11*S11M-e10e01))
+
+        p1_coefs['load match'] = (thru_i.inv**port1_cal.apply_cal(thru.s11)).s.flatten()
+        p2_coefs['load match'] = (thru_i.flipped().inv**port2_cal.apply_cal(thru.s22)).s.flatten()
 
         p1_coefs['transmission tracking'] = \
             ((thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
             (1. -  p1_coefs['source match']*thru_i.s11.s.flatten()\
              - p1_coefs['load match']*thru_i.s22.s.flatten()\
-             - p1_coefs['source match']*p1_coefs['load match']*det_s))/ \
+             + p1_coefs['source match']*p1_coefs['load match']*det_s))/ \
             thru_i.s21.s.flatten()
 
         p2_coefs['transmission tracking'] = \
             ((thru.s12.s.flatten() - p2_coefs.get('isolation',0))*\
-            (1. -  p2_coefs['source match']*thru_i.s22.s.flatten()\
-             - p2_coefs['load match']*thru_i.s11.s.flatten()\
-             - p2_coefs['source match']*p2_coefs['load match']*det_s))/ \
+            (1. -  p2_coefs['load match']*thru_i.s11.s.flatten()\
+             - p2_coefs['source match']*thru_i.s22.s.flatten()\
+             + p2_coefs['load match']*p2_coefs['source match']*det_s))/ \
             thru_i.s12.s.flatten()
-
         coefs = {}
 
         coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})

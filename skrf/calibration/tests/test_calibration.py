@@ -1225,20 +1225,17 @@ class SOLTTest(TwelveTermTest):
         self.If = wg.random(n_ports =1, name='If')
         self.Ir = wg.random(n_ports =1, name='Ir')
 
+        thru = wg.line(20,'deg',name='line')**wg.impedance_mismatch(45,50)  # use any non-flush thru
+        thru.name = 'thru'
+
         ideals = [
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='load'),
-            None,
-            ]
-        actuals = [
-            wg.short(nports=2, name='short'),
-            wg.open(nports=2, name='open'),
-            wg.match(nports=2, name='load'),
-            wg.thru(),
+            thru,
             ]
 
-        measured = [ self.measure(k) for k in actuals]
+        measured = [ self.measure(k) for k in ideals]
 
         self.cal = SOLT(
             ideals = ideals,
@@ -2138,7 +2135,8 @@ class MultiportSOLTTest(MultiportCalTest):
             s = wg.short(nports=nports, name='short')
             m = wg.match(nports=nports, name='load')
 
-            thru = wg.thru(name='thru')
+            thru = wg.line(20, 'deg', name='line') ** wg.impedance_mismatch(45, 50)  # use any non-flush thru
+            thru.name = 'thru'
 
             ideals = []
             # nports-1 thrus from port 0 to all other ports.
