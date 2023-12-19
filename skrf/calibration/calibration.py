@@ -1744,10 +1744,7 @@ class SOLT(TwelveTerm):
     more than 3 reflect standards are provided a least-squares solution
     is implemented for the one-port stage of the calibration.
 
-    If your `thru` is not flush you need to use `TwelveTerm` instead of
-    SOLT.
-
-    Redundant flush thru measurements can also be used, through the `n_thrus`
+    Redundant thru measurements can also be used, through the `n_thrus`
     parameter. See :func:`__init__`
 
     References
@@ -1771,12 +1768,11 @@ class SOLT(TwelveTerm):
         standards must align.
 
         If `n_thrus!=None`, then the thru standard[s] must be last in
-        the list. The `n_thrus` argument can be used to allow  multiple
-        measurements of the flush thru standard.
+        the list. The `n_thrus` argument can be used to allow multiple
+        measurements of the thru standard.
 
         If the ideal element for the thru is set to None, a flush thru
-        is assumed. If your `thru` is not flush you need
-        to use `TwelveTerm` instead of SOLT. Use
+        is assumed.
 
         Notes
         -----
