@@ -1229,16 +1229,10 @@ class SOLTTest(TwelveTermTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='load'),
-            None,
-            ]
-        actuals = [
-            wg.short(nports=2, name='short'),
-            wg.open(nports=2, name='open'),
-            wg.match(nports=2, name='load'),
-            wg.thru(),
+            wg.random(n_ports=2),
             ]
 
-        measured = [ self.measure(k) for k in actuals]
+        measured = [ self.measure(k) for k in ideals]
 
         self.cal = SOLT(
             ideals = ideals,

@@ -1832,51 +1832,6 @@ class SOLT(TwelveTerm):
         TwelveTerm.__init__(self,*args, **kwargs)
 
 
-
-    def run(self):
-        """
-        """
-        n_thrus = self.n_thrus
-        p1_m = [k.s11 for k in self.measured[:-n_thrus]]
-        p2_m = [k.s22 for k in self.measured[:-n_thrus]]
-        p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
-        p2_i = [k.s22 for k in self.ideals[:-n_thrus]]
-        thru = NetworkSet(self.measured[-n_thrus:]).mean_s
-
-        # create one port calibration for reflective standards
-        port1_cal = OnePort(measured = p1_m, ideals = p1_i)
-        port2_cal = OnePort(measured = p2_m, ideals = p2_i)
-
-        # cal coefficient dictionaries
-        p1_coefs = port1_cal.coefs
-        p2_coefs = port2_cal.coefs
-
-        if self.kwargs.get('isolation',None) is not None:
-            p1_coefs['isolation'] = self.kwargs['isolation'].s21.s.flatten()
-            p2_coefs['isolation'] = self.kwargs['isolation'].s12.s.flatten()
-        else:
-            p1_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
-            p2_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
-
-        p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
-        p2_coefs['load match'] = port2_cal.apply_cal(thru.s22).s.flatten()
-
-        p1_coefs['transmission tracking'] = \
-            (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
-            (1. - p1_coefs['source match']*p1_coefs['load match'])
-        p2_coefs['transmission tracking'] = \
-            (thru.s12.s.flatten() - p2_coefs.get('isolation',0))*\
-            (1. - p2_coefs['source match']*p2_coefs['load match'])
-        coefs = {}
-
-        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
-        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
-        eight_term_coefs = convert_12term_2_8term(coefs)
-
-        coefs.update({l: eight_term_coefs[l] for l in \
-            ['forward switch term','reverse switch term','k'] })
-        self._coefs = coefs
-
 class TwoPortOnePath(TwelveTerm):
     """
     Two Port One Path Calibration (aka poor man's TwelveTerm).
