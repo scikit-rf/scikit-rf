@@ -946,7 +946,7 @@ class Network:
             ntwk.s = self.s[:, t0, t1]
             ntwk.z0 = self.z0[:, t0]
             return ntwk
-        raise AttributeError(f'{self} does not have attribute {name}')
+        raise AttributeError(f'object does not have attribute {name}')
 
     def __dir__(self):
         ret = super().__dir__()
