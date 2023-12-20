@@ -1229,10 +1229,16 @@ class SOLTTest(TwelveTermTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='load'),
-            wg.random(n_ports=2),
+            None,
+            ]
+        actuals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='load'),
+            wg.thru(),
             ]
 
-        measured = [ self.measure(k) for k in ideals]
+        measured = [ self.measure(k) for k in actuals]
 
         self.cal = SOLT(
             ideals = ideals,
@@ -2132,7 +2138,8 @@ class MultiportSOLTTest(MultiportCalTest):
             s = wg.short(nports=nports, name='short')
             m = wg.match(nports=nports, name='load')
 
-            thru = wg.thru(name='thru')
+            # thru = wg.thru(name='thru')
+            thru = wg.impedance_mismatch(50, 45) ** wg.line(20, 'deg') ** wg.impedance_mismatch(45, 50)
 
             ideals = []
             # nports-1 thrus from port 0 to all other ports.
