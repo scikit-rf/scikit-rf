@@ -908,7 +908,7 @@ class Network:
                 z0 = _z0[0, :]
             else:
                 # empty frequency range
-                z0 = float('nan')
+                z0 = '[]'
 
         output = '%i-Port Network: \'%s\',  %s, z0=%s' % (self.number_of_ports, name, str(f), str(z0))
 
