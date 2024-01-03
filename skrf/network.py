@@ -2195,14 +2195,9 @@ class Network:
         self.frequency = Frequency.from_f(f, unit='hz')
         self.frequency.unit = touchstoneFile.frequency_unit
 
-        if touchstoneFile.has_hfss_port_impedances:
-            self.gamma, self.z0 = touchstoneFile.get_gamma_z0()
-            # if s_def not explicitely passed before, uses default HFSS setting
-            if self.s_def is None:
-                self.s_def = S_DEF_HFSS_DEFAULT
-        else:
-            self.z0 = touchstoneFile.resistance
-
+        self.gamma = touchstoneFile.gamma
+        self.z0 = touchstoneFile.z0
+        self.s_def = touchstoneFile.s_def if self.s_def is None else self.s_def
 
         if touchstoneFile.noise is not None:
             noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult

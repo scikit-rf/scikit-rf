@@ -24,18 +24,36 @@ Functions related to reading/writing touchstones.
    read_zipped_touchstones
 
 """
+from __future__ import annotations
+
+from typing import Callable
+from dataclasses import dataclass, field
 import re
-import operator
 import os
 import typing
 import zipfile
 import numpy
 import numpy as npy
 
+from ..constants import S_DEF_HFSS_DEFAULT
 from ..util import get_fid
 from ..network import Network
 from ..media import DefinedGammaZ0
-from .. import mathFunctions as mf
+
+def remove_prefix(text: str, prefix: str) -> str:
+    if text.startswith(prefix):
+        return text[len(prefix):]
+    return text
+
+@dataclass
+class ParserState:
+    option_line_parsed: bool = False
+    hfss_gamma: list[list[float]] = field(default_factory=list)
+    hfss_impedance: list[list[float]] = field(default_factory=list)
+    comments: list[str] = field(default_factory=list)
+    comments_after_option_line: list[str] = field(default_factory=list)
+    matrix_format: str = "full"
+    parse_network: bool = False
 
 
 class Touchstone:
@@ -117,9 +135,11 @@ class Touchstone:
         self.port_names = None
 
         self.comment_variables = None
-
-        # Does the input file have HFSS per frequency port impedances
+        # Does the input file has HFSS per frequency port impedances
         self.has_hfss_port_impedances = False
+        self.gamma = None
+        self.z0 = None
+        self.s_def = None
 
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
@@ -151,15 +171,9 @@ class Touchstone:
             self.load_file(fid)
 
         except Exception as e:
-            raise ValueError(f'Something went wrong by the file opening: {e}')
+            raise ValueError('Something went wrong by the file opening') from e
 
         finally:
-            self.gamma = []
-            self.z0 = []
-
-            if self.has_hfss_port_impedances:
-                self.get_gamma_z0_from_fid(fid)
-
             fid.close()
 
     def _parse_option_line(self, line: str) -> bool:
@@ -181,9 +195,30 @@ class Touchstone:
         if err_msg:
             raise ValueError(err_msg)
         
-        return 1
+        return True
 
+    @staticmethod
+    def _parse_n_floats(*, line: str, fid: typing.TextIO, n: int, in_comment: bool) -> list[float]:
+        def get_part_of_line(line: str) -> str:
+            if in_comment:
+                return line.partition("!")[0]
+            else:
+                return line.rpartition("!")[2]
 
+        values = get_part_of_line(line).split()
+        ret = []
+        while True:
+            if len(ret) == n:
+                break
+            
+            if not values:
+                values = get_part_of_line(fid.readline()).split()
+            try:
+                ret.append(float(values.pop(0)))
+            except ValueError:
+                pass
+            
+        return ret
 
     def load_file(self, fid: typing.TextIO):
         """
@@ -211,12 +246,7 @@ class Touchstone:
         else:
             raise Exception('Filename does not have the expected Touchstone extension (.sNp or .ts)')
         
-        _state = {
-            "option_line_parsed": False,
-            "hfss_params": [],
-            "matrix_format": "",
-            "parse_network": False,
-        }
+        state = ParserState()
 
         
         values = []
@@ -227,37 +257,39 @@ class Touchstone:
 
             line_l = line.lower()
 
-            if not _state["option_line_parsed"]:
-                parse_dict = {
+            if not state.option_line_parsed:
+                parse_dict: dict[str, Callable[[str], None]] = {
                     "[version]": lambda x: setattr(self, "version", x.split()[1]),
-                    "!": lambda x: operator.iadd(self.comments, x),
-                    "#": lambda x: operator.setitem(_state, "option_line_parsed", self._parse_option_line(x)),
+                    "!": state.comments.append,
+                    "#": lambda x: setattr(state, "option_line_parsed", self._parse_option_line(x)),
                 }
             else:
-                parse_dict = {
-                    "!": _state["hfss_params"].append,
+                parse_dict: dict[str, Callable[[str], None]] = {
+                    "! gamma": lambda x: state.hfss_gamma.append(
+                        self._parse_n_floats(line=x, fid=fid, n=self.rank * 2, in_comment=False)
+                    ),
+                    "! port impedance": lambda x: state.hfss_impedance.append(
+                        self._parse_n_floats(line=remove_prefix(x, "! Port Impedance"), 
+                                             fid=fid, 
+                                             n=self.rank * 2, 
+                                             in_comment=False)
+                    ),
+                    "!": state.comments_after_option_line.append
                 }
 
                 if self.version == "2.0":
-
-                    def parse_reference(_line: str):
-                        refs = _line.partition("!")[0].split()
-                        resistance = []
-                        refs.pop(0)
-                        for _ in range(self.rank):
-                            if not refs:
-                                refs = fid.readline().partition("!")[0].split()
-                            resistance.append(float(refs.pop()))
-                        
-                        return resistance
-
                     parse_dict.update({
                         "[number of ports]": lambda x: setattr(self, "rank", int(x.split()[3])),
-                        "[reference]": lambda x: setattr(self, "resistance", parse_reference(x)),
+
+                        "[reference]": lambda x: setattr(self, "resistance", self._parse_n_floats(line=x, 
+                                                                                                  fid=fid, 
+                                                                                                  n=self.rank, 
+                                                                                                  in_comment=True)),
+
                         "[number of frequencies]": lambda x: setattr(self, "frequency_nb", int(x.split()[3])),
-                        "[matrix format]": lambda x: operator.setitem(_state, "matrix_format", x.split()[2]),
-                        "[network data]": lambda _: operator.setitem(_state, "parse_network", 1),
-                        "[end]": lambda _: operator.setitem(_state, "parse_network", 0),
+                        "[matrix format]": lambda x: setattr(state, "matrix_format", x.split()[2]),
+                        "[network data]": lambda _: setattr(state, "parse_network", True),
+                        "[end]": lambda _: setattr(state, "parse_network", False),
                     })
 
             
@@ -268,6 +300,20 @@ class Touchstone:
             else:
                 values.extend([float(v) for v in line.partition("!")[0].split()])
 
+
+        self.comments = "\n".join([line[1:].strip() for line in state.comments])
+        
+        if state.hfss_gamma:
+            self.gamma = npy.array(state.hfss_gamma).view(npy.complex128)
+
+        if state.hfss_impedance:
+            self.z0 = npy.array(state.hfss_impedance).view(npy.complex128)
+            self.s_def = S_DEF_HFSS_DEFAULT
+            self.has_hfss_port_impedances = True
+        elif self.reference is None:
+            self.z0 = self.resistance
+        else:
+            self.z0 = self.reference
 
         # let's do some post-processing to the read values
         # for s2p parameters there may be noise parameters in the value list
@@ -293,9 +339,6 @@ class Touchstone:
         # multiplier from the frequency unit
         self.frequency_mult = {'hz':1.0, 'khz':1e3,
                                'mhz':1e6, 'ghz':1e9}.get(self.frequency_unit)
-        # set the reference to the resistance value if no [reference] is provided
-        if not self.reference:
-            self.reference = [self.resistance] * self.rank
 
     def get_comments(self, ignored_comments=['Created with skrf']):
         """
@@ -497,70 +540,6 @@ class Touchstone:
         # noise_source_phase = noise_values[:,3]
         # noise_normalized_resistance = noise_values[:,4]
         raise NotImplementedError('not yet implemented')
-
-    def get_gamma_z0_from_fid(self, fid):
-        """
-        Extracts Z0 and Gamma comments from fid.
-
-        Parameters
-        ----------
-        fid : file object
-        """
-        gamma = []
-        z0 = []
-        def line2ComplexVector(s):
-            return mf.scalar2Complex(npy.array([k for k in s.strip().split(' ')
-                                                if k != ''][self.rank*-2:],
-                                                dtype='float'))
-        fid.seek(0)
-        while True:
-            line = fid.readline()
-            if not line:
-                break
-            line = line.replace('\t', ' ')
-
-            # HFSS adds gamma and z0 data in .sNp files using comments.
-            # NB : each line(s) describe gamma and z0.
-            #  But, depending on the HFSS version, either:
-            #  - up to 4 ports only.
-                #  - up to 4 ports only.
-            #        for N > 4, gamma and z0 are given by additional lines
-            #  - all gamma and z0 are given on a single line (since 2020R2)
-            # In addition, some spurious '!' can remain in these lines
-            if '! Gamma' in line:
-                _line = line.replace('! Gamma', '').replace('!', '').rstrip()
-
-                # check how many elements are in the first line
-                nb_elem = len(_line.split())
-
-                if nb_elem == 2*self.rank:
-                    # case of all data in a single line
-                    gamma.append(line2ComplexVector(_line.replace('!', '').rstrip()))
-                else:
-                    # case of Nport > 4 *and* data on additional multiple lines
-                    for _ in range(int(npy.ceil(self.rank/4.0)) - 1):
-                        _line += fid.readline().replace('!', '').rstrip()
-                    gamma.append(line2ComplexVector(_line))
-
-
-            if '! Port Impedance' in line:
-                _line = line.replace('! Port Impedance', '').rstrip()
-                nb_elem = len(_line.split())
-
-                if nb_elem == 2*self.rank:
-                    z0.append(line2ComplexVector(_line.replace('!', '').rstrip()))
-                else:
-                    for _ in range(int(npy.ceil(self.rank/4.0)) - 1):
-                        _line += fid.readline().replace('!', '').rstrip()
-                    z0.append(line2ComplexVector(_line))
-
-        # If the file does not contain valid port impedance comments, set to default one
-        if len(z0) == 0:
-            z0 = npy.array(self.resistance, dtype=complex)
-            #raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
-
-        self.gamma = npy.array(gamma)
-        self.z0 = npy.array(z0)
 
     def get_gamma_z0(self):
         """
