@@ -181,5 +181,14 @@ class TouchstoneTestCase(unittest.TestCase):
                 assert(gamma.shape[-1] == touchst.rank)
                 assert(z0.shape[-1] == touchst.rank)
 
+
+    def test_touchstone_2(self):
+        files = ["ts/1.ts"]
+        for file in files:
+            Touchstone(os.path.join(self.test_dir, file))
+
+
+
+
 suite = unittest.TestLoader().loadTestsFromTestCase(TouchstoneTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

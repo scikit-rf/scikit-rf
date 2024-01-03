@@ -25,6 +25,7 @@ Functions related to reading/writing touchstones.
 
 """
 import re
+import operator
 import os
 import typing
 import zipfile
@@ -91,7 +92,7 @@ class Touchstone:
         # Defined by default to 1.0, since version number can be omitted in V1.0 format
         self.version = '1.0'
         ## comments in the file header
-        self.comments = None
+        self.comments = ""
         ## unit of the frequency (Hz, kHz, MHz, GHz)
         self.frequency_unit = None
         ## number of frequency points
@@ -161,6 +162,29 @@ class Touchstone:
 
             fid.close()
 
+    def _parse_option_line(self, line: str) -> bool:
+        toks = line.lower()[1:].strip().split()
+        # fill the option line with the missing defaults
+        toks.extend(['ghz', 's', 'ma', 'r', '50'][len(toks):])
+        self.frequency_unit = toks[0]
+        self.parameter = toks[1]
+        self.format = toks[2]
+        self.resistance = complex(toks[4])
+        err_msg = ""
+        if self.frequency_unit not in ['hz', 'khz', 'mhz', 'ghz']:
+            err_msg = f"ERROR: illegal frequency_unit {self.frequency_unit}\n"
+        if self.parameter not in 'syzgh':
+            err_msg = f"ERROR: illegal parameter value {self.parameter}\n"
+        if self.format not in ['ma', 'db', 'ri']:
+            err_msg = f"ERROR: illegal format value {self.format}\n"
+
+        if err_msg:
+            raise ValueError(err_msg)
+        
+        return 1
+
+
+
     def load_file(self, fid: typing.TextIO):
         """
         Load the touchstone file into the internal data structures.
@@ -170,7 +194,6 @@ class Touchstone:
         fid : file object
 
         """
-
         filename = self.filename
 
         # Check the filename extension.
@@ -187,101 +210,64 @@ class Touchstone:
             pass
         else:
             raise Exception('Filename does not have the expected Touchstone extension (.sNp or .ts)')
+        
+        _state = {
+            "option_line_parsed": False,
+            "hfss_params": [],
+            "matrix_format": "",
+            "parse_network": False,
+        }
 
+        
         values = []
         while True:
             line = fid.readline()
             if not line:
                 break
-            # store comments if they precede the option line
-            line = line.split('!', 1)
-            if len(line) == 2:
-                if not self.parameter:
-                    if self.comments is None:
-                        self.comments = ''
-                    self.comments = self.comments + line[1]
-                elif line[1].startswith(' Port['):
-                    try:
-                        port_string, name = line[1].split('=', 1) #throws ValueError on unpack
-                        name = name.strip()
-                        garbage, index = port_string.strip().split('[', 1) #throws ValueError on unpack
-                        index = int(index.rstrip(']')) #throws ValueError on not int-able
-                        if index > self.rank or index <= 0:
-                            print(f"Port name {name} provided for port number {index} but that's out of range for a file with extension s{self.rank}p")
-                        else:
-                            if self.port_names is None: #Initialize the array at the last minute
-                                self.port_names = [''] * self.rank
-                            self.port_names[index - 1] = name
-                    except ValueError as e:
-                        print(f"Error extracting port names from line: {line}")
-                elif line[1].strip().lower().startswith('port impedance'):
-                    self.has_hfss_port_impedances = True
 
-            # remove the comment (if any) so rest of line can be processed.
-            # touchstone files are case-insensitive
-            line = line[0].strip().lower()
+            line_l = line.lower()
 
-            # skip the line if there was nothing except comments
-            if len(line) == 0:
-                continue
+            if not _state["option_line_parsed"]:
+                parse_dict = {
+                    "[version]": lambda x: setattr(self, "version", x.split()[1]),
+                    "!": lambda x: operator.iadd(self.comments, x),
+                    "#": lambda x: operator.setitem(_state, "option_line_parsed", self._parse_option_line(x)),
+                }
+            else:
+                parse_dict = {
+                    "!": _state["hfss_params"].append,
+                }
 
-            # grab the [version] string
-            if line[:9] == '[version]':
-                self.version = line.split()[1]
-                continue
+                if self.version == "2.0":
 
-            # grab the [reference] string
-            if line[:11] == '[reference]':
-                # The reference impedances can be span after the keyword
-                # or on the following line
-                self.reference = [ float(r) for r in line.split()[2:] ]
-                if not self.reference:
-                    line = fid.readline()
-                    self.reference = [ float(r) for r in line.split()]
-                continue
+                    def parse_reference(_line: str):
+                        refs = _line.partition("!")[0].split()
+                        resistance = []
+                        refs.pop(0)
+                        for _ in range(self.rank):
+                            if not refs:
+                                refs = fid.readline().partition("!")[0].split()
+                            resistance.append(float(refs.pop()))
+                        
+                        return resistance
 
-            # grab the [Number of Ports] string
-            if line[:17] == '[number of ports]':
-                self.rank = int(line.split()[-1])
-                continue
+                    parse_dict.update({
+                        "[number of ports]": lambda x: setattr(self, "rank", int(x.split()[3])),
+                        "[reference]": lambda x: setattr(self, "resistance", parse_reference(x)),
+                        "[number of frequencies]": lambda x: setattr(self, "frequency_nb", int(x.split()[3])),
+                        "[matrix format]": lambda x: operator.setitem(_state, "matrix_format", x.split()[2]),
+                        "[network data]": lambda _: operator.setitem(_state, "parse_network", 1),
+                        "[end]": lambda _: operator.setitem(_state, "parse_network", 0),
+                    })
 
-            # grab the [Number of Frequencies] string
-            if line[:23] == '[number of frequencies]':
-                self.frequency_nb = line.split()[-1]
-                continue
+            
+            for k, v in parse_dict.items():
+                if line_l.startswith(k):
+                    v(line)
+                    break
+            else:
+                values.extend([float(v) for v in line.partition("!")[0].split()])
 
-            # skip the [Network Data] keyword
-            if line[:14] == '[network data]':
-                continue
-
-            # skip the [End] keyword
-            if line[:5] == '[end]':
-                continue
-
-            # the option line
-            if line[0] == '#':
-                toks = line[1:].strip().split()
-                # fill the option line with the missing defaults
-                toks.extend(['ghz', 's', 'ma', 'r', '50'][len(toks):])
-                self.frequency_unit = toks[0]
-                self.parameter = toks[1]
-                self.format = toks[2]
-                self.resistance = complex(toks[4])
-                if self.frequency_unit not in ['hz', 'khz', 'mhz', 'ghz']:
-                    print('ERROR: illegal frequency_unit [%s]',  self.frequency_unit)
-                    # TODO: Raise
-                if self.parameter not in 'syzgh':
-                    print('ERROR: illegal parameter value [%s]', self.parameter)
-                    # TODO: Raise
-                if self.format not in ['ma', 'db', 'ri']:
-                    print('ERROR: illegal format value [%s]', self.format)
-                    # TODO: Raise
-
-                continue
-
-            # collect all values without taking care of there meaning
-            # we're separating them later
-            values.extend([ float(v) for v in line.split() ])
 
         # let's do some post-processing to the read values
         # for s2p parameters there may be noise parameters in the value list
