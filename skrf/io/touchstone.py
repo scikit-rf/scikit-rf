@@ -54,16 +54,27 @@ class ParserState:
     comments_after_option_line: list[str] = field(default_factory=list)
     matrix_format: str = "full"
     parse_network: bool = True
-    parse_noise: bool = False
+    _parse_noise: bool = False
     f: list[float] = field(default_factory=list)
     f_noise: list[float] = field(default_factory=list)
     s: list[float] = field(default_factory=list)
     noise: list[float] = field(default_factory=list)
+    two_port_order_legacy: bool = True
+    number_noise_freq: int = 0
 
     def numbers_per_line(self, rank: int) -> int:
         if self.matrix_format == "full":
             return rank ** 2 * 2
         return rank ** 2 * rank
+    
+    @property
+    def parse_noise(self) -> bool:
+        return self._parse_noise
+
+    @parse_noise.setter
+    def parse_noise(self, x: bool) -> None:
+        self.parse_network = False
+        self._parse_noise = x
 
 
 class Touchstone:
@@ -295,7 +306,12 @@ class Touchstone:
                         "[number of frequencies]": lambda x: setattr(self, "frequency_nb", int(x.split()[3])),
                         "[matrix format]": lambda x: setattr(state, "matrix_format", x.split()[2].lower()),
                         "[network data]": lambda _: setattr(state, "parse_network", True),
-                        "[end]": lambda _: setattr(state, "parse_network", False),
+                        "[noise data]": lambda _: setattr(state, "parse_noise", True),
+                        "[two-port data order]": lambda x: setattr(state, "two_port_order_legacy", "21_12" in x),
+                        "[number of noise frequencies]": lambda x: setattr(state, 
+                                                                           "number_noise_freq", 
+                                                                           int(x.partition("]")[2].strip())),
+                        "[end]": lambda x: None,
                     })
 
             
@@ -314,7 +330,6 @@ class Touchstone:
                     self.rank == 2 and
                     self.version == "1.0"):
                     
-                    state.parse_network = False
                     state.parse_noise = True
 
                 if state.parse_network:
@@ -336,7 +351,7 @@ class Touchstone:
             self.s_def = S_DEF_HFSS_DEFAULT
             self.has_hfss_port_impedances = True
         elif self.reference is None:
-            self.z0 = self.resistance
+            self.z0 = npy.broadcast_to(self.resistance, (len(state.f), self.rank))
         else:
             self.z0 = self.reference
 
@@ -368,7 +383,7 @@ class Touchstone:
             self.s[:, index_flat] = s_flat
         
 
-        if self.rank == 2:
+        if self.rank == 2 and state.two_port_order_legacy:
             self.s = npy.transpose(self.s.reshape((-1, self.rank, self.rank)),axes=(0,2,1))
         else:
             self.s = self.s.reshape((-1, self.rank, self.rank))
