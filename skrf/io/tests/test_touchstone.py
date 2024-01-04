@@ -3,6 +3,7 @@ import os
 import numpy as npy
 from pathlib import Path
 
+import pytest
 from skrf.io.touchstone import Touchstone
 
 
@@ -82,10 +83,12 @@ class TouchstoneTestCase(unittest.TestCase):
 
         unexpected_keys = ['S11DB', 'S11M', ]
 
-        # get dict data structure
-        sp_ri = touch.get_sparameter_data(format="ri")
-        # Get dict data in db to check ri -> db/angle conversion
-        sp_db = touch.get_sparameter_data(format="db")
+
+        with pytest.warns(DeprecationWarning):
+            # get dict data structure
+            sp_ri = touch.get_sparameter_data(format="ri")
+            # Get dict data in db to check ri -> db/angle conversion
+            sp_db = touch.get_sparameter_data(format="db")
 
         # test data structure
         for ek in expected_keys:
@@ -137,11 +140,13 @@ class TouchstoneTestCase(unittest.TestCase):
                     msg='Field %s does not match. Expected "%s", got "%s"'%(
                         k, str(expected_sp_db[k]), str(sp_db[k]))  )
 
-        for k, v in zip(touch.get_sparameter_names(), touch.sparameters.T):
-            if k[0] != 'S':
-                # frequency doesn't match because of Hz vs GHz.
-                continue
-            self.assertTrue(npy.all(expected_sp_ri[k] == v))
+
+        with pytest.warns(DeprecationWarning):
+            for k, v in zip(touch.get_sparameter_names(), touch.sparameters.T):
+                if k[0] != 'S':
+                    # frequency doesn't match because of Hz vs GHz.
+                    continue
+                self.assertTrue(npy.all(expected_sp_ri[k] == v))
 
 
     def test_HFSS_touchstone_files(self):
@@ -183,7 +188,7 @@ class TouchstoneTestCase(unittest.TestCase):
 
 
     def test_touchstone_2(self):
-        files = ["ts/1.ts"]
+        files = ["ts/ansys.ts"]
         for file in files:
             Touchstone(os.path.join(self.test_dir, file))
 

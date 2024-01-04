@@ -32,8 +32,8 @@ import re
 import os
 import typing
 import zipfile
-import numpy
 import numpy as npy
+import warnings
 
 from ..constants import S_DEF_HFSS_DEFAULT
 from ..util import get_fid
@@ -53,7 +53,17 @@ class ParserState:
     comments: list[str] = field(default_factory=list)
     comments_after_option_line: list[str] = field(default_factory=list)
     matrix_format: str = "full"
-    parse_network: bool = False
+    parse_network: bool = True
+    parse_noise: bool = False
+    f: list[float] = field(default_factory=list)
+    f_noise: list[float] = field(default_factory=list)
+    s: list[float] = field(default_factory=list)
+    noise: list[float] = field(default_factory=list)
+
+    def numbers_per_line(self, rank: int) -> int:
+        if self.matrix_format == "full":
+            return rank ** 2 * 2
+        return rank ** 2 * rank
 
 
 class Touchstone:
@@ -124,8 +134,6 @@ class Touchstone:
         ## reference impedance for each s-parameter
         self.reference = None
 
-        ## numpy array of original s-parameter data
-        self.sparameters = None
         ## numpy array of original noise data
         self.noise = None
 
@@ -248,8 +256,6 @@ class Touchstone:
         
         state = ParserState()
 
-        
-        values = []
         while True:
             line = fid.readline()
             if not line:
@@ -287,7 +293,7 @@ class Touchstone:
                                                                                                   in_comment=True)),
 
                         "[number of frequencies]": lambda x: setattr(self, "frequency_nb", int(x.split()[3])),
-                        "[matrix format]": lambda x: setattr(state, "matrix_format", x.split()[2]),
+                        "[matrix format]": lambda x: setattr(state, "matrix_format", x.split()[2].lower()),
                         "[network data]": lambda _: setattr(state, "parse_network", True),
                         "[end]": lambda _: setattr(state, "parse_network", False),
                     })
@@ -298,7 +304,26 @@ class Touchstone:
                     v(line)
                     break
             else:
-                values.extend([float(v) for v in line.partition("!")[0].split()])
+                values = [float(v) for v in line.partition("!")[0].split()]
+                if not values:
+                    continue
+
+                if (state.f and 
+                    len(state.s) % state.numbers_per_line(self.rank) == 0 and 
+                    values[0] < state.f[-1] and 
+                    self.rank == 2 and
+                    self.version == "1.0"):
+                    
+                    state.parse_network = False
+                    state.parse_noise = True
+
+                if state.parse_network:
+                    if len(state.s) % state.numbers_per_line(self.rank) == 0:
+                        state.f.append(values.pop(0))
+                    state.s.extend(values)
+                
+                elif state.parse_noise:
+                    state.noise.append(values)
 
 
         self.comments = "\n".join([line[1:].strip() for line in state.comments])
@@ -315,30 +340,58 @@ class Touchstone:
         else:
             self.z0 = self.reference
 
-        # let's do some post-processing to the read values
-        # for s2p parameters there may be noise parameters in the value list
-        values = numpy.asarray(values)
+        self.f = npy.array(state.f)
+        self.s = npy.empty((len(self.f), self.rank * self.rank), dtype="complex")
+        self.s[:] = npy.nan
+        if not len(self.f):
+            return
+        
+        raw = npy.array(state.s).reshape(len(self.f), -1)
+
+        if self.format == "db":
+            raw[:, 0::2] = 10**(raw[:,0::2]/20.0)
+
+        if self.format in(["ma", "db"]):
+            s_flat = raw[:, 0::2] * npy.exp(1j*raw[:, 1::2] * npy.pi / 180)
+        elif self.format == "ri":
+            s_flat = raw.view(npy.complex128)
+        
+        self.s_flat = s_flat
+
+
+        if state.matrix_format == "full":
+            self.s[:] = s_flat
+        else:
+
+            index = npy.tril_indices(self.rank) if state.matrix_format == "lower" else npy.triu_indices(self.rank)
+            index_flat = npy.ravel_multi_index(index, (self.rank, self.rank))
+            self.s[:, index_flat] = s_flat
+        
+
         if self.rank == 2:
-            # the first frequency value that is smaller than the last one is the
-            # indicator for the start of the noise section
-            # each set of the s-parameter section is 9 values long
-            pos = numpy.where(numpy.sign(numpy.diff(values[::9])) == -1)
-            if len(pos[0]) != 0:
-                # we have noise data in the values
-                pos = pos[0][0] + 1   # add 1 because diff reduced it by 1
-                noise_values = values[pos*9:]
-                values = values[:pos*9]
-                self.noise = noise_values.reshape((-1,5))
+            self.s = npy.transpose(self.s.reshape((-1, self.rank, self.rank)),axes=(0,2,1))
+        else:
+            self.s = self.s.reshape((-1, self.rank, self.rank))
 
-        if len(values)%(1+2*(self.rank)**2) != 0 :
-            # incomplete data line / matrix found
-            raise AssertionError
+        if state.matrix_format != "full":
+            self.s = npy.nanmax((self.s, self.s.transpose(0,2,1)), axis=0)
 
-        # reshape the values to match the rank
-        self.sparameters = values.reshape((-1, 1 + 2*self.rank**2))
+
         # multiplier from the frequency unit
         self.frequency_mult = {'hz':1.0, 'khz':1e3,
                                'mhz':1e6, 'ghz':1e9}.get(self.frequency_unit)
+        
+        if state.noise:
+            self.noise = npy.array(state.noise)
+            self.noise[:,0] *= self.frequency_mult
+        
+        self.f *= self.frequency_mult
+
+    @property
+    def sparameters(self):
+        warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
+        return npy.hstack((self.f[:,None], self.s_flat.view(npy.float64).reshape(len(self.f), -1)))
+    
 
     def get_comments(self, ignored_comments=['Created with skrf']):
         """
@@ -406,7 +459,7 @@ class Touchstone:
                                  format, self.resistance)
 
 
-    def get_sparameter_names(self, format="ri"):
+    def get_sparameter_names(self, format="ri") -> list[str]:
         """
         Generate a list of column names for the s-parameter data.
         The names are different for each format.
@@ -414,7 +467,7 @@ class Touchstone:
         Parameters
         ----------
         format : str
-          Format: ri, ma, db, orig (where orig refers to one of the three others)
+          Format: ri, ma, db
 
         Returns
         -------
@@ -422,33 +475,19 @@ class Touchstone:
             list of strings
 
         """
-        names = ['frequency']
-        if format == 'orig':
-            format = self.format
-        ext1, ext2 = {'ri':('R','I'),'ma':('M','A'), 'db':('DB','A')}.get(format)
-        file_name_ending = self.filename.split('.')[-1].lower()
-        for r1 in range(self.rank):
-            for r2 in range(self.rank):
-                # Transpose Touchstone V1 2-port files (.2p), as the order is (11) (21) (12) (22)
-                if self.rank == 2 and file_name_ending == "s2p":
-                    names.append(f"S{r2+1}{r1+1}{ext1}")
-                    names.append(f"S{r2+1}{r1+1}{ext2}")
-                else:
-                    names.append(f"S{r1+1}{r2+1}{ext1}")
-                    names.append(f"S{r1+1}{r2+1}{ext2}")
-        return names
+        warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
+        return self.get_sparameter_data(format).keys()
 
-    def get_sparameter_data(self, format='ri'):
+    def get_sparameter_data(self, format='ri') -> dict[str, npy.ndarray]:
         """
         Get the data of the s-parameter with the given format.
 
         Parameters
         ----------
         format : str
-          Format: ri, ma, db, orig
+          Format: ri, ma, db
 
         supported formats are:
-          orig:  unmodified s-parameter data
           ri:    data in real/imaginary
           ma:    data in magnitude and angle (degree)
           db:    data in log magnitude and angle (degree)
@@ -459,37 +498,25 @@ class Touchstone:
             list of numpy.arrays
 
         """
-        ret = {}
-        if format == 'orig':
-            values = self.sparameters
-        else:
-            values = self.sparameters.copy()
-            # use frequency in hz unit
-            values[:,0] = values[:,0]*self.frequency_mult
-            if (self.format == 'db') and (format == 'ma'):
-                values[:,1::2] = 10**(values[:,1::2]/20.0)
-            elif (self.format == 'db') and (format == 'ri'):
-                v_complex = ((10**values[:,1::2]/20.0)
-                             * numpy.exp(1j*numpy.pi/180 * values[:,2::2]))
-                values[:,1::2] = numpy.real(v_complex)
-                values[:,2::2] = numpy.imag(v_complex)
-            elif (self.format == 'ma') and (format == 'db'):
-                values[:,1::2] = 20*numpy.log10(values[:,1::2])
-            elif (self.format == 'ma') and (format == 'ri'):
-                v_complex = (values[:,1::2] * numpy.exp(1j*numpy.pi/180 * values[:,2::2]))
-                values[:,1::2] = numpy.real(v_complex)
-                values[:,2::2] = numpy.imag(v_complex)
-            elif (self.format == 'ri') and (format == 'ma'):
-                v_complex = values[:,1::2] + 1j* values[:,2::2]
-                values[:,1::2] = numpy.absolute(v_complex)
-                values[:,2::2] = numpy.angle(v_complex)*(180/numpy.pi)
-            elif (self.format == 'ri') and (format == 'db'):
-                v_complex = values[:,1::2] + 1j* values[:,2::2]
-                values[:,1::2] = 20*numpy.log10(numpy.absolute(v_complex))
-                values[:,2::2] = numpy.angle(v_complex)*(180/numpy.pi)
+        warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
+        ret = {"frequency": self.f}
+        for j in range(self.rank):
+            for k in range(self.rank):
+                prefix = f"S{j+1}{k+1}"
+                val = self.s[:,j,k]
+                if self.rank == 2 and self.filename.split(".")[-1].lower() == "s2p":
+                    prefix = f"S{k+1}{j+1}"
+                    val = self.s[:,k,j]
 
-        for i,n in enumerate(self.get_sparameter_names(format=format)):
-            ret[n] = values[:,i]
+                if format == "ri":
+                    ret[f"{prefix}R"] = val.real
+                    ret[f"{prefix}I"] = val.imag
+                if format == "ma":
+                    ret[f"{prefix}M"] = npy.abs(val)
+                    ret[f"{prefix}A"] = npy.angle(val, deg=True)
+                if format == "db":
+                    ret[f"{prefix}DB"] = 20 * npy.log10(npy.abs(val))
+                    ret[f"{prefix}A"] = npy.angle(val, deg=True)
 
         return ret
 
@@ -510,23 +537,7 @@ class Touchstone:
         >>> s11 = a[:, 0, 0]
 
         """
-        v = self.sparameters
-
-        if self.format == 'ri':
-            v_complex = v[:,1::2] + 1j* v[:,2::2]
-        elif self.format == 'ma':
-            v_complex = (v[:,1::2] * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
-        elif self.format == 'db':
-            v_complex = ((10**(v[:,1::2]/20.0)) * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
-
-        if self.rank == 2 :
-            # this return is tricky; it handles the way touchtone lines are
-            # in case of rank==2: order is s11,s21,s12,s22
-            return (v[:,0] * self.frequency_mult,
-                    numpy.transpose(v_complex.reshape((-1, self.rank, self.rank)),axes=(0,2,1)))
-        else:
-            return (v[:,0] * self.frequency_mult,
-                    v_complex.reshape((-1, self.rank, self.rank)))
+        return self.f, self.s
 
     def get_noise_names(self):
         raise NotImplementedError('not yet implemented')

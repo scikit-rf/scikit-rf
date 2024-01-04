@@ -2200,7 +2200,7 @@ class Network:
         self.s_def = touchstoneFile.s_def if self.s_def is None else self.s_def
 
         if touchstoneFile.noise is not None:
-            noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult
+            noise_freq = touchstoneFile.noise[:, 0]
             nfmin_db = touchstoneFile.noise[:, 1]
             gamma_opt_mag = touchstoneFile.noise[:, 2]
             gamma_opt_angle = npy.deg2rad(touchstoneFile.noise[:, 3])
