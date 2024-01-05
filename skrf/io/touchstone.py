@@ -86,6 +86,12 @@ class ParserState:
         if m:
             self.port_names[int(m.group(1)) - 1] = m.group(2)
 
+    def append_comment(self, line: str) -> None:
+        if self.option_line_parsed:
+            self.comments_after_option_line.append(line)
+        else:
+            self.comments.append(line)
+
 
 class Touchstone:
     """
@@ -139,7 +145,7 @@ class Touchstone:
         """
         ## file format version.
         # Defined by default to 1.0, since version number can be omitted in V1.0 format
-        self.version = "1.0"
+        self._version = "1.0"
         ## comments in the file header
         self.comments = ""
         ## unit of the frequency (Hz, kHz, MHz, GHz)
@@ -248,6 +254,16 @@ class Touchstone:
                 pass
 
         return ret
+    
+    @property
+    def version(self) -> str:
+        return self._version
+    
+    @version.setter
+    def version(self, x: str) -> None:
+        self._version = x
+        if x == "2.0":
+            self._parse_dict.update(self._parse_dict_v2)
 
     def load_file(self, fid: typing.TextIO):
         """
@@ -282,21 +298,9 @@ class Touchstone:
 
         state = ParserState()
 
-        while True:
-            line = fid.readline()
-            if not line:
-                break
-
-            line_l = line.lower()
-
-            if not state.option_line_parsed:
-                parse_dict: dict[str, Callable[[str], None]] = {
+        self._parse_dict: dict[str, Callable[[str], None]] = {
                     "[version]": lambda x: setattr(self, "version", x.split()[1]),
-                    "!": state.comments.append,
                     "#": lambda x: setattr(state, "option_line_parsed", self._parse_option_line(x)),
-                }
-            else:
-                parse_dict: dict[str, Callable[[str], None]] = {
                     "! gamma": lambda x: state.hfss_gamma.append(
                         self._parse_n_floats(line=x, fid=fid, n=self.rank * 2, in_comment=False)
                     ),
@@ -306,12 +310,10 @@ class Touchstone:
                         )
                     ),
                     "! port": state.parse_port,
-                    "!": state.comments_after_option_line.append,
+                    "!": state.append_comment,
                 }
-
-                if self.version == "2.0":
-                    parse_dict.update(
-                        {
+        
+        self._parse_dict_v2: dict[str, Callable[[str], None]] = {
                             "[number of ports]": lambda x: setattr(self, "rank", int(x.split()[3])),
                             "[reference]": lambda x: setattr(
                                 self, "resistance", self._parse_n_floats(line=x, fid=fid, n=self.rank, in_comment=True)
@@ -326,9 +328,15 @@ class Touchstone:
                             ),
                             "[end]": lambda x: None,
                         }
-                    )
 
-            for k, v in parse_dict.items():
+        while True:
+            line = fid.readline()
+            if not line:
+                break
+
+            line_l = line.lower()
+
+            for k, v in self._parse_dict.items():
                 if line_l.startswith(k):
                     v(line)
                     break
@@ -355,8 +363,6 @@ class Touchstone:
                     state.noise.append(values)
 
         self.comments = "\n".join([line.strip()[1:] for line in state.comments])
-        print(state.comments_after_option_line)
-        print(state.comments)
         self.comments_after_option_line = "\n".join([line.strip()[1:] for line in state.comments_after_option_line])
         if state.port_names:
             self.port_names = [""] * self.rank
