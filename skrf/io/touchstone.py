@@ -86,6 +86,7 @@ class ParserState:
         if m:
             self.port_names[int(m.group(1)) - 1] = m.group(2)
 
+
 class Touchstone:
     """
     Class to read touchstone s-parameter files.
@@ -356,7 +357,7 @@ class Touchstone:
         self.comments = "\n".join([line[1:] for line in state.comments])
         if state.port_names:
             self.port_names = [""] * self.rank
-            for k,v in state.port_names.items():
+            for k, v in state.port_names.items():
                 self.port_names[k] = v
 
         if state.hfss_gamma:
