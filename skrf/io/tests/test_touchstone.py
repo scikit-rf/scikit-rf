@@ -188,9 +188,11 @@ class TouchstoneTestCase(unittest.TestCase):
 
 
     def test_touchstone_2(self):
-        files = ["ts/ansys.ts"]
-        for file in files:
-            Touchstone(os.path.join(self.test_dir, file))
+        net = Touchstone(os.path.join(self.test_dir, "ts/ansys.ts"))
+
+        assert net.port_names[0] == "U29_B6_1024G_EAS3QB_A_DBI.37.FD_0-1"
+        assert net.port_names[1] == "U29_B6_1024G_EAS3QB_A_DBI.38.GND"
+        assert net.port_names[2] == "U40_178BGA.E10.FD_0-1"
 
 
 

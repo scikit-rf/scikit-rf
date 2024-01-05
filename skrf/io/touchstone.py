@@ -26,6 +26,8 @@ Functions related to reading/writing touchstones.
 """
 from __future__ import annotations
 
+from typing import Optional
+
 from typing import Callable
 from dataclasses import dataclass, field
 import re
@@ -63,6 +65,7 @@ class ParserState:
     noise: list[float] = field(default_factory=list)
     two_port_order_legacy: bool = True
     number_noise_freq: int = 0
+    port_names: dict[int, str] = field(default_factory=dict)
 
     def numbers_per_line(self, rank: int) -> int:
         if self.matrix_format == "full":
@@ -78,6 +81,10 @@ class ParserState:
         self.parse_network = False
         self._parse_noise = x
 
+    def parse_port(self, line: str):
+        m = re.match(r"! Port\[(\d+)\]\s*=\s*(.*?)$", line)
+        if m:
+            self.port_names[int(m.group(1)) - 1] = m.group(2)
 
 class Touchstone:
     """
@@ -297,6 +304,7 @@ class Touchstone:
                             line=remove_prefix(x, "! Port Impedance"), fid=fid, n=self.rank * 2, in_comment=False
                         )
                     ),
+                    "! port": state.parse_port,
                     "!": state.comments_after_option_line.append,
                 }
 
@@ -345,7 +353,11 @@ class Touchstone:
                 elif state.parse_noise:
                     state.noise.append(values)
 
-        self.comments = "\n".join([line[1:].strip() for line in state.comments])
+        self.comments = "\n".join([line[1:] for line in state.comments])
+        if state.port_names:
+            self.port_names = [""] * self.rank
+            for k,v in state.port_names.items():
+                self.port_names[k] = v
 
         if state.hfss_gamma:
             self.gamma = npy.array(state.hfss_gamma).view(npy.complex128)
