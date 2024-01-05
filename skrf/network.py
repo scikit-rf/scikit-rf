@@ -2186,6 +2186,8 @@ class Network:
             raise NotImplementedError('only s-parameters supported for now.')
 
         self.comments = touchstoneFile.get_comments()
+        self.comments_after_option_line = touchstoneFile.comments_after_option_line
+        
 
         self.variables = touchstoneFile.get_comment_variables()
 

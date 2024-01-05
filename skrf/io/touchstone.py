@@ -354,7 +354,10 @@ class Touchstone:
                 elif state.parse_noise:
                     state.noise.append(values)
 
-        self.comments = "\n".join([line[1:] for line in state.comments])
+        self.comments = "\n".join([line.strip()[1:] for line in state.comments])
+        print(state.comments_after_option_line)
+        print(state.comments)
+        self.comments_after_option_line = "\n".join([line.strip()[1:] for line in state.comments_after_option_line])
         if state.port_names:
             self.port_names = [""] * self.rank
             for k, v in state.port_names.items():

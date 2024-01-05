@@ -194,6 +194,8 @@ class TouchstoneTestCase(unittest.TestCase):
         assert net.port_names[1] == "U29_B6_1024G_EAS3QB_A_DBI.38.GND"
         assert net.port_names[2] == "U40_178BGA.E10.FD_0-1"
 
+        assert net.comments_after_option_line == " Modal data exported"
+
 
 
 
