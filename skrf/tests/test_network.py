@@ -1,6 +1,5 @@
 import pytest
 from skrf.frequency import Frequency, InvalidFrequencyWarning
-import filecmp
 import unittest
 import os
 import io
