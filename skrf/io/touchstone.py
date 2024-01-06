@@ -77,9 +77,9 @@ class ParserState:
     @property
     def n_ansys_impedance_values(self) -> int:
         if self.ansys_data_type == "terminal":
-            return self.rank ** 2 * 2
+            return self.rank**2 * 2
 
-        return self.rank * 2 
+        return self.rank * 2
 
     @property
     def numbers_per_line(self) -> int:
@@ -127,8 +127,9 @@ class ParserState:
 
         if err_msg:
             raise ValueError(err_msg)
-        
+
         self.option_line_parsed = True
+
 
 class Touchstone:
     """
@@ -271,11 +272,11 @@ class Touchstone:
                 pass
 
         return ret
-    
+
     @property
     def version(self) -> str:
         return self._version
-    
+
     @version.setter
     def version(self, x: str) -> None:
         self._version = x
@@ -314,40 +315,42 @@ class Touchstone:
         else:
             raise Exception("Filename does not have the expected Touchstone extension (.sNp or .ts)")
 
-
         self._parse_dict: dict[str, Callable[[str], None]] = {
-                    "[version]": lambda x: setattr(self, "version", x.split()[1]),
-                    "#": lambda x: state.parse_option_line(x),
-                    "! gamma": lambda x: state.hfss_gamma.append(
-                        self._parse_n_floats(line=x, fid=fid, n=state.rank * 2, before_comment=False)
-                    ),
-                    "! port impedance": lambda x: state.hfss_impedance.append(
-                        self._parse_n_floats(
-                            line=remove_prefix(x.lower(), "! port impedance"), fid=fid, n=state.n_ansys_impedance_values, before_comment=False
-                        )
-                    ),
-                    "! port": state.parse_port,
-                    "! terminal data exported": lambda _: setattr(state, "ansys_data_type", "terminal"),
-                    "! modal data exported": lambda _: setattr(state, "ansys_data_type", "modal"),
-                    "!": state.append_comment,
-                }
-        
+            "[version]": lambda x: setattr(self, "version", x.split()[1]),
+            "#": lambda x: state.parse_option_line(x),
+            "! gamma": lambda x: state.hfss_gamma.append(
+                self._parse_n_floats(line=x, fid=fid, n=state.rank * 2, before_comment=False)
+            ),
+            "! port impedance": lambda x: state.hfss_impedance.append(
+                self._parse_n_floats(
+                    line=remove_prefix(x.lower(), "! port impedance"),
+                    fid=fid,
+                    n=state.n_ansys_impedance_values,
+                    before_comment=False,
+                )
+            ),
+            "! port": state.parse_port,
+            "! terminal data exported": lambda _: setattr(state, "ansys_data_type", "terminal"),
+            "! modal data exported": lambda _: setattr(state, "ansys_data_type", "modal"),
+            "!": state.append_comment,
+        }
+
         self._parse_dict_v2: dict[str, Callable[[str], None]] = {
-                            "[number of ports]": lambda x: setattr(state, "rank", int(x.split()[3])),
-                            "[reference]": lambda x: setattr(
-                                state, "resistance", self._parse_n_floats(line=x, fid=fid, n=state.rank, before_comment=True)
-                            ),
-                            "[number of frequencies]": lambda x: setattr(self, "frequency_nb", int(x.split()[3])),
-                            "[matrix format]": lambda x: setattr(state, "matrix_format", x.split()[2].lower()),
-                            "[network data]": lambda _: setattr(state, "parse_network", True),
-                            "[noise data]": lambda _: setattr(state, "parse_noise", True),
-                            "[two-port data order]": lambda x: setattr(state, "two_port_order_legacy", "21_12" in x),
-                            "[number of noise frequencies]": lambda x: setattr(
-                                state, "number_noise_freq", int(x.partition("]")[2].strip())
-                            ),
-                            "[mixed-mode order]": lambda line: setattr(state, "mixed_mode_order", line.lower().split()[2:]),
-                            "[end]": lambda x: None,
-                        }
+            "[number of ports]": lambda x: setattr(state, "rank", int(x.split()[3])),
+            "[reference]": lambda x: setattr(
+                state, "resistance", self._parse_n_floats(line=x, fid=fid, n=state.rank, before_comment=True)
+            ),
+            "[number of frequencies]": lambda x: setattr(self, "frequency_nb", int(x.split()[3])),
+            "[matrix format]": lambda x: setattr(state, "matrix_format", x.split()[2].lower()),
+            "[network data]": lambda _: setattr(state, "parse_network", True),
+            "[noise data]": lambda _: setattr(state, "parse_noise", True),
+            "[two-port data order]": lambda x: setattr(state, "two_port_order_legacy", "21_12" in x),
+            "[number of noise frequencies]": lambda x: setattr(
+                state, "number_noise_freq", int(x.partition("]")[2].strip())
+            ),
+            "[mixed-mode order]": lambda line: setattr(state, "mixed_mode_order", line.lower().split()[2:]),
+            "[end]": lambda x: None,
+        }
 
         while True:
             line = fid.readline()
@@ -401,7 +404,7 @@ class Touchstone:
         if state.hfss_impedance:
             self.z0 = npy.array(state.hfss_impedance).view(npy.complex128)
             if state.ansys_data_type == "terminal":
-                self.z0 = npy.diagonal(self.z0.reshape(-1, self.rank,self.rank), axis1=1, axis2=2)
+                self.z0 = npy.diagonal(self.z0.reshape(-1, self.rank, self.rank), axis1=1, axis2=2)
 
             self.s_def = S_DEF_HFSS_DEFAULT
             self.has_hfss_port_impedances = True
@@ -449,20 +452,20 @@ class Touchstone:
                 if mm.startswith("s"):
                     new_order[i] = int(mm[1:]) - 1
                 else:
-                    p1, p2 = sorted([int(e)-1 for e in mm[1:].split(",")])
+                    p1, p2 = sorted([int(e) - 1 for e in mm[1:].split(",")])
 
                     if mm.startswith("d"):
                         new_order[i] = p1
                     else:
                         new_order[i] = p2
                 self.port_modes[new_order[i]] = mm[0].upper()
-            
+
             order = npy.arange(self.rank, dtype=int)
             self.s[:, new_order, :] = self.s[:, order, :]
             self.s[:, :, new_order] = self.s[:, :, order]
             self.z0[:, self.port_modes == "D"] *= 2
             self.z0[:, self.port_modes == "C"] /= 2
-            
+
         # multiplier from the frequency unit
         self.frequency_mult = {"hz": 1.0, "khz": 1e3, "mhz": 1e6, "ghz": 1e9}.get(self.frequency_unit)
 
