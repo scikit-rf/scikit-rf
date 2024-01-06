@@ -486,6 +486,7 @@ class Network:
             self.s = npy.zeros(s_shape, dtype=complex)
 
         self.z0 = kwargs.get('z0', self._z0)
+        self.port_modes = npy.array(["S"] * self.nports)
 
 
         if "f" in kwargs.keys():
@@ -2200,6 +2201,7 @@ class Network:
         self.gamma = touchstoneFile.gamma
         self.z0 = touchstoneFile.z0
         self.s_def = touchstoneFile.s_def if self.s_def is None else self.s_def
+        self.port_modes = touchstoneFile.port_modes
 
         if touchstoneFile.noise is not None:
             noise_freq = touchstoneFile.noise[:, 0]
@@ -3761,6 +3763,9 @@ class Network:
         """
         if 2*p > self.nports or p < 0:
             raise ValueError('Invalid number of differential ports')
+        
+        self.port_modes[:p] = "D"
+        self.port_modes[p:2 * p] = "C"
         if s_def is None:
             s_def = self.s_def
         if s_def != self.s_def:
@@ -3893,6 +3898,8 @@ class Network:
         """
         if 2*p > self.nports or p < 0:
             raise ValueError('Invalid number of differential ports')
+        
+        self.port_modes[:2*p] = "S"
         if s_def is None:
             s_def = self.s_def
         if s_def != self.s_def:

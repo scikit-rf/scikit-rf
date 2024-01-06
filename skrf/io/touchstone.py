@@ -212,6 +212,7 @@ class Touchstone:
         self.gamma = None
         self.z0 = None
         self.s_def = None
+        self.port_modes = None
 
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
@@ -405,13 +406,12 @@ class Touchstone:
             self.s_def = S_DEF_HFSS_DEFAULT
             self.has_hfss_port_impedances = True
         elif self.reference is None:
-            self.z0 = npy.broadcast_to(self.resistance, (len(state.f), state.rank))
+            self.z0 = npy.broadcast_to(self.resistance, (len(state.f), state.rank)).copy()
         else:
-            self.z0 = self.reference
+            self.z0 = npy.empty((len(state.f), state.rank), dtype=complex).fill(self.reference)
 
         self.f = npy.array(state.f)
-        self.s = npy.empty((len(self.f), state.rank * state.rank), dtype="complex")
-        self.s[:] = npy.nan
+        self.s = npy.empty((len(self.f), state.rank * state.rank), dtype=complex)
         if not len(self.f):
             return
 
@@ -442,6 +442,27 @@ class Touchstone:
         if state.matrix_format != "full":
             self.s = npy.nanmax((self.s, self.s.transpose(0, 2, 1)), axis=0)
 
+        self.port_modes = npy.array(["S"] * state.rank)
+        if state.mixed_mode_order:
+            new_order = [None] * state.rank
+            for i, mm in enumerate(state.mixed_mode_order):
+                if mm.startswith("s"):
+                    new_order[i] = int(mm[1:]) - 1
+                else:
+                    p1, p2 = sorted([int(e)-1 for e in mm[1:].split(",")])
+
+                    if mm.startswith("d"):
+                        new_order[i] = p1
+                    else:
+                        new_order[i] = p2
+                self.port_modes[new_order[i]] = mm[0].upper()
+            
+            order = npy.arange(self.rank, dtype=int)
+            self.s[:, new_order, :] = self.s[:, order, :]
+            self.s[:, :, new_order] = self.s[:, :, order]
+            self.z0[:, self.port_modes == "D"] *= 2
+            self.z0[:, self.port_modes == "C"] /= 2
+            
         # multiplier from the frequency unit
         self.frequency_mult = {"hz": 1.0, "khz": 1e3, "mhz": 1e6, "ghz": 1e9}.get(self.frequency_unit)
 
