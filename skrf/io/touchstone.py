@@ -68,6 +68,11 @@ class ParserState:
     number_noise_freq: int = 0
     port_names: dict[int, str] = field(default_factory=dict)
     ansys_data_type: Optional[str] = None
+    mixed_mode_order: Optional[list[str]] = None
+    frequency_unit: str = "ghz"
+    parameter: str = "s"
+    format: str = "ma"
+    resistance: complex = complex(50)
 
     @property
     def n_ansys_impedance_values(self) -> int:
@@ -102,6 +107,28 @@ class ParserState:
         else:
             self.comments.append(line)
 
+    def parse_option_line(self, line: str) -> bool:
+        if self.option_line_parsed:
+            return True
+        toks = line.lower()[1:].strip().split()
+        # fill the option line with the missing defaults
+        toks.extend(["ghz", "s", "ma", "r", "50"][len(toks) :])
+        self.frequency_unit = toks[0]
+        self.parameter = toks[1]
+        self.format = toks[2]
+        self.resistance = complex(toks[4])
+        err_msg = ""
+        if self.frequency_unit not in ["hz", "khz", "mhz", "ghz"]:
+            err_msg = f"ERROR: illegal frequency_unit {self.frequency_unit}\n"
+        if self.parameter not in "syzgh":
+            err_msg = f"ERROR: illegal parameter value {self.parameter}\n"
+        if self.format not in ["ma", "db", "ri"]:
+            err_msg = f"ERROR: illegal format value {self.format}\n"
+
+        if err_msg:
+            raise ValueError(err_msg)
+        
+        self.option_line_parsed = True
 
 class Touchstone:
     """
@@ -221,27 +248,6 @@ class Touchstone:
         finally:
             fid.close()
 
-    def _parse_option_line(self, line: str) -> bool:
-        toks = line.lower()[1:].strip().split()
-        # fill the option line with the missing defaults
-        toks.extend(["ghz", "s", "ma", "r", "50"][len(toks) :])
-        self.frequency_unit = toks[0]
-        self.parameter = toks[1]
-        self.format = toks[2]
-        self.resistance = complex(toks[4])
-        err_msg = ""
-        if self.frequency_unit not in ["hz", "khz", "mhz", "ghz"]:
-            err_msg = f"ERROR: illegal frequency_unit {self.frequency_unit}\n"
-        if self.parameter not in "syzgh":
-            err_msg = f"ERROR: illegal parameter value {self.parameter}\n"
-        if self.format not in ["ma", "db", "ri"]:
-            err_msg = f"ERROR: illegal format value {self.format}\n"
-
-        if err_msg:
-            raise ValueError(err_msg)
-
-        return True
-
     @staticmethod
     def _parse_n_floats(*, line: str, fid: typing.TextIO, n: int, in_comment: bool) -> list[float]:
         def get_part_of_line(line: str) -> str:
@@ -310,13 +316,13 @@ class Touchstone:
 
         self._parse_dict: dict[str, Callable[[str], None]] = {
                     "[version]": lambda x: setattr(self, "version", x.split()[1]),
-                    "#": lambda x: setattr(state, "option_line_parsed", self._parse_option_line(x)),
+                    "#": lambda x: state.parse_option_line(x),
                     "! gamma": lambda x: state.hfss_gamma.append(
                         self._parse_n_floats(line=x, fid=fid, n=state.rank * 2, in_comment=False)
                     ),
                     "! port impedance": lambda x: state.hfss_impedance.append(
                         self._parse_n_floats(
-                            line=remove_prefix(x, "! Port Impedance"), fid=fid, n=state.n_ansys_impedance_values, in_comment=False
+                            line=remove_prefix(x.lower(), "! port impedance"), fid=fid, n=state.n_ansys_impedance_values, in_comment=False
                         )
                     ),
                     "! port": state.parse_port,
@@ -338,6 +344,7 @@ class Touchstone:
                             "[number of noise frequencies]": lambda x: setattr(
                                 state, "number_noise_freq", int(x.partition("]")[2].strip())
                             ),
+                            "[mixed-mode order]": lambda line: setattr(state, "mixed_mode_order", line.lower().split()[2:]),
                             "[end]": lambda x: None,
                         }
 
@@ -377,6 +384,10 @@ class Touchstone:
         self.comments = "\n".join([line.strip()[1:] for line in state.comments])
         self.comments_after_option_line = "\n".join([line.strip()[1:] for line in state.comments_after_option_line])
         self.rank = state.rank
+        self.frequency_unit = state.frequency_unit
+        self.parameter = state.parameter
+        self.format = state.format
+        self.resistance = state.resistance
 
         if state.port_names:
             self.port_names = [""] * state.rank

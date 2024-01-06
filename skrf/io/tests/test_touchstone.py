@@ -38,6 +38,12 @@ class TouchstoneTestCase(unittest.TestCase):
         self.assertTrue(z0 == z0_true)
         self.assertTrue(touch.comments_after_option_line == comments_after_option_line)
 
+    def test_double_option_line(self):
+        filename = os.path.join(self.test_dir, 'double_option_line.s2p')
+        touch = Touchstone(filename)
+
+        self.assertTrue(touch.resistance == 10+10j)
+
     def test_read_with_special_encoding(self):
         """
         Read Touchstone files with various file encoding

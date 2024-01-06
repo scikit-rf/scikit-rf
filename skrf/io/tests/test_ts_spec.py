@@ -60,3 +60,5 @@ def test_ts_example_17():
     assert ts == snp
     assert np.allclose(ts.noise, snp.noise)
      
+def test_ts_example_16():
+    ts = rf.Network(test_data / "ex_16.ts")
