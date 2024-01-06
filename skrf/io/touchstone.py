@@ -51,6 +51,7 @@ def remove_prefix(text: str, prefix: str) -> str:
 
 @dataclass
 class ParserState:
+    rank: Optional[int] = None
     option_line_parsed: bool = False
     hfss_gamma: list[list[float]] = field(default_factory=list)
     hfss_impedance: list[list[float]] = field(default_factory=list)
@@ -66,11 +67,20 @@ class ParserState:
     two_port_order_legacy: bool = True
     number_noise_freq: int = 0
     port_names: dict[int, str] = field(default_factory=dict)
+    ansys_data_type: Optional[str] = None
 
-    def numbers_per_line(self, rank: int) -> int:
+    @property
+    def n_ansys_impedance_values(self) -> int:
+        if self.ansys_data_type == "terminal":
+            return self.rank ** 2 * 2
+
+        return self.rank * 2 
+
+    @property
+    def numbers_per_line(self) -> int:
         if self.matrix_format == "full":
-            return rank**2 * 2
-        return rank**2 * rank
+            return self.rank**2 * 2
+        return self.rank**2 * self.rank
 
     @property
     def parse_noise(self) -> bool:
@@ -275,6 +285,7 @@ class Touchstone:
 
         """
         filename = self.filename
+        state = ParserState()
 
         # Check the filename extension.
         # Should be .sNp for Touchstone format V1.0, and .ts for V2
@@ -283,7 +294,7 @@ class Touchstone:
         if (extension[0] == "s") and (extension[-1] == "p"):  # sNp
             # check if N is a correct number
             try:
-                self.rank = int(extension[1:-1])
+                state.rank = int(extension[1:-1])
             except ValueError:
                 raise (
                     ValueError(
@@ -296,27 +307,28 @@ class Touchstone:
         else:
             raise Exception("Filename does not have the expected Touchstone extension (.sNp or .ts)")
 
-        state = ParserState()
 
         self._parse_dict: dict[str, Callable[[str], None]] = {
                     "[version]": lambda x: setattr(self, "version", x.split()[1]),
                     "#": lambda x: setattr(state, "option_line_parsed", self._parse_option_line(x)),
                     "! gamma": lambda x: state.hfss_gamma.append(
-                        self._parse_n_floats(line=x, fid=fid, n=self.rank * 2, in_comment=False)
+                        self._parse_n_floats(line=x, fid=fid, n=state.rank * 2, in_comment=False)
                     ),
                     "! port impedance": lambda x: state.hfss_impedance.append(
                         self._parse_n_floats(
-                            line=remove_prefix(x, "! Port Impedance"), fid=fid, n=self.rank * 2, in_comment=False
+                            line=remove_prefix(x, "! Port Impedance"), fid=fid, n=state.n_ansys_impedance_values, in_comment=False
                         )
                     ),
                     "! port": state.parse_port,
+                    "! terminal data exported": lambda _: setattr(state, "ansys_data_type", "terminal"),
+                    "! modal data exported": lambda _: setattr(state, "ansys_data_type", "modal"),
                     "!": state.append_comment,
                 }
         
         self._parse_dict_v2: dict[str, Callable[[str], None]] = {
-                            "[number of ports]": lambda x: setattr(self, "rank", int(x.split()[3])),
+                            "[number of ports]": lambda x: setattr(state, "rank", int(x.split()[3])),
                             "[reference]": lambda x: setattr(
-                                self, "resistance", self._parse_n_floats(line=x, fid=fid, n=self.rank, in_comment=True)
+                                self, "resistance", self._parse_n_floats(line=x, fid=fid, n=state.rank, in_comment=True)
                             ),
                             "[number of frequencies]": lambda x: setattr(self, "frequency_nb", int(x.split()[3])),
                             "[matrix format]": lambda x: setattr(state, "matrix_format", x.split()[2].lower()),
@@ -347,15 +359,15 @@ class Touchstone:
 
                 if (
                     state.f
-                    and len(state.s) % state.numbers_per_line(self.rank) == 0
+                    and len(state.s) % state.numbers_per_line == 0
                     and values[0] < state.f[-1]
-                    and self.rank == 2
+                    and state.rank == 2
                     and self.version == "1.0"
                 ):
                     state.parse_noise = True
 
                 if state.parse_network:
-                    if len(state.s) % state.numbers_per_line(self.rank) == 0:
+                    if len(state.s) % state.numbers_per_line == 0:
                         state.f.append(values.pop(0))
                     state.s.extend(values)
 
@@ -364,8 +376,10 @@ class Touchstone:
 
         self.comments = "\n".join([line.strip()[1:] for line in state.comments])
         self.comments_after_option_line = "\n".join([line.strip()[1:] for line in state.comments_after_option_line])
+        self.rank = state.rank
+
         if state.port_names:
-            self.port_names = [""] * self.rank
+            self.port_names = [""] * state.rank
             for k, v in state.port_names.items():
                 self.port_names[k] = v
 
@@ -374,15 +388,18 @@ class Touchstone:
 
         if state.hfss_impedance:
             self.z0 = npy.array(state.hfss_impedance).view(npy.complex128)
+            if state.ansys_data_type == "terminal":
+                self.z0 = npy.diagonal(self.z0.reshape(-1, self.rank,self.rank), axis1=1, axis2=2)
+
             self.s_def = S_DEF_HFSS_DEFAULT
             self.has_hfss_port_impedances = True
         elif self.reference is None:
-            self.z0 = npy.broadcast_to(self.resistance, (len(state.f), self.rank))
+            self.z0 = npy.broadcast_to(self.resistance, (len(state.f), state.rank))
         else:
             self.z0 = self.reference
 
         self.f = npy.array(state.f)
-        self.s = npy.empty((len(self.f), self.rank * self.rank), dtype="complex")
+        self.s = npy.empty((len(self.f), state.rank * state.rank), dtype="complex")
         self.s[:] = npy.nan
         if not len(self.f):
             return
@@ -402,14 +419,14 @@ class Touchstone:
         if state.matrix_format == "full":
             self.s[:] = s_flat
         else:
-            index = npy.tril_indices(self.rank) if state.matrix_format == "lower" else npy.triu_indices(self.rank)
-            index_flat = npy.ravel_multi_index(index, (self.rank, self.rank))
+            index = npy.tril_indices(state.rank) if state.matrix_format == "lower" else npy.triu_indices(self.rank)
+            index_flat = npy.ravel_multi_index(index, (state.rank, state.rank))
             self.s[:, index_flat] = s_flat
 
-        if self.rank == 2 and state.two_port_order_legacy:
-            self.s = npy.transpose(self.s.reshape((-1, self.rank, self.rank)), axes=(0, 2, 1))
+        if state.rank == 2 and state.two_port_order_legacy:
+            self.s = npy.transpose(self.s.reshape((-1, state.rank, state.rank)), axes=(0, 2, 1))
         else:
-            self.s = self.s.reshape((-1, self.rank, self.rank))
+            self.s = self.s.reshape((-1, state.rank, state.rank))
 
         if state.matrix_format != "full":
             self.s = npy.nanmax((self.s, self.s.transpose(0, 2, 1)), axis=0)

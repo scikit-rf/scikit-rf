@@ -31,9 +31,12 @@ class TouchstoneTestCase(unittest.TestCase):
                             [[9.+10.j, 13.+14.j], [11.+12.j, 15.+16.j]]])
         z0_true = 50+50j
 
+        comments_after_option_line = "freq	ReS11	ImS11	ReS21	ImS21	ReS12	ImS12	ReS22	ImS22"
+
         self.assertTrue((f == f_true).all())
         self.assertTrue((s == s_true).all())
         self.assertTrue(z0 == z0_true)
+        self.assertTrue(touch.comments_after_option_line == comments_after_option_line)
 
     def test_read_with_special_encoding(self):
         """
@@ -194,9 +197,22 @@ class TouchstoneTestCase(unittest.TestCase):
         assert net.port_names[1] == "U29_B6_1024G_EAS3QB_A_DBI.38.GND"
         assert net.port_names[2] == "U40_178BGA.E10.FD_0-1"
 
-        assert net.comments_after_option_line == " Modal data exported"
+    def test_ansys_modal_data(self):
+        net = Touchstone(os.path.join(self.test_dir, "ansys_modal_data.s2p"))
+        z0 = npy.array([
+            [51. +1.j, 52. +2.j],
+            [61.+11.j, 62.+12.j]
+        ])
+        assert npy.allclose(net.z0, z0)
 
+    def test_ansys_terminal_data(self):
+        net = Touchstone(os.path.join(self.test_dir, "ansys_terminal_data.s4p"))
 
+        z0 = npy.array([
+            [51. +1.j, 52. +2.j, 53. +3.j, 54. +4.j],
+            [61.+11.j, 62.+12.j, 63.+13.j, 64.+14.j]
+        ])
+        assert npy.allclose(net.z0, z0)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TouchstoneTestCase)
