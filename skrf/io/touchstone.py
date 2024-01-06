@@ -249,9 +249,9 @@ class Touchstone:
             fid.close()
 
     @staticmethod
-    def _parse_n_floats(*, line: str, fid: typing.TextIO, n: int, in_comment: bool) -> list[float]:
+    def _parse_n_floats(*, line: str, fid: typing.TextIO, n: int, before_comment: bool) -> list[float]:
         def get_part_of_line(line: str) -> str:
-            if in_comment:
+            if before_comment:
                 return line.partition("!")[0]
             else:
                 return line.rpartition("!")[2]
@@ -318,11 +318,11 @@ class Touchstone:
                     "[version]": lambda x: setattr(self, "version", x.split()[1]),
                     "#": lambda x: state.parse_option_line(x),
                     "! gamma": lambda x: state.hfss_gamma.append(
-                        self._parse_n_floats(line=x, fid=fid, n=state.rank * 2, in_comment=False)
+                        self._parse_n_floats(line=x, fid=fid, n=state.rank * 2, before_comment=False)
                     ),
                     "! port impedance": lambda x: state.hfss_impedance.append(
                         self._parse_n_floats(
-                            line=remove_prefix(x.lower(), "! port impedance"), fid=fid, n=state.n_ansys_impedance_values, in_comment=False
+                            line=remove_prefix(x.lower(), "! port impedance"), fid=fid, n=state.n_ansys_impedance_values, before_comment=False
                         )
                     ),
                     "! port": state.parse_port,
@@ -334,7 +334,7 @@ class Touchstone:
         self._parse_dict_v2: dict[str, Callable[[str], None]] = {
                             "[number of ports]": lambda x: setattr(state, "rank", int(x.split()[3])),
                             "[reference]": lambda x: setattr(
-                                self, "resistance", self._parse_n_floats(line=x, fid=fid, n=state.rank, in_comment=True)
+                                state, "resistance", self._parse_n_floats(line=x, fid=fid, n=state.rank, before_comment=True)
                             ),
                             "[number of frequencies]": lambda x: setattr(self, "frequency_nb", int(x.split()[3])),
                             "[matrix format]": lambda x: setattr(state, "matrix_format", x.split()[2].lower()),
