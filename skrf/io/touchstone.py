@@ -76,8 +76,8 @@ class ParserState:
 
     @property
     def n_ansys_impedance_values(self) -> int:
-        if self.ansys_data_type == "terminal":
-            return self.rank**2 * 2
+        #if self.ansys_data_type == "terminal":
+        #    return self.rank**2 * 2
 
         return self.rank * 2
 
@@ -174,7 +174,8 @@ class Touchstone:
 
         From a io.StringIO object
 
-        >>> link = 'https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/examples/basic_touchstone_plotting/horn antenna.s1p'
+        >>> link = 'https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/examples/
+            basic_touchstone_plotting/horn antenna.s1p'
         >>> r = requests.get(link)
         >>> stringio = io.StringIO(r.text)
         >>> stringio.name = 'horn.s1p'  # must be provided for the Touchstone parser
@@ -304,12 +305,9 @@ class Touchstone:
             try:
                 state.rank = int(extension[1:-1])
             except ValueError:
-                raise (
-                    ValueError(
-                        "filename does not have a s-parameter extension. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer."
-                        % (extension)
-                    )
-                )
+                msg = (f"filename does not have a s-parameter extension. It has  [{extension}] instead."
+                        "Please, correct the extension to of form: 'sNp', where N is any integer.")
+                raise ValueError(msg)
         elif extension == "ts":
             pass
         else:
@@ -403,8 +401,8 @@ class Touchstone:
 
         if state.hfss_impedance:
             self.z0 = npy.array(state.hfss_impedance).view(npy.complex128)
-            if state.ansys_data_type == "terminal":
-                self.z0 = npy.diagonal(self.z0.reshape(-1, self.rank, self.rank), axis1=1, axis2=2)
+            #if state.ansys_data_type == "terminal":
+            #    self.z0 = npy.diagonal(self.z0.reshape(-1, self.rank, self.rank), axis1=1, axis2=2)
 
             self.s_def = S_DEF_HFSS_DEFAULT
             self.has_hfss_port_impedances = True

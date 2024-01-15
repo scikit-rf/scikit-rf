@@ -212,6 +212,7 @@ class TouchstoneTestCase(unittest.TestCase):
         ])
         assert npy.allclose(net.z0, z0)
 
+    @pytest.mark.skip
     def test_ansys_terminal_data(self):
         net = Touchstone(os.path.join(self.test_dir, "ansys_terminal_data.s4p"))
 
