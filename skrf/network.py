@@ -4281,10 +4281,10 @@ class Network:
         """
         return s2vswr_active(self.s, a)
 
-    def stability_circle(self, target_port: str, npoints: int = 181) -> npy.ndarray:
+    def stability_circle(self, target_port: int, npoints: int = 181) -> npy.ndarray:
         r"""
-        Returns stability circles for a given port ('load' or 'source').
-        The center and radius of the load stability circle are calculated by the following equations.
+        Returns loci of stability circles for a given port (0 or 1). The network must have two ports.
+        The center and radius of the load (here target_port=1) stability circle are calculated by the following equation [#]_.
 
         .. math::
 
@@ -4296,7 +4296,7 @@ class Network:
 
                 D = S_{11} S_{22} - S_{12} S_{21}
 
-        Similarly, those of the source side are calculated by the following equations.
+        Similarly, those of the source side (here target_port=0) are calculated by the following equations.
 
         .. math::
 
@@ -4306,47 +4306,48 @@ class Network:
 
         Parameters
         ----------
-        target_port : str
-            Specifies the 'load' or 'source' side to calculate stability circles.
+        target_port : int
+            Specifies the port number (0 or 1) to calculate stability circles.
         npoints : int, optional
             The number of points on the circumference of the circle.
             More points result in a smoother circle, but require more computation. Default is 181.
 
         Returns
         -------
-        ntwk : :class:`numpy.ndarray` (shape is `npoints x f`)
-            Stability circle in complex numbers
+        sc : :class:`numpy.ndarray` (shape is `npoints x f`)
+            Loci of stability circles in complex numbers
 
         Example
         --------
         >>> import skrf as rf
         >>> import matplotlib.pyplot as plt
 
-        Create a network object
+        Create a two-port network object
 
         >>> ntwk = rf.Network('fet.s2p')
 
         Calculate the load stability circles for all the frequencies
 
-        >>> lsc = ntwk.stability_circle(target_port='load')
+        >>> lsc = ntwk.stability_circle(target_port=1)
 
         Plot the circles on the smith chart
 
-        >>> rf.plotting.plot_smith(s=lsc, smith_r=5)
+        >>> rf.plotting.plot_smith(s=lsc, smith_r=5, marker='o')
         >>> plt.show()
 
         Slicing the network allows you to specify a frequency
 
-        >>> lsc = ntwk['1GHz'].stability_circle(target_port='load')
-        >>> rf.plotting.plot_smith(s=lsc, smith_r=5)
+        >>> lsc = ntwk['1GHz'].stability_circle(target_port=1)
+        >>> rf.plotting.plot_smith(s=lsc, smith_r=5, marker='o')
         >>> plt.show()
 
         References
         ----------
-        ..  [1] David. M. Pozar, "Microwave Engineering, Fource Edition," Wiley, p. 566, 2011.
+        ..  [#] David. M. Pozar, "Microwave Engineering, Fource Edition," Wiley, p. 566, 2011.
 
         See Also
         --------
+        gain_circle
         stability
 
         """
@@ -4361,14 +4362,14 @@ class Network:
         D = self.s[:, 0, 0] * self.s[:, 1, 1] - self.s[:, 0, 1] * self.s[:, 1, 0]
 
         # Calculate the center and radius of the stability circle
-        if target_port == 'load':
+        if target_port == 1:
             sc_center = (self.s[:, 1, 1] - self.s[:, 0, 0].conjugate() * D).conjugate() / (npy.abs(self.s[:, 1, 1]) ** 2 - npy.abs(D) ** 2)
             sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] / (npy.abs(self.s[:, 1, 1] ) ** 2 - npy.abs(D) ** 2))
-        elif target_port == 'source':
+        elif target_port == 0:
             sc_center = (self.s[:, 0, 0] - self.s[:, 1, 1].conjugate() * D).conjugate() / (npy.abs(self.s[:, 0, 0]) ** 2 - npy.abs(D) ** 2)
             sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] / (npy.abs(self.s[:, 0, 0] ) ** 2 - npy.abs(D) ** 2))
         else:
-            raise ValueError("Invalid target_port. Use 'load' or 'source'.")
+            raise ValueError("Invalid target_port. Specify 0 or 1.")
 
         # Generate theta values for the points on the circle
         theta = npy.linspace(0, 2 * npy.pi, npoints)
@@ -4378,13 +4379,13 @@ class Network:
         sc_imag = npy.outer(sc_center.imag, npy.ones(npoints)) + npy.outer(sc_radius, npy.sin(theta))
 
         # Combine real and imaginary parts to create the load stability circle
-        sc = sc_real + 1j * sc_imag
-        return sc.T
+        sc = (sc_real + 1j * sc_imag).T
+        return sc
 
-    def gain_circle(self, target_port: str, gain: float, npoints: int = 181) -> npy.ndarray:
+    def gain_circle(self, target_port: int, gain: float, npoints: int = 181) -> npy.ndarray:
         r"""
-        Returns gain circles for a given port ('source' or 'load') and a specified gain.
-        The center and radius of the source gain circle are calculated by the following equations.
+        Returns loci of gain circles for a given port (0 or 1) and a specified gain. The network must have two ports.
+        The center and radius of the source (here target_port=0) gain circle are calculated by the following equations [#]_ [#]_.
 
         .. math::
 
@@ -4398,7 +4399,7 @@ class Network:
 
                 g_{S} = \frac{gain}{G_{Smax}} = gain * (1 - |S_{11}|^{2})
 
-        Similarly, those of the load side are calculated by the following equations.
+        Similarly, those of the load side (here target_port=1) are calculated by the following equations.
 
         .. math::
 
@@ -4412,8 +4413,8 @@ class Network:
 
         Parameters
         ----------
-        target_port : str
-            Specifies the 'source' or 'load' side to calculate gain circles.
+        target_port : int
+            Specifies the port number (0 or 1) to calculate gain circles.
         gain : float
             Gain of source or load matching network in decibels.
         npoints : int, optional
@@ -4422,37 +4423,37 @@ class Network:
 
         Returns
         -------
-        ntwk : :class:`numpy.ndarray` (shape is `npoints x f`)
-            Gain circle in complex numbers
+        gc : :class:`numpy.ndarray` (shape is `npoints x f`)
+            Loci of gain circles in complex numbers
 
         Example
         --------
         >>> import skrf as rf
         >>> import matplotlib.pyplot as plt
 
-        Create a network object
+        Create a two-port network object
 
         >>> ntwk = rf.Network('fet.s2p')
 
-        Calculate the source gain circles for all the frequencies
+        Calculate the source gain circles for all the frequencies at a gain of 2 dB
 
-        >>> sgc = ntwk.gain_circle(target_port='source', gain=2.0)
+        >>> sgc = ntwk.gain_circle(target_port=0, gain=2.0)
 
         Plot the circles on the smith chart
 
-        >>> rf.plotting.plot_smith(s=sgc, smith_r=1)
+        >>> rf.plotting.plot_smith(s=sgc, smith_r=1, marker='o')
         >>> plt.show()
 
         Slicing the network allows you to specify a frequency
 
-        >>> sgc = ntwk['1GHz'].gain_circle(target_port='source', gain=2.0)
-        >>> rf.plotting.plot_smith(s=sgc, smith_r=1)
+        >>> sgc = ntwk['1GHz'].gain_circle(target_port=0, gain=2.0)
+        >>> rf.plotting.plot_smith(s=sgc, smith_r=1, marker='o')
         >>> plt.show()
 
         References
         ----------
-        ..  [1] David. M. Pozar, "Microwave Engineering, Fource Edition," Wiley, p. 576, 2011.
-        ..  [2] https://www.allaboutcircuits.com/technical-articles/designing-a-unilateral-rf-amplifier-for-a-specified-gain/
+        ..  [#] David. M. Pozar, "Microwave Engineering, Fource Edition," Wiley, p. 576, 2011.
+        ..  [#] https://www.allaboutcircuits.com/technical-articles/designing-a-unilateral-rf-amplifier-for-a-specified-gain/
 
         See Also
         --------
@@ -4460,28 +4461,27 @@ class Network:
         max_gain : Maximum available and stable power gain
         max_stable_gain : Maximum stable power gain
         unilateral_gain : Mason's unilateral power gain
-        
 
         """
 
         if self.nports != 2:
-            raise ValueError("Gain circle is only defined for two ports")
+            raise ValueError("Gain circles are defined only for two-port networks")
 
         if npoints <= 0:
             raise ValueError("npoints must be a positive integer")
 
         # Calculate the center and radius of the gain circle
-        if target_port == 'source':
+        if target_port == 0:
             reflection = self.s[:, 0, 0]
-        elif target_port == 'load':
+        elif target_port == 1:
             reflection = self.s[:, 1, 1]
         else:
-            raise ValueError("Invalid target_port. Use 'load' or 'source'.")
+            raise ValueError("Invalid target_port. Specify 0 or 1.")
 
         gain_factor = mf.db10_2_mag(gain) * (1 - npy.abs(reflection) ** 2)
-        if gain_factor > 1:
-            warnings.warn("The specified gain is too large to be realized. Please specify a smaller gain.", RuntimeWarning)
-            gain_factor = 1
+        if npy.any(gain_factor > 1):
+            warnings.warn("The specified gain is greater than the maximum gain achievable by the matching network. Specify a smaller gain.", RuntimeWarning, stacklevel=2)
+            gain_factor = npy.minimum(gain_factor, 1)
         gc_center = gain_factor * reflection.conjugate() / (1 - (1 - gain_factor) * npy.abs(reflection) ** 2)
         gc_radius = npy.sqrt(1 - gain_factor) * (1 - npy.abs(reflection) ** 2) / (1 - (1 - gain_factor) * npy.abs(reflection) ** 2)
 
@@ -4493,8 +4493,8 @@ class Network:
         gc_imag = npy.outer(gc_center.imag, npy.ones(npoints)) + npy.outer(gc_radius, npy.sin(theta))
 
         # Combine real and imaginary parts to create the load gain circle
-        gc = gc_real + 1j * gc_imag
-        return gc.T
+        gc = (gc_real + 1j * gc_imag).T
+        return gc
 
     _plot_attribute_doc = r"""
     plot the Network attribute :attr:`{attribute}_{conversion}` component vs {x_axis}.
