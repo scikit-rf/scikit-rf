@@ -186,11 +186,12 @@ class TouchstoneTestCase(unittest.TestCase):
         """
         HFSS_RELEASES= ['HFSS_2019R2', 'HFSS_2020R2']
 
-        p = Path('.')
+        p = Path(self.test_dir)
         for hfss_release in HFSS_RELEASES:
             for sNp_file in p.glob(hfss_release+'/*.s*'):
                 touchst = Touchstone(sNp_file.as_posix())
                 gamma, z0 = touchst.get_gamma_z0()
+                print(z0)
 
                 assert(gamma.shape[-1] == touchst.rank)
                 assert(z0.shape[-1] == touchst.rank)
