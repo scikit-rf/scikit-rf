@@ -51,6 +51,8 @@ def remove_prefix(text: str, prefix: str) -> str:
 
 @dataclass
 class ParserState:
+    """Class to hold dynamic variables while parsing the touchstone file.
+    """
     rank: Optional[int] = None
     option_line_parsed: bool = False
     hfss_gamma: list[list[float]] = field(default_factory=list)
@@ -76,6 +78,13 @@ class ParserState:
 
     @property
     def n_ansys_impedance_values(self) -> int:
+        """Returns the number of port impedances returned by Ansys HFSS.
+
+        Currently this function returns rank * 2.
+
+        Returns:
+            int: number of impedance values.
+        """
         #if self.ansys_data_type == "terminal":
         #    return self.rank**2 * 2
 
@@ -83,12 +92,22 @@ class ParserState:
 
     @property
     def numbers_per_line(self) -> int:
+        """Returns data points per frequency point.
+
+        Returns:
+            int: Number of data points per frequency point.
+        """
         if self.matrix_format == "full":
             return self.rank**2 * 2
         return self.rank**2 * self.rank
 
     @property
     def parse_noise(self) -> bool:
+        """Returns true if the parser expects noise data.
+
+        Returns:
+            bool: True, if noise data is expected.
+        """
         return self._parse_noise
 
     @parse_noise.setter
@@ -97,17 +116,36 @@ class ParserState:
         self._parse_noise = x
 
     def parse_port(self, line: str):
+        """Regex parser for port names.
+
+        Args:
+            line (str): Touchstone line.
+        """
         m = re.match(r"! Port\[(\d+)\]\s*=\s*(.*?)$", line)
         if m:
             self.port_names[int(m.group(1)) - 1] = m.group(2)
 
     def append_comment(self, line: str) -> None:
+        """Append comment, and append appropriate comment list.
+
+        Args:
+            line (str): Line to parse
+        """
         if self.option_line_parsed:
             self.comments_after_option_line.append(line)
         else:
             self.comments.append(line)
 
-    def parse_option_line(self, line: str) -> bool:
+    def parse_option_line(self, line: str) -> None:
+        """Parse the option line starting with #
+
+        Args:
+            line (str): Line to parse
+
+        Raises:
+            ValueError: If option line contains invalid options.
+
+        """
         if self.option_line_parsed:
             return True
         toks = line.lower()[1:].strip().split()
@@ -253,7 +291,26 @@ class Touchstone:
 
     @staticmethod
     def _parse_n_floats(*, line: str, fid: typing.TextIO, n: int, before_comment: bool) -> list[float]:
+        """Parse a specified number of floats either in our outside a comment.
+
+        Args:
+            line (str): Actual line to parse.
+            fid (typing.TextIO): File descriptor to get new lines if necessary.
+            n (int): Number of floats to parse.
+            before_comment (bool): True, if the floats should get parsed in or outside a comment.
+
+        Returns:
+            list[float]: The parsed float values
+        """
         def get_part_of_line(line: str) -> str:
+            """Return either the part after or before a exclamation mark.
+
+            Args:
+                line (str): Line to parse.
+
+            Returns:
+                str: string subset.
+            """
             if before_comment:
                 return line.partition("!")[0]
             else:
@@ -276,6 +333,11 @@ class Touchstone:
 
     @property
     def version(self) -> str:
+        """The version string.
+
+        Returns:
+            str: Version
+        """
         return self._version
 
     @version.setter
@@ -313,6 +375,10 @@ class Touchstone:
         else:
             raise Exception("Filename does not have the expected Touchstone extension (.sNp or .ts)")
 
+        # Lookup dictionary for parser
+        # Dictionary has string keys and values contains functions which
+        # need the current line as string argument. The type hints allow 
+        # the IDE to provide full typing support
         self._parse_dict: dict[str, Callable[[str], None]] = {
             "[version]": lambda x: setattr(self, "version", x.split()[1]),
             "#": lambda x: state.parse_option_line(x),
