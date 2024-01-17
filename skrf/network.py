@@ -152,7 +152,7 @@ Misc Functions
 
 """
 from typing import (Any, NoReturn, Optional, Sequence,
-    Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List, TextIO)
+    Sized, Union, Tuple, Callable, Dict, List, TextIO)
 from numbers import Number
 from functools import reduce
 
@@ -185,11 +185,7 @@ from .util import get_fid, get_extn, find_nearest_index, axes_kwarg, copy_doc, p
 from .time import time_gate, get_window
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
-from .constants import S_DEFINITIONS, S_DEF_DEFAULT, S_DEF_HFSS_DEFAULT
-
-if TYPE_CHECKING:
-    import pandas as pd
-
+from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
 class Network:
     r"""

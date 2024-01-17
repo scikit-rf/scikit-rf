@@ -540,11 +540,16 @@ class Touchstone:
         self.f *= self.frequency_mult
 
     @property
-    def sparameters(self):
+    def sparameters(self) -> npy.ndarray:
+        """Touchstone data in tabular format.
+
+        Returns:
+            npy.ndarray: Frequency and data array.
+        """
         warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
         return npy.hstack((self.f[:, None], self.s_flat.view(npy.float64).reshape(len(self.f), -1)))
 
-    def get_comments(self, ignored_comments=["Created with skrf"]):
+    def get_comments(self, ignored_comments: list[str]=["Created with skrf"]) -> str:
         """
         Returns the comments which appear anywhere in the file.
 
@@ -568,7 +573,7 @@ class Touchstone:
                 processed_comments = processed_comments + comment_line + "\n"
         return processed_comments
 
-    def get_comment_variables(self):
+    def get_comment_variables(self) -> dict[str, str]:
         """
         Convert hfss variable comments to a dict of vars.
 
@@ -590,7 +595,7 @@ class Touchstone:
                 pass
         return var_dict
 
-    def get_format(self, format="ri"):
+    def get_format(self, format="ri") -> str:
         """
         Returns the file format string used for the given format.
 
@@ -606,9 +611,9 @@ class Touchstone:
             format = self.format
         else:
             frequency = "hz"
-        return "%s %s %s r %s" % (frequency, self.parameter, format, self.resistance)
+        return f"{frequency} {self.parameter} {format} r {self.resistance}"
 
-    def get_sparameter_names(self, format="ri") -> list[str]:
+    def get_sparameter_names(self, format: str="ri") -> list[str]:
         """
         Generate a list of column names for the s-parameter data.
         The names are different for each format.
@@ -627,7 +632,7 @@ class Touchstone:
         warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
         return self.get_sparameter_data(format).keys()
 
-    def get_sparameter_data(self, format="ri") -> dict[str, npy.ndarray]:
+    def get_sparameter_data(self, format: str="ri") -> dict[str, npy.ndarray]:
         """
         Get the data of the s-parameter with the given format.
 
@@ -669,7 +674,7 @@ class Touchstone:
 
         return ret
 
-    def get_sparameter_arrays(self):
+    def get_sparameter_arrays(self) -> tuple[npy.ndarray, npy.ndarray]:
         """
         Returns the s-parameters as a tuple of arrays.
 
@@ -714,7 +719,7 @@ class Touchstone:
         return self.gamma, self.z0
 
 
-def hfss_touchstone_2_gamma_z0(filename):
+def hfss_touchstone_2_gamma_z0(filename: str) -> tuple[npy.ndarray, npy.ndarray, npy.ndarray]:
     """
     Extracts Z0 and Gamma comments from touchstone file.
 
@@ -745,7 +750,7 @@ def hfss_touchstone_2_gamma_z0(filename):
     return ntwk.frequency.f, ntwk.gamma, ntwk.z0
 
 
-def hfss_touchstone_2_media(filename, f_unit="ghz"):
+def hfss_touchstone_2_media(filename: str) -> list[DefinedGammaZ0]:
     """
     Creates a :class:`~skrf.media.Media` object from a a HFSS-style Touchstone file with Gamma and Z0 comments.
 
@@ -753,9 +758,6 @@ def hfss_touchstone_2_media(filename, f_unit="ghz"):
     ----------
     filename : string
         the HFSS-style Touchstone file
-    f_unit : string
-        'hz', 'khz', 'mhz' or 'ghz', which is passed to the `f_unit` parameter
-        to :class:`~skrf.frequency.Frequency` constructor
 
     Returns
     -------
@@ -785,7 +787,7 @@ def hfss_touchstone_2_media(filename, f_unit="ghz"):
     return media_list
 
 
-def hfss_touchstone_2_network(filename, f_unit="ghz"):
+def hfss_touchstone_2_network(filename: str) -> Network:
     """
     Creates a :class:`~skrf.Network` object from a a HFSS-style Touchstone file.
 
@@ -793,9 +795,6 @@ def hfss_touchstone_2_network(filename, f_unit="ghz"):
     ----------
     filename : string
         the HFSS-style Touchstone file
-    f_unit : string
-        'hz', 'khz', 'mhz' or 'ghz', which is passed to the `f_unit` parameter
-        to :class:`~skrf.frequency.Frequency` constructor
 
     Returns
     -------
@@ -810,11 +809,11 @@ def hfss_touchstone_2_network(filename, f_unit="ghz"):
     --------
     hfss_touchstone_2_gamma_z0 : returns gamma, and z0
     """
-    my_network = Network(file=filename, f_unit=f_unit)
+    my_network = Network(file=filename)
     return my_network
 
 
-def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> typing.Dict[str, Network]:
+def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> dict[str, Network]:
     """
     similar to skrf.io.read_all_networks, which works for directories but only for Touchstones in ziparchives.
 
