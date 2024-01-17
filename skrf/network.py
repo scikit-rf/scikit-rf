@@ -185,12 +185,7 @@ from .util import get_fid, get_extn, find_nearest_index, axes_kwarg, copy_doc, p
 from .time import time_gate, get_window
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
-<<<<<<< HEAD
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
-=======
-from .constants import S_DEFINITIONS, S_DEF_DEFAULT, S_DEF_HFSS_DEFAULT
-
->>>>>>> master
 
 class Network:
     r"""
