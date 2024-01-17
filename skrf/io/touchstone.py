@@ -466,6 +466,11 @@ class Touchstone:
         if state.hfss_gamma:
             self.gamma = npy.array(state.hfss_gamma).view(npy.complex128)
 
+
+        # Impedance is parsed in the following order:
+        # - HFSS comments for each frequency point and each port.
+        # - TS v2 Reference keyword for each port.
+        # - Reference impedance from option line.
         if state.hfss_impedance:
             self.z0 = npy.array(state.hfss_impedance).view(npy.complex128)
             # Comment the line in, when we need when to expect port impedances in NxN format.
