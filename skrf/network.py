@@ -185,7 +185,12 @@ from .util import get_fid, get_extn, find_nearest_index, axes_kwarg, copy_doc, p
 from .time import time_gate, get_window
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
+<<<<<<< HEAD
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
+=======
+from .constants import S_DEFINITIONS, S_DEF_DEFAULT, S_DEF_HFSS_DEFAULT
+
+>>>>>>> master
 
 class Network:
     r"""
@@ -794,7 +799,7 @@ class Network:
             if self.s_def == other.s_def:
                 return True
             else:
-                return npy.allclose(self.z0.real, other.z0.real, atol = ZERO)            
+                return npy.allclose(self.z0.real, other.z0.real, atol = ZERO)
         else:
             return True
 
@@ -904,7 +909,11 @@ class Network:
         if _z0.ndim < 2:
             z0 = _z0
         else:
-            z0 = self.z0[0, :]
+            if _z0.size > 0:
+                z0 = _z0[0, :]
+            else:
+                # empty frequency range
+                z0 = '[]'
 
         output = '%i-Port Network: \'%s\',  %s, z0=%s' % (self.number_of_ports, name, str(f), str(z0))
 
@@ -942,11 +951,11 @@ class Network:
             ntwk.s = self.s[:, t0, t1]
             ntwk.z0 = self.z0[:, t0]
             return ntwk
-        raise AttributeError
+        raise AttributeError(f'object does not have attribute {name}')
 
     def __dir__(self):
         ret = super().__dir__()
-        
+
         s_properties = [f"s{t1+1}_{t2+1}" for t1 in range(self.nports) for t2 in range(self.nports)]
         s_properties += [f"s{t1+1}{t2+1}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
 
@@ -1738,7 +1747,7 @@ class Network:
 
         References
         ----------
-        ..  [1] M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited," 
+        ..  [1] M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited,"
             in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
 
         See Also
@@ -1753,7 +1762,7 @@ class Network:
 
         gms = npy.abs(self.s[:, 1, 0]) / npy.abs(self.s[:, 0, 1])
         return gms
-    
+
     @property
     def max_gain(self) -> npy.ndarray:
         r"""
@@ -1796,7 +1805,7 @@ class Network:
         K_clipped = npy.clip(K, 1, None)
         gmax = self.max_stable_gain / (K_clipped + npy.sqrt(npy.square(K_clipped) - 1))
         return gmax
-    
+
     @property
     def unilateral_gain(self) -> npy.ndarray:
         r"""
@@ -1812,7 +1821,7 @@ class Network:
 
         References
         ----------
-        ..  [1] M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited," 
+        ..  [1] M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited,"
             in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
 
         See Also
@@ -2487,7 +2496,7 @@ class Network:
                     new = ntwk.copy()
                     new.resample(ntwk.f_noise) # only write data from original noise freqs
                     for f, nf, g_opt, rn, z0 in zip(new.f_noise.f_scaled, new.nfmin_db, new.g_opt, new.rn, new.z0):
-                        output.write(f"{f} {nf} {mf.complex_2_magnitude(g_opt)} {mf.complex_2_degree(g_opt)} {rn/z0[0].real}\n") 
+                        output.write(f"{f} {nf} {mf.complex_2_magnitude(g_opt)} {mf.complex_2_degree(g_opt)} {rn/z0[0].real}\n")
 
             elif ntwk.number_of_ports == 3:
                 # 3-port is written over 3 lines / matrix order
@@ -2644,7 +2653,7 @@ class Network:
         from .io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
 
-    def to_dataframe(self, attrs: List[str] =['s_db'], 
+    def to_dataframe(self, attrs: List[str] =['s_db'],
             ports: List[Tuple[int, int]] = None, port_sep: Optional[str] = None):
         """
         Convert attributes of a Network to a pandas DataFrame.
@@ -2659,7 +2668,7 @@ class Network:
             list of port pairs to write. defaults to ntwk.port_tuples
             (like [[0,0]])
         port_sep : string
-            defaults to None, which means a empty string "" is used for 
+            defaults to None, which means a empty string "" is used for
             networks with lower than 10 ports. (s_db 11, s_db 21)
             For more than ten ports a "_" is used to avoid ambiguity.
             (s_db 1_1, s_db 2_1)
@@ -3383,7 +3392,7 @@ class Network:
         d=d/2.
         if media is None:
             from .media import Freespace
-            media = Freespace(frequency=self.frequency, 
+            media = Freespace(frequency=self.frequency,
                               z0_override = self.z0[:,port])
 
         l =media.line(d=d, unit=unit,**kw)
@@ -4279,7 +4288,7 @@ class Network:
             y_active : active Y-parameters
         """
         return s2vswr_active(self.s, a)
-    
+
     def stability_circle(self, target_port: str, npoints: int = 181) -> npy.ndarray:
         r"""
         Returns a complex number of stability circles for a given port ('load' or 'source').
@@ -4352,7 +4361,7 @@ class Network:
 
         if self.nports != 2:
             raise ValueError("Stability circle is only defined for two ports")
-        
+
         if npoints <= 0:
             raise ValueError("npoints must be a positive integer")
 
@@ -4380,7 +4389,7 @@ class Network:
         sc = sc_real + 1j * sc_imag
         return sc.T
 
-    
+
     _plot_attribute_doc = r"""
     plot the Network attribute :attr:`{attribute}_{conversion}` component vs {x_axis}.
 
@@ -4410,7 +4419,7 @@ class Network:
     Examples
     --------
     >>> myntwk.plot_{attribute}_{conversion}(m=1,n=0,color='r')
-        
+
     """
 
     @axes_kwarg
@@ -4423,7 +4432,7 @@ class Network:
                             show_legend=True,
                             y_label=None,
                             logx=False, **kwargs):
-        
+
 
         # create index lists, if not provided by user
         if m is None:
@@ -4464,7 +4473,7 @@ class Network:
 
                 if conversion in ["time_impulse", "time_step"]:
                     xlabel = "Time (ns)"
-                    
+
                     t_func_kwargs = {"squeeze": False}
                     for key in {"window", "n", "pad", "bandpass"} & kwargs.keys():
                         t_func_kwargs[key] = kwargs.pop(key)
@@ -4473,13 +4482,13 @@ class Network:
                         x, y = self.impulse_response(**t_func_kwargs)
                     else:
                         x, y = self.step_response(**t_func_kwargs)
-                    
+
                     if attribute[0].lower() == "z":
                         y_label = "Z (Ohm)"
                         y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
                         y[x == -1.] = -1. + 1e-12  # solve numerical singularity
                         y = self.z0[0,0].real * (1+y) / (1-y)
-                    
+
                     rfplt.plot_rectangular(x=x * 1e9,
                                         y=y[:, m, n],
                                         x_label=xlabel,
@@ -4516,7 +4525,7 @@ class Network:
                                         y_label=y_label,
                                         show_legend=show_legend, ax=ax,
                                         **kwargs)
-    
+
     plot_attribute.__doc__ = _plot_attribute_doc.format(attribute="conversion", conversion="attribute", x_axis="frequency or time")
 
     @copy_doc(rfplt.plot)
@@ -4578,10 +4587,10 @@ for func_name, (_func, prop_name, conversion) in Network._generated_functions().
     for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
         plotfunc = partial_with_docs(Network.plot_attribute, prop_name, conversion)
         plotfunc.__doc__ = Network._plot_attribute_doc.format(
-            attribute=prop_name, 
-            conversion=conversion, 
+            attribute=prop_name,
+            conversion=conversion,
             x_axis="time" if "time" in conversion else "frequency")
-        
+
         setattr(Network, f"plot_{func_name}", plotfunc)
 
 

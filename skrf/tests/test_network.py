@@ -92,6 +92,13 @@ class NetworkTestCase(unittest.TestCase):
         n2 = rf.two_port_reflect(n, n, name = 'new_name')
         self.assertEqual(n2.name, 'new_name' )
 
+    def test_network_empty_frequency_range(self):
+        number_of_data_points = 10
+        f = rf.Frequency.from_f(np.linspace(2e6, 3e6, number_of_data_points), unit="Hz")
+        n=rf.Network(frequency=f, s=np.linspace(0.1, .8, number_of_data_points), name='test', z0=np.linspace(50, 50.1,number_of_data_points ))
+        empty_network = n[n.f < 0]
+        self.assertIn('1-Port Network', repr(empty_network))
+
     def test_timedomain(self):
         t = self.ntwk1.s11.s_time
         s = self.ntwk1.s11.s
@@ -108,7 +115,7 @@ class NetworkTestCase(unittest.TestCase):
 
             def get_window(*args, **kwargs):
                 return signal.get_window(window, *args, **kwargs)
-        
+
             gated2 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=get_window, fft_window=get_window)
             assert gated1 == gated2
 
@@ -381,20 +388,20 @@ class NetworkTestCase(unittest.TestCase):
         # Writing complex characteristic impedance should fail
         with pytest.raises(ValueError) as e_info:
             snp = ntwk.write_touchstone(return_string=True)
-        
+
     def test_write_touchstone_noisy(self):
         ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
 
         # Read back the written touchstone
         ntwkstr = ntwk.write_touchstone(return_string=True)
         strio = io.StringIO(ntwkstr)
-        strio.name = f'StringIO.s2p'
+        strio.name = 'StringIO.s2p'
         new_ntwk = rf.Network(strio)
 
         # Only compare to original noise data, not interpolated
         ntwk.resample(ntwk.f_noise)
         new_ntwk.resample(new_ntwk.f_noise)
-        
+
         # Newly written noise properties should match the original
         npy.testing.assert_allclose(ntwk.f_noise.f_scaled, new_ntwk.f_noise.f_scaled)
         npy.testing.assert_allclose(ntwk.nfmin, new_ntwk.nfmin)
