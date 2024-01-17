@@ -379,6 +379,7 @@ class Touchstone:
         # Dictionary has string keys and values contains functions which
         # need the current line as string argument. The type hints allow 
         # the IDE to provide full typing support
+        # Take care of the order of the elements when inserting new key words.
         self._parse_dict: dict[str, Callable[[str], None]] = {
             "[version]": lambda x: setattr(self, "version", x.split()[1]),
             "#": lambda x: state.parse_option_line(x),
@@ -467,6 +468,8 @@ class Touchstone:
 
         if state.hfss_impedance:
             self.z0 = npy.array(state.hfss_impedance).view(npy.complex128)
+            # Comment the line in, when we need when to expect port impedances in NxN format.
+            # See https://github.com/scikit-rf/scikit-rf/issues/354 for details.
             #if state.ansys_data_type == "terminal":
             #    self.z0 = npy.diagonal(self.z0.reshape(-1, self.rank, self.rank), axis1=1, axis2=2)
 
