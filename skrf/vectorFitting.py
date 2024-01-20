@@ -355,9 +355,14 @@ class VectorFitting:
                 R[i] = np.linalg.qr(A_ri[i], mode='r')
 
             # only R22 is required to solve for c_res and d_res
-            # R12 and R22 both have shape (L, K/2, n_cols_used)
-            n_rows_r22 = int(dim_k / 2)
-            R22 = R[:, n_rows_r22:, n_cols_unused:]
+            # R12 and R22 can have a different number of rows, depending on K
+            if dim_k == 2 * n_freqs:
+                n_rows_r12 = n_freqs
+                n_rows_r22 = n_freqs
+            else:
+                n_rows_r12 = n_cols_unused
+                n_rows_r22 = n_cols_used
+            R22 = R[:, n_rows_r12:, n_cols_unused:]
 
             # weighting
             R22 = weights_responses[:, None, None] * R22
