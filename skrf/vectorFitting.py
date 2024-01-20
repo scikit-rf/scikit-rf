@@ -330,25 +330,38 @@ class VectorFitting:
             # part 4: constant (variable d_res)
             A[:, :, -1] = -1 * freq_responses
 
+            A_ri = np.hstack((A.real, A.imag))
+
+            # calculation of matrix sizes after QR decomposition:
+            # A_ri has shape (L, M, N)
+            # with
+            # L = n_responses = n_ports ** 2
+            # M = 2 * n_freqs
+            # N = n_cols_unused + n_cols_used
+            # then
+            # R has shape (L, K, N) with K = min(M, N)
+            dim_k = min(2 * n_freqs, n_cols_unused + n_cols_used)
+
             # QR decomposition
-            #R = np.linalg.qr(np.hstack((A.real, A.imag)), 'r')
+            # R = np.linalg.qr(A_ri, 'r')
 
             # direct QR of stacked matrices for linalg.qr() only works with numpy>=1.22.0
             # workaround for old numpy:
-            R = np.empty((n_responses, n_cols_unused + n_cols_used, n_cols_unused + n_cols_used))
-            A_ri = np.hstack((A.real, A.imag))
+            R = np.empty((n_responses, dim_k, A_ri.shape[2]))
             for i in range(n_responses):
                 R[i] = np.linalg.qr(A_ri[i], mode='r')
 
             # only R22 is required to solve for c_res and d_res
-            R22 = R[:, n_cols_unused:, n_cols_unused:]
+            # R12 and R22 both have shape (L, K/2, n_cols_used)
+            n_rows_r22 = int(dim_k / 2)
+            R22 = R[:, n_rows_r22:, n_cols_unused:]
 
             # weighting
             R22 = weights_responses[:, None, None] * R22
 
             # assemble compressed coefficient matrix A_fast by row-stacking individual upper triangular matrices R22
-            A_fast = np.empty((n_responses * n_cols_used + 1, n_cols_used))
-            A_fast[:-1, :] = R22.reshape((n_responses * n_cols_used, n_cols_used))
+            A_fast = np.empty((n_responses * n_rows_r22 + 1, n_cols_used))
+            A_fast[:-1, :] = R22.reshape((n_responses * n_rows_r22, n_cols_used))
 
             # extra equation to avoid trivial solution
             A_fast[-1, idx_res_real] = np.sum(coeff_real.real, axis=0)
@@ -360,7 +373,7 @@ class VectorFitting:
             A_fast[-1, :] = weight_extra * A_fast[-1, :]
 
             # right hand side vector (weighted)
-            b = np.zeros(n_responses * n_cols_used + 1)
+            b = np.zeros(n_responses * n_rows_r22 + 1)
             b[-1] = weight_extra * n_samples
 
             cond_A = np.linalg.cond(A_fast)
