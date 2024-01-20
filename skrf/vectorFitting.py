@@ -97,6 +97,7 @@ class VectorFitting:
         self.history_max_sigma = []
         self.history_cond_A = []
         self.history_rank_A = []
+        self.full_rank = 0
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
@@ -389,7 +390,8 @@ class VectorFitting:
 
             rank_A = np.linalg.matrix_rank(A_fast)
             self.history_rank_A.append(rank_A)
-            logging.info(f'The rank of the coefficient matrix is {rank_A}')
+            self.full_rank = np.min(A_fast.shape)
+            logging.info(f'The rank of the coefficient matrix is {rank_A}. Deficiency is {self.full_rank - rank_A}')
 
             # if rank_A < np.min(A_fast.shape):
             #     warnings.warn(f'The coefficient matrix is rank-deficient (rank = {rank_A}).',
@@ -473,8 +475,9 @@ class VectorFitting:
                     hint_illcond = f'\nHint: the linear system was ill-conditioned (max. condition number was {max_cond}).'
                 else:
                     hint_illcond = ''
-                if min_rank < np.min(A_fast.shape):
-                    hint_rank = f'\nHint: the coefficient matrix was rank-deficient (min. rank was {min_rank}).'
+                if min_rank < self.full_rank:
+                    hint_rank = (f'\nHint: the coefficient matrix was rank-deficient (min. rank was {min_rank}, full '
+                                 f'rank is {self.full_rank}).')
                 else:
                     hint_rank = ''
                 if converged and stop is False:
