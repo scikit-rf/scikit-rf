@@ -350,7 +350,7 @@ class VectorFitting:
 
             # direct QR of stacked matrices for linalg.qr() only works with numpy>=1.22.0
             # workaround for old numpy:
-            R = np.empty((n_responses, dim_k, A_ri.shape[2]))
+            R = np.empty((n_responses, dim_k, n_cols_unused + n_cols_used))
             for i in range(n_responses):
                 R[i] = np.linalg.qr(A_ri[i], mode='r')
 
@@ -384,18 +384,10 @@ class VectorFitting:
             logging.info(f'Condition number of coefficient matrix is {int(cond_A)}')
             self.history_cond_A.append(cond_A)
 
-            # if cond_A > 1e6:
-            #     warnings.warn(f'The condition number of the coefficient matrix is huge ({cond_A}).',
-            #                   RuntimeWarning, stacklevel=2)
-
             rank_A = np.linalg.matrix_rank(A_fast)
             self.history_rank_A.append(rank_A)
             self.full_rank = np.min(A_fast.shape)
             logging.info(f'The rank of the coefficient matrix is {rank_A}. Deficiency is {self.full_rank - rank_A}')
-
-            # if rank_A < np.min(A_fast.shape):
-            #     warnings.warn(f'The coefficient matrix is rank-deficient (rank = {rank_A}).',
-            #                   RuntimeWarning, stacklevel=2)
 
             # solve least squares for real parts
             x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
