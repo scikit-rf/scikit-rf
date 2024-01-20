@@ -96,6 +96,7 @@ class VectorFitting:
         self.delta_max_history = []
         self.history_max_sigma = []
         self.history_cond_A = []
+        self.history_rank_A = []
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
@@ -247,6 +248,7 @@ class VectorFitting:
         self.d_res_history = []
         self.delta_max_history = []
         self.history_cond_A = []
+        self.history_rank_A = []
         converged = False
 
         omega = 2 * np.pi * freqs_norm
@@ -376,9 +378,22 @@ class VectorFitting:
             b = np.zeros(n_responses * n_rows_r22 + 1)
             b[-1] = weight_extra * n_samples
 
+            # check condition of the linear system
             cond_A = np.linalg.cond(A_fast)
-            logging.info(f'Condition number of coeff. matrix A = {int(cond_A)}')
+            logging.info(f'Condition number of coefficient matrix is {int(cond_A)}')
             self.history_cond_A.append(cond_A)
+
+            # if cond_A > 1e6:
+            #     warnings.warn(f'The condition number of the coefficient matrix is huge ({cond_A}).',
+            #                   RuntimeWarning, stacklevel=2)
+
+            rank_A = np.linalg.matrix_rank(A_fast)
+            self.history_rank_A.append(rank_A)
+            logging.info(f'The rank of the coefficient matrix is {rank_A}')
+
+            # if rank_A < np.min(A_fast.shape):
+            #     warnings.warn(f'The coefficient matrix is rank-deficient (rank = {rank_A}).',
+            #                   RuntimeWarning, stacklevel=2)
 
             # solve least squares for real parts
             x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
@@ -391,9 +406,13 @@ class VectorFitting:
             tol_res = 1e-8
             if np.abs(d_res) < tol_res:
                 # d_res is too small, discard solution and proceed the |d_res| = tol_res
+                logging.info(f'Replacing d_res solution as it was too small ({d_res}).')
                 d_res = tol_res * (d_res / np.abs(d_res))
-                warnings.warn('Replacing d_res solution as it was too small. This is not a good sign and probably '
-                              'means that more starting poles are required', RuntimeWarning, stacklevel=2)
+                # warnings.warn('Replacing d_res solution as it was too small. This is a sign for an '
+                #               'ill-conditioned linear system.\n'
+                #               f'The condition number of the coefficient matrix is {cond_A}.\n'
+                #               f'There could be too many or not enough poles.',
+                #               RuntimeWarning, stacklevel=2)
 
             self.d_res_history.append(d_res)
             logging.info(f'd_res = {d_res}')
@@ -447,22 +466,27 @@ class VectorFitting:
             iterations -= 1
 
             if iterations == 0:
+                # loop ran into iterations limit; trying to assess the issue
                 max_cond = np.amax(self.history_cond_A)
+                min_rank = np.amin(self.history_rank_A)
                 if max_cond > 1e10:
-                    msg_illcond = 'Hint: the linear system was ill-conditioned (max. condition number = {}). ' \
-                                  'This often means that more poles are required.'.format(max_cond)
+                    hint_illcond = f'\nHint: the linear system was ill-conditioned (max. condition number was {max_cond}).'
                 else:
-                    msg_illcond = ''
+                    hint_illcond = ''
+                if min_rank < np.min(A_fast.shape):
+                    hint_rank = f'\nHint: the coefficient matrix was rank-deficient (min. rank was {min_rank}).'
+                else:
+                    hint_rank = ''
                 if converged and stop is False:
                     warnings.warn('Vector Fitting: The pole relocation process barely converged to tolerance. '
-                                  'It took the max. number of iterations (N_max = {}). '
-                                  'The results might not have converged properly. '.format(self.max_iterations)
-                                  + msg_illcond, RuntimeWarning, stacklevel=2)
+                                  f'It took the max. number of iterations (N_max = {self.max_iterations}). '
+                                  'The results might not have converged properly.'
+                                  + hint_illcond + hint_rank, RuntimeWarning, stacklevel=2)
                 else:
                     warnings.warn('Vector Fitting: The pole relocation process stopped after reaching the '
-                                  'maximum number of iterations (N_max = {}). '
-                                  'The results did not converge properly. '.format(self.max_iterations)
-                                  + msg_illcond, RuntimeWarning, stacklevel=2)
+                                  f'maximum number of iterations (N_max = {self.max_iterations}). '
+                                  'The results did not converge properly.'
+                                  + hint_illcond + hint_rank, RuntimeWarning, stacklevel=2)
 
             if stop:
                 iterations = 0
