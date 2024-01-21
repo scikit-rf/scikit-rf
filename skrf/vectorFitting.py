@@ -333,24 +333,23 @@ class VectorFitting:
             # part 4: constant (variable d_res)
             A[:, :, -1] = -1 * freq_responses
 
-            A_ri = np.hstack((A.real, A.imag))
-
             # calculation of matrix sizes after QR decomposition:
-            # A_ri has shape (L, M, N)
+            # stacked coefficient matrix (A.real, A.imag) has shape (L, M, N)
             # with
             # L = n_responses = n_ports ** 2
-            # M = 2 * n_freqs
+            # M = 2 * n_freqs (because of hstack with 2x n_freqs)
             # N = n_cols_unused + n_cols_used
             # then
             # R has shape (L, K, N) with K = min(M, N)
             dim_k = min(2 * n_freqs, n_cols_unused + n_cols_used)
 
             # QR decomposition
-            # R = np.linalg.qr(A_ri, 'r')
+            # R = np.linalg.qr(np.hstack((A.real, A.imag)), 'r')
 
             # direct QR of stacked matrices for linalg.qr() only works with numpy>=1.22.0
             # workaround for old numpy:
             R = np.empty((n_responses, dim_k, n_cols_unused + n_cols_used))
+            A_ri = np.hstack((A.real, A.imag))
             for i in range(n_responses):
                 R[i] = np.linalg.qr(A_ri[i], mode='r')
 
