@@ -185,8 +185,7 @@ from .util import get_fid, get_extn, find_nearest_index, axes_kwarg, copy_doc, p
 from .time import time_gate, get_window
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
-from .constants import S_DEFINITIONS, S_DEF_DEFAULT, S_DEF_HFSS_DEFAULT
-
+from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
 class Network:
     r"""
@@ -483,6 +482,7 @@ class Network:
             self.s = npy.zeros(s_shape, dtype=complex)
 
         self.z0 = kwargs.get('z0', self._z0)
+        self.port_modes = npy.array(["S"] * self.nports)
 
 
         if "f" in kwargs.keys():
@@ -2187,6 +2187,8 @@ class Network:
             raise NotImplementedError('only s-parameters supported for now.')
 
         self.comments = touchstoneFile.get_comments()
+        self.comments_after_option_line = touchstoneFile.comments_after_option_line
+        
 
         self.variables = touchstoneFile.get_comment_variables()
 
@@ -2196,17 +2198,13 @@ class Network:
         self.frequency = Frequency.from_f(f, unit='hz')
         self.frequency.unit = touchstoneFile.frequency_unit
 
-        if touchstoneFile.has_hfss_port_impedances:
-            self.gamma, self.z0 = touchstoneFile.get_gamma_z0()
-            # if s_def not explicitely passed before, uses default HFSS setting
-            if self.s_def is None:
-                self.s_def = S_DEF_HFSS_DEFAULT
-        else:
-            self.z0 = touchstoneFile.resistance
-
+        self.gamma = touchstoneFile.gamma
+        self.z0 = touchstoneFile.z0
+        self.s_def = touchstoneFile.s_def if self.s_def is None else self.s_def
+        self.port_modes = touchstoneFile.port_modes
 
         if touchstoneFile.noise is not None:
-            noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult
+            noise_freq = touchstoneFile.noise[:, 0]
             nfmin_db = touchstoneFile.noise[:, 1]
             gamma_opt_mag = touchstoneFile.noise[:, 2]
             gamma_opt_angle = npy.deg2rad(touchstoneFile.noise[:, 3])
@@ -3765,6 +3763,9 @@ class Network:
         """
         if 2*p > self.nports or p < 0:
             raise ValueError('Invalid number of differential ports')
+        
+        self.port_modes[:p] = "D"
+        self.port_modes[p:2 * p] = "C"
         if s_def is None:
             s_def = self.s_def
         if s_def != self.s_def:
@@ -3897,6 +3898,8 @@ class Network:
         """
         if 2*p > self.nports or p < 0:
             raise ValueError('Invalid number of differential ports')
+        
+        self.port_modes[:2*p] = "S"
         if s_def is None:
             s_def = self.s_def
         if s_def != self.s_def:

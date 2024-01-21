@@ -1509,8 +1509,11 @@ class NetworkTestCase(unittest.TestCase):
                 ntwk4.z0 = z0
 
             ntwk4t = ntwk4.copy()
+            self.assertTrue(npy.all(ntwk4t.port_modes == "S"))
             ntwk4t.se2gmm(p=2)
+            self.assertTrue(npy.all(ntwk4t.port_modes == ["D", "D", "C", "C"]))
             ntwk4t.gmm2se(p=2)
+            self.assertTrue(npy.all(ntwk4t.port_modes == "S"))
 
             self.assertTrue(npy.allclose(ntwk4.s, ntwk4t.s))
             self.assertTrue(npy.allclose(ntwk4.z0, ntwk4t.z0))
@@ -1543,7 +1546,9 @@ class NetworkTestCase(unittest.TestCase):
         gmm = npy.zeros((1,3,3), dtype=complex)
         gmm[:,0,2] = 1
         gmm[:,2,0] = 1
+        self.assertTrue(npy.all(net.port_modes == "S"))
         net.se2gmm(p=1)
+        self.assertTrue(npy.all(net.port_modes == ["D", "C", "S"]))
         self.assertTrue(npy.allclose(net.z0, npy.array([[100,25,50]])))
         self.assertTrue(npy.allclose(net.s, gmm))
 
