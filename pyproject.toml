@@ -48,8 +48,7 @@ test = [
     "coverage >=6.0",
     "flake8 >=5.0",
     "pytest-cov >=4.0",
-    "nbval >=0.9",
-    "pyarrow >= 10.0"
+    "nbval >=0.9"
 ]
 
 plot = [
