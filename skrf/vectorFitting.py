@@ -389,13 +389,12 @@ class VectorFitting:
             logging.info(f'Condition number of coefficient matrix is {int(cond_A)}')
             self.history_cond_A.append(cond_A)
 
-            rank_A = np.linalg.matrix_rank(A_fast)
-            self.history_rank_A.append(rank_A)
-            self.full_rank = np.min(A_fast.shape)
-            logging.info(f'The rank of the coefficient matrix is {rank_A}. Deficiency is {self.full_rank - rank_A}')
-
             # solve least squares for real parts
             x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
+
+            self.history_rank_A.append(rank)
+            self.full_rank = np.min(A_fast.shape)
+            logging.info(f'The rank of the coefficient matrix is {rank}. Rank deficiency is {self.full_rank - rank}.')
 
             # assemble individual result vectors from single LS result x
             c_res = x[:-1]
