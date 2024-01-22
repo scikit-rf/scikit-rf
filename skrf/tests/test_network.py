@@ -1202,13 +1202,13 @@ class NetworkTestCase(unittest.TestCase):
 
 
     def test_interpolate(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1, f_unit="ghz")
         freq = rf.F.from_f(npy.linspace(1,2,4), unit='ghz')
         b = a.interpolate(freq)
         # TODO: numerically test for correct interpolation
 
     def test_interpolate_rational(self):
-        a = rf.N(f=npy.linspace(1,2,5),s=npy.linspace(0,1,5)*(1+1j),z0=1)
+        a = rf.N(f=npy.linspace(1,2,5),s=npy.linspace(0,1,5)*(1+1j),z0=1, f_unit="ghz")
         freq = rf.F.from_f(npy.linspace(1,2,6,endpoint=True), unit='GHz')
         b = a.interpolate(freq, kind='rational')
         self.assertFalse(any(npy.isnan(b.s)))
@@ -1220,7 +1220,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(b.z0[0] == a.z0[0])
 
     def test_interpolate_linear(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=[1,2])
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=[1,2], f_unit="ghz")
         freq = rf.F.from_f(npy.linspace(1,2,3,endpoint=True), unit='GHz')
         b = a.interpolate(freq, kind='linear')
         self.assertFalse(any(npy.isnan(b.s)))
@@ -1247,7 +1247,8 @@ class NetworkTestCase(unittest.TestCase):
     def test_slicer(self):
         a = rf.Network(f=[1,2,4,5,6],
                        s=[1,1,1,1,1],
-                       z0=50 )
+                       z0=50,
+                       f_unit="ghz")
 
         b = a['2-5ghz']
         tinyfloat = 1e-12
@@ -1395,7 +1396,7 @@ class NetworkTestCase(unittest.TestCase):
 
         b = rf.Network(f=[1, 2],
                        s=[[[0, 1], [1, 0]], [[0, 1], [1, 0]]],
-                       z0=50).interpolate(a.frequency)
+                       z0=50, f_unit="ghz").interpolate(a.frequency)
         with self.assertRaises(ValueError) as context:
             b.n
         with self.assertRaises(ValueError) as context:
