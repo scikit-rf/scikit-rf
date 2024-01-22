@@ -97,22 +97,6 @@ class VectorFitting:
         self.history_max_sigma = []
         self.history_cond_A = []
 
-    # legacy getter and setter methods to support deprecated 'zeros' attribute (now correctly called 'residues')
-    @property
-    def zeros(self):
-        """
-        **Deprecated**; Please use :attr:`residues` instead.
-        """
-        warnings.warn('Attribute `zeros` is deprecated and will be removed in a future version. Please use the new '
-                      'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
-        return self.residues
-
-    @zeros.setter
-    def zeros(self, value):
-        warnings.warn('Attribute `zeros` is deprecated and will be removed in a future version. Please use the new '
-                      'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
-        self.residues = value
-
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """

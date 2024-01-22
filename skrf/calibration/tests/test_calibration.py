@@ -2138,7 +2138,8 @@ class MultiportSOLTTest(MultiportCalTest):
             s = wg.short(nports=nports, name='short')
             m = wg.match(nports=nports, name='load')
 
-            thru = wg.thru(name='thru')
+            # thru = wg.thru(name='thru')
+            thru = wg.impedance_mismatch(50, 45) ** wg.line(20, 'deg') ** wg.impedance_mismatch(45, 50)
 
             ideals = []
             # nports-1 thrus from port 0 to all other ports.

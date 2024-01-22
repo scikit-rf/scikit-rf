@@ -3,6 +3,7 @@ import os
 import numpy as npy
 from pathlib import Path
 
+import pytest
 from skrf.io.touchstone import Touchstone
 
 
@@ -30,9 +31,18 @@ class TouchstoneTestCase(unittest.TestCase):
                             [[9.+10.j, 13.+14.j], [11.+12.j, 15.+16.j]]])
         z0_true = 50+50j
 
+        comments_after_option_line = "freq	ReS11	ImS11	ReS21	ImS21	ReS12	ImS12	ReS22	ImS22"
+
         self.assertTrue((f == f_true).all())
         self.assertTrue((s == s_true).all())
         self.assertTrue(z0 == z0_true)
+        self.assertTrue(touch.comments_after_option_line == comments_after_option_line)
+
+    def test_double_option_line(self):
+        filename = os.path.join(self.test_dir, 'double_option_line.s2p')
+        touch = Touchstone(filename)
+
+        self.assertTrue(touch.resistance == 10+10j)
 
     def test_read_with_special_encoding(self):
         """
@@ -82,10 +92,12 @@ class TouchstoneTestCase(unittest.TestCase):
 
         unexpected_keys = ['S11DB', 'S11M', ]
 
-        # get dict data structure
-        sp_ri = touch.get_sparameter_data(format="ri")
-        # Get dict data in db to check ri -> db/angle conversion
-        sp_db = touch.get_sparameter_data(format="db")
+
+        with pytest.warns(DeprecationWarning):
+            # get dict data structure
+            sp_ri = touch.get_sparameter_data(format="ri")
+            # Get dict data in db to check ri -> db/angle conversion
+            sp_db = touch.get_sparameter_data(format="db")
 
         # test data structure
         for ek in expected_keys:
@@ -137,11 +149,13 @@ class TouchstoneTestCase(unittest.TestCase):
                     msg='Field %s does not match. Expected "%s", got "%s"'%(
                         k, str(expected_sp_db[k]), str(sp_db[k]))  )
 
-        for k, v in zip(touch.get_sparameter_names(), touch.sparameters.T):
-            if k[0] != 'S':
-                # frequency doesn't match because of Hz vs GHz.
-                continue
-            self.assertTrue(npy.all(expected_sp_ri[k] == v))
+
+        with pytest.warns(DeprecationWarning):
+            for k, v in zip(touch.get_sparameter_names(), touch.sparameters.T):
+                if k[0] != 'S':
+                    # frequency doesn't match because of Hz vs GHz.
+                    continue
+                self.assertTrue(npy.all(expected_sp_ri[k] == v))
 
 
     def test_HFSS_touchstone_files(self):
@@ -172,14 +186,42 @@ class TouchstoneTestCase(unittest.TestCase):
         """
         HFSS_RELEASES= ['HFSS_2019R2', 'HFSS_2020R2']
 
-        p = Path('.')
+        p = Path(self.test_dir)
         for hfss_release in HFSS_RELEASES:
             for sNp_file in p.glob(hfss_release+'/*.s*'):
                 touchst = Touchstone(sNp_file.as_posix())
                 gamma, z0 = touchst.get_gamma_z0()
+                print(z0)
 
                 assert(gamma.shape[-1] == touchst.rank)
                 assert(z0.shape[-1] == touchst.rank)
+
+
+    def test_touchstone_2(self):
+        net = Touchstone(os.path.join(self.test_dir, "ts/ansys.ts"))
+
+        assert net.port_names[0] == "U29_B6_1024G_EAS3QB_A_DBI.37.FD_0-1"
+        assert net.port_names[1] == "U29_B6_1024G_EAS3QB_A_DBI.38.GND"
+        assert net.port_names[2] == "U40_178BGA.E10.FD_0-1"
+
+    def test_ansys_modal_data(self):
+        net = Touchstone(os.path.join(self.test_dir, "ansys_modal_data.s2p"))
+        z0 = npy.array([
+            [51. +1.j, 52. +2.j],
+            [61.+11.j, 62.+12.j]
+        ])
+        assert npy.allclose(net.z0, z0)
+
+    @pytest.mark.skip
+    def test_ansys_terminal_data(self):
+        net = Touchstone(os.path.join(self.test_dir, "ansys_terminal_data.s4p"))
+
+        z0 = npy.array([
+            [51. +1.j, 52. +2.j, 53. +3.j, 54. +4.j],
+            [61.+11.j, 62.+12.j, 63.+13.j, 64.+14.j]
+        ])
+        assert npy.allclose(net.z0, z0)
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TouchstoneTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
