@@ -377,7 +377,7 @@ class Touchstone:
 
         # Lookup dictionary for parser
         # Dictionary has string keys and values contains functions which
-        # need the current line as string argument. The type hints allow 
+        # need the current line as string argument. The type hints allow
         # the IDE to provide full typing support
         # Take care of the order of the elements when inserting new key words.
         self._parse_dict: dict[str, Callable[[str], None]] = {
