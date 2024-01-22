@@ -538,6 +538,15 @@ class Touchstone:
             self.z0[:, self.port_modes == "D"] *= 2
             self.z0[:, self.port_modes == "C"] /= 2
 
+        if self.parameter in ["g", "h", "y", "z"]:
+            if self.version == "1.0":
+                self.s = self.s * self.z0[:,:, None]
+
+            func_name = f"{self.parameter}2s"
+            from .. import network
+            self.s: npy.ndarray = getattr(network, func_name)(self.s, self.z0)
+
+
         # multiplier from the frequency unit
         self.frequency_mult = {"hz": 1.0, "khz": 1e3, "mhz": 1e6, "ghz": 1e9}.get(self.frequency_unit)
 

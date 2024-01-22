@@ -2183,9 +2183,6 @@ class Network:
         from .io import touchstone
         touchstoneFile = touchstone.Touchstone(filename, encoding=encoding)
 
-        if touchstoneFile.get_format().split()[1] != 's':
-            raise NotImplementedError('only s-parameters supported for now.')
-
         self.comments = touchstoneFile.get_comments()
         self.comments_after_option_line = touchstoneFile.comments_after_option_line
         

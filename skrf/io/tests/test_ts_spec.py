@@ -5,6 +5,7 @@ import pytest
 
 test_data = Path(__file__).parent / "ts" 
 
+
 s_mag = np.array(
         [[[0.6 , 0.4 , 0.42, 0.53],
         [0.4 , 0.6 , 0.53, 0.42],
@@ -17,7 +18,7 @@ s_deg = np.array(
     [-66.58, -79.34, 161.24, -42.2 ],
     [-79.34, -66.58, -42.2 , 161.24]]])
 
-s = s_mag * np.exp(1j*s_deg*np.pi/180)
+s = s_mag * np.exp(1j*s_deg * np.pi / 180)
 ex_5_6 = rf.Network(s=s, z0=[50, 75, 0.01, 0.01], f=5e9, f_unit="Hz")
 
 @pytest.mark.parametrize("fname", 
@@ -29,6 +30,19 @@ ex_5_6 = rf.Network(s=s, z0=[50, 75, 0.01, 0.01], f=5e9, f_unit="Hz")
 def test_ts_example_5_6(fname):
     ts = rf.Network(fname)
     assert ex_5_6 == ts
+
+def test_example_7():
+    ex_7 = rf.Network(test_data / "ex_7.s1p")
+    ref = rf.Network(f=[2e6], s=[[[0.894 * np.exp(1j* -12.136 * np.pi / 180)]]])
+
+    assert ex_7 == ref
+
+
+def test_ts_example_8_9():
+    ex_8 = rf.Network(test_data / "ex_8.s1p")
+    ex_9 = rf.Network(test_data / "ex_9.ts")
+
+    assert np.allclose(ex_8.z, ex_9.z)
 
 def test_ts_example_17():
     s_mag = np.array([
