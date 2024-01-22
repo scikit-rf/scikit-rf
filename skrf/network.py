@@ -487,7 +487,7 @@ class Network:
 
         if "f" in kwargs.keys():
             if f_unit is None:
-                f_unit = "ghz"
+                f_unit = "hz"
             kwargs["frequency"] = Frequency.from_f(kwargs.pop("f"), unit=f_unit)
 
         for attr in PRIMARY_PROPERTIES + ['frequency', 'noise', 'noise_freq']:
