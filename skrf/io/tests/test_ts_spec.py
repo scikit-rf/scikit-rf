@@ -100,6 +100,12 @@ def test_ts_example_11_12():
 
     assert ex_11 == ex_12
 
+def test_ts_example_12_12g():
+    ex_12 = rf.Network(test_data / "ex_12.ts")
+    ex_12_g = rf.Network(test_data / "ex_12_g.ts")
+
+    assert np.allclose(ex_12.s, ex_12_g.s, atol=0.01)
+
 def test_ts_example_13():
     snp = rf.Network(test_data / "ex_13.s2p")
     s = np.array([[[ 3.926e-01-0.1211j, -3.000e-04-0.0021j],

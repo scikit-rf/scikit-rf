@@ -7197,6 +7197,25 @@ def z2h(z: npy.ndarray) -> npy.ndarray:
     ]).transpose()
     return h
 
+def g2s(g: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
+    """
+    Convert inverse hybrid parameters to s parameters.
+
+    Parameters
+    ----------
+    g : complex array-like
+        inverse hybrid parameters
+    z0 : complex array-like or number
+        port impedances
+
+    Returns
+    -------
+    s : complex array-like
+        scattering parameters
+
+    """
+    return h2s(npy.linalg.inv(g), z0)
+
 
 ## these methods are used in the secondary properties
 def passivity(s: npy.ndarray) -> npy.ndarray:
