@@ -5,7 +5,6 @@ import pytest
 
 test_data = Path(__file__).parent / "ts"
 
-
 s_mag = np.array(
         [[[0.6 , 0.4 , 0.42, 0.53],
         [0.4 , 0.6 , 0.53, 0.42],
@@ -32,17 +31,23 @@ def test_ts_example_5_6(fname):
     assert ex_5_6 == ts
 
 def test_example_7():
-    ex_7 = rf.Network(test_data / "ex_7.s1p")
+    ex_7 = rf.Network(test_data / "ex_8.s1p")
     ref = rf.Network(f=[2e6], s=[[[0.894 * np.exp(1j* -12.136 * np.pi / 180)]]])
 
     assert ex_7 == ref
 
 
-def test_ts_example_8_9():
-    ex_8 = rf.Network(test_data / "ex_8.s1p")
-    ex_9 = rf.Network(test_data / "ex_9.ts")
+def test_ts_example_9_10():
+    ex_9 = rf.Network(test_data / "ex_9.s1p")
+    ex_10 = rf.Network(test_data / "ex_10.ts")
 
-    assert np.allclose(ex_8.z, ex_9.z)
+    assert np.allclose(ex_9.z, ex_10.z)
+
+def test_ts_example_11_12():
+    ex_11 = rf.Network(test_data / "ex_11.s2p")
+    ex_12 = rf.Network(test_data / "ex_12.ts")
+
+    assert np.allclose(ex_11.h, ex_12.h)
 
 def test_ts_example_17():
     s_mag = np.array([

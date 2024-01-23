@@ -4,6 +4,7 @@
 [Number of Ports] 1
 [Number of Frequencies] 5
 [Reference] 20.0
+[Network Data]
 !freq magZ11 angZ11
 100 74.25 -4
 200 60 -22
