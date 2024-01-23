@@ -5,6 +5,45 @@ import pytest
 
 test_data = Path(__file__).parent / "ts"
 
+
+def test_ex_1():
+    ts = rf.Network(test_data / "ex_1.ts")
+
+
+def test_ex_2():
+    ts = rf.Network(test_data / "ex_2.ts")
+    ref = rf.Network(
+        f=np.arange(1,6),
+        z=(np.arange(5) + 11) * np.exp(1j*np.arange(10,60,10) * np.pi / 180),
+        f_unit="mhz"
+                     )
+    assert ts == ref
+
+def test_ex_3():
+    ts = rf.Network(test_data / "ex_3.ts")
+    ref = rf.Network(
+        f=[1,2],
+        s=[[[111, 112], [121, 122]],
+           [[211, 212], [221, 222]]
+           ],
+        f_unit="ghz"
+     )
+    assert ts == ref
+
+def test_ex_4():
+    ts = rf.Network(test_data / "ex_4.ts")
+    ref = rf.Network(
+        f=[1],
+        s=[[[11, 12, 13, 14],
+            [21, 22, 23, 24],
+            [31, 32, 33, 34],
+            [41, 42, 43, 44]
+            ]],
+        z0=[50, 75, 0.01, 0.01],
+        f_unit="ghz"
+     )
+    assert ts == ref
+
 s_mag = np.array(
         [[[0.6 , 0.4 , 0.42, 0.53],
         [0.4 , 0.6 , 0.53, 0.42],
@@ -30,7 +69,19 @@ def test_ts_example_5_6(fname):
     ts = rf.Network(fname)
     assert ex_5_6 == ts
 
-def test_example_7():
+def test_ts_example_7():
+    ts = rf.Network(test_data / "ex_7.ts")
+    ref = rf.Network(z0=20, f_unit="mhz", f=np.arange(100,600,100),
+                     z=[
+                         [[74.250*np.exp(1j*( -4) * np.pi / 180)]],
+                         [[60.000*np.exp(1j*(-22) * np.pi / 180)]],
+                         [[53.025*np.exp(1j*(-45) * np.pi / 180)]],
+                         [[30.000*np.exp(1j*(-62) * np.pi / 180)]],
+                         [[0.7500*np.exp(1j*(-89) * np.pi / 180)]],
+                         ])
+    assert ts == ref
+
+def test_example_8():
     ex_7 = rf.Network(test_data / "ex_8.s1p")
     ref = rf.Network(f=[2e6], s=[[[0.894 * np.exp(1j* -12.136 * np.pi / 180)]]])
 
@@ -47,7 +98,56 @@ def test_ts_example_11_12():
     ex_11 = rf.Network(test_data / "ex_11.s2p")
     ex_12 = rf.Network(test_data / "ex_12.ts")
 
-    assert np.allclose(ex_11.h, ex_12.h)
+    assert ex_11 == ex_12
+
+def test_ts_example_13():
+    snp = rf.Network(test_data / "ex_13.s2p")
+    s = np.array([[[ 3.926e-01-0.1211j, -3.000e-04-0.0021j],
+        [-3.000e-04-0.0021j,  3.926e-01-0.1211j]],
+
+       [[ 3.517e-01-0.3054j, -9.600e-03-0.0298j],
+        [-9.600e-03-0.0298j,  3.517e-01-0.3054j]],
+
+       [[ 3.419e-01+0.3336j, -1.340e-02+0.0379j],
+        [-1.340e-02+0.0379j,  3.419e-01+0.3336j]]])
+
+    ref = rf.Network(s=s, f=[1,2,10], f_unit="ghz")
+    assert snp == ref
+
+def test_ts_example_14():
+    s_mag = np.array([[[0.6 , 0.4 , 0.42, 0.53],
+            [0.4 , 0.6 , 0.53, 0.42],
+            [0.42, 0.53, 0.6 , 0.4 ],
+            [0.53, 0.42, 0.4 , 0.6 ]],
+
+        [[0.57, 0.4 , 0.41, 0.57],
+            [0.4 , 0.57, 0.57, 0.41],
+            [0.41, 0.57, 0.57, 0.4 ],
+            [0.57, 0.41, 0.4 , 0.57]],
+
+        [[0.5 , 0.45, 0.37, 0.62],
+            [0.45, 0.5 , 0.62, 0.37],
+            [0.37, 0.62, 0.5 , 0.45],
+            [0.62, 0.37, 0.45, 0.5 ]]])
+
+    deg = np.array([[[ 161.24,  -42.2 ,  -66.58,  -79.34],
+        [ -42.2 ,  161.2 ,  -79.34,  -66.58],
+        [ -66.58,  -79.34,  161.24,  -42.2 ],
+        [ -79.34,  -66.58,  -42.2 ,  161.24]],
+
+       [[ 150.37,  -44.34,  -81.24,  -95.77],
+        [ -44.34,  150.37,  -95.77,  -81.24],
+        [ -81.24,  -95.77,  150.37,  -44.34],
+        [ -95.77,  -81.24,  -44.34,  150.37]],
+
+       [[ 136.69,  -46.41,  -99.09, -114.19],
+        [ -46.41,  136.69, -114.19,  -99.09],
+        [ -99.09, -114.19,  136.69,  -46.41],
+        [-114.19,  -99.09,  -46.41,  136.69]]])
+
+    snp = rf.Network(test_data / "ex_14.s4p")
+    ref = rf.Network(s=s_mag * np.exp(1j * deg / 180 * np.pi), f=[5,6,7], f_unit="ghz")
+    assert snp == ref
 
 def test_ts_example_17():
     s_mag = np.array([

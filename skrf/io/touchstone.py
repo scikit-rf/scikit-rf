@@ -486,8 +486,8 @@ class Touchstone:
             self.z0 = npy.empty((len(state.f), state.rank), dtype=complex).fill(self.reference)
 
         self.f = npy.array(state.f)
-        self.s = npy.empty((len(self.f), state.rank * state.rank), dtype=complex)
         if not len(self.f):
+            self.s = npy.empty((0, state.rank, state.rank))
             return
 
         raw = npy.array(state.s).reshape(len(self.f), -1)
@@ -502,6 +502,7 @@ class Touchstone:
 
         self.s_flat = s_flat
 
+        self.s = npy.empty((len(self.f), state.rank * state.rank), dtype=complex)
         if state.matrix_format == "full":
             self.s[:] = s_flat
         else:
