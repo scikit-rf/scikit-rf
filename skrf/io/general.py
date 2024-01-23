@@ -246,7 +246,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir: str ='.', sort = True, contains = None, f_unit = None, 
+def read_all(dir: str ='.', sort = True, contains = None, f_unit = None,
         obj_type=None, files: list=None, recursive=False) -> dict:
     """
     Read all skrf objects in a directory.
@@ -365,8 +365,6 @@ def read_all_networks(*args, **kwargs):
     --------
     read_all
     """
-    if 'f_unit' not in kwargs:
-        kwargs.update({'f_unit':'ghz'})
     return read_all(*args,obj_type='Network', **kwargs)
 
 ran = read_all_networks
@@ -595,7 +593,6 @@ def read_csv(filename):
         ntwk.s = data[:,1] +1j*data[:,2]
 
     ntwk.frequency.f = data[:,0]
-    ntwk.frequency.unit='ghz'
 
     return ntwk
 
@@ -632,7 +629,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
     if remove_tmp_file:
         os.rename(new_file_name,file_name)
 
-def network_2_spreadsheet(ntwk: Network, file_name: str = None, 
+def network_2_spreadsheet(ntwk: Network, file_name: str = None,
         file_type: str = 'excel', form: str ='db', *args, **kwargs):
     r"""
     Write a Network object to a spreadsheet, for your boss.
@@ -713,7 +710,7 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
     df.__getattribute__('to_%s'%file_type)(file_name,
         index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
 
-def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'], 
+def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'],
         ports: List[Tuple[int, int]] = None, port_sep: Optional[str] = None):
     """
     Convert one or more attributes of a network to a pandas DataFrame.
@@ -728,10 +725,10 @@ def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'],
         list of port pairs to write. defaults to ntwk.port_tuples
         (like [(0,0)])
     port_sep : string
-        defaults to None, which means a empty string "" is used for 
+        defaults to None, which means a empty string "" is used for
         networks with lower than 10 ports. (s_db 11, s_db 21)
         For more than ten ports a "_" is used to avoid ambiguity.
-        (s_db 1_1, s_db 2_1)    
+        (s_db 1_1, s_db 2_1)
 
     Returns
     -------

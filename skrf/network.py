@@ -487,7 +487,7 @@ class Network:
 
         if "f" in kwargs.keys():
             if f_unit is None:
-                f_unit = "ghz"
+                f_unit = "hz"
             kwargs["frequency"] = Frequency.from_f(kwargs.pop("f"), unit=f_unit)
 
         for attr in PRIMARY_PROPERTIES + ['frequency', 'noise', 'noise_freq']:
@@ -2188,7 +2188,7 @@ class Network:
 
         self.comments = touchstoneFile.get_comments()
         self.comments_after_option_line = touchstoneFile.comments_after_option_line
-        
+
 
         self.variables = touchstoneFile.get_comment_variables()
 
@@ -3763,7 +3763,7 @@ class Network:
         """
         if 2*p > self.nports or p < 0:
             raise ValueError('Invalid number of differential ports')
-        
+
         self.port_modes[:p] = "D"
         self.port_modes[p:2 * p] = "C"
         if s_def is None:
@@ -3898,7 +3898,7 @@ class Network:
         """
         if 2*p > self.nports or p < 0:
             raise ValueError('Invalid number of differential ports')
-        
+
         self.port_modes[:2*p] = "S"
         if s_def is None:
             s_def = self.s_def
