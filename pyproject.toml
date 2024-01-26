@@ -101,9 +101,10 @@ multiline-trl = "skrf_qtapps.multiline_trl:main"
 requires = [
   "setuptools >= 64",
   "wheel",
+  "poetry-core",
 ]
-build-backend = "setuptools.build_meta"
-
+# build-backend = "setuptools.build_meta"
+build-backend = "poetry.core.masonry.api"
 
 [tool.setuptools]
 license-files = ["LICENSE.txt"]
@@ -154,3 +155,18 @@ ignore = ["F403", "F405", "F841", "E741"]
 "__init__.py" = ["E402", "F401"]
 "doc/source/conf.py" = ["E402"]
 "doc/sphinxext/tests/test_docscrape.py" = ["E402"]
+
+[tool.poetry]
+name = "scikit-rf"
+version = "0.31.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+
+
+[tool.poetry.group.dev.dependencies]
+
+
