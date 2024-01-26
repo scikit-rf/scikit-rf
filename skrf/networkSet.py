@@ -998,7 +998,7 @@ class NetworkSet:
             )
         return df
 
-    def interpolate_from_network(self, ntw_param: ArrayLike, x: float, interp_kind: str = 'linear'):
+    def interpolate_from_network(self, ntw_param: ArrayLike, x: float, interp_kind: Union[int, str] = 'linear'):
         """
         Interpolate a Network from a NetworkSet, as a multi-file N-port network.
 
@@ -1009,6 +1009,9 @@ class NetworkSet:
         which is used to interpolate the returned Network. Length of `interp_param`
         should be equal to the length of the NetworkSet.
 
+        Duplicate values of the interpolated parameter may cause the interpolation to fail
+        depending on the `interp_kind` used.
+
         Parameters
         ----------
         ntw_param : (N,) array_like
@@ -1016,8 +1019,9 @@ class NetworkSet:
             to the length of the NetworkSet
         x : real
             Point to evaluate the interpolated network at
-        interp_kind: str
-            Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.  Cf :class:`scipy.interpolate.interp1d` for detailed description.
+        interp_kind: str or int
+            Specifies the kind of interpolation as a string or an int: 'linear', 'nearest', 'zero', 'slinear', 
+            'quadratic', 'cubic'. If using an int, it describes the order of the spline interpolator. Cf :class:`scipy.interpolate.interp1d` for detailed description.
             Default is 'linear'.
 
         Returns
@@ -1227,7 +1231,7 @@ class NetworkSet:
 
 
     def interpolate_from_params(self, param: str, x: float,
-                                sub_params: dict={}, interp_kind: str = 'linear'):
+                                sub_params: dict={}, interp_kind: Union[int, str] = 'linear'):
         """
         Interpolate a Network from given parameters of NetworkSet's Networks.
 
@@ -1241,10 +1245,9 @@ class NetworkSet:
             Dictionnary of parameter/values to filter the NetworkSet,
             if necessary to avoid an ambiguity.
             Default is empty dict.
-        interp_kind: str
-            Specifies the kind of interpolation as a string: 'linear', 'nearest',
-            'zero', 'slinear', 'quadratic', 'cubic'.
-            Cf :class:`scipy.interpolate.interp1d` for detailed description.
+        interp_kind: str or int
+            Specifies the kind of interpolation as a string or an int: 'linear', 'nearest', 'zero', 'slinear', 
+            'quadratic', 'cubic'. If using an int, it describes the order of the spline interpolator. Cf :class:`scipy.interpolate.interp1d` for detailed description.
             Default is 'linear'.
 
         Returns
@@ -1305,7 +1308,7 @@ class NetworkSet:
 
         # interpolating the sub-NetworkSet matching the passed sub-parameters
         sub_ns = self.sel(sub_params)
-        interp_ntwk = sub_ns.interpolate_from_network(sub_ns.coords[param],
+        interp_ntwk = sub_ns.interpolate_from_network(sub_ns.params_values[param],
                                                       x, interp_kind)
 
         return interp_ntwk
