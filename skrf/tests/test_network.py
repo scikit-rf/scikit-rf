@@ -92,6 +92,13 @@ class NetworkTestCase(unittest.TestCase):
         n2 = rf.two_port_reflect(n, n, name = 'new_name')
         self.assertEqual(n2.name, 'new_name' )
 
+    def test_network_empty_frequency_range(self):
+        number_of_data_points = 10
+        f = rf.Frequency.from_f(np.linspace(2e6, 3e6, number_of_data_points), unit="Hz")
+        n=rf.Network(frequency=f, s=np.linspace(0.1, .8, number_of_data_points), name='test', z0=np.linspace(50, 50.1,number_of_data_points ))
+        empty_network = n[n.f < 0]
+        self.assertIn('1-Port Network', repr(empty_network))
+
     def test_timedomain(self):
         t = self.ntwk1.s11.s_time
         s = self.ntwk1.s11.s
@@ -108,7 +115,7 @@ class NetworkTestCase(unittest.TestCase):
 
             def get_window(*args, **kwargs):
                 return signal.get_window(window, *args, **kwargs)
-        
+
             gated2 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=get_window, fft_window=get_window)
             assert gated1 == gated2
 
@@ -381,20 +388,20 @@ class NetworkTestCase(unittest.TestCase):
         # Writing complex characteristic impedance should fail
         with pytest.raises(ValueError) as e_info:
             snp = ntwk.write_touchstone(return_string=True)
-        
+
     def test_write_touchstone_noisy(self):
         ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
 
         # Read back the written touchstone
         ntwkstr = ntwk.write_touchstone(return_string=True)
         strio = io.StringIO(ntwkstr)
-        strio.name = f'StringIO.s2p'
+        strio.name = 'StringIO.s2p'
         new_ntwk = rf.Network(strio)
 
         # Only compare to original noise data, not interpolated
         ntwk.resample(ntwk.f_noise)
         new_ntwk.resample(new_ntwk.f_noise)
-        
+
         # Newly written noise properties should match the original
         npy.testing.assert_allclose(ntwk.f_noise.f_scaled, new_ntwk.f_noise.f_scaled)
         npy.testing.assert_allclose(ntwk.nfmin, new_ntwk.nfmin)
@@ -1195,13 +1202,13 @@ class NetworkTestCase(unittest.TestCase):
 
 
     def test_interpolate(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1, f_unit="ghz")
         freq = rf.F.from_f(npy.linspace(1,2,4), unit='ghz')
         b = a.interpolate(freq)
         # TODO: numerically test for correct interpolation
 
     def test_interpolate_rational(self):
-        a = rf.N(f=npy.linspace(1,2,5),s=npy.linspace(0,1,5)*(1+1j),z0=1)
+        a = rf.N(f=npy.linspace(1,2,5),s=npy.linspace(0,1,5)*(1+1j),z0=1, f_unit="ghz")
         freq = rf.F.from_f(npy.linspace(1,2,6,endpoint=True), unit='GHz')
         b = a.interpolate(freq, kind='rational')
         self.assertFalse(any(npy.isnan(b.s)))
@@ -1213,7 +1220,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(b.z0[0] == a.z0[0])
 
     def test_interpolate_linear(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=[1,2])
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=[1,2], f_unit="ghz")
         freq = rf.F.from_f(npy.linspace(1,2,3,endpoint=True), unit='GHz')
         b = a.interpolate(freq, kind='linear')
         self.assertFalse(any(npy.isnan(b.s)))
@@ -1240,7 +1247,8 @@ class NetworkTestCase(unittest.TestCase):
     def test_slicer(self):
         a = rf.Network(f=[1,2,4,5,6],
                        s=[1,1,1,1,1],
-                       z0=50 )
+                       z0=50,
+                       f_unit="ghz")
 
         b = a['2-5ghz']
         tinyfloat = 1e-12
@@ -1388,7 +1396,7 @@ class NetworkTestCase(unittest.TestCase):
 
         b = rf.Network(f=[1, 2],
                        s=[[[0, 1], [1, 0]], [[0, 1], [1, 0]]],
-                       z0=50).interpolate(a.frequency)
+                       z0=50, f_unit="ghz").interpolate(a.frequency)
         with self.assertRaises(ValueError) as context:
             b.n
         with self.assertRaises(ValueError) as context:
@@ -1502,8 +1510,11 @@ class NetworkTestCase(unittest.TestCase):
                 ntwk4.z0 = z0
 
             ntwk4t = ntwk4.copy()
+            self.assertTrue(npy.all(ntwk4t.port_modes == "S"))
             ntwk4t.se2gmm(p=2)
+            self.assertTrue(npy.all(ntwk4t.port_modes == ["D", "D", "C", "C"]))
             ntwk4t.gmm2se(p=2)
+            self.assertTrue(npy.all(ntwk4t.port_modes == "S"))
 
             self.assertTrue(npy.allclose(ntwk4.s, ntwk4t.s))
             self.assertTrue(npy.allclose(ntwk4.z0, ntwk4t.z0))
@@ -1536,7 +1547,9 @@ class NetworkTestCase(unittest.TestCase):
         gmm = npy.zeros((1,3,3), dtype=complex)
         gmm[:,0,2] = 1
         gmm[:,2,0] = 1
+        self.assertTrue(npy.all(net.port_modes == "S"))
         net.se2gmm(p=1)
+        self.assertTrue(npy.all(net.port_modes == ["D", "C", "S"]))
         self.assertTrue(npy.allclose(net.z0, npy.array([[100,25,50]])))
         self.assertTrue(npy.allclose(net.s, gmm))
 
@@ -1786,12 +1799,12 @@ class NetworkTestCase(unittest.TestCase):
         load_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'load_stability_circle_ads.csv'), encoding='utf-8', delimiter=',')
         self.assertTrue(
             npy.all(
-                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].stability_circle(target_port='load', npoints=6)[:,0]) - load_stability_circle_ads[:,0]) / load_stability_circle_ads[:,0] < 1e-4
+                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].stability_circle(target_port=1, npoints=6)[:,0]) - load_stability_circle_ads[:,0]) / load_stability_circle_ads[:,0] < 1e-4
             )
         )
         self.assertTrue(
             npy.all(
-                npy.abs(rf.complex_2_degree(self.fet['30GHz'].stability_circle(target_port='load', npoints=6)[:,0]) - load_stability_circle_ads[:,1]) / load_stability_circle_ads[:,1] < 1e-4
+                npy.abs(rf.complex_2_degree(self.fet['30GHz'].stability_circle(target_port=1, npoints=6)[:,0]) - load_stability_circle_ads[:,1]) / load_stability_circle_ads[:,1] < 1e-4
             )
         )
 
@@ -1799,27 +1812,71 @@ class NetworkTestCase(unittest.TestCase):
         source_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'source_stability_circle_ads.csv'), encoding='utf-8', delimiter=',')
         self.assertTrue(
             npy.all(
-                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].stability_circle(target_port='source', npoints=6)[:,0]) - source_stability_circle_ads[:,0]) / source_stability_circle_ads[:,0] < 1e-4
+                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].stability_circle(target_port=0, npoints=6)[:,0]) - source_stability_circle_ads[:,0]) / source_stability_circle_ads[:,0] < 1e-4
             )
         )
         self.assertTrue(
             npy.all(
-                npy.abs(rf.complex_2_degree(self.fet['30GHz'].stability_circle(target_port='source', npoints=6)[:,0]) - source_stability_circle_ads[:,1]) / source_stability_circle_ads[:,1] < 1e-4
+                npy.abs(rf.complex_2_degree(self.fet['30GHz'].stability_circle(target_port=0, npoints=6)[:,0]) - source_stability_circle_ads[:,1]) / source_stability_circle_ads[:,1] < 1e-4
             )
         )
 
         # Check whether an error is raised when the network is not 2 port.
         net = rf.Network(f=[1], s=npy.eye(3), z0=50)
         with pytest.raises(ValueError):
-            net.stability_circle(target_port='load')
+            net.stability_circle(target_port=1)
 
         # Check whether an error is raised when the number of points is not positive.
         with pytest.raises(ValueError):
-            net.stability_circle(target_port='load', npoints=0)
+            net.stability_circle(target_port=1, npoints=0)
 
         # Check whether an error is raised when an incorrect target_port is specified.
         with pytest.raises(ValueError):
             net.stability_circle(target_port='foobar')
+
+    def test_gain_circle(self):
+        # Check whether the load stability circle agrees with that calculated with ADS
+        load_gain_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'load_gain_circle_ads.csv'), encoding='utf-8', delimiter=',')
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].gain_circle(target_port=1, gain=1.0, npoints=6)[:,0]) - load_gain_circle_ads[:,0]) / load_gain_circle_ads[:,0] < 1e-4
+            )
+        )
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_degree(self.fet['30GHz'].gain_circle(target_port=1, gain=1.0, npoints=6)[:,0]) - load_gain_circle_ads[:,1]) / load_gain_circle_ads[:,1] < 1e-4
+            )
+        )
+
+        # Check whether the source stability circle agrees with that calculated with ADS
+        source_gain_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'source_gain_circle_ads.csv'), encoding='utf-8', delimiter=',')
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].gain_circle(target_port=0, gain=1.0, npoints=6)[:,0]) - source_gain_circle_ads[:,0]) / source_gain_circle_ads[:,0] < 1e-4
+            )
+        )
+        self.assertTrue(
+            npy.all(
+                npy.abs(rf.complex_2_degree(self.fet['30GHz'].gain_circle(target_port=0, gain=1.0, npoints=6)[:,0]) - source_gain_circle_ads[:,1]) / source_gain_circle_ads[:,1] < 1e-4
+            )
+        )
+
+        # Check whether an error is raised when the network is not 2 port.
+        net = rf.Network(f=[1], s=npy.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.gain_circle(target_port=1, gain=2.0)
+
+        # Check whether an error is raised when the number of points is not positive.
+        with pytest.raises(ValueError):
+            net.gain_circle(target_port=1, gain=2.0, npoints=0)
+
+        # Check whether an error is raised when an incorrect target_port is specified.
+        with pytest.raises(ValueError):
+            net.gain_circle(target_port='foobar', gain=2.0)
+
+        # Check whether the specified gain is too large.
+        with pytest.raises(RuntimeWarning):
+            self.fet['30GHz'].gain_circle(target_port=1, gain=100)
 
     def test_de_embed_by_floordiv(self):
         ntwk_result_1 = self.ntwk1 // self.ntwk2

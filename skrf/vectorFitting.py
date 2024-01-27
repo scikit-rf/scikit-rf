@@ -96,22 +96,8 @@ class VectorFitting:
         self.delta_max_history = []
         self.history_max_sigma = []
         self.history_cond_A = []
-
-    # legacy getter and setter methods to support deprecated 'zeros' attribute (now correctly called 'residues')
-    @property
-    def zeros(self):
-        """
-        **Deprecated**; Please use :attr:`residues` instead.
-        """
-        warnings.warn('Attribute `zeros` is deprecated and will be removed in a future version. Please use the new '
-                      'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
-        return self.residues
-
-    @zeros.setter
-    def zeros(self, value):
-        warnings.warn('Attribute `zeros` is deprecated and will be removed in a future version. Please use the new '
-                      'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
-        self.residues = value
+        self.history_rank_A = []
+        self.full_rank = 0
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
@@ -263,6 +249,7 @@ class VectorFitting:
         self.d_res_history = []
         self.delta_max_history = []
         self.history_cond_A = []
+        self.history_rank_A = []
         converged = False
 
         omega = 2 * np.pi * freqs_norm
@@ -346,25 +333,42 @@ class VectorFitting:
             # part 4: constant (variable d_res)
             A[:, :, -1] = -1 * freq_responses
 
+            # calculation of matrix sizes after QR decomposition:
+            # stacked coefficient matrix (A.real, A.imag) has shape (L, M, N)
+            # with
+            # L = n_responses = n_ports ** 2
+            # M = 2 * n_freqs (because of hstack with 2x n_freqs)
+            # N = n_cols_unused + n_cols_used
+            # then
+            # R has shape (L, K, N) with K = min(M, N)
+            dim_k = min(2 * n_freqs, n_cols_unused + n_cols_used)
+
             # QR decomposition
-            #R = np.linalg.qr(np.hstack((A.real, A.imag)), 'r')
+            # R = np.linalg.qr(np.hstack((A.real, A.imag)), 'r')
 
             # direct QR of stacked matrices for linalg.qr() only works with numpy>=1.22.0
             # workaround for old numpy:
-            R = np.empty((n_responses, n_cols_unused + n_cols_used, n_cols_unused + n_cols_used))
+            R = np.empty((n_responses, dim_k, n_cols_unused + n_cols_used))
             A_ri = np.hstack((A.real, A.imag))
             for i in range(n_responses):
                 R[i] = np.linalg.qr(A_ri[i], mode='r')
 
             # only R22 is required to solve for c_res and d_res
-            R22 = R[:, n_cols_unused:, n_cols_unused:]
+            # R12 and R22 can have a different number of rows, depending on K
+            if dim_k == 2 * n_freqs:
+                n_rows_r12 = n_freqs
+                n_rows_r22 = n_freqs
+            else:
+                n_rows_r12 = n_cols_unused
+                n_rows_r22 = n_cols_used
+            R22 = R[:, n_rows_r12:, n_cols_unused:]
 
             # weighting
             R22 = weights_responses[:, None, None] * R22
 
             # assemble compressed coefficient matrix A_fast by row-stacking individual upper triangular matrices R22
-            A_fast = np.empty((n_responses * n_cols_used + 1, n_cols_used))
-            A_fast[:-1, :] = R22.reshape((n_responses * n_cols_used, n_cols_used))
+            A_fast = np.empty((n_responses * n_rows_r22 + 1, n_cols_used))
+            A_fast[:-1, :] = R22.reshape((n_responses * n_rows_r22, n_cols_used))
 
             # extra equation to avoid trivial solution
             A_fast[-1, idx_res_real] = np.sum(coeff_real.real, axis=0)
@@ -376,15 +380,20 @@ class VectorFitting:
             A_fast[-1, :] = weight_extra * A_fast[-1, :]
 
             # right hand side vector (weighted)
-            b = np.zeros(n_responses * n_cols_used + 1)
+            b = np.zeros(n_responses * n_rows_r22 + 1)
             b[-1] = weight_extra * n_samples
 
+            # check condition of the linear system
             cond_A = np.linalg.cond(A_fast)
-            logging.info(f'Condition number of coeff. matrix A = {int(cond_A)}')
+            logging.info(f'Condition number of coefficient matrix is {int(cond_A)}')
             self.history_cond_A.append(cond_A)
 
             # solve least squares for real parts
             x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
+
+            self.history_rank_A.append(rank)
+            self.full_rank = np.min(A_fast.shape)
+            logging.info(f'The rank of the coefficient matrix is {rank}. Rank deficiency is {self.full_rank - rank}.')
 
             # assemble individual result vectors from single LS result x
             c_res = x[:-1]
@@ -394,9 +403,13 @@ class VectorFitting:
             tol_res = 1e-8
             if np.abs(d_res) < tol_res:
                 # d_res is too small, discard solution and proceed the |d_res| = tol_res
+                logging.info(f'Replacing d_res solution as it was too small ({d_res}).')
                 d_res = tol_res * (d_res / np.abs(d_res))
-                warnings.warn('Replacing d_res solution as it was too small. This is not a good sign and probably '
-                              'means that more starting poles are required', RuntimeWarning, stacklevel=2)
+                # warnings.warn('Replacing d_res solution as it was too small. This is a sign for an '
+                #               'ill-conditioned linear system.\n'
+                #               f'The condition number of the coefficient matrix is {cond_A}.\n'
+                #               f'There could be too many or not enough poles.',
+                #               RuntimeWarning, stacklevel=2)
 
             self.d_res_history.append(d_res)
             logging.info(f'd_res = {d_res}')
@@ -450,22 +463,28 @@ class VectorFitting:
             iterations -= 1
 
             if iterations == 0:
+                # loop ran into iterations limit; trying to assess the issue
                 max_cond = np.amax(self.history_cond_A)
+                min_rank = np.amin(self.history_rank_A)
                 if max_cond > 1e10:
-                    msg_illcond = 'Hint: the linear system was ill-conditioned (max. condition number = {}). ' \
-                                  'This often means that more poles are required.'.format(max_cond)
+                    hint_illcond = f'\nHint: the linear system was ill-conditioned (max. condition number was {max_cond}).'
                 else:
-                    msg_illcond = ''
+                    hint_illcond = ''
+                if min_rank < self.full_rank:
+                    hint_rank = (f'\nHint: the coefficient matrix was rank-deficient (min. rank was {min_rank}, full '
+                                 f'rank is {self.full_rank}).')
+                else:
+                    hint_rank = ''
                 if converged and stop is False:
                     warnings.warn('Vector Fitting: The pole relocation process barely converged to tolerance. '
-                                  'It took the max. number of iterations (N_max = {}). '
-                                  'The results might not have converged properly. '.format(self.max_iterations)
-                                  + msg_illcond, RuntimeWarning, stacklevel=2)
+                                  f'It took the max. number of iterations (N_max = {self.max_iterations}). '
+                                  'The results might not have converged properly.'
+                                  + hint_illcond + hint_rank, RuntimeWarning, stacklevel=2)
                 else:
                     warnings.warn('Vector Fitting: The pole relocation process stopped after reaching the '
-                                  'maximum number of iterations (N_max = {}). '
-                                  'The results did not converge properly. '.format(self.max_iterations)
-                                  + msg_illcond, RuntimeWarning, stacklevel=2)
+                                  f'maximum number of iterations (N_max = {self.max_iterations}). '
+                                  'The results did not converge properly.'
+                                  + hint_illcond + hint_rank, RuntimeWarning, stacklevel=2)
 
             if stop:
                 iterations = 0
