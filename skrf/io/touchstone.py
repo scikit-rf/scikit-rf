@@ -48,7 +48,7 @@ def remove_prefix(text: str, prefix: str) -> str:
         return text[len(prefix) :]
     return text
 
-FREQ_UNITS = {"hz": 1.0, "khz": 1e3, "mhz": 1e6, "ghz": 1e9}
+FREQ_UNITS = {"hz": 1.0, "khz": 1e3, "mhz": 1e6, "ghz": 1e9, "thz": 1e12}
 
 @dataclass
 class ParserState:
