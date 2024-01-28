@@ -2183,9 +2183,6 @@ class Network:
         from .io import touchstone
         touchstoneFile = touchstone.Touchstone(filename, encoding=encoding)
 
-        if touchstoneFile.get_format().split()[1] != 's':
-            raise NotImplementedError('only s-parameters supported for now.')
-
         self.comments = touchstoneFile.get_comments()
         self.comments_after_option_line = touchstoneFile.comments_after_option_line
 
@@ -7199,6 +7196,25 @@ def z2h(z: npy.ndarray) -> npy.ndarray:
          1. / z[:, 1, 1]],
     ]).transpose()
     return h
+
+def g2s(g: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
+    """
+    Convert inverse hybrid parameters to s parameters.
+
+    Parameters
+    ----------
+    g : complex array-like
+        inverse hybrid parameters
+    z0 : complex array-like or number
+        port impedances
+
+    Returns
+    -------
+    s : complex array-like
+        scattering parameters
+
+    """
+    return h2s(npy.linalg.inv(g), z0)
 
 
 ## these methods are used in the secondary properties

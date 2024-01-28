@@ -1,0 +1,4 @@
+!2-port H-parameter file, single frequency point
+# kHz H MA R 1
+! freq magH11 angH11 magH21 angH21 magH12 angH12 magH22 angH22
+2 .95 -26 3.57 157 .04 76 .66 -14

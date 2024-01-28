@@ -1,0 +1,4 @@
+!1-port S-parameter file, single frequency point
+# MHz S MA R 50
+!freq magS11 angS11
+2.000 0.894 -12.136
