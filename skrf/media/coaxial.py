@@ -14,7 +14,6 @@ A coaxial transmission line defined from its electrical or geometrical/physical 
 #from copy import deepcopy
 from scipy.constants import  epsilon_0, mu_0, pi, c
 from numpy import sqrt, log, imag, exp, expm1, size, array
-import warnings
 from ..tlineFunctions import surface_resistivity, skin_depth
 from .distributedCircuit import DistributedCircuit
 from .media import Media, DefinedGammaZ0

@@ -28,7 +28,6 @@ from numbers import Number
 from scipy.constants import  epsilon_0, mu_0, pi
 from numpy import sqrt, exp, where
 import numpy as npy
-import warnings
 from .media import Media
 from ..data import materials
 from ..tlineFunctions import skin_depth

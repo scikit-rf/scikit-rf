@@ -95,7 +95,11 @@ class NetworkTestCase(unittest.TestCase):
     def test_network_empty_frequency_range(self):
         number_of_data_points = 10
         f = rf.Frequency.from_f(np.linspace(2e6, 3e6, number_of_data_points), unit="Hz")
-        n=rf.Network(frequency=f, s=np.linspace(0.1, .8, number_of_data_points), name='test', z0=np.linspace(50, 50.1,number_of_data_points ))
+        n=rf.Network(
+            frequency=f, 
+            s=np.linspace(0.1, .8, number_of_data_points), 
+            name='test', 
+            z0=np.linspace(50, 50.1,number_of_data_points ))
         empty_network = n[n.f < 0]
         self.assertIn('1-Port Network', repr(empty_network))
 

@@ -942,7 +942,13 @@ def psd2TimeDomain(f: npy.ndarray, y: npy.ndarray, windowType: str = 'hamming'):
     return timeVector, signalVector
 
 
-def rational_interp(x: npy.ndarray, y: npy.ndarray, d: int = 4, epsilon: float = 1e-9, axis: int = 0, assume_sorted: bool = False) -> Callable:
+def rational_interp(
+        x: npy.ndarray, 
+        y: npy.ndarray, 
+        d: int = 4, 
+        epsilon: float = 1e-9, 
+        axis: int = 0, 
+        assume_sorted: bool = False) -> Callable:
     """
     Interpolates function using rational polynomials of degree `d`.
 
@@ -978,7 +984,8 @@ def rational_interp(x: npy.ndarray, y: npy.ndarray, d: int = 4, epsilon: float =
 
     References
     ------------
-    .. [#] M. S. Floater and K. Hormann, "Barycentric rational interpolation with no poles and high rates of approximation," Numer. Math., vol. 107, no. 2, pp. 315-331, Aug. 2007
+    .. [#] M. S. Floater and K. Hormann, "Barycentric rational interpolation with no poles and high rates of 
+    approximation," Numer. Math., vol. 107, no. 2, pp. 315-331, Aug. 2007
     """
     if axis != 0:
         raise NotImplementedError("Axis other than 0 is not implemented")

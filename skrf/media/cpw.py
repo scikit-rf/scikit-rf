@@ -493,7 +493,8 @@ class CPW(Media):
         Z0 = sqrt(mu_0 / epsilon_0)
         if t is not None and t > 0.:
             if rho is None:
-                raise(AttributeError('must provide values conductivity and conductor thickness to calculate this. see initializer help'))
+                raise(AttributeError("must provide values conductivity and conductor thickness to calculate this. "
+                                     "see initializer help"))
             r_s = surface_resistivity(f=f, rho=rho, \
                     mu_r=1)
             ds = skin_depth(f = f, rho = rho, mu_r = 1.)

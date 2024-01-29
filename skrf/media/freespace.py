@@ -15,7 +15,6 @@ the space's relative permittivity and relative permeability.
 
 """
 from scipy.constants import epsilon_0, mu_0
-import warnings
 from .media import Media
 from ..data import materials
 from ..constants import NumberLike

@@ -37,7 +37,7 @@ import zipfile
 import numpy as npy
 import warnings
 
-from ..constants import S_DEF_HFSS_DEFAULT
+from ..constants import S_DEF_HFSS_DEFAULT, FREQ_UNITS
 from ..util import get_fid
 from ..network import Network
 from ..media import DefinedGammaZ0
@@ -48,7 +48,6 @@ def remove_prefix(text: str, prefix: str) -> str:
         return text[len(prefix) :]
     return text
 
-FREQ_UNITS = {"hz": 1.0, "khz": 1e3, "mhz": 1e6, "ghz": 1e9, "thz": 1e12}
 
 @dataclass
 class ParserState:
@@ -119,7 +118,8 @@ class ParserState:
 
     @property
     def frequency_mult(self) -> float:
-        return FREQ_UNITS[self.frequency_unit]
+        _units = {k.lower(): v for k,v in FREQ_UNITS.items()}
+        return _units[self.frequency_unit]
 
     def parse_port(self, line: str):
         """Regex parser for port names.

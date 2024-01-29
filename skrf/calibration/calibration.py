@@ -3542,7 +3542,8 @@ class TUGMultilineTRL(EightTerm):
         _2022 98th ARFTG Microwave Measurement Conference (ARFTG)_, Las Vegas, NV, USA, 2022, pp. 1-5, 
         doi: https://doi.org/10.1109/ARFTG52954.2022.9844064
 
-    .. [2] Z. Hatab, M. Gadringer and W. Bösch, "Propagation of Linear Uncertainties through Multiline Thru-Reflect-Line Calibration," 
+    .. [2] Z. Hatab, M. Gadringer and W. Bösch, "Propagation of Linear Uncertainties through Multiline 
+        Thru-Reflect-Line Calibration," 
             2023, e-print: https://arxiv.org/abs/2301.09126
             
     .. [3] https://ziadhatab.github.io/posts/multiline-trl-calibration/
@@ -3589,7 +3590,8 @@ class TUGMultilineTRL(EightTerm):
 
         reflect_meas : a two-port :class:`~skrf.network.Network` or a list of two-port :class:`~skrf.network.Network`
             measurement of symmetric reflect. 
-            Multiple symmetric reflect can be passed in a list, which is used to compute to average solution of the error terms.   
+            Multiple symmetric reflect can be passed in a list, which is used to compute to average solution of the
+            error terms.   
         
         reflect_est : complex or list of complex
             Estimated reflection coefficients of reflect standards at first frequency point of the measurement.
@@ -3623,7 +3625,11 @@ class TUGMultilineTRL(EightTerm):
         self.freq = self.line_meas[0].frequency
         s_nan = npy.array([ npy.eye(2)*npy.nan for f in self.freq.f])
         
-        self.reflect_meas   = [Network(s=s_nan, frequency=self.freq)] if reflect_meas is None else (reflect_meas if isinstance(reflect_meas, list) else [reflect_meas])
+        self.reflect_meas = (
+            [Network(s=s_nan, frequency=self.freq)]
+            if reflect_meas is None
+            else (reflect_meas if isinstance(reflect_meas, list) else [reflect_meas])
+        )
         self.reflect_est    = npy.atleast_1d(reflect_est)
         self.reflect_offset = npy.atleast_1d(reflect_offset)*npy.ones(len(self.reflect_est))
 
@@ -3639,8 +3645,9 @@ class TUGMultilineTRL(EightTerm):
             *args, **kwargs)
         
         n_lines = len(self.line_lengths)
-        self.line_meas = self.measured_unterminated[:n_lines] # switch term corrected
-        self.reflect_meas = self.reflect_meas if reflect_meas is None else self.measured_unterminated[n_lines:] # switch term corrected
+        # switch term corrected
+        self.line_meas = self.measured_unterminated[:n_lines]
+        self.reflect_meas = self.reflect_meas if reflect_meas is None else self.measured_unterminated[n_lines:] 
         
         self.ref_plane = npy.atleast_1d(ref_plane)*npy.ones(2)
         
@@ -3651,8 +3658,10 @@ class TUGMultilineTRL(EightTerm):
         P  = npy.array([[1,0,0,0], [0, 0,1,0], [0,1, 0,0], [0,0,0,1]])
         
         # Functions used throughout the calibration
-        gamma2ereff = lambda x,f: -(c0/2/npy.pi/f*x)**2
-        ereff2gamma = lambda x,f: 2*npy.pi*f/c0*npy.sqrt(-x)
+        def gamma2ereff(x, f):
+            return -(c0 / 2 / npy.pi / f * x) ** 2
+        def ereff2gamma(x, f):
+            return 2 * npy.pi * f / c0 * npy.sqrt(-x)
 
         def s2t_single(S, pseudo=False):
             T = S.copy()
@@ -3682,7 +3691,8 @@ class TUGMultilineTRL(EightTerm):
             u,s,vh = u[:,:2],s[:2],vh[:2,:]  # low-rank truncated (Eckart-Young theorem)
             phi = npy.sqrt( s*npy.diag(vh@u.conj()) )
             G = u@npy.diag(phi)
-            lambd = s[0]*s[1]  # this is the eigenvalue of the weighted eigenvalue problem (1/2 squared Frobenius norm of W)
+            # this is the eigenvalue of the weighted eigenvalue problem (1/2 squared Frobenius norm of W)
+            lambd = s[0]*s[1]
             return G, lambd
 
         def WLS(x,y,w=1):
@@ -3699,7 +3709,7 @@ class TUGMultilineTRL(EightTerm):
             # with inx you can choose the refrence line. doesn't make any difference.
             lengths = lengths - lengths[inx]
             EX = (X_inv@M)[[0,-1],:]             # extract z and y columns
-            EX = npy.diag(1/EX[:,inx])@EX        # normalize to a reference line based on index `inx` (can be any)            
+            EX = npy.diag(1/EX[:,inx])@EX        # normalize to a reference line based on index `inx` (can be any)
             del_inx = npy.arange(len(lengths)) != inx  # get rid of the reference line
             
             # solve for alpha
@@ -3749,10 +3759,10 @@ class TUGMultilineTRL(EightTerm):
 
         fpoints = len(self.freq.f)
         Xs = npy.zeros(shape=(fpoints, 4, 4), dtype=complex)  # to store the combined error boxes (6 error terms)
-        ks = npy.zeros(shape=(fpoints,), dtype=complex)       # to store the 7th transmission error terms
+        ks = npy.zeros(shape=(fpoints,), dtype=complex)  # to store the 7th transmission error terms
         er_effs = npy.zeros(shape=(fpoints,), dtype=complex)
         gammas = npy.zeros(shape=(fpoints,), dtype=complex)
-        lambds = npy.zeros(shape=(fpoints,), dtype=float)     # to store the eigenvalue of the weighted eigendecomposition
+        lambds = npy.zeros(shape=(fpoints,), dtype=float)  # to store the eigenvalue of the weighted eigendecomposition
 
         # compute the calibration at each frequency point
         for m, f in enumerate(self.freq.f):
@@ -3811,8 +3821,9 @@ class TUGMultilineTRL(EightTerm):
             ## solve a11b11 and k from thru measurement (first line in the list)
             ka11b11,_,_,k = X_inv@M[:,0]
             a11b11 = ka11b11/k
-            a11b11 = a11b11*npy.exp(2*gamma*(lengths[0] - self.ref_plane.sum())) # shift plane to edges of the thru standard plus defined reference plane
-            k      = k*npy.exp(-gamma*(lengths[0] - self.ref_plane.sum()))       # shift plane to edges of the thru standard plus defined reference plane
+            # shift plane to edges of the thru standard plus defined reference plane
+            a11b11 = a11b11*npy.exp(2*gamma*(lengths[0] - self.ref_plane.sum())) 
+            k = k*npy.exp(-gamma*(lengths[0] - self.ref_plane.sum()))
 
             if npy.isnan(reflect_meas_S[0,m,0,0]):
                 # no reflect measurement available.
@@ -3826,7 +3837,10 @@ class TUGMultilineTRL(EightTerm):
                 a11_b11 = -T[2,:]/T[1,:]
                 a11 = npy.sqrt(a11_b11*a11b11)
                 b11 = a11b11/a11
-                G_cal = ( (reflect_meas_S[:,m,0,0] - a12)/(1 - reflect_meas_S[:,m,0,0]*a21_a11)/a11 + (reflect_meas_S[:,m,1,1] + b21)/(1 + reflect_meas_S[:,m,1,1]*b12_b11)/b11 )/2  # average
+                G_cal = (
+                    (reflect_meas_S[:,m,0,0] - a12) / (1 - reflect_meas_S[:,m,0,0]*a21_a11)/a11 
+                    + (reflect_meas_S[:,m,1,1] 
+                    + b21)/(1 + reflect_meas_S[:,m,1,1]*b12_b11)/b11 )/2  # average
                 for inx,(Gcal,Gest) in enumerate(zip(G_cal, reflect_est_offset)):
                     if abs(Gcal - Gest) > abs(Gcal + Gest):
                         a11[inx]   = -a11[inx]

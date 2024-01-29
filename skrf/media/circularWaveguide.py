@@ -12,7 +12,6 @@ from scipy.constants import  epsilon_0, mu_0, pi
 from scipy.special import  jn_zeros, jnp_zeros
 from numpy import sqrt, where
 import numpy as npy
-import warnings
 from .media import Media
 from ..data import materials
 from .freespace import Freespace

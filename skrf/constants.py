@@ -106,6 +106,8 @@ S_DEFINITIONS = ['power', 'pseudo', 'traveling']
 S_DEF_DEFAULT = 'power'
 S_DEF_HFSS_DEFAULT = 'traveling'
 
+FREQ_UNITS = {"Hz": 1.0, "kHz": 1e3, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}
+
 NumberLike = Union[Number, Sequence[Number], npy.ndarray]
 
 global distance_dict

@@ -2,7 +2,6 @@ import skrf as rf
 import numpy as np
 import unittest
 import os
-import sys
 from numpy.testing import assert_array_almost_equal
 
 class CircuitTestConstructor(unittest.TestCase):

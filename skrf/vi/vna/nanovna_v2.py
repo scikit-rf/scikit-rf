@@ -450,7 +450,8 @@ class NanoVNAv2(abcvna.VNA):
                 col = 0
             else:
                 # problem: column index is ambiguous
-                raise ValueError('Source port index `0` is missing in `ports` with length > 1. Column index is ambiguous.')
+                raise ValueError("Source port index `0` is missing in `ports` with length > 1. "
+                                 "Column index is ambiguous.")
 
         # populate N-port network with s11 and s21
         k = 0

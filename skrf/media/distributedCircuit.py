@@ -12,7 +12,6 @@ A transmission line mode defined in terms of distributed impedance and admittanc
 """
 
 from numpy import sqrt, real, imag
-import warnings
 from .media import Media, DefinedGammaZ0
 from ..constants import NumberLike
 from typing import Union, TYPE_CHECKING

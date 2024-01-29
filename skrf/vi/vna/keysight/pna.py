@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional, Sequence, Union
 
-import re
 import sys
 from enum import Enum
 import itertools

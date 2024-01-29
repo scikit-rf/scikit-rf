@@ -55,7 +55,6 @@ from __future__ import annotations
 
 import os
 import warnings
-from functools import partialmethod
 from numbers import Number
 from typing import TYPE_CHECKING, Callable, List, Tuple, Union
 
@@ -75,7 +74,7 @@ import numpy as npy
 from . import mathFunctions as mf
 from .constants import NumberLike
 from .frequency import Frequency
-from .util import axes_kwarg, copy_doc, now_string_2_dt, partial_with_docs
+from .util import axes_kwarg, now_string_2_dt
 
 if TYPE_CHECKING:
     from . import Network, NetworkSet

@@ -855,7 +855,7 @@ class Network:
                 return self[slice_like][p1_name, p2_name]
             elif len(key) == 2:
                 p1_name, p2_name = key
-                if type(p1_name) == int and type(p2_name) == int:  # allow integer indexing if desired
+                if isinstance(p1_name, int) and isinstance(p2_name, int):  # allow integer indexing if desired
                     if p1_name <= 0 or p2_name <= 0 or p1_name > self.nports or p2_name > self.nports:
                         raise ValueError("Port index out of bounds")
                     p1_index = p1_name - 1
@@ -1743,7 +1743,8 @@ class Network:
         References
         ----------
         ..  [1] M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited,"
-            in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
+            in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, 
+            doi: 10.1109/22.137392.
 
         See Also
         --------
@@ -1777,12 +1778,14 @@ class Network:
         ----
         The maximum available power gain is defined for a unconditionally stable network (K > 1).
         For K <= 1, this property returns the maximum stable gain instead.
-        This behavior is similar to the max_gain() function in Keysight's Advanced Design System (but differs in decibel or linear) [3]_.
+        This behavior is similar to the max_gain() function in Keysight's Advanced Design System 
+        (but differs in decibel or linear) [3]_.
 
         References
         ----------
         ..  [1] M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited,"
-            in IEEE Transactions on Microwave Theory and Techniques,  vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
+            in IEEE Transactions on Microwave Theory and Techniques,  vol. 40, no. 5, pp. 864-879, May 1992, 
+            doi: 10.1109/22.137392.
         ..  [2] https://www.microwaves101.com/encyclopedias/stability-factor
         ..  [3] https://edadocs.software.keysight.com/pages/viewpage.action?pageId=5920581
 
@@ -1817,7 +1820,8 @@ class Network:
         References
         ----------
         ..  [1] M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited,"
-            in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, doi: 10.1109/22.137392.
+            in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992,
+            doi: 10.1109/22.137392.
 
         See Also
         --------
@@ -1831,7 +1835,8 @@ class Network:
 
         K = self.stability
         gms = self.max_stable_gain
-        U = npy.abs((self.s[:, 1, 0] / self.s[:, 0, 1]) - 1) ** 2 / (2 * K * gms - 2 * npy.real(self.s[:, 1, 0] / self.s[:, 0, 1]))
+        U = (npy.abs((self.s[:, 1, 0] / self.s[:, 0, 1]) - 1) ** 2 
+            / (2 * K * gms - 2 * npy.real(self.s[:, 1, 0] / self.s[:, 0, 1])))
         return U
 
     @property
@@ -2231,12 +2236,7 @@ class Network:
             except(AttributeError, TypeError):
                 # in case they pass a file-object instead of file name,
                 # get the name from the touchstone file
-                try:
-                    self.name = os.path.basename(os.path.splitext(touchstoneFile.filename)[0])
-                except:
-                    print('warning: couldn\'t inspect network name')
-                    self.name = ''
-                pass
+                self.name = os.path.basename(os.path.splitext(touchstoneFile.filename)[0])
 
     @classmethod
     def zipped_touchstone(cls, filename: str, archive: zipfile.ZipFile) -> 'Network':
@@ -2463,7 +2463,8 @@ class Network:
 
                 # write comment line for users (optional)
                 output.write(
-                    '!freq {labelA}S11 {labelB}S11 {labelA}S21 {labelB}S21 {labelA}S12 {labelB}S12 {labelA}S22 {labelB}S22\n'.format(
+                    ("!freq {labelA}S11 {labelB}S11 {labelA}S21 {labelB}S21 "
+                           "{labelA}S12 {labelB}S12 {labelA}S22 {labelB}S22\n").format(
                         **formatDic))
                 # write out data
                 for f in range(len(ntwk.f)):
@@ -2488,7 +2489,8 @@ class Network:
                     new = ntwk.copy()
                     new.resample(ntwk.f_noise) # only write data from original noise freqs
                     for f, nf, g_opt, rn, z0 in zip(new.f_noise.f_scaled, new.nfmin_db, new.g_opt, new.rn, new.z0):
-                        output.write(f"{f} {nf} {mf.complex_2_magnitude(g_opt)} {mf.complex_2_degree(g_opt)} {rn/z0[0].real}\n")
+                        output.write(f"{f} {nf} {mf.complex_2_magnitude(g_opt)} "
+                                     f"{mf.complex_2_degree(g_opt)} {rn/z0[0].real}\n")
 
             elif ntwk.number_of_ports == 3:
                 # 3-port is written over 3 lines / matrix order
@@ -3059,29 +3061,37 @@ class Network:
             raise ValueError(f"`f_stop` was {f_stop}, which was smaller than `f_start`, which was {f_start}")
 
         if unit is not None: # if `unit` is specified, we must retranslate the frequency units
-            scaleFactor = Frequency.multiplier_dict[unit.lower()]/self.frequency.multiplier# make a multiplier to put f_start and f_stop in the right units, e.g. 'GHz' -> 'MHz'
+            # make a multiplier to put f_start and f_stop in the right units, e.g. 'GHz' -> 'MHz'
+            scaleFactor = Frequency.multiplier_dict[unit.lower()]/self.frequency.multiplier
             f_start *=scaleFactor
             f_stop *=scaleFactor
 
         if f_start > self.frequency.f_scaled.max():
-            raise ValueError(f"`f_start` was {f_start}, which was larger than the largest frequency in this Network object, which was {self.frequency.f_scaled.max()}")
+            raise ValueError(f"`f_start` was {f_start}, which was larger than the largest frequency " 
+                             "in this Network object, which was {self.frequency.f_scaled.max()}")
         if f_stop < self.frequency.f_scaled.min():
-            raise ValueError(f"`f_stop` was {f_stop}, which was smaller than the smallest frequency in this Network object, which was {self.frequency.f_scaled.min()}")
+            raise ValueError(f"`f_stop` was {f_stop}, which was smaller than the smallest frequency "
+                             "in this Network object, which was {self.frequency.f_scaled.min()}")
 
         start_idx,stop_idx = 0,self.frequency.npoints-1 # start with entire frequency range selected
 
         if f_start > self.frequency.f_scaled.min():
             start_idx = find_nearest_index(self.frequency.f_scaled, f_start)
-            if f_start > self.frequency.f_scaled[start_idx]: # we do not want the start index to be at a frequency lower than `f_start`
+            # we do not want the start index to be at a frequency lower than `f_start`
+            if f_start > self.frequency.f_scaled[start_idx]: 
                 start_idx += 1
         if f_stop < self.frequency.f_scaled.max():
             stop_idx = find_nearest_index(self.frequency.f_scaled, f_stop)
-            if f_stop < self.frequency.f_scaled[stop_idx]: # we don't want the stop index to be at a frequency higher than `f_stop`
+            # we don't want the stop index to be at a frequency higher than `f_stop`
+            if f_stop < self.frequency.f_scaled[stop_idx]: 
                 stop_idx -=1
 
         if stop_idx < start_idx :
-            raise ValueError("Stop index/frequency lower than start: stop_idx: {}, start_idx: {}, self.frequency.f[stop_idx]: {}, self.frequency.f[start_idx]: {}"\
-                                .format(stop_idx,start_idx,self.frequency.f[stop_idx],self.frequency.f[start_idx]  ))
+            raise ValueError("Stop index/frequency lower than start: "
+                             f"stop_idx: {stop_idx}, "
+                             f"start_idx: {start_idx}, "
+                             f"self.frequency.f[stop_idx]: {self.frequency.f[stop_idx]}, "
+                             f"self.frequency.f[start_idx]: {self.frequency.f[start_idx]}")
         ntwk = self[start_idx:stop_idx + 1]
         self.frequency, self.s, self.z0 = ntwk.frequency, ntwk.s, ntwk.z0
 
@@ -3964,10 +3974,18 @@ class Network:
         M[:, 2:, 2:] = self._m(z0_mm[:, p + l], s_def)  # common mode impedance of port pair
         return M
 
-    def _X(self, j: int, k: int , l: int, p: int, z0_se: npy.ndarray, z0_mm: npy.ndarray, s_def : str) -> npy.ndarray:  # (15)
-        return npy.einsum('...ij,...jk->...ik', self._M_circle(l, p, z0_mm, s_def).dot(self._T),
-                          npy.linalg.inv(self._M(j, k, z0_se, s_def)))  # matrix multiplication elementwise for each frequency
-
+    def _X(self, 
+           j: int, 
+           k: int , 
+           l: int, 
+           p: int, 
+           z0_se: npy.ndarray, 
+           z0_mm: npy.ndarray, 
+           s_def : str) -> npy.ndarray:  # (15)
+        # matrix multiplication elementwise for each frequency
+        return npy.einsum('...ij,...jk->...ik', 
+                          self._M_circle(l, p, z0_mm, s_def).dot(self._T),
+                          npy.linalg.inv(self._M(j, k, z0_se, s_def)))  
     def _P(self, p: int) -> npy.ndarray:  # (27) (28)
         n = self.nports
 
@@ -4284,7 +4302,8 @@ class Network:
     def stability_circle(self, target_port: int, npoints: int = 181) -> npy.ndarray:
         r"""
         Returns loci of stability circles for a given port (0 or 1). The network must have two ports.
-        The center and radius of the load (here target_port=1) stability circle are calculated by the following equation [#]_.
+        The center and radius of the load (here target_port=1) stability circle are calculated by the following equation
+        [#]_.
 
         .. math::
 
@@ -4363,11 +4382,15 @@ class Network:
 
         # Calculate the center and radius of the stability circle
         if target_port == 1:
-            sc_center = (self.s[:, 1, 1] - self.s[:, 0, 0].conjugate() * D).conjugate() / (npy.abs(self.s[:, 1, 1]) ** 2 - npy.abs(D) ** 2)
-            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] / (npy.abs(self.s[:, 1, 1] ) ** 2 - npy.abs(D) ** 2))
+            sc_center = ((self.s[:, 1, 1] - self.s[:, 0, 0].conjugate() * D).conjugate()
+                / (npy.abs(self.s[:, 1, 1]) ** 2 - npy.abs(D) ** 2))
+            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] 
+                / (npy.abs(self.s[:, 1, 1] ) ** 2 - npy.abs(D) ** 2))
         elif target_port == 0:
-            sc_center = (self.s[:, 0, 0] - self.s[:, 1, 1].conjugate() * D).conjugate() / (npy.abs(self.s[:, 0, 0]) ** 2 - npy.abs(D) ** 2)
-            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] / (npy.abs(self.s[:, 0, 0] ) ** 2 - npy.abs(D) ** 2))
+            sc_center = ((self.s[:, 0, 0] - self.s[:, 1, 1].conjugate() * D).conjugate()
+                / (npy.abs(self.s[:, 0, 0]) ** 2 - npy.abs(D) ** 2))
+            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] 
+                / (npy.abs(self.s[:, 0, 0] ) ** 2 - npy.abs(D) ** 2))
         else:
             raise ValueError("Invalid target_port. Specify 0 or 1.")
 
@@ -4385,7 +4408,8 @@ class Network:
     def gain_circle(self, target_port: int, gain: float, npoints: int = 181) -> npy.ndarray:
         r"""
         Returns loci of gain circles for a given port (0 or 1) and a specified gain. The network must have two ports.
-        The center and radius of the source (here target_port=0) gain circle are calculated by the following equations [#]_ [#]_.
+        The center and radius of the source (here target_port=0) gain circle are calculated by the following equations 
+        [#]_ [#]_.
 
         .. math::
 
@@ -4393,7 +4417,8 @@ class Network:
 
                 R_{S} = |\frac{\sqrt{(1 - g_{S})}(1 - |S_{11}|^{2})}{1 - (1 - g_{S})|S_{11}|^{2}}
 
-        where :math:`g_{S}` is obtained by normalizing the specified gain by the maximum gain of the source matching network :math:`G_{Smax}`
+        where :math:`g_{S}` is obtained by normalizing the specified gain by the maximum gain of the source 
+        matching network :math:`G_{Smax}`
 
         .. math::
 
@@ -4480,10 +4505,12 @@ class Network:
 
         gain_factor = mf.db10_2_mag(gain) * (1 - npy.abs(reflection) ** 2)
         if npy.any(gain_factor > 1):
-            warnings.warn("The specified gain is greater than the maximum gain achievable by the matching network. Specify a smaller gain.", RuntimeWarning, stacklevel=2)
+            warnings.warn("The specified gain is greater than the maximum gain achievable by the matching network. "
+                          "Specify a smaller gain.", RuntimeWarning, stacklevel=2)
             gain_factor = npy.minimum(gain_factor, 1)
         gc_center = gain_factor * reflection.conjugate() / (1 - (1 - gain_factor) * npy.abs(reflection) ** 2)
-        gc_radius = npy.sqrt(1 - gain_factor) * (1 - npy.abs(reflection) ** 2) / (1 - (1 - gain_factor) * npy.abs(reflection) ** 2)
+        gc_radius = (npy.sqrt(1 - gain_factor) * (1 - npy.abs(reflection) ** 2) 
+            / (1 - (1 - gain_factor) * npy.abs(reflection) ** 2))
 
         # Generate theta values for the points on the circle
         theta = npy.linspace(0, 2 * npy.pi, npoints)
@@ -4632,7 +4659,10 @@ class Network:
                                         show_legend=show_legend, ax=ax,
                                         **kwargs)
 
-    plot_attribute.__doc__ = _plot_attribute_doc.format(attribute="conversion", conversion="attribute", x_axis="frequency or time")
+    plot_attribute.__doc__ = _plot_attribute_doc.format(
+        attribute="conversion", 
+        conversion="attribute", 
+        x_axis="frequency or time")
 
     @copy_doc(rfplt.plot)
     def plot(self, *args, **kwargs):
@@ -5917,8 +5947,8 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
         Proceedings of the 32nd Midwest Symposium on , vol., no., pp.716-718 vol.2, 14-16 Aug 1989.
         URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=101955&isnumber=3167
 
-    .. [#] Filipsson, Gunnar; , "A New General Computer Algorithm for S-Matrix Calculation of Interconnected Multiports,"
-        Microwave Conference, 1981. 11th European , vol., no., pp.700-704, 7-11 Sept. 1981.
+    .. [#] Filipsson, Gunnar; , "A New General Computer Algorithm for S-Matrix Calculation of Interconnected Multiports"
+        ,Microwave Conference, 1981. 11th European , vol., no., pp.700-704, 7-11 Sept. 1981.
         URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4131699&isnumber=4131585
 
 

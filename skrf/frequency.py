@@ -41,7 +41,7 @@ from typing import List
 import warnings
 
 from numbers import Number
-from .constants import NumberLike, ZERO
+from .constants import NumberLike, ZERO, FREQ_UNITS
 from typing import Union
 from numpy import pi, linspace, geomspace
 import numpy as npy
@@ -75,24 +75,13 @@ class Frequency:
     combined with the `unit` property. All other properties, `start`
     `stop`, etc are generated from these.
     """
-    unit_dict = {
-            'hz': 'Hz',
-            'khz': 'kHz',
-            'mhz': 'MHz',
-            'ghz': 'GHz',
-            'thz': 'THz'
-            }
+    unit_dict = {k.lower(): k for k in FREQ_UNITS}
+
     """
     Dictionary to convert unit string with correct capitalization for display.
     """
 
-    multiplier_dict={
-            'hz': 1,
-            'khz': 1e3,
-            'mhz': 1e6,
-            'ghz': 1e9,
-            'thz': 1e12
-            }
+    multiplier_dict={k.lower(): v for k,v in FREQ_UNITS.items()}
     """
     Frequency unit multipliers.
     """
