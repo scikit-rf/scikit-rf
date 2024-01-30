@@ -2,7 +2,6 @@ import skrf as rf
 import numpy as np
 import unittest
 import os
-import sys
 from numpy.testing import assert_array_almost_equal
 
 class CircuitTestConstructor(unittest.TestCase):
@@ -796,7 +795,9 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         Compare with the S-parameters obtained from ANSYS Designer
         """
         for phase_angle in [20, 75]:
-            vc_designer = rf.Network(os.path.join(self.test_dir, 'designer_variable_coupler_ideal_'+str(phase_angle)+'deg.s4p'))
+            vc_designer = rf.Network(
+                os.path.join(self.test_dir,
+                             'designer_variable_coupler_ideal_'+str(phase_angle)+'deg.s4p'))
             vc_circuit = self.variable_coupler_network_from_circuit(phase_angle)
             assert_array_almost_equal(vc_designer.s, vc_circuit.s, decimal=4)
 
@@ -805,7 +806,9 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         Compare S-parameters obtained from ANSYS Designer with Network.connect
         """
         for phase_angle in [20, 75]:
-            vc_designer = rf.Network(os.path.join(self.test_dir, 'designer_variable_coupler_ideal_'+str(phase_angle)+'deg.s4p'))
+            vc_designer = rf.Network(
+                os.path.join(self.test_dir,
+                             'designer_variable_coupler_ideal_'+str(phase_angle)+'deg.s4p'))
             vc_connect = self.variable_coupler_network_from_connect(phase_angle)
             assert_array_almost_equal(vc_designer.s, vc_connect.s, decimal=4)
 
@@ -1058,3 +1061,6 @@ class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
         I_at_ports = crt.currents_external(power, phase)
         np.testing.assert_allclose(V_at_ports, [[10+0j, 10+0j]])
         np.testing.assert_allclose(I_at_ports, [[-0.2+0j, 0.2+0j]])
+
+if __name__ == '__main__':
+    unittest.main()

@@ -89,7 +89,7 @@ from . util import subplots
 
 import numpy as np
 
-from itertools import chain, product
+from itertools import chain
 
 from typing import List, TYPE_CHECKING, Tuple
 
@@ -788,14 +788,13 @@ class Circuit:
         for (ntw_name, ntw_ports) in ntws_ports_reordering.items():
             # get the port re-ordering indexes (from -> to)
             ntw_ports = np.array(ntw_ports)
-            # create the port permutations
-            from_port = list(product(ntw_ports[:,0], repeat=2))
-            to_port = list(product(ntw_ports[:,1], repeat=2))
 
-            #print(ntw_name, from_port, to_port)
+            # port permutations
+            from_port = ntw_ports[:,0]
+            to_port = ntw_ports[:,1]
+
             for (_from, _to) in zip(from_port, to_port):
-                #print(f'{_from} --> {_to}')
-                S[:, _to[0], _to[1]] = ntws[ntw_name].s_traveling[:, _from[0], _from[1]]
+                S[:, _to, to_port] = ntws[ntw_name].s_traveling[:, _from, from_port]
 
         return S  # shape (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
 
@@ -1407,4 +1406,3 @@ class Circuit:
         # remove x and y axis and labels
         ax.axis('off')
         fig.tight_layout()
-
