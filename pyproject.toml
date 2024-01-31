@@ -140,8 +140,6 @@ select = ["E", "F", "FA", "I", "UP", "W"]
 line-length = 120
 
 # Ignore some rules for all files
-# F403: undefined-local-with-import-star
-# F405: undefined-local-with-import-star-usage
 # F841: unused-variable
 # E741: ambiguous-variable-name
 ignore = ["F841", "E741"]
