@@ -33,7 +33,7 @@ from ..io.general import read
 pwd = os.path.dirname(os.path.abspath(__file__))
 
 class StaticData:
-    
+
     @property
     def ntwk1(self) -> Network:
         return Network(os.path.join(pwd, 'ntwk1.s2p'))

@@ -139,7 +139,7 @@ class DefinedAEpTandZ0(Media):
         self.z0_characteristic = z0
         self.f_low, self.f_high, self.f_ep = f_low, f_high, f_ep
         self.model = model
-        
+
         if Z0 is not None:
             # warns of deprecation
             warnings.warn(
@@ -228,7 +228,7 @@ class DefinedAEpTandZ0(Media):
     def z0_characteristic(self) -> NumberLike:
         """
         Characteristic Impedance, :math:`z_0`
-        
+
         Returns
         -------
         z0_characteristic : npy.ndarray

@@ -160,7 +160,7 @@ class StaticInstances:
     @property
     def f_wr0p51(self) -> Frequency:
         return Frequency(1400,2200,1001, 'GHz')
-    
+
     @property
     def f_wm106(self) -> Frequency:
         return Frequency(1700,2600,1001, 'ghz')

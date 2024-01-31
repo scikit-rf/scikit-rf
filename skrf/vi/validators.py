@@ -69,9 +69,9 @@ class IntValidator(Validator):
 
 class FloatValidator(Validator):
     def __init__(
-        self, 
-        min: Optional[float] = None, 
-        max: Optional[float] = None, 
+        self,
+        min: Optional[float] = None,
+        max: Optional[float] = None,
         decimal_places: int=50
     ) -> None:
         self.min = min
@@ -209,10 +209,10 @@ class BooleanValidator(Validator):
     falsey = ['0', 'off', 'false']
 
     def __init__(
-        self, 
-        true_response: Optional[str] = None, 
-        false_response: Optional[str] = None, 
-        true_setting: str='1', 
+        self,
+        true_response: Optional[str] = None,
+        false_response: Optional[str] = None,
+        true_setting: str='1',
         false_setting: str='0'
     ):
         if true_response:

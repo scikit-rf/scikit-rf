@@ -312,7 +312,7 @@ class MLine(Media):
     def z0_characteristic(self) -> npy.ndarray:
         """
         Characteristic Impedance, :math:`z_0`
-        
+
         Returns
         -------
         z0_characteristic : npy.ndarray

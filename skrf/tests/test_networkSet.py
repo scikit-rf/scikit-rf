@@ -206,7 +206,7 @@ class NetworkSetTestCase(unittest.TestCase):
         ns.name = 'testing'
         ns.write()  # write 'testing.ns'
         os.remove('testing.ns')
-    
+
     @pytest.mark.skipif("openpyxl" not in sys.modules, reason="Requires openpyxl in sys.modules.")
     def test_write_spreadsheet(self):
         """
