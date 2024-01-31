@@ -101,8 +101,9 @@ class VectorFitting:
 
     def get_spurious(self, n_freqs: int = 101, gamma: float = 0.03):
         """
-        Classifies fitted pole-residue pairs spurious or not spurious. The implementation is based on the evaluation of
-        band-limited norms of the resonance curves of individual pole-residue pairs, as proposed in [#Grivet-Talocia]_.
+        Classifies fitted pole-residue pairs as spurious or not spurious. The implementation is based on the evaluation
+        of band-limited energy norms (p=2) of the resonance curves of individual pole-residue pairs, as proposed in
+        [#Grivet-Talocia]_.
 
         Parameters
         ----------
