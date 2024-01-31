@@ -99,6 +99,39 @@ class VectorFitting:
         self.history_rank_A = []
         self.full_rank = 0
 
+    def get_spurious(self, n_freqs: int = 101, gamma: float = 0.03):
+        """
+        Classifies fitted pole-residue pairs spurious or not spurious. The implementation is based on the evaluation of
+        band-limited norms of the resonance curves of individual pole-residue pairs, as proposed in [#Grivet-Talocia]_.
+
+        Parameters
+        ----------
+        n_freqs : int, optional
+            Number of frequencies for the evaluation. The frequency range is chosen automatically and the default
+            101 frequencies should be appropriate in most cases.
+
+        gamma : float, optional
+            Sensitivity threshold for the classification. Typical values range from 0.01 to 0.05.
+
+        Returns
+        -------
+        ndarray, bool
+            Boolean array having the same shape as :attr:`poles`. `True` marks the respective pole as spurious.
+
+        References
+        ----------
+        .. [#Grivet-Talocia] S. Grivet-Talocia and M. Bandinu, "Improving the convergence of vector fitting for
+            equivalent circuit extraction from noisy frequency responses," in IEEE Transactions on Electromagnetic
+            Compatibility, vol. 48, no. 1, pp. 104-120, Feb. 2006, DOI: https://doi.org/10.1109/TEMC.2006.870814
+        """
+
+        omega_eval = np.linspace(np.min(self.poles.imag) / 3, np.max(self.poles.imag) * 3, n_freqs)
+        h = (self.residues[:, None, :] / (1j * omega_eval[:, None] - self.poles)
+             + np.conj(self.residues[:, None, :]) / (1j * omega_eval[:, None] - np.conj(self.poles)))
+        norm2 = np.sqrt(np.trapz(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
+        spurious = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
+        return spurious
+
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """
