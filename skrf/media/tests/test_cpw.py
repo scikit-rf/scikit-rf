@@ -41,7 +41,7 @@ class CPWTestCase(unittest.TestCase):
                         t = None, ep_r = 4.5, rho = None,  z0_port = 50.)
         self.cpw5 = CPW(frequency = self.freq, w = 3.0e-3, s = 0.3e-3,
                         t = 0., ep_r = 4.5, rho = None, z0_port = 50.)
-        
+
         # more newtorks to test against Qucs with air or metal backing
         self.ref_qucs = [
             {'has_metal_backside': True, 'w': 1.6e-3, 's': 0.3e-3, 't': 35e-6,

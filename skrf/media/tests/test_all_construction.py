@@ -83,11 +83,11 @@ class MediaTestCase():
 
     def test_shunt_inductor(self):
         self.media.shunt_inductor(1)
-    
+
     def test_Z0_deprecation_warning(self):
         with self.assertWarns(DeprecationWarning) as context:
             self.media.Z0
-    
+
     def test_embed_deprecation_warning(self):
         with self.assertWarns(DeprecationWarning) as context:
             self.media.line(1, unit = 'deg', embed = True)
@@ -117,8 +117,8 @@ class Z0InitDeprecationTestCase(unittest.TestCase):
         with self.assertWarns(DeprecationWarning) as context:
             mlin = MLine(self.frequency, z0 = 50)
             self.assertTrue(np.all(mlin.z0 == 50))
-    
-    
+
+
 class FreespaceTestCase(MediaTestCase, unittest.TestCase):
     def setUp(self):
         self.frequency = rf.Frequency(75,110,101,'GHz')

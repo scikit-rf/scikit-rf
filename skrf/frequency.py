@@ -648,7 +648,7 @@ class Frequency:
         else:
             sweep_type = 'unknown'
         return sweep_type
-    
+
     @axes_kwarg
     def labelXAxis(self, ax: Axes = None):
         """

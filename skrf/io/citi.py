@@ -38,7 +38,7 @@ class Citi():
     References
     ----------
     .. [#] https://na.support.keysight.com/plts/help/WebHelp/FilePrint/CITIfile_Format.htm
-    .. [#] Handbook of Microwave Component Measurements: with Advanced VNA Techniques, Joel P. Dunsmore, 2020, 
+    .. [#] Handbook of Microwave Component Measurements: with Advanced VNA Techniques, Joel P. Dunsmore, 2020,
     Section 6.1.6.1
 
     Examples

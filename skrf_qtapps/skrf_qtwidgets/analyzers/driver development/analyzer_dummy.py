@@ -32,7 +32,7 @@ class Analyzer(base_analyzer.Analyzer):
 
     def get_snp_network(self, ports, **kwargs):
         ntwk = skrf.Network(os.path.join(example_data_dir, 'ring slot array simulation.s2p'))
-        if type(ports) == int:
+        if isinstance(ports, int):
             ports = [ports]
 
         if len(ports) == 1:

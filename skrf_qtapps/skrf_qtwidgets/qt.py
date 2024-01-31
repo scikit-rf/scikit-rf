@@ -113,7 +113,7 @@ class WarningMsgBox(QtWidgets.QDialog):
 
 
 def error_popup(error):
-    if type(error) is not str:
+    if not isinstance(error,str):
         etype, value, tb = sys.exc_info()
         error = "\n".join(traceback.format_exception(etype, value, tb))
     WarningMsgBox(error).exec_()
@@ -209,7 +209,7 @@ def single_widget_application(widget_class, splash_screen=True, appid="skrf.qtap
 
     form = widget_class()
     try:
-        if type(icon) is str:
+        if isinstance(icon, str):
             icon = QtGui.QIcon(icon)
         elif not isinstance(icon, QtGui.QIcon):
             icon = False
@@ -233,7 +233,7 @@ def set_process_id(appid=None):
     :param appid: str, unicode
     :return:
     """
-    if appid and type(appid) is str and platform.system() == "Windows":
+    if appid and isinstance(appid, str) and platform.system() == "Windows":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
 
 
@@ -260,7 +260,7 @@ class HelpIndicator(QtWidgets.QPushButton):
         self.w = self.h
         self.setFixedWidth(self.w)
         self.setText("?")
-        if help_text and type(help_text) is str:
+        if help_text and isinstance(help_text, str):
             self.help_text = help_text
         else:
             self.help_text = None

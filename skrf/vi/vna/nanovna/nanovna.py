@@ -183,9 +183,9 @@ class NanoVNA(vna.VNA):
 
             s11[freqIndex] = b1 / a1
             s21[freqIndex] = b2 / a1
-        
+
         return s11, s21
-        
+
 
     def get_s11_s21(self) -> tuple[skrf.Network, skrf.Network]:
         n = self._freq.npoints

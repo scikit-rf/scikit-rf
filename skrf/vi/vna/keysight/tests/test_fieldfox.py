@@ -31,19 +31,20 @@ def mocked_ff(mocker):
         ('freq_span', 'SENS:FREQ:SPAN?', 'SENS:FREQ:SPAN 100', '100', 100, 100),
         ('npoints', 'SENS:SWE:POIN?', 'SENS:SWE:POIN 100', '100', 100, 100),
         ('if_bandwidth', 'SENS:BWID?', 'SENS:BWID 100', '100', 100, 100),
-        ('window_configuration', 'DISP:WIND:SPL?', 'DISP:WIND:SPL D1', 'D1', WindowFormat.ONE_TRACE, WindowFormat.ONE_TRACE),
+        ('window_configuration', 'DISP:WIND:SPL?', 'DISP:WIND:SPL D1', 'D1',
+         WindowFormat.ONE_TRACE, WindowFormat.ONE_TRACE),
         ('ntraces', 'CALC:PAR:COUN?', 'CALC:PAR:COUN 1', '1', 1, 1),
         ('active_trace', None, 'CALC:PAR1:SEL', None, None, 1),
     ]
 )
 def test_params(
-    mocker, 
-    mocked_ff, 
-    param, 
-    expected_query, 
+    mocker,
+    mocked_ff,
+    param,
+    expected_query,
     expected_write,
-    query_response, 
-    expected_val, 
+    query_response,
+    expected_val,
     write_val
 ):
     if expected_query is not None:
@@ -136,17 +137,18 @@ def test_sweep(mocker, mocked_ff):
 def test_get_snp_network(mocker, mocked_ff):
     mocker.patch('skrf.vi.vna.keysight.FieldFox.sweep')
     query_ret_vals = [
-        '1', 
-        WindowFormat.ONE_TRACE, 
+        '1',
+        WindowFormat.ONE_TRACE,
         '1',
         'S11',
         '4', '4', '4', '4',
-        '100', '200', '11', 
+        '100', '200', '11',
         '4'
     ]
     mocked_ff.query.side_effect=query_ret_vals
     mock_s_data = np.array([1. + 1.j]*11)
-    mocker.patch('skrf.vi.vna.keysight.FieldFox.active_trace_sdata', return_value=mock_s_data.copy(), new_callable=mocker.PropertyMock)
+    mocker.patch('skrf.vi.vna.keysight.FieldFox.active_trace_sdata',
+                 return_value=mock_s_data.copy(), new_callable=mocker.PropertyMock)
 
     test = mocked_ff.get_snp_network()
 

@@ -1314,7 +1314,7 @@ def plot_uncertainty_bounds_component(
                 upper_bound = ppf(upper_bound)
                 lower_bound = ppf(lower_bound)
                 lower_bound[npy.isnan(lower_bound)] = min(lower_bound)
-                if ppf in [mf.magnitude_2_db, mf.mag_2_db]:  # quickfix of wrong ylabels due to usage of ppf for *_db plots
+                if ppf in [mf.magnitude_2_db, mf.mag_2_db]:  # fix of wrong ylabels due to usage of ppf for *_db plots
                     if attribute == 's_mag':
                         plot_attribute = 's_db'
                     elif attribute == 's_time_mag':
@@ -1563,7 +1563,10 @@ def plot_uncertainty_bounds_s(self: NetworkSet, multiplier: float = 200, *args, 
     else:
         was_interactive = False
 
-    [self.mean_s[k].plot_s_smith(*args, ms = self.std_s[k].s_mag*multiplier, **default_kwargs) for k in range(len(self[0]))]
+    [
+        self.mean_s[k].plot_s_smith(*args, ms = self.std_s[k].s_mag*multiplier, **default_kwargs)
+        for k in range(len(self[0]))
+    ]
 
     if was_interactive:
         plt.interactive(1)
@@ -1896,4 +1899,3 @@ def plot_prop_polar(netw: Network, prop_name: str,
                 z = getattr(netw,prop_name)[:,m,n],
                 show_legend = show_legend, ax = ax,
                 **kwargs)
-

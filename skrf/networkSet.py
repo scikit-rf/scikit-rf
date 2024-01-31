@@ -378,7 +378,9 @@ class NetworkSet:
             if isinstance(other, NetworkSet):
                 if len(other) != len(self):
                     raise(ValueError('Network sets must be of same length to be cascaded'))
-                return NetworkSet([getattr(self.ntwk_set[k], operator_name)(other.ntwk_set[k]) for k in range(len(self))])
+                return NetworkSet([
+                        getattr(self.ntwk_set[k], operator_name)(other.ntwk_set[k]) for k in range(len(self))
+                    ])
 
             elif isinstance(other, Network):
                 return NetworkSet([getattr(ntwk, operator_name)(other) for ntwk in self.ntwk_set])
@@ -1017,7 +1019,8 @@ class NetworkSet:
         x : real
             Point to evaluate the interpolated network at
         interp_kind: str
-            Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.  Cf :class:`scipy.interpolate.interp1d` for detailed description.
+            Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic',
+            'cubic'. See :class:`scipy.interpolate.interp1d` for detailed description.
             Default is 'linear'.
 
         Returns
@@ -1309,7 +1312,7 @@ class NetworkSet:
                                                       x, interp_kind)
 
         return interp_ntwk
-    
+
     @copy_doc(skrf_plt.animate)
     def animate(self, *args, **kwargs):
         skrf_plt.animate(self, *args, **kwargs)
@@ -1357,7 +1360,7 @@ class NetworkSet:
     @copy_doc(skrf_plt.signature)
     def signature(self, *args, **kwargs):
         skrf_plt.signature(self, *args, **kwargs)
-        
+
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):

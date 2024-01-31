@@ -1743,7 +1743,7 @@ class Network:
         References
         ----------
         ..  [1] M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited,"
-            in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992, 
+            in IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 5, pp. 864-879, May 1992,
             doi: 10.1109/22.137392.
 
         See Also
@@ -1778,13 +1778,13 @@ class Network:
         ----
         The maximum available power gain is defined for a unconditionally stable network (K > 1).
         For K <= 1, this property returns the maximum stable gain instead.
-        This behavior is similar to the max_gain() function in Keysight's Advanced Design System 
+        This behavior is similar to the max_gain() function in Keysight's Advanced Design System
         (but differs in decibel or linear) [3]_.
 
         References
         ----------
         ..  [1] M. S. Gupta, "Power gain in feedback amplifiers, a classic revisited,"
-            in IEEE Transactions on Microwave Theory and Techniques,  vol. 40, no. 5, pp. 864-879, May 1992, 
+            in IEEE Transactions on Microwave Theory and Techniques,  vol. 40, no. 5, pp. 864-879, May 1992,
             doi: 10.1109/22.137392.
         ..  [2] https://www.microwaves101.com/encyclopedias/stability-factor
         ..  [3] https://edadocs.software.keysight.com/pages/viewpage.action?pageId=5920581
@@ -1835,7 +1835,7 @@ class Network:
 
         K = self.stability
         gms = self.max_stable_gain
-        U = (npy.abs((self.s[:, 1, 0] / self.s[:, 0, 1]) - 1) ** 2 
+        U = (npy.abs((self.s[:, 1, 0] / self.s[:, 0, 1]) - 1) ** 2
             / (2 * K * gms - 2 * npy.real(self.s[:, 1, 0] / self.s[:, 0, 1])))
         return U
 
@@ -3067,7 +3067,7 @@ class Network:
             f_stop *=scaleFactor
 
         if f_start > self.frequency.f_scaled.max():
-            raise ValueError(f"`f_start` was {f_start}, which was larger than the largest frequency " 
+            raise ValueError(f"`f_start` was {f_start}, which was larger than the largest frequency "
                              "in this Network object, which was {self.frequency.f_scaled.max()}")
         if f_stop < self.frequency.f_scaled.min():
             raise ValueError(f"`f_stop` was {f_stop}, which was smaller than the smallest frequency "
@@ -3078,12 +3078,12 @@ class Network:
         if f_start > self.frequency.f_scaled.min():
             start_idx = find_nearest_index(self.frequency.f_scaled, f_start)
             # we do not want the start index to be at a frequency lower than `f_start`
-            if f_start > self.frequency.f_scaled[start_idx]: 
+            if f_start > self.frequency.f_scaled[start_idx]:
                 start_idx += 1
         if f_stop < self.frequency.f_scaled.max():
             stop_idx = find_nearest_index(self.frequency.f_scaled, f_stop)
             # we don't want the stop index to be at a frequency higher than `f_stop`
-            if f_stop < self.frequency.f_scaled[stop_idx]: 
+            if f_stop < self.frequency.f_scaled[stop_idx]:
                 stop_idx -=1
 
         if stop_idx < start_idx :
@@ -3974,18 +3974,18 @@ class Network:
         M[:, 2:, 2:] = self._m(z0_mm[:, p + l], s_def)  # common mode impedance of port pair
         return M
 
-    def _X(self, 
-           j: int, 
-           k: int , 
-           l: int, 
-           p: int, 
-           z0_se: npy.ndarray, 
-           z0_mm: npy.ndarray, 
+    def _X(self,
+           j: int,
+           k: int ,
+           l: int,
+           p: int,
+           z0_se: npy.ndarray,
+           z0_mm: npy.ndarray,
            s_def : str) -> npy.ndarray:  # (15)
         # matrix multiplication elementwise for each frequency
-        return npy.einsum('...ij,...jk->...ik', 
+        return npy.einsum('...ij,...jk->...ik',
                           self._M_circle(l, p, z0_mm, s_def).dot(self._T),
-                          npy.linalg.inv(self._M(j, k, z0_se, s_def)))  
+                          npy.linalg.inv(self._M(j, k, z0_se, s_def)))
     def _P(self, p: int) -> npy.ndarray:  # (27) (28)
         n = self.nports
 
@@ -4384,12 +4384,12 @@ class Network:
         if target_port == 1:
             sc_center = ((self.s[:, 1, 1] - self.s[:, 0, 0].conjugate() * D).conjugate()
                 / (npy.abs(self.s[:, 1, 1]) ** 2 - npy.abs(D) ** 2))
-            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] 
+            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0]
                 / (npy.abs(self.s[:, 1, 1] ) ** 2 - npy.abs(D) ** 2))
         elif target_port == 0:
             sc_center = ((self.s[:, 0, 0] - self.s[:, 1, 1].conjugate() * D).conjugate()
                 / (npy.abs(self.s[:, 0, 0]) ** 2 - npy.abs(D) ** 2))
-            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0] 
+            sc_radius = npy.abs(self.s[:, 0, 1]  * self.s[:, 1, 0]
                 / (npy.abs(self.s[:, 0, 0] ) ** 2 - npy.abs(D) ** 2))
         else:
             raise ValueError("Invalid target_port. Specify 0 or 1.")
@@ -4408,7 +4408,7 @@ class Network:
     def gain_circle(self, target_port: int, gain: float, npoints: int = 181) -> npy.ndarray:
         r"""
         Returns loci of gain circles for a given port (0 or 1) and a specified gain. The network must have two ports.
-        The center and radius of the source (here target_port=0) gain circle are calculated by the following equations 
+        The center and radius of the source (here target_port=0) gain circle are calculated by the following equations
         [#]_ [#]_.
 
         .. math::
@@ -4417,7 +4417,7 @@ class Network:
 
                 R_{S} = |\frac{\sqrt{(1 - g_{S})}(1 - |S_{11}|^{2})}{1 - (1 - g_{S})|S_{11}|^{2}}
 
-        where :math:`g_{S}` is obtained by normalizing the specified gain by the maximum gain of the source 
+        where :math:`g_{S}` is obtained by normalizing the specified gain by the maximum gain of the source
         matching network :math:`G_{Smax}`
 
         .. math::
@@ -4509,7 +4509,7 @@ class Network:
                           "Specify a smaller gain.", RuntimeWarning, stacklevel=2)
             gain_factor = npy.minimum(gain_factor, 1)
         gc_center = gain_factor * reflection.conjugate() / (1 - (1 - gain_factor) * npy.abs(reflection) ** 2)
-        gc_radius = (npy.sqrt(1 - gain_factor) * (1 - npy.abs(reflection) ** 2) 
+        gc_radius = (npy.sqrt(1 - gain_factor) * (1 - npy.abs(reflection) ** 2)
             / (1 - (1 - gain_factor) * npy.abs(reflection) ** 2))
 
         # Generate theta values for the points on the circle
@@ -4660,8 +4660,8 @@ class Network:
                                         **kwargs)
 
     plot_attribute.__doc__ = _plot_attribute_doc.format(
-        attribute="conversion", 
-        conversion="attribute", 
+        attribute="conversion",
+        conversion="attribute",
         x_axis="frequency or time")
 
     @copy_doc(rfplt.plot)

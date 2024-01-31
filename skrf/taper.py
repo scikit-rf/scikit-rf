@@ -300,7 +300,8 @@ class Klopfenstein(Taper1D):
         doi: 10.1109/JRPROC.1956.274847
         https://ieeexplore.ieee.org/document/4051841
     .. [#Kajfez] D. Kajfez and J. O. Prewitt, "Correction to "A Transmission Line Taper of Improved Design" (Letters),"
-        in IEEE Transactions on Microwave Theory and Techniques, vol. 21, no. 5, pp. 364-364, May 1973, doi: 10.1109/TMTT.1973.1128003.
+        in IEEE Transactions on Microwave Theory and Techniques, vol. 21, no. 5, pp. 364-364, May 1973,
+        doi: 10.1109/TMTT.1973.1128003.
         https://ieeexplore.ieee.org/document/1128003
     """
     def __init__(self, **kw):

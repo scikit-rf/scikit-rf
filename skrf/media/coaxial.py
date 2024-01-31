@@ -82,8 +82,8 @@ class Coaxial(DistributedCircuit, Media):
                  z0_port: Union[NumberLike, None] = None,
                  z0_override: Union[NumberLike, None] = None,
                  z0: Union[NumberLike, None] = None,
-                 Dint: NumberLike = .81e-3, Dout: NumberLike = 5e-3, 
-                 epsilon_r: NumberLike = 1, tan_delta: NumberLike = 0, 
+                 Dint: NumberLike = .81e-3, Dout: NumberLike = 5e-3,
+                 epsilon_r: NumberLike = 1, tan_delta: NumberLike = 0,
                  sigma: NumberLike = INF,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
@@ -95,7 +95,7 @@ class Coaxial(DistributedCircuit, Media):
         self.epsilon_second = epsilon_0*self.epsilon_r*self.tan_delta
 
     @classmethod
-    def from_attenuation_VF(cls, frequency: Union['Frequency', None] = None, 
+    def from_attenuation_VF(cls, frequency: Union['Frequency', None] = None,
                             z0_port: Union[NumberLike, None] = None, z0: float = 50,
                          att=0, unit='dB/m', VF=1) -> Media:
         """
@@ -169,9 +169,9 @@ class Coaxial(DistributedCircuit, Media):
                                     z0_port=z0_port, z0=z0)
 
     @classmethod
-    def from_Z0_Dout(cls, frequency: Union['Frequency', None] = None, 
-                     z0_port: Union[NumberLike, None] = None, z0: float = 50,  
-                     epsilon_r: NumberLike = 1, Dout: NumberLike = 5e-3, 
+    def from_Z0_Dout(cls, frequency: Union['Frequency', None] = None,
+                     z0_port: Union[NumberLike, None] = None, z0: float = 50,
+                     epsilon_r: NumberLike = 1, Dout: NumberLike = 5e-3,
                      **kw) -> Media:
         """
         Init from characteristic impedance and outer diameter.

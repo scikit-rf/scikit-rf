@@ -116,11 +116,11 @@ def snp_string(ntwk, comments=None):
     -------
     str
     """
-    if type(comments) == str:
+    if isinstance(comments, str):
         lines = comments.splitlines()
-    elif type(comments) == list:
+    elif isinstance(comments, list):
         lines = comments
-    elif type(comments) == tuple:
+    elif isinstance(comments, tuple):
         lines = list(comments)
     elif comments:
         raise TypeError("Must provide either a string, or a list of strings")

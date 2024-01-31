@@ -106,7 +106,8 @@ class SweepPlan:
         sweep_sections = []
 
         def finalize_window(growing_window, misfits, sweep_sections):
-            """ When a growing_window has grown as far as it can, finalize_window is called to turn it into a sweep section + misfits"""
+            """ When a growing_window has grown as far as it can,
+            finalize_window is called to turn it into a sweep section + misfits"""
             # Runt windows aren't really linear sweeps -- we should just add their points to the misfit pile
             if len(growing_window) <= 2:
                 misfits.extend(growing_window)

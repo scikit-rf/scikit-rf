@@ -254,7 +254,7 @@ class CPW(Media):
     def z0_characteristic(self) -> NumberLike:
         """
         Characteristic Impedance, :math:`z_0`.
-        
+
         Returns
         -------
         z0_characteristic : npy.ndarray

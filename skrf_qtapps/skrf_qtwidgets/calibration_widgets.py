@@ -400,7 +400,8 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.listWidget_thru = networkListWidget.NetworkListWidget()
         self.verticalLayout_main.addWidget(self.listWidget_thru)
 
-        self.reflect_help = widgets.qt.HelpIndicator(title="Reflect Standards Help", help_text="""<h2>Reflect Standards</h2>
+        self.reflect_help = widgets.qt.HelpIndicator(title="Reflect Standards Help",
+                                                     help_text="""<h2>Reflect Standards</h2>
             <p>You can have any number of reflect standards. &nbsp;The number of standards is not entered,
             but rather is determined from the number that you load or measure</p>
             <h3>Parameters</h3>
@@ -425,9 +426,13 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.listWidget_reflect.label_parameters = ["refl_type", "offset"]
         self.verticalLayout_main.addWidget(self.listWidget_reflect)
 
-        self.line_help = widgets.qt.HelpIndicator(title="Line Standards Help", help_text="""<h2>Line Standards</h2>
-<p>You can have any number of line standards. &nbsp;The number of line standards is not entered, but instead is determined from the lines loaded or measured.</p>
-<p>The accuracy of the calibration will in large part depend on having line standards that are not close to an integer multiple of 180 degrees out of phase from the calibration planes</p>
+        self.line_help = widgets.qt.HelpIndicator(
+            title="Line Standards Help",
+            help_text="""<h2>Line Standards</h2>
+<p>You can have any number of line standards. &nbsp;The number of line standards is not entered,
+but instead is determined from the lines loaded or measured.</p>
+<p>The accuracy of the calibration will in large part depend on having line standards that are not
+close to an integer multiple of 180 degrees out of phase from the calibration planes</p>
 <h3>Parameters</h3>
 <p>Lines have a length in mm. &nbsp;This can be edited by double clicking the items in the list below.</p>""")
 

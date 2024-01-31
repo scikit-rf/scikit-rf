@@ -63,7 +63,7 @@ class CircularWaveguide(Media):
         (Default is None)
     z0 : number, array-like, or None
         deprecated parameter, alias to `z0_override` if `z0_override` is None.
-        Emmit a deprecation warning. 
+        Emmit a deprecation warning.
     r : number
         radius of the waveguide, in meters.
     mode_type : ['te','tm']
@@ -109,11 +109,11 @@ class CircularWaveguide(Media):
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)
-        
+
         if mode_type.lower() not in ['te','tm']:
             raise ValueError('mode_type must be either \'te\' or \'tm\'')
 
-          
+
         self.r = r
         self.mode_type = mode_type.lower()
         self.m = m
@@ -406,12 +406,12 @@ class CircularWaveguide(Media):
         u= self.kc*r
         return 1./r * sqrt( (w*ep)/(2./rho) ) * ( (1/f_n)**2 + 1/(u**2 - 1) ) \
             /sqrt(1-(1/f_n)**2)
-    
+
     @property
     def z0_characteristic(self) -> NumberLike:
         """
         The characteristic impedance, :math:`z_0`.
-        
+
         Returns
         -------
         z0_characteristic : npy.ndarray

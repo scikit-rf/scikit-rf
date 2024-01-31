@@ -24,7 +24,7 @@ def mocked_ff(mocker):
     mock.model = "TEST"
 
     # This gets done in init, but we are mocking init to prevent super().__init__, so just call here
-    mock.create_channel(1, 'Channel 1') 
+    mock.create_channel(1, 'Channel 1')
 
     yield mock
 
@@ -44,13 +44,13 @@ def mocked_ff(mocker):
     ]
 )
 def test_params(
-    mocker, 
-    mocked_ff, 
-    param, 
-    expected_query, 
+    mocker,
+    mocked_ff,
+    param,
+    expected_query,
     expected_write,
-    query_response, 
-    expected_val, 
+    query_response,
+    expected_val,
     write_val
 ):
     if expected_query is not None:
@@ -178,7 +178,8 @@ def test_get_active_trace(mocker, mocked_ff):
     ]
     mocked_ff.query.side_effect = query_responses
     mocked_ff.ch1.sweep = mocker.MagicMock()
-    mocker.patch('skrf.vi.vna.keysight.PNA.Channel.active_trace_sdata', return_value=mock_sdata, new_callable=mocker.PropertyMock)
+    mocker.patch('skrf.vi.vna.keysight.PNA.Channel.active_trace_sdata',
+                return_value=mock_sdata, new_callable=mocker.PropertyMock)
     test = mocked_ff.ch1.get_active_trace()
     assert isinstance(test, skrf.Network)
     mocked_ff.ch1.sweep.assert_called_once()

@@ -151,6 +151,6 @@ class ConvenienceTestCase(unittest.TestCase):
         self.assertTrue(ntwk.frequency.f[npy.argmin(ntwk.s11.s_mag)], 55.5e6)
 
         self.assertTrue(npy.allclose(ntwk.s_re[0][2], # check s3n_re
-                                    [-9.748145748042028E-6, 5.737806652221101E-6, -7.283138400961303E-1,  -7.202238521877286E-6]))
+                                    [-9.748145748042E-6, 5.737806652221E-6, -7.2831384009613E-1,  -7.2022385218772E-6]))
         self.assertTrue(npy.allclose(ntwk.s_im[0][2], # check s3n_im
-                                    [4.457944078457155E-6, 5.341399484369366E-6, -4.531402467395991E-1, 5.667857998796495E-7]))
+                                    [4.4579440784571E-6, 5.3413994843693E-6, -4.5314024673959E-1, 5.6678579987964E-7]))

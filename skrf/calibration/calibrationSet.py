@@ -55,7 +55,9 @@ class CalibrationSet:
     References
     -----------
 
-    .. [1] A. Arsenovic, L. Chen, M. F. Bauwens, H. Li, N. S. Barker, and R. M. Weikle, "An Experimental Technique for Calibration Uncertainty Analysis," IEEE Transactions on Microwave Theory and Techniques, vol. 61, no. 1, pp. 263-269, 2013.
+    .. [1] A. Arsenovic, L. Chen, M. F. Bauwens, H. Li, N. S. Barker, and R. M. Weikle,
+    "An Experimental Technique for Calibration Uncertainty Analysis,"
+    IEEE Transactions on Microwave Theory and Techniques, vol. 61, no. 1, pp. 263-269, 2013.
 
     """
 

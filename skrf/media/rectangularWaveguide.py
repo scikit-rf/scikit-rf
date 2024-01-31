@@ -62,7 +62,7 @@ class RectangularWaveguide(Media):
         (Default is None)
     z0 : number, array-like, or None
         deprecated parameter, alias to `z0_override` if `z0_override` is None.
-        Emmit a deprecation warning. 
+        Emmit a deprecation warning.
     a : number, optional
         width of waveguide, in meters.
         Default is 1.
@@ -120,7 +120,7 @@ class RectangularWaveguide(Media):
             raise ValueError('mode_type must be either \'te\' or \'tm\'')
 
 
-        
+
         self.a = a
         self.b = b
         self.mode_type = mode_type.lower()
@@ -468,7 +468,7 @@ class RectangularWaveguide(Media):
         The characteristic impedance, :math:`z_0`.
 
         The characteristic impedance depends of the mode ('te' or 'tm').
-        
+
         Returns
         -------
         z0_characteristic : npy.ndarray

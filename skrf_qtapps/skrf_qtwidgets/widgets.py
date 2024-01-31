@@ -89,7 +89,11 @@ class OverwriteFilesQuery(QtWidgets.QDialog):
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(
-            QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.No | QtWidgets.QDialogButtonBox.Yes | QtWidgets.QDialogButtonBox.YesToAll)
+            QtWidgets.QDialogButtonBox.Cancel
+            | QtWidgets.QDialogButtonBox.No
+            | QtWidgets.QDialogButtonBox.Yes
+            | QtWidgets.QDialogButtonBox.YesToAll
+        )
 
         self.choice = None
 

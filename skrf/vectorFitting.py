@@ -121,9 +121,9 @@ class VectorFitting:
 
         parameter_type : str, optional
             Representation type of the frequency responses to be fitted. Either *scattering* (`'s'` or `'S'`),
-            *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). As scikit-rf can currently only read S parameters
-            from a Touchstone file, the fit should also be performed on the original S parameters. Otherwise, scikit-rf
-            will convert the responses from S to Z or Y, which might work for the fit but can cause other issues.
+            *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). It's recommended to perform the fit on the
+            original S parameters. Otherwise, scikit-rf will convert the responses from S to Z or Y, which might work
+            for the fit but can cause other issues.
 
         fit_constant : bool, optional
             Include a constant term **d** in the fit.
@@ -467,7 +467,8 @@ class VectorFitting:
                 max_cond = np.amax(self.history_cond_A)
                 min_rank = np.amin(self.history_rank_A)
                 if max_cond > 1e10:
-                    hint_illcond = f'\nHint: the linear system was ill-conditioned (max. condition number was {max_cond}).'
+                    hint_illcond = ("\nHint: the linear system was ill-conditioned "
+                        f"(max. condition number was {max_cond}).")
                 else:
                     hint_illcond = ''
                 if min_rank < self.full_rank:
@@ -567,13 +568,13 @@ class VectorFitting:
         logging.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A))}')
 
         # solve least squares and obtain results as stack of real part vector and imaginary part vector
-        x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((A.real, A.imag)),
-                                                            np.hstack((freq_responses.real, freq_responses.imag)).transpose(),
+        x, _, rank, singular_vals = np.linalg.lstsq(np.vstack((A.real, A.imag)),
+                                                            np.hstack((freq_responses.real, freq_responses.imag)).T,
                                                             rcond=None)
 
         # align poles and residues arrays to get matching pole-residue pairs
         poles = np.concatenate((poles[idx_poles_real], poles[idx_poles_complex]))
-        residues = np.concatenate((x[idx_res_real], x[idx_res_complex_re] + 1j * x[idx_res_complex_im]), axis=0).transpose()
+        residues = np.concatenate((x[idx_res_real], x[idx_res_complex_re] + 1j * x[idx_res_complex_im]), axis=0).T
 
         if fit_constant:
             constant_coeff = x[idx_constant][0]
