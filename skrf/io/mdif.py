@@ -13,14 +13,17 @@ Mdif class and utilities
    Mdif
 
 """
-import numpy as np
-from typing import Union, TextIO
-from ..util import get_fid
-from ..frequency import Frequency
-from ..network import Network, z2s, y2s
-from ..networkSet import NetworkSet
-from ..mathFunctions import magdeg_2_reim
 from itertools import product
+from typing import TextIO, Union
+
+import numpy as np
+
+from ..frequency import Frequency
+from ..mathFunctions import magdeg_2_reim
+from ..network import Network, y2s, z2s
+from ..networkSet import NetworkSet
+from ..util import get_fid
+
 
 class Mdif():
     """

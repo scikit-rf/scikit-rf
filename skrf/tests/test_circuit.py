@@ -1,8 +1,11 @@
-import skrf as rf
-import numpy as np
-import unittest
 import os
+import unittest
+
+import numpy as np
 from numpy.testing import assert_array_almost_equal
+
+import skrf as rf
+
 
 class CircuitTestConstructor(unittest.TestCase):
     """

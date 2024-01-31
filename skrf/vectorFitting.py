@@ -1,8 +1,8 @@
-import os
 import logging
+import os
 import warnings
 from timeit import default_timer as timer
-from typing import Any, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Tuple
 
 import numpy as np
 
@@ -11,7 +11,7 @@ try:
 except ImportError:
     pass
 
-from .util import axes_kwarg, Axes
+from .util import Axes, axes_kwarg
 
 # imports for type hinting
 if TYPE_CHECKING:

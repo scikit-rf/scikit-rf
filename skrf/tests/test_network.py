@@ -1,24 +1,25 @@
-import pytest
-from skrf.frequency import Frequency, InvalidFrequencyWarning
-import unittest
-import os
 import io
-import tempfile
-import zipfile
-import sys
-import numpy as npy
-from scipy import signal
-from pathlib import Path
+import os
 import pickle
-import skrf as rf
+import sys
+import tempfile
+import unittest
 import warnings
+import zipfile
+from pathlib import Path
+
 import numpy as np
+import numpy as npy
+import pytest
+from scipy import signal
+
+import skrf as rf
 from skrf import setup_pylab
-from skrf.media import CPW
-from skrf.media import DistributedCircuit
-from skrf.constants import S_DEFINITIONS
+from skrf.constants import S_DEF_HFSS_DEFAULT, S_DEFINITIONS
+from skrf.frequency import Frequency, InvalidFrequencyWarning
+from skrf.media import CPW, DistributedCircuit
 from skrf.networkSet import tuner_constellation
-from skrf.constants import S_DEF_HFSS_DEFAULT
+
 try:
     from skrf.plotting import plot_contour
 except ImportError:

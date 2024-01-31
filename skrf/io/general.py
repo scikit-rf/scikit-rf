@@ -62,37 +62,47 @@ JSON
 
 
 """
-from typing import List, Tuple, Optional
+from __future__ import annotations
 
 import glob
 import inspect
 import json
 import os
 import pickle
-from pickle import UnpicklingError
 import sys
 import warnings
-import numpy as npy
-from pandas import DataFrame, Series, ExcelWriter
 from io import StringIO
+from pickle import UnpicklingError
+from typing import Any, List, Optional, Tuple
 
-from ..util import get_extn, get_fid
-from ..network import Network
+import numpy as npy
+from pandas import DataFrame, ExcelWriter, Series
+
 from ..frequency import Frequency
-from ..media import Media
+from ..network import Network
 from ..networkSet import NetworkSet
-from ..calibration.calibration import Calibration
+from ..util import get_extn, get_fid
 
-# file extension conventions for skrf objects.
-OBJ_EXTN = [
-    [Frequency, 'freq'],
-    [Network, 'ntwk'],
-    [NetworkSet, 'ns'],
-    [Calibration, 'cal'],
-    [Media, 'med'],
-    [object, 'p'],
+
+def _get_extension(inst: Any) -> str:
+    """File extension conventions for skrf objects.
+    """
+    from ..calibration.calibration import Calibration
+    from ..media import Media
+
+    extensions = [
+        (Frequency, "freq"),
+        (Network, "ntwk"),
+        (NetworkSet, "ns"),
+        (Calibration, "cal"),
+        (Media, "med"),
     ]
 
+    for cls, ext in extensions:
+        print(cls, ext)
+        if isinstance(inst, cls):
+            return ext
+    return "p"
 
 def read(file, *args, **kwargs):
     r"""
@@ -227,11 +237,7 @@ def write(file, obj, overwrite = True):
         extn = get_extn(file)
         if extn is None:
             # if there is not extension add one
-            for obj_extn in OBJ_EXTN:
-                if isinstance(obj, obj_extn[0]):
-                    extn = obj_extn[1]
-                    break
-            file = file + '.' + extn
+            file += f".{_get_extension(obj)}"
 
         if os.path.exists(file):
             if not overwrite:
@@ -422,11 +428,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
         extn = get_extn(filename)
         if extn is None:
             # if there is not extension add one
-            for obj_extn in OBJ_EXTN:
-                if isinstance(obj, obj_extn[0]):
-                    extn = obj_extn[1]
-                    break
-            filename = filename + '.' + extn
+            filename += f".{_get_extension(obj)}"
         try:
             with open(os.path.join(dir+'/', filename), 'wb') as fid:
                 write(fid, obj,*args, **kwargs)
@@ -747,7 +749,7 @@ def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'],
             d[f'{attr} {m+1}{port_sep}{n+1}'] = attr_array[:, m, n]
     return DataFrame(d, index=ntwk.frequency.f)
 
-def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_type: str = 'excel',
+def networkset_2_spreadsheet(ntwkset: NetworkSet, file_name: str = None, file_type: str = 'excel',
     *args, **kwargs):
     r"""
     Write a NetworkSet object to a spreadsheet, for your boss.

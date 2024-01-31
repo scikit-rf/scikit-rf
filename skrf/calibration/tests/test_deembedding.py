@@ -1,8 +1,11 @@
-import pytest
-import skrf as rf
-import unittest
 import os
+import unittest
+
 import numpy as np
+import pytest
+
+import skrf as rf
+
 
 class DeembeddingTestCase(unittest.TestCase):
     """

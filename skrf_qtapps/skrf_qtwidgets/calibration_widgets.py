@@ -1,9 +1,10 @@
-from qtpy import QtWidgets, QtCore
-import pyqtgraph as pg
-import skrf
 import numpy as np
+import pyqtgraph as pg
+from qtpy import QtCore, QtWidgets
 
-from . import qt, networkListWidget, numeric_inputs, widgets
+import skrf
+
+from . import networkListWidget, numeric_inputs, qt, widgets
 
 
 class CalibratedMeasurementsWidget(QtWidgets.QWidget):

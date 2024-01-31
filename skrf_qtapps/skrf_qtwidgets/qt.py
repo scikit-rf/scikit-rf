@@ -1,12 +1,13 @@
-import os
-import time
-import sys
-import traceback
-import platform
 import ctypes
+import os
+import platform
+import sys
+import time
+import traceback
+
+from qtpy import QtCore, QtGui, QtWidgets
 
 from . import cfg  # must import cfg before qtpy to properly parse qt-bindings
-from qtpy import QtCore, QtWidgets, QtGui
 
 
 class QHLine(QtWidgets.QFrame):

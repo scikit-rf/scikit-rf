@@ -1,11 +1,14 @@
-from skrf.mathFunctions import LOG_OF_NEG
-import skrf as rf
 import unittest
+
 import numpy as npy
-from numpy import log, pi, isnan, inf
-from numpy.testing import assert_equal, assert_almost_equal
 import pytest
+from numpy import inf, isnan, log, pi
+from numpy.testing import assert_almost_equal, assert_equal
+
+import skrf as rf
 from skrf.constants import EIG_MIN
+from skrf.mathFunctions import LOG_OF_NEG
+
 
 class TestUnitConversions(unittest.TestCase):
     """

@@ -47,13 +47,15 @@ Reading/Writing Anritsu VectorStar
 
 
 """
-import numpy as npy
 import os
-from ..network import Network
-from .. import mathFunctions as mf
-from ..frequency import Frequency
-from .. import util
 from warnings import warn
+
+import numpy as npy
+
+from .. import mathFunctions as mf
+from .. import util
+from ..frequency import Frequency
+from ..network import Network
 
 # delayed imports
 # from pandas import Series, Index, DataFrame
@@ -149,7 +151,7 @@ def pna_csv_2_df(filename):
 
     """
     warn("deprecated", DeprecationWarning)
-    from pandas import Index, DataFrame
+    from pandas import DataFrame, Index
     header, comments, d = read_pna_csv(filename)
     f_unit = header.split(',')[0].split(')')[0].split('(')[1]
 
@@ -525,7 +527,7 @@ class AgilentCSV:
         df : `pandas.DataFrame`
 
         """
-        from pandas import  Index, DataFrame
+        from pandas import DataFrame, Index
 
         index = Index(
             self.frequency.f_scaled,

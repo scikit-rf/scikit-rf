@@ -25,10 +25,16 @@ Example/Test Networks
     short_2p
 
 """
-import os
+from __future__ import annotations
 
-from ..network import Network
+import os
+from typing import TYPE_CHECKING
+
 from ..io.general import read
+from ..network import Network
+
+if TYPE_CHECKING:
+    from ..calibration import Calibration
 
 pwd = os.path.dirname(os.path.abspath(__file__))
 
@@ -109,12 +115,16 @@ class StaticData:
     def ro_3(self) -> Network:
         return Network(os.path.join(pwd, 'ro,3.s1p'))
 
+    @property
+    def one_port_cal(self) -> Calibration:
+        return read(os.path.join(pwd, 'one_port.cal'), encoding='latin1')
+
 _data = StaticData()
 
 def __getattr__(name):
     return getattr(_data, name)
 
-one_port_cal = read(os.path.join(pwd, 'one_port.cal'), encoding='latin1')
+#one_port_cal = read(os.path.join(pwd, 'one_port.cal'), encoding='latin1')
 
 mpl_rc_fname = os.path.join(pwd, 'skrf.mplstyle')
 

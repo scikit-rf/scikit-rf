@@ -2,10 +2,11 @@ import os
 import re
 from collections import OrderedDict
 
-from qtpy import QtWidgets, QtCore
+from qtpy import QtCore, QtWidgets
 
 import skrf
-from . import qt, numeric_inputs, widgets
+
+from . import numeric_inputs, qt, widgets
 from .networkPlotWidget import NetworkPlotWidget
 
 

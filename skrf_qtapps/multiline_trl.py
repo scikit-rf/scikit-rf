@@ -1,5 +1,6 @@
-from skrf_qtapps.skrf_qtwidgets import NetworkPlotWidget, qt, widgets, calibration_widgets
-from qtpy import QtWidgets, QtCore
+from qtpy import QtCore, QtWidgets
+
+from skrf_qtapps.skrf_qtwidgets import NetworkPlotWidget, calibration_widgets, qt, widgets
 
 
 class TRLWidget(QtWidgets.QWidget):

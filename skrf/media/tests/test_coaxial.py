@@ -1,11 +1,13 @@
-import unittest
 import os
+import unittest
 
+import numpy as npy
 import pytest
+from numpy.testing import assert_almost_equal, assert_array_almost_equal
+
 import skrf as rf
 from skrf.media import Coaxial
-import numpy as npy
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+
 
 class MediaTestCase(unittest.TestCase):
     """

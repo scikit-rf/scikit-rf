@@ -20,8 +20,7 @@ import shutil
 import sys
 from os import chdir as cd
 from os.path import join as pjoin
-
-from subprocess import Popen, PIPE, CalledProcessError, check_call
+from subprocess import PIPE, CalledProcessError, Popen, check_call
 
 #-----------------------------------------------------------------------------
 # Globals

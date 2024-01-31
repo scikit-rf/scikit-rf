@@ -1,8 +1,10 @@
-import skrf as rf
 import unittest
-from numpy import real, imag, linspace, pi, array
+
+from numpy import array, imag, linspace, pi, real
 from numpy.random import rand
-from numpy.testing import assert_equal, assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_equal
+
+import skrf as rf
 
 
 class TestBasicTransmissionLine(unittest.TestCase):

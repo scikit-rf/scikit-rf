@@ -27,8 +27,10 @@ References
 
 from numbers import Number
 from typing import Callable, List
-from . network import cascade_list
-from numpy import exp, log, linspace
+
+from numpy import exp, linspace, log
+
+from .network import cascade_list
 
 
 class Taper1D:

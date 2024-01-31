@@ -15,12 +15,14 @@ behaviour is frequency invariant.
 
    DefinedAEpTandZ0
 """
-from typing import Union
 import warnings
-from scipy.constants import  c
-from numpy import real, imag, sqrt, ones, pi, log
-from .. constants import NumberLike
-from .. frequency import Frequency
+from typing import Union
+
+from numpy import imag, log, ones, pi, real, sqrt
+from scipy.constants import c
+
+from ..constants import NumberLike
+from ..frequency import Frequency
 from .media import Media
 
 

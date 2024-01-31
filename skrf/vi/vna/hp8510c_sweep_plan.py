@@ -1,7 +1,8 @@
 import dataclasses
-import numpy as np
-from typing import List
 from abc import ABC, abstractmethod
+from typing import List
+
+import numpy as np
 
 
 class SweepSection(ABC):

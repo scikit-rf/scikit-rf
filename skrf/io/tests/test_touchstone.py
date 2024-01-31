@@ -1,9 +1,10 @@
-import unittest
 import os
-import numpy as npy
+import unittest
 from pathlib import Path
 
+import numpy as npy
 import pytest
+
 from skrf.io.touchstone import Touchstone
 
 

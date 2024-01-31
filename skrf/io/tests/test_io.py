@@ -1,10 +1,11 @@
-import unittest
 import os
+import unittest
+
 import numpy as npy
 
 import skrf as rf
-from skrf.io import Touchstone
-from skrf.io import network_2_dataframe
+from skrf.io import Touchstone, network_2_dataframe
+
 
 class IOTestCase(unittest.TestCase):
     """

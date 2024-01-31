@@ -17,9 +17,9 @@ CalibrationSet Class
 
 """
 from itertools import product
-from .calibration import Calibration
-from ..networkSet import NetworkSet
 
+from ..networkSet import NetworkSet
+from .calibration import Calibration
 
 
 def cartesian_product(ideals, measured_sets, *args, **kwargs):

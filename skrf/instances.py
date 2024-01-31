@@ -56,9 +56,10 @@ References
 .. [#] Spinner Technical Information: Cross Reference For Hollow Metallic Waveguides (TD-00036) https://www.spinner-group.com/images/download/technical_documents/SPINNER_TD00036.pdf
 """
 
-from . frequency import Frequency
-from . media import RectangularWaveguide, Freespace
 from .constants import mil
+from .frequency import Frequency
+from .media import Freespace, RectangularWaveguide
+
 
 class StaticInstances:
     @property

@@ -13,13 +13,16 @@ Citi class and utilities
    Citi
 
 """
-import numpy as np
 import typing
-from ..util import get_fid
+
+import numpy as np
+
 from ..frequency import Frequency
+from ..mathFunctions import magdeg_2_reim
 from ..network import Network, z2s
 from ..networkSet import NetworkSet
-from ..mathFunctions import magdeg_2_reim
+from ..util import get_fid
+
 
 class Citi():
     """

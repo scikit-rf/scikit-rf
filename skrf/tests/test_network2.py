@@ -1,9 +1,11 @@
-import unittest
-import skrf as rf
 import os
+import unittest
+
 import numpy as np
 
+import skrf as rf
 from skrf import network2 as n2
+
 
 def get_abs_file_path(filename):
     test_dir = os.path.dirname(os.path.abspath(__file__))+'/'

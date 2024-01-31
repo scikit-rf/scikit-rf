@@ -2,11 +2,11 @@ import os
 import sys
 import traceback
 
-from qtpy import QtWidgets, QtCore
+from qtpy import QtCore, QtWidgets
 
 import skrf
-from . import numeric_inputs
-from . import qt
+
+from . import numeric_inputs, qt
 from .analyzers import analyzers
 
 

@@ -53,16 +53,18 @@ De-embedding Methods
 
 """
 
-from abc import ABC, abstractmethod
-from ..frequency import *
-from ..network import *
 import warnings
+from abc import ABC, abstractmethod
+
 import numpy as np
-from numpy import concatenate, conj, flip, real, angle, exp, zeros
-from numpy.fft import fft, fftshift, irfft, ifftshift
+from numpy import angle, concatenate, conj, exp, flip, real, zeros
+from numpy.fft import fft, fftshift, ifftshift, irfft
 from scipy.interpolate import interp1d
 
+from ..frequency import Frequency
+from ..network import Network, concat_ports, overlap_multi, subnetwork
 from ..util import subplots
+
 
 class Deembedding(ABC):
     """
@@ -1282,12 +1284,12 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             e01 = np.sqrt(s21r * (1 - e111 * e112))
             for i in range(n):
                 if i > 0:
-                    if npy.abs(-e01[i] - e01[i-1]) < npy.abs(e01[i] - e01[i-1]):
+                    if np.abs(-e01[i] - e01[i-1]) < np.abs(e01[i] - e01[i-1]):
                         e01[i] = - e01[i]
             e10 = np.sqrt(s12r * (1 - e111 * e112))
             for i in range(n):
                 if i > 0:
-                    if npy.abs(-e10[i] - e10[i-1]) < npy.abs(e10[i] - e10[i-1]):
+                    if np.abs(-e10[i] - e10[i-1]) < np.abs(e10[i] - e10[i-1]):
                         e10[i] = - e10[i]
 
 

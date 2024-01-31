@@ -12,17 +12,19 @@ A coaxial transmission line defined from its electrical or geometrical/physical 
 """
 
 #from copy import deepcopy
-from scipy.constants import  epsilon_0, mu_0, pi, c
-from numpy import sqrt, log, imag, exp, expm1, size, array
-from ..tlineFunctions import surface_resistivity, skin_depth
-from .distributedCircuit import DistributedCircuit
-from .media import Media, DefinedGammaZ0
+from typing import TYPE_CHECKING, Union
+
+from numpy import array, exp, expm1, imag, log, size, sqrt
+from scipy.constants import c, epsilon_0, mu_0, pi
+
 from ..constants import INF, NumberLike
-from ..mathFunctions import feet_2_meter, db_per_100feet_2_db_per_100meter, db_2_np
-from typing import Union, TYPE_CHECKING
+from ..mathFunctions import db_2_np, db_per_100feet_2_db_per_100meter, feet_2_meter
+from ..tlineFunctions import skin_depth, surface_resistivity
+from .distributedCircuit import DistributedCircuit
+from .media import DefinedGammaZ0, Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class Coaxial(DistributedCircuit, Media):

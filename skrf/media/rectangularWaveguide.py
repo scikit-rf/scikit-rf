@@ -25,18 +25,20 @@ Characteristic Impedance              :math:`z_0`    :attr:`z0`
 
 """
 from numbers import Number
-from scipy.constants import  epsilon_0, mu_0, pi
-from numpy import sqrt, exp, where
+from typing import TYPE_CHECKING, Union
+
 import numpy as npy
-from .media import Media
+from numpy import exp, sqrt, where
+from scipy.constants import epsilon_0, mu_0, pi
+
+from ..constants import NumberLike
 from ..data import materials
 from ..tlineFunctions import skin_depth
 from .freespace import Freespace
-from ..constants import NumberLike
-from typing import Union, TYPE_CHECKING
+from .media import Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class RectangularWaveguide(Media):

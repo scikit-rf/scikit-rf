@@ -11,27 +11,24 @@ Media class.
     DefinedGammaZ0
 
 """
+import re
+import warnings
+from abc import ABC, abstractmethod
+from copy import deepcopy as copy
 from numbers import Number
 from pathlib import Path
-import warnings
+from typing import Union
 
 import numpy as npy
-from numpy import real, imag, ones, any, gradient, array
+from numpy import any, array, gradient, imag, ones, real
 from scipy import stats
-from scipy.constants import  c
+from scipy.constants import c
 
+from .. import mathFunctions as mf
+from ..constants import S_DEF_DEFAULT, ZERO, NumberLike, to_meters
 from ..frequency import Frequency
 from ..network import Network, connect, impedance_mismatch, innerconnect
 
-from .. import mathFunctions as mf
-
-from ..constants import NumberLike, to_meters, ZERO
-from typing import Union
-
-from abc import ABC, abstractmethod
-import re
-from copy import deepcopy as copy
-from ..constants import S_DEF_DEFAULT
 
 class Media(ABC):
     """

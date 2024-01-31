@@ -18,15 +18,18 @@ Time domain functions
 
 """
 
-from .util import find_nearest_index
-from scipy import signal
-import numpy as npy
-from numpy.fft import fft, rfft, fftshift, ifft, irfft, ifftshift
-from scipy.ndimage import convolve1d
 import warnings
 
 # imports for type hinting
-from typing import List, TYPE_CHECKING, Union, Callable
+from typing import TYPE_CHECKING, Callable, List, Union
+
+import numpy as npy
+from numpy.fft import fft, fftshift, ifft, ifftshift, irfft, rfft
+from scipy import signal
+from scipy.ndimage import convolve1d
+
+from .util import find_nearest_index
+
 if TYPE_CHECKING:
     from .network import Network
 

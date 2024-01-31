@@ -50,25 +50,27 @@ General Purpose Objects
     HomoDict
 
 """
+import collections
 import contextlib
 import fnmatch
 import os
-from typing import Iterable, Tuple, List, Union, Any, TypeVar, Callable
-import warnings
-import numpy as npy
-from datetime import datetime
-import collections
 import pprint
 import re
-from subprocess import Popen, PIPE
 import sys
+import warnings
+from datetime import datetime
 from functools import wraps
+from subprocess import PIPE, Popen
+from typing import Any, Callable, Iterable, List, Tuple, TypeVar, Union
+
+import numpy as npy
+
 from .constants import Number
 
 try:
-    from matplotlib.figure import Figure
-    from matplotlib.axes import Axes
     import matplotlib.pyplot as plt
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 except ImportError:
     Figure = TypeVar("Figure")
     Axes = TypeVar("Axes")

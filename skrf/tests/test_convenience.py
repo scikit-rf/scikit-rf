@@ -1,5 +1,6 @@
-import unittest
 import os
+import unittest
+
 import numpy as npy
 
 import skrf as rf

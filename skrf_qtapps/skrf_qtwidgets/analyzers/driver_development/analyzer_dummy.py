@@ -1,8 +1,9 @@
-import numpy as np
-from skrf_qtwidgets.analyzers import base_analyzer
-
 import os
+
+import numpy as np
+
 import skrf
+from skrf_qtwidgets.analyzers import base_analyzer
 from skrf_qtwidgets.cfg import example_data_dir
 
 

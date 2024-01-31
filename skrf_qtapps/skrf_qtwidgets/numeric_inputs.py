@@ -1,6 +1,6 @@
 import re
 
-from qtpy import QtWidgets, QtCore, QtGui
+from qtpy import QtCore, QtGui, QtWidgets
 
 from . import util
 

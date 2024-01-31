@@ -82,16 +82,15 @@ Graph representation
    Circuit.edge_labels
 
 """
-from . network import Network, s2s
-from . media import media
-from . constants import INF, NumberLike, S_DEF_DEFAULT
-from . util import subplots
+from itertools import chain
+from typing import TYPE_CHECKING, List, Tuple
 
 import numpy as np
 
-from itertools import chain
-
-from typing import List, TYPE_CHECKING, Tuple
+from .constants import INF, S_DEF_DEFAULT, NumberLike
+from .media import media
+from .network import Network, s2s
+from .util import subplots
 
 if TYPE_CHECKING:
     from .frequency import Frequency

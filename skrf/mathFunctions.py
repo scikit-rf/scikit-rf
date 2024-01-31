@@ -84,11 +84,12 @@ Various Utility Functions
 
 """
 from typing import Callable, Union
+
 import numpy as npy
-from numpy import pi, unwrap, real, imag
+from numpy import imag, pi, real, unwrap
 from scipy import signal
 
-from . constants import NumberLike, INF, ALMOST_ZERO, LOG_OF_NEG, EIG_COND, EIG_MIN
+from .constants import ALMOST_ZERO, EIG_COND, EIG_MIN, INF, LOG_OF_NEG, NumberLike
 
 
 # simple conversions

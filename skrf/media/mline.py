@@ -8,18 +8,19 @@ MLine (:mod:`skrf.media.MLine`)
    MLine
 
 """
-import numpy as npy
-from numpy import log, log10, tanh, sqrt, exp, real, imag, cosh, \
-                            ones, zeros, arctan
-from scipy.constants import  epsilon_0, mu_0, c, pi
-from .media import Media
-from ..tlineFunctions import skin_depth, surface_resistivity
-from ..constants import NumberLike
-from typing import Union, TYPE_CHECKING
 import warnings
+from typing import TYPE_CHECKING, Union
+
+import numpy as npy
+from numpy import arctan, cosh, exp, imag, log, log10, ones, real, sqrt, tanh, zeros
+from scipy.constants import c, epsilon_0, mu_0, pi
+
+from ..constants import NumberLike
+from ..tlineFunctions import skin_depth, surface_resistivity
+from .media import Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class MLine(Media):

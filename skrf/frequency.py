@@ -37,17 +37,21 @@ Misc
 """
 
 # from matplotlib.pyplot import gca,plot, autoscale
-from typing import List
-import warnings
-
-from numbers import Number
-from .constants import NumberLike, ZERO, FREQ_UNITS
-from typing import Union
-from numpy import pi, linspace, geomspace
-import numpy as npy
-from numpy import gradient  # used to center attribute `t` at 0
 import re
-from .util import slice_domain, find_nearest_index, axes_kwarg, Axes
+import warnings
+from numbers import Number
+from typing import List, Union
+
+import numpy as npy
+from numpy import (
+    geomspace,
+    gradient,  # used to center attribute `t` at 0
+    linspace,
+    pi,
+)
+
+from .constants import FREQ_UNITS, ZERO, NumberLike
+from .util import Axes, axes_kwarg, find_nearest_index, slice_domain
 
 
 class InvalidFrequencyWarning(UserWarning):

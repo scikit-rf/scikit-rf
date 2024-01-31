@@ -151,25 +151,22 @@ Misc Functions
     Network.drop_non_monotonic_increasing
 
 """
-from typing import (Any, NoReturn, Optional, Sequence,
-    Sized, Union, Tuple, Callable, Dict, List, TextIO)
-from numbers import Number
-from functools import reduce
-
-import os
-import warnings
 import io
-from pathlib import Path
-from pickle import UnpicklingError
-
+import os
 import re
+import warnings
 import zipfile
 from copy import deepcopy as copy
+from functools import reduce
 from itertools import product
+from numbers import Number
+from pathlib import Path
+from pickle import UnpicklingError
+from typing import Any, Callable, Dict, List, NoReturn, Optional, Sequence, Sized, TextIO, Tuple, Union
 
 import numpy as npy
-from numpy.linalg import inv as npy_inv
 from numpy import gradient, ndarray, shape
+from numpy.linalg import inv as npy_inv
 from scipy import stats  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 
@@ -179,13 +176,12 @@ except ImportError:
     pass
 
 from . import mathFunctions as mf
-from .frequency import Frequency
 from . import plotting as rfplt
-from .util import get_fid, get_extn, find_nearest_index, axes_kwarg, copy_doc, partial_with_docs, Axes
-from .time import time_gate, get_window
+from .constants import K_BOLTZMANN, S_DEF_DEFAULT, S_DEFINITIONS, T0, ZERO, NumberLike
+from .frequency import Frequency
+from .time import get_window, time_gate
+from .util import Axes, axes_kwarg, copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
 
-from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
-from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
 class Network:
     r"""

@@ -1,9 +1,11 @@
 
-import numpy as np
-import pytest
 import sys
 
+import numpy as np
+import pytest
+
 import skrf
+
 try:
     from skrf.vi.vna import ValuesFormat, keysight
     from skrf.vi.vna.keysight.pna import SweepMode, SweepType

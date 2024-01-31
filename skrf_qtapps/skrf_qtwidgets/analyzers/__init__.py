@@ -1,9 +1,9 @@
-from collections import OrderedDict
-import importlib
 import glob
+import importlib
 import os.path
-import traceback
 import sys
+import traceback
+from collections import OrderedDict
 
 analyzers = OrderedDict()
 

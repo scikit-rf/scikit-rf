@@ -128,13 +128,14 @@ References
    pp. 669–671, Aug. 1983, doi: 10.1109/TMTT.1983.1131566.
 
 """
-import numpy as np
-from .network import Network
-from .frequency import Frequency
-from .constants import NumberLike
 from typing import Union
 from warnings import warn
 
+import numpy as np
+
+from .constants import NumberLike
+from .frequency import Frequency
+from .network import Network
 
 # Available resonance types
 RESONANCE_TYPES = ['reflection', 'reflection_method2',

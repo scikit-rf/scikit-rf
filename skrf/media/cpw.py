@@ -8,17 +8,19 @@ cpw (:mod:`skrf.media.cpw`)
    CPW
 
 """
-from numpy import sqrt, log, zeros, any, tanh, sinh, exp, real, imag
-from scipy.constants import  epsilon_0, mu_0, c, pi
-from scipy.special import ellipk
-from .media import Media
-from ..tlineFunctions import surface_resistivity, skin_depth
-from ..constants import NumberLike
-from typing import Union, TYPE_CHECKING
 import warnings
+from typing import TYPE_CHECKING, Union
+
+from numpy import any, exp, imag, log, real, sinh, sqrt, tanh, zeros
+from scipy.constants import c, epsilon_0, mu_0, pi
+from scipy.special import ellipk
+
+from ..constants import NumberLike
+from ..tlineFunctions import skin_depth, surface_resistivity
+from .media import Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class CPW(Media):

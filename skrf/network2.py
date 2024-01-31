@@ -1,23 +1,21 @@
-from .frequency import Frequency
-from .mathFunctions import *
-from .plotting import plot_complex_rectangular,plot_rectangular, smith
-from .util import find_nearest_index,slice_domain
-
-from scipy import  signal
 import numpy as npy
 from numpy import fft
+from scipy import signal
+
+from .frequency import Frequency
+from .mathFunctions import *
+from .plotting import plot_complex_rectangular, plot_rectangular, smith
+from .util import find_nearest_index, slice_domain
 
 try:
     import matplotlib.pyplot as plb
 except ImportError:
     pass
 
-from IPython.display import Image
-from IPython.core.pylabtools import print_figure
-
 import re
 
-
+from IPython.core.pylabtools import print_figure
+from IPython.display import Image
 
 ##
 

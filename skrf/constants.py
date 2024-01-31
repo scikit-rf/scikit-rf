@@ -50,8 +50,9 @@ This module contains constants, numerical approximations, and unit conversions
 """
 from numbers import Number
 from typing import Sequence, Union
+
 import numpy as npy
-from scipy.constants import c, mil, inch
+from scipy.constants import c, inch, mil
 
 # used as substitutes to handle mathematical singularities.
 INF = 1e99

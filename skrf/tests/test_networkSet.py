@@ -1,10 +1,13 @@
-import unittest
-import os
-import numpy as np
-import skrf as rf
 import glob
+import os
 import sys
+import unittest
+
+import numpy as np
 import pytest
+
+import skrf as rf
+
 
 class NetworkSetTestCase(unittest.TestCase):
     """

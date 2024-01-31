@@ -1,11 +1,12 @@
-import unittest
 import os
-import numpy as npy
+import unittest
 
-from skrf.media import CPW
-from skrf.frequency import Frequency
-import skrf as rf
+import numpy as npy
 from numpy.testing import assert_array_almost_equal
+
+import skrf as rf
+from skrf.frequency import Frequency
+from skrf.media import CPW
 
 try:
     from matplotlib import pyplot as plt

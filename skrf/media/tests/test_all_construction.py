@@ -4,13 +4,12 @@ of all general circuit components
 
 """
 import unittest
+
 import numpy as np
 from scipy.constants import *
 
 import skrf as rf
-from skrf.media import Freespace, CircularWaveguide, RectangularWaveguide
-from skrf.media import Coaxial, DistributedCircuit
-from skrf.media import CPW, MLine
+from skrf.media import CPW, CircularWaveguide, Coaxial, DistributedCircuit, Freespace, MLine, RectangularWaveguide
 
 
 class MediaTestCase():

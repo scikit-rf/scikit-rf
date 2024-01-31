@@ -11,13 +11,15 @@ A transmission line mode defined in terms of distributed impedance and admittanc
 
 """
 
-from numpy import sqrt, real, imag
-from .media import Media, DefinedGammaZ0
+from typing import TYPE_CHECKING, Union
+
+from numpy import imag, real, sqrt
+
 from ..constants import NumberLike
-from typing import Union, TYPE_CHECKING
+from .media import DefinedGammaZ0, Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class DistributedCircuit(Media):

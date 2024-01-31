@@ -1,8 +1,10 @@
-from . import abcvna
-import numpy as np
-import skrf
 from time import sleep
 
+import numpy as np
+
+import skrf
+
+from . import abcvna
 
 # Communication commands and register addresses are listed in the user manual at
 # https://nanorfe.com/nanovna-v2-user-manual.html

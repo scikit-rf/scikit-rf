@@ -52,9 +52,8 @@ import numpy as npy
 from scipy.interpolate import interp1d
 
 from . import mathFunctions as mf
-from .network import (COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency,
-                      Network)
-from .util import now_string_2_dt, copy_doc
+from .network import COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency, Network
+from .util import copy_doc, now_string_2_dt
 
 try:
     from numpy.typing import ArrayLike
@@ -62,7 +61,6 @@ except ImportError:
     ArrayLike = Any
 
 from . import plotting as skrf_plt
-
 
 
 class NetworkSet:

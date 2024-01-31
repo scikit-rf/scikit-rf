@@ -35,12 +35,12 @@ Media base-class
 
 """
 
-from .media import *
-from .distributedCircuit import DistributedCircuit
-from .freespace import Freespace
-from .cpw import CPW
-from .rectangularWaveguide import RectangularWaveguide
 from .circularWaveguide import CircularWaveguide
 from .coaxial import Coaxial
-from .mline import MLine
+from .cpw import CPW
 from .definedAEpTandZ0 import DefinedAEpTandZ0
+from .distributedCircuit import DistributedCircuit
+from .freespace import Freespace
+from .media import *
+from .mline import MLine
+from .rectangularWaveguide import RectangularWaveguide

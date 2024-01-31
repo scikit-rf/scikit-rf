@@ -1,33 +1,31 @@
 import unittest
 import warnings
-import pytest
 
 import numpy as npy
-from numpy.random  import uniform
+import pytest
+from numpy.random import uniform
 
 import skrf as rf
-from skrf.media import Coaxial
+from skrf import two_port_reflect
 from skrf.calibration import (
     PHN,
     SOLT,
-    UnknownThru,
-    TwoPortOnePath,
-    TwelveTerm,
-    terminate,
-    terminate_nport,
-    determine_line,
-    determine_reflect,
-    compute_switch_terms,
-    NISTMultilineTRL,
     MultiportCal,
     MultiportSOLT,
-    TUGMultilineTRL
+    NISTMultilineTRL,
+    TUGMultilineTRL,
+    TwelveTerm,
+    TwoPortOnePath,
+    UnknownThru,
+    compute_switch_terms,
+    determine_line,
+    determine_reflect,
+    terminate,
+    terminate_nport,
 )
-
-from skrf import two_port_reflect
+from skrf.media import Coaxial, DistributedCircuit
 from skrf.networkSet import NetworkSet
 from skrf.util import suppress_warning_decorator
-from skrf.media import DistributedCircuit
 
 # number of frequency points to test calibration at .
 # i choose 1 for speed, but given that many tests employ *random*

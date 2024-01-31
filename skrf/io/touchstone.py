@@ -26,21 +26,20 @@ Functions related to reading/writing touchstones.
 """
 from __future__ import annotations
 
-from typing import Optional
-
-from typing import Callable
-from dataclasses import dataclass, field
-import re
 import os
+import re
 import typing
-import zipfile
-import numpy as npy
 import warnings
+import zipfile
+from dataclasses import dataclass, field
+from typing import Callable, Optional
 
-from ..constants import S_DEF_HFSS_DEFAULT, FREQ_UNITS
-from ..util import get_fid
-from ..network import Network
+import numpy as npy
+
+from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT
 from ..media import DefinedGammaZ0
+from ..network import Network
+from ..util import get_fid
 
 
 def remove_prefix(text: str, prefix: str) -> str:

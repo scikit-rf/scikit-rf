@@ -87,30 +87,28 @@ PNA interaction
 
 """
 
-import numpy as npy
-from numpy import linalg
-from numpy.linalg import det
-from numpy import angle, real, imag, exp, ones, zeros, poly1d, invert, einsum, sqrt
-from scipy.optimize import least_squares
 import json
-from numbers import Number
-from collections import OrderedDict
-from copy import copy
 import warnings
+from collections import OrderedDict, defaultdict
+from copy import copy
+from itertools import combinations
+from numbers import Number
+from textwrap import dedent
 from warnings import warn
 
-from ..mathFunctions import sqrt_phase_unwrap, \
-    find_correct_sign, find_closest,  ALMOST_ZERO, rand_c, cross_ratio
+import numpy as npy
+from numpy import angle, einsum, exp, imag, invert, linalg, ones, poly1d, real, sqrt, zeros
+from numpy.linalg import det
+from scipy.optimize import least_squares
+
+from .. import __version__ as skrf__version__
+from .. import util
 from ..frequency import *
+from ..io.touchstone import read_zipped_touchstones
+from ..mathFunctions import ALMOST_ZERO, cross_ratio, find_closest, find_correct_sign, rand_c, sqrt_phase_unwrap
 from ..network import *
 from ..network import Network
 from ..networkSet import NetworkSet
-from .. import util
-from ..io.touchstone import read_zipped_touchstones
-from .. import __version__ as skrf__version__
-from collections import defaultdict
-from itertools import combinations
-from textwrap import dedent
 
 ComplexArray = npy.typing.NDArray[complex]
 

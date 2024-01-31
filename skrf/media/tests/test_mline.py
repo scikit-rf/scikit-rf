@@ -1,10 +1,11 @@
-import unittest
 import os
+import unittest
+
 import numpy as npy
 
-from skrf.media import MLine
-from skrf.frequency import Frequency
 import skrf as rf
+from skrf.frequency import Frequency
+from skrf.media import MLine
 
 try:
     from matplotlib import pyplot as plt

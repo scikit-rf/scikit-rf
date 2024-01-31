@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional, Sequence, Union
 
+import itertools
 import sys
 from enum import Enum
-import itertools
 
 import numpy as np
 

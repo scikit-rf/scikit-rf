@@ -14,15 +14,17 @@ the space's relative permittivity and relative permeability.
 
 
 """
+from typing import TYPE_CHECKING, Union
+
+from numpy import ones, real, sqrt
 from scipy.constants import epsilon_0, mu_0
-from .media import Media
-from ..data import materials
+
 from ..constants import NumberLike
-from typing import Union, TYPE_CHECKING
-from numpy import real, sqrt, ones
+from ..data import materials
+from .media import Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class Freespace(Media):

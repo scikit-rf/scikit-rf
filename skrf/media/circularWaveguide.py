@@ -8,18 +8,20 @@ circularWaveguide (:mod:`skrf.media.circularWaveguide`)
    CircularWaveguide
 
 """
-from scipy.constants import  epsilon_0, mu_0, pi
-from scipy.special import  jn_zeros, jnp_zeros
-from numpy import sqrt, where
+from typing import TYPE_CHECKING, Union
+
 import numpy as npy
-from .media import Media
+from numpy import sqrt, where
+from scipy.constants import epsilon_0, mu_0, pi
+from scipy.special import jn_zeros, jnp_zeros
+
+from ..constants import NumberLike
 from ..data import materials
 from .freespace import Freespace
-from ..constants import NumberLike
-from typing import Union, TYPE_CHECKING
+from .media import Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class CircularWaveguide(Media):

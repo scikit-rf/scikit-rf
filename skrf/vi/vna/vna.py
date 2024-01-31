@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional
 
-import inspect
 import functools
+import inspect
 import re
 from abc import ABC
 from enum import Enum, auto
