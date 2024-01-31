@@ -5526,7 +5526,7 @@ class MultiportCal():
         for k, c in cal_dict.items():
             if len(k) != 2:
                 raise ValueError("Invalid cal_dict key {}. Expected tuple of length two.".format(k))
-            if not isinstance(k, int) or not isinstance(k[1], int):
+            if not isinstance(k[0], int) or not isinstance(k[1], int):
                 raise ValueError("cal_dict key should be tuple of ints.")
             max_key_nports = max(max_key_nports, max(k[0], k[1]))
             min_key_nports = min(min_key_nports, min(k[0], k[1]))

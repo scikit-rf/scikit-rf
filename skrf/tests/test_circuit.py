@@ -1059,3 +1059,6 @@ class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
         I_at_ports = crt.currents_external(power, phase)
         np.testing.assert_allclose(V_at_ports, [[10+0j, 10+0j]])
         np.testing.assert_allclose(I_at_ports, [[-0.2+0j, 0.2+0j]])
+
+if __name__ == '__main__':
+    unittest.main()

@@ -43,6 +43,6 @@ class Analyzer(VNA):
 
     ***DRIVER TESTING***
     Although this driver template is designed for use with the widgets, it can be used with any program desired.
-    An ipython notebook can be found in the driver development folder that provides a template for how to test the
+    An ipython notebook can be found in the driver_development folder that provides a template for how to test the
     functionality of the driver.
     """
