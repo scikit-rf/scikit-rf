@@ -6,7 +6,7 @@ of all general circuit components
 import unittest
 
 import numpy as np
-from scipy.constants import *
+from scipy.constants import mil
 
 import skrf as rf
 from skrf.media import CPW, CircularWaveguide, Coaxial, DistributedCircuit, Freespace, MLine, RectangularWaveguide

@@ -103,11 +103,21 @@ from scipy.optimize import least_squares
 
 from .. import __version__ as skrf__version__
 from .. import util
-from ..frequency import *
 from ..io.touchstone import read_zipped_touchstones
 from ..mathFunctions import ALMOST_ZERO, cross_ratio, find_closest, find_correct_sign, rand_c, sqrt_phase_unwrap
-from ..network import *
-from ..network import Network
+from ..network import (
+    Network,
+    average,
+    connect,
+    renormalize_s,
+    s2t,
+    s2z,
+    subnetwork,
+    t2s,
+    two_port_reflect,
+    z2s,
+    zipfile,
+)
 from ..networkSet import NetworkSet
 
 ComplexArray = npy.typing.NDArray[complex]
@@ -1004,10 +1014,10 @@ class Calibration:
         \*\*kwargs : kwargs
             passed to the plot method of Network
         """
+        ns = NetworkSet(self.caled_ntwks)
         nports = ns[0].nports
         fig, axes = util.subplots(figsize=(8,8))
 
-        ns = NetworkSet(self.caled_ntwks)
         kwargs.update({'show_legend':show_legend})
 
         for ax ,mn in zip(axes, ns[0].port_tuples):

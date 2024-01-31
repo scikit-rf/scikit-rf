@@ -3,7 +3,7 @@ from numpy import fft
 from scipy import signal
 
 from .frequency import Frequency
-from .mathFunctions import *
+from .mathFunctions import complex_2_db, complex_2_db10, complex_2_degree, complex_2_radian
 from .plotting import plot_complex_rectangular, plot_rectangular, smith
 from .util import find_nearest_index, slice_domain
 
@@ -391,7 +391,7 @@ class Network:
         elif 'y' in kw:
             self.s = y2s(kw['y'],z0)
         else:
-            s=zeros(len(frequency))
+            s=npy.zeros(len(frequency))
 
         self.frequency = frequency
         self.z0 = z0
