@@ -11,13 +11,14 @@ Media class.
     DefinedGammaZ0
 
 """
+from __future__ import annotations
+
 import re
 import warnings
 from abc import ABC, abstractmethod
 from copy import deepcopy as copy
 from numbers import Number
 from pathlib import Path
-from typing import Union
 
 import numpy as npy
 from numpy import any, array, gradient, imag, ones, real
@@ -83,10 +84,10 @@ class Media(ABC):
     behaviour. The default (`z0_port = None`) is the first behaviour.
     """
 
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None):
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None):
         if frequency is None:
             frequency = Frequency(1,10,101,'GHz')
 
@@ -105,7 +106,7 @@ class Media(ABC):
         self.z0_port = z0_port
         self.z0_override = z0_override
 
-    def mode(self,  **kw) -> 'Media':
+    def mode(self,  **kw) -> Media:
         r"""
         Create another mode in this medium.
 
@@ -126,7 +127,7 @@ class Media(ABC):
             setattr(self, k, kw[k])
         return out
 
-    def copy(self) -> 'Media':
+    def copy(self) -> Media:
         """
         Copy of this Media object.
 
@@ -454,7 +455,7 @@ class Media(ABC):
     ## Network creation
 
     # lumped elements
-    def match(self, nports: int = 1, z0: Union[NumberLike, None] = None,
+    def match(self, nports: int = 1, z0: NumberLike | None = None,
               z0_norm: bool = False, **kwargs) -> Network:
         r"""
         Perfect matched load (:math:`\Gamma_0 = 0`).
@@ -501,7 +502,7 @@ class Media(ABC):
         return result
 
     def load(self, Gamma0: NumberLike, nports: int = 1,
-             z0: Union[NumberLike, None] = None, **kwargs) -> Network:
+             z0: NumberLike | None = None, **kwargs) -> Network:
         r"""
         Load of given reflection coefficient.
 
@@ -540,7 +541,7 @@ class Media(ABC):
         return result
 
     def short(self, nports: int = 1,
-              z0: Union[NumberLike, None] = None, **kwargs) -> Network:
+              z0: NumberLike | None = None, **kwargs) -> Network:
         r"""
         Short (:math:`\Gamma_0 = -1`)
 
@@ -870,7 +871,7 @@ class Media(ABC):
             return to_meters(d=d,unit=unit, v_g=v_g)
 
     def thru(self,
-             z0: Union[NumberLike, None] = None,
+             z0: NumberLike | None = None,
              **kwargs) -> Network:
         r"""
         Matched transmission line of length 0.
@@ -904,7 +905,7 @@ class Media(ABC):
         return self.line(0, z0 = z0, **kwargs)
 
     def line(self, d: NumberLike, unit: str = 'deg',
-             z0: Union[NumberLike, str, None] = None, embed: bool = False, **kwargs) -> Network:
+             z0: NumberLike | str | None = None, embed: bool = False, **kwargs) -> Network:
         r"""
         Transmission line of a given length and impedance.
 
@@ -1666,10 +1667,10 @@ class DefinedGammaZ0(Media):
         deprecated parameter, only emmit a deprecation warning.
     """
 
-    def __init__(self, frequency: Union[Frequency, None] = None,
-                 z0_port: Union[NumberLike, None] = None,
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
                  z0: NumberLike = 50,
-                 Z0: Union[NumberLike, None] = None,
+                 Z0: NumberLike | None = None,
                  gamma: NumberLike = 1j):
         super().__init__(frequency=frequency, z0_port=z0_port)
 

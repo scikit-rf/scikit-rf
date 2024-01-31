@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import List
 
 import numpy as np
 
@@ -63,7 +64,7 @@ class LinearCustomSweepSection(SweepSection):
 
 @dataclasses.dataclass
 class RandomSweepSection(SweepSection):
-    hz_list: List[float]
+    hz_list: list[float]
 
     def get_hz(self):
         return self.hz_list
@@ -90,7 +91,7 @@ class SweepPlan:
     801 point sweep and discarding a point saved 15 minutes in a recent script.
     """
 
-    sections: List[SweepSection]
+    sections: list[SweepSection]
 
     @classmethod
     def from_hz(cls, hz):

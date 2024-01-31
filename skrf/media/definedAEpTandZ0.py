@@ -15,8 +15,9 @@ behaviour is frequency invariant.
 
    DefinedAEpTandZ0
 """
+from __future__ import annotations
+
 import warnings
-from typing import Union
 
 from numpy import imag, log, ones, pi, real, sqrt
 from scipy.constants import c
@@ -126,12 +127,12 @@ class DefinedAEpTandZ0(Media):
 
     """
 
-    def __init__(self, frequency: Union[Frequency, None] = None,
+    def __init__(self, frequency: Frequency| None = None,
                  A: float = 0.0, f_A: float = 1.0,
                  ep_r: NumberLike = 1.0, tanD: NumberLike = 0.0,
-                 z0_port: Union[NumberLike, None] = None,
+                 z0_port: NumberLike | None = None,
                  z0: float = 50.0,
-                 Z0: Union[NumberLike, None] = None,
+                 Z0: NumberLike | None = None,
                  f_low: float = 1.0e3, f_high: float = 1.0e12, f_ep: float = 1.0e9,
                  model: str = 'frequencyinvariant', *args, **kwargs):
 

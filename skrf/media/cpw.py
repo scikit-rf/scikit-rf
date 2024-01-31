@@ -8,8 +8,10 @@ cpw (:mod:`skrf.media.cpw`)
    CPW
 
 """
+from __future__ import annotations
+
 import warnings
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from numpy import any, exp, imag, log, real, sinh, sqrt, tanh, zeros
 from scipy.constants import c, epsilon_0, mu_0, pi
@@ -174,19 +176,19 @@ class CPW(Media):
         vol. 41, no. 9, pp. 1499-1510, Sept. 1993.
 
     """
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None,
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None,
                  w: NumberLike = 3e-3, s: NumberLike = 0.3e-3,
                  h: NumberLike = 1.55,
-                 ep_r: NumberLike = 4.5, t: Union[NumberLike, None] = None,
+                 ep_r: NumberLike = 4.5, t: NumberLike | None = None,
                  diel: str = 'djordjevicsvensson',
-                 rho: Union[NumberLike, None] = 1.68e-8, tand: NumberLike = 0,
+                 rho: NumberLike | None = 1.68e-8, tand: NumberLike = 0,
                  f_low: NumberLike = 1e3, f_high: NumberLike = 1e12,
                  f_epr_tand: NumberLike = 1e9,
                  has_metal_backside: bool = False,
-                 compatibility_mode: Union[str, None] = None,
+                 compatibility_mode: str | None = None,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)

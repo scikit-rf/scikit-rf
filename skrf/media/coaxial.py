@@ -11,8 +11,9 @@ A coaxial transmission line defined from its electrical or geometrical/physical 
 
 """
 
-#from copy import deepcopy
-from typing import TYPE_CHECKING, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from numpy import array, exp, expm1, imag, log, size, sqrt
 from scipy.constants import c, epsilon_0, mu_0, pi
@@ -80,10 +81,10 @@ class Coaxial(DistributedCircuit, Media):
 
     """
     ## CONSTRUCTOR
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None,
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None,
                  Dint: NumberLike = .81e-3, Dout: NumberLike = 5e-3,
                  epsilon_r: NumberLike = 1, tan_delta: NumberLike = 0,
                  sigma: NumberLike = INF,
@@ -97,8 +98,8 @@ class Coaxial(DistributedCircuit, Media):
         self.epsilon_second = epsilon_0*self.epsilon_r*self.tan_delta
 
     @classmethod
-    def from_attenuation_VF(cls, frequency: Union['Frequency', None] = None,
-                            z0_port: Union[NumberLike, None] = None, z0: float = 50,
+    def from_attenuation_VF(cls, frequency: Frequency | None = None,
+                            z0_port: NumberLike | None = None, z0: float = 50,
                          att=0, unit='dB/m', VF=1) -> Media:
         """
         Init from electrical properties of the line: attenuation and velocity factor.
@@ -171,8 +172,8 @@ class Coaxial(DistributedCircuit, Media):
                                     z0_port=z0_port, z0=z0)
 
     @classmethod
-    def from_Z0_Dout(cls, frequency: Union['Frequency', None] = None,
-                     z0_port: Union[NumberLike, None] = None, z0: float = 50,
+    def from_Z0_Dout(cls, frequency: Frequency | None = None,
+                     z0_port: NumberLike | None = None, z0: float = 50,
                      epsilon_r: NumberLike = 1, Dout: NumberLike = 5e-3,
                      **kw) -> Media:
         """

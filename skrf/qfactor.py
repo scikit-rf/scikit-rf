@@ -128,7 +128,8 @@ References
    pp. 669–671, Aug. 1983, doi: 10.1109/TMTT.1983.1131566.
 
 """
-from typing import Union
+from __future__ import annotations
+
 from warnings import warn
 
 import numpy as np
@@ -240,8 +241,8 @@ class Qfactor:
     def __init__(self,
                  ntwk: Network,
                  res_type: str,
-                 Q_L0: Union[None, float] = None,
-                 f_L0: Union[None, float] = None,
+                 Q_L0: None | float = None,
+                 f_L0: None | float = None,
                  verbose: bool = False):
         """Q-factor initializer."""
         # check ntwk is a 1-port
@@ -398,8 +399,8 @@ class Qfactor:
 
     def _initial_fit(self,
                     N: int,
-                    Q_L0: Union[float, None] = None,
-                    f_L0: Union[None, float] = None
+                    Q_L0: float | None = None,
+                    f_L0: None | float = None
                     ):
         """Initial Linear least squares Q-factor fit.
 
@@ -970,8 +971,8 @@ class Qfactor:
             })
 
     def Q_circle(self,
-                 opt_res: Union[None, OptimizedResult] = None,
-                 A: Union[None, float] = None
+                 opt_res: None | OptimizedResult = None,
+                 A: None | float = None
                  ) -> list:
         r"""Q-circle diameter.
 
@@ -1032,8 +1033,8 @@ class Qfactor:
 
 
     def Q_unloaded(self,
-                   opt_res: Union[None, OptimizedResult] = None,
-                   A: Union[None, float] = None
+                   opt_res: None| OptimizedResult = None,
+                   A: None | float = None
                    ) -> float:
         """Unloaded Q-factor Q0.
 
@@ -1139,8 +1140,8 @@ class Qfactor:
         return Q0
 
     def fitted_s(self,
-                 opt_res: Union[None, OptimizedResult] = None,
-                 f: Union[None, np.ndarray] = None
+                 opt_res: None | OptimizedResult = None,
+                 f: None | np.ndarray = None
                  ) -> np.ndarray:
         r"""S-parameter response of an equivalent circuit model resonator.
 
@@ -1196,8 +1197,8 @@ class Qfactor:
         return s
 
     def fitted_network(self,
-                       opt_res: Union[None, OptimizedResult] = None,
-                       frequency: Union[None, Frequency] = None,
+                       opt_res: None | OptimizedResult = None,
+                       frequency: None | Frequency = None,
                        ) -> Network:
         """Fitted Network.
 

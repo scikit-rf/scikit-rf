@@ -13,8 +13,10 @@ Mdif class and utilities
    Mdif
 
 """
+from __future__ import annotations
+
 from itertools import product
-from typing import TextIO, Union
+from typing import TextIO
 
 import numpy as np
 
@@ -67,7 +69,7 @@ class Mdif:
 
     """
 
-    def __init__(self, file: Union[str, TextIO]):
+    def __init__(self, file: str | TextIO):
         """
         Constructor
 
@@ -366,8 +368,8 @@ class Mdif:
     @staticmethod
     def write(ns : NetworkSet,
               filename : str,
-              values: Union[dict, None] = None,
-              data_types: Union[dict, None] = None,
+              values: dict | None = None,
+              data_types: dict | None = None,
               comments = []):
         """
         Write a MDIF file from a NetworkSet.

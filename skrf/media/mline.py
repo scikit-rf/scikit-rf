@@ -8,8 +8,10 @@ MLine (:mod:`skrf.media.MLine`)
    MLine
 
 """
+from __future__ import annotations
+
 import warnings
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as npy
 from numpy import arctan, cosh, exp, imag, log, log10, ones, real, sqrt, tanh, zeros
@@ -200,12 +202,12 @@ class MLine(Media):
         causality,
         IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
     """
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None,
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None,
                  w: NumberLike = 3, h: NumberLike = 1.6,
-                 t: Union[NumberLike, None] = None,
+                 t: NumberLike | None = None,
                  ep_r: NumberLike = 4.5,
                  mu_r: NumberLike = 1.0,
                  model: str = 'hammerstadjensen',
@@ -215,7 +217,7 @@ class MLine(Media):
                  rough: NumberLike = 0.15e-6,
                  f_low: NumberLike = 1e3, f_high: NumberLike = 1e12,
                  f_epr_tand: NumberLike = 1e9,
-                 compatibility_mode: Union[str, None] = None,
+                 compatibility_mode: str | None = None,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)

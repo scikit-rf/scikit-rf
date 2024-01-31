@@ -151,6 +151,8 @@ Misc Functions
     Network.drop_non_monotonic_increasing
 
 """
+from __future__ import annotations
+
 import io
 import os
 import re
@@ -162,7 +164,7 @@ from itertools import product
 from numbers import Number
 from pathlib import Path
 from pickle import UnpicklingError
-from typing import Any, Callable, Dict, List, NoReturn, Optional, Sequence, Sized, TextIO, Tuple, Union
+from typing import Any, Callable, NoReturn, Sequence, Sized, TextIO
 
 import numpy as npy
 from numpy import gradient, ndarray, shape
@@ -300,7 +302,7 @@ class Network:
     """
 
     @classmethod
-    def _generated_functions(cls) -> Dict[str, Tuple[Callable, str, str]]:
+    def _generated_functions(cls) -> dict[str, tuple[Callable, str, str]]:
         return {f"{p}_{func_name}": (func, p, func_name)
             for p in cls.PRIMARY_PROPERTIES
             for func_name, func in cls.COMPONENT_FUNC_DICT.items()}
@@ -341,7 +343,7 @@ class Network:
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
                  comments: str = None, f_unit: str = None,
-                 s_def: Union[str, None] = None, **kwargs) -> None:
+                 s_def: str | None = None, **kwargs) -> None:
         r"""
         Network constructor.
 
@@ -491,7 +493,7 @@ class Network:
                 self.__setattr__(attr, kwargs[attr])
 
     @classmethod
-    def from_z(cls, z: npy.ndarray, *args, **kw) -> 'Network':
+    def from_z(cls, z: npy.ndarray, *args, **kw) -> Network:
         r"""
         Create a Network from its Z-parameters.
 
@@ -522,7 +524,7 @@ class Network:
         return me
 
     # OPERATORS
-    def __pow__(self, other: 'Network') -> 'Network':
+    def __pow__(self, other: Network) -> Network:
         """
         Cascade this network with another network.
 
@@ -547,7 +549,7 @@ class Network:
         else:
             return cascade(self, other)
 
-    def __rshift__(self, other: 'Network') -> 'Network':
+    def __rshift__(self, other: Network) -> Network:
         """
         Cascade two 4-port networks with "1=>2/3=>4" port numbering.
 
@@ -593,7 +595,7 @@ class Network:
         _rslt.renumber(ix_new,ix_old)
         return _rslt
 
-    def __floordiv__(self, other: Union['Network', Tuple['Network', ...]] ) -> 'Network':
+    def __floordiv__(self, other: Network | tuple[Network, ...] ) -> Network:
         """
         De-embedding 1 or 2 network[s], from this network.
 
@@ -642,7 +644,7 @@ class Network:
             # flip(de_embed(flip(de_embed(c.s, self.s)), b.s))
             return result
 
-    def __mul__(self, other:'Network') -> 'Network':
+    def __mul__(self, other:Network) -> Network:
         """
         Element-wise complex multiplication of s-matrix.
 
@@ -663,7 +665,7 @@ class Network:
 
         return result
 
-    def __rmul__(self, other: 'Network') -> 'Network':
+    def __rmul__(self, other: Network) -> Network:
         """
         Element-wise complex multiplication of s-matrix.
 
@@ -683,7 +685,7 @@ class Network:
 
         return result
 
-    def __add__(self, other:'Network') -> 'Network':
+    def __add__(self, other:Network) -> Network:
         """
         Element-wise complex addition of s-matrix.
 
@@ -702,7 +704,7 @@ class Network:
 
         return result
 
-    def __radd__(self, other:'Network') -> 'Network':
+    def __radd__(self, other:Network) -> Network:
         """
         Element-wise complex addition of s-matrix.
 
@@ -721,7 +723,7 @@ class Network:
 
         return result
 
-    def __sub__(self, other:'Network') -> 'Network':
+    def __sub__(self, other:Network) -> Network:
         """
         Element-wise complex subtraction of s-matrix.
         """
@@ -736,7 +738,7 @@ class Network:
 
         return result
 
-    def __rsub__(self, other:'Network') -> 'Network':
+    def __rsub__(self, other:Network) -> Network:
         """
         Element-wise complex subtraction of s-matrix.
 
@@ -755,10 +757,10 @@ class Network:
 
         return result
 
-    def __truediv__(self, other: 'Network') -> 'Network':
+    def __truediv__(self, other: Network) -> Network:
         return self.__div__(other)
 
-    def __div__(self, other: 'Network') -> 'Network':
+    def __div__(self, other: Network) -> Network:
         """
         Element-wise complex division of s-matrix.
 
@@ -797,7 +799,7 @@ class Network:
     def __ne__(self, other:object) -> bool:
         return (not self.__eq__(other))
 
-    def __getitem__(self, key:Union[str, int, slice, Sized]) -> 'Network':
+    def __getitem__(self, key: str | int | slice | Sized) -> Network:
         """
         Slice a Network object based on an index, or human readable string.
 
@@ -920,7 +922,7 @@ class Network:
         return len(self.s)
 
     # INTERNAL CODE GENERATION METHODS
-    def __compatable_for_scalar_operation_test(self, other:'Network') -> None:
+    def __compatable_for_scalar_operation_test(self, other:Network) -> None:
         """
         Test to make sure other network's s-matrix is of same shape.
         """
@@ -930,7 +932,7 @@ class Network:
         if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
 
-    def __getattr__(self, name: str) -> 'Network':
+    def __getattr__(self, name: str) -> Network:
         m = re.match(r"s(\d+)_(\d+)", name)
         if not m:
             m = re.match(r"s(\d)(\d)", name)
@@ -1376,7 +1378,7 @@ class Network:
             return self._frequency
 
     @frequency.setter
-    def frequency(self, new_frequency: Union[Frequency, int, Sequence[float], npy.ndarray]) -> None:
+    def frequency(self, new_frequency: Frequency | int | Sequence[float] | npy.ndarray) -> None:
         """
         Take a Frequency object, see frequency.py.
         """
@@ -1389,7 +1391,7 @@ class Network:
                 raise TypeError('Could not convert argument to a frequency vector')
 
     @property
-    def inv(self) -> 'Network':
+    def inv(self) -> Network:
         """
         A :class:`Network` object with 'inverse' s-parameters.
 
@@ -1431,7 +1433,7 @@ class Network:
         return self.frequency.f
 
     @f.setter
-    def f(self, f: Union[NumberLike, Frequency]) -> None:
+    def f(self, f: NumberLike | Frequency) -> None:
         warnings.warn('frequency.f parameter will be immutable in the next release.',
              DeprecationWarning, stacklevel=2)
 
@@ -1586,7 +1588,7 @@ class Network:
         return self.number_of_ports
 
     @property
-    def port_tuples(self) -> List[Tuple[int, int]]:
+    def port_tuples(self) -> list[tuple[int, int]]:
         """
         Returns a list of tuples, for each port index pair.
 
@@ -1887,7 +1889,7 @@ class Network:
         """
         return npy.allclose(reciprocity(self.s), npy.zeros_like(self.s), atol=tol)
 
-    def is_symmetric(self, n: int = 1, port_order: Dict[int, int] = {}, tol: float = mf.ALMOST_ZERO) -> bool:
+    def is_symmetric(self, n: int = 1, port_order: dict[int, int] = {}, tol: float = mf.ALMOST_ZERO) -> bool:
         """
         Return whether the 2N-port network has n-th order reflection symmetry by checking.
         :math:`S_{i,i} == S_{j,j}` for appropriate pair(s) of :math:`i` and :math:`j`.
@@ -2006,7 +2008,7 @@ class Network:
         return True
 
     ## CLASS METHODS
-    def copy(self) -> 'Network':
+    def copy(self) -> Network:
         """
         Return a copy of this Network.
 
@@ -2040,7 +2042,7 @@ class Network:
             ntwk.port_names = None
         return ntwk
 
-    def copy_from(self, other: 'Network') -> None:
+    def copy_from(self, other: Network) -> None:
         """
         Copy the contents of another Network into self.
 
@@ -2060,7 +2062,7 @@ class Network:
         for attr in ['_s', 'frequency', '_z0', 'name']:
             setattr(self, attr, copy(getattr(other, attr)))
 
-    def copy_subset(self, key: npy.ndarray) -> 'Network':
+    def copy_subset(self, key: npy.ndarray) -> Network:
         """
         Return a copy of a frequency subset of this Network.
 
@@ -2159,8 +2161,8 @@ class Network:
 
 
     # touchstone file IO
-    def read_touchstone(self, filename: Union[str, TextIO],
-                        encoding: Union[str, None] = None) -> None:
+    def read_touchstone(self, filename: str | TextIO,
+                        encoding: str | None = None) -> None:
         """
         Load values from a touchstone file.
 
@@ -2235,7 +2237,7 @@ class Network:
                 self.name = os.path.basename(os.path.splitext(touchstoneFile.filename)[0])
 
     @classmethod
-    def zipped_touchstone(cls, filename: str, archive: zipfile.ZipFile) -> 'Network':
+    def zipped_touchstone(cls, filename: str, archive: zipfile.ZipFile) -> Network:
         """
         Read a Network from a Touchstone file in a ziparchive.
 
@@ -2264,7 +2266,7 @@ class Network:
                          write_z0: bool = False, skrf_comment: bool = True,
                          return_string: bool = False, to_archive: bool = None,
                          form: str = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
-                         format_spec_freq : str = '{}', r_ref : float = None) -> Optional[str]:
+                         format_spec_freq : str = '{}', r_ref : float = None) -> str | None:
         """
         Write a contents of the :class:`Network` to a touchstone file.
 
@@ -2643,8 +2645,8 @@ class Network:
         from .io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
 
-    def to_dataframe(self, attrs: List[str] =['s_db'],
-            ports: List[Tuple[int, int]] = None, port_sep: Optional[str] = None):
+    def to_dataframe(self, attrs: list[str] =['s_db'],
+            ports: list[tuple[int, int]] = None, port_sep: str | None = None):
         """
         Convert attributes of a Network to a pandas DataFrame.
 
@@ -2699,9 +2701,9 @@ class Network:
 
 
     # interpolation
-    def interpolate(self, freq_or_n: Union[Frequency, NumberLike], basis: str = 's',
+    def interpolate(self, freq_or_n: Frequency | NumberLike, basis: str = 's',
                     coords: str = 'cart', f_kwargs: dict = {}, return_array: bool = False,
-                    **kwargs) -> Union['Network', npy.ndarray]:
+                    **kwargs) -> Network | npy.ndarray:
         r"""
         Interpolate a Network along frequency axis.
 
@@ -2858,7 +2860,7 @@ class Network:
               result.noise_freq = new_frequency
         return result
 
-    def interpolate_self(self, freq_or_n: Union[Frequency, NumberLike], **kwargs) -> None:
+    def interpolate_self(self, freq_or_n: Frequency | NumberLike, **kwargs) -> None:
         """
         Interpolate the current Network along frequency axis (inplace).
 
@@ -2904,7 +2906,7 @@ class Network:
 
     def extrapolate_to_dc(self, points: int = None, dc_sparam: NumberLike = None,
                           kind: str = 'cubic', coords: str = 'cart',
-                          **kwargs) -> 'Network':
+                          **kwargs) -> Network:
         """
         Extrapolate S-parameters down to 0 Hz and interpolate to uniform spacing.
 
@@ -2992,7 +2994,7 @@ class Network:
         return result
 
 
-    def subnetwork(self, ports: Sequence[int], offby: int = 1) -> 'Network':
+    def subnetwork(self, ports: Sequence[int], offby: int = 1) -> Network:
         """
         Return a subnetwork of a the Network from a list of port numbers.
 
@@ -3091,7 +3093,7 @@ class Network:
         ntwk = self[start_idx:stop_idx + 1]
         self.frequency, self.s, self.z0 = ntwk.frequency, ntwk.s, ntwk.z0
 
-    def cropped(self, f_start: float, f_stop: float, unit: str = None) -> 'Network':
+    def cropped(self, f_start: float, f_stop: float, unit: str = None) -> Network:
         """
         Returns a cropped network, leaves self alone.
 
@@ -3150,7 +3152,7 @@ class Network:
         else:
             raise ValueError('you can only flip two-port Networks')
 
-    def flipped(self) -> 'Network':
+    def flipped(self) -> Network:
         """
         Returns a flipped network, leaves self alone.
 
@@ -3321,7 +3323,7 @@ class Network:
         self.s[:, :, to_ports] = self.s[:, :, from_ports]  # renumber columns
         self.z0[:, to_ports] = self.z0[:, from_ports]
 
-    def renumbered(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> 'Network':
+    def renumbered(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> Network:
         """
         Return a renumbered Network, leave self alone.
 
@@ -3359,7 +3361,7 @@ class Network:
 
         self.s = self.s * npy.exp(-1j*theta)
 
-    def delay(self, d: float, unit: str = 'deg', port: int = 0, media: Any = None, **kw) -> 'Network':
+    def delay(self, d: float, unit: str = 'deg', port: int = 0, media: Any = None, **kw) -> Network:
         """
         Add phase delay to a given port.
 
@@ -3396,8 +3398,8 @@ class Network:
         l =media.line(d=d, unit=unit,**kw)
         return connect(self, port, l, 0)
 
-    def windowed(self, window: Union[str, float, Tuple[str, float], Callable]=('kaiser', 6),
-            normalize: bool = True, center_to_dc: bool = None) -> 'Network':
+    def windowed(self, window: str | float | tuple[str, float] | Callable =('kaiser', 6),
+            normalize: bool = True, center_to_dc: bool = None) -> Network:
         """
         Return a windowed version of s-matrix. Used in time-domain analysis.
 
@@ -3461,7 +3463,7 @@ class Network:
 
         return windowed
 
-    def time_gate(self, *args, **kw) -> 'Network':
+    def time_gate(self, *args, **kw) -> Network:
         """
         Time gate this Network.
 
@@ -3540,7 +3542,7 @@ class Network:
             size=self.s.shape)
         self.s = mag_rv * npy.exp(1j * npy.pi / 180. * phase_rv) * self.s
 
-    def nudge(self, amount: float = 1e-12) -> 'Network':
+    def nudge(self, amount: float = 1e-12) -> Network:
         """
         Perturb s-parameters by small amount.
 
@@ -3567,7 +3569,7 @@ class Network:
         self.s = self.s + amount
 
     # other
-    def func_on_parameter(self, func: Callable, attr: str = 's', *args, **kwargs) -> 'Network':
+    def func_on_parameter(self, func: Callable, attr: str = 's', *args, **kwargs) -> Network:
         r"""
         Apply a function parameter matrix, one frequency slice at a time.
 
@@ -3603,7 +3605,7 @@ class Network:
                           for k in range(len(p))]]
         return ntwkB
 
-    def nonreciprocity(self, m: int, n: int, normalize: bool = False) -> 'Network':
+    def nonreciprocity(self, m: int, n: int, normalize: bool = False) -> Network:
         r"""
         Normalized non-reciprocity metric.
 
@@ -4027,7 +4029,7 @@ class Network:
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
     def impulse_response(self, window: str = 'hamming', n: int = None, pad: int = 1000,
-                        bandpass: bool = None, squeeze: bool = True) -> Tuple[npy.ndarray, npy.ndarray]:
+                        bandpass: bool = None, squeeze: bool = True) -> tuple[npy.ndarray, npy.ndarray]:
         """Calculate time-domain impulse response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -4100,7 +4102,7 @@ class Network:
 
     def step_response(
             self, window: str = 'hamming', n: int = None, pad: int = 1000, squeeze: bool = True
-            ) -> Tuple[npy.ndarray, npy.ndarray]:
+            ) -> tuple[npy.ndarray, npy.ndarray]:
         """Calculate time-domain step response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -5209,7 +5211,7 @@ def stitch(ntwkA: Network, ntwkB: Network, **kwargs) -> Network:
     return C
 
 
-def overlap(ntwkA: Network, ntwkB: Network) -> Tuple[Network, Network]:
+def overlap(ntwkA: Network, ntwkB: Network) -> tuple[Network, Network]:
     """
     Return the overlapping parts of two Networks, interpolating if needed.
 
@@ -7337,7 +7339,7 @@ def reciprocity(s: npy.ndarray) -> npy.ndarray:
 ## renormalize
 def renormalize_s(
         s: npy.ndarray, z_old: NumberLike, z_new: NumberLike,
-        s_def:str = S_DEF_DEFAULT, s_def_old: Union[str, None] = None
+        s_def:str = S_DEF_DEFAULT, s_def_old: str | None = None
         ) -> npy.ndarray:
 
     """
@@ -7738,7 +7740,7 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling')
     return result
 
 
-def two_port_reflect(ntwk1: Network, ntwk2: Network = None, name : Optional[str] = None) -> Network:
+def two_port_reflect(ntwk1: Network, ntwk2: Network = None, name : str | None = None) -> Network:
     """
     Generate a two-port reflective two-port, from two one-ports.
 

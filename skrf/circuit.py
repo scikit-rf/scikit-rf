@@ -82,8 +82,10 @@ Graph representation
    Circuit.edge_labels
 
 """
+from __future__ import annotations
+
 from itertools import chain
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -130,7 +132,7 @@ class Circuit:
         except ImportError as err:
             raise ImportError('networkx package as not been installed and is required.') from err
 
-    def __init__(self, connections: List[List[Tuple]], name: str = None,) -> None:
+    def __init__(self, connections: list[list[tuple]], name: str = None,) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -224,7 +226,7 @@ class Circuit:
             return True
 
     @classmethod
-    def Port(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+    def Port(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
         Return a 1-port Network to be used as a Circuit port.
 
@@ -259,7 +261,7 @@ class Circuit:
         return port
 
     @classmethod
-    def SeriesImpedance(cls, frequency: 'Frequency', Z: NumberLike, name: str, z0: float = 50) -> 'Network':
+    def SeriesImpedance(cls, frequency: Frequency, Z: NumberLike, name: str, z0: float = 50) -> Network:
         """
         Return a 2-port network of a series impedance.
 
@@ -302,7 +304,7 @@ class Circuit:
         return ntw
 
     @classmethod
-    def ShuntAdmittance(cls, frequency: 'Frequency', Y: NumberLike, name: str, z0: float = 50) -> 'Network':
+    def ShuntAdmittance(cls, frequency: Frequency, Y: NumberLike, name: str, z0: float = 50) -> Network:
         """
         Return a 2-port network of a shunt admittance.
 
@@ -345,7 +347,7 @@ class Circuit:
         return ntw
 
     @classmethod
-    def Ground(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+    def Ground(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
         Return a 2-port network of a grounded link.
 
@@ -382,7 +384,7 @@ class Circuit:
         return cls.ShuntAdmittance(frequency, Y=INF, name=name)
 
     @classmethod
-    def Open(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+    def Open(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
         Return a 2-port network of an open link.
 
@@ -418,7 +420,7 @@ class Circuit:
         """
         return cls.SeriesImpedance(frequency, Z=INF, name=name)
 
-    def networks_dict(self, connections: List = None, min_nports: int = 1) -> dict:
+    def networks_dict(self, connections: list = None, min_nports: int = 1) -> dict:
         """
         Return the dictionary of Networks from the connection setup X.
 
@@ -443,7 +445,7 @@ class Circuit:
                 ntws.append(ntw)
         return {ntw.name: ntw for ntw in ntws  if ntw.nports >= min_nports}
 
-    def networks_list(self, connections: List = None, min_nports: int = 1) -> List:
+    def networks_list(self, connections: list = None, min_nports: int = 1) -> list:
         """
         Return a list of unique networks (sorted by appearing order in connections).
 
@@ -611,7 +613,7 @@ class Circuit:
         return edge_labels
 
 
-    def _Y_k(self, cnx: List[Tuple]) -> np.ndarray:
+    def _Y_k(self, cnx: list[tuple]) -> np.ndarray:
         """
         Return the sum of the system admittances of each intersection.
 
@@ -632,7 +634,7 @@ class Circuit:
         y_k = np.array(y_ns).sum(axis=0)  # shape: (nb_freq,)
         return y_k
 
-    def _Xnn_k(self, cnx_k: List[Tuple]) -> np.ndarray:
+    def _Xnn_k(self, cnx_k: list[tuple]) -> np.ndarray:
         """
         Return the reflection coefficients x_nn of the connection matrix [X]_k.
 
@@ -655,7 +657,7 @@ class Circuit:
 
         return np.array(X_nn).T  # shape: (nb_freq, nb_n)
 
-    def _Xmn_k(self, cnx_k: List[Tuple]) -> np.ndarray:
+    def _Xmn_k(self, cnx_k: list[tuple]) -> np.ndarray:
         """
         Return the transmission coefficient X_mn of the mth column of
         intersection scattering matrix matrix [X]_k.
@@ -695,7 +697,7 @@ class Circuit:
 
         return np.array(X_mn).T  # shape: (nb_freq, nb_n)
 
-    def _Xk(self, cnx_k: List[Tuple]) -> np.ndarray:
+    def _Xk(self, cnx_k: list[tuple]) -> np.ndarray:
         """
         Return the scattering matrices [X]_k of the individual intersections k.
 
@@ -827,7 +829,7 @@ class Circuit:
                 port_indexes.append(idx_cnx)
         return port_indexes
 
-    def _cnx_z0(self, cnx_k: List[Tuple]) -> np.ndarray:
+    def _cnx_z0(self, cnx_k: list[tuple]) -> np.ndarray:
         """
         Return the characteristic impedances of a specific connections.
 
@@ -882,7 +884,7 @@ class Circuit:
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
 
     @property
-    def network(self) -> 'Network':
+    def network(self) -> Network:
         """
         Return the Network associated to external ports.
 
@@ -1042,7 +1044,7 @@ class Circuit:
         return np.array(z0s).T
 
     @property
-    def connections_pair(self) -> List:
+    def connections_pair(self) -> list:
         """
         List the connections by pair.
 

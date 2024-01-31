@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import logging
 import os
 import warnings
 from timeit import default_timer as timer
-from typing import TYPE_CHECKING, Any, Tuple
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -62,7 +64,7 @@ class VectorFitting:
     .. [#vectfit_website] Vector Fitting website: https://www.sintef.no/projectweb/vectorfitting/
     """
 
-    def __init__(self, network: 'Network'):
+    def __init__(self, network: Network):
         self.network = network
         """ Instance variable holding the Network to be fitted. This is the Network passed during initialization,
         which may be changed or set to *None*. """
@@ -669,7 +671,7 @@ class VectorFitting:
 
         return np.sqrt(error_mean_squared)
 
-    def _get_ABCDE(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def _get_ABCDE(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Private method.
         Returns the real-valued system matrices of the state-space representation of the current rational model, as

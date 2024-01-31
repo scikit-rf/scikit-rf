@@ -83,7 +83,9 @@ Various Utility Functions
 
 
 """
-from typing import Callable, Union
+from __future__ import annotations
+
+from typing import Callable
 
 import numpy as npy
 from numpy import imag, pi, real, unwrap
@@ -1290,8 +1292,8 @@ def rsolve(A: npy.ndarray, B: npy.ndarray) -> npy.ndarray:
             npy.transpose(B, (0, 2, 1)).conj()), (0, 2, 1)).conj()
 
 def nudge_eig(mat: npy.ndarray,
-              cond: Union[float, None] = None,
-              min_eig: Union[float, None] = None) -> npy.ndarray:
+              cond: float | None = None,
+              min_eig: float | None  = None) -> npy.ndarray:
     r"""Nudge eigenvalues with absolute value smaller than
     max(cond * max(eigenvalue), min_eig) to that value.
     Can be used to avoid singularities in solving matrix equations.

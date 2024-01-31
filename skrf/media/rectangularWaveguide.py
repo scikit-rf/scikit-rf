@@ -24,8 +24,10 @@ Characteristic Impedance              :math:`z_0`    :attr:`z0`
    RectangularWaveguide
 
 """
+from __future__ import annotations
+
 from numbers import Number
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as npy
 from numpy import exp, sqrt, where
@@ -103,15 +105,15 @@ class RectangularWaveguide(Media):
     >>> rf.RectangularWaveguide(freq,a= 100*mil)
     """
 
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None,
-                 a: float = 1, b: Union[float, None] = None,
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None,
+                 a: float = 1, b: float | None = None,
                  mode_type: str = 'te', m: int = 1, n: int = 0,
-                 ep_r: Union[None, NumberLike] = 1, mu_r: Union[None, NumberLike] = 1,
-                 rho: Union[None, NumberLike] = None,
-                 roughness: Union[None, NumberLike] = None,
+                 ep_r: None | NumberLike = 1, mu_r: None | NumberLike = 1,
+                 rho: None | NumberLike = None,
+                 roughness: None | NumberLike = None,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)
@@ -146,7 +148,7 @@ class RectangularWaveguide(Media):
 
 
     @classmethod
-    def from_z0(cls, frequency: 'Frequency', z0: NumberLike, f: Number,
+    def from_z0(cls, frequency: Frequency, z0: NumberLike, f: Number,
                 ep_r=1, mu_r=1, **kw) -> Media:
         """
         Initialize from specified impedance at a given frequency, assuming
@@ -330,7 +332,7 @@ class RectangularWaveguide(Media):
         return self._rho
 
     @rho.setter
-    def rho(self, val: Union[NumberLike, str]):
+    def rho(self, val: NumberLike | str):
         if isinstance(val, str):
             self._rho = materials[val.lower()]['resistivity(ohm*m)']
         else:

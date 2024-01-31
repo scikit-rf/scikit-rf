@@ -13,6 +13,8 @@ Citi class and utilities
    Citi
 
 """
+from __future__ import annotations
+
 import typing
 
 import numpy as np
@@ -55,7 +57,7 @@ class Citi:
     >>> file = open('network.cti')
     >>> m = rf.Citi(file)
     """
-    def __init__(self, file: typing.Union[str, typing.TextIO]):
+    def __init__(self, file: str | typing.TextIO):
         """
         Constructor
 

@@ -8,7 +8,9 @@ circularWaveguide (:mod:`skrf.media.circularWaveguide`)
    CircularWaveguide
 
 """
-from typing import TYPE_CHECKING, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as npy
 from numpy import sqrt, where
@@ -100,14 +102,14 @@ class CircularWaveguide(Media):
     >>> rf.CircularWaveguide(freq, r=0.5 * 2.39e-3)
 
     """
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None,
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None,
                  r: NumberLike = 1,
                  mode_type: str = 'te', m: int = 1, n: int = 1,
                  ep_r: NumberLike = 1, mu_r: NumberLike = 1,
-                 rho: Union[NumberLike, str, None] = None,
+                 rho: NumberLike | str | None = None,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)
@@ -138,7 +140,7 @@ class CircularWaveguide(Media):
 
 
     @classmethod
-    def from_z0(cls, frequency: 'Frequency', z0: NumberLike,
+    def from_z0(cls, frequency: Frequency, z0: NumberLike,
                 f: NumberLike, ep_r: NumberLike = 1, mu_r: NumberLike = 1,
                 **kwargs):
         r"""

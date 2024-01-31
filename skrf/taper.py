@@ -24,9 +24,10 @@ References
     Klopfenstein
 
 """
+from __future__ import annotations
 
 from numbers import Number
-from typing import Callable, List
+from typing import Callable
 
 from numpy import exp, linspace, log
 
@@ -187,7 +188,7 @@ class Taper1D:
                                        unit=self.length_unit)
 
     @property
-    def medias(self) -> List:
+    def medias(self) -> list:
         """
         List of medias.
 
@@ -198,7 +199,7 @@ class Taper1D:
         return [self.media_at(k) for k in self.value_vector]
 
     @property
-    def sections(self) -> List:
+    def sections(self) -> list:
         """
         List of sections.
 

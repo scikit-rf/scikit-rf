@@ -50,6 +50,8 @@ General Purpose Objects
     HomoDict
 
 """
+from __future__ import annotations
+
 import collections
 import contextlib
 import fnmatch
@@ -61,7 +63,7 @@ import warnings
 from datetime import datetime
 from functools import wraps
 from subprocess import PIPE, Popen
-from typing import Any, Callable, Iterable, List, Tuple, TypeVar, Union
+from typing import Any, Callable, Iterable, TypeVar
 
 import numpy as npy
 
@@ -116,7 +118,7 @@ def copy_doc(copy_func: Callable) -> Callable:
     return wrapper
 
 
-def subplots(*args, **kwargs) -> Tuple[Figure, npy.ndarray]:
+def subplots(*args, **kwargs) -> tuple[Figure, npy.ndarray]:
     """
     Wraps the matplotlib subplots call and raises if not available.
 
@@ -347,7 +349,7 @@ def git_version(modname: str) -> str:
     return out
 
 
-def dict_2_recarray(d: dict, delim: str, dtype: List[Tuple]) -> npy.ndarray:
+def dict_2_recarray(d: dict, delim: str, dtype: list[tuple]) -> npy.ndarray:
     """
     Turn a dictionary of structured keys to a record array of objects.
 
@@ -665,7 +667,7 @@ class HomoDict(collections.abc.MutableMapping):
         return a
 
 
-def has_duplicate_value(value: Any, values: Iterable, index: int) -> Union[bool, int]:
+def has_duplicate_value(value: Any, values: Iterable, index: int) -> bool | int:
     """
     Check if there is another value of the current index in the list.
 

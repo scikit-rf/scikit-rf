@@ -36,11 +36,11 @@ Misc
 
 """
 
-# from matplotlib.pyplot import gca,plot, autoscale
+from __future__ import annotations
+
 import re
 import warnings
 from numbers import Number
-from typing import List, Union
 
 import numpy as npy
 from numpy import (
@@ -174,7 +174,7 @@ class Frequency:
         """
         return self.__str__()
 
-    def __getitem__(self, key: Union[str, int, slice]) -> 'Frequency':
+    def __getitem__(self, key: str | int | slice) -> Frequency:
         """
         Slices a Frequency object based on an index, or human readable string.
 
@@ -237,7 +237,7 @@ class Frequency:
 
 
     @classmethod
-    def from_f(cls, f: NumberLike, *args,**kwargs) -> 'Frequency':
+    def from_f(cls, f: NumberLike, *args,**kwargs) -> Frequency:
         """
         Construct Frequency object from a frequency vector.
 
@@ -295,17 +295,17 @@ class Frequency:
         """
         return self.npoints
 
-    def __mul__(self,other: 'Frequency') -> 'Frequency':
+    def __mul__(self,other: Frequency) -> Frequency:
         out = self.copy()
         out.f = self.f*other
         return out
 
-    def __rmul__(self,other: 'Frequency') -> 'Frequency':
+    def __rmul__(self,other: Frequency) -> Frequency:
         out = self.copy()
         out.f = self.f*other
         return out
 
-    def __div__(self,other: 'Frequency') -> 'Frequency':
+    def __div__(self,other: Frequency) -> Frequency:
         out = self.copy()
         out.f = self.f/other
         return out
@@ -324,7 +324,7 @@ class Frequency:
             "To get rid of the invalid values call `drop_non_monotonic_increasing`",
                 InvalidFrequencyWarning)
 
-    def drop_non_monotonic_increasing(self) -> List[int]:
+    def drop_non_monotonic_increasing(self) -> list[int]:
         """Drop duplicate and invalid frequency values and return the dropped indices
 
         Returns:
@@ -572,7 +572,7 @@ class Frequency:
         """
         return self.multiplier_dict[self._unit]
 
-    def copy(self) -> 'Frequency':
+    def copy(self) -> Frequency:
         """
         Returns a new copy of this frequency.
         """
@@ -598,7 +598,7 @@ class Frequency:
         """
         return self.t*1e9
 
-    def round_to(self, val: Union[str, Number] = 'hz') -> None:
+    def round_to(self, val: str | Number = 'hz') -> None:
         """
         Round off frequency values to a specified precision.
 
@@ -623,7 +623,7 @@ class Frequency:
 
         self.f = npy.round_(self.f/val)*val
 
-    def overlap(self,f2: 'Frequency') -> 'Frequency':
+    def overlap(self,f2: Frequency) -> Frequency:
         """
         Calculates overlapping frequency  between self and f2.
 
@@ -708,7 +708,7 @@ class Frequency:
         self.labelXAxis()
 
 
-def overlap_freq(f1: 'Frequency',f2: 'Frequency') -> Frequency:
+def overlap_freq(f1: Frequency,f2: Frequency) -> Frequency:
     """
     Calculates overlapping frequency between f1 and f2.
 
