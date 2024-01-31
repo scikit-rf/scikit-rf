@@ -24,7 +24,7 @@ from ..networkSet import NetworkSet
 from ..util import get_fid
 
 
-class Citi():
+class Citi:
     """
     Class to read CITI N-port files.
 

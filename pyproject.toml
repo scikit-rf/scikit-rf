@@ -136,7 +136,7 @@ filterwarnings = [
 
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
-select = ["E", "F", "I", "W"]
+select = ["E", "F", "I", "UP", "W"]
 # larger line length for rule E501 (default is 88)
 line-length = 120
 

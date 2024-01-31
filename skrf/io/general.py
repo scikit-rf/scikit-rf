@@ -73,7 +73,7 @@ import sys
 import warnings
 from io import StringIO
 from pickle import UnpicklingError
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import numpy as npy
 from pandas import DataFrame, ExcelWriter, Series
@@ -434,7 +434,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
                 write(fid, obj,*args, **kwargs)
         except Exception as inst:
             print(inst)
-            warnings.warn('couldnt write %s: %s'%(k,str(inst)))
+            warnings.warn(f'couldnt write {k}: {inst}')
 
             pass
 
@@ -712,8 +712,8 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
     df.__getattribute__('to_%s'%file_type)(file_name,
         index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
 
-def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'],
-        ports: List[Tuple[int, int]] = None, port_sep: Optional[str] = None):
+def network_2_dataframe(ntwk: Network, attrs: list[str] =['s_db'],
+        ports: list[tuple[int, int]] = None, port_sep: str | None = None):
     """
     Convert one or more attributes of a network to a pandas DataFrame.
 

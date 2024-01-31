@@ -136,11 +136,9 @@ class RectangularWaveguide(Media):
 
     def __str__(self):
         f=self.frequency
-        output =  \
-                'Rectangular Waveguide Media.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\n a= %.2em, b= %.2em'% \
-                (self.a,self.b)
+        output = (
+                f'Rectangular Waveguide Media.  {f.f_scaled[0]}-{f.f_scaled[-1]} {f.unit}.  {f.npoints} points'
+                f'\n a= {self.a:.2e}m, b= {self.b:.2e}m')
         return output
 
     def __repr__(self):

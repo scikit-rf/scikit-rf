@@ -304,7 +304,7 @@ class Mag(Projection):
     def __str__(self):
         return ''
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
 
     @property
     def val(self):
@@ -316,7 +316,7 @@ class Db10(Projection):
     def __str__(self):
         return 'dB'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
 
     @property
     def val(self):
@@ -328,7 +328,7 @@ class Db20(Projection):
     def __str__(self):
         return 'dB'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
     @property
     def val(self):
         return complex_2_db(self._param.val)
@@ -339,7 +339,7 @@ class Deg(Projection):
     def __str__(self):
         return 'deg'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
     @property
     def val(self):
         return complex_2_degree(self._param.val)
@@ -350,7 +350,7 @@ class Rad(Projection):
     def __str__(self):
         return 'rad'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
     @property
     def val(self):
         return complex_2_radian(self._param.val)
@@ -361,7 +361,7 @@ class Re(Projection):
     def __str__(self):
         return 'real'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
     @property
     def val(self):
         return self._param.val.real
@@ -372,7 +372,7 @@ class Im(Projection):
     def __str__(self):
         return 'imag'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
     @property
     def val(self):
         return self._param.val.imag

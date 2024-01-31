@@ -419,7 +419,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
             window_fd = npy.ones(n_fd)
 
     else:
-        raise ValueError('Invalid parameter method=`{}`'.format(method))
+        raise ValueError(f'Invalid parameter method=`{method}`')
 
     # apply frequency-domain window
     ntwk_gated.s[:, 0, 0] = ntwk_gated.s[:, 0, 0] * window_fd

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Union
+    pass
 
 import functools
 from enum import Enum
@@ -64,12 +64,12 @@ class NanoVNA(vna.VNA):
     def _reset_protocol(self):
         self.write_raw(b"\x00\x00\x00\x00\x00\x00\x00\x00")
 
-    def query(self, op: OP, addr: Union[REG_ADDR, bytes], nbytes: int) -> bytes:
+    def query(self, op: OP, addr: REG_ADDR | bytes, nbytes: int) -> bytes:
         cmd = op + addr
         self.write_raw(cmd)
         return self.read_bytes(nbytes)
 
-    def write(self, op: OP, addr: Union[REG_ADDR, bytes], nbytes: int, arg: int) -> None:
+    def write(self, op: OP, addr: REG_ADDR | bytes, nbytes: int, arg: int) -> None:
         arg = int(arg).to_bytes(nbytes, byteorder="little", signed=False)
 
         if op == OP.WRITEFIFO:

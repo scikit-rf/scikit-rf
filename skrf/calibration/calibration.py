@@ -304,13 +304,9 @@ class Calibration:
             name = self.name
 
         if 'fromcoefs' in self.family.lower():
-            output = '%s Calibration: \'%s\', %s'\
-                %(self.family,name,str(self.frequency))
+            output = f'{self.family} Calibration: \'{name}\', {self.frequency}'
         else:
-            output = '%s Calibration: \'%s\', %s, %i-standards'\
-                %(self.family,name,str(self.frequency),\
-                len(self.measured))
-
+            output = f'{self.family} Calibration: \'{name}\', {self.frequency}, {len(self.measured)}-standards'
         return output
 
     def __repr__(self):
@@ -5468,7 +5464,7 @@ class Normalization(Calibration):
     def apply_cal(self, input_ntwk):
         return input_ntwk/average(self.measured)
 
-class MultiportCal():
+class MultiportCal:
     """
     Multi-port VNA calibration using two-port calibration method.
 
@@ -5523,20 +5519,20 @@ class MultiportCal():
         frequency = None
         for k, c in cal_dict.items():
             if len(k) != 2:
-                raise ValueError("Invalid cal_dict key {}. Expected tuple of length two.".format(k))
+                raise ValueError(f"Invalid cal_dict key {k}. Expected tuple of length two.")
             if not isinstance(k[0], int) or not isinstance(k[1], int):
                 raise ValueError("cal_dict key should be tuple of ints.")
             max_key_nports = max(max_key_nports, max(k[0], k[1]))
             min_key_nports = min(min_key_nports, min(k[0], k[1]))
             if not isinstance(c, dict):
-                raise ValueError("cal_dict[{}] not dictionary.".format(k))
+                raise ValueError(f"cal_dict[{k}] not dictionary.")
             if 'method' not in c:
-                raise ValueError("cal_dict[{}] missing key 'method'.".format(k))
+                raise ValueError(f"cal_dict[{k}] missing key 'method'.")
             if 'measured' not in c:
-                raise ValueError("cal_dict[{}] missing key 'measured'.".format(k))
+                raise ValueError(f"cal_dict[{k}] missing key 'measured'.")
             for m in c['measured']:
                 if not isinstance(m, Network):
-                    raise ValueError("Expected Network in cal_dict[{}]['measured']".format(k))
+                    raise ValueError(f"Expected Network in cal_dict[{k}]['measured']")
                 if nports is None:
                     nports = m.nports
                 if m.nports not in [2, nports]:
@@ -5644,7 +5640,7 @@ class MultiportCal():
                 if 'k' not in self._coefs[p[not k_side]].keys():
                     self._coefs[p[not k_side]][c] = one
             else:
-                warn('Unknown coefficient in calibration {}'.format(c))
+                warn(f'Unknown coefficient in calibration {c}')
 
         term1 = self.dut_termination(S1, coefs['reverse switch term'])
         term2 = self.dut_termination(S2, coefs['forward switch term'])
@@ -5835,7 +5831,7 @@ class MultiportCal():
                     [ Err*k,  Esr ]
                     ]).transpose(2,0,1)
         else:
-            raise ValueError("Invalid k_side {}, expected 0 or 1.".format(k_side))
+            raise ValueError(f"Invalid k_side {k_side}, expected 0 or 1.")
         return (S1, S2)
 
     def dut_termination(self, S, gamma):
@@ -5924,7 +5920,7 @@ class MultiportSOLT(MultiportCal):
             warn("SixteenTerm calibration is reduced to 8-terms.")
 
         if len(ideals) < nports - 1:
-            raise ValueError("Invalid number of ideals. Expected at least {} but got {}.".format(nports-1, len(ideals)))
+            raise ValueError(f"Invalid number of ideals. Expected at least {nports-1} but got {len(ideals)}.")
 
         self.thru_ports = []
         for thru in ideals[:nports-1]:

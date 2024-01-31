@@ -56,7 +56,7 @@ from __future__ import annotations
 import os
 import warnings
 from numbers import Number
-from typing import TYPE_CHECKING, Callable, List, Tuple, Union
+from typing import TYPE_CHECKING, Callable
 
 try:
     import matplotlib as mpl
@@ -112,8 +112,8 @@ def scale_frequency_ticks(ax: plt.Axes, funit: str):
 
 @axes_kwarg
 def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
-          border: bool = False, ax: Union[plt.Axes, None] = None, ref_imm: float = 1.0,
-          draw_vswr: Union[List, bool, None] = None):
+          border: bool = False, ax: plt.Axes | None = None, ref_imm: float = 1.0,
+          draw_vswr: list | bool | None = None):
     """
     Plot the Smith chart of a given radius.
 
@@ -336,9 +336,9 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
 
 
 def plot_rectangular(x: NumberLike, y: NumberLike,
-                     x_label: Union[str, None] = None, y_label: Union[str, None] = None,
-                     title: Union[str, None] = None, show_legend: bool = True,
-                     axis: str = 'tight', ax: Union[plt.Axes, None] = None,
+                     x_label: str | None = None, y_label: str | None = None,
+                     title: str | None = None, show_legend: bool = True,
+                     axis: str = 'tight', ax: plt.Axes | None = None,
                      *args, **kwargs):
     r"""
     Plot rectangular data and optionally label axes.
@@ -394,9 +394,9 @@ def plot_rectangular(x: NumberLike, y: NumberLike,
 
 
 def plot_polar(theta: NumberLike, r: NumberLike,
-               x_label: Union[str, None] = None, y_label: Union[str, None] = None,
-               title: Union[str, None] = None, show_legend: bool = True,
-               axis_equal: bool = False, ax: Union[plt.Axes, None] = None,
+               x_label: str | None = None, y_label: str | None = None,
+               title: str | None = None, show_legend: bool = True,
+               axis_equal: bool = False, ax: plt.Axes | None = None,
                *args, **kwargs):
     r"""
     Plot polar data on a polar plot and optionally label axes.
@@ -473,7 +473,7 @@ def plot_polar(theta: NumberLike, r: NumberLike,
 def plot_complex_rectangular(z: NumberLike,
                              x_label: str = 'Real', y_label: str = 'Imag',
                              title: str = 'Complex Plane', show_legend: bool = True,
-                             axis: str = 'equal', ax: Union[plt.Axes, None] = None,
+                             axis: str = 'equal', ax: plt.Axes | None = None,
                              **kwargs):
     r"""
     Plot complex data on the complex plane.
@@ -511,9 +511,9 @@ def plot_complex_rectangular(z: NumberLike,
 
 
 def plot_complex_polar(z: NumberLike,
-                       x_label: Union[str, None] = None, y_label: Union[str, None] = None,
-                       title: Union[str, None] = None, show_legend: bool = True,
-                       axis_equal: bool = False, ax: Union[plt.Axes, None] = None,
+                       x_label: str | None = None, y_label: str | None = None,
+                       title: str | None = None, show_legend: bool = True,
+                       axis_equal: bool = False, ax: plt.Axes | None = None,
                        **kwargs):
     r"""
     Plot complex data in polar format.
@@ -551,8 +551,8 @@ def plot_complex_polar(z: NumberLike,
 
 def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
                x_label: str = 'Real', y_label: str = 'Imaginary', title: str = 'Complex Plane',
-               show_legend: bool = True, axis: str = 'equal', ax: Union[plt.Axes, None] = None,
-               force_chart: bool = False, draw_vswr: Union[List, bool, None] = None, draw_labels: bool = False,
+               show_legend: bool = True, axis: str = 'equal', ax: plt.Axes | None = None,
+               force_chart: bool = False, draw_vswr: list | bool | None = None, draw_labels: bool = False,
                **kwargs):
     r"""
     Plot complex data on smith chart.
@@ -660,7 +660,7 @@ def subplot_params(ntwk, param: str = 's', proj: str = 'db',
         axs = npy.array(f.get_axes())
 
     for ports,ax in zip(ntwk.port_tuples, axs.flatten()):
-        plot_func = ntwk.__getattribute__('plot_%s_%s'%(param, proj))
+        plot_func = ntwk.__getattribute__(f'plot_{param}_{proj}')
         plot_func(m=ports[0], n=ports[1], ax=ax, **kwargs)
         if add_titles:
             ax.set_title('%s%i%i'%(param.upper(),ports[0]+1, ports[1]+1))
@@ -669,7 +669,7 @@ def subplot_params(ntwk, param: str = 's', proj: str = 'db',
     return f, axs
 
 
-def shade_bands(edges: NumberLike, y_range: Union[Tuple, None] = None,
+def shade_bands(edges: NumberLike, y_range: tuple | None = None,
                 cmap: str = 'prism', **kwargs):
     r"""
     Shades frequency bands.
@@ -707,7 +707,7 @@ def shade_bands(edges: NumberLike, y_range: Union[Tuple, None] = None,
     plt.axis(axis)
 
 
-def save_all_figs(dir: str = './', format: Union[None, List[str]] = None,
+def save_all_figs(dir: str = './', format: None | list[str] = None,
                   replace_spaces: bool = True, echo: bool = True):
     """
     Save all open Figures to disk.
@@ -746,7 +746,7 @@ saf = save_all_figs
 
 @axes_kwarg
 def add_markers_to_lines(ax: plt.Axes = None,
-                         marker_list: List = None,
+                         marker_list: list = None,
                          markevery: int = 10):
     """
     Add markers to existing lings on a plot.
@@ -793,7 +793,7 @@ def legend_off(ax: plt.Axes = None):
     ax.legend_.set_visible(0)
 
 @axes_kwarg
-def scrape_legend(n: Union[int, None] = None,
+def scrape_legend(n: int | None = None,
                   ax:plt.Axes = None):
     """
     Scrape a legend with redundant labels.
@@ -871,7 +871,7 @@ def plot_vector(a: complex, off: complex = 0+0j, **kwargs):
            angles='xy', scale=1, **kwargs)
 
 
-def colors() -> List[str]:
+def colors() -> list[str]:
     """
     Return the list of colors of the rcParams color cycle.
 
@@ -978,7 +978,7 @@ def plot_reciprocity2(netw: Network, db=False, *args, **kwargs):
         plt.draw()
 
 
-def plot_s_db_time(netw: Network, *args, window: Union[str, float, Tuple[str, float]]=('kaiser', 6),
+def plot_s_db_time(netw: Network, *args, window: str | float | tuple[str, float]=('kaiser', 6),
         normalize: bool = True, center_to_dc: bool = None, **kwargs):
     return netw.windowed(window, normalize, center_to_dc).plot_s_time_db(*args,**kwargs)
 
@@ -1144,8 +1144,8 @@ def stylely(rc_dict: dict = None, style_file: str = 'skrf.mplstyle'):
 
 
 # Network Set Plotting Commands
-def animate(self: NetworkSet, attr: str = 's_deg', ylims: Tuple = (-5, 5),
-            xlims: Union[Tuple, None] = None, show: bool = True,
+def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
+            xlims: tuple | None = None, show: bool = True,
             savefigs: bool = False, dir_: str = '.', *args, **kwargs):
     r"""
     Animate a property of the networkset.
@@ -1227,9 +1227,9 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: Tuple = (-5, 5),
 @axes_kwarg
 def plot_uncertainty_bounds_component(
         self: NetworkSet, attribute: str,
-        m: Union[int, None] = None, n: Union[int, None] = None,
+        m: int | None = None, n: int | None = None,
         type: str = 'shade', n_deviations: int = 3,
-        alpha: float = .3, color_error: Union[str, None] = None,
+        alpha: float = .3, color_error: str | None = None,
         markevery_error: int = 20, ax: plt.Axes = None,
         ppf: bool = None, kwargs_error: dict = None,
         **kwargs):
@@ -1348,7 +1348,7 @@ def plot_uncertainty_bounds_component(
 @axes_kwarg
 def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
                                  type: str = 'shade', n_deviations: int = 3,
-                                 alpha: float = .3, color_error: Union[str, None] = None,
+                                 alpha: float = .3, color_error: str | None = None,
                                  markevery_error: int = 20, ax: plt.Axes = None,
                                  ppf: bool = None, kwargs_error: dict = None,
                                  **kwargs):
@@ -1593,8 +1593,8 @@ def plot_logsigma(self: NetworkSet, label_axis: bool = True, *args,**kwargs):
 
 
 def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag',
-              vmax: Union[Number, None] = None, vs_time: bool = False,
-              cbar_label: Union[str, None] = None,
+              vmax: Number | None = None, vs_time: bool = False,
+              cbar_label: str | None = None,
               *args, **kwargs):
     r"""
     Visualization of a NetworkSet.

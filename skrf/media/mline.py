@@ -279,11 +279,9 @@ class MLine(Media):
 
     def __str__(self) -> str:
         f=self.frequency
-        output =  \
-                'Microstripline Media.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\n W= %.2em, H= %.2em'% \
-                (self.w,self.h)
+        output = (
+                f'Microstripline Media.  {f.f_scaled[0]}-{f.f_scaled[-1]} {f.unit}.  {f.npoints} points'%\
+                f'\n W= {self.w:.2e}m, H= {self.h:.2e}m')
         return output
 
     def __repr__(self) -> str:
@@ -641,7 +639,7 @@ class MLine(Media):
                 if(npy.any(t < 3 * ds)):
                     warnings.warn(
                         'Conductor loss calculation invalid for line'
-                        'height t ({})  < 3 * skin depth ({})'.format(t, ds[0]),
+                        f'height t ({t})  < 3 * skin depth ({ds[0]})',
                         RuntimeWarning
                         )
                 # current distribution factor

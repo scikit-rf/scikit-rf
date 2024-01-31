@@ -25,7 +25,7 @@ from ..networkSet import NetworkSet
 from ..util import get_fid
 
 
-class Mdif():
+class Mdif:
     """
     Class to read Generalized MDIF N-port files.
 
@@ -439,13 +439,9 @@ class Mdif():
                         data_types[p] = "double"
 
                     if data_types[p] == "string":
-                        var_def_str = 'VAR {}({}) = "{}"'.format(
-                            p, dict_types[data_types[p]], values[p][filenumber]
-                        )
+                        var_def_str = f'VAR {p}({dict_types[data_types[p]]}) = "{values[p][filenumber]}"'
                     else:
-                        var_def_str = "VAR {}({}) = {}".format(
-                            p, dict_types[data_types[p]], values[p][filenumber]
-                        )
+                        var_def_str = f"VAR {p}({dict_types[data_types[p]]}) = {values[p][filenumber]}"
                     mdif.write(var_def_str + "\n")
 
                 mdif.write("\nBEGIN ACDATA\n")

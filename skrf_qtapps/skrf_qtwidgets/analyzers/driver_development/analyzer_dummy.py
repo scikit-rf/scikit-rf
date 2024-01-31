@@ -7,7 +7,7 @@ from skrf_qtwidgets.analyzers import base_analyzer
 from skrf_qtwidgets.cfg import example_data_dir
 
 
-class DummyResource(object):
+class DummyResource:
     def __init__(self, *args, **kwargs):
         pass
 

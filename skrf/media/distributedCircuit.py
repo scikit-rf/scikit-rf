@@ -129,17 +129,13 @@ class DistributedCircuit(Media):
     def __str__(self) -> str:
         f=self.frequency
         try:
-            output =  \
-                'Distributed Circuit Media.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\nL\'= %.2f, C\'= %.2f,R\'= %.2f, G\'= %.2f, '% \
-                (self.L, self.C,self.R, self.G)
+            output = (
+                f'Distributed Circuit Media.  {f.f_scaled[0]}-{f.f_scaled[-1]} {f.unit}.  {f.npoints} points'
+                f'\nL\'= {self.L:.2f}, C\'= {self.C:.2f},R\'= {self.R:.2f}, G\'= {self.G:.2f}, ')
         except(TypeError):
-            output =  \
-                'Distributed Circuit Media.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\nL\'= %.2f.., C\'= %.2f..,R\'= %.2f.., G\'= %.2f.., '% \
-                (self.L[0], self.C[0],self.R[0], self.G[0])
+            output = (
+                f'Distributed Circuit Media.  {f.f_scaled[0]}-{f.f_scaled[-1]} {f.unit}.  {f.npoints} points'
+                f'\nL\'= {self.L:.2f}.., C\'= {self.C:.2f}..,R\'= {self.R:.2f}.., G\'= {self.G:.2f}.., ')
         return output
 
     def __repr__(self) -> str:

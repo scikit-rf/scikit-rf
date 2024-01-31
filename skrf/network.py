@@ -2331,14 +2331,14 @@ class Network:
 
         if r_ref is None and not write_z0:
             if not equal_z0:
-                raise ValueError((
+                raise ValueError(
                     "Network has unequal port impedances but reference impedance for renormalization"
-                    " 'r_ref' is not specified.")
+                    " 'r_ref' is not specified."
                     )
             if have_complex_ports:
                 raise ValueError(
-                    ("Network port impedances are complex but reference impedance for renormalization"
-                     " 'r_ref' is not specified.")
+                    "Network port impedances are complex but reference impedance for renormalization"
+                     " 'r_ref' is not specified."
                     )
             r_ref = ntwk.z0[0, 0]
         elif r_ref is not None:
@@ -7456,8 +7456,7 @@ def fix_param_shape(p: NumberLike):
         # Many port with one frequency
         return p.reshape(-1, p.shape[0], p.shape[0])
     if len(p.shape) != 3:
-        raise ValueError('Input array has too many dimensions. Shape: {}' \
-                .format(p.shape))
+        raise ValueError(f'Input array has too many dimensions. Shape: {p.shape}')
     return p
 
 def fix_z0_shape(z0: NumberLike, nfreqs: int, nports: int) -> npy.ndarray:

@@ -1482,7 +1482,7 @@ class VectorFitting:
                     responses = self.network.y
                 else:
                     raise ValueError('The network parameter type is not valid, must be `s`, `z`, or `y`, '
-                                     'got `{}`.'.format(parameter))
+                                     f'got `{parameter}`.')
 
                 i_samples = 0
                 for i in list_i:

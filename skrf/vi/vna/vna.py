@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
 import functools
 import inspect
@@ -64,7 +64,7 @@ class Channel:
     """
 
     def __init__(
-        self, parent, cnum: Optional[int] = None, cname: Optional[str] = None
+        self, parent, cnum: int | None = None, cname: str | None = None
     ) -> None:
         self.parent = parent
         self.cnum = cnum
@@ -82,7 +82,7 @@ class VNA(ABC):
     _scpi = True  # Set to false in subclasses that don't use SCPI
 
     def __init__(
-        self, address: str, backend: str = "@py", timeout: Optional[int] = None
+        self, address: str, backend: str = "@py", timeout: int | None = None
     ) -> None:
         rm = pyvisa.ResourceManager(backend)
         self._resource = rm.open_resource(address, timeout=timeout)
@@ -155,12 +155,12 @@ class VNA(ABC):
 
     @staticmethod
     def command(
-        get_cmd: Optional[str] = None,
-        set_cmd: Optional[str] = None,
-        doc: Optional[str] = None,
-        validator: Optional[Validator] = None,
+        get_cmd: str | None = None,
+        set_cmd: str | None = None,
+        doc: str | None = None,
+        validator: Validator | None = None,
         values: bool = False,
-        values_container: Optional[type] = np.array,
+        values_container: type | None = np.array,
         complex_values: bool = False,
     ) -> property:
         """
@@ -242,11 +242,11 @@ class VNA(ABC):
         return property(fget=fget, fset=fset)
 
     @property
-    def timeout(self) -> Optional[int]:
+    def timeout(self) -> int | None:
         return self._resource.timeout
 
     @timeout.setter
-    def timeout(self, timeout: Optional[int]) -> None:
+    def timeout(self, timeout: int | None) -> None:
         self._resource.timeout = timeout
 
     def read(self, **kwargs) -> None:

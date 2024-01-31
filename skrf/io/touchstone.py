@@ -32,7 +32,7 @@ import typing
 import warnings
 import zipfile
 from dataclasses import dataclass, field
-from typing import Callable, Optional
+from typing import Callable
 
 import numpy as npy
 
@@ -52,7 +52,7 @@ def remove_prefix(text: str, prefix: str) -> str:
 class ParserState:
     """Class to hold dynamic variables while parsing the touchstone file.
     """
-    rank: Optional[int] = None
+    rank: int | None = None
     option_line_parsed: bool = False
     hfss_gamma: list[list[float]] = field(default_factory=list)
     hfss_impedance: list[list[float]] = field(default_factory=list)
@@ -68,8 +68,8 @@ class ParserState:
     two_port_order_legacy: bool = True
     number_noise_freq: int = 0
     port_names: dict[int, str] = field(default_factory=dict)
-    ansys_data_type: Optional[str] = None
-    mixed_mode_order: Optional[list[str]] = None
+    ansys_data_type: str | None = None
+    mixed_mode_order: list[str] | None = None
     frequency_unit: str = "ghz"
     parameter: str = "s"
     format: str = "ma"
@@ -188,7 +188,7 @@ class Touchstone:
     .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
 
-    def __init__(self, file: typing.Union[str, typing.TextIO], encoding: typing.Union[str, None] = None):
+    def __init__(self, file: str | typing.TextIO, encoding: str | None = None):
         """
         constructor
 

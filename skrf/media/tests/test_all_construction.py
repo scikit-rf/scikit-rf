@@ -12,7 +12,7 @@ import skrf as rf
 from skrf.media import CPW, CircularWaveguide, Coaxial, DistributedCircuit, Freespace, MLine, RectangularWaveguide
 
 
-class MediaTestCase():
+class MediaTestCase:
     """Base class, contains tests for all media."""
     def test_gamma(self):
         self.media.gamma

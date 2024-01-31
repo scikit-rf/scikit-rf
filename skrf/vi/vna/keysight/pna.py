@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional, Sequence, Union
+    from typing import Sequence
 
 import itertools
 import sys
@@ -194,7 +194,7 @@ class PNA(VNA):
             return int(f.step)
 
         @freq_step.setter
-        def freq_step(self, f: Union[int, float, str]) -> None:
+        def freq_step(self, f: int | float | str) -> None:
             validator = FreqValidator()
             f = validator.validate_input(f)
             freq = self.frequency
@@ -333,7 +333,7 @@ class PNA(VNA):
 
         def get_snp_network(
             self,
-            ports: Optional[Sequence] = None,
+            ports: Sequence | None = None,
         ) -> skrf.Network:
             if ports is None:
                 ports = list(range(1, self.parent.nports + 1))
@@ -490,7 +490,7 @@ class PNA(VNA):
             return self._model_param("nports")
 
     @property
-    def active_channel(self) -> Optional[Channel]:
+    def active_channel(self) -> Channel | None:
         num = int(self.query("SYST:ACT:CHAN?"))
         return getattr(self, f"ch{num}", None)
 

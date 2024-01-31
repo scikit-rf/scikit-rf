@@ -242,11 +242,8 @@ class CPW(Media):
 
     def __str__(self) -> str:
         f=self.frequency
-        output =  \
-                'Coplanar Waveguide Media.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\n W= %.2em, S= %.2em'% \
-                (self.w,self.s)
+        output = (f'Coplanar Waveguide Media.  {f.f_scaled[0]}-{f.f_scaled[-1]} {f.unit}. {f.npoints} points'
+                  f'\n W= {self.w:.2e}m, S= {self.s:.2e}m')
         return output
 
     def __repr__(self) -> str:
@@ -503,7 +500,7 @@ class CPW(Media):
             if any(t < 3 * ds):
                 warnings.warn(
                     'Conductor loss calculation invalid for line'
-                    'height t ({})  < 3 * skin depth ({})'.format(t, ds[0]),
+                    f'height t ({t})  < 3 * skin depth ({ds[0]})',
                     RuntimeWarning
                     )
             n = (1. - k1) * 8. * pi / (t * (1. + k1))

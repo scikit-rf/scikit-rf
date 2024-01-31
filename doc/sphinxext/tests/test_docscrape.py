@@ -1,4 +1,3 @@
-# -*- encoding:utf-8 -*-
 
 import os
 import sys
@@ -176,9 +175,9 @@ def non_blank_line_by_line_compare(a,b):
     b = [l for l in b.split('\n') if l.strip()]
     for n,line in enumerate(a):
         if not line == b[n]:
-            raise AssertionError("Lines %s of a and b differ: "
-                                 "\n>>> %s\n<<< %s\n" %
-                                 (n,line,b[n]))
+            raise AssertionError(f"Lines {n} of a and b differ: "
+                                 f"\n>>> {line}\n<<< {b[n]}\n")
+
 def test_str():
     non_blank_line_by_line_compare(str(doc),
 """numpy.multivariate_normal(mean, cov, shape=None, spam=None)
@@ -508,7 +507,7 @@ def test_see_also():
             assert desc == ['fubar', 'foobar']
 
 def test_see_also_print():
-    class Dummy(object):
+    class Dummy:
         """
         See Also
         --------
@@ -558,7 +557,7 @@ def test_unicode():
         äää
 
     """)
-    assert doc['Summary'][0] == u'öäöäöäöäöåååå'.encode('utf-8')
+    assert doc['Summary'][0] == 'öäöäöäöäöåååå'.encode()
 
 def test_plot_examples():
     cfg = dict(use_plots=True)
@@ -585,7 +584,7 @@ def test_plot_examples():
 
 def test_class_members():
 
-    class Dummy(object):
+    class Dummy:
         """
         Dummy class.
 

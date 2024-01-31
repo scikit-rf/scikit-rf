@@ -125,9 +125,8 @@ class Deembedding(ABC):
         else:
             name = self.name
 
-        output = '%s Deembedding: %s, %s, %s dummy structures'\
-                %(self.__class__.__name__, name, str(self.frequency),\
-                    len(self.dummies))
+        output = (f'{self.__class__.__name__} Deembedding: {name}, {self.frequency}, '
+                  f'{len(self.dummies)} dummy structures')
 
         return output
 
