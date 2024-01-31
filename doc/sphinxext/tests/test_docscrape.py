@@ -427,7 +427,7 @@ doc3 = NumpyDocString("""
 
 def test_escape_stars():
     signature = str(doc3).split('\n')[0]
-    assert_equal(signature, 'my_signature(\*params, \*\*kwds)')
+    assert_equal(signature, r'my_signature(\*params, \*\*kwds)')
 
 doc4 = NumpyDocString(
     """a.conj()
