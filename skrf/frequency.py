@@ -621,7 +621,7 @@ class Frequency:
         if isinstance(val, str):
             val = self.multiplier_dict[val.lower()]
 
-        self.f = npy.round_(self.f/val)*val
+        self.f = npy.round(self.f/val)*val
 
     def overlap(self,f2: Frequency) -> Frequency:
         """
