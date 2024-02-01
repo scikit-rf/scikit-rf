@@ -8,18 +8,21 @@ MLine (:mod:`skrf.media.MLine`)
    MLine
 
 """
-import numpy as npy
-from numpy import log, log10, tanh, sqrt, exp, real, imag, cosh, \
-                            ones, zeros, arctan
-from scipy.constants import  epsilon_0, mu_0, c, pi
-from .media import Media
-from ..tlineFunctions import skin_depth, surface_resistivity
-from ..constants import NumberLike
-from typing import Union, TYPE_CHECKING
+from __future__ import annotations
+
 import warnings
+from typing import TYPE_CHECKING
+
+import numpy as npy
+from numpy import arctan, cosh, exp, imag, log, log10, ones, real, sqrt, tanh, zeros
+from scipy.constants import c, epsilon_0, mu_0, pi
+
+from ..constants import NumberLike
+from ..tlineFunctions import skin_depth, surface_resistivity
+from .media import Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class MLine(Media):
@@ -199,12 +202,12 @@ class MLine(Media):
         causality,
         IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
     """
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None,
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None,
                  w: NumberLike = 3, h: NumberLike = 1.6,
-                 t: Union[NumberLike, None] = None,
+                 t: NumberLike | None = None,
                  ep_r: NumberLike = 4.5,
                  mu_r: NumberLike = 1.0,
                  model: str = 'hammerstadjensen',
@@ -214,7 +217,7 @@ class MLine(Media):
                  rough: NumberLike = 0.15e-6,
                  f_low: NumberLike = 1e3, f_high: NumberLike = 1e12,
                  f_epr_tand: NumberLike = 1e9,
-                 compatibility_mode: Union[str, None] = None,
+                 compatibility_mode: str | None = None,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)
@@ -278,11 +281,9 @@ class MLine(Media):
 
     def __str__(self) -> str:
         f=self.frequency
-        output =  \
-                'Microstripline Media.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\n W= %.2em, H= %.2em'% \
-                (self.w,self.h)
+        output = (
+                f'Microstripline Media.  {f.f_scaled[0]}-{f.f_scaled[-1]} {f.unit}.  {f.npoints} points'%\
+                f'\n W= {self.w:.2e}m, H= {self.h:.2e}m')
         return output
 
     def __repr__(self) -> str:
@@ -312,7 +313,7 @@ class MLine(Media):
     def z0_characteristic(self) -> npy.ndarray:
         """
         Characteristic Impedance, :math:`z_0`
-        
+
         Returns
         -------
         z0_characteristic : npy.ndarray
@@ -640,7 +641,7 @@ class MLine(Media):
                 if(npy.any(t < 3 * ds)):
                     warnings.warn(
                         'Conductor loss calculation invalid for line'
-                        'height t ({})  < 3 * skin depth ({})'.format(t, ds[0]),
+                        f'height t ({t})  < 3 * skin depth ({ds[0]})',
                         RuntimeWarning
                         )
                 # current distribution factor

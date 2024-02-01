@@ -17,16 +17,20 @@ Time domain functions
    get_window
 
 """
+from __future__ import annotations
 
-from .util import find_nearest_index
-from scipy import signal
-import numpy as npy
-from numpy.fft import fft, rfft, fftshift, ifft, irfft, ifftshift
-from scipy.ndimage import convolve1d
 import warnings
 
 # imports for type hinting
-from typing import List, TYPE_CHECKING, Union, Callable
+from typing import TYPE_CHECKING, Callable
+
+import numpy as npy
+from numpy.fft import fft, fftshift, ifft, ifftshift, irfft, rfft
+from scipy import signal
+from scipy.ndimage import convolve1d
+
+from .util import find_nearest_index
+
 if TYPE_CHECKING:
     from .network import Network
 
@@ -137,7 +141,7 @@ def indexes(y: npy.ndarray, thres: float = 0.3, min_dist: int = 1) -> npy.ndarra
     return peaks
 
 
-def find_n_peaks(x: npy.ndarray, n: int, thres: float = 0.9, **kwargs) -> List[int]:
+def find_n_peaks(x: npy.ndarray, n: int, thres: float = 0.9, **kwargs) -> list[int]:
     """
     Find a given number of peaks in a signal.
 
@@ -183,7 +187,7 @@ time_lookup_dict = {
     "ps": 1e-12
 }
 
-def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
+def detect_span(ntwk: Network, t_unit: str = "") -> float:
     """
     Detect the correct time-span between two largest peaks.
 
@@ -223,7 +227,7 @@ def detect_span(ntwk: 'Network', t_unit: str = "") -> float:
 
     return span / time_lookup_dict[t_unit]
 
-def get_window(window: Union[str, tuple, Callable], Nx: int, **kwargs) -> npy.ndarray:
+def get_window(window: str | tuple | Callable, Nx: int, **kwargs) -> npy.ndarray:
     """Calls a custom window function or `scipy.signal.get_window()` depending on the window argument.
 
     Parameters
@@ -245,9 +249,9 @@ def get_window(window: Union[str, tuple, Callable], Nx: int, **kwargs) -> npy.nd
     else:
         return signal.get_window(window, Nx=Nx, **kwargs)
 
-def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
+def time_gate(ntwk: Network, start: float = None, stop: float = None, center: float = None, span: float = None,
               mode: str = 'bandpass', window=('kaiser', 6),
-              method: str ='fft', fft_window: str='cosine', conv_mode: str='wrap', t_unit: str = "") -> 'Network':
+              method: str ='fft', fft_window: str='cosine', conv_mode: str='wrap', t_unit: str = "") -> Network:
     """
     Time-domain gating of one-port s-parameters with a window function from scipy.signal.windows.
 
@@ -416,7 +420,7 @@ def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: 
             window_fd = npy.ones(n_fd)
 
     else:
-        raise ValueError('Invalid parameter method=`{}`'.format(method))
+        raise ValueError(f'Invalid parameter method=`{method}`')
 
     # apply frequency-domain window
     ntwk_gated.s[:, 0, 0] = ntwk_gated.s[:, 0, 0] * window_fd

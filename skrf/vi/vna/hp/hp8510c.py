@@ -68,12 +68,12 @@ class HP8510C(VNA):
 
     is_continuous = VNA.command(
         get_cmd="GROU?",
-        set_cmd="<arg>", # This is blank on purpose. The command sent to the instrument is in the BooleanValidator constructor
+        set_cmd="<arg>", # This is blank on purpose. The command sent is in the BooleanValidator constructor
         doc="""The trigger mode of the instrument""",
         validator=BooleanValidator(
             true_response='"CONTINUAL"',
             false_response='"HOLD"',
-            true_setting='CONT;', 
+            true_setting='CONT;',
             false_setting='SING;'
         )
     )

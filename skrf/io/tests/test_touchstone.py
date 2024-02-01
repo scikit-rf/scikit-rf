@@ -1,9 +1,10 @@
-import unittest
 import os
-import numpy as npy
+import unittest
 from pathlib import Path
 
+import numpy as npy
 import pytest
+
 from skrf.io.touchstone import Touchstone
 
 
@@ -139,15 +140,13 @@ class TouchstoneTestCase(unittest.TestCase):
             self.assertTrue(k in expected_sp_ri)
 
             self.assertTrue( (expected_sp_ri[k] == sp_ri[k]).all(),
-                    msg='Field %s does not match. Expected "%s", got "%s"'%(
-                        k, str(expected_sp_ri[k]), str(sp_ri[k]))  )
+                    msg=f'Field {k} does not match. Expected "{expected_sp_ri[k]}", got "{sp_ri[k]}"')
 
         for k in sp_db:
             self.assertTrue(k in expected_sp_db)
 
             self.assertTrue( (expected_sp_db[k] == sp_db[k]).all(),
-                    msg='Field %s does not match. Expected "%s", got "%s"'%(
-                        k, str(expected_sp_db[k]), str(sp_db[k]))  )
+                    msg=f'Field {k} does not match. Expected "{expected_sp_db[k]}", got "{sp_db[k]}"')
 
 
         with pytest.warns(DeprecationWarning):

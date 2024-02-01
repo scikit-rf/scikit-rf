@@ -1,18 +1,31 @@
 import unittest
 import warnings
-import pytest
 
 import numpy as npy
-from numpy.random  import uniform
+import pytest
+from numpy.random import uniform
 
 import skrf as rf
-from skrf.media import Coaxial
-from skrf.calibration import PHN, SOLT, UnknownThru, TwoPortOnePath, TwelveTerm, terminate, terminate_nport, determine_line, determine_reflect, compute_switch_terms, NISTMultilineTRL, MultiportCal, MultiportSOLT, TUGMultilineTRL
-
 from skrf import two_port_reflect
+from skrf.calibration import (
+    PHN,
+    SOLT,
+    MultiportCal,
+    MultiportSOLT,
+    NISTMultilineTRL,
+    TUGMultilineTRL,
+    TwelveTerm,
+    TwoPortOnePath,
+    UnknownThru,
+    compute_switch_terms,
+    determine_line,
+    determine_reflect,
+    terminate,
+    terminate_nport,
+)
+from skrf.media import Coaxial, DistributedCircuit
 from skrf.networkSet import NetworkSet
 from skrf.util import suppress_warning_decorator
-from skrf.media import DistributedCircuit
 
 # number of frequency points to test calibration at .
 # i choose 1 for speed, but given that many tests employ *random*
@@ -96,7 +109,7 @@ class DetermineTest(unittest.TestCase):
         short = medium.short()
 
         rng = npy.random.default_rng(12)
-        short.s[:, 0, 0] = short.s[:, 0, 0]+rng.uniform(-.02, 0.02, freq.f.size) + rng.uniform(-.02, 0.02, freq.f.size)*1j
+        short.s[:, 0, 0] += rng.uniform(-.02, 0.02, freq.f.size) + rng.uniform(-.02, 0.02, freq.f.size)*1j
 
         r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
         npy.testing.assert_array_almost_equal( r.s, short.s)
@@ -115,7 +128,7 @@ class DetermineTest(unittest.TestCase):
 
 class ComputeSwitchTermsTest(unittest.TestCase):
     '''
-    test the indirect method of computing the switch terms 
+    test the indirect method of computing the switch terms
     with at least three reciprocal devices
     '''
     def setUp(self):
@@ -129,16 +142,16 @@ class ComputeSwitchTermsTest(unittest.TestCase):
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
 
-        # Reciprocal devices: asymmetric and both transmissive and reflective devices 
-        Rs = [25, 50, 100, ] 
+        # Reciprocal devices: asymmetric and both transmissive and reflective devices
+        Rs = [25, 50, 100, ]
         stands = [wg.resistor(R)**wg.shunt_resistor(R) for R in Rs]
         stands_meas = [terminate(self.X**k**self.Y, self.gamma_f, self.gamma_r) for k in stands]
-        
+
         self.gamma_f_indirect, self.gamma_r_indirect = compute_switch_terms(stands_meas)
 
     def test_gamma_f(self):
         self.assertTrue(all(npy.abs(self.gamma_f_indirect.s - self.gamma_f.s) < 1e-9))
-    
+
     def test_gamma_r(self):
         self.assertTrue(all(npy.abs(self.gamma_r_indirect.s - self.gamma_r.s) < 1e-9))
 
@@ -946,10 +959,10 @@ class TUGMultilineTest(EightTermTest):
         measured = [self.measure(k) for k in actuals]
 
         self.cal = TUGMultilineTRL(
-            line_meas = [measured[0]] + measured[3:], 
-            line_lengths = [0, 100e-6, 200e-6, 900e-6], 
-            er_est = 1, 
-            reflect_meas = measured[1:3], 
+            line_meas = [measured[0]] + measured[3:],
+            line_lengths = [0, 100e-6, 200e-6, 900e-6],
+            er_est = 1,
+            reflect_meas = measured[1:3],
             reflect_est = [-1, 1],
             isolation = measured[1],
             switch_terms = (self.gamma_f, self.gamma_r)
@@ -2059,11 +2072,11 @@ class MultiportCalTest(unittest.TestCase):
         # Test coefs
         nports = self.n_ports
         for e, c in enumerate(self.cal.coefs):
-            self.assertTrue(npy.abs(c['directivity'] - self.Z.s[:,e,e]) < 1e-7)
-            self.assertTrue(npy.abs(c['source match'] - self.Z.s[:,nports+e,nports+e]) < 1e-7)
-            self.assertTrue(npy.abs(c['reflection tracking'] - self.Z.s[:,e,nports+e] * self.Z.s[:,nports+e,e]) < 1e-7)
-            self.assertTrue(npy.abs(c['switch term'] - self.gammas[e].s) < 1e-7)
-            self.assertTrue(npy.abs(c['k']/self.cal.coefs[0]['k'] - self.Z.s[:,nports+0,0]/self.Z.s[:,nports+e,e]) < 1e-7)
+            assert npy.allclose(c['directivity'], self.Z.s[:,e,e])
+            assert npy.allclose(c['source match'], self.Z.s[:,nports+e,nports+e])
+            assert npy.allclose(c['reflection tracking'], self.Z.s[:,e,nports+e] * self.Z.s[:,nports+e,e])
+            assert npy.allclose(c['switch term'], self.gammas[e].s)
+            assert npy.allclose(c['k']/self.cal.coefs[0]['k'], self.Z.s[:,nports+0,0]/self.Z.s[:,nports+e,e])
 
         # Test DUT correction
         dut_cal = self.cal.apply_cal(dut_meas)
@@ -2163,11 +2176,11 @@ class MultiportSOLTTest(MultiportCalTest):
                 # Test coefs
                 nports = self.n_ports
                 for e, c in enumerate(self.cal.coefs):
-                    self.assertTrue(npy.abs(c['directivity'] - self.Z.s[:,e,e]) < 1e-7)
-                    self.assertTrue(npy.abs(c['source match'] - self.Z.s[:,nports+e,nports+e]) < 1e-7)
-                    self.assertTrue(npy.abs(c['reflection tracking'] - self.Z.s[:,e,nports+e] * self.Z.s[:,nports+e,e]) < 1e-7)
-                    self.assertTrue(npy.abs(c['switch term'] - self.gammas[e].s) < 1e-7)
-                    self.assertTrue(npy.abs(c['k']/self.cal.coefs[0]['k'] - self.Z.s[:,nports+0,0]/self.Z.s[:,nports+e,e]) < 1e-7)
+                    assert npy.allclose(c['directivity'], self.Z.s[:,e,e])
+                    assert npy.allclose(c['source match'], self.Z.s[:,nports+e,nports+e])
+                    assert npy.allclose(c['reflection tracking'], self.Z.s[:,e,nports+e] * self.Z.s[:,nports+e,e])
+                    assert npy.allclose(c['switch term'], self.gammas[e].s)
+                    assert npy.allclose(c['k']/self.cal.coefs[0]['k'], self.Z.s[:,nports+0,0]/self.Z.s[:,nports+e,e])
 
                 # Test DUT correction
                 dut_cal = self.cal.apply_cal(dut_meas)

@@ -11,19 +11,21 @@ A coaxial transmission line defined from its electrical or geometrical/physical 
 
 """
 
-#from copy import deepcopy
-from scipy.constants import  epsilon_0, mu_0, pi, c
-from numpy import sqrt, log, imag, exp, expm1, size, array
-import warnings
-from ..tlineFunctions import surface_resistivity, skin_depth
-from .distributedCircuit import DistributedCircuit
-from .media import Media, DefinedGammaZ0
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from numpy import array, exp, expm1, imag, log, size, sqrt
+from scipy.constants import c, epsilon_0, mu_0, pi
+
 from ..constants import INF, NumberLike
-from ..mathFunctions import feet_2_meter, db_per_100feet_2_db_per_100meter, db_2_np
-from typing import Union, TYPE_CHECKING
+from ..mathFunctions import db_2_np, db_per_100feet_2_db_per_100meter, feet_2_meter
+from ..tlineFunctions import skin_depth, surface_resistivity
+from .distributedCircuit import DistributedCircuit
+from .media import DefinedGammaZ0, Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class Coaxial(DistributedCircuit, Media):
@@ -79,12 +81,12 @@ class Coaxial(DistributedCircuit, Media):
 
     """
     ## CONSTRUCTOR
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None,
-                 Dint: NumberLike = .81e-3, Dout: NumberLike = 5e-3, 
-                 epsilon_r: NumberLike = 1, tan_delta: NumberLike = 0, 
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None,
+                 Dint: NumberLike = .81e-3, Dout: NumberLike = 5e-3,
+                 epsilon_r: NumberLike = 1, tan_delta: NumberLike = 0,
                  sigma: NumberLike = INF,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
@@ -96,8 +98,8 @@ class Coaxial(DistributedCircuit, Media):
         self.epsilon_second = epsilon_0*self.epsilon_r*self.tan_delta
 
     @classmethod
-    def from_attenuation_VF(cls, frequency: Union['Frequency', None] = None, 
-                            z0_port: Union[NumberLike, None] = None, z0: float = 50,
+    def from_attenuation_VF(cls, frequency: Frequency | None = None,
+                            z0_port: NumberLike | None = None, z0: float = 50,
                          att=0, unit='dB/m', VF=1) -> Media:
         """
         Init from electrical properties of the line: attenuation and velocity factor.
@@ -170,9 +172,9 @@ class Coaxial(DistributedCircuit, Media):
                                     z0_port=z0_port, z0=z0)
 
     @classmethod
-    def from_Z0_Dout(cls, frequency: Union['Frequency', None] = None, 
-                     z0_port: Union[NumberLike, None] = None, z0: float = 50,  
-                     epsilon_r: NumberLike = 1, Dout: NumberLike = 5e-3, 
+    def from_Z0_Dout(cls, frequency: Frequency | None = None,
+                     z0_port: NumberLike | None = None, z0: float = 50,
+                     epsilon_r: NumberLike = 1, Dout: NumberLike = 5e-3,
                      **kw) -> Media:
         """
         Init from characteristic impedance and outer diameter.

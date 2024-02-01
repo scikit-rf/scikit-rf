@@ -36,18 +36,22 @@ Misc
 
 """
 
-# from matplotlib.pyplot import gca,plot, autoscale
-from typing import List
-import warnings
+from __future__ import annotations
 
-from numbers import Number
-from .constants import NumberLike, ZERO
-from typing import Union
-from numpy import pi, linspace, geomspace
-import numpy as npy
-from numpy import gradient  # used to center attribute `t` at 0
 import re
-from .util import slice_domain, find_nearest_index, axes_kwarg, Axes
+import warnings
+from numbers import Number
+
+import numpy as npy
+from numpy import (
+    geomspace,
+    gradient,  # used to center attribute `t` at 0
+    linspace,
+    pi,
+)
+
+from .constants import FREQ_UNITS, ZERO, NumberLike
+from .util import Axes, axes_kwarg, find_nearest_index, slice_domain
 
 
 class InvalidFrequencyWarning(UserWarning):
@@ -75,24 +79,13 @@ class Frequency:
     combined with the `unit` property. All other properties, `start`
     `stop`, etc are generated from these.
     """
-    unit_dict = {
-            'hz': 'Hz',
-            'khz': 'kHz',
-            'mhz': 'MHz',
-            'ghz': 'GHz',
-            'thz': 'THz'
-            }
+    unit_dict = {k.lower(): k for k in FREQ_UNITS}
+
     """
     Dictionary to convert unit string with correct capitalization for display.
     """
 
-    multiplier_dict={
-            'hz': 1,
-            'khz': 1e3,
-            'mhz': 1e6,
-            'ghz': 1e9,
-            'thz': 1e12
-            }
+    multiplier_dict={k.lower(): v for k,v in FREQ_UNITS.items()}
     """
     Frequency unit multipliers.
     """
@@ -181,7 +174,7 @@ class Frequency:
         """
         return self.__str__()
 
-    def __getitem__(self, key: Union[str, int, slice]) -> 'Frequency':
+    def __getitem__(self, key: str | int | slice) -> Frequency:
         """
         Slices a Frequency object based on an index, or human readable string.
 
@@ -244,7 +237,7 @@ class Frequency:
 
 
     @classmethod
-    def from_f(cls, f: NumberLike, *args,**kwargs) -> 'Frequency':
+    def from_f(cls, f: NumberLike, *args,**kwargs) -> Frequency:
         """
         Construct Frequency object from a frequency vector.
 
@@ -302,17 +295,17 @@ class Frequency:
         """
         return self.npoints
 
-    def __mul__(self,other: 'Frequency') -> 'Frequency':
+    def __mul__(self,other: Frequency) -> Frequency:
         out = self.copy()
         out.f = self.f*other
         return out
 
-    def __rmul__(self,other: 'Frequency') -> 'Frequency':
+    def __rmul__(self,other: Frequency) -> Frequency:
         out = self.copy()
         out.f = self.f*other
         return out
 
-    def __div__(self,other: 'Frequency') -> 'Frequency':
+    def __div__(self,other: Frequency) -> Frequency:
         out = self.copy()
         out.f = self.f/other
         return out
@@ -331,7 +324,7 @@ class Frequency:
             "To get rid of the invalid values call `drop_non_monotonic_increasing`",
                 InvalidFrequencyWarning)
 
-    def drop_non_monotonic_increasing(self) -> List[int]:
+    def drop_non_monotonic_increasing(self) -> list[int]:
         """Drop duplicate and invalid frequency values and return the dropped indices
 
         Returns:
@@ -579,7 +572,7 @@ class Frequency:
         """
         return self.multiplier_dict[self._unit]
 
-    def copy(self) -> 'Frequency':
+    def copy(self) -> Frequency:
         """
         Returns a new copy of this frequency.
         """
@@ -605,7 +598,7 @@ class Frequency:
         """
         return self.t*1e9
 
-    def round_to(self, val: Union[str, Number] = 'hz') -> None:
+    def round_to(self, val: str | Number = 'hz') -> None:
         """
         Round off frequency values to a specified precision.
 
@@ -628,9 +621,9 @@ class Frequency:
         if isinstance(val, str):
             val = self.multiplier_dict[val.lower()]
 
-        self.f = npy.round_(self.f/val)*val
+        self.f = npy.round(self.f/val)*val
 
-    def overlap(self,f2: 'Frequency') -> 'Frequency':
+    def overlap(self,f2: Frequency) -> Frequency:
         """
         Calculates overlapping frequency  between self and f2.
 
@@ -659,7 +652,7 @@ class Frequency:
         else:
             sweep_type = 'unknown'
         return sweep_type
-    
+
     @axes_kwarg
     def labelXAxis(self, ax: Axes = None):
         """
@@ -715,7 +708,7 @@ class Frequency:
         self.labelXAxis()
 
 
-def overlap_freq(f1: 'Frequency',f2: 'Frequency') -> Frequency:
+def overlap_freq(f1: Frequency,f2: Frequency) -> Frequency:
     """
     Calculates overlapping frequency between f1 and f2.
 

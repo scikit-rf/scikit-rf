@@ -13,7 +13,7 @@ _scpi_error_codes_and_messages = {
     -112: ("PRGM_MNEMONIC_TOO_LONG", "The header contains more too many characters (> 12)"),
     -113: ("UNDEFINED_HEADER", "The command is unrecognized"),
     -114: ("HEADER_SUFFIX_OUT_OF_RANGE", "The parameter passed is out of range for this header"),
-    -115: ("UNEXPECTED_NUMBER_OF_PARAMS", "The number of parameters received does not correspond to the number expected"),
+    -115: ("UNEXPECTED_NUMBER_OF_PARAMS", "The number of parameters received does not correspond to the number expected"),  # noqa: E501
     -120: ('NUMERIC_DATA_ERROR', 'A generic numeric data error occurred'),
     -121: ('INVALID_CHAR_IN_NUMBER', 'An invalid character was encounterd for the numeric data type'),
     -123: ('EXPONENT_TOO_LARGE', 'The magnitude of the exponent was larger than 32,000'),

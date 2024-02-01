@@ -43,18 +43,19 @@ NetworkSet Utilities
 
 
 """
+from __future__ import annotations
+
 import zipfile
 from io import BytesIO
 from numbers import Number
-from typing import Any, Mapping, TextIO, Union
+from typing import Any, Mapping, TextIO
 
 import numpy as npy
 from scipy.interpolate import interp1d
 
 from . import mathFunctions as mf
-from .network import (COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency,
-                      Network)
-from .util import now_string_2_dt, copy_doc
+from .network import COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency, Network
+from .util import copy_doc, now_string_2_dt
 
 try:
     from numpy.typing import ArrayLike
@@ -62,7 +63,6 @@ except ImportError:
     ArrayLike = Any
 
 from . import plotting as skrf_plt
-
 
 
 class NetworkSet:
@@ -126,7 +126,7 @@ class NetworkSet:
 
     """
 
-    def __init__(self, ntwk_set: Union[list, dict] = [], name: str = None):
+    def __init__(self, ntwk_set: list | dict = [], name: str = None):
         """
         Initialize for NetworkSet.
 
@@ -319,7 +319,7 @@ class NetworkSet:
                             *args, **kwargs)  for k in d])
 
     @classmethod
-    def from_mdif(cls, file: Union[str, TextIO]) -> 'NetworkSet':
+    def from_mdif(cls, file: str | TextIO) -> NetworkSet:
         """
         Create a NetworkSet from a MDIF file.
 
@@ -342,7 +342,7 @@ class NetworkSet:
         return Mdif(file).to_networkset()
 
     @classmethod
-    def from_citi(cls, file: Union[str, TextIO]) -> 'NetworkSet':
+    def from_citi(cls, file: str | TextIO) -> NetworkSet:
         """
         Create a NetworkSet from a CITI file.
 
@@ -378,7 +378,9 @@ class NetworkSet:
             if isinstance(other, NetworkSet):
                 if len(other) != len(self):
                     raise(ValueError('Network sets must be of same length to be cascaded'))
-                return NetworkSet([getattr(self.ntwk_set[k], operator_name)(other.ntwk_set[k]) for k in range(len(self))])
+                return NetworkSet([
+                        getattr(self.ntwk_set[k], operator_name)(other.ntwk_set[k]) for k in range(len(self))
+                    ])
 
             elif isinstance(other, Network):
                 return NetworkSet([getattr(ntwk, operator_name)(other) for ntwk in self.ntwk_set])
@@ -419,7 +421,7 @@ class NetworkSet:
         """
         return len(self.ntwk_set)
 
-    def __eq__(self, other: 'NetworkSet') -> bool:
+    def __eq__(self, other: NetworkSet) -> bool:
         """
         Compare the NetworkSet with another NetworkSet.
 
@@ -562,7 +564,7 @@ class NetworkSet:
             d[k] = d[k].s
         return d
 
-    def element_wise_method(self, network_method_name: str, *args, **kwargs) -> 'NetworkSet':
+    def element_wise_method(self, network_method_name: str, *args, **kwargs) -> NetworkSet:
         """
         Call a given method of each element and returns the result as
         a new NetworkSet if the output is a Network.
@@ -584,7 +586,7 @@ class NetworkSet:
         else:
             return output
 
-    def copy(self) -> 'NetworkSet':
+    def copy(self) -> NetworkSet:
         """
         Copie each network of the network set.
 
@@ -595,7 +597,7 @@ class NetworkSet:
         """
         return NetworkSet([k.copy() for k in self.ntwk_set])
 
-    def sort(self, key=lambda x: x.name, inplace: bool = True, **kwargs) -> Union[None, 'NetworkSet']:
+    def sort(self, key=lambda x: x.name, inplace: bool = True, **kwargs) -> None | NetworkSet:
         r"""
         Sort this network set.
 
@@ -653,7 +655,7 @@ class NetworkSet:
         else:
             return out
 
-    def filter(self, s: str) -> 'NetworkSet':
+    def filter(self, s: str) -> NetworkSet:
         """
         Filter NetworkSet based on a string in `Network.name`.
 
@@ -766,7 +768,7 @@ class NetworkSet:
         return ntwk
 
     @property
-    def inv(self) -> 'NetworkSet':
+    def inv(self) -> NetworkSet:
         """
         Return the NetworkSet of inverted Networks (Network.inv()).
 
@@ -943,8 +945,8 @@ class NetworkSet:
 
     def write_mdif(self,
                    filename: str,
-                   values: Union[dict, None] = None,
-                   data_types: Union[dict, None] = None,
+                   values: dict | None = None,
+                   data_types: dict | None = None,
                    comments = []):
         """Convert a scikit-rf NetworkSet object to a Generalized MDIF file.
 
@@ -1017,7 +1019,8 @@ class NetworkSet:
         x : real
             Point to evaluate the interpolated network at
         interp_kind: str
-            Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.  Cf :class:`scipy.interpolate.interp1d` for detailed description.
+            Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic',
+            'cubic'. See :class:`scipy.interpolate.interp1d` for detailed description.
             Default is 'linear'.
 
         Returns
@@ -1091,7 +1094,7 @@ class NetworkSet:
         return list(self.dims)
 
     @property
-    def params_values(self) -> Union[dict, None]:
+    def params_values(self) -> dict | None:
         """
         Return a dictionnary containing all parameters and their values.
 
@@ -1113,7 +1116,7 @@ class NetworkSet:
             return None
 
     @property
-    def params_types(self) -> Union[dict, None]:
+    def params_types(self) -> dict | None:
         """
         Return a dictionnary describing the data type of each parameters.
 
@@ -1145,7 +1148,7 @@ class NetworkSet:
             return None
 
 
-    def sel(self, indexers: Mapping[Any, Any] = None) -> 'NetworkSet':
+    def sel(self, indexers: Mapping[Any, Any] = None) -> NetworkSet:
         """
         Select Network(s) in the NetworkSet from a given value of a parameter.
 
@@ -1309,7 +1312,7 @@ class NetworkSet:
                                                       x, interp_kind)
 
         return interp_ntwk
-    
+
     @copy_doc(skrf_plt.animate)
     def animate(self, *args, **kwargs):
         skrf_plt.animate(self, *args, **kwargs)
@@ -1357,7 +1360,7 @@ class NetworkSet:
     @copy_doc(skrf_plt.signature)
     def signature(self, *args, **kwargs):
         skrf_plt.signature(self, *args, **kwargs)
-        
+
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):

@@ -1,9 +1,11 @@
+import os
+
 from traits.api import *
-from traitsui.api import *#View, Item, ButtonEditor, Group, HSplit,
+from traitsui.api import *  #View, Item, ButtonEditor, Group, HSplit,
 from traitsui.menu import *
 
 import skrf as rf
-import os
+
 
 class Network2Spreadsheet(HasTraits):
     input_dir = Directory('')

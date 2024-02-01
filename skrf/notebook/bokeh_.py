@@ -1,7 +1,7 @@
 from bokeh import models, plotting
 
-from .utils import trace_color_cycle
 from .. import network
+from .utils import trace_color_cycle
 
 plotting.output_notebook()
 

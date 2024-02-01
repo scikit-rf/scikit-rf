@@ -24,20 +24,23 @@ Characteristic Impedance              :math:`z_0`    :attr:`z0`
    RectangularWaveguide
 
 """
+from __future__ import annotations
+
 from numbers import Number
-from scipy.constants import  epsilon_0, mu_0, pi
-from numpy import sqrt, exp, where
+from typing import TYPE_CHECKING
+
 import numpy as npy
-import warnings
-from .media import Media
+from numpy import exp, sqrt, where
+from scipy.constants import epsilon_0, mu_0, pi
+
+from ..constants import NumberLike
 from ..data import materials
 from ..tlineFunctions import skin_depth
 from .freespace import Freespace
-from ..constants import NumberLike
-from typing import Union, TYPE_CHECKING
+from .media import Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class RectangularWaveguide(Media):
@@ -63,7 +66,7 @@ class RectangularWaveguide(Media):
         (Default is None)
     z0 : number, array-like, or None
         deprecated parameter, alias to `z0_override` if `z0_override` is None.
-        Emmit a deprecation warning. 
+        Emmit a deprecation warning.
     a : number, optional
         width of waveguide, in meters.
         Default is 1.
@@ -102,15 +105,15 @@ class RectangularWaveguide(Media):
     >>> rf.RectangularWaveguide(freq,a= 100*mil)
     """
 
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None,
-                 a: float = 1, b: Union[float, None] = None,
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None,
+                 a: float = 1, b: float | None = None,
                  mode_type: str = 'te', m: int = 1, n: int = 0,
-                 ep_r: Union[None, NumberLike] = 1, mu_r: Union[None, NumberLike] = 1,
-                 rho: Union[None, NumberLike] = None,
-                 roughness: Union[None, NumberLike] = None,
+                 ep_r: None | NumberLike = 1, mu_r: None | NumberLike = 1,
+                 rho: None | NumberLike = None,
+                 roughness: None | NumberLike = None,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)
@@ -121,7 +124,7 @@ class RectangularWaveguide(Media):
             raise ValueError('mode_type must be either \'te\' or \'tm\'')
 
 
-        
+
         self.a = a
         self.b = b
         self.mode_type = mode_type.lower()
@@ -135,11 +138,9 @@ class RectangularWaveguide(Media):
 
     def __str__(self):
         f=self.frequency
-        output =  \
-                'Rectangular Waveguide Media.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\n a= %.2em, b= %.2em'% \
-                (self.a,self.b)
+        output = (
+                f'Rectangular Waveguide Media.  {f.f_scaled[0]}-{f.f_scaled[-1]} {f.unit}.  {f.npoints} points'
+                f'\n a= {self.a:.2e}m, b= {self.b:.2e}m')
         return output
 
     def __repr__(self):
@@ -147,7 +148,7 @@ class RectangularWaveguide(Media):
 
 
     @classmethod
-    def from_z0(cls, frequency: 'Frequency', z0: NumberLike, f: Number,
+    def from_z0(cls, frequency: Frequency, z0: NumberLike, f: Number,
                 ep_r=1, mu_r=1, **kw) -> Media:
         """
         Initialize from specified impedance at a given frequency, assuming
@@ -331,7 +332,7 @@ class RectangularWaveguide(Media):
         return self._rho
 
     @rho.setter
-    def rho(self, val: Union[NumberLike, str]):
+    def rho(self, val: NumberLike | str):
         if isinstance(val, str):
             self._rho = materials[val.lower()]['resistivity(ohm*m)']
         else:
@@ -469,7 +470,7 @@ class RectangularWaveguide(Media):
         The characteristic impedance, :math:`z_0`.
 
         The characteristic impedance depends of the mode ('te' or 'tm').
-        
+
         Returns
         -------
         z0_characteristic : npy.ndarray

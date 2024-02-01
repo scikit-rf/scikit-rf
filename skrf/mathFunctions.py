@@ -83,12 +83,15 @@ Various Utility Functions
 
 
 """
-from typing import Callable, Union
+from __future__ import annotations
+
+from typing import Callable
+
 import numpy as npy
-from numpy import pi, unwrap, real, imag
+from numpy import imag, pi, real, unwrap
 from scipy import signal
 
-from . constants import NumberLike, INF, ALMOST_ZERO, LOG_OF_NEG, EIG_COND, EIG_MIN
+from .constants import ALMOST_ZERO, EIG_COND, EIG_MIN, INF, LOG_OF_NEG, NumberLike
 
 
 # simple conversions
@@ -942,7 +945,13 @@ def psd2TimeDomain(f: npy.ndarray, y: npy.ndarray, windowType: str = 'hamming'):
     return timeVector, signalVector
 
 
-def rational_interp(x: npy.ndarray, y: npy.ndarray, d: int = 4, epsilon: float = 1e-9, axis: int = 0, assume_sorted: bool = False) -> Callable:
+def rational_interp(
+        x: npy.ndarray,
+        y: npy.ndarray,
+        d: int = 4,
+        epsilon: float = 1e-9,
+        axis: int = 0,
+        assume_sorted: bool = False) -> Callable:
     """
     Interpolates function using rational polynomials of degree `d`.
 
@@ -978,7 +987,8 @@ def rational_interp(x: npy.ndarray, y: npy.ndarray, d: int = 4, epsilon: float =
 
     References
     ------------
-    .. [#] M. S. Floater and K. Hormann, "Barycentric rational interpolation with no poles and high rates of approximation," Numer. Math., vol. 107, no. 2, pp. 315-331, Aug. 2007
+    .. [#] M. S. Floater and K. Hormann, "Barycentric rational interpolation with no poles and high rates of
+    approximation," Numer. Math., vol. 107, no. 2, pp. 315-331, Aug. 2007
     """
     if axis != 0:
         raise NotImplementedError("Axis other than 0 is not implemented")
@@ -1282,8 +1292,8 @@ def rsolve(A: npy.ndarray, B: npy.ndarray) -> npy.ndarray:
             npy.transpose(B, (0, 2, 1)).conj()), (0, 2, 1)).conj()
 
 def nudge_eig(mat: npy.ndarray,
-              cond: Union[float, None] = None,
-              min_eig: Union[float, None] = None) -> npy.ndarray:
+              cond: float | None = None,
+              min_eig: float | None  = None) -> npy.ndarray:
     r"""Nudge eigenvalues with absolute value smaller than
     max(cond * max(eigenvalue), min_eig) to that value.
     Can be used to avoid singularities in solving matrix equations.

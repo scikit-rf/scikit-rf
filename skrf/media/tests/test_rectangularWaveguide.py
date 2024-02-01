@@ -1,8 +1,10 @@
-import unittest
 import os
+import unittest
+
+from skrf.constants import mil
 from skrf.media.rectangularWaveguide import RectangularWaveguide
 from skrf.network import Network
-from skrf.constants import mil
+
 
 class MediaTestCase(unittest.TestCase):
     """

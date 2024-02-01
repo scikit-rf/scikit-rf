@@ -24,11 +24,14 @@ References
     Klopfenstein
 
 """
+from __future__ import annotations
 
 from numbers import Number
-from typing import Callable, List
-from . network import cascade_list
-from numpy import exp, log, linspace
+from typing import Callable
+
+from numpy import exp, linspace, log
+
+from .network import cascade_list
 
 
 class Taper1D:
@@ -185,7 +188,7 @@ class Taper1D:
                                        unit=self.length_unit)
 
     @property
-    def medias(self) -> List:
+    def medias(self) -> list:
         """
         List of medias.
 
@@ -196,7 +199,7 @@ class Taper1D:
         return [self.media_at(k) for k in self.value_vector]
 
     @property
-    def sections(self) -> List:
+    def sections(self) -> list:
         """
         List of sections.
 
@@ -300,7 +303,8 @@ class Klopfenstein(Taper1D):
         doi: 10.1109/JRPROC.1956.274847
         https://ieeexplore.ieee.org/document/4051841
     .. [#Kajfez] D. Kajfez and J. O. Prewitt, "Correction to "A Transmission Line Taper of Improved Design" (Letters),"
-        in IEEE Transactions on Microwave Theory and Techniques, vol. 21, no. 5, pp. 364-364, May 1973, doi: 10.1109/TMTT.1973.1128003.
+        in IEEE Transactions on Microwave Theory and Techniques, vol. 21, no. 5, pp. 364-364, May 1973,
+        doi: 10.1109/TMTT.1973.1128003.
         https://ieeexplore.ieee.org/document/1128003
     """
     def __init__(self, **kw):

@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import dataclasses
-import numpy as np
-from typing import List
 from abc import ABC, abstractmethod
+
+import numpy as np
 
 
 class SweepSection(ABC):
@@ -62,7 +64,7 @@ class LinearCustomSweepSection(SweepSection):
 
 @dataclasses.dataclass
 class RandomSweepSection(SweepSection):
-    hz_list: List[float]
+    hz_list: list[float]
 
     def get_hz(self):
         return self.hz_list
@@ -89,7 +91,7 @@ class SweepPlan:
     801 point sweep and discarding a point saved 15 minutes in a recent script.
     """
 
-    sections: List[SweepSection]
+    sections: list[SweepSection]
 
     @classmethod
     def from_hz(cls, hz):
@@ -106,7 +108,8 @@ class SweepPlan:
         sweep_sections = []
 
         def finalize_window(growing_window, misfits, sweep_sections):
-            """ When a growing_window has grown as far as it can, finalize_window is called to turn it into a sweep section + misfits"""
+            """ When a growing_window has grown as far as it can,
+            finalize_window is called to turn it into a sweep section + misfits"""
             # Runt windows aren't really linear sweeps -- we should just add their points to the misfit pile
             if len(growing_window) <= 2:
                 misfits.extend(growing_window)

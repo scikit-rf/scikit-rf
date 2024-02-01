@@ -13,15 +13,20 @@ Citi class and utilities
    Citi
 
 """
-import numpy as np
+from __future__ import annotations
+
 import typing
-from ..util import get_fid
+
+import numpy as np
+
 from ..frequency import Frequency
+from ..mathFunctions import magdeg_2_reim
 from ..network import Network, z2s
 from ..networkSet import NetworkSet
-from ..mathFunctions import magdeg_2_reim
+from ..util import get_fid
 
-class Citi():
+
+class Citi:
     """
     Class to read CITI N-port files.
 
@@ -38,7 +43,8 @@ class Citi():
     References
     ----------
     .. [#] https://na.support.keysight.com/plts/help/WebHelp/FilePrint/CITIfile_Format.htm
-    .. [#] Handbook of Microwave Component Measurements: with Advanced VNA Techniques, Joel P. Dunsmore, 2020, Section 6.1.6.1
+    .. [#] Handbook of Microwave Component Measurements: with Advanced VNA Techniques, Joel P. Dunsmore, 2020,
+    Section 6.1.6.1
 
     Examples
     --------
@@ -51,7 +57,7 @@ class Citi():
     >>> file = open('network.cti')
     >>> m = rf.Citi(file)
     """
-    def __init__(self, file: typing.Union[str, typing.TextIO]):
+    def __init__(self, file: str | typing.TextIO):
         """
         Constructor
 

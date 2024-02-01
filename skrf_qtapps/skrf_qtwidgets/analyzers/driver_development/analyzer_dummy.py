@@ -1,12 +1,13 @@
-import numpy as np
-from skrf_qtwidgets.analyzers import base_analyzer
-
 import os
+
+import numpy as np
+
 import skrf
+from skrf_qtwidgets.analyzers import base_analyzer
 from skrf_qtwidgets.cfg import example_data_dir
 
 
-class DummyResource(object):
+class DummyResource:
     def __init__(self, *args, **kwargs):
         pass
 
@@ -32,7 +33,7 @@ class Analyzer(base_analyzer.Analyzer):
 
     def get_snp_network(self, ports, **kwargs):
         ntwk = skrf.Network(os.path.join(example_data_dir, 'ring slot array simulation.s2p'))
-        if type(ports) == int:
+        if isinstance(ports, int):
             ports = [ports]
 
         if len(ports) == 1:

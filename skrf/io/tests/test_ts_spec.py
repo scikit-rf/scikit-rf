@@ -1,7 +1,9 @@
-import skrf as rf
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 import pytest
+
+import skrf as rf
 
 test_data = Path(__file__).parent / "ts"
 

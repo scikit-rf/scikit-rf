@@ -1,24 +1,25 @@
-import pytest
-from skrf.frequency import Frequency, InvalidFrequencyWarning
-import unittest
-import os
 import io
-import tempfile
-import zipfile
-import sys
-import numpy as npy
-from scipy import signal
-from pathlib import Path
+import os
 import pickle
-import skrf as rf
+import sys
+import tempfile
+import unittest
 import warnings
+import zipfile
+from pathlib import Path
+
 import numpy as np
+import numpy as npy
+import pytest
+from scipy import signal
+
+import skrf as rf
 from skrf import setup_pylab
-from skrf.media import CPW
-from skrf.media import DistributedCircuit
-from skrf.constants import S_DEFINITIONS
+from skrf.constants import S_DEF_HFSS_DEFAULT, S_DEFINITIONS
+from skrf.frequency import Frequency, InvalidFrequencyWarning
+from skrf.media import CPW, DistributedCircuit
 from skrf.networkSet import tuner_constellation
-from skrf.constants import S_DEF_HFSS_DEFAULT
+
 try:
     from skrf.plotting import plot_contour
 except ImportError:
@@ -95,7 +96,11 @@ class NetworkTestCase(unittest.TestCase):
     def test_network_empty_frequency_range(self):
         number_of_data_points = 10
         f = rf.Frequency.from_f(np.linspace(2e6, 3e6, number_of_data_points), unit="Hz")
-        n=rf.Network(frequency=f, s=np.linspace(0.1, .8, number_of_data_points), name='test', z0=np.linspace(50, 50.1,number_of_data_points ))
+        n=rf.Network(
+            frequency=f,
+            s=np.linspace(0.1, .8, number_of_data_points),
+            name='test',
+            z0=np.linspace(50, 50.1,number_of_data_points ))
         empty_network = n[n.f < 0]
         self.assertIn('1-Port Network', repr(empty_network))
 
@@ -1796,29 +1801,31 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_stability_circle(self):
         # Check whether the load stability circle agrees with that calculated with ADS
-        load_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'load_stability_circle_ads.csv'), encoding='utf-8', delimiter=',')
-        self.assertTrue(
-            npy.all(
-                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].stability_circle(target_port=1, npoints=6)[:,0]) - load_stability_circle_ads[:,0]) / load_stability_circle_ads[:,0] < 1e-4
-            )
+        load_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'load_stability_circle_ads.csv'),
+                                                encoding='utf-8', delimiter=',')
+
+        assert npy.allclose(
+            rf.complex_2_magnitude(self.fet['30GHz'].stability_circle(target_port=1, npoints=6)[:,0]),
+            load_stability_circle_ads[:,0]
         )
-        self.assertTrue(
-            npy.all(
-                npy.abs(rf.complex_2_degree(self.fet['30GHz'].stability_circle(target_port=1, npoints=6)[:,0]) - load_stability_circle_ads[:,1]) / load_stability_circle_ads[:,1] < 1e-4
-            )
+
+        assert npy.allclose(
+            rf.complex_2_degree(self.fet['30GHz'].stability_circle(target_port=1, npoints=6)[:,0]),
+            load_stability_circle_ads[:,1]
         )
 
         # Check whether the source stability circle agrees with that calculated with ADS
-        source_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'source_stability_circle_ads.csv'), encoding='utf-8', delimiter=',')
-        self.assertTrue(
-            npy.all(
-                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].stability_circle(target_port=0, npoints=6)[:,0]) - source_stability_circle_ads[:,0]) / source_stability_circle_ads[:,0] < 1e-4
-            )
+        source_stability_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'source_stability_circle_ads.csv'),
+                                                  encoding='utf-8', delimiter=',')
+
+        assert npy.allclose(
+            rf.complex_2_magnitude(self.fet['30GHz'].stability_circle(target_port=0, npoints=6)[:,0]),
+            source_stability_circle_ads[:,0]
         )
-        self.assertTrue(
-            npy.all(
-                npy.abs(rf.complex_2_degree(self.fet['30GHz'].stability_circle(target_port=0, npoints=6)[:,0]) - source_stability_circle_ads[:,1]) / source_stability_circle_ads[:,1] < 1e-4
-            )
+
+        assert npy.allclose(
+            rf.complex_2_degree(self.fet['30GHz'].stability_circle(target_port=0, npoints=6)[:,0]),
+            source_stability_circle_ads[:,1]
         )
 
         # Check whether an error is raised when the network is not 2 port.
@@ -1836,29 +1843,32 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_gain_circle(self):
         # Check whether the load stability circle agrees with that calculated with ADS
-        load_gain_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'load_gain_circle_ads.csv'), encoding='utf-8', delimiter=',')
-        self.assertTrue(
-            npy.all(
-                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].gain_circle(target_port=1, gain=1.0, npoints=6)[:,0]) - load_gain_circle_ads[:,0]) / load_gain_circle_ads[:,0] < 1e-4
-            )
+        load_gain_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'load_gain_circle_ads.csv'), encoding='utf-8',
+                                           delimiter=',')
+
+        assert npy.allclose(
+            rf.complex_2_magnitude(self.fet['30GHz'].gain_circle(target_port=1, gain=1.0, npoints=6)[:,0]),
+            load_gain_circle_ads[:,0],
         )
-        self.assertTrue(
-            npy.all(
-                npy.abs(rf.complex_2_degree(self.fet['30GHz'].gain_circle(target_port=1, gain=1.0, npoints=6)[:,0]) - load_gain_circle_ads[:,1]) / load_gain_circle_ads[:,1] < 1e-4
-            )
+
+        assert npy.allclose(
+            rf.complex_2_degree(self.fet['30GHz'].gain_circle(target_port=1, gain=1.0, npoints=6)[:,0]),
+            load_gain_circle_ads[:,1],
         )
 
         # Check whether the source stability circle agrees with that calculated with ADS
-        source_gain_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'source_gain_circle_ads.csv'), encoding='utf-8', delimiter=',')
-        self.assertTrue(
-            npy.all(
-                npy.abs(rf.complex_2_magnitude(self.fet['30GHz'].gain_circle(target_port=0, gain=1.0, npoints=6)[:,0]) - source_gain_circle_ads[:,0]) / source_gain_circle_ads[:,0] < 1e-4
-            )
+        source_gain_circle_ads = npy.loadtxt(os.path.join(self.test_dir, 'source_gain_circle_ads.csv'),
+                                             encoding='utf-8', delimiter=',')
+
+
+        assert npy.allclose(
+            rf.complex_2_magnitude(self.fet['30GHz'].gain_circle(target_port=0, gain=1.0, npoints=6)[:,0]),
+            source_gain_circle_ads[:,0],
         )
-        self.assertTrue(
-            npy.all(
-                npy.abs(rf.complex_2_degree(self.fet['30GHz'].gain_circle(target_port=0, gain=1.0, npoints=6)[:,0]) - source_gain_circle_ads[:,1]) / source_gain_circle_ads[:,1] < 1e-4
-            )
+
+        assert npy.allclose(
+            rf.complex_2_degree(self.fet['30GHz'].gain_circle(target_port=0, gain=1.0, npoints=6)[:,0]),
+            source_gain_circle_ads[:,1],
         )
 
         # Check whether an error is raised when the network is not 2 port.

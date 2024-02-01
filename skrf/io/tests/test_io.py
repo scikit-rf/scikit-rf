@@ -1,10 +1,11 @@
-import unittest
 import os
+import unittest
+
 import numpy as npy
 
 import skrf as rf
-from skrf.io import Touchstone
-from skrf.io import network_2_dataframe
+from skrf.io import Touchstone, network_2_dataframe
+
 
 class IOTestCase(unittest.TestCase):
     """
@@ -195,7 +196,7 @@ class IOTestCase(unittest.TestCase):
             netw = rf.Network(s=s, f=f)
 
             df = netw.to_dataframe()
-            
+
             if ports <= 10:
                 assert "s_db 11" in df.columns
             else:
