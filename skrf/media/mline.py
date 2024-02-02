@@ -282,7 +282,7 @@ class MLine(Media):
     def __str__(self) -> str:
         f=self.frequency
         output = (
-                f'Microstripline Media.  {f.f_scaled[0]}-{f.f_scaled[-1]} {f.unit}.  {f.npoints} points'%\
+                f'Microstripline Media.  {f.f_scaled[0]}-{f.f_scaled[-1]} {f.unit}.  {f.npoints} points'
                 f'\n W= {self.w:.2e}m, H= {self.h:.2e}m')
         return output
 
