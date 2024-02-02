@@ -131,7 +131,6 @@ norecursedirs = [
 ]
 filterwarnings = [
     "error",
-    "ignore::pytest.PytestRemovedIn8Warning",
 ]
 
 [tool.ruff]

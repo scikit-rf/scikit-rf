@@ -27,4 +27,4 @@ jobs:
     - name: Test the code, tutorials and examples
       if: ${{ always() }}
       run: |
-        tox --skip-env minimal-dependencies -- --nbval-lax --current-env
+        tox --skip-env minimal-dependencies -- --nbval-lax --nbval-current-env
