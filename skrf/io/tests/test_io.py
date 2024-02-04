@@ -173,7 +173,7 @@ class IOTestCase(unittest.TestCase):
         assert df_method.equals(df_function)
 
     def test_network_2_dataframe_columns(self):
-        s = npy.random.standard_normal((1, 11, 11))
+        s = npy.random.default_rng().standard_normal((1, 11, 11))
         f = [1]
         netw = rf.Network(s=s, f=f)
 
@@ -192,7 +192,7 @@ class IOTestCase(unittest.TestCase):
     def test_network_2_dataframe_port_sep_auto(self):
         f = [1]
         for ports in [1, 2, 4, 8, 10, 11, 16]:
-            s = npy.random.standard_normal((1, ports, ports))
+            s = npy.random.default_rng().standard_normal((1, ports, ports))
             netw = rf.Network(s=s, f=f)
 
             df = netw.to_dataframe()

@@ -52,8 +52,9 @@ class MediaTestCase(unittest.TestCase):
         """
         # create a dummy Coaxial media for various attenuation and test the
         # resulting alpha values (real part of gamma)
-        frequency = rf.Frequency(npy.random.rand(), unit='GHz', npoints=1)
-        _att = npy.random.rand()
+        rng = npy.random.default_rng()
+        frequency = rf.Frequency(rng.random(), unit='GHz', npoints=1)
+        _att = rng.random()
         # dB/m
         coax = Coaxial.from_attenuation_VF(frequency=frequency, VF=1, att=_att, unit='dB/m')
         assert_almost_equal(coax.gamma.real,  rf.db_2_np(_att))

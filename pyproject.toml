@@ -138,7 +138,7 @@ filterwarnings = [
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "F", "FA", "I", "UP", "W"]
+select = ["E", "F", "FA", "I", "NPY", "UP", "W"]
 
 # Ignore some rules for all files
 # F841: unused-variable

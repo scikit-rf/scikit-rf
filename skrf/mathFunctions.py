@@ -872,7 +872,7 @@ def flatten_c_mat(s: NumberLike, order: str = 'F'):
     return complex2Scalar(s.flatten(order='F'))
 
 
-def rand_c(*args) -> npy.ndarray:
+def rand_c(*size) -> npy.ndarray:
     """
     Creates a complex random array of shape s.
 
@@ -887,8 +887,9 @@ def rand_c(*args) -> npy.ndarray:
     ---------
     >>> x = rf.rand_c(2,2)
     """
-    return 1-2*npy.random.rand(*args) + \
-        1j-2j*npy.random.rand(*args)
+    rng = npy.random.default_rng()
+    return 1-2*rng.random(size) + \
+        1j-2j*rng.random(size)
 
 
 

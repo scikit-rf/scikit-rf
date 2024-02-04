@@ -1,7 +1,7 @@
 import unittest
 
+import numpy as np
 from numpy import array, imag, linspace, pi, real
-from numpy.random import rand
 from numpy.testing import assert_almost_equal, assert_equal
 
 import skrf as rf
@@ -155,8 +155,9 @@ class TestVoltageCurrentPropagation(unittest.TestCase):
         """
         gamma = array([1j])
         z0 = 50
-        v1 = rand()
-        i1 = rand()
+        rng = np.random.default_rng()
+        v1 = rng.random()
+        i1 = rng.random()
         theta = 1j*2*pi
 
         v2, i2 = rf.voltage_current_propagation(v1, i1, z0, theta)
@@ -170,8 +171,9 @@ class TestVoltageCurrentPropagation(unittest.TestCase):
         """
         gamma = array([1j])
         z0 = 50
-        v1 = rand()
-        i1 = rand()
+        rng = np.random.default_rng()
+        v1 = rng.random()
+        i1 = rng.random()
         theta = 1j*pi
 
         v2, i2 = rf.voltage_current_propagation(v1, i1, z0, theta)
