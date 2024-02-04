@@ -134,16 +134,18 @@ filterwarnings = [
 ]
 
 [tool.ruff]
-select = ["E", "F", "FA", "I", "UP", "W"]
 # larger line length for rule E501 (default is 88)
 line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "FA", "I", "UP", "W"]
 
 # Ignore some rules for all files
 # F841: unused-variable
 # E741: ambiguous-variable-name
 ignore = ["F841", "E741"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # Ignore some rules for some specific files
 # E402: imports at the beginning of file
 # F401: unused-import
