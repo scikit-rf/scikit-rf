@@ -3,7 +3,6 @@ import warnings
 
 import numpy as npy
 import pytest
-from numpy.random import uniform
 
 import skrf as rf
 from skrf import two_port_reflect
@@ -845,10 +844,12 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
         self.wg = WG
         wg = self.wg
 
-        r = npy.random.uniform(10,100,NPTS)
-        l = 1e-9*npy.random.uniform(100,200,NPTS)
+        rng = npy.random.default_rng()
+
+        r = rng.uniform(10,100,NPTS)
+        l = 1e-9*rng.uniform(100,200,NPTS)
         g = npy.zeros(NPTS)
-        c = 1e-12*npy.random.uniform(100,200,NPTS)
+        c = 1e-12*rng.uniform(100,200,NPTS)
 
         rlgc = DistributedCircuit(frequency=wg.frequency, z0=None, R=r, L=l, G=g, C=c)
         self.rlgc = rlgc
@@ -1470,7 +1471,7 @@ class LRRMTest(EightTermTest):
         s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
         o = wg.shunt_capacitor(5e-15) ** wg.open(nports=1, name='open')
 
-        self.match_l = npy.random.uniform(1e-12, 20e-12)
+        self.match_l = npy.random.default_rng().uniform(1e-12, 20e-12)
         l = wg.inductor(L=self.match_l)
         m = l**m_i
 
@@ -1546,7 +1547,7 @@ class LRRMTestNoFit(LRRMTest):
         s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
         o = wg.shunt_capacitor(5e-15) ** wg.open(nports=1, name='open')
 
-        self.match_l = npy.random.uniform(1e-12, 20e-12)
+        self.match_l = npy.random.default_rng().uniform(1e-12, 20e-12)
         l = wg.inductor(L=self.match_l)
         m = l**m_i
 
@@ -1996,7 +1997,7 @@ class LMR16Test(SixteenTermTest):
         mr = rf.two_port_reflect(m, r)
         rr = rf.two_port_reflect(r, r)
 
-        thru_length = uniform(0,10)
+        thru_length = npy.random.default_rng().uniform(0,10)
         thru = wg.line(thru_length,'deg',name='line')
 
         self.thru = thru

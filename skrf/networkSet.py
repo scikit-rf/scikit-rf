@@ -647,7 +647,7 @@ class NetworkSet:
             number of samples to return (default is 1)
 
         """
-        idx = npy.random.randint(0,len(self), n)
+        idx = npy.random.default_rng().randint(0,len(self), n)
         out = [self.ntwk_set[k] for k in idx]
 
         if n ==1:
