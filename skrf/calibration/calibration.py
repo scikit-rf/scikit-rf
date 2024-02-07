@@ -293,8 +293,8 @@ class Calibration:
                         self.measured[0].frequency)
                     print('Success')
 
-                except Exception:
-                    raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].'))
+                except Exception as err:
+                    raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].')) from err
 
 
         # passed to calibration algorithm in run()
@@ -639,8 +639,8 @@ class Calibration:
                     self.coefs_ntwks[direction + ' directivity']/\
                     self.coefs_ntwks[direction + ' reflection tracking']
             return out
-        except Exception:
-            raise ValueError('cant find error coefs')
+        except Exception as err:
+            raise ValueError('cant find error coefs') from err
 
 
     @property
@@ -1173,8 +1173,9 @@ class OnePort(Calibration):
             abc[f,:] = abcTmp.flatten()
             try:
                 residuals[f,:] = residualsTmp
-            except(ValueError):
-                raise(ValueError('matrix has singular values. ensure standards are far enough away on smith chart'))
+            except ValueError as err:
+                raise(ValueError('matrix has singular values. ensure standards are far enough away on smith chart'))\
+                    from err
 
         # convert the abc vector to standard error coefficients
         a,b,c = abc[:,0], abc[:,1],abc[:,2]
@@ -1262,7 +1263,7 @@ class SDDLWeikle(OnePort):
         if (len(measured) != 4) or (len(ideals)) != 4:
             raise IndexError('Incorrect number of standards.')
         Calibration.__init__(self, measured =  measured,
-                             ideals =ideals, *args, **kwargs)
+                             ideals =ideals, **kwargs)
 
     def run(self):
         #measured reflection coefficients
@@ -1367,7 +1368,7 @@ class SDDL(OnePort):
         if (len(measured) != 4) or (len(ideals)) != 4:
             raise IndexError('Incorrect number of standards.')
         Calibration.__init__(self, measured =  measured,
-                             ideals =ideals, *args, **kwargs)
+                             ideals =ideals, **kwargs)
 
 
     def run(self):
@@ -1405,7 +1406,7 @@ class PHN(OnePort):
             raise IndexError('Incorrect number of standards.')
 
         Calibration.__init__(self, measured =  measured,
-                             ideals =ideals, *args, **kwargs)
+                             ideals =ideals, **kwargs)
 
 
     def run(self):
@@ -1921,7 +1922,7 @@ class TwoPortOnePath(TwelveTerm):
             forward = 'reverse'
             reverse = 'forward'
         else:
-            raise('source_port is out of range. should be 1 or 2.')
+            raise ValueError('source_port is out of range. should be 1 or 2.')
         for k in self.coefs:
             if k.startswith(forward):
                 k_out = k.replace(forward,reverse)
@@ -2089,7 +2090,7 @@ class EightTerm(Calibration):
         Calibration.__init__(self,
             measured = measured,
             ideals = ideals,
-            *args, **kwargs)
+            **kwargs)
 
 
     def unterminate(self,ntwk):
@@ -2550,7 +2551,7 @@ class TRL(EightTerm):
         EightTerm.__init__(self,
             measured = measured,
             ideals = ideals,
-            *args, **kwargs)
+            **kwargs)
 
     def run(self):
         m_ut = self.measured_unterminated
@@ -2776,7 +2777,7 @@ class NISTMultilineTRL(EightTerm):
             measured = measured,
             ideals = ideals,
             self_calibration=True,
-            *args, **kwargs)
+            **kwargs)
 
         m_sw = [k for k in self.measured_unterminated]
 
@@ -3111,7 +3112,7 @@ class NISTMultilineTRL(EightTerm):
                         Vc[a,b] /= n
                         Vc[b,a] = Vc[a,b].conjugate()
 
-            def solve_A(B1, B2, CoA1, CoA2):
+            def solve_A(B1, B2, CoA1, CoA2, S_thru, m):
                 #Determine A using unknown reflect
                 Ap = B1*B2 - B1*S_thru[1,1] - B2*S_thru[0,0] + linalg.det(S_thru)
                 Ap = -Ap/(1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*linalg.det(S_thru))
@@ -3173,7 +3174,7 @@ class NISTMultilineTRL(EightTerm):
             if abs(values[0][0]) > 1e-9 and d1[1]/d1[0] > 10 and d2[1]/d2[0] > 10:
                 #Estimate seems to be correct
                 B1, B2, CoA1, CoA2 = values[0][1:]
-                A1, A2 = solve_A(B1, B2, CoA1, CoA2)
+                A1, A2 = solve_A(B1, B2, CoA1, CoA2, S_thru, m)
             else:
                 #Estimation is incorrect or the accuracy is bad
                 #Choose the root that minimizes error to measurements
@@ -3183,7 +3184,7 @@ class NISTMultilineTRL(EightTerm):
                     if abs(v[0]) < 1e-9:
                         continue
                     B1, B2, CoA1, CoA2 = v[1:]
-                    A1, A2 = solve_A(B1, B2, CoA1, CoA2)
+                    A1, A2 = solve_A(B1, B2, CoA1, CoA2, S_thru, m)
                     C1 = CoA1*A1
                     C2 = CoA2*A2
                     R = S_thru[0,1]*(1 - C1*C2)/(A1 - B1*C1)
@@ -3203,7 +3204,7 @@ class NISTMultilineTRL(EightTerm):
                         best_error = error
                         best_values = v
                 B1, B2, CoA1, CoA2 = best_values[1:]
-                A1, A2 = solve_A(B1, B2, CoA1, CoA2)
+                A1, A2 = solve_A(B1, B2, CoA1, CoA2, S_thru, m)
 
             sigmab = npy.sqrt(1/(npy.sum(inv_Vb).real))
             sigmac = npy.sqrt(1/(npy.sum(inv_Vc).real))
@@ -3647,7 +3648,7 @@ class TUGMultilineTRL(EightTerm):
             measured = measured,
             ideals = measured, # not actually used. Just to initiate the class
             self_calibration=True,
-            *args, **kwargs)
+            **kwargs)
 
         n_lines = len(self.line_lengths)
         # switch term corrected
@@ -3982,7 +3983,7 @@ class UnknownThru(EightTerm):
         """
 
         EightTerm.__init__(self, measured = measured, ideals = ideals,
-                           *args, **kwargs)
+                           **kwargs)
 
 
     def run(self):
@@ -4103,7 +4104,7 @@ class LRM(EightTerm):
             ideals = ideals,
             switch_terms = switch_terms,
             isolation = isolation,
-            *args, **kwargs)
+            **kwargs)
 
     def run(self):
         mList = [k for k in self.measured_unterminated]
@@ -4359,7 +4360,7 @@ class LRRM(EightTerm):
             ideals = ideals,
             switch_terms = switch_terms,
             isolation = isolation,
-            *args, **kwargs)
+            **kwargs)
 
     def run(self):
         mList = [k for k in self.measured_unterminated]
@@ -4776,7 +4777,7 @@ class MRC(UnknownThru):
         """
 
         UnknownThru.__init__(self, measured = measured, ideals = ideals,
-                           *args, **kwargs)
+                           **kwargs)
 
 
     def run(self):
@@ -4896,7 +4897,7 @@ class SixteenTerm(Calibration):
         Calibration.__init__(self,
             measured = measured,
             ideals = ideals,
-            *args, **kwargs)
+            **kwargs)
 
     def unterminate(self,ntwk):
         """
@@ -5257,7 +5258,7 @@ class LMR16(SixteenTerm):
             ideals = ideals,
             sloppy_input=False,
             self_calibration=True,
-            *args, **kwargs)
+            **kwargs)
 
     def run(self):
         mList = [k.s  for k in self.measured_unterminated]

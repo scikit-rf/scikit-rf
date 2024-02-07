@@ -255,7 +255,7 @@ class VNA(ABC):
 
         return fn(**kwargs)
 
-    def read_values(self, **kwargs) -> None:
+    def read_values(self, **kwargs) -> None:  # noqa: B027
         pass
 
     def write(self, cmd, **kwargs) -> None:

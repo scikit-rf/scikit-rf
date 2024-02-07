@@ -318,7 +318,7 @@ class NetworkSet:
         NetworkSet.to_s_dict
         """
         return cls([Network(s=d[k], frequency=frequency, name=k,
-                            *args, **kwargs)  for k in d])
+                            **kwargs)  for k in d])
 
     @classmethod
     def from_mdif(cls, file: str | TextIO) -> NetworkSet:
@@ -1406,7 +1406,7 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
     data_matrix = npy.array([getattr(ntwk, attribute) for ntwk in ntwk_list])
 
     new_ntwk = ntwk_list[0].copy()
-    new_ntwk.s = func(data_matrix,axis=0,*args,**kwargs)
+    new_ntwk.s = func(data_matrix,axis=0,**kwargs)
 
     if name is not None:
         new_ntwk.name = name

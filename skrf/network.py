@@ -519,7 +519,7 @@ class Network:
 
         """
         s = npy.zeros(shape=z.shape)
-        me = cls(s=s, *args, **kw)
+        me = cls(s=s, **kw)
         me.z = z
         return me
 
@@ -863,12 +863,12 @@ class Network:
                         raise ValueError("Can't index without named ports")
                     try:
                         p1_index = self.port_names.index(p1_name)
-                    except ValueError as e:
-                        raise KeyError(f"Unknown port {p1_name}")
+                    except ValueError as err:
+                        raise KeyError(f"Unknown port {p1_name}") from err
                     try:
                         p2_index = self.port_names.index(p2_name)
-                    except ValueError as e:
-                        raise KeyError(f"Unknown port {p2_name}")
+                    except ValueError as err:
+                        raise KeyError(f"Unknown port {p2_name}") from err
                 ntwk = self.copy()
                 ntwk.s = self.s[:, p1_index, p2_index]
                 ntwk.z0 = self.z0[:, p1_index]
@@ -1387,8 +1387,8 @@ class Network:
         else:
             try:
                 self._frequency = Frequency.from_f(new_frequency)
-            except (TypeError):
-                raise TypeError('Could not convert argument to a frequency vector')
+            except TypeError as err:
+                raise TypeError('Could not convert argument to a frequency vector') from err
 
     @property
     def inv(self) -> Network:
@@ -5667,7 +5667,7 @@ def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network
     z0 = npy.concatenate(
         [ntwk_list[k].z0 for k in range(0, nports ** 2, nports + 1)], 1)
     frequency = ntwk_list[0].frequency
-    return Network(s=s_out, z0=z0, frequency=frequency, *args, **kwargs)
+    return Network(s=s_out, z0=z0, frequency=frequency, **kwargs)
 
 
 def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,

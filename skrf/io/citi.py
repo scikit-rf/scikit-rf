@@ -265,7 +265,7 @@ class Citi:
                 zname = 'PORTZ'
 
             for m in range(rank):
-                for (idx_set, params_set) in enumerate(params_sets):
+                for idx_set in range(len(params_sets)):
                     z0s[idx_set,:,m] = self._data[f'{zname}[{m+1}]']['values'].reshape((int(occ), len(freq)))[idx_set,:]
 
         # create list of Networks assuming the following ordering:
@@ -287,7 +287,7 @@ class Citi:
                     ntwkprm = 'S'
 
                 # network param (m,n) for the current set of params
-                for (idx_set, params_set) in enumerate(params_sets):
+                for idx_set in range(len(params_sets)):
                     p[idx_set,:,m,n] = pp[idx_set,:]
 
         # generate networks from the network parameters and set of params

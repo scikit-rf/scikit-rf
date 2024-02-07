@@ -70,7 +70,7 @@ class MatchedSymmetricCoupler(Device):
     """
     def __init__(self, media, c=None, t=None, t_phase=0, phase_diff=0,
                  nports=4, *args, **kw):
-        Device.__init__(self, media=media, *args, **kw)
+        Device.__init__(self, media=media, **kw)
 
         if c is None and t is None:
             raise ValueError('Must pass either `c`  or `t`')
@@ -109,7 +109,7 @@ class MatchedSymmetricCoupler(Device):
 
         """
         c = mf.db_2_mag(-1*abs(db))
-        return cls(media=media, c=c, phase_diff=deg, *args,**kw)
+        return cls(media=media, c=c, phase_diff=deg, **kw)
 
     @property
     def c(self):
@@ -156,7 +156,7 @@ class Hybrid(MatchedSymmetricCoupler):
         c = 1/sqrt(2)
         MatchedSymmetricCoupler.__init__(self,media=media, c=c,
                                          phase_diff=phase_diff,
-                                         t_phase=t_phase,*args,**kw)
+                                         t_phase=t_phase,**kw)
 
 
 
@@ -167,7 +167,7 @@ class QuadratureHybrid(MatchedSymmetricCoupler):
     def __init__(self, media,t_phase=0, *args, **kw):
         c = 1/sqrt(2)
         MatchedSymmetricCoupler.__init__(self,media=media,c=c,t_phase=t_phase,
-                                         phase_diff=-90, *args, **kw)
+                                         phase_diff=-90, **kw)
 
 
 class Hybrid180(Device):
@@ -187,7 +187,7 @@ class Hybrid180(Device):
     http://www.microwaves101.com/encyclopedias/hybrid-couplers
     """
     def __init__(self, media, nports=4, *args, **kw):
-        Device.__init__(self, media=media, *args, **kw)
+        Device.__init__(self, media=media, **kw)
         self.nports = nports
     @property
     def ntwk(self):
@@ -213,7 +213,7 @@ class DualCoupler(Device):
         * 2 : coupled on coupler 1
         * 3 : coupled on coupler 2
     """
-    def __init__(self, media, c1=1/sqrt(2), c2=None, c1kw=None,c2kw=None):
+    def __init__(self, media, c1=1/sqrt(2), c2=None, c1kw=None,c2kw=None):  # noqa: B008
         if c2kw is None:
             c2kw = {}
         if c1kw is None:

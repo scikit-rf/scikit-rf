@@ -6,6 +6,7 @@ import tempfile
 import unittest
 import warnings
 import zipfile
+from functools import partial
 from pathlib import Path
 
 import numpy as np
@@ -118,8 +119,7 @@ class NetworkTestCase(unittest.TestCase):
         for window in ["hamming", ('kaiser', 6)]:
             gated1 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=window, fft_window=window)
 
-            def get_window(*args, **kwargs):
-                return signal.get_window(window, *args, **kwargs)
+            get_window = partial(signal.get_window, window)
 
             gated2 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=get_window, fft_window=get_window)
             assert gated1 == gated2

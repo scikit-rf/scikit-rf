@@ -340,7 +340,7 @@ class FieldFox(vna.VNA):
         )
 
         self.sweep()
-        for tr, ((i, j), param) in enumerate(zip(msmnts, msmnt_params)):
+        for tr, (i, j) in enumerate(msmnts):
             self.active_trace = tr + 1
 
             sdata = self.active_trace_sdata

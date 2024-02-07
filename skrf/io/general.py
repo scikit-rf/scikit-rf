@@ -710,7 +710,7 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
 
     df = DataFrame(d)
     df.__getattribute__('to_%s'%file_type)(file_name,
-        index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
+        index_label='Freq(%s)'%ntwk.frequency.unit, **kwargs)
 
 def network_2_dataframe(ntwk: Network, attrs: list[str] =None,
         ports: list[tuple[int, int]] = None, port_sep: str | None = None):
@@ -800,7 +800,7 @@ def networkset_2_spreadsheet(ntwkset: NetworkSet, file_name: str = None, file_ty
         if not file_name.endswith('.xlsx'):
             file_name += '.xlsx'
         with ExcelWriter(file_name) as writer:
-            [network_2_spreadsheet(k, writer, sheet_name=k.name, *args, **kwargs) for k in ntwkset]
+            [network_2_spreadsheet(k, writer, sheet_name=k.name, **kwargs) for k in ntwkset]
     else:
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
 

@@ -104,8 +104,8 @@ def axes_kwarg(func):
         try:
             if ax is None:
                 ax = plt.gca()
-        except NameError:
-            raise RuntimeError("Plotting is not available")
+        except NameError as err:
+            raise RuntimeError("Plotting is not available") from err
         func(*args, ax=ax, **kwargs)
 
     return wrapper
@@ -130,8 +130,8 @@ def subplots(*args, **kwargs) -> tuple[Figure, npy.ndarray]:
 
     try:
         return plt.subplots(*args, **kwargs)
-    except NameError:
-        raise RuntimeError("Plotting is not available")
+    except NameError as err:
+        raise RuntimeError("Plotting is not available") from err
 
 def now_string() -> str:
     """

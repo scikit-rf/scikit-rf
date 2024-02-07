@@ -688,7 +688,7 @@ class Circuit:
 
             z0eq = np.array(z0s).prod(axis=0)
 
-            for (ntw, ntw_port) in cnx_k:
+            for _i in range(len(cnx_k)):
                 X_mn.append( 2/(np.sqrt(z0eq) *y_k) )
         else:
             # formula (3)

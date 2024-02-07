@@ -1797,7 +1797,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', 
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.',
                           RuntimeWarning, stacklevel=2)
             ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
             s_side1, s_side2 = self.split2xthru(s2xthru,

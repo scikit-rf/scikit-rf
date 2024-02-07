@@ -119,7 +119,7 @@ def read_pna_csv(filename, *args, **kwargs):
             delimiter = ',',
             skip_header = begin_line + 2,
             skip_footer = footer - (n_END-1)*2,
-            *args, **kwargs
+            **kwargs
             )
     except(ValueError):
         # carrage returns require a doubling of skiplines
@@ -128,7 +128,7 @@ def read_pna_csv(filename, *args, **kwargs):
             delimiter = ',',
             skip_header = (begin_line + 2)*2,
             skip_footer = footer,
-            *args, **kwargs
+            **kwargs
             )
 
     # pna uses unicode coding for degree symbol, but we dont need that
@@ -450,7 +450,7 @@ class AgilentCSV:
             ntwk_list.append(
                 Network(
                     frequency = freq, s = s,comments = comments,
-                    name = cols[k],*self.args, **self.kwargs)
+                    name = cols[k], **self.kwargs)
                 )
 
         return ntwk_list
@@ -499,7 +499,7 @@ class AgilentCSV:
 
                 ntwk_list.append(
                     Network(frequency = self.frequency, s=s, name=name,
-                        comments=comments, *self.args, **self.kwargs)
+                        comments=comments, **self.kwargs)
                     )
 
         return ntwk_list
@@ -702,7 +702,7 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
         ntwk_list.append(
             Network(
                 frequency = freq, s = s,comments = comments,
-                name = cols[k],*args, **kwargs)
+                name = cols[k], **kwargs)
             )
 
 
@@ -748,7 +748,7 @@ def read_zva_dat(filename, *args, **kwargs):
         filename,
         delimiter = ',',
         skip_header = begin_line,
-        *args, **kwargs
+        **kwargs
         )
 
     return header, comments, data

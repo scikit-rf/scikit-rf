@@ -224,8 +224,8 @@ class Frequency:
             try:
                 output._f = npy.array(output.f[slicer]).reshape(-1)
                 return output
-            except(IndexError):
-                raise IndexError('slicing frequency is incorrect')
+            except(IndexError) as err:
+                raise IndexError('slicing frequency is incorrect') from err
 
 
         if output.f.shape[0] > 0:
