@@ -241,7 +241,7 @@ def write(file, obj, overwrite = True):
 
         if os.path.exists(file):
             if not overwrite:
-                warnings.warn('file exists, and overwrite option is False. Not writing.')
+                warnings.warn('file exists, and overwrite option is False. Not writing.', stacklevel=2)
                 return
 
         with open(file, 'wb') as fid:
@@ -434,7 +434,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
                 write(fid, obj,*args, **kwargs)
         except Exception as inst:
             print(inst)
-            warnings.warn(f'couldnt write {k}: {inst}')
+            warnings.warn(f'couldnt write {k}: {inst}', stacklevel=2)
 
             pass
 
@@ -557,7 +557,7 @@ def write_dict_of_networks(ntwkDict, dir='.'):
 
 
     """
-    warnings.warn('Deprecated. use write_all.', DeprecationWarning)
+    warnings.warn('Deprecated. use write_all.', DeprecationWarning, stacklevel=2)
     for ntwkKey in ntwkDict:
         ntwkDict[ntwkKey].write_touchstone(filename = dir+'/'+ntwkKey)
 

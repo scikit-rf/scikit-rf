@@ -92,7 +92,7 @@ def read_pna_csv(filename, *args, **kwargs):
     --------
     >>> header, comments, data = rf.read_pna_csv('myfile.csv')
     """
-    warn("deprecated", DeprecationWarning)
+    warn("deprecated", DeprecationWarning, stacklevel=2)
     with open(filename) as fid:
         begin_line = -2
         end_line = -1
@@ -150,7 +150,7 @@ def pna_csv_2_df(filename):
     df : `pandas.DataFrame`
 
     """
-    warn("deprecated", DeprecationWarning)
+    warn("deprecated", DeprecationWarning, stacklevel=2)
     from pandas import DataFrame, Index
     header, comments, d = read_pna_csv(filename)
     f_unit = header.split(',')[0].split(')')[0].split('(')[1]
@@ -162,7 +162,7 @@ def pna_csv_2_df(filename):
     return df
 
 def pna_csv_2_ntwks2(filename, *args, **kwargs):
-    warn("deprecated", DeprecationWarning)
+    warn("deprecated", DeprecationWarning, stacklevel=2)
     df = pna_csv_2_df(filename, *args, **kwargs)
     header, comments, d = read_pna_csv(filename)
     ntwk_dict  = {}
@@ -241,7 +241,7 @@ def pna_csv_2_ntwks3(filename):
         return n
 
     else:
-        warn("File does not seem to be formatted properly (only dB/deg supported for now)")
+        warn("File does not seem to be formatted properly (only dB/deg supported for now)", stacklevel=2)
 
 def read_all_csv(dir='.', contains = None):
     """
@@ -412,7 +412,7 @@ class AgilentCSV:
                 cols =  [col + ')'  for col in cols[:-1]] + [cols[-1]]
             else:
                 # I dont know how to separate column names
-                warn('Cant decipher header, so I\'m creating one. check output. ')
+                warn('Cant decipher header, so I\'m creating one. check output. ', stacklevel=2)
                 cols = ['Freq(?),']+['%s-%i'%(util.basename_noext(self.filename),k) \
                     for k in range(n_traces)]
         return cols
@@ -494,7 +494,7 @@ class AgilentCSV:
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
                 else:
                     warn(f'CSV format unrecognized in "{names[k]}" or "{names[k+1]}". '
-                         'It\'s up to you to interpret the resulting network correctly.')
+                         'It\'s up to you to interpret the resulting network correctly.', stacklevel=2)
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
 
                 ntwk_list.append(
@@ -560,7 +560,7 @@ def pna_csv_header_split(filename):
     cols : list of str's
         list of column names
     """
-    warn("deprecated", DeprecationWarning)
+    warn("deprecated", DeprecationWarning, stacklevel=2)
     header, comments, d = read_pna_csv(filename)
 
     n_traces =  d.shape[1] - 1 # because theres is one frequency column
@@ -577,7 +577,7 @@ def pna_csv_header_split(filename):
             cols =  [col + ')'  for col in cols[:-1]] + [cols[-1]]
         else:
             # i dont know how to separate column names
-            warn('Cant decipher header, so im creating one. check output. ')
+            warn('Cant decipher header, so im creating one. check output. ', stacklevel=2)
             cols = ['Freq(?),']+['%s-%i'%(util.basename_noext(filename),k) \
                 for k in range(n_traces)]
     return cols
@@ -606,7 +606,7 @@ def pna_csv_2_ntwks(filename):
         list of Networks representing the data contained in column pairs
 
     """
-    warn("deprecated", DeprecationWarning)
+    warn("deprecated", DeprecationWarning, stacklevel=2)
     #TODO: check the data's format (Real-imag or db/angle , ..)
     header, comments, d = read_pna_csv(filename)
     #import pdb;pdb.set_trace()
@@ -645,7 +645,7 @@ def pna_csv_2_ntwks(filename):
     return ntwk_list
 
 def pna_csv_2_freq(filename):
-    warn("deprecated", DeprecationWarning)
+    warn("deprecated", DeprecationWarning, stacklevel=2)
     header, comments, d = read_pna_csv(filename)
     #try to pull out frequency unit
     cols = pna_csv_header_split(filename)
@@ -675,7 +675,7 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
         list of Networks representing the data contained in column pairs
 
     """
-    warn("deprecated", DeprecationWarning)
+    warn("deprecated", DeprecationWarning, stacklevel=2)
     header, comments, d = read_pna_csv(filename)
 
     n_traces =  d.shape[1] - 1 # because theres is one frequency column
@@ -811,7 +811,7 @@ def zva_dat_2_ntwks(filename):
         return n
 
     else:
-        warn("File does not seem to be formatted properly (dB/deg or re/im)")
+        warn("File does not seem to be formatted properly (dB/deg or re/im)", stacklevel=2)
 
 def read_all_zva_dat(dir='.', contains = None):
     """

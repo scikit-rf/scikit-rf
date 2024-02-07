@@ -445,6 +445,7 @@ def plot_polar(theta: NumberLike, r: NumberLike,
             warnings.warn(
                 f"Projection of the Axes passed as `ax` is not 'polar' but is {ax.name}." +
                 "See Matplotlib documentation to create a polar plot or call this function without the `ax` parameter."
+                , stacklevel=2
             )
 
     ax.plot(theta, r, *args, **kwargs)

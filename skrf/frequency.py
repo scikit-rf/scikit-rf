@@ -322,7 +322,7 @@ class Frequency:
         if not increase.all():
             warnings.warn("Frequency values are not monotonously increasing!\n"
             "To get rid of the invalid values call `drop_non_monotonic_increasing`",
-                InvalidFrequencyWarning)
+                InvalidFrequencyWarning, stacklevel=2)
 
     def drop_non_monotonic_increasing(self) -> list[int]:
         """Drop duplicate and invalid frequency values and return the dropped indices

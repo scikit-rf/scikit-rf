@@ -247,13 +247,13 @@ class Calibration:
         if hasattr(measured, 'keys'):
             measured = measured.values()
             if not sloppy_input:
-                warn('dictionary passed, sloppy_input automatically activated')
+                warn('dictionary passed, sloppy_input automatically activated', stacklevel=2)
                 sloppy_input = True
 
         if hasattr(ideals, 'keys'):
             ideals = ideals.values()
             if not sloppy_input:
-                warn('dictionary passed, sloppy_input automatically activated')
+                warn('dictionary passed, sloppy_input automatically activated', stacklevel=2)
                 sloppy_input = True
 
         # fill measured and ideals with copied lists of input
@@ -284,7 +284,7 @@ class Calibration:
         for k in list(range(len(self.ideals))):
             if self.ideals[k].frequency != self.measured[0].frequency:
                 print(dedent(
-                    f"""Warning: Frequency information doesn\'t match on ideals[{k}],
+                    f"""Warning: Frequency information doesn't match on ideals[{k}],
                     attempting to interpolate the ideal[{k}] Network .."""))
                 try:
                     # try to resample our ideals network to match
@@ -314,9 +314,9 @@ class Calibration:
             name = self.name
 
         if 'fromcoefs' in self.family.lower():
-            output = f'{self.family} Calibration: \'{name}\', {self.frequency}'
+            output = f"{self.family} Calibration: '{name}', {self.frequency}"
         else:
-            output = f'{self.family} Calibration: \'{name}\', {self.frequency}, {len(self.measured)}-standards'
+            output = f"{self.family} Calibration: '{name}', {self.frequency}, {len(self.measured)}-standards"
         return output
 
     def __repr__(self):
@@ -514,7 +514,7 @@ class Calibration:
         Number of ideal/measurement pairs in calibration.
         """
         if len(self.ideals) != len(self.measured):
-            warn('number of ideals and measured don\'t agree')
+            warn("number of ideals and measured don't agree", stacklevel=2)
         return len(self.ideals)
 
     @property
@@ -1554,7 +1554,7 @@ class TwelveTerm(Calibration):
         trans_thres_mag = 10 ** (trans_thres / 20)
 
         if n_thrus is None:
-            warn('n_thrus is None, guessing which stds are transmissive')
+            warn('n_thrus is None, guessing which stds are transmissive', stacklevel=2)
             n_thrus=0
             for k in self.ideals:
                 mean_trans = NetworkSet([k.s21, k.s12]).mean_s_mag
@@ -1971,7 +1971,8 @@ class TwoPortOnePath(TwelveTerm):
             return out
 
         else:
-            warnings.warn('only gave a single measurement orientation, error correction is partial without a tuple')
+            warnings.warn('only gave a single measurement orientation, error correction is partial without a tuple',
+                          stacklevel=2)
             ntwk = ntwk_tuple.copy()
             sp,rp = self.sp,self.rp
 
@@ -2072,7 +2073,7 @@ class EightTerm(Calibration):
 
         self.switch_terms = switch_terms
         if switch_terms is None:
-            warn('No switch terms provided')
+            warn('No switch terms provided', stacklevel=2)
 
         if isolation is None:
             self.isolation = measured[0].copy()
@@ -3236,7 +3237,7 @@ class NISTMultilineTRL(EightTerm):
                 R1_est = exp(gamma[m]*p1_len_est)
 
                 if abs( R1_est/abs(R1_est) - R1/abs(R1) ) > npy.sqrt(2):
-                    warn('Inconsistencies detected')
+                    warn('Inconsistencies detected', stacklevel=2)
             elif self.k_method == 'multical':
                 denom = 1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*\
                 (S_thru[0,0]*S_thru[1,1] - S_thru[0,1]*S_thru[1,0])
@@ -4036,7 +4037,7 @@ class UnknownThru(EightTerm):
                 'reverse switch term': self.switch_terms[1].s.flatten(),
                 })
         else:
-            warn('No switch terms provided')
+            warn('No switch terms provided', stacklevel=2)
             coefs.update({
                 'forward switch term': npy.zeros(len(self.frequency), dtype=complex),
                 'reverse switch term': npy.zeros(len(self.frequency), dtype=complex),
@@ -4113,11 +4114,13 @@ class LRM(EightTerm):
         gm = self.ideals[2].s[:,0,0]
         if self.ideals[2].nports > 1:
             if any(gm != self.ideals[2].s[:,1,1]):
-                warnings.warn('Match ideal port 1 and port 2 are different. Using port 1 match also for port 2.')
+                warnings.warn('Match ideal port 1 and port 2 are different. Using port 1 match also for port 2.',
+                              stacklevel=2)
 
         if self.ideals[1].nports > 1:
             if any(self.ideals[1].s[:,0,0] != self.ideals[1].s[:,1,1]):
-                warnings.warn('Reflect ideal port 1 and port 2 are different. Using port 1 reflect also for port 2.')
+                warnings.warn('Reflect ideal port 1 and port 2 are different. Using port 1 reflect also for port 2.',
+                              stacklevel=2)
 
         inv = npy.linalg.inv
 
@@ -4487,7 +4490,7 @@ class LRRM(EightTerm):
 
         det = b**2 - 4*a*c
         if npy.any(det < 0):
-            warnings.warn('Load inductance determination failed. Calibration might be incorrect.')
+            warnings.warn('Load inductance determination failed. Calibration might be incorrect.', stacklevel=2)
         det[det < 0] = 0
         wL = [None, None]
         wL[0] = (-b+npy.sqrt(det))/(2*a)
@@ -4544,7 +4547,7 @@ class LRRM(EightTerm):
 
             if self.ideals[2].s[0,0,0].real < 0:
                 warnings.warn("2nd reflect assumed to be open, but 2nd ideal ' \
-                'doesn't look like open. Calibration is likely incorrect.")
+                'doesn't look like open. Calibration is likely incorrect.", stacklevel=2)
 
             match_c = -1/(npy.choose(root, wL)*w)
             c0 = npy.sum(w * match_c) / npy.sum(w)
@@ -4832,7 +4835,7 @@ class MRC(UnknownThru):
                 'reverse switch term': self.switch_terms[1].s.flatten(),
                 })
         else:
-            warn('No switch terms provided')
+            warn('No switch terms provided', stacklevel=2)
             coefs.update({
                 'forward switch term': npy.zeros(len(self.frequency), dtype=complex),
                 'reverse switch term': npy.zeros(len(self.frequency), dtype=complex),
@@ -4888,7 +4891,7 @@ class SixteenTerm(Calibration):
 
         self.switch_terms = switch_terms
         if switch_terms is None:
-            warn('No switch terms provided')
+            warn('No switch terms provided', stacklevel=2)
 
         Calibration.__init__(self,
             measured = measured,
@@ -5226,7 +5229,7 @@ class LMR16(SixteenTerm):
 
         self.switch_terms = switch_terms
         if switch_terms is None:
-            warn('No switch terms provided')
+            warn('No switch terms provided', stacklevel=2)
 
         if type(ideals) == Network:
             ideals = [ideals]
@@ -5650,7 +5653,7 @@ class MultiportCal:
                 if 'k' not in self._coefs[p[not k_side]].keys():
                     self._coefs[p[not k_side]][c] = one
             else:
-                warn(f'Unknown coefficient in calibration {c}')
+                warn(f'Unknown coefficient in calibration {c}', stacklevel=2)
 
         term1 = self.dut_termination(S1, coefs['reverse switch term'])
         term2 = self.dut_termination(S2, coefs['forward switch term'])
@@ -5927,7 +5930,7 @@ class MultiportSOLT(MultiportCal):
         if not issubclass(method, Calibration):
             raise ValueError("method must be Calibration subclass.")
         if issubclass(method, SixteenTerm):
-            warn("SixteenTerm calibration is reduced to 8-terms.")
+            warn("SixteenTerm calibration is reduced to 8-terms.", stacklevel=2)
 
         if len(ideals) < nports - 1:
             raise ValueError(f"Invalid number of ideals. Expected at least {nports-1} but got {len(ideals)}.")
