@@ -213,7 +213,11 @@ class DualCoupler(Device):
         * 2 : coupled on coupler 1
         * 3 : coupled on coupler 2
     """
-    def __init__(self, media, c1=1/sqrt(2), c2=None, c1kw={},c2kw ={}):
+    def __init__(self, media, c1=1/sqrt(2), c2=None, c1kw=None,c2kw=None):
+        if c2kw is None:
+            c2kw = {}
+        if c1kw is None:
+            c1kw = {}
         Device.__init__(self,media=media)
         if c2 is None:
             c2= c1

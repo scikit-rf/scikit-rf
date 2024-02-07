@@ -423,7 +423,7 @@ def findReplace(directory: str, find: str, replace: str, file_pattern: str):
     ----------
     .. [1] http://stackoverflow.com/questions/4205854/python-way-to-recursively-find-and-replace-string-in-text-files
     """
-    for path, dirs, files in os.walk(os.path.abspath(directory)):
+    for path, _dirs, files in os.walk(os.path.abspath(directory)):
         for filename in fnmatch.filter(files, file_pattern):
             filepath = os.path.join(path, filename)
             with open(filepath) as f:

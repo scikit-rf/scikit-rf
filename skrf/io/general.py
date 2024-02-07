@@ -712,7 +712,7 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
     df.__getattribute__('to_%s'%file_type)(file_name,
         index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
 
-def network_2_dataframe(ntwk: Network, attrs: list[str] =['s_db'],
+def network_2_dataframe(ntwk: Network, attrs: list[str] =None,
         ports: list[tuple[int, int]] = None, port_sep: str | None = None):
     """
     Convert one or more attributes of a network to a pandas DataFrame.
@@ -736,6 +736,8 @@ def network_2_dataframe(ntwk: Network, attrs: list[str] =['s_db'],
     -------
     df : pandas DataFrame Object
     """
+    if attrs is None:
+        attrs = ["s_db"]
     if ports is None:
         ports = ntwk.port_tuples
 

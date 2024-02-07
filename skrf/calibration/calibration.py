@@ -3471,7 +3471,7 @@ class NISTMultilineTRL(EightTerm):
                 rswitch.write_touchstone(dir="switch terms", to_archive=archive)
             for i, ntwk in enumerate(self.measured):  # type: int, Network
                 ntwk.write_touchstone(ntwk_names[i] + ".s2p", dir="measured", to_archive=archive)
-            for key, ntwk in self.coefs_ntwks.items():
+            for ntwk in self.coefs_ntwks.values():
                 ntwk.write_touchstone(dir="coefs", to_archive=archive)
             gamma_ntwk = Network(f=self.measured[0].f, s=self.gamma, z0=50., comments="propagation constant")
             gamma_ntwk.write_touchstone("gamma.s1p", to_archive=archive)
@@ -5596,7 +5596,7 @@ class MultiportCal:
             # I think this limitation could be removed if the `k` would be
             # solved to be consistent in repeated ports.
             raise ValueError("Invalid thru port combinations. One port should be common in all thru measurements.")
-        for e, p in enumerate(self.cal_dict.keys()):
+        for p in self.cal_dict.keys():
             c = self.cal_dict[p].copy()
             if 'ideals' in c:
                 ideals = [i if i.nports == 2 else subnetwork(i, p) for i in c['ideals']]

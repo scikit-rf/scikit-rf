@@ -126,7 +126,7 @@ class NetworkSet:
 
     """
 
-    def __init__(self, ntwk_set: list | dict = [], name: str = None):
+    def __init__(self, ntwk_set: list | dict = None, name: str = None):
         """
         Initialize for NetworkSet.
 
@@ -138,6 +138,8 @@ class NetworkSet:
                 the name of the NetworkSet, given to the Networks returned
                 from properties of this class.
         """
+        if ntwk_set is None:
+            ntwk_set = []
         if not isinstance(ntwk_set, (list, dict)):
             raise ValueError('NetworkSet requires a list as argument')
 
@@ -947,7 +949,7 @@ class NetworkSet:
                    filename: str,
                    values: dict | None = None,
                    data_types: dict | None = None,
-                   comments = []):
+                   comments = None):
         """Convert a scikit-rf NetworkSet object to a Generalized MDIF file.
 
         Parameters
@@ -974,6 +976,8 @@ class NetworkSet:
 
         """
         from .io import Mdif
+        if comments is None:
+            comments = []
         Mdif.write(ns=self, filename=filename, values=values,
                              data_types=data_types, comments=comments)
 
@@ -1230,7 +1234,7 @@ class NetworkSet:
 
 
     def interpolate_from_params(self, param: str, x: float,
-                                sub_params: dict={}, interp_kind: str = 'linear'):
+                                sub_params: dict=None, interp_kind: str = 'linear'):
         """
         Interpolate a Network from given parameters of NetworkSet's Networks.
 
@@ -1285,6 +1289,8 @@ class NetworkSet:
 
         """
         # checking interpolating param and values
+        if sub_params is None:
+            sub_params = {}
         if param not in self.params:
             raise ValueError(f'Parameter {param} is not found in the NetworkSet params.')
         if isinstance(x, Number):

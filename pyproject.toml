@@ -138,7 +138,7 @@ filterwarnings = [
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "F", "FA", "I", "NPY", "UP", "W"]
+select = ["B", "E", "F", "FA", "I", "NPY", "UP", "W"]
 
 # Ignore some rules for all files
 # F841: unused-variable
@@ -153,3 +153,4 @@ ignore = ["F841", "E741"]
 "apps/*" = ["F403", "F405"]
 "doc/source/conf.py" = ["E402"]
 "doc/sphinxext/tests/test_docscrape.py" = ["E402", "F403", "F405"]
+"*/tests/*.py"=["B018"]

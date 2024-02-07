@@ -1889,7 +1889,7 @@ class Network:
         """
         return npy.allclose(reciprocity(self.s), npy.zeros_like(self.s), atol=tol)
 
-    def is_symmetric(self, n: int = 1, port_order: dict[int, int] = {}, tol: float = mf.ALMOST_ZERO) -> bool:
+    def is_symmetric(self, n: int = 1, port_order: dict[int, int] = None, tol: float = mf.ALMOST_ZERO) -> bool:
         """
         Return whether the 2N-port network has n-th order reflection symmetry by checking.
         :math:`S_{i,i} == S_{j,j}` for appropriate pair(s) of :math:`i` and :math:`j`.
@@ -1924,6 +1924,8 @@ class Network:
 
         """
 
+        if port_order is None:
+            port_order = {}
         nfreqs, ny, nx = self.s.shape  # nfreqs is number of frequencies, and nx, ny both are number of ports (2N)
         if nx % 2 != 0 or nx != ny:
             raise ValueError('Using is_symmetric() is only valid for a 2N-port network (N=2,4,6,8,...)')
@@ -2645,7 +2647,7 @@ class Network:
         from .io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
 
-    def to_dataframe(self, attrs: list[str] =['s_db'],
+    def to_dataframe(self, attrs: list[str] =None,
             ports: list[tuple[int, int]] = None, port_sep: str | None = None):
         """
         Convert attributes of a Network to a pandas DataFrame.
@@ -2677,6 +2679,8 @@ class Network:
         skrf.io.general.network_2_dataframe
         """
         from .io.general import network_2_dataframe
+        if attrs is None:
+            attrs = ['s_db']
         return network_2_dataframe(self, attrs=attrs, ports=ports, port_sep=port_sep)
 
     def write_to_json_string(self) -> str:
@@ -2702,7 +2706,7 @@ class Network:
 
     # interpolation
     def interpolate(self, freq_or_n: Frequency | NumberLike, basis: str = 's',
-                    coords: str = 'cart', f_kwargs: dict = {}, return_array: bool = False,
+                    coords: str = 'cart', f_kwargs: dict = None, return_array: bool = False,
                     **kwargs) -> Network | npy.ndarray:
         r"""
         Interpolate a Network along frequency axis.
@@ -2791,6 +2795,8 @@ class Network:
 
         """
         # make new network and fill with interpolated values
+        if f_kwargs is None:
+            f_kwargs = {}
         result = self.copy()
 
         if kwargs.get('kind', None) == 'rational':

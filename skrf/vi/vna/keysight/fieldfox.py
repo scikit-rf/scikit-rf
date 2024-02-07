@@ -298,7 +298,7 @@ class FieldFox(vna.VNA):
         self.write("INIT")
         self.is_continuous = was_continuous
 
-    def get_snp_network(self, ports={1, 2}, restore_settings: bool = True) -> skrf.Network:
+    def get_snp_network(self, ports=None, restore_settings: bool = True) -> skrf.Network:
         """
         Get trace data as an :class:`skrf.Network`
 
@@ -317,6 +317,8 @@ class FieldFox(vna.VNA):
         :class:`skrf.Network`
             The measured data
         """
+        if ports is None:
+            ports = {1, 2}
         msmnts = list(itertools.product(ports, repeat=2))
         msmnt_params = [f"S{a}{b}" for a, b in msmnts]
 

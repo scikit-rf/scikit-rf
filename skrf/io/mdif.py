@@ -370,7 +370,7 @@ class Mdif:
               filename : str,
               values: dict | None = None,
               data_types: dict | None = None,
-              comments = []):
+              comments = None):
         """
         Write a MDIF file from a NetworkSet.
 
@@ -399,6 +399,8 @@ class Mdif:
 
         """
 
+        if comments is None:
+            comments = []
         if values is None:
             if ns.has_params():
                 values = ns.params_values
