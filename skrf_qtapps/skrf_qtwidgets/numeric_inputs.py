@@ -1,6 +1,6 @@
 import re
 
-from qtpy import QtWidgets, QtCore, QtGui
+from qtpy import QtCore, QtGui, QtWidgets
 
 from . import util
 
@@ -119,7 +119,7 @@ class InputWithUnits(NumericLineEdit):
 
     def get_value(self, units=None):
         value = float(self.text())
-        if type(units) is str:
+        if isinstance(units, str):
             if units in self.conversions.keys():
                 value *= self.conversions[units] / self.conversions[self.units]
             else:

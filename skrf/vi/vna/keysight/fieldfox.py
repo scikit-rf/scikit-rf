@@ -4,7 +4,7 @@
 Keysight FieldFox (:mod:`skrf.vi.vna.keysight.fieldfox`)
 =================================================
 
-Provides a class to interact with Keysight's FieldFox handheld analyzer. 
+Provides a class to interact with Keysight's FieldFox handheld analyzer.
 
 This module additionally provides some enumerations to make certain commands
 more clear.
@@ -65,7 +65,7 @@ class WindowFormat(Enum):
 
 class FieldFox(vna.VNA):
     """Keysight FieldFox.
-    
+
     The FieldFox is a class of handheld analyzers with numerous modes with
     different capabilities. This class only provides methods related to the
     network analyzer mode.
@@ -230,7 +230,7 @@ class FieldFox(vna.VNA):
         binary)
 
         When transferring a large number of values from the instrument (like
-        trace data), it can be done either as ascii characters or as binary. 
+        trace data), it can be done either as ascii characters or as binary.
 
         Transferring in binary is much faster, as large numbers can be
         represented much more succinctly.
@@ -301,7 +301,7 @@ class FieldFox(vna.VNA):
     def get_snp_network(self, ports={1, 2}, restore_settings: bool = True) -> skrf.Network:
         """
         Get trace data as an :class:`skrf.Network`
-        
+
         Parameters
         ----------
         ports: Sequence

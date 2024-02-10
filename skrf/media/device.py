@@ -28,11 +28,13 @@ Example Devices
 """
 
 
-import numpy as npy
 from abc import ABCMeta, abstractproperty
+
+import numpy as npy
+from numpy import exp, sqrt
+
 from .. import mathFunctions as mf
-from ..network  import connect
-from numpy import sqrt,exp
+from ..network import connect
 
 
 class Device:

@@ -1,7 +1,9 @@
-import unittest
 import os
+import unittest
+
 from skrf.media import DistributedCircuit
 from skrf.network import Network
+
 
 class MediaTestCase(unittest.TestCase):
     """

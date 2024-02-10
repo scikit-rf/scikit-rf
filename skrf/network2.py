@@ -1,23 +1,21 @@
-from .frequency import Frequency
-from .mathFunctions import *
-from .plotting import plot_complex_rectangular,plot_rectangular, smith
-from .util import find_nearest_index,slice_domain
-
-from scipy import  signal
 import numpy as npy
 from numpy import fft
+from scipy import signal
+
+from .frequency import Frequency
+from .mathFunctions import complex_2_db, complex_2_db10, complex_2_degree, complex_2_radian
+from .plotting import plot_complex_rectangular, plot_rectangular, smith
+from .util import find_nearest_index, slice_domain
 
 try:
     import matplotlib.pyplot as plb
 except ImportError:
     pass
 
-from IPython.display import Image
-from IPython.core.pylabtools import print_figure
-
 import re
 
-
+from IPython.core.pylabtools import print_figure
+from IPython.display import Image
 
 ##
 
@@ -306,7 +304,7 @@ class Mag(Projection):
     def __str__(self):
         return ''
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
 
     @property
     def val(self):
@@ -318,7 +316,7 @@ class Db10(Projection):
     def __str__(self):
         return 'dB'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
 
     @property
     def val(self):
@@ -330,7 +328,7 @@ class Db20(Projection):
     def __str__(self):
         return 'dB'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
     @property
     def val(self):
         return complex_2_db(self._param.val)
@@ -341,7 +339,7 @@ class Deg(Projection):
     def __str__(self):
         return 'deg'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
     @property
     def val(self):
         return complex_2_degree(self._param.val)
@@ -352,7 +350,7 @@ class Rad(Projection):
     def __str__(self):
         return 'rad'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
     @property
     def val(self):
         return complex_2_radian(self._param.val)
@@ -363,7 +361,7 @@ class Re(Projection):
     def __str__(self):
         return 'real'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
     @property
     def val(self):
         return self._param.val.real
@@ -374,7 +372,7 @@ class Im(Projection):
     def __str__(self):
         return 'imag'
     def __repr__(self):
-        return '{self._param}{self}'.format(self=self)
+        return f'{self._param}{self}'
     @property
     def val(self):
         return self._param.val.imag
@@ -393,7 +391,7 @@ class Network:
         elif 'y' in kw:
             self.s = y2s(kw['y'],z0)
         else:
-            s=zeros(len(frequency))
+            s=npy.zeros(len(frequency))
 
         self.frequency = frequency
         self.z0 = z0

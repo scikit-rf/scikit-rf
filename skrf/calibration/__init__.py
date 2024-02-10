@@ -15,10 +15,7 @@ module.
 
 
 #from parametricStandard import *
-from . import calibration
-from . import calibrationSet
-from . import deembedding
-
+from . import calibration, calibrationSet, deembedding
 from .calibration import *
 from .calibrationSet import *
 from .deembedding import *

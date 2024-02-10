@@ -47,13 +47,15 @@ Reading/Writing Anritsu VectorStar
 
 
 """
-import numpy as npy
 import os
-from ..network import Network
-from .. import mathFunctions as mf
-from ..frequency import Frequency
-from .. import util
 from warnings import warn
+
+import numpy as npy
+
+from .. import mathFunctions as mf
+from .. import util
+from ..frequency import Frequency
+from ..network import Network
 
 # delayed imports
 # from pandas import Series, Index, DataFrame
@@ -149,7 +151,7 @@ def pna_csv_2_df(filename):
 
     """
     warn("deprecated", DeprecationWarning)
-    from pandas import Index, DataFrame
+    from pandas import DataFrame, Index
     header, comments, d = read_pna_csv(filename)
     f_unit = header.split(',')[0].split(')')[0].split('(')[1]
 
@@ -491,7 +493,8 @@ class AgilentCSV:
                 elif 'real' in names[k].lower() and 'imag' in names[k+1].lower():
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
                 else:
-                    warn(f'CSV format unrecognized in "{names[k]}" or "{names[k+1]}". It\'s up to you to interpret the resultant network correctly.')
+                    warn(f'CSV format unrecognized in "{names[k]}" or "{names[k+1]}". '
+                         'It\'s up to you to interpret the resulting network correctly.')
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
 
                 ntwk_list.append(
@@ -524,7 +527,7 @@ class AgilentCSV:
         df : `pandas.DataFrame`
 
         """
-        from pandas import  Index, DataFrame
+        from pandas import DataFrame, Index
 
         index = Index(
             self.frequency.f_scaled,

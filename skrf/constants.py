@@ -50,8 +50,9 @@ This module contains constants, numerical approximations, and unit conversions
 """
 from numbers import Number
 from typing import Sequence, Union
+
 import numpy as npy
-from scipy.constants import c, mil, inch
+from scipy.constants import c, inch, mil
 
 # used as substitutes to handle mathematical singularities.
 INF = 1e99
@@ -105,6 +106,8 @@ Minimum eigenvalue used in :meth:`~skrf.mathFunctions.nudge_eig`
 S_DEFINITIONS = ['power', 'pseudo', 'traveling']
 S_DEF_DEFAULT = 'power'
 S_DEF_HFSS_DEFAULT = 'traveling'
+
+FREQ_UNITS = {"Hz": 1.0, "kHz": 1e3, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}
 
 NumberLike = Union[Number, Sequence[Number], npy.ndarray]
 

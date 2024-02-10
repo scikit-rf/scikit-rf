@@ -1,11 +1,11 @@
-# -*- encoding:utf-8 -*-
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from docscrape import NumpyDocString, FunctionDoc, ClassDoc
-from docscrape_sphinx import SphinxDocString, SphinxClassDoc
+from docscrape import ClassDoc, FunctionDoc, NumpyDocString
+from docscrape_sphinx import SphinxClassDoc, SphinxDocString
 from nose.tools import *
 
 doc_txt = '''\
@@ -175,9 +175,9 @@ def non_blank_line_by_line_compare(a,b):
     b = [l for l in b.split('\n') if l.strip()]
     for n,line in enumerate(a):
         if not line == b[n]:
-            raise AssertionError("Lines %s of a and b differ: "
-                                 "\n>>> %s\n<<< %s\n" %
-                                 (n,line,b[n]))
+            raise AssertionError(f"Lines {n} of a and b differ: "
+                                 f"\n>>> {line}\n<<< {b[n]}\n")
+
 def test_str():
     non_blank_line_by_line_compare(str(doc),
 """numpy.multivariate_normal(mean, cov, shape=None, spam=None)
@@ -427,7 +427,7 @@ doc3 = NumpyDocString("""
 
 def test_escape_stars():
     signature = str(doc3).split('\n')[0]
-    assert_equal(signature, 'my_signature(\*params, \*\*kwds)')
+    assert_equal(signature, r'my_signature(\*params, \*\*kwds)')
 
 doc4 = NumpyDocString(
     """a.conj()
@@ -507,7 +507,7 @@ def test_see_also():
             assert desc == ['fubar', 'foobar']
 
 def test_see_also_print():
-    class Dummy(object):
+    class Dummy:
         """
         See Also
         --------
@@ -557,7 +557,7 @@ def test_unicode():
         äää
 
     """)
-    assert doc['Summary'][0] == u'öäöäöäöäöåååå'.encode('utf-8')
+    assert doc['Summary'][0] == 'öäöäöäöäöåååå'.encode()
 
 def test_plot_examples():
     cfg = dict(use_plots=True)
@@ -584,7 +584,7 @@ def test_plot_examples():
 
 def test_class_members():
 
-    class Dummy(object):
+    class Dummy:
         """
         Dummy class.
 

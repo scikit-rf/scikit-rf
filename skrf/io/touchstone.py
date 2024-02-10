@@ -26,21 +26,20 @@ Functions related to reading/writing touchstones.
 """
 from __future__ import annotations
 
-from typing import Optional
-
-from typing import Callable
-from dataclasses import dataclass, field
-import re
 import os
+import re
 import typing
-import zipfile
-import numpy as npy
 import warnings
+import zipfile
+from dataclasses import dataclass, field
+from typing import Callable
 
-from ..constants import S_DEF_HFSS_DEFAULT
-from ..util import get_fid
-from ..network import Network
+import numpy as npy
+
+from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT
 from ..media import DefinedGammaZ0
+from ..network import Network
+from ..util import get_fid
 
 
 def remove_prefix(text: str, prefix: str) -> str:
@@ -53,7 +52,7 @@ def remove_prefix(text: str, prefix: str) -> str:
 class ParserState:
     """Class to hold dynamic variables while parsing the touchstone file.
     """
-    rank: Optional[int] = None
+    rank: int | None = None
     option_line_parsed: bool = False
     hfss_gamma: list[list[float]] = field(default_factory=list)
     hfss_impedance: list[list[float]] = field(default_factory=list)
@@ -69,8 +68,8 @@ class ParserState:
     two_port_order_legacy: bool = True
     number_noise_freq: int = 0
     port_names: dict[int, str] = field(default_factory=dict)
-    ansys_data_type: Optional[str] = None
-    mixed_mode_order: Optional[list[str]] = None
+    ansys_data_type: str | None = None
+    mixed_mode_order: list[str] | None = None
     frequency_unit: str = "ghz"
     parameter: str = "s"
     format: str = "ma"
@@ -85,6 +84,7 @@ class ParserState:
         Returns:
             int: number of impedance values.
         """
+        # See https://github.com/scikit-rf/scikit-rf/issues/354 for details.
         #if self.ansys_data_type == "terminal":
         #    return self.rank**2 * 2
 
@@ -115,13 +115,18 @@ class ParserState:
         self.parse_network = False
         self._parse_noise = x
 
+    @property
+    def frequency_mult(self) -> float:
+        _units = {k.lower(): v for k,v in FREQ_UNITS.items()}
+        return _units[self.frequency_unit]
+
     def parse_port(self, line: str):
         """Regex parser for port names.
 
         Args:
             line (str): Touchstone line.
         """
-        m = re.match(r"! Port\[(\d+)\]\s*=\s*(.*?)$", line)
+        m = re.match(r"! Port\[(\d+)\]\s*=\s*(.*)$", line)
         if m:
             self.port_names[int(m.group(1)) - 1] = m.group(2)
 
@@ -147,7 +152,7 @@ class ParserState:
 
         """
         if self.option_line_parsed:
-            return True
+            return
         toks = line.lower()[1:].strip().split()
         # fill the option line with the missing defaults
         toks.extend(["ghz", "s", "ma", "r", "50"][len(toks) :])
@@ -183,7 +188,7 @@ class Touchstone:
     .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
 
-    def __init__(self, file: typing.Union[str, typing.TextIO], encoding: typing.Union[str, None] = None):
+    def __init__(self, file: str | typing.TextIO, encoding: str | None = None):
         """
         constructor
 
@@ -346,38 +351,37 @@ class Touchstone:
         if x == "2.0":
             self._parse_dict.update(self._parse_dict_v2)
 
-    def load_file(self, fid: typing.TextIO):
+    def _parse_file(self, fid: typing.TextIO) -> ParserState:
         """
-        Load the touchstone file into the internal data structures.
+        Parse the raw file and generate an structured view.
 
         Parameters
         ----------
         fid : file object
 
+        Returns
+        -------
+        state: File content as ParserState
+
         """
-        filename = self.filename
         state = ParserState()
 
         # Check the filename extension.
         # Should be .sNp for Touchstone format V1.0, and .ts for V2
-        extension = filename.split(".")[-1].lower()
+        extension = self.filename.split(".")[-1].lower()
 
-        if (extension[0] == "s") and (extension[-1] == "p"):  # sNp
-            # check if N is a correct number
-            try:
-                state.rank = int(extension[1:-1])
-            except ValueError:
-                msg = (f"filename does not have a s-parameter extension. It has  [{extension}] instead."
-                        "Please, correct the extension to of form: 'sNp', where N is any integer.")
-                raise ValueError(msg)
-        elif extension == "ts":
-            pass
-        else:
-            raise Exception("Filename does not have the expected Touchstone extension (.sNp or .ts)")
+        m = re.match(r"s(\d+)p", extension)
+        if m:
+            state.rank = int(m.group(1))
+        elif extension != "ts":
+            msg = (f"{self.filename} does not have a s-parameter extension ({extension})."
+                    "Please, correct the extension to of form: 'sNp', where N is any integer for Touchstone v1,"
+                    "or ts for Touchstone v2.")
+            raise ValueError(msg)
 
         # Lookup dictionary for parser
         # Dictionary has string keys and values contains functions which
-        # need the current line as string argument. The type hints allow 
+        # need the current line as string argument. The type hints allow
         # the IDE to provide full typing support
         # Take care of the order of the elements when inserting new key words.
         self._parse_dict: dict[str, Callable[[str], None]] = {
@@ -450,6 +454,20 @@ class Touchstone:
                 elif state.parse_noise:
                     state.noise.append(values)
 
+        return state
+
+    def load_file(self, fid: typing.TextIO):
+        """
+        Load the touchstone file into the internal data structures.
+
+        Parameters
+        ----------
+        fid : file object
+
+        """
+
+        state = self._parse_file(fid=fid)
+
         self.comments = "\n".join([line.strip()[1:] for line in state.comments])
         self.comments_after_option_line = "\n".join([line.strip()[1:] for line in state.comments_after_option_line])
         self.rank = state.rank
@@ -486,8 +504,8 @@ class Touchstone:
             self.z0 = npy.empty((len(state.f), state.rank), dtype=complex).fill(self.reference)
 
         self.f = npy.array(state.f)
-        self.s = npy.empty((len(self.f), state.rank * state.rank), dtype=complex)
         if not len(self.f):
+            self.s = npy.empty((0, state.rank, state.rank))
             return
 
         raw = npy.array(state.s).reshape(len(self.f), -1)
@@ -502,6 +520,7 @@ class Touchstone:
 
         self.s_flat = s_flat
 
+        self.s = npy.empty((len(self.f), state.rank * state.rank), dtype=complex)
         if state.matrix_format == "full":
             self.s[:] = s_flat
         else:
@@ -538,8 +557,17 @@ class Touchstone:
             self.z0[:, self.port_modes == "D"] *= 2
             self.z0[:, self.port_modes == "C"] /= 2
 
+        if self.parameter in ["g", "h", "y", "z"]:
+            if self.version == "1.0":
+                self.s = self.s * self.z0[:,:, None]
+
+            func_name = f"{self.parameter}2s"
+            from .. import network
+            self.s: npy.ndarray = getattr(network, func_name)(self.s, self.z0)
+
+
         # multiplier from the frequency unit
-        self.frequency_mult = {"hz": 1.0, "khz": 1e3, "mhz": 1e6, "ghz": 1e9}.get(self.frequency_unit)
+        self.frequency_mult = state.frequency_mult
 
         if state.noise:
             self.noise = npy.array(state.noise)
@@ -673,10 +701,10 @@ class Touchstone:
                 if format == "ri":
                     ret[f"{prefix}R"] = val.real
                     ret[f"{prefix}I"] = val.imag
-                if format == "ma":
+                elif format == "ma":
                     ret[f"{prefix}M"] = npy.abs(val)
                     ret[f"{prefix}A"] = npy.angle(val, deg=True)
-                if format == "db":
+                elif format == "db":
                     ret[f"{prefix}DB"] = 20 * npy.log10(npy.abs(val))
                     ret[f"{prefix}A"] = npy.angle(val, deg=True)
 
@@ -840,8 +868,8 @@ def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> dict[
     """
     networks = dict()
     for fname in ziparchive.namelist():  # type: str
-        directory, filename = os.path.split(fname)
-        if dir == directory and fname[-4:].lower() in (".s1p", ".s2p", ".s3p", ".s4p"):
+        directory = os.path.split(fname)[0]
+        if dir == directory and  re.match(r"s\d+p", fname.lower()):
             network = Network.zipped_touchstone(fname, ziparchive)
             networks[network.name] = network
     return networks
