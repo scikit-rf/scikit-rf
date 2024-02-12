@@ -330,7 +330,7 @@ class Qfactor:
         if loop_plan[0] == "w":
             raise ValueError("First item in loop_plan must not be w (weight calculation)")
         if loop_plan[-1] != "c":
-            warn("Last item in loop_plan is not c so convergence not tested!")
+            warn("Last item in loop_plan is not c so convergence not tested!", stacklevel=2)
 
         self.method = method
         self.loop_plan = loop_plan
@@ -350,7 +350,7 @@ class Qfactor:
         self.opt_res = result
 
         if result.Q_L < 0:
-            warn('Negative Q_L, fitting may be inaccurate.')
+            warn('Negative Q_L, fitting may be inaccurate.', stacklevel=2)
 
         return result
 
@@ -1250,7 +1250,7 @@ class Qfactor:
 
         """
         if not self.fitted:
-            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.', stacklevel=2)
         return self.f_L/self.f_multiplier
 
     @property
@@ -1276,7 +1276,7 @@ class Qfactor:
 
         """
         if not self.fitted:
-            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.', stacklevel=2)
         return self.f_L/self.Q_L
 
     @property
@@ -1294,5 +1294,5 @@ class Qfactor:
 
         """
         if not self.fitted:
-            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.', stacklevel=2)
         return self.BW/self.f_multiplier

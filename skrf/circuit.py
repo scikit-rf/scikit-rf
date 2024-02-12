@@ -441,7 +441,7 @@ class Circuit:
 
         ntws = []
         for cnx in connections:
-            for (ntw, port) in cnx:
+            for (ntw, _port) in cnx:
                 ntws.append(ntw)
         return {ntw.name: ntw for ntw in ntws  if ntw.nports >= min_nports}
 
@@ -543,7 +543,7 @@ class Circuit:
             cnx_name = 'X'+str(idx)
             # Adding connection nodes and edges
             G.add_node(cnx_name)
-            for (ntw, ntw_port) in cnx:
+            for (ntw, _ntw_port) in cnx:
                 ntw_name = ntw.name
                 G.add_edge(cnx_name, ntw_name)
         return G
@@ -688,7 +688,7 @@ class Circuit:
 
             z0eq = np.array(z0s).prod(axis=0)
 
-            for (ntw, ntw_port) in cnx_k:
+            for _i in range(len(cnx_k)):
                 X_mn.append( 2/(np.sqrt(z0eq) *y_k) )
         else:
             # formula (3)
@@ -1039,7 +1039,7 @@ class Circuit:
 
         """
         z0s = []
-        for cnx_idx, (ntw, ntw_port) in self.connections_list:
+        for _cnx_idx, (ntw, ntw_port) in self.connections_list:
             z0s.append(ntw.z0[:,ntw_port])
         return np.array(z0s).T
 
@@ -1204,7 +1204,7 @@ class Circuit:
         #                 |
         #                 |
         #              [ntwC]
-        for inter_idx, inter in self.intersections_dict.items():
+        for inter in self.intersections_dict.values():
             if len(inter) > 2:
                 raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
 
@@ -1234,7 +1234,7 @@ class Circuit:
 
         """
         # cf currents() for more details
-        for inter_idx, inter in self.intersections_dict.items():
+        for inter in self.intersections_dict.values():
             if len(inter) > 2:
                 raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
 

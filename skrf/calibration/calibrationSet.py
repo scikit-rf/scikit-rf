@@ -27,7 +27,7 @@ def cartesian_product(ideals, measured_sets, *args, **kwargs):
     """
     measured_lists = product(*[k[:] for k in measured_sets])
     return [Calibration(ideals = ideals, measured = measured,
-        *args, **kwargs) for measured in measured_lists ]
+        **kwargs) for measured in measured_lists ]
 
 def dot_product(ideals, measured_sets, *args, **kwargs):
     """
@@ -41,7 +41,7 @@ def dot_product(ideals, measured_sets, *args, **kwargs):
         measured = [measured_set[k] for measured_set in measured_sets]
         cal_list.append(
             Calibration(ideals=ideals, measured= measured,
-            *args,**kwargs)
+            **kwargs)
             )
 
     return cal_list
@@ -138,5 +138,5 @@ class Dot(CalibrationSet):
         for k in range(len(measured_sets[0])):
             measured = [measured_set[k] for measured_set in measured_sets]
             cal = self.cal_class(ideals=ideals, measured= measured,
-                                 *args,**kwargs)
+                                 **kwargs)
             self.cal_list.append(cal)

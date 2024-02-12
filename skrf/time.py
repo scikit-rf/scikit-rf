@@ -165,7 +165,7 @@ def find_n_peaks(x: npy.ndarray, n: int, thres: float = 0.9, **kwargs) -> list[i
     ValueError
         If no peaks are found.
     """
-    for dummy in range(10):
+    for _dummy in range(10):
 
         idx = indexes(x, **kwargs)
         if len(idx) < n:

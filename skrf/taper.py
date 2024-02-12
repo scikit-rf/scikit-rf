@@ -40,7 +40,7 @@ class Taper1D:
     """
     def __init__(self, med, start: Number, stop: Number, n_sections: int, f: Callable,
                  length: Number, length_unit: str = 'm', param: str = 'z0', f_is_normed: bool = True,
-                 med_kw: dict = {}, f_kw: dict = {}):
+                 med_kw: dict = None, f_kw: dict = None):
         """
         Generic 1D Taper Constructor.
 
@@ -105,6 +105,10 @@ class Taper1D:
                             f_is_normed=True,
                             med_kw={'frequency':Frequency(75,110,101,'ghz')})
         """
+        if f_kw is None:
+            f_kw = {}
+        if med_kw is None:
+            med_kw = {}
         self.med = med
         self.param = param
         self.start = start
@@ -124,7 +128,7 @@ class Taper1D:
         # it makes for a intuitive operation
         if param == 'z0':
             if hasattr(self.med, 'from_z0'):
-                self.med = getattr(self.med, 'from_z0')
+                self.med = self.med.from_z0
 
     def __str__(self) -> str:
         return 'Taper: {classname}: {param} from {start}-{stop}'

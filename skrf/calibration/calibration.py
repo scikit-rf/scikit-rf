@@ -247,13 +247,13 @@ class Calibration:
         if hasattr(measured, 'keys'):
             measured = measured.values()
             if not sloppy_input:
-                warn('dictionary passed, sloppy_input automatically activated')
+                warn('dictionary passed, sloppy_input automatically activated', stacklevel=2)
                 sloppy_input = True
 
         if hasattr(ideals, 'keys'):
             ideals = ideals.values()
             if not sloppy_input:
-                warn('dictionary passed, sloppy_input automatically activated')
+                warn('dictionary passed, sloppy_input automatically activated', stacklevel=2)
                 sloppy_input = True
 
         # fill measured and ideals with copied lists of input
@@ -284,7 +284,7 @@ class Calibration:
         for k in list(range(len(self.ideals))):
             if self.ideals[k].frequency != self.measured[0].frequency:
                 print(dedent(
-                    f"""Warning: Frequency information doesn\'t match on ideals[{k}],
+                    f"""Warning: Frequency information doesn't match on ideals[{k}],
                     attempting to interpolate the ideal[{k}] Network .."""))
                 try:
                     # try to resample our ideals network to match
@@ -293,8 +293,8 @@ class Calibration:
                         self.measured[0].frequency)
                     print('Success')
 
-                except Exception:
-                    raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].'))
+                except Exception as err:
+                    raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].')) from err
 
 
         # passed to calibration algorithm in run()
@@ -314,9 +314,9 @@ class Calibration:
             name = self.name
 
         if 'fromcoefs' in self.family.lower():
-            output = f'{self.family} Calibration: \'{name}\', {self.frequency}'
+            output = f"{self.family} Calibration: '{name}', {self.frequency}"
         else:
-            output = f'{self.family} Calibration: \'{name}\', {self.frequency}, {len(self.measured)}-standards'
+            output = f"{self.family} Calibration: '{name}', {self.frequency}, {len(self.measured)}-standards"
         return output
 
     def __repr__(self):
@@ -514,7 +514,7 @@ class Calibration:
         Number of ideal/measurement pairs in calibration.
         """
         if len(self.ideals) != len(self.measured):
-            warn('number of ideals and measured don\'t agree')
+            warn("number of ideals and measured don't agree", stacklevel=2)
         return len(self.ideals)
 
     @property
@@ -639,8 +639,8 @@ class Calibration:
                     self.coefs_ntwks[direction + ' directivity']/\
                     self.coefs_ntwks[direction + ' reflection tracking']
             return out
-        except Exception:
-            raise ValueError('cant find error coefs')
+        except Exception as err:
+            raise ValueError('cant find error coefs') from err
 
 
     @property
@@ -1173,8 +1173,9 @@ class OnePort(Calibration):
             abc[f,:] = abcTmp.flatten()
             try:
                 residuals[f,:] = residualsTmp
-            except(ValueError):
-                raise(ValueError('matrix has singular values. ensure standards are far enough away on smith chart'))
+            except ValueError as err:
+                raise(ValueError('matrix has singular values. ensure standards are far enough away on smith chart'))\
+                    from err
 
         # convert the abc vector to standard error coefficients
         a,b,c = abc[:,0], abc[:,1],abc[:,2]
@@ -1262,7 +1263,7 @@ class SDDLWeikle(OnePort):
         if (len(measured) != 4) or (len(ideals)) != 4:
             raise IndexError('Incorrect number of standards.')
         Calibration.__init__(self, measured =  measured,
-                             ideals =ideals, *args, **kwargs)
+                             ideals =ideals, **kwargs)
 
     def run(self):
         #measured reflection coefficients
@@ -1367,7 +1368,7 @@ class SDDL(OnePort):
         if (len(measured) != 4) or (len(ideals)) != 4:
             raise IndexError('Incorrect number of standards.')
         Calibration.__init__(self, measured =  measured,
-                             ideals =ideals, *args, **kwargs)
+                             ideals =ideals, **kwargs)
 
 
     def run(self):
@@ -1405,7 +1406,7 @@ class PHN(OnePort):
             raise IndexError('Incorrect number of standards.')
 
         Calibration.__init__(self, measured =  measured,
-                             ideals =ideals, *args, **kwargs)
+                             ideals =ideals, **kwargs)
 
 
     def run(self):
@@ -1554,7 +1555,7 @@ class TwelveTerm(Calibration):
         trans_thres_mag = 10 ** (trans_thres / 20)
 
         if n_thrus is None:
-            warn('n_thrus is None, guessing which stds are transmissive')
+            warn('n_thrus is None, guessing which stds are transmissive', stacklevel=2)
             n_thrus=0
             for k in self.ideals:
                 mean_trans = NetworkSet([k.s21, k.s12]).mean_s_mag
@@ -1921,7 +1922,7 @@ class TwoPortOnePath(TwelveTerm):
             forward = 'reverse'
             reverse = 'forward'
         else:
-            raise('source_port is out of range. should be 1 or 2.')
+            raise ValueError('source_port is out of range. should be 1 or 2.')
         for k in self.coefs:
             if k.startswith(forward):
                 k_out = k.replace(forward,reverse)
@@ -1971,7 +1972,8 @@ class TwoPortOnePath(TwelveTerm):
             return out
 
         else:
-            warnings.warn('only gave a single measurement orientation, error correction is partial without a tuple')
+            warnings.warn('only gave a single measurement orientation, error correction is partial without a tuple',
+                          stacklevel=2)
             ntwk = ntwk_tuple.copy()
             sp,rp = self.sp,self.rp
 
@@ -2072,7 +2074,7 @@ class EightTerm(Calibration):
 
         self.switch_terms = switch_terms
         if switch_terms is None:
-            warn('No switch terms provided')
+            warn('No switch terms provided', stacklevel=2)
 
         if isolation is None:
             self.isolation = measured[0].copy()
@@ -2088,7 +2090,7 @@ class EightTerm(Calibration):
         Calibration.__init__(self,
             measured = measured,
             ideals = ideals,
-            *args, **kwargs)
+            **kwargs)
 
 
     def unterminate(self,ntwk):
@@ -2549,7 +2551,7 @@ class TRL(EightTerm):
         EightTerm.__init__(self,
             measured = measured,
             ideals = ideals,
-            *args, **kwargs)
+            **kwargs)
 
     def run(self):
         m_ut = self.measured_unterminated
@@ -2775,7 +2777,7 @@ class NISTMultilineTRL(EightTerm):
             measured = measured,
             ideals = ideals,
             self_calibration=True,
-            *args, **kwargs)
+            **kwargs)
 
         m_sw = [k for k in self.measured_unterminated]
 
@@ -3110,7 +3112,7 @@ class NISTMultilineTRL(EightTerm):
                         Vc[a,b] /= n
                         Vc[b,a] = Vc[a,b].conjugate()
 
-            def solve_A(B1, B2, CoA1, CoA2):
+            def solve_A(B1, B2, CoA1, CoA2, S_thru, m):
                 #Determine A using unknown reflect
                 Ap = B1*B2 - B1*S_thru[1,1] - B2*S_thru[0,0] + linalg.det(S_thru)
                 Ap = -Ap/(1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*linalg.det(S_thru))
@@ -3172,7 +3174,7 @@ class NISTMultilineTRL(EightTerm):
             if abs(values[0][0]) > 1e-9 and d1[1]/d1[0] > 10 and d2[1]/d2[0] > 10:
                 #Estimate seems to be correct
                 B1, B2, CoA1, CoA2 = values[0][1:]
-                A1, A2 = solve_A(B1, B2, CoA1, CoA2)
+                A1, A2 = solve_A(B1, B2, CoA1, CoA2, S_thru, m)
             else:
                 #Estimation is incorrect or the accuracy is bad
                 #Choose the root that minimizes error to measurements
@@ -3182,7 +3184,7 @@ class NISTMultilineTRL(EightTerm):
                     if abs(v[0]) < 1e-9:
                         continue
                     B1, B2, CoA1, CoA2 = v[1:]
-                    A1, A2 = solve_A(B1, B2, CoA1, CoA2)
+                    A1, A2 = solve_A(B1, B2, CoA1, CoA2, S_thru, m)
                     C1 = CoA1*A1
                     C2 = CoA2*A2
                     R = S_thru[0,1]*(1 - C1*C2)/(A1 - B1*C1)
@@ -3202,7 +3204,7 @@ class NISTMultilineTRL(EightTerm):
                         best_error = error
                         best_values = v
                 B1, B2, CoA1, CoA2 = best_values[1:]
-                A1, A2 = solve_A(B1, B2, CoA1, CoA2)
+                A1, A2 = solve_A(B1, B2, CoA1, CoA2, S_thru, m)
 
             sigmab = npy.sqrt(1/(npy.sum(inv_Vb).real))
             sigmac = npy.sqrt(1/(npy.sum(inv_Vc).real))
@@ -3236,7 +3238,7 @@ class NISTMultilineTRL(EightTerm):
                 R1_est = exp(gamma[m]*p1_len_est)
 
                 if abs( R1_est/abs(R1_est) - R1/abs(R1) ) > npy.sqrt(2):
-                    warn('Inconsistencies detected')
+                    warn('Inconsistencies detected', stacklevel=2)
             elif self.k_method == 'multical':
                 denom = 1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*\
                 (S_thru[0,0]*S_thru[1,1] - S_thru[0,1]*S_thru[1,0])
@@ -3471,7 +3473,7 @@ class NISTMultilineTRL(EightTerm):
                 rswitch.write_touchstone(dir="switch terms", to_archive=archive)
             for i, ntwk in enumerate(self.measured):  # type: int, Network
                 ntwk.write_touchstone(ntwk_names[i] + ".s2p", dir="measured", to_archive=archive)
-            for key, ntwk in self.coefs_ntwks.items():
+            for ntwk in self.coefs_ntwks.values():
                 ntwk.write_touchstone(dir="coefs", to_archive=archive)
             gamma_ntwk = Network(f=self.measured[0].f, s=self.gamma, z0=50., comments="propagation constant")
             gamma_ntwk.write_touchstone("gamma.s1p", to_archive=archive)
@@ -3646,7 +3648,7 @@ class TUGMultilineTRL(EightTerm):
             measured = measured,
             ideals = measured, # not actually used. Just to initiate the class
             self_calibration=True,
-            *args, **kwargs)
+            **kwargs)
 
         n_lines = len(self.line_lengths)
         # switch term corrected
@@ -3981,7 +3983,7 @@ class UnknownThru(EightTerm):
         """
 
         EightTerm.__init__(self, measured = measured, ideals = ideals,
-                           *args, **kwargs)
+                           **kwargs)
 
 
     def run(self):
@@ -4036,7 +4038,7 @@ class UnknownThru(EightTerm):
                 'reverse switch term': self.switch_terms[1].s.flatten(),
                 })
         else:
-            warn('No switch terms provided')
+            warn('No switch terms provided', stacklevel=2)
             coefs.update({
                 'forward switch term': npy.zeros(len(self.frequency), dtype=complex),
                 'reverse switch term': npy.zeros(len(self.frequency), dtype=complex),
@@ -4102,7 +4104,7 @@ class LRM(EightTerm):
             ideals = ideals,
             switch_terms = switch_terms,
             isolation = isolation,
-            *args, **kwargs)
+            **kwargs)
 
     def run(self):
         mList = [k for k in self.measured_unterminated]
@@ -4113,11 +4115,13 @@ class LRM(EightTerm):
         gm = self.ideals[2].s[:,0,0]
         if self.ideals[2].nports > 1:
             if any(gm != self.ideals[2].s[:,1,1]):
-                warnings.warn('Match ideal port 1 and port 2 are different. Using port 1 match also for port 2.')
+                warnings.warn('Match ideal port 1 and port 2 are different. Using port 1 match also for port 2.',
+                              stacklevel=2)
 
         if self.ideals[1].nports > 1:
             if any(self.ideals[1].s[:,0,0] != self.ideals[1].s[:,1,1]):
-                warnings.warn('Reflect ideal port 1 and port 2 are different. Using port 1 reflect also for port 2.')
+                warnings.warn('Reflect ideal port 1 and port 2 are different. Using port 1 reflect also for port 2.',
+                              stacklevel=2)
 
         inv = npy.linalg.inv
 
@@ -4356,7 +4360,7 @@ class LRRM(EightTerm):
             ideals = ideals,
             switch_terms = switch_terms,
             isolation = isolation,
-            *args, **kwargs)
+            **kwargs)
 
     def run(self):
         mList = [k for k in self.measured_unterminated]
@@ -4487,7 +4491,7 @@ class LRRM(EightTerm):
 
         det = b**2 - 4*a*c
         if npy.any(det < 0):
-            warnings.warn('Load inductance determination failed. Calibration might be incorrect.')
+            warnings.warn('Load inductance determination failed. Calibration might be incorrect.', stacklevel=2)
         det[det < 0] = 0
         wL = [None, None]
         wL[0] = (-b+npy.sqrt(det))/(2*a)
@@ -4544,7 +4548,7 @@ class LRRM(EightTerm):
 
             if self.ideals[2].s[0,0,0].real < 0:
                 warnings.warn("2nd reflect assumed to be open, but 2nd ideal ' \
-                'doesn't look like open. Calibration is likely incorrect.")
+                'doesn't look like open. Calibration is likely incorrect.", stacklevel=2)
 
             match_c = -1/(npy.choose(root, wL)*w)
             c0 = npy.sum(w * match_c) / npy.sum(w)
@@ -4773,7 +4777,7 @@ class MRC(UnknownThru):
         """
 
         UnknownThru.__init__(self, measured = measured, ideals = ideals,
-                           *args, **kwargs)
+                           **kwargs)
 
 
     def run(self):
@@ -4832,7 +4836,7 @@ class MRC(UnknownThru):
                 'reverse switch term': self.switch_terms[1].s.flatten(),
                 })
         else:
-            warn('No switch terms provided')
+            warn('No switch terms provided', stacklevel=2)
             coefs.update({
                 'forward switch term': npy.zeros(len(self.frequency), dtype=complex),
                 'reverse switch term': npy.zeros(len(self.frequency), dtype=complex),
@@ -4888,12 +4892,12 @@ class SixteenTerm(Calibration):
 
         self.switch_terms = switch_terms
         if switch_terms is None:
-            warn('No switch terms provided')
+            warn('No switch terms provided', stacklevel=2)
 
         Calibration.__init__(self,
             measured = measured,
             ideals = ideals,
-            *args, **kwargs)
+            **kwargs)
 
     def unterminate(self,ntwk):
         """
@@ -5226,7 +5230,7 @@ class LMR16(SixteenTerm):
 
         self.switch_terms = switch_terms
         if switch_terms is None:
-            warn('No switch terms provided')
+            warn('No switch terms provided', stacklevel=2)
 
         if type(ideals) == Network:
             ideals = [ideals]
@@ -5254,7 +5258,7 @@ class LMR16(SixteenTerm):
             ideals = ideals,
             sloppy_input=False,
             self_calibration=True,
-            *args, **kwargs)
+            **kwargs)
 
     def run(self):
         mList = [k.s  for k in self.measured_unterminated]
@@ -5596,7 +5600,7 @@ class MultiportCal:
             # I think this limitation could be removed if the `k` would be
             # solved to be consistent in repeated ports.
             raise ValueError("Invalid thru port combinations. One port should be common in all thru measurements.")
-        for e, p in enumerate(self.cal_dict.keys()):
+        for p in self.cal_dict.keys():
             c = self.cal_dict[p].copy()
             if 'ideals' in c:
                 ideals = [i if i.nports == 2 else subnetwork(i, p) for i in c['ideals']]
@@ -5650,7 +5654,7 @@ class MultiportCal:
                 if 'k' not in self._coefs[p[not k_side]].keys():
                     self._coefs[p[not k_side]][c] = one
             else:
-                warn(f'Unknown coefficient in calibration {c}')
+                warn(f'Unknown coefficient in calibration {c}', stacklevel=2)
 
         term1 = self.dut_termination(S1, coefs['reverse switch term'])
         term2 = self.dut_termination(S2, coefs['forward switch term'])
@@ -5927,7 +5931,7 @@ class MultiportSOLT(MultiportCal):
         if not issubclass(method, Calibration):
             raise ValueError("method must be Calibration subclass.")
         if issubclass(method, SixteenTerm):
-            warn("SixteenTerm calibration is reduced to 8-terms.")
+            warn("SixteenTerm calibration is reduced to 8-terms.", stacklevel=2)
 
         if len(ideals) < nports - 1:
             raise ValueError(f"Invalid number of ideals. Expected at least {nports-1} but got {len(ideals)}.")

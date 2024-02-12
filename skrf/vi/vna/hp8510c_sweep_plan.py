@@ -11,9 +11,6 @@ class SweepSection(ABC):
     def get_hz(self):
         pass
 
-    def apply_8510(self, hp8510c):
-        pass
-
     def mask_8510(self, network):
         return network
 

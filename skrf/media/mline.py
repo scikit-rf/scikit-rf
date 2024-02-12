@@ -642,7 +642,7 @@ class MLine(Media):
                     warnings.warn(
                         'Conductor loss calculation invalid for line'
                         f'height t ({t})  < 3 * skin depth ({ds[0]})',
-                        RuntimeWarning
+                        RuntimeWarning, stacklevel=2
                         )
                 # current distribution factor
                 Ki  = exp(-1.2 * ((zl_eff_f1 + zl_eff_f2) / 2 / Z0)**0.7)

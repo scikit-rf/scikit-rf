@@ -519,7 +519,7 @@ class Network:
 
         """
         s = npy.zeros(shape=z.shape)
-        me = cls(s=s, *args, **kw)
+        me = cls(s=s, **kw)
         me.z = z
         return me
 
@@ -863,12 +863,12 @@ class Network:
                         raise ValueError("Can't index without named ports")
                     try:
                         p1_index = self.port_names.index(p1_name)
-                    except ValueError as e:
-                        raise KeyError(f"Unknown port {p1_name}")
+                    except ValueError as err:
+                        raise KeyError(f"Unknown port {p1_name}") from err
                     try:
                         p2_index = self.port_names.index(p2_name)
-                    except ValueError as e:
-                        raise KeyError(f"Unknown port {p2_name}")
+                    except ValueError as err:
+                        raise KeyError(f"Unknown port {p2_name}") from err
                 ntwk = self.copy()
                 ntwk.s = self.s[:, p1_index, p2_index]
                 ntwk.z0 = self.z0[:, p1_index]
@@ -1387,8 +1387,8 @@ class Network:
         else:
             try:
                 self._frequency = Frequency.from_f(new_frequency)
-            except (TypeError):
-                raise TypeError('Could not convert argument to a frequency vector')
+            except TypeError as err:
+                raise TypeError('Could not convert argument to a frequency vector') from err
 
     @property
     def inv(self) -> Network:
@@ -1889,7 +1889,7 @@ class Network:
         """
         return npy.allclose(reciprocity(self.s), npy.zeros_like(self.s), atol=tol)
 
-    def is_symmetric(self, n: int = 1, port_order: dict[int, int] = {}, tol: float = mf.ALMOST_ZERO) -> bool:
+    def is_symmetric(self, n: int = 1, port_order: dict[int, int] = None, tol: float = mf.ALMOST_ZERO) -> bool:
         """
         Return whether the 2N-port network has n-th order reflection symmetry by checking.
         :math:`S_{i,i} == S_{j,j}` for appropriate pair(s) of :math:`i` and :math:`j`.
@@ -1924,6 +1924,8 @@ class Network:
 
         """
 
+        if port_order is None:
+            port_order = {}
         nfreqs, ny, nx = self.s.shape  # nfreqs is number of frequencies, and nx, ny both are number of ports (2N)
         if nx % 2 != 0 or nx != ny:
             raise ValueError('Using is_symmetric() is only valid for a 2N-port network (N=2,4,6,8,...)')
@@ -2645,7 +2647,7 @@ class Network:
         from .io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
 
-    def to_dataframe(self, attrs: list[str] =['s_db'],
+    def to_dataframe(self, attrs: list[str] =None,
             ports: list[tuple[int, int]] = None, port_sep: str | None = None):
         """
         Convert attributes of a Network to a pandas DataFrame.
@@ -2677,6 +2679,8 @@ class Network:
         skrf.io.general.network_2_dataframe
         """
         from .io.general import network_2_dataframe
+        if attrs is None:
+            attrs = ['s_db']
         return network_2_dataframe(self, attrs=attrs, ports=ports, port_sep=port_sep)
 
     def write_to_json_string(self) -> str:
@@ -2702,7 +2706,7 @@ class Network:
 
     # interpolation
     def interpolate(self, freq_or_n: Frequency | NumberLike, basis: str = 's',
-                    coords: str = 'cart', f_kwargs: dict = {}, return_array: bool = False,
+                    coords: str = 'cart', f_kwargs: dict = None, return_array: bool = False,
                     **kwargs) -> Network | npy.ndarray:
         r"""
         Interpolate a Network along frequency axis.
@@ -2791,6 +2795,8 @@ class Network:
 
         """
         # make new network and fill with interpolated values
+        if f_kwargs is None:
+            f_kwargs = {}
         result = self.copy()
 
         if kwargs.get('kind', None) == 'rational':
@@ -4157,7 +4163,7 @@ class Network:
         if self.frequency.f[0] != 0:
             warnings.warn(
                 "Frequency doesn't begin from 0. Step response will not be correct.",
-                RuntimeWarning
+                RuntimeWarning, stacklevel=2
             )
 
         t, y = self.impulse_response(window=window, n=n, pad=pad, bandpass=False, squeeze=squeeze)
@@ -4802,7 +4808,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         else:
             ntwkA = ntwkA[common_freq[1]]
             ntwkB = ntwkB[common_freq[2]]
-            warnings.warn("Using a frequency subset:\n" + str(ntwkA.frequency))
+            warnings.warn("Using a frequency subset:\n" + str(ntwkA.frequency), stacklevel=2)
 
     if (k + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `k` out of range')
@@ -4817,7 +4823,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         warnings.warn('Connecting two networks with different s_def and complex ports. '
                 'The resulting network will have s_def of the first network: ' + ntwkA.s_def + '. '\
                 'To silence this warning explicitly convert the networks to same s_def '
-                'using `renormalize` function.')
+                'using `renormalize` function.', stacklevel=2)
         ntwkB = ntwkB.copy()
         ntwkB.renormalize(ntwkB.z0, ntwkA.s_def)
 
@@ -5661,7 +5667,7 @@ def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network
     z0 = npy.concatenate(
         [ntwk_list[k].z0 for k in range(0, nports ** 2, nports + 1)], 1)
     frequency = ntwk_list[0].frequency
-    return Network(s=s_out, z0=z0, frequency=frequency, *args, **kwargs)
+    return Network(s=s_out, z0=z0, frequency=frequency, **kwargs)
 
 
 def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
