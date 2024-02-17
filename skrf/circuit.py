@@ -711,8 +711,8 @@ class Circuit:
         Xs : :class:`numpy.ndarray`
             shape `f x n x n`
         """
-        Xnn = self._Xnn_k(cnx_k)  # shape: (nb_freq, nb_n)
-        Xmn = self._Xmn_k(cnx_k)  # shape: (nb_freq, nb_n)
+        # Xnn = self._Xnn_k(cnx_k)  # shape: (nb_freq, nb_n)
+        # Xmn = self._Xmn_k(cnx_k)  # shape: (nb_freq, nb_n)
         # # for loop version
         # Xs = []
         # for (_Xnn, _Xmn) in zip(Xnn, Xmn):  # for all frequencies
@@ -724,16 +724,32 @@ class Circuit:
         # return np.array(Xs) # shape : nb_freq, nb_n, nb_n
 
         # vectorized version
-        nb_n = Xnn.shape[1]
-        Xs = np.tile(Xmn, (nb_n, 1, 1)).swapaxes(1, 0)
-        Xs[:, np.arange(nb_n), np.arange(nb_n)] = Xnn
+        # nb_n = Xnn.shape[1]
+        # Xs = np.tile(Xmn, (nb_n, 1, 1)).swapaxes(1, 0)
+        # Xs[:, np.arange(nb_n), np.arange(nb_n)] = Xnn
 
-        return Xs # shape : nb_freq, nb_n, nb_n
+        # return Xs # shape : nb_freq, nb_n, nb_n
 
         # TEST : Could we use media.splitter() instead ? -> does not work
         # _media = media.DefinedGammaZ0(frequency=self.frequency)
         # Xs = _media.splitter(len(cnx_k), z0=self._cnx_z0(cnx_k))
         # return Xs.s
+        n_port = len(cnx_k)
+        s = np.zeros((self.frequency.npoints, n_port, n_port), dtype = complex)
+        y_k = self._Y_k(cnx_k)
+        # sii
+        for i in range(n_port):
+            (ntw_i, port_i) = cnx_k[i]
+            s[:,i,i] = 2. / (ntw_i.z0[:,port_i] * y_k) - 1
+            #sji
+            for j in range(n_port):
+                if j != i:
+                    (ntw_j, port_j) = cnx_k[j]
+                    y_eq = np.sqrt((1./ntw_i.z0[:,port_i]) \
+                                   * (1./ntw_j.z0[:,port_j]))
+                    s[:,j,i] = 2. *y_eq / y_k
+                    s[:,i,j] = s[:,j,i]
+        return s
 
     @property
     def X(self) -> np.ndarray:
