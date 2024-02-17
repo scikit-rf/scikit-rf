@@ -220,7 +220,7 @@ class Freespace(Media):
         kw['mu_r'] = -1j*z
 
         kwargs.update(kw)
-        return cls(frequency=dc.frequency, *args, **kwargs)
+        return cls(frequency=dc.frequency, **kwargs)
 
     @property
     def rho(self) -> NumberLike:

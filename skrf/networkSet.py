@@ -126,7 +126,7 @@ class NetworkSet:
 
     """
 
-    def __init__(self, ntwk_set: list | dict = [], name: str = None):
+    def __init__(self, ntwk_set: list | dict = None, name: str = None):
         """
         Initialize for NetworkSet.
 
@@ -138,6 +138,8 @@ class NetworkSet:
                 the name of the NetworkSet, given to the Networks returned
                 from properties of this class.
         """
+        if ntwk_set is None:
+            ntwk_set = []
         if not isinstance(ntwk_set, (list, dict)):
             raise ValueError('NetworkSet requires a list as argument')
 
@@ -316,7 +318,7 @@ class NetworkSet:
         NetworkSet.to_s_dict
         """
         return cls([Network(s=d[k], frequency=frequency, name=k,
-                            *args, **kwargs)  for k in d])
+                            **kwargs)  for k in d])
 
     @classmethod
     def from_mdif(cls, file: str | TextIO) -> NetworkSet:
@@ -947,7 +949,7 @@ class NetworkSet:
                    filename: str,
                    values: dict | None = None,
                    data_types: dict | None = None,
-                   comments = []):
+                   comments = None):
         """Convert a scikit-rf NetworkSet object to a Generalized MDIF file.
 
         Parameters
@@ -974,6 +976,8 @@ class NetworkSet:
 
         """
         from .io import Mdif
+        if comments is None:
+            comments = []
         Mdif.write(ns=self, filename=filename, values=values,
                              data_types=data_types, comments=comments)
 
@@ -1230,7 +1234,7 @@ class NetworkSet:
 
 
     def interpolate_from_params(self, param: str, x: float,
-                                sub_params: dict={}, interp_kind: str = 'linear'):
+                                sub_params: dict=None, interp_kind: str = 'linear'):
         """
         Interpolate a Network from given parameters of NetworkSet's Networks.
 
@@ -1285,6 +1289,8 @@ class NetworkSet:
 
         """
         # checking interpolating param and values
+        if sub_params is None:
+            sub_params = {}
         if param not in self.params:
             raise ValueError(f'Parameter {param} is not found in the NetworkSet params.')
         if isinstance(x, Number):
@@ -1400,7 +1406,7 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
     data_matrix = npy.array([getattr(ntwk, attribute) for ntwk in ntwk_list])
 
     new_ntwk = ntwk_list[0].copy()
-    new_ntwk.s = func(data_matrix,axis=0,*args,**kwargs)
+    new_ntwk.s = func(data_matrix,axis=0,**kwargs)
 
     if name is not None:
         new_ntwk.name = name

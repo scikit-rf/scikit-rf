@@ -503,7 +503,7 @@ class CPW(Media):
                 warnings.warn(
                     'Conductor loss calculation invalid for line'
                     f'height t ({t})  < 3 * skin depth ({ds[0]})',
-                    RuntimeWarning
+                    RuntimeWarning, stacklevel=2
                     )
             n = (1. - k1) * 8. * pi / (t * (1. + k1))
             a = w / 2.

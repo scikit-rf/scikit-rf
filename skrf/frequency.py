@@ -224,8 +224,8 @@ class Frequency:
             try:
                 output._f = npy.array(output.f[slicer]).reshape(-1)
                 return output
-            except(IndexError):
-                raise IndexError('slicing frequency is incorrect')
+            except(IndexError) as err:
+                raise IndexError('slicing frequency is incorrect') from err
 
 
         if output.f.shape[0] > 0:
@@ -322,7 +322,7 @@ class Frequency:
         if not increase.all():
             warnings.warn("Frequency values are not monotonously increasing!\n"
             "To get rid of the invalid values call `drop_non_monotonic_increasing`",
-                InvalidFrequencyWarning)
+                InvalidFrequencyWarning, stacklevel=2)
 
     def drop_non_monotonic_increasing(self) -> list[int]:
         """Drop duplicate and invalid frequency values and return the dropped indices

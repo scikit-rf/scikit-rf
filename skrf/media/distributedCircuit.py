@@ -168,7 +168,7 @@ class DistributedCircuit(Media):
         G,C = real(Y), imag(Y)/w
         R,L = real(Z), imag(Z)/w
         return cls(frequency = my_media.frequency,
-                   z0_port = z0_port, C=C, L=L, R=R, G=G, *args, **kwargs)
+                   z0_port = z0_port, C=C, L=L, R=R, G=G, **kwargs)
 
     @classmethod
     def from_csv(self, *args, **kw):

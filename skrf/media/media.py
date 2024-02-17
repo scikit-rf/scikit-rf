@@ -641,7 +641,7 @@ class Media(ABC):
         capacitor
         inductor
         """
-        result = self.match(nports=2, *args, **kwargs)
+        result = self.match(nports=2, **kwargs)
         y = npy.zeros(shape=result.s.shape, dtype=complex)
         R = npy.array(R)
         y[:, 0, 0] = 1.0 / R
@@ -1723,7 +1723,7 @@ class DefinedGammaZ0(Media):
             z0 = z_re+1j*z_im,
             gamma = g_re+1j*g_im,
             z0_port = pz_re+1j*pz_im,
-            *args, **kwargs
+            **kwargs
             )
 
     @property

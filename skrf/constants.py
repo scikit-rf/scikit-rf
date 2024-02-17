@@ -161,5 +161,5 @@ def to_meters(d: NumberLike, unit: str = 'm', v_g: float = c) -> NumberLike:
     unit = unit.lower()
     try:
         return _distance_dict[unit]*d
-    except(KeyError):
-        raise(ValueError('Incorrect unit'))
+    except KeyError as err:
+        raise(ValueError('Incorrect unit')) from err
