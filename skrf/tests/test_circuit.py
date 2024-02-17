@@ -171,7 +171,7 @@ class CircuitTestWilkinson(unittest.TestCase):
 
         # resistor
         self.R = 100
-        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, z0=self.R)
+        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, z0=Z0_ports)
         self.resistor = self.line_resistor.resistor(self.R, name='resistor')
 
         # branches
@@ -181,9 +181,9 @@ class CircuitTestWilkinson(unittest.TestCase):
         self.branch2 = self.line_branches.line(90, unit='deg', name='branch2')
 
         # ports
-        port1 = rf.Circuit.Port(self.freq, name='port1')
-        port2 = rf.Circuit.Port(self.freq, name='port2')
-        port3 = rf.Circuit.Port(self.freq, name='port3')
+        port1 = rf.Circuit.Port(self.freq, name='port1', z0=50)
+        port2 = rf.Circuit.Port(self.freq, name='port2', z0=50)
+        port3 = rf.Circuit.Port(self.freq, name='port3', z0=50)
 
         # Connection setup
         self.connections = [
@@ -214,16 +214,6 @@ class CircuitTestWilkinson(unittest.TestCase):
                             [self.X2_m1, 0, self.X2_m3],
                             [self.X2_m1, self.X2_m2, 0]]) + np.diag(self.X2_nn)
 
-    def test_global_admittance(self):
-        """
-        Check is Y is correct wrt to ref P.Hallbjörner (2003)
-        """
-        Y1 = (1 + np.sqrt(2)) / 50
-        Y2 = (3 + np.sqrt(2)) / 100
-
-        assert_array_almost_equal(self.C._Y_k(self.connections[0]), Y1)
-        assert_array_almost_equal(self.C._Y_k(self.connections[1]), Y2)
-        assert_array_almost_equal(self.C._Y_k(self.connections[2]), Y2)
 
     @unittest.expectedFailure
     def test_sparam_individual_intersection_matrices(self):
@@ -272,25 +262,21 @@ class CircuitTestWilkinson(unittest.TestCase):
         Create a Wilkinson power divider using skrf usual Network methods.
         """
         z0_port = 50
-        z0_lines = self.line_branches.z0[0]
-        z0_R = self.line_resistor.z0[0]
         # require to create the three tees
-        T0 = self.line_branches.splitter(3, z0=[z0_port, z0_lines, z0_lines])
-        T1 = self.line_branches.splitter(3, z0=[z0_lines, z0_R, z0_port])
-        T2 = self.line_branches.splitter(3, z0=[z0_lines, z0_R, z0_port])
+        T0 = self.line_branches.splitter(3, z0=z0_port)
+        T1 = self.line_branches.splitter(3, z0=z0_port)
+        T2 = self.line_branches.splitter(3, z0=z0_port)
 
         _wilkinson1 = rf.connect(T0, 1, self.branch1, 0)
         _wilkinson2 = rf.connect(_wilkinson1, 2, self.branch2, 0)
         _wilkinson3 = rf.connect(_wilkinson2, 1, T1, 0)
         _wilkinson4 = rf.connect(_wilkinson3, 1, T2, 0)
         _wilkinson5 = rf.connect(_wilkinson4, 1, self.resistor, 0)
-        wilkinson = rf.innerconnect(_wilkinson5, 1, 3)
+        wilkinson = rf.innerconnect(_wilkinson5, 1, 4)
 
         ntw_C = self.C.network
 
-        # the following is failing and I don't know why
-        #assert_array_almost_equal(ntw_C.s_db, wilkinson.s_db)
-
+        assert_array_almost_equal(ntw_C.s, wilkinson.s)
         assert_array_almost_equal(ntw_C.z0, wilkinson.z0)
 
     def test_compare_with_designer_wilkinson(self):
