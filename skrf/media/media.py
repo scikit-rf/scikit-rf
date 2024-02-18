@@ -794,6 +794,25 @@ class Media(ABC):
     def splitter(self, nports: int, **kwargs) -> Network:
         r"""
         Ideal, lossless n-way splitter.
+        
+        The port impedances can be mismatched and the power is split
+        accordingly.
+        
+        For n > 2, the splitter is not matched because the power wave entering
+        one port meet the equivalent impedance of the other ports in parallel.
+        
+        .. math::
+            S_{ii} = \frac{Y_i - \sum_{j\neq i} Y_j}{Y_i + \sum_{j\neq i} Y_j}
+            = \frac{2Y_i}{\sum_{j=1...n} Y_j} - 1
+        
+        The remaining power is split between the other ports depending their
+        impedances.
+        
+        .. math::
+            \sum_{j=1...n} S_{ij}^2 = 1 - S_{ii}^2
+        
+        .. math::
+            S_{ij} = \frac{2\sqrt{Y_i \cdot Y_j}}{\sum_{k=1...n} Y_{k}}
 
         Parameters
         ----------
@@ -812,13 +831,15 @@ class Media(ABC):
         --------
         match : called to create a 'blank' network
         """
-        n=nports
-        result = self.match(n, **kwargs)
-
-        for f in range(self.frequency.npoints):
-            result.s[f,:,:] =  (2*1./n-1)*npy.eye(n) + \
-                    npy.sqrt((1-((2.-n)/n)**2)/(n-1))*\
-                    (npy.ones((n,n))-npy.eye(n))
+        result = self.match(nports, **kwargs)
+        
+        y0s = npy.array(1./result.z0)
+        y_k = y0s.sum(axis=1)
+        s = npy.zeros((self.frequency.npoints, nports, nports),
+                      dtype='complex')
+        s = 2 *npy.sqrt(npy.einsum('ki,kj->kij', y0s, y0s)) / y_k[:, None, None]
+        npy.einsum('kii->ki', s)[:] -= 1  # Sii
+        result.s =  s
         return result
 
 

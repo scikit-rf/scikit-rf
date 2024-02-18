@@ -613,93 +613,11 @@ class Circuit:
         return edge_labels
 
 
-    def _Y_k(self, cnx: list[tuple]) -> np.ndarray:
-        """
-        Return the sum of the system admittances of each intersection.
-
-        Parameters
-        ----------
-        cnx : list of tuples
-            each tuple contains (network, port)
-
-        Returns
-        -------
-        y_k : :class:`numpy.ndarray`
-        """
-        y_ns = []
-        for (ntw, ntw_port) in cnx:
-            # formula (2)
-            y_ns.append(1/ntw.z0[:,ntw_port] )
-
-        y_k = np.array(y_ns).sum(axis=0)  # shape: (nb_freq,)
-        return y_k
-
-    def _Xnn_k(self, cnx_k: list[tuple]) -> np.ndarray:
-        """
-        Return the reflection coefficients x_nn of the connection matrix [X]_k.
-
-        Parameters
-        ----------
-        cnx_k : list of tuples
-            each tuple contains (network, port)
-
-        Returns
-        -------
-        X_nn : :class:`numpy.ndarray`
-            shape `f x n`
-        """
-        X_nn = []
-        y_k = self._Y_k(cnx_k)
-
-        for (ntw, ntw_port) in cnx_k:
-            # formula (1)
-            X_nn.append( 2/(ntw.z0[:,ntw_port]*y_k) - 1)
-
-        return np.array(X_nn).T  # shape: (nb_freq, nb_n)
-
-    def _Xmn_k(self, cnx_k: list[tuple]) -> np.ndarray:
-        """
-        Return the transmission coefficient X_mn of the mth column of
-        intersection scattering matrix matrix [X]_k.
-
-        Parameters
-        ----------
-        cnx_k : list of tuples
-            each tuple contains (network, port)
-
-        Returns
-        -------
-        X_mn : :class:`numpy.ndarray`
-            shape `f x n`
-        """
-        # get the char.impedance of the n
-        X_mn = []
-        y_k = self._Y_k(cnx_k)
-
-        # There is a problem in the case of two-ports connexion:
-        # the formula (3) in P. Hallbjörner (2003) seems incorrect.
-        # Instead of Z_n one should have sqrt(Z_1 x Z_2).
-        # The formula works with respect to the example given in the paper
-        # (3 port connection), but not with 2-port connections made with skrf
-        if len(cnx_k) == 2:
-            z0s = []
-            for (ntw, ntw_port) in cnx_k:
-                z0s.append(ntw.z0[:,ntw_port])
-
-            z0eq = np.array(z0s).prod(axis=0)
-
-            for _i in range(len(cnx_k)):
-                X_mn.append( 2/(np.sqrt(z0eq) *y_k) )
-        else:
-            # formula (3)
-            for (ntw, ntw_port) in cnx_k:
-                X_mn.append( 2/(ntw.z0[:,ntw_port]*y_k) )
-
-        return np.array(X_mn).T  # shape: (nb_freq, nb_n)
-
     def _Xk(self, cnx_k: list[tuple]) -> np.ndarray:
         """
         Return the scattering matrices [X]_k of the individual intersections k.
+        The results in [#]_ do not agree due to an error in the formula (3)
+        for mismatched intersections.
 
         Parameters
         ----------
@@ -710,30 +628,20 @@ class Circuit:
         -------
         Xs : :class:`numpy.ndarray`
             shape `f x n x n`
+        
+        References
+        ----------
+        .. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
         """
-        Xnn = self._Xnn_k(cnx_k)  # shape: (nb_freq, nb_n)
-        Xmn = self._Xmn_k(cnx_k)  # shape: (nb_freq, nb_n)
-        # # for loop version
-        # Xs = []
-        # for (_Xnn, _Xmn) in zip(Xnn, Xmn):  # for all frequencies
-        #       # repeat Xmn along the lines
-        #     _X = np.tile(_Xmn, (len(_Xmn), 1))
-        #     _X[np.diag_indices(len(_Xmn))] = _Xnn
-        #     Xs.append(_X)
+        
+        y0s = np.array([1/ntw.z0[:,ntw_port] for (ntw, ntw_port) in cnx_k]).T
+        y_k = y0s.sum(axis=1)
 
-        # return np.array(Xs) # shape : nb_freq, nb_n, nb_n
-
-        # vectorized version
-        nb_n = Xnn.shape[1]
-        Xs = np.tile(Xmn, (nb_n, 1, 1)).swapaxes(1, 0)
-        Xs[:, np.arange(nb_n), np.arange(nb_n)] = Xnn
-
-        return Xs # shape : nb_freq, nb_n, nb_n
-
-        # TEST : Could we use media.splitter() instead ? -> does not work
-        # _media = media.DefinedGammaZ0(frequency=self.frequency)
-        # Xs = _media.splitter(len(cnx_k), z0=self._cnx_z0(cnx_k))
-        # return Xs.s
+        Xs = np.zeros((len(self.frequency), len(cnx_k), len(cnx_k)), dtype='complex')
+        
+        Xs = 2 *np.sqrt(np.einsum('ij,ik->ijk', y0s, y0s)) / y_k[:, None, None]       
+        np.einsum('kii->ki', Xs)[:] -= 1  # Sii
+        return Xs
 
     @property
     def X(self) -> np.ndarray:
