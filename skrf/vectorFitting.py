@@ -275,9 +275,6 @@ class VectorFitting:
         self.history_rank_A = []
         converged = False
 
-        omega = 2 * np.pi * freqs_norm
-        s = 1j * omega
-
         # POLE RELOCATION LOOP
         while iterations > 0:
             logging.info(f'Iteration {self.max_iterations - iterations + 1}')
