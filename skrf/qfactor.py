@@ -128,13 +128,15 @@ References
    pp. 669–671, Aug. 1983, doi: 10.1109/TMTT.1983.1131566.
 
 """
-import numpy as np
-from .network import Network
-from .frequency import Frequency
-from .constants import NumberLike
-from typing import Union
+from __future__ import annotations
+
 from warnings import warn
 
+import numpy as np
+
+from .constants import NumberLike
+from .frequency import Frequency
+from .network import Network
 
 # Available resonance types
 RESONANCE_TYPES = ['reflection', 'reflection_method2',
@@ -239,8 +241,8 @@ class Qfactor:
     def __init__(self,
                  ntwk: Network,
                  res_type: str,
-                 Q_L0: Union[None, float] = None,
-                 f_L0: Union[None, float] = None,
+                 Q_L0: None | float = None,
+                 f_L0: None | float = None,
                  verbose: bool = False):
         """Q-factor initializer."""
         # check ntwk is a 1-port
@@ -328,7 +330,7 @@ class Qfactor:
         if loop_plan[0] == "w":
             raise ValueError("First item in loop_plan must not be w (weight calculation)")
         if loop_plan[-1] != "c":
-            warn("Last item in loop_plan is not c so convergence not tested!")
+            warn("Last item in loop_plan is not c so convergence not tested!", stacklevel=2)
 
         self.method = method
         self.loop_plan = loop_plan
@@ -348,7 +350,7 @@ class Qfactor:
         self.opt_res = result
 
         if result.Q_L < 0:
-            warn('Negative Q_L, fitting may be inaccurate.')
+            warn('Negative Q_L, fitting may be inaccurate.', stacklevel=2)
 
         return result
 
@@ -397,8 +399,8 @@ class Qfactor:
 
     def _initial_fit(self,
                     N: int,
-                    Q_L0: Union[float, None] = None,
-                    f_L0: Union[None, float] = None
+                    Q_L0: float | None = None,
+                    f_L0: None | float = None
                     ):
         """Initial Linear least squares Q-factor fit.
 
@@ -969,8 +971,8 @@ class Qfactor:
             })
 
     def Q_circle(self,
-                 opt_res: Union[None, OptimizedResult] = None,
-                 A: Union[None, float] = None
+                 opt_res: None | OptimizedResult = None,
+                 A: None | float = None
                  ) -> list:
         r"""Q-circle diameter.
 
@@ -1031,8 +1033,8 @@ class Qfactor:
 
 
     def Q_unloaded(self,
-                   opt_res: Union[None, OptimizedResult] = None,
-                   A: Union[None, float] = None
+                   opt_res: None| OptimizedResult = None,
+                   A: None | float = None
                    ) -> float:
         """Unloaded Q-factor Q0.
 
@@ -1138,8 +1140,8 @@ class Qfactor:
         return Q0
 
     def fitted_s(self,
-                 opt_res: Union[None, OptimizedResult] = None,
-                 f: Union[None, np.ndarray] = None
+                 opt_res: None | OptimizedResult = None,
+                 f: None | np.ndarray = None
                  ) -> np.ndarray:
         r"""S-parameter response of an equivalent circuit model resonator.
 
@@ -1195,8 +1197,8 @@ class Qfactor:
         return s
 
     def fitted_network(self,
-                       opt_res: Union[None, OptimizedResult] = None,
-                       frequency: Union[None, Frequency] = None,
+                       opt_res: None | OptimizedResult = None,
+                       frequency: None | Frequency = None,
                        ) -> Network:
         """Fitted Network.
 
@@ -1248,7 +1250,7 @@ class Qfactor:
 
         """
         if not self.fitted:
-            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.', stacklevel=2)
         return self.f_L/self.f_multiplier
 
     @property
@@ -1274,7 +1276,7 @@ class Qfactor:
 
         """
         if not self.fitted:
-            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.', stacklevel=2)
         return self.f_L/self.Q_L
 
     @property
@@ -1292,5 +1294,5 @@ class Qfactor:
 
         """
         if not self.fitted:
-            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.', stacklevel=2)
         return self.BW/self.f_multiplier

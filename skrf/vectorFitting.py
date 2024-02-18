@@ -1,8 +1,10 @@
-import os
+from __future__ import annotations
+
 import logging
+import os
 import warnings
 from timeit import default_timer as timer
-from typing import Any, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -11,7 +13,7 @@ try:
 except ImportError:
     pass
 
-from .util import axes_kwarg, Axes
+from .util import Axes, axes_kwarg
 
 # imports for type hinting
 if TYPE_CHECKING:
@@ -62,7 +64,7 @@ class VectorFitting:
     .. [#vectfit_website] Vector Fitting website: https://www.sintef.no/projectweb/vectorfitting/
     """
 
-    def __init__(self, network: 'Network'):
+    def __init__(self, network: Network):
         self.network = network
         """ Instance variable holding the Network to be fitted. This is the Network passed during initialization,
         which may be changed or set to *None*. """
@@ -121,9 +123,9 @@ class VectorFitting:
 
         parameter_type : str, optional
             Representation type of the frequency responses to be fitted. Either *scattering* (`'s'` or `'S'`),
-            *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). As scikit-rf can currently only read S parameters
-            from a Touchstone file, the fit should also be performed on the original S parameters. Otherwise, scikit-rf
-            will convert the responses from S to Z or Y, which might work for the fit but can cause other issues.
+            *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). It's recommended to perform the fit on the
+            original S parameters. Otherwise, scikit-rf will convert the responses from S to Z or Y, which might work
+            for the fit but can cause other issues.
 
         fit_constant : bool, optional
             Include a constant term **d** in the fit.
@@ -467,7 +469,8 @@ class VectorFitting:
                 max_cond = np.amax(self.history_cond_A)
                 min_rank = np.amin(self.history_rank_A)
                 if max_cond > 1e10:
-                    hint_illcond = f'\nHint: the linear system was ill-conditioned (max. condition number was {max_cond}).'
+                    hint_illcond = ("\nHint: the linear system was ill-conditioned "
+                        f"(max. condition number was {max_cond}).")
                 else:
                     hint_illcond = ''
                 if min_rank < self.full_rank:
@@ -567,13 +570,13 @@ class VectorFitting:
         logging.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A))}')
 
         # solve least squares and obtain results as stack of real part vector and imaginary part vector
-        x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((A.real, A.imag)),
-                                                            np.hstack((freq_responses.real, freq_responses.imag)).transpose(),
+        x, _, rank, singular_vals = np.linalg.lstsq(np.vstack((A.real, A.imag)),
+                                                            np.hstack((freq_responses.real, freq_responses.imag)).T,
                                                             rcond=None)
 
         # align poles and residues arrays to get matching pole-residue pairs
         poles = np.concatenate((poles[idx_poles_real], poles[idx_poles_complex]))
-        residues = np.concatenate((x[idx_res_real], x[idx_res_complex_re] + 1j * x[idx_res_complex_im]), axis=0).transpose()
+        residues = np.concatenate((x[idx_res_real], x[idx_res_complex_re] + 1j * x[idx_res_complex_im]), axis=0).T
 
         if fit_constant:
             constant_coeff = x[idx_constant][0]
@@ -668,7 +671,7 @@ class VectorFitting:
 
         return np.sqrt(error_mean_squared)
 
-    def _get_ABCDE(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def _get_ABCDE(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Private method.
         Returns the real-valued system matrices of the state-space representation of the current rational model, as
@@ -1481,7 +1484,7 @@ class VectorFitting:
                     responses = self.network.y
                 else:
                     raise ValueError('The network parameter type is not valid, must be `s`, `z`, or `y`, '
-                                     'got `{}`.'.format(parameter))
+                                     f'got `{parameter}`.')
 
                 i_samples = 0
                 for i in list_i:

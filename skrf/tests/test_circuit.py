@@ -1,9 +1,11 @@
-import skrf as rf
-import numpy as np
-import unittest
 import os
-import sys
+import unittest
+
+import numpy as np
 from numpy.testing import assert_array_almost_equal
+
+import skrf as rf
+
 
 class CircuitTestConstructor(unittest.TestCase):
     """
@@ -147,7 +149,9 @@ class CircuitClassMethods(unittest.TestCase):
 class CircuitTestWilkinson(unittest.TestCase):
     """
     Create a Wilkinson power divider Circuit [#]_ and test the results
-    against theoretical ones (obtained in [#]_)
+    against network.connect.
+    The results in [#]_ do not agree due to an error in the formula (3)
+    for mismatched intersections.
 
     References
     ----------
@@ -167,7 +171,7 @@ class CircuitTestWilkinson(unittest.TestCase):
 
         # resistor
         self.R = 100
-        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, z0=self.R)
+        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, z0=Z0_ports)
         self.resistor = self.line_resistor.resistor(self.R, name='resistor')
 
         # branches
@@ -177,9 +181,9 @@ class CircuitTestWilkinson(unittest.TestCase):
         self.branch2 = self.line_branches.line(90, unit='deg', name='branch2')
 
         # ports
-        port1 = rf.Circuit.Port(self.freq, name='port1')
-        port2 = rf.Circuit.Port(self.freq, name='port2')
-        port3 = rf.Circuit.Port(self.freq, name='port3')
+        port1 = rf.Circuit.Port(self.freq, name='port1', z0=50)
+        port2 = rf.Circuit.Port(self.freq, name='port2', z0=50)
+        port3 = rf.Circuit.Port(self.freq, name='port3', z0=50)
 
         # Connection setup
         self.connections = [
@@ -210,44 +214,32 @@ class CircuitTestWilkinson(unittest.TestCase):
                             [self.X2_m1, 0, self.X2_m3],
                             [self.X2_m1, self.X2_m2, 0]]) + np.diag(self.X2_nn)
 
-    def test_global_admittance(self):
-        """
-        Check is Y is correct wrt to ref P.Hallbjörner (2003)
-        """
-        Y1 = (1 + np.sqrt(2)) / 50
-        Y2 = (3 + np.sqrt(2)) / 100
 
-        assert_array_almost_equal(self.C._Y_k(self.connections[0]), Y1)
-        assert_array_almost_equal(self.C._Y_k(self.connections[1]), Y2)
-        assert_array_almost_equal(self.C._Y_k(self.connections[2]), Y2)
-
-    def test_reflection_coefficients(self):
-        """
-        Check if Xnn are correct wrt to ref P.Hallbjörner (2003)
-        """
-        assert_array_almost_equal(self.C._Xnn_k(self.connections[0])[0], self.X1_nn)
-        assert_array_almost_equal(self.C._Xnn_k(self.connections[1])[0], self.X2_nn)
-        assert_array_almost_equal(self.C._Xnn_k(self.connections[2])[0], self.X2_nn)
-
-    def test_transmission_coefficients(self):
-        """
-        Check if Xmn are correct wrt to ref P.Hallbjörner (2003)
-        """
-        assert_array_almost_equal(self.C._Xmn_k(self.connections[0])[0], np.r_[self.X1_m1, self.X1_m2, self.X1_m2])
-        assert_array_almost_equal(self.C._Xmn_k(self.connections[1])[0], np.r_[self.X2_m1, self.X2_m2, self.X2_m3])
-        assert_array_almost_equal(self.C._Xmn_k(self.connections[2])[0], np.r_[self.X2_m1, self.X2_m2, self.X2_m3])
-
+    @unittest.expectedFailure
     def test_sparam_individual_intersection_matrices(self):
         """
         Testing the individual intersection scattering matrices X_k
+        The results in [#]_ do not agree due to an error in the formula (3)
+        for mismatched intersections.
+
+        References
+        ----------
+        .. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
         """
         np.testing.assert_array_almost_equal(self.C._Xk(self.connections[0])[0], self.X1)
         np.testing.assert_array_almost_equal(self.C._Xk(self.connections[1])[0], self.X2)
         np.testing.assert_array_almost_equal(self.C._Xk(self.connections[2])[0], self.X2)
 
+    @unittest.expectedFailure
     def test_sparam_global_intersection_matrix(self):
         """
         Testing the global intersection scattering matrix
+        The results in [#]_ do not agree due to an error in the formula (3)
+        for mismatched intersections.
+
+        References
+        ----------
+        .. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
         """
         from scipy.linalg import block_diag
         assert_array_almost_equal(self.C.X[0], block_diag(self.X1, self.X2, self.X2) )
@@ -270,25 +262,21 @@ class CircuitTestWilkinson(unittest.TestCase):
         Create a Wilkinson power divider using skrf usual Network methods.
         """
         z0_port = 50
-        z0_lines = self.line_branches.z0[0]
-        z0_R = self.line_resistor.z0[0]
         # require to create the three tees
-        T0 = self.line_branches.splitter(3, z0=[z0_port, z0_lines, z0_lines])
-        T1 = self.line_branches.splitter(3, z0=[z0_lines, z0_R, z0_port])
-        T2 = self.line_branches.splitter(3, z0=[z0_lines, z0_R, z0_port])
+        T0 = self.line_branches.splitter(3, z0=z0_port)
+        T1 = self.line_branches.splitter(3, z0=z0_port)
+        T2 = self.line_branches.splitter(3, z0=z0_port)
 
         _wilkinson1 = rf.connect(T0, 1, self.branch1, 0)
         _wilkinson2 = rf.connect(_wilkinson1, 2, self.branch2, 0)
         _wilkinson3 = rf.connect(_wilkinson2, 1, T1, 0)
         _wilkinson4 = rf.connect(_wilkinson3, 1, T2, 0)
         _wilkinson5 = rf.connect(_wilkinson4, 1, self.resistor, 0)
-        wilkinson = rf.innerconnect(_wilkinson5, 1, 3)
+        wilkinson = rf.innerconnect(_wilkinson5, 1, 4)
 
         ntw_C = self.C.network
 
-        # the following is failing and I don't know why
-        #assert_array_almost_equal(ntw_C.s_db, wilkinson.s_db)
-
+        assert_array_almost_equal(ntw_C.s, wilkinson.s)
         assert_array_almost_equal(ntw_C.z0, wilkinson.z0)
 
     def test_compare_with_designer_wilkinson(self):
@@ -417,7 +405,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         port1 = rf.Circuit.Port(freq,  name='port1')
         line = rf.media.DefinedGammaZ0(frequency=freq)
-        gamma = np.random.rand(1,1) + 1j*np.random.rand(1,1)
+        gamma = np.random.default_rng().random((1,1)) + 1j*np.random.default_rng().random((1,1))
         load = line.load(gamma, name='load')
 
         cnx = [
@@ -434,7 +422,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
-        a.s = np.random.rand(4).reshape(2, 2)
+        a.s = np.random.default_rng().random(4).reshape(2, 2)
         line = rf.media.DefinedGammaZ0(frequency=freq)
         match_load = line.match(name='match_load')
 
@@ -457,7 +445,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
-        a.s = np.random.rand(4).reshape(2, 2)
+        a.s = np.random.default_rng().random(4).reshape(2, 2)
         a.z0 = [z01, z02]
         line = rf.media.DefinedGammaZ0(frequency=freq, z0=z02)
         match_load = line.match(name='match_load')
@@ -480,11 +468,11 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
-        a.s = np.random.rand(4).reshape(2, 2)
+        a.s = np.random.default_rng().random(4).reshape(2, 2)
 
         b = rf.Network(name='b')
         b.frequency = freq
-        b.s = np.random.rand(4).reshape(2, 2)
+        b.s = np.random.default_rng().random(4).reshape(2, 2)
 
         # classic connecting
         c = rf.connect(a, 1, b, 0)
@@ -509,12 +497,12 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
-        a.s = np.random.rand(4).reshape(2, 2)
+        a.s = np.random.default_rng().random(4).reshape(2, 2)
         a.z0 = z0
 
         b = rf.Network(name='b')
         b.frequency = freq
-        b.s = np.random.rand(4).reshape(2, 2)
+        b.s = np.random.default_rng().random(4).reshape(2, 2)
         b.z0 = z0
 
         # classic connecting
@@ -539,12 +527,12 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
-        a.s = np.random.rand(4).reshape(2,2)
+        a.s = np.random.default_rng().random(4).reshape(2,2)
         a.z0 = [1, 2]  #  Z0 should never be zero
 
         b = rf.Network(name='b')
         b.frequency = freq
-        b.s = np.random.rand(4).reshape(2,2)
+        b.s = np.random.default_rng().random(4).reshape(2,2)
         b.z0 = [11, 12]
 
         # classic connecting
@@ -569,11 +557,11 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
-        a.s = np.random.rand(16).reshape(4, 4)
+        a.s = np.random.default_rng().random(16).reshape(4, 4)
 
         b = rf.Network(name='b')
         b.frequency = freq
-        b.s = np.random.rand(16).reshape(4, 4)
+        b.s = np.random.default_rng().random(16).reshape(4, 4)
 
         # classic connecting
         c = rf.connect(a, 2, b, 0, 2)
@@ -603,12 +591,12 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
-        a.s = np.random.rand(16).reshape(4, 4)
+        a.s = np.random.default_rng().random(16).reshape(4, 4)
         a.z0 = z0
 
         b = rf.Network(name='b')
         b.frequency = freq
-        b.s = np.random.rand(16).reshape(4, 4)
+        b.s = np.random.default_rng().random(16).reshape(4, 4)
         b.z0 = z0
 
         # classic connecting
@@ -639,12 +627,12 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         freq = rf.Frequency(start=1, npoints=1, unit='GHz')
         a = rf.Network(name='a')
         a.frequency = freq
-        a.s = np.random.rand(16).reshape(4, 4)
+        a.s = np.random.default_rng().random(16).reshape(4, 4)
         a.z0 = z0
 
         b = rf.Network(name='b')
         b.frequency = freq
-        b.s = np.random.rand(16).reshape(4, 4)
+        b.s = np.random.default_rng().random(16).reshape(4, 4)
         b.z0 = [11, 12, 13, 14]
 
         # classic connecting
@@ -786,7 +774,7 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         """
         Compare with the S-parameters obtained from Network.connect
         """
-        phase_deg = np.random.randint(low=0, high=180)
+        phase_deg = np.random.default_rng().integers(low=0, high=180)
         vc_connect = self.variable_coupler_network_from_connect(phase_deg)
         vc_circuit = self.variable_coupler_network_from_circuit(phase_deg)
         assert_array_almost_equal(vc_connect.s, vc_circuit.s)
@@ -796,7 +784,8 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         Compare with the S-parameters obtained from ANSYS Designer
         """
         for phase_angle in [20, 75]:
-            vc_designer = rf.Network(os.path.join(self.test_dir, 'designer_variable_coupler_ideal_'+str(phase_angle)+'deg.s4p'))
+            vc_designer = rf.Network(os.path.join(self.test_dir,
+                                                  f"designer_variable_coupler_ideal_{phase_angle}deg.s4p"))
             vc_circuit = self.variable_coupler_network_from_circuit(phase_angle)
             assert_array_almost_equal(vc_designer.s, vc_circuit.s, decimal=4)
 
@@ -805,7 +794,8 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         Compare S-parameters obtained from ANSYS Designer with Network.connect
         """
         for phase_angle in [20, 75]:
-            vc_designer = rf.Network(os.path.join(self.test_dir, 'designer_variable_coupler_ideal_'+str(phase_angle)+'deg.s4p'))
+            vc_designer = rf.Network(os.path.join(self.test_dir,
+                                                  f"designer_variable_coupler_ideal_{phase_angle}deg.s4p"))
             vc_connect = self.variable_coupler_network_from_connect(phase_angle)
             assert_array_almost_equal(vc_designer.s, vc_connect.s, decimal=4)
 
@@ -959,11 +949,12 @@ class CircuitTestComplexCharacteristicImpedance(unittest.TestCase):
 
 class CircuitTestVoltagesCurrents(unittest.TestCase):
     def setUp(self):
+        rng = np.random.default_rng()
         # setup a test transmission line randomly excited
-        self.P_f = np.random.rand()  # forward power in Watt
-        self.phase_f = np.random.rand()  # forward phase in rad
-        self.Z = np.random.rand()  # source internal impedance, line characteristic impedance and load impedance
-        self.L = np.random.rand()  # line length in [m]
+        self.P_f = rng.random()  # forward power in Watt
+        self.phase_f = rng.random()  # forward phase in rad
+        self.Z = rng.random()  # source internal impedance, line characteristic impedance and load impedance
+        self.L = rng.random()  # line length in [m]
         self.freq = rf.Frequency(1, 10, 10, unit='GHz')
         self.line_media = rf.media.DefinedGammaZ0(self.freq, z0=self.Z)  # lossless line medium
         self.line = self.line_media.line(d=self.L, unit='m', name='line')  # transmission line Network
@@ -1058,3 +1049,6 @@ class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
         I_at_ports = crt.currents_external(power, phase)
         np.testing.assert_allclose(V_at_ports, [[10+0j, 10+0j]])
         np.testing.assert_allclose(I_at_ports, [[-0.2+0j, 0.2+0j]])
+
+if __name__ == '__main__':
+    unittest.main()

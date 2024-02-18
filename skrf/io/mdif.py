@@ -13,16 +13,21 @@ Mdif class and utilities
    Mdif
 
 """
-import numpy as np
-from typing import Union, TextIO
-from ..util import get_fid
-from ..frequency import Frequency
-from ..network import Network, z2s, y2s
-from ..networkSet import NetworkSet
-from ..mathFunctions import magdeg_2_reim
-from itertools import product
+from __future__ import annotations
 
-class Mdif():
+from itertools import product
+from typing import TextIO
+
+import numpy as np
+
+from ..frequency import Frequency
+from ..mathFunctions import magdeg_2_reim
+from ..network import Network, y2s, z2s
+from ..networkSet import NetworkSet
+from ..util import get_fid
+
+
+class Mdif:
     """
     Class to read Generalized MDIF N-port files.
 
@@ -64,7 +69,7 @@ class Mdif():
 
     """
 
-    def __init__(self, file: Union[str, TextIO]):
+    def __init__(self, file: str | TextIO):
         """
         Constructor
 
@@ -363,9 +368,9 @@ class Mdif():
     @staticmethod
     def write(ns : NetworkSet,
               filename : str,
-              values: Union[dict, None] = None,
-              data_types: Union[dict, None] = None,
-              comments = []):
+              values: dict | None = None,
+              data_types: dict | None = None,
+              comments = None):
         """
         Write a MDIF file from a NetworkSet.
 
@@ -394,6 +399,8 @@ class Mdif():
 
         """
 
+        if comments is None:
+            comments = []
         if values is None:
             if ns.has_params():
                 values = ns.params_values
@@ -436,13 +443,9 @@ class Mdif():
                         data_types[p] = "double"
 
                     if data_types[p] == "string":
-                        var_def_str = 'VAR {}({}) = "{}"'.format(
-                            p, dict_types[data_types[p]], values[p][filenumber]
-                        )
+                        var_def_str = f'VAR {p}({dict_types[data_types[p]]}) = "{values[p][filenumber]}"'
                     else:
-                        var_def_str = "VAR {}({}) = {}".format(
-                            p, dict_types[data_types[p]], values[p][filenumber]
-                        )
+                        var_def_str = f"VAR {p}({dict_types[data_types[p]]}) = {values[p][filenumber]}"
                     mdif.write(var_def_str + "\n")
 
                 mdif.write("\nBEGIN ACDATA\n")

@@ -1,6 +1,6 @@
 import skrf_qtwidgets.networkPlotWidget
-from skrf_qtwidgets import qt, widgets, calibration_widgets
-from qtpy import QtWidgets, QtCore
+from qtpy import QtCore, QtWidgets
+from skrf_qtwidgets import calibration_widgets, qt, widgets
 
 
 class NISTTRLWidget(QtWidgets.QWidget):

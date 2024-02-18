@@ -82,16 +82,17 @@ Graph representation
    Circuit.edge_labels
 
 """
-from . network import Network, s2s
-from . media import media
-from . constants import INF, NumberLike, S_DEF_DEFAULT
-from . util import subplots
+from __future__ import annotations
+
+from itertools import chain
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from itertools import chain, product
-
-from typing import List, TYPE_CHECKING, Tuple
+from .constants import INF, S_DEF_DEFAULT, NumberLike
+from .media import media
+from .network import Network, s2s
+from .util import subplots
 
 if TYPE_CHECKING:
     from .frequency import Frequency
@@ -131,7 +132,7 @@ class Circuit:
         except ImportError as err:
             raise ImportError('networkx package as not been installed and is required.') from err
 
-    def __init__(self, connections: List[List[Tuple]], name: str = None,) -> None:
+    def __init__(self, connections: list[list[tuple]], name: str = None,) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -225,7 +226,7 @@ class Circuit:
             return True
 
     @classmethod
-    def Port(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+    def Port(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
         Return a 1-port Network to be used as a Circuit port.
 
@@ -260,7 +261,7 @@ class Circuit:
         return port
 
     @classmethod
-    def SeriesImpedance(cls, frequency: 'Frequency', Z: NumberLike, name: str, z0: float = 50) -> 'Network':
+    def SeriesImpedance(cls, frequency: Frequency, Z: NumberLike, name: str, z0: float = 50) -> Network:
         """
         Return a 2-port network of a series impedance.
 
@@ -303,7 +304,7 @@ class Circuit:
         return ntw
 
     @classmethod
-    def ShuntAdmittance(cls, frequency: 'Frequency', Y: NumberLike, name: str, z0: float = 50) -> 'Network':
+    def ShuntAdmittance(cls, frequency: Frequency, Y: NumberLike, name: str, z0: float = 50) -> Network:
         """
         Return a 2-port network of a shunt admittance.
 
@@ -346,7 +347,7 @@ class Circuit:
         return ntw
 
     @classmethod
-    def Ground(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+    def Ground(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
         Return a 2-port network of a grounded link.
 
@@ -383,7 +384,7 @@ class Circuit:
         return cls.ShuntAdmittance(frequency, Y=INF, name=name)
 
     @classmethod
-    def Open(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+    def Open(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
         Return a 2-port network of an open link.
 
@@ -419,7 +420,7 @@ class Circuit:
         """
         return cls.SeriesImpedance(frequency, Z=INF, name=name)
 
-    def networks_dict(self, connections: List = None, min_nports: int = 1) -> dict:
+    def networks_dict(self, connections: list = None, min_nports: int = 1) -> dict:
         """
         Return the dictionary of Networks from the connection setup X.
 
@@ -440,11 +441,11 @@ class Circuit:
 
         ntws = []
         for cnx in connections:
-            for (ntw, port) in cnx:
+            for (ntw, _port) in cnx:
                 ntws.append(ntw)
         return {ntw.name: ntw for ntw in ntws  if ntw.nports >= min_nports}
 
-    def networks_list(self, connections: List = None, min_nports: int = 1) -> List:
+    def networks_list(self, connections: list = None, min_nports: int = 1) -> list:
         """
         Return a list of unique networks (sorted by appearing order in connections).
 
@@ -542,7 +543,7 @@ class Circuit:
             cnx_name = 'X'+str(idx)
             # Adding connection nodes and edges
             G.add_node(cnx_name)
-            for (ntw, ntw_port) in cnx:
+            for (ntw, _ntw_port) in cnx:
                 ntw_name = ntw.name
                 G.add_edge(cnx_name, ntw_name)
         return G
@@ -612,93 +613,11 @@ class Circuit:
         return edge_labels
 
 
-    def _Y_k(self, cnx: List[Tuple]) -> np.ndarray:
-        """
-        Return the sum of the system admittances of each intersection.
-
-        Parameters
-        ----------
-        cnx : list of tuples
-            each tuple contains (network, port)
-
-        Returns
-        -------
-        y_k : :class:`numpy.ndarray`
-        """
-        y_ns = []
-        for (ntw, ntw_port) in cnx:
-            # formula (2)
-            y_ns.append(1/ntw.z0[:,ntw_port] )
-
-        y_k = np.array(y_ns).sum(axis=0)  # shape: (nb_freq,)
-        return y_k
-
-    def _Xnn_k(self, cnx_k: List[Tuple]) -> np.ndarray:
-        """
-        Return the reflection coefficients x_nn of the connection matrix [X]_k.
-
-        Parameters
-        ----------
-        cnx_k : list of tuples
-            each tuple contains (network, port)
-
-        Returns
-        -------
-        X_nn : :class:`numpy.ndarray`
-            shape `f x n`
-        """
-        X_nn = []
-        y_k = self._Y_k(cnx_k)
-
-        for (ntw, ntw_port) in cnx_k:
-            # formula (1)
-            X_nn.append( 2/(ntw.z0[:,ntw_port]*y_k) - 1)
-
-        return np.array(X_nn).T  # shape: (nb_freq, nb_n)
-
-    def _Xmn_k(self, cnx_k: List[Tuple]) -> np.ndarray:
-        """
-        Return the transmission coefficient X_mn of the mth column of
-        intersection scattering matrix matrix [X]_k.
-
-        Parameters
-        ----------
-        cnx_k : list of tuples
-            each tuple contains (network, port)
-
-        Returns
-        -------
-        X_mn : :class:`numpy.ndarray`
-            shape `f x n`
-        """
-        # get the char.impedance of the n
-        X_mn = []
-        y_k = self._Y_k(cnx_k)
-
-        # There is a problem in the case of two-ports connexion:
-        # the formula (3) in P. Hallbjörner (2003) seems incorrect.
-        # Instead of Z_n one should have sqrt(Z_1 x Z_2).
-        # The formula works with respect to the example given in the paper
-        # (3 port connection), but not with 2-port connections made with skrf
-        if len(cnx_k) == 2:
-            z0s = []
-            for (ntw, ntw_port) in cnx_k:
-                z0s.append(ntw.z0[:,ntw_port])
-
-            z0eq = np.array(z0s).prod(axis=0)
-
-            for (ntw, ntw_port) in cnx_k:
-                X_mn.append( 2/(np.sqrt(z0eq) *y_k) )
-        else:
-            # formula (3)
-            for (ntw, ntw_port) in cnx_k:
-                X_mn.append( 2/(ntw.z0[:,ntw_port]*y_k) )
-
-        return np.array(X_mn).T  # shape: (nb_freq, nb_n)
-
-    def _Xk(self, cnx_k: List[Tuple]) -> np.ndarray:
+    def _Xk(self, cnx_k: list[tuple]) -> np.ndarray:
         """
         Return the scattering matrices [X]_k of the individual intersections k.
+        The results in [#]_ do not agree due to an error in the formula (3)
+        for mismatched intersections.
 
         Parameters
         ----------
@@ -709,30 +628,20 @@ class Circuit:
         -------
         Xs : :class:`numpy.ndarray`
             shape `f x n x n`
+        
+        References
+        ----------
+        .. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
         """
-        Xnn = self._Xnn_k(cnx_k)  # shape: (nb_freq, nb_n)
-        Xmn = self._Xmn_k(cnx_k)  # shape: (nb_freq, nb_n)
-        # # for loop version
-        # Xs = []
-        # for (_Xnn, _Xmn) in zip(Xnn, Xmn):  # for all frequencies
-        #       # repeat Xmn along the lines
-        #     _X = np.tile(_Xmn, (len(_Xmn), 1))
-        #     _X[np.diag_indices(len(_Xmn))] = _Xnn
-        #     Xs.append(_X)
+        
+        y0s = np.array([1/ntw.z0[:,ntw_port] for (ntw, ntw_port) in cnx_k]).T
+        y_k = y0s.sum(axis=1)
 
-        # return np.array(Xs) # shape : nb_freq, nb_n, nb_n
-
-        # vectorized version
-        nb_n = Xnn.shape[1]
-        Xs = np.tile(Xmn, (nb_n, 1, 1)).swapaxes(1, 0)
-        Xs[:, np.arange(nb_n), np.arange(nb_n)] = Xnn
-
-        return Xs # shape : nb_freq, nb_n, nb_n
-
-        # TEST : Could we use media.splitter() instead ? -> does not work
-        # _media = media.DefinedGammaZ0(frequency=self.frequency)
-        # Xs = _media.splitter(len(cnx_k), z0=self._cnx_z0(cnx_k))
-        # return Xs.s
+        Xs = np.zeros((len(self.frequency), len(cnx_k), len(cnx_k)), dtype='complex')
+        
+        Xs = 2 *np.sqrt(np.einsum('ij,ik->ijk', y0s, y0s)) / y_k[:, None, None]       
+        np.einsum('kii->ki', Xs)[:] -= 1  # Sii
+        return Xs
 
     @property
     def X(self) -> np.ndarray:
@@ -788,14 +697,13 @@ class Circuit:
         for (ntw_name, ntw_ports) in ntws_ports_reordering.items():
             # get the port re-ordering indexes (from -> to)
             ntw_ports = np.array(ntw_ports)
-            # create the port permutations
-            from_port = list(product(ntw_ports[:,0], repeat=2))
-            to_port = list(product(ntw_ports[:,1], repeat=2))
 
-            #print(ntw_name, from_port, to_port)
+            # port permutations
+            from_port = ntw_ports[:,0]
+            to_port = ntw_ports[:,1]
+
             for (_from, _to) in zip(from_port, to_port):
-                #print(f'{_from} --> {_to}')
-                S[:, _to[0], _to[1]] = ntws[ntw_name].s_traveling[:, _from[0], _from[1]]
+                S[:, _to, to_port] = ntws[ntw_name].s_traveling[:, _from, from_port]
 
         return S  # shape (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
 
@@ -829,7 +737,7 @@ class Circuit:
                 port_indexes.append(idx_cnx)
         return port_indexes
 
-    def _cnx_z0(self, cnx_k: List[Tuple]) -> np.ndarray:
+    def _cnx_z0(self, cnx_k: list[tuple]) -> np.ndarray:
         """
         Return the characteristic impedances of a specific connections.
 
@@ -884,7 +792,7 @@ class Circuit:
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
 
     @property
-    def network(self) -> 'Network':
+    def network(self) -> Network:
         """
         Return the Network associated to external ports.
 
@@ -1039,12 +947,12 @@ class Circuit:
 
         """
         z0s = []
-        for cnx_idx, (ntw, ntw_port) in self.connections_list:
+        for _cnx_idx, (ntw, ntw_port) in self.connections_list:
             z0s.append(ntw.z0[:,ntw_port])
         return np.array(z0s).T
 
     @property
-    def connections_pair(self) -> List:
+    def connections_pair(self) -> list:
         """
         List the connections by pair.
 
@@ -1204,7 +1112,7 @@ class Circuit:
         #                 |
         #                 |
         #              [ntwC]
-        for inter_idx, inter in self.intersections_dict.items():
+        for inter in self.intersections_dict.values():
             if len(inter) > 2:
                 raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
 
@@ -1234,7 +1142,7 @@ class Circuit:
 
         """
         # cf currents() for more details
-        for inter_idx, inter in self.intersections_dict.items():
+        for inter in self.intersections_dict.values():
             if len(inter) > 2:
                 raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
 
@@ -1407,4 +1315,3 @@ class Circuit:
         # remove x and y axis and labels
         ax.axis('off')
         fig.tight_layout()
-

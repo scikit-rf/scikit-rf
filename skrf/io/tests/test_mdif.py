@@ -1,7 +1,10 @@
-import unittest
 import os
+import unittest
+
 import numpy as np
+
 import skrf as rf
+
 
 class MdifTestCase(unittest.TestCase):
     """

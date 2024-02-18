@@ -62,37 +62,47 @@ JSON
 
 
 """
-from typing import List, Tuple, Optional
+from __future__ import annotations
 
 import glob
 import inspect
 import json
 import os
 import pickle
-from pickle import UnpicklingError
 import sys
 import warnings
-import numpy as npy
-from pandas import DataFrame, Series, ExcelWriter
 from io import StringIO
+from pickle import UnpicklingError
+from typing import Any
 
-from ..util import get_extn, get_fid
-from ..network import Network
+import numpy as npy
+from pandas import DataFrame, ExcelWriter, Series
+
 from ..frequency import Frequency
-from ..media import Media
+from ..network import Network
 from ..networkSet import NetworkSet
-from ..calibration.calibration import Calibration
+from ..util import get_extn, get_fid
 
-# file extension conventions for skrf objects.
-OBJ_EXTN = [
-    [Frequency, 'freq'],
-    [Network, 'ntwk'],
-    [NetworkSet, 'ns'],
-    [Calibration, 'cal'],
-    [Media, 'med'],
-    [object, 'p'],
+
+def _get_extension(inst: Any) -> str:
+    """File extension conventions for skrf objects.
+    """
+    from ..calibration.calibration import Calibration
+    from ..media import Media
+
+    extensions = [
+        (Frequency, "freq"),
+        (Network, "ntwk"),
+        (NetworkSet, "ns"),
+        (Calibration, "cal"),
+        (Media, "med"),
     ]
 
+    for cls, ext in extensions:
+        print(cls, ext)
+        if isinstance(inst, cls):
+            return ext
+    return "p"
 
 def read(file, *args, **kwargs):
     r"""
@@ -227,15 +237,11 @@ def write(file, obj, overwrite = True):
         extn = get_extn(file)
         if extn is None:
             # if there is not extension add one
-            for obj_extn in OBJ_EXTN:
-                if isinstance(obj, obj_extn[0]):
-                    extn = obj_extn[1]
-                    break
-            file = file + '.' + extn
+            file += f".{_get_extension(obj)}"
 
         if os.path.exists(file):
             if not overwrite:
-                warnings.warn('file exists, and overwrite option is False. Not writing.')
+                warnings.warn('file exists, and overwrite option is False. Not writing.', stacklevel=2)
                 return
 
         with open(file, 'wb') as fid:
@@ -422,17 +428,13 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
         extn = get_extn(filename)
         if extn is None:
             # if there is not extension add one
-            for obj_extn in OBJ_EXTN:
-                if isinstance(obj, obj_extn[0]):
-                    extn = obj_extn[1]
-                    break
-            filename = filename + '.' + extn
+            filename += f".{_get_extension(obj)}"
         try:
             with open(os.path.join(dir+'/', filename), 'wb') as fid:
                 write(fid, obj,*args, **kwargs)
         except Exception as inst:
             print(inst)
-            warnings.warn('couldnt write %s: %s'%(k,str(inst)))
+            warnings.warn(f'couldnt write {k}: {inst}', stacklevel=2)
 
             pass
 
@@ -555,7 +557,7 @@ def write_dict_of_networks(ntwkDict, dir='.'):
 
 
     """
-    warnings.warn('Deprecated. use write_all.', DeprecationWarning)
+    warnings.warn('Deprecated. use write_all.', DeprecationWarning, stacklevel=2)
     for ntwkKey in ntwkDict:
         ntwkDict[ntwkKey].write_touchstone(filename = dir+'/'+ntwkKey)
 
@@ -708,10 +710,10 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
 
     df = DataFrame(d)
     df.__getattribute__('to_%s'%file_type)(file_name,
-        index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
+        index_label='Freq(%s)'%ntwk.frequency.unit, **kwargs)
 
-def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'],
-        ports: List[Tuple[int, int]] = None, port_sep: Optional[str] = None):
+def network_2_dataframe(ntwk: Network, attrs: list[str] =None,
+        ports: list[tuple[int, int]] = None, port_sep: str | None = None):
     """
     Convert one or more attributes of a network to a pandas DataFrame.
 
@@ -734,6 +736,8 @@ def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'],
     -------
     df : pandas DataFrame Object
     """
+    if attrs is None:
+        attrs = ["s_db"]
     if ports is None:
         ports = ntwk.port_tuples
 
@@ -747,7 +751,7 @@ def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'],
             d[f'{attr} {m+1}{port_sep}{n+1}'] = attr_array[:, m, n]
     return DataFrame(d, index=ntwk.frequency.f)
 
-def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_type: str = 'excel',
+def networkset_2_spreadsheet(ntwkset: NetworkSet, file_name: str = None, file_type: str = 'excel',
     *args, **kwargs):
     r"""
     Write a NetworkSet object to a spreadsheet, for your boss.
@@ -796,7 +800,7 @@ def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_
         if not file_name.endswith('.xlsx'):
             file_name += '.xlsx'
         with ExcelWriter(file_name) as writer:
-            [network_2_spreadsheet(k, writer, sheet_name=k.name, *args, **kwargs) for k in ntwkset]
+            [network_2_spreadsheet(k, writer, sheet_name=k.name, **kwargs) for k in ntwkset]
     else:
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
 

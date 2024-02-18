@@ -2,10 +2,11 @@ import os
 import re
 from collections import OrderedDict
 
-from qtpy import QtWidgets, QtCore
+from qtpy import QtCore, QtWidgets
 
 import skrf
-from . import qt, numeric_inputs, widgets
+
+from . import numeric_inputs, qt, widgets
 from .networkPlotWidget import NetworkPlotWidget
 
 
@@ -514,7 +515,7 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
 
     @label_parameters.setter
     def label_parameters(self, parameters):
-        if type(parameters) is str:
+        if isinstance(parameters, str):
             if parameters in self.item_parameters.keys():
                 self._label_parameters = [parameters]
             else:
@@ -527,7 +528,7 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
         label_parameters = list()
 
         for param_name in parameters:
-            if type(param_name) is not str:
+            if not isinstance(param_name, str):
                 print("must provide strings only")
             elif param_name in self.item_parameters.keys() and param_name not in self._label_parameters:
                 label_parameters.append(param_name)
@@ -550,7 +551,7 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
         item = NetworkListItem()
         item.setFlags(item.flags() | QtCore.Qt.NoItemFlags)
         item.ntwk = ntwk
-        if type(parameters) is dict:
+        if isinstance(parameters, dict):
             for name, param in self.item_parameters.items():
                 item.parameters[name] = parameters.get(name, param["default"])
         else:

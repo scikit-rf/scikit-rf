@@ -1,8 +1,8 @@
 import unittest
 
 import skrf as rf
+from skrf.calibration import EightTerm, OnePort
 from skrf.calibration.calibrationSet import Dot
-from skrf.calibration import OnePort, EightTerm
 from skrf.util import suppress_warning_decorator
 
 

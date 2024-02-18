@@ -8,19 +8,22 @@ circularWaveguide (:mod:`skrf.media.circularWaveguide`)
    CircularWaveguide
 
 """
-from scipy.constants import  epsilon_0, mu_0, pi
-from scipy.special import  jn_zeros, jnp_zeros
-from numpy import sqrt, where
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as npy
-import warnings
-from .media import Media
+from numpy import sqrt, where
+from scipy.constants import epsilon_0, mu_0, pi
+from scipy.special import jn_zeros, jnp_zeros
+
+from ..constants import NumberLike
 from ..data import materials
 from .freespace import Freespace
-from ..constants import NumberLike
-from typing import Union, TYPE_CHECKING
+from .media import Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class CircularWaveguide(Media):
@@ -64,7 +67,7 @@ class CircularWaveguide(Media):
         (Default is None)
     z0 : number, array-like, or None
         deprecated parameter, alias to `z0_override` if `z0_override` is None.
-        Emmit a deprecation warning. 
+        Emmit a deprecation warning.
     r : number
         radius of the waveguide, in meters.
     mode_type : ['te','tm']
@@ -99,22 +102,22 @@ class CircularWaveguide(Media):
     >>> rf.CircularWaveguide(freq, r=0.5 * 2.39e-3)
 
     """
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None,
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None,
                  r: NumberLike = 1,
                  mode_type: str = 'te', m: int = 1, n: int = 1,
                  ep_r: NumberLike = 1, mu_r: NumberLike = 1,
-                 rho: Union[NumberLike, str, None] = None,
+                 rho: NumberLike | str | None = None,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)
-        
+
         if mode_type.lower() not in ['te','tm']:
             raise ValueError('mode_type must be either \'te\' or \'tm\'')
 
-          
+
         self.r = r
         self.mode_type = mode_type.lower()
         self.m = m
@@ -137,7 +140,7 @@ class CircularWaveguide(Media):
 
 
     @classmethod
-    def from_z0(cls, frequency: 'Frequency', z0: NumberLike,
+    def from_z0(cls, frequency: Frequency, z0: NumberLike,
                 f: NumberLike, ep_r: NumberLike = 1, mu_r: NumberLike = 1,
                 **kwargs):
         r"""
@@ -407,12 +410,12 @@ class CircularWaveguide(Media):
         u= self.kc*r
         return 1./r * sqrt( (w*ep)/(2./rho) ) * ( (1/f_n)**2 + 1/(u**2 - 1) ) \
             /sqrt(1-(1/f_n)**2)
-    
+
     @property
     def z0_characteristic(self) -> NumberLike:
         """
         The characteristic impedance, :math:`z_0`.
-        
+
         Returns
         -------
         z0_characteristic : npy.ndarray

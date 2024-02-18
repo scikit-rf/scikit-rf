@@ -1,11 +1,11 @@
+import pylab as plb
+from plotTool import PlotTool
 from traits.api import *
-from traitsui.api import *#View, Item, ButtonEditor, Group, HSplit,
+from traitsui.api import *  #View, Item, ButtonEditor, Group, HSplit,
 from traitsui.menu import *
 
-import pylab as plb
 import skrf as rf
 
-from plotTool import PlotTool
 
 class TouchstonePlotter(HasTraits):
     cur_dir = Directory('')

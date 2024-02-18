@@ -11,10 +11,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional
+    pass
 
-import inspect
 import functools
+import inspect
 import re
 from abc import ABC
 from enum import Enum, auto
@@ -64,7 +64,7 @@ class Channel:
     """
 
     def __init__(
-        self, parent, cnum: Optional[int] = None, cname: Optional[str] = None
+        self, parent, cnum: int | None = None, cname: str | None = None
     ) -> None:
         self.parent = parent
         self.cnum = cnum
@@ -82,7 +82,7 @@ class VNA(ABC):
     _scpi = True  # Set to false in subclasses that don't use SCPI
 
     def __init__(
-        self, address: str, backend: str = "@py", timeout: Optional[int] = None
+        self, address: str, backend: str = "@py", timeout: int | None = None
     ) -> None:
         rm = pyvisa.ResourceManager(backend)
         self._resource = rm.open_resource(address, timeout=timeout)
@@ -127,21 +127,17 @@ class VNA(ABC):
                 raise AttributeError(f"{type(self).__name__} has no attribute {k}")
             return getattr(self.ch1, k)
 
-        setattr(cls, "create_channel", create_channel)
-        setattr(cls, "delete_channel", delete_channel)
-        setattr(cls, "channels", property(_channels))
-        setattr(cls, "__getattr__", __getattr__)
+        cls.create_channel = create_channel
+        cls.delete_channel = delete_channel
+        cls.channels = property(_channels)
+        cls.__getattr__ = __getattr__
 
     def _setup_scpi(self) -> None:
-        setattr(
-            self.__class__,
-            "wait_for_complete",
-            lambda self: self.query("*OPC?"),
-        )
-        setattr(self.__class__, "status", property(lambda self: self.query("*STB?")))
-        setattr(self.__class__, "options", property(lambda self: self.query("*OPT?")))
-        setattr(self.__class__, "id", property(lambda self: self.query("*IDN?")))
-        setattr(self.__class__, "clear_errors", lambda self: self.write("*CLS"))
+        self.__class__.wait_for_complete = lambda self: self.query("*OPC?")
+        self.__class__.status = property(lambda self: self.query("*STB?"))
+        self.__class__.options = property(lambda self: self.query("*OPT?"))
+        self.__class__.id = property(lambda self: self.query("*IDN?"))
+        self.__class__.clear_errors = lambda self: self.write("*CLS")
 
         def errcheck(self) -> None:
             err = self.query("SYST:ERR?")
@@ -151,16 +147,16 @@ class VNA(ABC):
             else:
                 raise SCPIError(errno)
 
-        setattr(self.__class__, "check_errors", errcheck)
+        self.__class__.check_errors = errcheck
 
     @staticmethod
     def command(
-        get_cmd: Optional[str] = None,
-        set_cmd: Optional[str] = None,
-        doc: Optional[str] = None,
-        validator: Optional[Validator] = None,
+        get_cmd: str | None = None,
+        set_cmd: str | None = None,
+        doc: str | None = None,
+        validator: Validator | None = None,
         values: bool = False,
-        values_container: Optional[type] = np.array,
+        values_container: type | None = np.array,
         complex_values: bool = False,
     ) -> property:
         """
@@ -242,11 +238,11 @@ class VNA(ABC):
         return property(fget=fget, fset=fset)
 
     @property
-    def timeout(self) -> Optional[int]:
+    def timeout(self) -> int | None:
         return self._resource.timeout
 
     @timeout.setter
-    def timeout(self, timeout: Optional[int]) -> None:
+    def timeout(self, timeout: int | None) -> None:
         self._resource.timeout = timeout
 
     def read(self, **kwargs) -> None:
@@ -259,7 +255,7 @@ class VNA(ABC):
 
         return fn(**kwargs)
 
-    def read_values(self, **kwargs) -> None:
+    def read_values(self, **kwargs) -> None:  # noqa: B027
         pass
 
     def write(self, cmd, **kwargs) -> None:

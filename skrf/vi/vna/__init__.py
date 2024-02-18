@@ -62,7 +62,7 @@ freq_stop, etc) should be defined on the class. For instruments **with** channel
 support, the class should include a subclass of :class:`Channel` that defines
 properties specific to channel settings in the channel definition while other
 instrument properties should be defined in the instrument class. To make this
-more clear, consider the following example from the Keysight PNA implementation 
+more clear, consider the following example from the Keysight PNA implementation
 (the property creator `VNA.Command` is explained later)
 
 .. code-block:: python
@@ -86,15 +86,15 @@ more clear, consider the following example from the Keysight PNA implementation
             validator=IntValidator()
         )
 
-Here, the start frequency is set **per channel** whereas the number of ports is 
-related to the instrument itself. Instruments with channel support should create a 
+Here, the start frequency is set **per channel** whereas the number of ports is
+related to the instrument itself. Instruments with channel support should create a
 single channel in `__init__()` using `create_channel`
 
 Property Creator
 ----------------
 
-Inspired by `PyMeasure <https://github.com/pymeasure/pymeasure>`_, skrf has a property 
-creator to simplify creating properties that are queried and set with commands. 
+Inspired by `PyMeasure <https://github.com/pymeasure/pymeasure>`_, skrf has a property
+creator to simplify creating properties that are queried and set with commands.
 
 .. automethod:: VNA.command
 
@@ -107,10 +107,10 @@ angle bracket delimiters and referring to the name. Here are some
 examples:
 
 Here, we are assuming we are writing a command for an instrument with
-channels, and writing a command **for** the internal `Channel` class. 
+channels, and writing a command **for** the internal `Channel` class.
 In `get_cmd`, `<self:cnum>` gets the `self.cnum` property of the Channel
-class **at runtime**. In `set_cmd`, `<arg>` is replaced by the argument 
-passed to the setter. 
+class **at runtime**. In `set_cmd`, `<arg>` is replaced by the argument
+passed to the setter.
 
 .. code-block:: python
 
@@ -133,9 +133,9 @@ command strings would be after replacement.
 Validators
 ----------
 
-Validators are (optionally, but almost always) passed to `VNA.command`. When a property 
-is get or set, the appropriate validate command is called to convert input to the proper 
-format expected by the instrument, or convert responses from the instrument to the 
+Validators are (optionally, but almost always) passed to `VNA.command`. When a property
+is get or set, the appropriate validate command is called to convert input to the proper
+format expected by the instrument, or convert responses from the instrument to the
 proper type.
 
 The current validators are:
@@ -148,9 +148,9 @@ The current validators are:
     * :class:`skrf.vi.validators.FreqValidator`
     * :class:`skrf.vi.validators.SetValidator`
 
-The documentation for each of these explains more about their functionality, but in essence 
-when writing a `VNA.command`, consider how the command must be formatted to be sent to the 
-instrument and what the expected response from the instrument will be and how that can be 
+The documentation for each of these explains more about their functionality, but in essence
+when writing a `VNA.command`, consider how the command must be formatted to be sent to the
+instrument and what the expected response from the instrument will be and how that can be
 transformed to something more useful than, say, a string.
 
 Here's an example of using a validator:
@@ -165,7 +165,7 @@ Here's an example of using a validator:
 
     # ...
 
-    # This will call FreqValidator.validate_input('100 kHz') to 
+    # This will call FreqValidator.validate_input('100 kHz') to
     # transform the string '100 kHz' to '100000'. The full command
     # then becomes:
     # CALC:FREQ:STAR 100000
