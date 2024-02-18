@@ -794,6 +794,25 @@ class Media(ABC):
     def splitter(self, nports: int, **kwargs) -> Network:
         r"""
         Ideal, lossless n-way splitter.
+        
+        The port impedances can be mismatched and the power is split
+        accordingly.
+        
+        For n > 2, the splitter is not matched because the power wave entering
+        one port meet the equivalent impedance of the other ports in parallel.
+        
+        .. math::
+            S_{ii} = \frac{Y_i - \sum_{j\neq i} Y_j}{Y_i + \sum_{j\neq i} Y_j}
+            = \frac{2Y_i}{\sum_{j=1...n} Y_j} - 1
+        
+        The remaining power is split between the other ports depending their
+        impedances.
+        
+        .. math::
+            \sum_{j=1...n} S_{ij}^2 = 1 - S_{ii}^2
+        
+        .. math::
+            S_{ij} = \frac{2\sqrt{Y_i \cdot Y_j}}{\sum_{k=1...n} Y_{k}}
 
         Parameters
         ----------
@@ -813,8 +832,14 @@ class Media(ABC):
         match : called to create a 'blank' network
         """
         result = self.match(nports, **kwargs)
-
-        result.s =  splitter_s(self.frequency, nports, z0=result.z0)
+        
+        y0s = npy.array(1./result.z0)
+        y_k = y0s.sum(axis=1)
+        s = npy.zeros((self.frequency.npoints, nports, nports),
+                      dtype='complex')
+        s = 2 *npy.sqrt(npy.einsum('ki,kj->kij', y0s, y0s)) / y_k[:, None, None]
+        npy.einsum('kii->ki', s)[:] -= 1  # Sii
+        result.s =  s
         return result
 
 
@@ -1829,49 +1854,3 @@ def parse_z0(s: str) -> NumberLike:
     else:
         raise ValueError('couldnt parse z0 string')
     return out
-
-def splitter_s(frequency: Frequency, n: int,
-               z0: NumberLike | None = None) -> npy.ndarray:
-    r"""
-    Compute the scattering parametters of an n-port lossless splitter.
-    The port impedances can be mismatched and the power is split accordingly.
-    
-    For n > 2, the splitter is not matched because the power wave entering
-    one port meet the quivalent impedance of the other ports in parallel.
-    
-    .. math::
-        S_{ii} = \frac{Y_i - \sum_{j\neq i} Y_j}{Y_i + \sum_{j\neq i} Y_j}
-        = \frac{2Y_i}{\sum_{j=1...n} Y_j} - 1
-    
-    The remaining power is split between the other ports
-    
-    .. math::
-        \sum_{j=1...n} S_{ij}^2 = 1 - S_{ii}^2
-    
-    .. math::
-        S_{ij} = \frac{2\sqrt{Y_i \cdot Y_j}}{\sum_{k=1...n} Y_{k}}
-
-    Parameters
-    ----------
-    frequency : :class:`~skrf.frequency.Frequency` object or None
-        frequency band of this transmission line medium.
-        Used only to get the npoints dimension.
-    n  : int
-        number of ports
-    z0 : number, or array-like or None
-        port impedance. Default is None, in which case the splitter has the
-        same impedance on all ports.
-
-    Returns
-    -------
-    s : :class:`numpy.ndarray`
-        shape `f x n x n`
-    """
-    if z0 is None:
-        z0 = ones(frequency.npoints, n)
-    y0s = npy.array(1./z0)
-    y_k = y0s.sum(axis=1)
-    s = npy.zeros((frequency.npoints, n, n), dtype='complex')
-    s = 2 *npy.sqrt(npy.einsum('ki,kj->kij', y0s, y0s)) / y_k[:, None, None]
-    npy.einsum('kii->ki', s)[:] -= 1  # Sii
-    return s
