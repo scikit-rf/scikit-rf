@@ -1832,7 +1832,7 @@ def parse_z0(s: str) -> NumberLike:
 
 def splitter_s(frequency: Frequency, n: int,
                z0: NumberLike | None = None) -> npy.ndarray:
-    """
+    r"""
     Compute the scattering parametters of an n-port lossless splitter.
     The port impedances can be mismatched and the power is split accordingly.
     
