@@ -175,8 +175,9 @@ class TestUnitConversions(unittest.TestCase):
         assert_equal(rf.inf_to_num(x), y)
 
     def test_rsolve(self):
-        A = npy.random.random((3, 2, 2)) + 1j*npy.random.random((3, 2, 2))
-        B = npy.random.random((3, 2, 2)) + 1j*npy.random.random((3, 2, 2))
+        rng = npy.random.default_rng()
+        A = rng.random((3, 2, 2)) + 1j*rng.random((3, 2, 2))
+        B = rng.random((3, 2, 2)) + 1j*rng.random((3, 2, 2))
         # Make sure they are not singular
         A = rf.nudge_eig(A)
         B = rf.nudge_eig(B)

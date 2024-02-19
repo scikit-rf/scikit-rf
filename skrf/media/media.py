@@ -794,23 +794,23 @@ class Media(ABC):
     def splitter(self, nports: int, **kwargs) -> Network:
         r"""
         Ideal, lossless n-way splitter.
-        
+
         The port impedances can be mismatched and the power is split
         accordingly.
-        
+
         For n > 2, the splitter is not matched because the power wave entering
         one port meet the equivalent impedance of the other ports in parallel.
-        
+
         .. math::
             S_{ii} = \frac{Y_i - \sum_{j\neq i} Y_j}{Y_i + \sum_{j\neq i} Y_j}
             = \frac{2Y_i}{\sum_{j=1...n} Y_j} - 1
-        
+
         The remaining power is split between the other ports depending their
         impedances.
-        
+
         .. math::
             \sum_{j=1...n} S_{ij}^2 = 1 - S_{ii}^2
-        
+
         .. math::
             S_{ij} = \frac{2\sqrt{Y_i \cdot Y_j}}{\sum_{k=1...n} Y_{k}}
 
@@ -832,7 +832,7 @@ class Media(ABC):
         match : called to create a 'blank' network
         """
         result = self.match(nports, **kwargs)
-        
+
         y0s = npy.array(1./result.z0)
         y_k = y0s.sum(axis=1)
         s = npy.zeros((self.frequency.npoints, nports, nports),
