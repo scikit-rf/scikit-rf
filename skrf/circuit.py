@@ -628,18 +628,18 @@ class Circuit:
         -------
         Xs : :class:`numpy.ndarray`
             shape `f x n x n`
-        
+
         References
         ----------
         .. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
         """
-        
+
         y0s = np.array([1/ntw.z0[:,ntw_port] for (ntw, ntw_port) in cnx_k]).T
         y_k = y0s.sum(axis=1)
 
         Xs = np.zeros((len(self.frequency), len(cnx_k), len(cnx_k)), dtype='complex')
-        
-        Xs = 2 *np.sqrt(np.einsum('ij,ik->ijk', y0s, y0s)) / y_k[:, None, None]       
+
+        Xs = 2 *np.sqrt(np.einsum('ij,ik->ijk', y0s, y0s)) / y_k[:, None, None]
         np.einsum('kii->ki', Xs)[:] -= 1  # Sii
         return Xs
 
