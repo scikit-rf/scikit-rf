@@ -141,16 +141,16 @@ line-length = 120
 select = ["B", "E", "F", "FA", "I", "NPY", "UP", "W"]
 
 # Ignore some rules for all files
-# F841: unused-variable
 # E741: ambiguous-variable-name
-ignore = ["F841", "E741"]
+ignore = ["E741"]
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore some rules for some specific files
 # E402: imports at the beginning of file
 # F401: unused-import
+# F841: unused-variable
 "__init__.py" = ["E402", "F401", "F403", "F405"]
 "apps/*" = ["F403", "F405"]
 "doc/source/conf.py" = ["E402"]
 "doc/sphinxext/tests/test_docscrape.py" = ["E402", "F403", "F405"]
-"*/tests/*.py"=["B018"]
+"*/tests/*.py"=["B018", "F841"]

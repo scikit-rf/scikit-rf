@@ -1184,7 +1184,6 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                    )
                 flag_df = True
                 f_original = f
-                df = f[1] - f[0]
                 projected_n = round(f[-1]/f[0])
                 if(projected_n <= 10000):
                     fnew = f[0] * (np.arange(0, projected_n) + 1)

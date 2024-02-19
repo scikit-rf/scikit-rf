@@ -1015,7 +1015,6 @@ class Calibration:
             passed to the plot method of Network
         """
         ns = NetworkSet(self.caled_ntwks)
-        nports = ns[0].nports
         fig, axes = util.subplots(figsize=(8,8))
 
         kwargs.update({'show_legend':show_legend})
@@ -2804,7 +2803,6 @@ class NISTMultilineTRL(EightTerm):
         exp = npy.exp
         log = npy.log
         abs = npy.abs
-        det = linalg.det
 
         gamma_est_user = self.kwargs.get('gamma_est', None)
 
@@ -4788,8 +4786,6 @@ class MRC(UnknownThru):
 
         thru_m = self.measured_unterminated[-1]
 
-        thru_approx  =  self.ideals[-1]
-
         # create one port calibration for all reflective standards
         port1_cal = SDDL(measured = p1_m, ideals = p1_i)
         port2_cal = SDDL(measured = p2_m, ideals = p2_i)
@@ -4800,8 +4796,6 @@ class MRC(UnknownThru):
 
         e_rf = port1_cal.coefs_ntwks['reflection tracking']
         e_rr = port2_cal.coefs_ntwks['reflection tracking']
-        X = port1_cal.error_ntwk
-        Y = port2_cal.error_ntwk
 
         # create a fully-determined 8-term cal just get estimate on k's sign
         # this is really inefficient, i need to work out the math on the
@@ -5707,7 +5701,6 @@ class MultiportCal:
         T1,T2,T3,T4 : numpy ndarray
         """
         npoints = len(self.coefs[0]['k'])
-        one = npy.ones(npoints, dtype=complex)
         zero = npy.zeros(npoints, dtype=complex)
 
         Edf = self.coefs[p1]['directivity']
@@ -6153,7 +6146,6 @@ def terminate_nport(ntwk, gammas):
     fpoints = len(ntwk.frequency)
     if len(gammas) != ntwk.nports:
         raise ValueError("len(gammas) doesn't match the number of network ports")
-    zeros = npy.zeros(len(ntwk.s))
     ones = npy.ones(len(ntwk.s))
     for i in range(nports):
         term = npy.zeros((fpoints, 2*nports, 2*nports), dtype=complex)
@@ -6429,14 +6421,12 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     Erf = coefs_12term['forward reflection tracking']
     Etf = coefs_12term['forward transmission tracking']
     Elf = coefs_12term['forward load match']
-    Eif = coefs_12term.get('forward isolation',0)
 
     Edr = coefs_12term['reverse directivity']
     Esr = coefs_12term['reverse source match']
     Err = coefs_12term['reverse reflection tracking']
     Elr = coefs_12term['reverse load match']
     Etr = coefs_12term['reverse transmission tracking']
-    Eir = coefs_12term.get('reverse isolation',0)
 
     # these are given in eq (30) - (33) in Roger Mark's paper listed in
     # the docstring
