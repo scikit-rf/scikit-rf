@@ -181,55 +181,21 @@ class VectorFitting:
 
         timer_start = timer()
 
-        # create initial poles and space them across the frequencies in the provided Touchstone file
         # use normalized frequencies during the iterations (seems to be more stable during least-squares fit)
         norm = np.average(self.network.f)
-        #norm = np.exp(np.mean(np.log(self.network.f)))
+        # norm = np.exp(np.mean(np.log(self.network.f)))
         freqs_norm = np.array(self.network.f) / norm
 
-        fmin = np.amin(freqs_norm)
-        fmax = np.amax(freqs_norm)
+        # get initial poles
+        poles = self._init_poles(freqs_norm, n_poles_real, n_poles_cmplx, init_pole_spacing)
 
-        # poles cannot be at f=0; hence, f_min for starting pole must be greater than 0
-        if fmin == 0.0:
-            # random choice: use 1/1000 of first non-zero frequency
-            fmin = freqs_norm[1] / 1000
-
-        init_pole_spacing = init_pole_spacing.lower()
-        if init_pole_spacing == 'log':
-            pole_freqs_real = np.geomspace(fmin, fmax, n_poles_real)
-            pole_freqs_cmplx = np.geomspace(fmin, fmax, n_poles_cmplx)
-        elif init_pole_spacing == 'lin':
-            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
-            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
-        elif init_pole_spacing == 'custom':
-            pole_freqs_real = None
-            pole_freqs_cmplx = None
+        # check and normalize custom poles
+        if poles is None:
             if self.poles is not None and len(self.poles) > 0:
                 poles = self.poles / norm
             else:
                 raise ValueError('Initial poles must be provided in `self.poles` when calling with '
                                  '`init_pole_spacing == \'custom\'`.')
-        else:
-            warnings.warn('Invalid choice of initial pole spacing; proceeding with linear spacing.', UserWarning,
-                          stacklevel=2)
-            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
-            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
-
-        if pole_freqs_real is not None and pole_freqs_cmplx is not None:
-            # init poles array of correct length
-            poles = np.zeros(n_poles_real + n_poles_cmplx, dtype=complex)
-
-            # add real poles
-            for i, f in enumerate(pole_freqs_real):
-                omega = 2 * np.pi * f
-                poles[i] = -1 * omega
-
-            # add complex-conjugate poles (store only positive imaginary parts)
-            i_offset = len(pole_freqs_real)
-            for i, f in enumerate(pole_freqs_cmplx):
-                omega = 2 * np.pi * f
-                poles[i_offset + i] = (-0.01 + 1j) * omega
 
         # save initial poles (un-normalize first)
         initial_poles = poles * norm
@@ -372,6 +338,54 @@ class VectorFitting:
                 warnings.warn('The fitted network is passive, but the vector fit is not passive. Consider running '
                               '`passivity_enforce()` to enforce passivity before using this model.',
                               UserWarning, stacklevel=2)
+
+    @staticmethod
+    def _init_poles(freqs: list, n_poles_real: int, n_poles_cmplx: int, init_pole_spacing: str):
+        # create initial poles and space them across the frequencies in the provided Touchstone file
+
+        fmin = np.amin(freqs)
+        fmax = np.amax(freqs)
+
+        # poles cannot be at f=0; hence, f_min for starting pole must be greater than 0
+        if fmin == 0.0:
+            # random choice: use 1/1000 of first non-zero frequency
+            fmin = freqs[1] / 1000
+
+        init_pole_spacing = init_pole_spacing.lower()
+        if init_pole_spacing == 'log':
+            pole_freqs_real = np.geomspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.geomspace(fmin, fmax, n_poles_cmplx)
+        elif init_pole_spacing == 'lin':
+            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
+        elif init_pole_spacing == 'custom':
+            pole_freqs_real = None
+            pole_freqs_cmplx = None
+        else:
+            warnings.warn('Invalid choice of initial pole spacing; proceeding with linear spacing.', UserWarning,
+                          stacklevel=2)
+            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
+
+        if pole_freqs_real is not None and pole_freqs_cmplx is not None:
+            # init poles array of correct length
+            poles = np.zeros(n_poles_real + n_poles_cmplx, dtype=complex)
+
+            # add real poles
+            for i, f in enumerate(pole_freqs_real):
+                omega = 2 * np.pi * f
+                poles[i] = -1 * omega
+
+            # add complex-conjugate poles (store only positive imaginary parts)
+            i_offset = len(pole_freqs_real)
+            for i, f in enumerate(pole_freqs_cmplx):
+                omega = 2 * np.pi * f
+                poles[i_offset + i] = (-0.01 + 1j) * omega
+
+            return poles
+
+        else:
+            return None
 
     @staticmethod
     def _pole_relocation(poles, freqs, freq_responses, weights_responses, fit_constant, fit_proportional):
