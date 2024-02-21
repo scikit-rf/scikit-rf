@@ -96,8 +96,7 @@ class VectorFitting:
         self.delta_max_history = []
         self.history_max_sigma = []
         self.history_cond_A = []
-        self.history_rank_A = []
-        self.full_rank = 0
+        self.history_rank_deficiency = []
 
     def get_spurious(self, n_freqs: int = 101, gamma: float = 0.03):
         """
@@ -272,15 +271,24 @@ class VectorFitting:
         self.d_res_history = []
         self.delta_max_history = []
         self.history_cond_A = []
-        self.history_rank_A = []
+        self.history_rank_deficiency = []
         converged = False
 
         # POLE RELOCATION LOOP
         while iterations > 0:
             logging.info(f'Iteration {self.max_iterations - iterations + 1}')
 
-            poles, singular_vals = self._pole_relocation(poles, freqs_norm, freq_responses, weights_responses,
-                                                         fit_constant=fit_constant, fit_proportional=fit_proportional)
+            poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
+                poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+
+            logging.info(f'Condition number of coefficient matrix is {int(cond)}')
+            self.history_cond_A.append(cond)
+
+            self.history_rank_deficiency.append(rank_deficiency)
+            logging.info(f'Rank deficiency is {rank_deficiency}.')
+
+            self.d_res_history.append(d_res)
+            logging.info(f'd_res = {d_res}')
 
             # calculate relative changes in the singular values; stop iteration loop once poles have converged
             new_max_singular = np.amax(singular_vals)
@@ -309,14 +317,14 @@ class VectorFitting:
             if iterations == 0:
                 # loop ran into iterations limit; trying to assess the issue
                 max_cond = np.amax(self.history_cond_A)
-                min_rank = np.amin(self.history_rank_A)
+                max_deficiency = np.amax(self.history_rank_deficiency)
                 if max_cond > 1e10:
                     hint_illcond = f'\nHint: the linear system was ill-conditioned (max. condition number was {max_cond}).'
                 else:
                     hint_illcond = ''
-                if min_rank < self.full_rank:
-                    hint_rank = (f'\nHint: the coefficient matrix was rank-deficient (min. rank was {min_rank}, full '
-                                 f'rank is {self.full_rank}).')
+                if max_deficiency < 0:
+                    hint_rank = ('\nHint: the coefficient matrix was rank-deficient (max. rank deficiency was '
+                                 f'{max_deficiency}).')
                 else:
                     hint_rank = ''
                 if converged and stop is False:
@@ -365,7 +373,8 @@ class VectorFitting:
                               '`passivity_enforce()` to enforce passivity before using this model.',
                               UserWarning, stacklevel=2)
 
-    def _pole_relocation(self, poles, freqs, freq_responses, weights_responses, fit_constant, fit_proportional):
+    @staticmethod
+    def _pole_relocation(poles, freqs, freq_responses, weights_responses, fit_constant, fit_proportional):
         n_responses, n_freqs = np.shape(freq_responses)
         n_samples = n_responses * n_freqs
         omega = 2 * np.pi * freqs
@@ -504,16 +513,14 @@ class VectorFitting:
         b[-1] = weight_extra * n_samples
 
         # check condition of the linear system
-        cond_A = np.linalg.cond(A_fast)
-        logging.info(f'Condition number of coefficient matrix is {int(cond_A)}')
-        self.history_cond_A.append(cond_A)
+        cond = np.linalg.cond(A_fast)
+        full_rank = np.min(A_fast.shape)
 
         # solve least squares for real parts
         x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
 
-        self.history_rank_A.append(rank)
-        self.full_rank = np.min(A_fast.shape)
-        logging.info(f'The rank of the coefficient matrix is {rank}. Rank deficiency is {self.full_rank - rank}.')
+        # rank deficiency
+        rank_deficiency = full_rank - rank
 
         # assemble individual result vectors from single LS result x
         c_res = x[:-1]
@@ -525,14 +532,6 @@ class VectorFitting:
             # d_res is too small, discard solution and proceed the |d_res| = tol_res
             logging.info(f'Replacing d_res solution as it was too small ({d_res}).')
             d_res = tol_res * (d_res / np.abs(d_res))
-            # warnings.warn('Replacing d_res solution as it was too small. This is a sign for an '
-            #               'ill-conditioned linear system.\n'
-            #               f'The condition number of the coefficient matrix is {cond_A}.\n'
-            #               f'There could be too many or not enough poles.',
-            #               RuntimeWarning, stacklevel=2)
-
-        self.d_res_history.append(d_res)
-        logging.info(f'd_res = {d_res}')
 
         # build test matrix H, which will hold the new poles as eigenvalues
         H = np.zeros((len(c_res), len(c_res)))
@@ -558,9 +557,10 @@ class VectorFitting:
         # flip real part of unstable poles (real part needs to be negative for stability)
         poles.real = -1 * np.abs(poles.real)
 
-        return poles, singular_vals
+        return poles, d_res, cond, rank_deficiency, residuals, singular_vals
 
-    def _fit_residues(self, poles, freqs, freq_responses, fit_constant, fit_proportional):
+    @staticmethod
+    def _fit_residues(poles, freqs, freq_responses, fit_constant, fit_proportional):
         n_responses, n_freqs = np.shape(freq_responses)
         omega = 2 * np.pi * freqs
         s = 1j * omega
