@@ -6421,12 +6421,14 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     Erf = coefs_12term['forward reflection tracking']
     Etf = coefs_12term['forward transmission tracking']
     Elf = coefs_12term['forward load match']
+    Eif = coefs_12term.get('forward isolation',0)  # noqa: F841
 
     Edr = coefs_12term['reverse directivity']
     Esr = coefs_12term['reverse source match']
     Err = coefs_12term['reverse reflection tracking']
     Elr = coefs_12term['reverse load match']
     Etr = coefs_12term['reverse transmission tracking']
+    Eir = coefs_12term.get('reverse isolation',0)  # noqa: F841
 
     # these are given in eq (30) - (33) in Roger Mark's paper listed in
     # the docstring
