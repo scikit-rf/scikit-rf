@@ -1754,7 +1754,6 @@ class VectorFitting:
         A, B, C, D, E = self._get_ABCDE()
 
         n_ports = np.shape(D)[0]
-        singvals = np.zeros((n_ports, len(freqs)))
 
         # calculate and save singular values for each frequency
         u, sigma, vh = np.linalg.svd(self._get_s_from_ABCDE(freqs, A, B, C, D, E))

@@ -93,7 +93,7 @@ class InputWithUnits(NumericLineEdit):
             try:
                 value = float(value)
                 self.setText(str(value))
-            except ValueError as e:
+            except ValueError:
                 Warning(f"invalid entry {value} for line Edit")
 
         self.units = units

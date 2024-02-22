@@ -446,7 +446,6 @@ class Qfactor:
 
         # Q_L0 : An order-of-magnitude estimate for Q_L-factor
         if Q_L0 is None:
-            Tol = self.tol * np.argmax(np.abs(self.s))
             # The value 5.0 should work well
             # for initial and optimised fits (Section 2.6).
             mult = 5.0
@@ -1078,7 +1077,6 @@ class Qfactor:
             raise ValueError("Illegal Scaling factor; should be a float or  None")
 
         m1, m2, m3, m4, m5 = (opt_res[key] for key in ['m1', 'm2', 'm3', 'm4', 'Q_L'])
-        FL = opt_res['f_L']
 
         if self.res_type == "transmission":
             if auto_flag:

@@ -721,8 +721,6 @@ class TRLWithNoIdealsTest(EightTermTest):
         self.X.s[:,1,1] *=1e-1
         self.Y.s[:,1,1] *=1e-1
 
-        ideals =  None
-
         r = wg.delay_short(20,'deg')
 
         self.actuals=[wg.thru( name='thru'),
@@ -765,8 +763,6 @@ class TRLMultiline(EightTermTest):
         #self.Y.s[:,0,0] *=1e-1
         #self.X.s[:,1,1] *=1e-1
         #self.Y.s[:,1,1] *=1e-1
-
-        ideals =  None
 
         actuals = [
             wg.thru( name='thru'),

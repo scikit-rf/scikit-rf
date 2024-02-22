@@ -1140,11 +1140,11 @@ class NetworkSet:
                 try:
                     _ = [int(v) for v in values[key]]
                     data_types[key] = 'int'
-                except ValueError as e:  # not an int
+                except ValueError:  # not an int
                     try:
                         _ = [float(v) for v in values[key]]
                         data_types[key] = 'double'
-                    except ValueError as e:  # not a float -> then a string
+                    except ValueError:  # not a float -> then a string
                         data_types[key] = 'string'
 
             return data_types

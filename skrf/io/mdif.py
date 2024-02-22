@@ -296,11 +296,9 @@ class Mdif:
         fid.seek(0)
 
         block_data = []
-        kinds = []
         ntwks = []
         params = dict()
 
-        in_a_block = False
         in_data_block = False
 
         for line in fid:
@@ -311,7 +309,6 @@ class Mdif:
             # ...
             # VAR param_name_N = Z
             if line.lower().startswith('var'):
-                in_a_block = True
                 # current parameter
                 param_name, param_value = (s.strip() for s in line[3:].split('='))
                 # remove the datatype "(blah)" in "varname(blah)" if any
@@ -335,9 +332,7 @@ class Mdif:
 
                 # reset parsed values
                 in_data_block = False
-                in_a_block = False
                 block_data = []
-                kinds = []
                 params = dict()
 
             if in_data_block:

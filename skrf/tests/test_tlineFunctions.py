@@ -153,7 +153,6 @@ class TestVoltageCurrentPropagation(unittest.TestCase):
         Propagate voltage and current on a d=lambda lossless transmission line.
         Voltage and current are equal.
         """
-        gamma = array([1j])
         z0 = 50
         rng = np.random.default_rng()
         v1 = rng.random()
@@ -169,7 +168,6 @@ class TestVoltageCurrentPropagation(unittest.TestCase):
         Propagate voltage and current on a d=lambda/2 lossless transmission line.
         Voltage and current are inversed.
         """
-        gamma = array([1j])
         z0 = 50
         rng = np.random.default_rng()
         v1 = rng.random()

@@ -145,7 +145,7 @@ def read(file, *args, **kwargs):
     fid = get_fid(file, mode='rb')
     try:
         obj = pickle.load(fid, *args, **kwargs)
-    except (UnpicklingError, UnicodeDecodeError) as e:
+    except (UnpicklingError, UnicodeDecodeError):
         # if fid is seekable then reset to beginning of file
         fid.seek(0)
 
@@ -529,7 +529,6 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
     for f in os.listdir (dir):
         if contains is not None and contains not in f:
             continue
-        fullname = os.path.join(dir,f)
         keyname,extn = os.path.splitext(f)
         extn = extn.lower()
         try:

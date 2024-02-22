@@ -674,7 +674,7 @@ close to an integer multiple of 180 degrees out of phase from the calibration pl
         try:
             forward_switch_terms = self.listWidget_thru.get_named_item(self.SWITCH_TERMS_ID_FORWARD).ntwk
             reverse_switch_terms = self.listWidget_thru.get_named_item(self.SWITCH_TERMS_ID_REVERSE).ntwk
-        except Exception as e:
+        except Exception:
             forward_switch_terms = None
             reverse_switch_terms = None
 

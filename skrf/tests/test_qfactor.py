@@ -41,7 +41,7 @@ class QfactorTests(unittest.TestCase):
         # Load frequency and S-parameter data from a file.
         try:
             f, s_re, s_im = np.loadtxt(file, comments="%", unpack=True)
-        except ValueError as e:
+        except ValueError:
             f, s_re, s_im, s_abs, s_mag = np.loadtxt(file, comments="%", unpack=True)
 
         s = s_re + 1j * s_im
@@ -241,7 +241,6 @@ class QfactorTests(unittest.TestCase):
         # Tol is 1.0E-5 * |S21| at peak.
         Mg = np.abs(ntwk2.s).squeeze()
         index_max = np.argmax(Mg)
-        Tol = Mg[index_max] * 1.0e-5
         Fseed = Q.f[index_max]
 
         # Set Qseed: An order-of-magnitude estimate for Q-factor
@@ -319,5 +318,5 @@ class QfactorTests(unittest.TestCase):
         Q = rf.Qfactor(self.ntwk_2port.s11, res_type='reflection')
         # before the fit, warnings should be raised
         with self.assertWarns(Warning):
-            BW = Q.BW
-            BW_scaled = Q.BW_scaled
+            Q.BW
+            Q.BW_scaled
