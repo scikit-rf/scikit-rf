@@ -5,6 +5,7 @@ from timeit import default_timer as timer
 from typing import Any, Tuple, TYPE_CHECKING
 
 import numpy as np
+from scipy.signal import find_peaks
 
 try:
     from matplotlib.ticker import EngFormatter
@@ -98,7 +99,8 @@ class VectorFitting:
         self.history_cond_A = []
         self.history_rank_deficiency = []
 
-    def get_spurious(self, n_freqs: int = 101, gamma: float = 0.03):
+    @staticmethod
+    def get_spurious(poles, residues, n_freqs: int = 101, gamma: float = 0.03):
         """
         Classifies fitted pole-residue pairs as spurious or not spurious. The implementation is based on the evaluation
         of band-limited energy norms (p=2) of the resonance curves of individual pole-residue pairs, as proposed in
@@ -125,9 +127,9 @@ class VectorFitting:
             Compatibility, vol. 48, no. 1, pp. 104-120, Feb. 2006, DOI: https://doi.org/10.1109/TEMC.2006.870814
         """
 
-        omega_eval = np.linspace(np.min(self.poles.imag) / 3, np.max(self.poles.imag) * 3, n_freqs)
-        h = (self.residues[:, None, :] / (1j * omega_eval[:, None] - self.poles)
-             + np.conj(self.residues[:, None, :]) / (1j * omega_eval[:, None] - np.conj(self.poles)))
+        omega_eval = np.linspace(np.min(poles.imag) / 3, np.max(poles.imag) * 3, n_freqs)
+        h = (residues[:, None, :] / (1j * omega_eval[:, None] - poles)
+             + np.conj(residues[:, None, :]) / (1j * omega_eval[:, None] - np.conj(poles)))
         norm2 = np.sqrt(np.trapz(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
         spurious = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
         return spurious
@@ -338,6 +340,163 @@ class VectorFitting:
                 warnings.warn('The fitted network is passive, but the vector fit is not passive. Consider running '
                               '`passivity_enforce()` to enforce passivity before using this model.',
                               UserWarning, stacklevel=2)
+
+    def autofit(self, parameter_type: str = 's'):
+        n_poles_init_real = 3
+        n_poles_init_cmplx = 0
+        model_order_max = 200
+        n_poles_add = 5
+
+        i_start = 3
+        i_inter = 3
+        i_final = 3
+
+        eps_min = 1e-3
+        alpha = 0.03
+        gamma = 0.03
+
+        eps_peak_history = []
+        model_order_history = []
+
+        timer_start = timer()
+
+        # use normalized frequencies during the iterations (seems to be more stable during least-squares fit)
+        norm = np.average(self.network.f)
+        # norm = np.exp(np.mean(np.log(self.network.f)))
+        freqs_norm = np.array(self.network.f) / norm
+
+        # get initial poles
+        poles = self._init_poles(freqs_norm, n_poles_init_real, n_poles_init_cmplx, 'lin')
+
+        logging.info('### Starting pole relocation process.\n')
+
+        # select network representation type
+        if parameter_type.lower() == 's':
+            nw_responses = self.network.s
+            fit_constant = True
+            fit_proportional = False
+        elif parameter_type.lower() == 'z':
+            nw_responses = self.network.z
+            fit_constant = True
+            fit_proportional = True
+        elif parameter_type.lower() == 'y':
+            nw_responses = self.network.y
+            fit_constant = True
+            fit_proportional = True
+        else:
+            warnings.warn('Invalid choice of matrix parameter type (S, Z, or Y); proceeding with scattering '
+                          'representation.', UserWarning, stacklevel=2)
+            nw_responses = self.network.s
+            fit_constant = True
+            fit_proportional = False
+
+        # stack frequency responses as a single vector
+        # stacking order (row-major):
+        # s11, s12, s13, ..., s21, s22, s23, ...
+        freq_responses = []
+        for i in range(self.network.nports):
+            for j in range(self.network.nports):
+                freq_responses.append(nw_responses[:, i, j])
+        freq_responses = np.array(freq_responses)
+
+        # responses will be weighted according to their norm;
+        # alternative: equal weights with weight_response = 1.0
+        # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
+        weights_responses = np.linalg.norm(freq_responses, axis=1)
+        # weights_responses = np.ones(self.network.nports ** 2)
+        # weights_responses = 10 / np.exp(np.mean(np.log(np.abs(freq_responses)), axis=1))
+
+        # INITIAL POLE RELOCATION FOR i_start ITERATIONS
+        for i in range(i_start):
+            poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
+                poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+
+        # RESIDUE FITTING FOR ERROR COMPUTATION
+        residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
+                                                                          fit_constant=fit_constant,
+                                                                          fit_proportional=fit_proportional)
+        delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
+                                weights_responses)
+        eps_peak = np.max(delta)
+        eps_peak_history.append(eps_peak)
+
+        model_order = np.sum((poles.imag != 0) + 1)
+        model_order_history.append(model_order)
+
+        delta_eps = 1
+
+        # POLE SKIMMING AND ADDING LOOP
+        while eps_peak > eps_min and model_order < model_order_max and delta_eps > alpha:
+
+            # SKIMMING OF SPURIOUS POLES
+            spurious = self.get_spurious(poles, residues, gamma=gamma)
+            n_skim = np.sum(spurious)
+            print(f'skimming {n_skim} poles')
+            poles = poles[~spurious]
+
+            # REPLACING SPURIOUS POLE AND ADDING NEW POLES
+            idx_freqs_start, idx_freqs_stop, idx_freqs_max, delta_mean_bands = self._find_error_bands(freqs_norm, delta)
+            #print(f'replacement candidate frequencies: {2 * np.pi * freqs_norm[idx_freqs_max]}')
+            #print(f'existing pole frequencies: {poles}')
+
+            n_bands = len(idx_freqs_max)
+            if n_bands < n_skim:
+                n_add = n_bands
+            elif n_bands < n_skim + n_poles_add:
+                n_add = n_bands
+            else:
+                n_add = n_poles_add
+
+            print(f'adding {n_add} poles')
+            for i in range(n_add):
+                poles = np.append(poles, [(-0.01 + 1j) * 2 * np.pi * freqs_norm[idx_freqs_max[i]]])
+
+            # INTERMEDIATE POLE RELOCATION FOR i_inter ITERATIONS
+            for i in range(i_inter):
+                poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
+                    poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+
+            # RESIDUE FITTING FOR ERROR COMPUTATION
+            residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
+                                                                              fit_constant=fit_constant,
+                                                                              fit_proportional=fit_proportional)
+            delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
+                                    weights_responses)
+            eps_peak = np.max(delta)
+            eps_peak_history.append(eps_peak)
+
+            if len(eps_peak_history) > 3:
+                delta_eps = abs(eps_peak_history[-4] - eps_peak_history[-1])
+            else:
+                delta_eps = 1
+
+            model_order = np.sum((poles.imag != 0) + 1)
+            model_order_history.append(model_order)
+
+        # SKIMMING OF SPURIOUS POLES
+        spurious = self.get_spurious(poles, residues, gamma=gamma)
+        n_skim = np.sum(spurious)
+        print(f'skimming {n_skim} poles')
+        poles = poles[~spurious]
+
+        # FINAL POLE RELOCATION FOR i_final ITERATIONS
+        for i in range(i_final):
+            poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
+                poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+
+        # FINAL RESIDUE FITTING
+        residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
+                                                                          fit_constant=fit_constant,
+                                                                          fit_proportional=fit_proportional)
+
+        # save poles, residues, d, e in actual frequencies (un-normalized)
+        self.poles = poles * norm
+        self.residues = np.array(residues) * norm
+        self.constant_coeff = np.array(constant_coeff)
+        self.proportional_coeff = np.array(proportional_coeff) / norm
+
+        timer_stop = timer()
+        self.wall_clock_time = timer_stop - timer_start
 
     @staticmethod
     def _init_poles(freqs: list, n_poles_real: int, n_poles_cmplx: int, init_pole_spacing: str):
@@ -666,6 +825,62 @@ class VectorFitting:
 
         return residues, constant_coeff, proportional_coeff
 
+    @staticmethod
+    def _get_delta(poles, residues, constant_coeff, proportional_coeff, freqs, freq_responses, weights_responses):
+        s = 2j * np.pi * freqs
+        model = proportional_coeff[:, None] * s + constant_coeff[:, None]
+        for i, pole in enumerate(poles):
+            if np.imag(pole) == 0.0:
+                # real pole
+                model += residues[:, i, None] / (s - pole)
+            else:
+                # complex conjugate pole
+                model += residues[:, i, None] / (s - pole) + np.conjugate(residues[:, i, None]) / (s - np.conjugate(pole))
+
+        # compute weighted error and return global maximum at each frequency across all individual responses
+        delta = np.abs(model - freq_responses) * weights_responses[:, None]
+        return np.max(delta, axis=0)
+
+    @staticmethod
+    def _find_error_bands(freqs, delta):
+        # compute error bands (maximal fit deviation)
+        delta_mean = np.mean(delta)
+        error = delta - delta_mean
+
+        # find limits of error bands
+        idx_limits = np.nonzero(np.diff(error > 0))[0]
+        idx_limits_filtered = idx_limits[np.diff(idx_limits, prepend=0) > 2]
+
+        freqs_bands = np.split(freqs, idx_limits_filtered)
+        error_bands = np.split(error, idx_limits_filtered)
+        n_bands = len(freqs_bands)
+
+        idx_freqs_start = []
+        idx_freqs_stop = []
+        idx_freqs_max = []
+        delta_mean_bands = []
+        for i_band in range(n_bands):
+            band_error_mean = np.mean(error_bands[i_band])
+            if band_error_mean > 0:
+                # band with excess error;
+                # find frequency index of error maximum inside this band
+                i_band_max_error = np.argmax(error_bands[i_band])
+                i_start = np.nonzero(freqs == freqs_bands[i_band][0])[0][0]
+                i_stop = np.nonzero(freqs == freqs_bands[i_band][-1])[0][0]
+                i_max = np.nonzero(freqs == freqs_bands[i_band][i_band_max_error])[0][0]
+                idx_freqs_start.append(i_start)
+                idx_freqs_stop.append(i_stop)
+                idx_freqs_max.append(i_max)
+                delta_mean_bands.append(np.mean(delta[i_start:i_stop]))
+
+        idx_freqs_start = np.array(idx_freqs_start)
+        idx_freqs_stop = np.array(idx_freqs_stop)
+        idx_freqs_max = np.array(idx_freqs_max)
+        delta_mean_bands = np.array(delta_mean_bands)
+
+        i_sort = np.flip(np.argsort(delta_mean_bands))
+
+        return idx_freqs_start[i_sort], idx_freqs_stop[i_sort], idx_freqs_max[i_sort], delta_mean_bands[i_sort]
 
     def get_rms_error(self, i=-1, j=-1, parameter_type: str = 's'):
         r"""
