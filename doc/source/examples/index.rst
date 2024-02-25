@@ -97,15 +97,6 @@ Taper
     taper/*
 
 
-Internals
-------------------
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-
-    internals/*
-
 Instrument Control
 ------------------
 
