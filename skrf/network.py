@@ -519,7 +519,7 @@ class Network:
 
         """
         s = npy.zeros(shape=z.shape)
-        me = cls(s=s, *args, **kw)
+        me = cls(s=s, **kw)
         me.z = z
         return me
 
@@ -845,7 +845,6 @@ class Network:
         >>> d = b.s12
         """
 
-        a = self.z0  # HACK: to force getter for z0 to re-shape it (z0 getter has side effects...)
         # If user passes a multidimensional index, try to return that 1 port subnetwork
         if isinstance(key, tuple):
             if len(key) == 3:
@@ -863,12 +862,12 @@ class Network:
                         raise ValueError("Can't index without named ports")
                     try:
                         p1_index = self.port_names.index(p1_name)
-                    except ValueError as e:
-                        raise KeyError(f"Unknown port {p1_name}")
+                    except ValueError as err:
+                        raise KeyError(f"Unknown port {p1_name}") from err
                     try:
                         p2_index = self.port_names.index(p2_name)
-                    except ValueError as e:
-                        raise KeyError(f"Unknown port {p2_name}")
+                    except ValueError as err:
+                        raise KeyError(f"Unknown port {p2_name}") from err
                 ntwk = self.copy()
                 ntwk.s = self.s[:, p1_index, p2_index]
                 ntwk.z0 = self.z0[:, p1_index]
@@ -877,8 +876,6 @@ class Network:
                 return ntwk
             else:
                 raise ValueError(f"Don't understand index: {key}")
-            sliced_frequency = self.frequency[key]
-            return self.interpolate(sliced_frequency)
         if isinstance(key, str):
             sliced_frequency = self.frequency[key]
             return self.interpolate(sliced_frequency)
@@ -1387,8 +1384,8 @@ class Network:
         else:
             try:
                 self._frequency = Frequency.from_f(new_frequency)
-            except (TypeError):
-                raise TypeError('Could not convert argument to a frequency vector')
+            except TypeError as err:
+                raise TypeError('Could not convert argument to a frequency vector') from err
 
     @property
     def inv(self) -> Network:
@@ -1521,7 +1518,6 @@ class Network:
       """
       The noise figure for the network if the source impedance is z.
       """
-      z0 = self.z0
       y_opt = self.y_opt
       fmin = self.nfmin
       rn = self.rn
@@ -1889,7 +1885,7 @@ class Network:
         """
         return npy.allclose(reciprocity(self.s), npy.zeros_like(self.s), atol=tol)
 
-    def is_symmetric(self, n: int = 1, port_order: dict[int, int] = {}, tol: float = mf.ALMOST_ZERO) -> bool:
+    def is_symmetric(self, n: int = 1, port_order: dict[int, int] = None, tol: float = mf.ALMOST_ZERO) -> bool:
         """
         Return whether the 2N-port network has n-th order reflection symmetry by checking.
         :math:`S_{i,i} == S_{j,j}` for appropriate pair(s) of :math:`i` and :math:`j`.
@@ -1924,6 +1920,8 @@ class Network:
 
         """
 
+        if port_order is None:
+            port_order = {}
         nfreqs, ny, nx = self.s.shape  # nfreqs is number of frequencies, and nx, ny both are number of ports (2N)
         if nx % 2 != 0 or nx != ny:
             raise ValueError('Using is_symmetric() is only valid for a 2N-port network (N=2,4,6,8,...)')
@@ -2218,9 +2216,6 @@ class Network:
 
             gamma_opt = gamma_opt_mag * npy.exp(1j * gamma_opt_angle)
 
-            nf_min = npy.power(10., nfmin_db/10.)
-            # TODO maybe interpolate z0 as above
-            y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
             # use the voltage/current correlation matrix; this works nicely with
             # cascading networks
             self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
@@ -2645,7 +2640,7 @@ class Network:
         from .io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
 
-    def to_dataframe(self, attrs: list[str] =['s_db'],
+    def to_dataframe(self, attrs: list[str] =None,
             ports: list[tuple[int, int]] = None, port_sep: str | None = None):
         """
         Convert attributes of a Network to a pandas DataFrame.
@@ -2677,6 +2672,8 @@ class Network:
         skrf.io.general.network_2_dataframe
         """
         from .io.general import network_2_dataframe
+        if attrs is None:
+            attrs = ['s_db']
         return network_2_dataframe(self, attrs=attrs, ports=ports, port_sep=port_sep)
 
     def write_to_json_string(self) -> str:
@@ -2702,7 +2699,7 @@ class Network:
 
     # interpolation
     def interpolate(self, freq_or_n: Frequency | NumberLike, basis: str = 's',
-                    coords: str = 'cart', f_kwargs: dict = {}, return_array: bool = False,
+                    coords: str = 'cart', f_kwargs: dict = None, return_array: bool = False,
                     **kwargs) -> Network | npy.ndarray:
         r"""
         Interpolate a Network along frequency axis.
@@ -2791,6 +2788,8 @@ class Network:
 
         """
         # make new network and fill with interpolated values
+        if f_kwargs is None:
+            f_kwargs = {}
         result = self.copy()
 
         if kwargs.get('kind', None) == 'rational':
@@ -4157,7 +4156,7 @@ class Network:
         if self.frequency.f[0] != 0:
             warnings.warn(
                 "Frequency doesn't begin from 0. Step response will not be correct.",
-                RuntimeWarning
+                RuntimeWarning, stacklevel=2
             )
 
         t, y = self.impulse_response(window=window, n=n, pad=pad, bandpass=False, squeeze=squeeze)
@@ -4802,7 +4801,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         else:
             ntwkA = ntwkA[common_freq[1]]
             ntwkB = ntwkB[common_freq[2]]
-            warnings.warn("Using a frequency subset:\n" + str(ntwkA.frequency))
+            warnings.warn("Using a frequency subset:\n" + str(ntwkA.frequency), stacklevel=2)
 
     if (k + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `k` out of range')
@@ -4817,7 +4816,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         warnings.warn('Connecting two networks with different s_def and complex ports. '
                 'The resulting network will have s_def of the first network: ' + ntwkA.s_def + '. '\
                 'To silence this warning explicitly convert the networks to same s_def '
-                'using `renormalize` function.')
+                'using `renormalize` function.', stacklevel=2)
         ntwkB = ntwkB.copy()
         ntwkB.renormalize(ntwkB.z0, ntwkA.s_def)
 
@@ -5661,7 +5660,7 @@ def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network
     z0 = npy.concatenate(
         [ntwk_list[k].z0 for k in range(0, nports ** 2, nports + 1)], 1)
     frequency = ntwk_list[0].frequency
-    return Network(s=s_out, z0=z0, frequency=frequency, *args, **kwargs)
+    return Network(s=s_out, z0=z0, frequency=frequency, **kwargs)
 
 
 def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
@@ -5749,103 +5748,6 @@ def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Netwo
     three_twoports_2_threeport
     """
     return n_oneports_2_nport([s11, s12, s21, s22], *args, **kwargs)
-
-
-def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool = True, *args,
-                               **kwargs) -> Network:
-    r"""
-    Create 3-port from  three 2-port Networks.
-
-    This function provides a convenient way to build a 3-port Network
-    from a set of 2-port measurements. Which may occur when measuring
-    a three port device on a 2-port VNA.
-
-    Note
-    ----
-    if `auto_order` is False,  ntwk_triplet must be of port orderings:
-         [p12, p13, p23]
-
-    else if `auto_order`is True, then the  3 Networks in ntwk_triplet must
-    contain port identification in their names.
-    For example, their names may be like `me12`, `me13`, `me23`
-
-    Parameters
-    ----------
-    ntwk_triplet : list of 2-port Network objects
-        list of three 2-ports. see notes about order.
-
-    auto_order : bool
-        if True attempt to inspect port orderings from Network names.
-        Names must be like 'p12', 'p23', etc
-    contains : str
-        only files containing this string will be loaded.
-    \*args,\*\*kwargs :
-        passed to :func:`Network.__init__` for resultant network
-
-    Returns
-    -------
-    threeport : 3-port Network
-
-    See Also
-    --------
-    n_oneports_2_nport
-
-    Examples
-    --------
-    >>> rf.three_twoports_2_threeport(rf.read_all('.').values())
-    """
-    raise DeprecationWarning('Use n_twoports_2_nport instead')
-    if auto_order:
-        p12, p13, p23 = None, None, None
-        s11, s12, s13, s21, s22, s23, s31, s32, s33 = None, None, None, None, None, None, None, None, None
-
-        for k in ntwk_triplet:
-            if '12' in k.name:
-                p12 = k
-            elif '13' in k.name:
-                p13 = k
-            elif '23' in k.name:
-                p23 = k
-            elif '21' in k.name:
-                p12 = k.flipped()
-            elif '31' in k.name:
-                p31 = k.flipped()
-            elif '32' in k.name:
-                p23 = k.flipped()
-    else:
-        p12, p13, p23 = ntwk_triplet
-        p21 = p12.flipped()
-        p31 = p13.flipped()
-        p32 = p23.flipped()
-
-    if p12 is not None:
-        s11 = p12.s11
-        s12 = p12.s12
-        s21 = p12.s21
-        s22 = p12.s22
-
-    if p13 is not None:
-        s11 = p13.s11
-        s13 = p13.s12
-        s31 = p13.s21
-        s33 = p13.s22
-
-    if p23 is not None:
-        s22 = p23.s11
-        s23 = p23.s12
-        s32 = p23.s21
-        s33 = p23.s22
-
-    ntwk_list = [s11, s12, s13, s21, s22, s23, s31, s32, s33]
-
-    for k in range(len(ntwk_list)):
-        if ntwk_list[k] is None:
-            frequency = ntwk_triplet[0].frequency
-            s = npy.zeros((len(ntwk_triplet[0]), 1, 1))
-            ntwk_list[k] = Network(s=s, frequency=frequency)
-
-    threeport = n_oneports_2_nport(ntwk_list, *args, **kwargs)
-    return threeport
 
 
 ## Functions operating on s-parameter matrices

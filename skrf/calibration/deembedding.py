@@ -109,7 +109,8 @@ class Deembedding(ABC):
        # ensure all the dummy Networks' frequency's are the same
         for dmyntwk in dummies:
             if dummies[0].frequency != dmyntwk.frequency:
-                warnings.warn('Dummy Networks dont have matching frequencies, attempting overlap.', RuntimeWarning)
+                warnings.warn('Dummy Networks dont have matching frequencies, attempting overlap.', RuntimeWarning,
+                              stacklevel=2)
                 dummies = overlap_multi(dummies)
                 break
 
@@ -237,7 +238,8 @@ class OpenShort(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning,
+                          stacklevel=2)
             caled, op, sh = overlap_multi([ntwk, self.open, self.short])
         else:
             caled, op, sh = ntwk.copy(), self.open, self.short
@@ -330,7 +332,8 @@ class Open(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning,
+                           stacklevel=2)
             ntwk, op = overlap_multi([ntwk, self.open])
         else:
             op = self.open
@@ -428,7 +431,8 @@ class ShortOpen(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning,
+                          stacklevel=2)
             ntwk, op, sh = overlap_multi([ntwk, self.open, self.short])
         else:
             op, sh = self.open, self.short
@@ -524,7 +528,8 @@ class Short(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.short.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning,
+                           stacklevel=2)
             ntwk, sh = overlap_multi([ntwk, self.short])
         else:
             sh = self.short
@@ -618,7 +623,8 @@ class SplitPi(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.',
+                          RuntimeWarning, stacklevel=2)
             ntwk, thru = overlap_multi([ntwk, self.thru])
         else:
             thru = self.thru
@@ -718,7 +724,8 @@ class SplitTee(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.',
+                          RuntimeWarning, stacklevel=2)
             ntwk, thru = overlap_multi([ntwk, self.thru])
         else:
             thru = self.thru
@@ -821,7 +828,8 @@ class AdmittanceCancel(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.',
+                          RuntimeWarning, stacklevel=2)
             ntwk, thru = overlap_multi([ntwk, self.thru])
         else:
             thru = self.thru
@@ -922,7 +930,8 @@ class ImpedanceCancel(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.thru.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.',
+                          RuntimeWarning, stacklevel=2)
             ntwk, thru = overlap_multi([ntwk, self.thru])
         else:
             thru = self.thru
@@ -1078,7 +1087,8 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.',
+                          RuntimeWarning, stacklevel=2)
             ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
             s_side1, s_side2 = self.split2xthru(s2xthru)
         else:
@@ -1157,7 +1167,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             if(f[0] == 0):
                 warnings.warn(
                     "DC point detected. An interpolated DC point will be included in the errorboxes.",
-                    RuntimeWarning
+                    RuntimeWarning, stacklevel=2
                     )
                 flag_DC = True
                 f = f[1:]
@@ -1170,11 +1180,10 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 warnings.warn(
                    """Non-uniform frequency vector detected. An interpolated S-parameter matrix will be created for
                    this calculation. The output results will be re-interpolated to the original vector.""",
-                   RuntimeWarning
+                   RuntimeWarning, stacklevel=2
                    )
                 flag_df = True
                 f_original = f
-                df = f[1] - f[0]
                 projected_n = round(f[-1]/f[0])
                 if(projected_n <= 10000):
                     fnew = f[0] * (np.arange(0, projected_n) + 1)
@@ -1563,7 +1572,8 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.',
+                          RuntimeWarning, stacklevel=2)
             ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
             se_side1, se_side2 = self.split2xthru(s2xthru)
         else:
@@ -1786,7 +1796,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.',
+                          RuntimeWarning, stacklevel=2)
             ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
             s_side1, s_side2 = self.split2xthru(s2xthru,
                                                       self.sfix_dut_fix)
@@ -2158,7 +2169,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         if(f[0] == 0):
             warnings.warn(
                 "DC point detected. The included DC point will not be used during extraction.",
-                RuntimeWarning
+                RuntimeWarning, stacklevel=2
                 )
             self.flag_DC = True
             f = f[1:]
@@ -2173,7 +2184,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             warnings.warn(
                """Non-uniform frequency vector detected. An interpolated S-parameter matrix will be created for
                this calculation. The output results will be re-interpolated to the original vector.""",
-               RuntimeWarning
+               RuntimeWarning, stacklevel=2
                )
             self.flag_df = True
             f_original = f
@@ -2194,7 +2205,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             warnings.warn(
                """2x-thru does not have the same frequency vector as the fixture-dut-fixture.
                Interpolating to fix problem.""",
-               RuntimeWarning
+               RuntimeWarning, stacklevel=2
                )
 
         # enforce Nyquist rate point
@@ -2250,7 +2261,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         else:
             warnings.warn(
                "no output because no output was requested",
-               RuntimeWarning
+               RuntimeWarning, stacklevel=2
                )
 
 
@@ -2473,7 +2484,8 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.s2xthru.frequency:
-            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.', RuntimeWarning)
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.',
+                          RuntimeWarning, stacklevel=2)
             ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
             se_side1, se_side2 = self.split2xthru(s2xthru, self.sfix_dut_fix)
         else:

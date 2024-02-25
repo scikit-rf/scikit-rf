@@ -20,7 +20,7 @@ try:
 
         try:
             module = importlib.import_module(module_name)
-        except Exception as e:
+        except Exception:
             etype, value, tb = sys.exc_info()
             err_msg = "\n".join(traceback.format_exception(etype, value, tb))
             print(f"did not import {module_name:s}\n\n{err_msg:s}")

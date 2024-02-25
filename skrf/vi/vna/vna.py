@@ -127,21 +127,17 @@ class VNA(ABC):
                 raise AttributeError(f"{type(self).__name__} has no attribute {k}")
             return getattr(self.ch1, k)
 
-        setattr(cls, "create_channel", create_channel)
-        setattr(cls, "delete_channel", delete_channel)
-        setattr(cls, "channels", property(_channels))
-        setattr(cls, "__getattr__", __getattr__)
+        cls.create_channel = create_channel
+        cls.delete_channel = delete_channel
+        cls.channels = property(_channels)
+        cls.__getattr__ = __getattr__
 
     def _setup_scpi(self) -> None:
-        setattr(
-            self.__class__,
-            "wait_for_complete",
-            lambda self: self.query("*OPC?"),
-        )
-        setattr(self.__class__, "status", property(lambda self: self.query("*STB?")))
-        setattr(self.__class__, "options", property(lambda self: self.query("*OPT?")))
-        setattr(self.__class__, "id", property(lambda self: self.query("*IDN?")))
-        setattr(self.__class__, "clear_errors", lambda self: self.write("*CLS"))
+        self.__class__.wait_for_complete = lambda self: self.query("*OPC?")
+        self.__class__.status = property(lambda self: self.query("*STB?"))
+        self.__class__.options = property(lambda self: self.query("*OPT?"))
+        self.__class__.id = property(lambda self: self.query("*IDN?"))
+        self.__class__.clear_errors = lambda self: self.write("*CLS")
 
         def errcheck(self) -> None:
             err = self.query("SYST:ERR?")
@@ -151,7 +147,7 @@ class VNA(ABC):
             else:
                 raise SCPIError(errno)
 
-        setattr(self.__class__, "check_errors", errcheck)
+        self.__class__.check_errors = errcheck
 
     @staticmethod
     def command(
@@ -259,7 +255,7 @@ class VNA(ABC):
 
         return fn(**kwargs)
 
-    def read_values(self, **kwargs) -> None:
+    def read_values(self, **kwargs) -> None:  # noqa: B027
         pass
 
     def write(self, cmd, **kwargs) -> None:

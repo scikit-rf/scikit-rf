@@ -71,7 +71,9 @@ class Analyzer(base_analyzer.Analyzer):
         ]
         return traces
 
-    def get_traces(self, traces=[], channel=None, sweep=False, **kwargs):
+    def get_traces(self, traces=None, channel=None, sweep=False, **kwargs):
+        if traces is None:
+            traces = []
         name_prefix = kwargs.get('name_prefix', "")
         if name_prefix:
             name_prefix += " - "

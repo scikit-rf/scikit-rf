@@ -93,12 +93,12 @@ class InputWithUnits(NumericLineEdit):
             try:
                 value = float(value)
                 self.setText(str(value))
-            except ValueError as e:
+            except ValueError:
                 Warning(f"invalid entry {value} for line Edit")
 
         self.units = units
         self.conversions = None
-        for key, unit_list in available_units.items():
+        for unit_list in available_units.values():
             if units in unit_list.keys():
                 self.conversions = unit_list
                 self.base_unit = self.conversions["base"]

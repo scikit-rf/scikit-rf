@@ -145,7 +145,7 @@ def read(file, *args, **kwargs):
     fid = get_fid(file, mode='rb')
     try:
         obj = pickle.load(fid, *args, **kwargs)
-    except (UnpicklingError, UnicodeDecodeError) as e:
+    except (UnpicklingError, UnicodeDecodeError):
         # if fid is seekable then reset to beginning of file
         fid.seek(0)
 
@@ -241,7 +241,7 @@ def write(file, obj, overwrite = True):
 
         if os.path.exists(file):
             if not overwrite:
-                warnings.warn('file exists, and overwrite option is False. Not writing.')
+                warnings.warn('file exists, and overwrite option is False. Not writing.', stacklevel=2)
                 return
 
         with open(file, 'wb') as fid:
@@ -434,7 +434,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
                 write(fid, obj,*args, **kwargs)
         except Exception as inst:
             print(inst)
-            warnings.warn(f'couldnt write {k}: {inst}')
+            warnings.warn(f'couldnt write {k}: {inst}', stacklevel=2)
 
             pass
 
@@ -529,7 +529,6 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
     for f in os.listdir (dir):
         if contains is not None and contains not in f:
             continue
-        fullname = os.path.join(dir,f)
         keyname,extn = os.path.splitext(f)
         extn = extn.lower()
         try:
@@ -557,7 +556,7 @@ def write_dict_of_networks(ntwkDict, dir='.'):
 
 
     """
-    warnings.warn('Deprecated. use write_all.', DeprecationWarning)
+    warnings.warn('Deprecated. use write_all.', DeprecationWarning, stacklevel=2)
     for ntwkKey in ntwkDict:
         ntwkDict[ntwkKey].write_touchstone(filename = dir+'/'+ntwkKey)
 
@@ -710,9 +709,9 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
 
     df = DataFrame(d)
     df.__getattribute__('to_%s'%file_type)(file_name,
-        index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
+        index_label='Freq(%s)'%ntwk.frequency.unit, **kwargs)
 
-def network_2_dataframe(ntwk: Network, attrs: list[str] =['s_db'],
+def network_2_dataframe(ntwk: Network, attrs: list[str] =None,
         ports: list[tuple[int, int]] = None, port_sep: str | None = None):
     """
     Convert one or more attributes of a network to a pandas DataFrame.
@@ -736,6 +735,8 @@ def network_2_dataframe(ntwk: Network, attrs: list[str] =['s_db'],
     -------
     df : pandas DataFrame Object
     """
+    if attrs is None:
+        attrs = ["s_db"]
     if ports is None:
         ports = ntwk.port_tuples
 
@@ -798,7 +799,7 @@ def networkset_2_spreadsheet(ntwkset: NetworkSet, file_name: str = None, file_ty
         if not file_name.endswith('.xlsx'):
             file_name += '.xlsx'
         with ExcelWriter(file_name) as writer:
-            [network_2_spreadsheet(k, writer, sheet_name=k.name, *args, **kwargs) for k in ntwkset]
+            [network_2_spreadsheet(k, writer, sheet_name=k.name, **kwargs) for k in ntwkset]
     else:
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
 

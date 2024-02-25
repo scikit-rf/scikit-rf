@@ -45,8 +45,8 @@ class IntValidator(Validator):
     def validate_input(self, arg) -> int:
         try:
             arg = int(arg)
-        except ValueError:
-            raise ValidationError(f"Could not convert {arg} to an int")
+        except ValueError as err:
+            raise ValidationError(f"Could not convert {arg} to an int") from err
 
         if self.min is not None or self.max is not None:
             self.check_bounds(arg)
@@ -57,14 +57,14 @@ class IntValidator(Validator):
         try:
             if self.min is not None:
                 assert arg >= self.min
-        except AssertionError:
-            raise ValidationError(f"{arg} < {self.min}")
+        except AssertionError as err:
+            raise ValidationError(f"{arg} < {self.min}") from err
 
         try:
             if self.max is not None:
                 assert arg <= self.max
-        except AssertionError:
-            raise ValidationError(f"{arg} > {self.max}")
+        except AssertionError as err:
+            raise ValidationError(f"{arg} > {self.max}") from err
 
 
 class FloatValidator(Validator):
@@ -81,8 +81,8 @@ class FloatValidator(Validator):
     def validate_input(self, arg) -> float:
         try:
             arg = float(arg)
-        except ValueError:
-            raise ValidationError(f"Could not convert {arg} to a float")
+        except ValueError as err:
+            raise ValidationError(f"Could not convert {arg} to a float") from err
 
         if self.min is not None or self.max is not None:
             self.check_bounds(arg)
@@ -93,14 +93,14 @@ class FloatValidator(Validator):
         try:
             if self.min is not None:
                 assert arg >= self.min
-        except AssertionError:
-            raise ValidationError(f"{arg} < {self.min}")
+        except AssertionError as err:
+            raise ValidationError(f"{arg} < {self.min}") from err
 
         try:
             if self.max is not None:
                 assert arg <= self.max
-        except AssertionError:
-            raise ValidationError(f"{arg} > {self.max}")
+        except AssertionError as err:
+            raise ValidationError(f"{arg} > {self.max}") from err
 
 
 class FreqValidator(Validator):
@@ -117,15 +117,15 @@ class FreqValidator(Validator):
         else:
             try:
                 return int(arg)
-            except ValueError:
-                raise ValidationError("Could not convert {arg} to an int")
+            except ValueError as err:
+                raise ValidationError("Could not convert {arg} to an int") from err
 
     def validate_output(self, arg) -> int:
         try:
             f = float(arg)
             return int(f)
-        except ValueError:
-            raise ValidationError(f"Response from instrument ({arg}) could not be converted to an int")
+        except ValueError as err:
+            raise ValidationError(f"Response from instrument ({arg}) could not be converted to an int") from err
 
 
 class EnumValidator(Validator):
@@ -138,14 +138,14 @@ class EnumValidator(Validator):
         else:
             try:
                 return self.Enum(arg).value
-            except ValueError:
-                raise ValidationError(f"{arg} is not a valid {self.Enum.__name__}")
+            except ValueError as err:
+                raise ValidationError(f"{arg} is not a valid {self.Enum.__name__}") from err
 
     def validate_output(self, arg) -> Any:
         try:
             return self.Enum(arg)
-        except ValueError:
-            raise ValidationError(f"Got unexpected response {arg}")
+        except ValueError as err:
+            raise ValidationError(f"Got unexpected response {arg}") from err
 
 
 class SetValidator(Validator):
@@ -177,7 +177,7 @@ class DictValidator(Validator):
         try:
             return self.arg_string.format(**arg)
         except KeyError as e:
-            raise ValidationError(f"Missing expected argument '{e}'")
+            raise ValidationError(f"Missing expected argument '{e}'") from e
 
     def validate_output(self, arg) -> dict:
         match = self.pattern.fullmatch(arg)

@@ -330,7 +330,7 @@ class Qfactor:
         if loop_plan[0] == "w":
             raise ValueError("First item in loop_plan must not be w (weight calculation)")
         if loop_plan[-1] != "c":
-            warn("Last item in loop_plan is not c so convergence not tested!")
+            warn("Last item in loop_plan is not c so convergence not tested!", stacklevel=2)
 
         self.method = method
         self.loop_plan = loop_plan
@@ -350,7 +350,7 @@ class Qfactor:
         self.opt_res = result
 
         if result.Q_L < 0:
-            warn('Negative Q_L, fitting may be inaccurate.')
+            warn('Negative Q_L, fitting may be inaccurate.', stacklevel=2)
 
         return result
 
@@ -446,7 +446,6 @@ class Qfactor:
 
         # Q_L0 : An order-of-magnitude estimate for Q_L-factor
         if Q_L0 is None:
-            Tol = self.tol * np.argmax(np.abs(self.s))
             # The value 5.0 should work well
             # for initial and optimised fits (Section 2.6).
             mult = 5.0
@@ -1078,7 +1077,6 @@ class Qfactor:
             raise ValueError("Illegal Scaling factor; should be a float or  None")
 
         m1, m2, m3, m4, m5 = (opt_res[key] for key in ['m1', 'm2', 'm3', 'm4', 'Q_L'])
-        FL = opt_res['f_L']
 
         if self.res_type == "transmission":
             if auto_flag:
@@ -1250,7 +1248,7 @@ class Qfactor:
 
         """
         if not self.fitted:
-            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.', stacklevel=2)
         return self.f_L/self.f_multiplier
 
     @property
@@ -1276,7 +1274,7 @@ class Qfactor:
 
         """
         if not self.fitted:
-            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.', stacklevel=2)
         return self.f_L/self.Q_L
 
     @property
@@ -1294,5 +1292,5 @@ class Qfactor:
 
         """
         if not self.fitted:
-            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.')
+            warn('Q-factor not fitted, result may be inaccurate. Use the .fit() method before.', stacklevel=2)
         return self.BW/self.f_multiplier

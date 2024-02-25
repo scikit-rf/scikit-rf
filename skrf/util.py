@@ -104,8 +104,8 @@ def axes_kwarg(func):
         try:
             if ax is None:
                 ax = plt.gca()
-        except NameError:
-            raise RuntimeError("Plotting is not available")
+        except NameError as err:
+            raise RuntimeError("Plotting is not available") from err
         func(*args, ax=ax, **kwargs)
 
     return wrapper
@@ -130,8 +130,8 @@ def subplots(*args, **kwargs) -> tuple[Figure, npy.ndarray]:
 
     try:
         return plt.subplots(*args, **kwargs)
-    except NameError:
-        raise RuntimeError("Plotting is not available")
+    except NameError as err:
+        raise RuntimeError("Plotting is not available") from err
 
 def now_string() -> str:
     """
@@ -423,7 +423,7 @@ def findReplace(directory: str, find: str, replace: str, file_pattern: str):
     ----------
     .. [1] http://stackoverflow.com/questions/4205854/python-way-to-recursively-find-and-replace-string-in-text-files
     """
-    for path, dirs, files in os.walk(os.path.abspath(directory)):
+    for path, _dirs, files in os.walk(os.path.abspath(directory)):
         for filename in fnmatch.filter(files, file_pattern):
             filepath = os.path.join(path, filename)
             with open(filepath) as f:

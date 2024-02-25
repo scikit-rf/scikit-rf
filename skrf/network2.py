@@ -113,7 +113,7 @@ class Parameter:
                 lines.append(plot_complex_rectangular(
                     z = self.val[:,m,n],
                     show_legend = show_legend, ax = ax,
-                    *args, **kwargs))#[0]) ## fix
+                    **kwargs))#[0]) ## fix
         #return lines ## fix
     def plot_smith(self, **kwargs):
         self.plot(**kwargs)
@@ -281,7 +281,7 @@ class Projection:
                         x_label = x_label,
                         y_label = self.y_label,
                         show_legend = show_legend, ax = ax,
-                        *args, **kwargs)[0])
+                        **kwargs)[0])
         return lines
 
     def _figure_data(self, format):
@@ -391,7 +391,7 @@ class Network:
         elif 'y' in kw:
             self.s = y2s(kw['y'],z0)
         else:
-            s=npy.zeros(len(frequency))
+            self.s=npy.zeros(len(frequency))
 
         self.frequency = frequency
         self.z0 = z0
@@ -458,7 +458,6 @@ class Network:
         if isinstance(key, str):
             # they passed a string. try to read the string and convert
             # it into a  slice. then slice self on that
-            re_numbers = re.compile(r'.*\d')
             re_hyphen = re.compile(r'\s*-\s*')
             re_letters = re.compile('[a-zA-Z]+')
 
@@ -492,8 +491,8 @@ class Network:
             output.s = output.s[key,:,:]
             return output
 
-        except(IndexError):
-            raise IndexError('slicing frequency/index is incorrect')
+        except IndexError as err:
+            raise IndexError('slicing frequency/index is incorrect') from err
 
 
 

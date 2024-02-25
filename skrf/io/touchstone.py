@@ -585,7 +585,7 @@ class Touchstone:
         warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
         return npy.hstack((self.f[:, None], self.s_flat.view(npy.float64).reshape(len(self.f), -1)))
 
-    def get_comments(self, ignored_comments: list[str]=["Created with skrf"]) -> str:
+    def get_comments(self, ignored_comments: list[str]=None) -> str:
         """
         Returns the comments which appear anywhere in the file.
 
@@ -598,6 +598,8 @@ class Touchstone:
         processed_comments : string
 
         """
+        if ignored_comments is None:
+            ignored_comments = ["Created with skrf"]
         processed_comments = ""
         if self.comments is None:
             self.comments = ""
