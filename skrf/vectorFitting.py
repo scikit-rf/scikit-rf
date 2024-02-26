@@ -345,7 +345,7 @@ class VectorFitting:
         n_poles_init_real = 3
         n_poles_init_cmplx = 10
         model_order_max = 100
-        n_poles_add = 2
+        n_poles_add = 5
 
         i_start = 3
         i_inter = 3
@@ -354,7 +354,7 @@ class VectorFitting:
         eps_min = 1e-2
         alpha = 0.03
         gamma = 0.03
-        nu = 0.01
+        nu_samples = 1
 
         eps_peak_history = []
         model_order_history = []
@@ -366,6 +366,7 @@ class VectorFitting:
         # norm = np.exp(np.mean(np.log(self.network.f)))
         freqs_norm = np.array(self.network.f) / norm
         omega_norm = 2 * np.pi * freqs_norm
+        nu = (omega_norm[1] - omega_norm[0]) * nu_samples
 
         # get initial poles
         poles = self._init_poles(freqs_norm, n_poles_init_real, n_poles_init_cmplx, 'lin')
@@ -414,9 +415,9 @@ class VectorFitting:
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
         # RESIDUE FITTING FOR ERROR COMPUTATION
-        poles, residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
-                                                                                 fit_constant=fit_constant,
-                                                                                 fit_proportional=fit_proportional)
+        residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
+                                                                          fit_constant=fit_constant,
+                                                                          fit_proportional=fit_proportional)
         delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                 weights_responses)
         eps_peak = np.max(delta)
@@ -431,11 +432,9 @@ class VectorFitting:
         while eps_peak > eps_min and model_order < model_order_max and delta_eps > alpha:
 
             # SKIMMING OF SPURIOUS POLES
-            spurious = self.get_spurious(poles, residues, n_freqs=len(freqs_norm), gamma=gamma)
+            spurious = self.get_spurious(poles, residues, gamma=gamma)
             n_skim = np.sum(spurious)
             poles = poles[~spurious]
-            # residues = residues[:, ~spurious]
-            print(f'skimming {n_skim} poles')
 
             # REPLACING SPURIOUS POLE AND ADDING NEW POLES
             idx_freqs_start, idx_freqs_stop, idx_freqs_max, delta_mean_bands = self._find_error_bands(freqs_norm, delta)
@@ -448,20 +447,7 @@ class VectorFitting:
             else:
                 n_add = n_skim + n_poles_add
 
-            print(f'adding {n_add} poles')
-
-            # poles_add = (-0.01 + 1j) * omega_norm[idx_freqs_max]
-            # height_stem = np.max(delta_mean_bands)
-            # import matplotlib.pyplot as mplt
-            # mplt.figure()
-            # mplt.hlines(delta_mean_bands, omega_norm[idx_freqs_start], omega_norm[idx_freqs_stop])
-            # mplt.stem(poles.imag, height_stem * np.ones_like(poles.imag), '-')
-            # mplt.stem(poles_add.imag, height_stem * np.ones_like(poles_add.imag), '-')
-            # #mplt.xlim(0, omega[-1])
-            # mplt.show()
-
             for i in range(n_add):
-                #omega_band = omega_norm[idx_freqs_start[i]:idx_freqs_stop[i]]
                 omega_add = omega_norm[idx_freqs_max[i]]
                 pole_add = (-0.01 + 1j) * omega_add
 
@@ -471,7 +457,6 @@ class VectorFitting:
 
                 # avoid forbidden bands (too close to neighbour)
                 if np.min(abs_poles_existing) < nu or pole_add.imag < nu:
-                    print('handling forbidden band')
                     # decide shift direction (towards higher or lower frequencies)
                     if idx_freqs_max[i] > 0:
                         delta_below = delta[idx_freqs_max[i] - 1]
@@ -484,10 +469,10 @@ class VectorFitting:
 
                     if delta_above > delta_below:
                         # shift to higher frequencies
-                        pole_add += (-0.01 + 1j) * nu
+                        pole_add += 1j * nu
                     else:
                         # shift to lower frequencies
-                        pole_add += (-0.01 - 1j) * nu
+                        pole_add -= 1j * nu
 
                 poles = np.append(poles, [pole_add])
 
@@ -497,37 +482,22 @@ class VectorFitting:
                     poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
             # RESIDUE FITTING FOR ERROR COMPUTATION
-            poles, residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
-                                                                                     fit_constant=fit_constant,
-                                                                                     fit_proportional=fit_proportional)
+            residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
+                                                                              fit_constant=fit_constant,
+                                                                              fit_proportional=fit_proportional)
             delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                     weights_responses)
             eps_peak = np.max(delta)
-            print(f'{eps_peak = }')
             eps_peak_history.append(eps_peak)
 
             m = 3
             if len(eps_peak_history) > m:
-                delta_eps = np.mean(np.abs(np.diff(eps_peak_history[-1 - m:-1])))
-                #delta_eps = np.abs(eps_peak_history[-1 - m] - eps_peak_history[-1])
+                delta_eps = np.mean(np.abs(np.diff(eps_peak_history[-1-m:-1])))
             else:
-                delta_eps = 10 * alpha
-
-            print(f'{delta_eps = }')
-            print()
+                delta_eps = 1
 
             model_order = np.sum((poles.imag != 0) + 1)
             model_order_history.append(model_order)
-
-            s = 1j * omega_norm
-            model = proportional_coeff[:, None] * s + constant_coeff[:, None]
-            for i, pole in enumerate(poles):
-                if np.imag(pole) == 0.0:
-                    # real pole
-                    model += residues[:, i, None] / (s - pole)
-                else:
-                    # complex conjugate pole
-                    model += residues[:, i, None] / (s - pole) + np.conjugate(residues[:, i, None]) / (s - np.conjugate(pole))
 
         # SKIMMING OF SPURIOUS POLES
         spurious = self.get_spurious(poles, residues, gamma=gamma)
@@ -539,9 +509,9 @@ class VectorFitting:
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
         # FINAL RESIDUE FITTING
-        poles, residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
-                                                                                 fit_constant=fit_constant,
-                                                                                 fit_proportional=fit_proportional)
+        residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
+                                                                          fit_constant=fit_constant,
+                                                                          fit_proportional=fit_proportional)
 
         # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
@@ -865,10 +835,12 @@ class VectorFitting:
                                                             np.hstack((freq_responses.real, freq_responses.imag)).transpose(),
                                                             rcond=None)
 
-        # align poles and residues arrays to get matching pole-residue pairs
-        poles = np.concatenate((poles[idx_poles_real], poles[idx_poles_complex]))
-        residues = np.concatenate((x[idx_res_real], x[idx_res_complex_re] + 1j * x[idx_res_complex_im]), axis=0).transpose()
+        # extract residues from solution vector and align them with poles to get matching pole-residue pairs
+        residues = np.empty((len(freq_responses), len(poles)), dtype=complex)
+        residues[:, idx_poles_real] = np.transpose(x[idx_res_real])
+        residues[:, idx_poles_complex] = np.transpose(x[idx_res_complex_re] + 1j * x[idx_res_complex_im])
 
+        # extract constant and proportional coefficient, if available
         if fit_constant:
             constant_coeff = x[idx_constant][0]
         else:
@@ -879,7 +851,7 @@ class VectorFitting:
         else:
             proportional_coeff = np.zeros(n_responses)
 
-        return poles, residues, constant_coeff, proportional_coeff
+        return residues, constant_coeff, proportional_coeff
 
     @staticmethod
     def _get_delta(poles, residues, constant_coeff, proportional_coeff, freqs, freq_responses, weights_responses):
@@ -896,8 +868,7 @@ class VectorFitting:
         # compute weighted error and return global maximum at each frequency across all individual responses
         delta = np.abs(model - freq_responses) * weights_responses[:, None]
 
-        # return np.max(delta, axis=0)
-        return np.mean(delta, axis=0)
+        return np.max(delta, axis=0)
 
     @staticmethod
     def _find_error_bands(freqs, delta):
