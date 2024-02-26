@@ -100,7 +100,7 @@ class VectorFitting:
         self.history_rank_deficiency = []
 
     @staticmethod
-    def get_spurious(poles, residues, n_freqs: int = 101, gamma: float = 0.03):
+    def get_spurious(poles : np.ndarray, residues : np.ndarray, n_freqs: int = 101, gamma: float = 0.03) -> np.ndarray:
         """
         Classifies fitted pole-residue pairs as spurious or not spurious. The implementation is based on the evaluation
         of band-limited energy norms (p=2) of the resonance curves of individual pole-residue pairs, as proposed in
@@ -108,6 +108,12 @@ class VectorFitting:
 
         Parameters
         ----------
+        poles : ndarray, shape (N)
+            Array of fitted poles
+
+        residues : ndarray, shape (M, N)
+            Array of fitted residues
+
         n_freqs : int, optional
             Number of frequencies for the evaluation. The frequency range is chosen automatically and the default
             101 frequencies should be appropriate in most cases.
@@ -117,7 +123,7 @@ class VectorFitting:
 
         Returns
         -------
-        ndarray, bool
+        ndarray, bool, shape (M)
             Boolean array having the same shape as :attr:`poles`. `True` marks the respective pole as spurious.
 
         References
@@ -341,22 +347,84 @@ class VectorFitting:
                               '`passivity_enforce()` to enforce passivity before using this model.',
                               UserWarning, stacklevel=2)
 
-    def autofit(self, parameter_type: str = 's'):
-        n_poles_init_real = 3
-        n_poles_init_cmplx = 10
-        model_order_max = 100
-        n_poles_add = 5
+    def autofit(self, n_poles_init_real: int = 3, n_poles_init_cmplx: int = 3, n_poles_add: int = 3,
+                model_order_max: int = 100, iters_start: int = 3, iters_inter:int = 3, iters_final: int = 5,
+                target_error: float = 1e-2, alpha: float = 0.03, gamma: float = 0.03, nu_samples: float = 1.0,
+                parameter_type: str = 's') -> (np.ndarray, np.ndarray):
+        """
+        Automatic fitting routine implementing the "vector fitting with adding and skimming" algorithm as proposed in
+        [#Grivet-Talocia]_. This algorithm is able to provide high quality macromodels with automatic model order
+        optimization, while improving both the rate of convergence and the fit quality in case of noisy data.
+        The resulting model paramters will be stored in the class variables :attr:`poles`, :attr:`residues`,
+        :attr:`proportional_coeff` and :attr:`constant_coeff`.
 
-        i_start = 3
-        i_inter = 3
-        i_final = 5
+        Parameters
+        ----------
+        n_poles_init_real: int, optional
+            Number of real poles in the initial model.
 
-        eps_min = 1e-2
-        alpha = 0.03
-        gamma = 0.03
-        nu_samples = 1
+        n_poles_init_cmplx: int, optional
+            Number of complex conjugate poles in the initial model.
 
-        eps_peak_history = []
+        n_poles_add: int, optional
+            Number of new poles allowed to be added in each refinement iteration, if possible. This controls how fast
+            the model order is allowed to grow. Unnecessary poles will have to be skimmed and removed later. This
+            parameter has a strong effect on the convergence.
+
+        model_order_max: int, optional
+            Maximum model order as calculated with :math:`N_{real} + 2 N_{complex}`. This parameter provides a stopping
+            criterion in case the refinement process is not converging.
+
+        iters_start: int, optional
+            Number of initial iterations for pole relocations as in regular vector fitting.
+
+        iters_inter: int, optional
+            Number of intermediate iterations for pole relocations during each iteration of the refinement process.
+
+        iters_final: int, optional
+            Number of final iterations for pole relocations after the refinement process.
+
+        target_error: float, optional
+            Target for the model error to be reached during the refinement process. The actual achievable error is
+            bound by the noise in the data. If specified with a number greater than the noise floor, this parameter
+            provides another stopping criterion for the refinement process. It therefore affects both the convergence,
+            the final error, and the final model order (number of poles used in the model).
+
+        alpha: float, optional
+            Threshold for the error decay to stop the refinement loop in case of error stall. This parameter provides
+            another stopping criterion for cases where the model already has enough poles but the target error still
+            cannot be reached because of excess noise (target error too small for noise level in the data).
+
+        gamma: float, optional
+            Threshold for the detection of spurious poles.
+
+        nu_samples: float, optional
+            Required and enforced (relative) spacing between relocated or added poles, specified in frequency samples.
+            The number can be a float, it does not have to be an integer.
+
+        parameter_type: str, optional
+            Representation type of the frequency responses to be fitted. Either *scattering* (`'s'` or `'S'`),
+            *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). As scikit-rf can currently only read S parameters
+            from a Touchstone file, the fit should also be performed on the original S parameters. Otherwise, scikit-rf
+            will convert the responses from S to Z or Y, which might work for the fit but can cause other issues.
+
+        Returns
+        -------
+        error_peak_history, ndarray
+            The history of the largest error magnitude during the fitting iterations.
+
+        model_order_history, ndarray
+            The history of the model order during the fitting iterations, calculated with
+            :math:`N_{real} + 2 N_{complex}`.
+
+        References
+        ----------
+        .. [#Grivet-Talocia] S. Grivet-Talocia and M. Bandinu, "Improving the convergence of vector fitting for
+            equivalent circuit extraction from noisy frequency responses," in IEEE Transactions on Electromagnetic
+            Compatibility, vol. 48, no. 1, pp. 104-120, Feb. 2006, DOI: https://doi.org/10.1109/TEMC.2006.870814
+        """
+
+        error_peak_history = []
         model_order_history = []
 
         timer_start = timer()
@@ -410,7 +478,7 @@ class VectorFitting:
         # weights_responses = 10 / np.exp(np.mean(np.log(np.abs(freq_responses)), axis=1))
 
         # INITIAL POLE RELOCATION FOR i_start ITERATIONS
-        for i in range(i_start):
+        for i in range(iters_start):
             poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
@@ -420,8 +488,8 @@ class VectorFitting:
                                                                           fit_proportional=fit_proportional)
         delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                 weights_responses)
-        eps_peak = np.max(delta)
-        eps_peak_history.append(eps_peak)
+        error_peak = np.max(delta)
+        error_peak_history.append(error_peak)
 
         model_order = np.sum((poles.imag != 0) + 1)
         model_order_history.append(model_order)
@@ -429,7 +497,7 @@ class VectorFitting:
         delta_eps = 10 * alpha
 
         # POLE SKIMMING AND ADDING LOOP
-        while eps_peak > eps_min and model_order < model_order_max and delta_eps > alpha:
+        while error_peak > target_error and model_order < model_order_max and delta_eps > alpha:
 
             # SKIMMING OF SPURIOUS POLES
             spurious = self.get_spurious(poles, residues, gamma=gamma)
@@ -477,7 +545,7 @@ class VectorFitting:
                 poles = np.append(poles, [pole_add])
 
             # INTERMEDIATE POLE RELOCATION FOR i_inter ITERATIONS
-            for i in range(i_inter):
+            for i in range(iters_inter):
                 poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                     poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
@@ -487,12 +555,11 @@ class VectorFitting:
                                                                               fit_proportional=fit_proportional)
             delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                     weights_responses)
-            eps_peak = np.max(delta)
-            eps_peak_history.append(eps_peak)
+            error_peak_history.append(np.max(delta))
 
             m = 3
-            if len(eps_peak_history) > m:
-                delta_eps = np.mean(np.abs(np.diff(eps_peak_history[-1-m:-1])))
+            if len(error_peak_history) > m:
+                delta_eps = np.mean(np.abs(np.diff(error_peak_history[-1-m:-1])))
             else:
                 delta_eps = 1
 
@@ -504,7 +571,7 @@ class VectorFitting:
         poles = poles[~spurious]
 
         # FINAL POLE RELOCATION FOR i_final ITERATIONS
-        for i in range(i_final):
+        for i in range(iters_final):
             poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
@@ -522,7 +589,7 @@ class VectorFitting:
         timer_stop = timer()
         self.wall_clock_time = timer_stop - timer_start
 
-        return eps_peak_history, model_order_history
+        return error_peak_history, model_order_history
 
     @staticmethod
     def _init_poles(freqs: list, n_poles_real: int, n_poles_cmplx: int, init_pole_spacing: str):
