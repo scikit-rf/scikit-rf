@@ -4,7 +4,7 @@
 Keysight FieldFox (:mod:`skrf.vi.vna.keysight.fieldfox`)
 =================================================
 
-Provides a class to interact with Keysight's FieldFox handheld analyzer. 
+Provides a class to interact with Keysight's FieldFox handheld analyzer.
 
 This module additionally provides some enumerations to make certain commands
 more clear.
@@ -65,7 +65,7 @@ class WindowFormat(Enum):
 
 class FieldFox(vna.VNA):
     """Keysight FieldFox.
-    
+
     The FieldFox is a class of handheld analyzers with numerous modes with
     different capabilities. This class only provides methods related to the
     network analyzer mode.
@@ -230,7 +230,7 @@ class FieldFox(vna.VNA):
         binary)
 
         When transferring a large number of values from the instrument (like
-        trace data), it can be done either as ascii characters or as binary. 
+        trace data), it can be done either as ascii characters or as binary.
 
         Transferring in binary is much faster, as large numbers can be
         represented much more succinctly.
@@ -298,10 +298,10 @@ class FieldFox(vna.VNA):
         self.write("INIT")
         self.is_continuous = was_continuous
 
-    def get_snp_network(self, ports={1, 2}, restore_settings: bool = True) -> skrf.Network:
+    def get_snp_network(self, ports=None, restore_settings: bool = True) -> skrf.Network:
         """
         Get trace data as an :class:`skrf.Network`
-        
+
         Parameters
         ----------
         ports: Sequence
@@ -317,6 +317,8 @@ class FieldFox(vna.VNA):
         :class:`skrf.Network`
             The measured data
         """
+        if ports is None:
+            ports = {1, 2}
         msmnts = list(itertools.product(ports, repeat=2))
         msmnt_params = [f"S{a}{b}" for a, b in msmnts]
 
@@ -338,7 +340,7 @@ class FieldFox(vna.VNA):
         )
 
         self.sweep()
-        for tr, ((i, j), param) in enumerate(zip(msmnts, msmnt_params)):
+        for tr, (i, j) in enumerate(msmnts):
             self.active_trace = tr + 1
 
             sdata = self.active_trace_sdata

@@ -1,11 +1,13 @@
-import unittest
-import pytest
-import skrf
-import numpy as np
-import tempfile
 import os
-from pathlib import Path
 import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+import skrf
 
 
 class VectorFittingTestCase(unittest.TestCase):

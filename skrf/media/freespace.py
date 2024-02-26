@@ -14,16 +14,19 @@ the space's relative permittivity and relative permeability.
 
 
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from numpy import ones, real, sqrt
 from scipy.constants import epsilon_0, mu_0
-import warnings
-from .media import Media
-from ..data import materials
+
 from ..constants import NumberLike
-from typing import Union, TYPE_CHECKING
-from numpy import real, sqrt, ones
+from ..data import materials
+from .media import Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class Freespace(Media):
@@ -90,14 +93,14 @@ class Freespace(Media):
 
     """
 
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None,
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None,
                  ep_r: NumberLike = 1+0j, mu_r: NumberLike = 1+0j,
-                 ep_loss_tan: Union[NumberLike, None] = None,
-                 mu_loss_tan: Union[NumberLike, None] = None,
-                 rho: Union[NumberLike, str, None] = None,
+                 ep_loss_tan: NumberLike | None = None,
+                 mu_loss_tan: NumberLike | None = None,
+                 rho: NumberLike | str | None = None,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)
@@ -217,7 +220,7 @@ class Freespace(Media):
         kw['mu_r'] = -1j*z
 
         kwargs.update(kw)
-        return cls(frequency=dc.frequency, *args, **kwargs)
+        return cls(frequency=dc.frequency, **kwargs)
 
     @property
     def rho(self) -> NumberLike:

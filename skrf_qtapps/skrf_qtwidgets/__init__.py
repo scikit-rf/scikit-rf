@@ -1,7 +1,6 @@
 from . import qt
-
-from .widgets import VnaSelector
-from .networkPlotWidget import NetworkPlotWidget
+from .calibration_widgets import CalibratedMeasurementsWidget, NISTTRLStandardsWidget, TRLStandardsWidget
 from .networkListWidget import NetworkListWidget, ParameterizedNetworkListWidget
-from .calibration_widgets import NISTTRLStandardsWidget, TRLStandardsWidget, CalibratedMeasurementsWidget
-from .numeric_inputs import NumericLineEdit, DoubleLineEdit, InputWithUnits
+from .networkPlotWidget import NetworkPlotWidget
+from .numeric_inputs import DoubleLineEdit, InputWithUnits, NumericLineEdit
+from .widgets import VnaSelector

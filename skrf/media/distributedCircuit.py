@@ -10,15 +10,17 @@ A transmission line mode defined in terms of distributed impedance and admittanc
    DistributedCircuit
 
 """
+from __future__ import annotations
 
-from numpy import sqrt, real, imag
-import warnings
-from .media import Media, DefinedGammaZ0
+from typing import TYPE_CHECKING
+
+from numpy import imag, real, sqrt
+
 from ..constants import NumberLike
-from typing import Union, TYPE_CHECKING
+from .media import DefinedGammaZ0, Media
 
 if TYPE_CHECKING:
-    from .. frequency import Frequency
+    from ..frequency import Frequency
 
 
 class DistributedCircuit(Media):
@@ -79,12 +81,12 @@ class DistributedCircuit(Media):
     The following quantities may be calculated, which are functions of
     angular frequency (:math:`\omega`):
 
-    ===================================  ==================================================  ==============================
+    ===================================  ==================================================  ========================
     Quantity                             Symbol                                              Property
-    ===================================  ==================================================  ==============================
+    ===================================  ==================================================  ========================
     Distributed Impedance                :math:`Z^{'} = R^{'} + j \omega L^{'}`              :attr:`Z`
     Distributed Admittance               :math:`Y^{'} = G^{'} + j \omega C^{'}`              :attr:`Y`
-    ===================================  ==================================================  ==============================
+    ===================================  ==================================================  ========================
 
 
     The properties which define their wave behavior:
@@ -112,10 +114,10 @@ class DistributedCircuit(Media):
 
     """
 
-    def __init__(self, frequency: Union['Frequency', None] = None,
-                 z0_port: Union[NumberLike, None] = None,
-                 z0_override: Union[NumberLike, None] = None,
-                 z0: Union[NumberLike, None] = None,
+    def __init__(self, frequency: Frequency | None = None,
+                 z0_port: NumberLike | None = None,
+                 z0_override: NumberLike | None = None,
+                 z0: NumberLike | None = None,
                  C: NumberLike = 90e-12, L: NumberLike = 280e-9,
                  R: NumberLike = 0, G: NumberLike = 0,
                 *args, **kwargs):
@@ -128,17 +130,13 @@ class DistributedCircuit(Media):
     def __str__(self) -> str:
         f=self.frequency
         try:
-            output =  \
-                'Distributed Circuit Media.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\nL\'= %.2f, C\'= %.2f,R\'= %.2f, G\'= %.2f, '% \
-                (self.L, self.C,self.R, self.G)
+            output = (
+                f'Distributed Circuit Media.  {f.f_scaled[0]}-{f.f_scaled[-1]} {f.unit}.  {f.npoints} points'
+                f'\nL\'= {self.L:.2f}, C\'= {self.C:.2f},R\'= {self.R:.2f}, G\'= {self.G:.2f}, ')
         except(TypeError):
-            output =  \
-                'Distributed Circuit Media.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\nL\'= %.2f.., C\'= %.2f..,R\'= %.2f.., G\'= %.2f.., '% \
-                (self.L[0], self.C[0],self.R[0], self.G[0])
+            output = (
+                f'Distributed Circuit Media.  {f.f_scaled[0]}-{f.f_scaled[-1]} {f.unit}.  {f.npoints} points'
+                f'\nL\'= {self.L:.2f}.., C\'= {self.C:.2f}..,R\'= {self.R:.2f}.., G\'= {self.G:.2f}.., ')
         return output
 
     def __repr__(self) -> str:
@@ -170,7 +168,7 @@ class DistributedCircuit(Media):
         G,C = real(Y), imag(Y)/w
         R,L = real(Z), imag(Z)/w
         return cls(frequency = my_media.frequency,
-                   z0_port = z0_port, C=C, L=L, R=R, G=G, *args, **kwargs)
+                   z0_port = z0_port, C=C, L=L, R=R, G=G, **kwargs)
 
     @classmethod
     def from_csv(self, *args, **kw):

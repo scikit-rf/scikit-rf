@@ -2,11 +2,11 @@ import os
 import sys
 import traceback
 
-from qtpy import QtWidgets, QtCore
+from qtpy import QtCore, QtWidgets
 
 import skrf
-from . import numeric_inputs
-from . import qt
+
+from . import numeric_inputs, qt
 from .analyzers import analyzers
 
 
@@ -89,7 +89,11 @@ class OverwriteFilesQuery(QtWidgets.QDialog):
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(
-            QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.No | QtWidgets.QDialogButtonBox.Yes | QtWidgets.QDialogButtonBox.YesToAll)
+            QtWidgets.QDialogButtonBox.Cancel
+            | QtWidgets.QDialogButtonBox.No
+            | QtWidgets.QDialogButtonBox.Yes
+            | QtWidgets.QDialogButtonBox.YesToAll
+        )
 
         self.choice = None
 
@@ -449,7 +453,7 @@ class VnaSelector(QtWidgets.QWidget):
         self.verticalLayout.addLayout(self.row2)
 
         self.comboBox_analyzer.currentIndexChanged.connect(self.update_selected_analyzer)
-        for key, val in analyzers.items():
+        for key in analyzers.keys():
             self.comboBox_analyzer.addItem(key)
         # --- End Setup UI Elements --- #
 

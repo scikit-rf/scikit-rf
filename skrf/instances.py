@@ -56,9 +56,10 @@ References
 .. [#] Spinner Technical Information: Cross Reference For Hollow Metallic Waveguides (TD-00036) https://www.spinner-group.com/images/download/technical_documents/SPINNER_TD00036.pdf
 """
 
-from . frequency import Frequency
-from . media import RectangularWaveguide, Freespace
 from .constants import mil
+from .frequency import Frequency
+from .media import Freespace, RectangularWaveguide
+
 
 class StaticInstances:
     @property
@@ -160,7 +161,7 @@ class StaticInstances:
     @property
     def f_wr0p51(self) -> Frequency:
         return Frequency(1400,2200,1001, 'GHz')
-    
+
     @property
     def f_wm106(self) -> Frequency:
         return Frequency(1700,2600,1001, 'ghz')

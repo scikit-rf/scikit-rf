@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Union
+    from typing import Any, Sequence
 
 import re
 from abc import ABC, abstractmethod
@@ -38,15 +38,15 @@ class Validator(ABC):
 
 
 class IntValidator(Validator):
-    def __init__(self, min: Optional[int] = None, max: Optional[int] = None) -> None:
+    def __init__(self, min: int | None = None, max: int | None = None) -> None:
         self.min = min
         self.max = max
 
     def validate_input(self, arg) -> int:
         try:
             arg = int(arg)
-        except ValueError:
-            raise ValidationError(f"Could not convert {arg} to an int")
+        except ValueError as err:
+            raise ValidationError(f"Could not convert {arg} to an int") from err
 
         if self.min is not None or self.max is not None:
             self.check_bounds(arg)
@@ -57,21 +57,21 @@ class IntValidator(Validator):
         try:
             if self.min is not None:
                 assert arg >= self.min
-        except AssertionError:
-            raise ValidationError(f"{arg} < {self.min}")
+        except AssertionError as err:
+            raise ValidationError(f"{arg} < {self.min}") from err
 
         try:
             if self.max is not None:
                 assert arg <= self.max
-        except AssertionError:
-            raise ValidationError(f"{arg} > {self.max}")
+        except AssertionError as err:
+            raise ValidationError(f"{arg} > {self.max}") from err
 
 
 class FloatValidator(Validator):
     def __init__(
-        self, 
-        min: Optional[float] = None, 
-        max: Optional[float] = None, 
+        self,
+        min: float | None = None,
+        max: float | None = None,
         decimal_places: int=50
     ) -> None:
         self.min = min
@@ -81,8 +81,8 @@ class FloatValidator(Validator):
     def validate_input(self, arg) -> float:
         try:
             arg = float(arg)
-        except ValueError:
-            raise ValidationError(f"Could not convert {arg} to a float")
+        except ValueError as err:
+            raise ValidationError(f"Could not convert {arg} to a float") from err
 
         if self.min is not None or self.max is not None:
             self.check_bounds(arg)
@@ -93,14 +93,14 @@ class FloatValidator(Validator):
         try:
             if self.min is not None:
                 assert arg >= self.min
-        except AssertionError:
-            raise ValidationError(f"{arg} < {self.min}")
+        except AssertionError as err:
+            raise ValidationError(f"{arg} < {self.min}") from err
 
         try:
             if self.max is not None:
                 assert arg <= self.max
-        except AssertionError:
-            raise ValidationError(f"{arg} > {self.max}")
+        except AssertionError as err:
+            raise ValidationError(f"{arg} > {self.max}") from err
 
 
 class FreqValidator(Validator):
@@ -117,15 +117,15 @@ class FreqValidator(Validator):
         else:
             try:
                 return int(arg)
-            except ValueError:
-                raise ValidationError("Could not convert {arg} to an int")
+            except ValueError as err:
+                raise ValidationError("Could not convert {arg} to an int") from err
 
     def validate_output(self, arg) -> int:
         try:
             f = float(arg)
             return int(f)
-        except ValueError:
-            raise ValidationError(f"Response from instrument ({arg}) could not be converted to an int")
+        except ValueError as err:
+            raise ValidationError(f"Response from instrument ({arg}) could not be converted to an int") from err
 
 
 class EnumValidator(Validator):
@@ -138,14 +138,14 @@ class EnumValidator(Validator):
         else:
             try:
                 return self.Enum(arg).value
-            except ValueError:
-                raise ValidationError(f"{arg} is not a valid {self.Enum.__name__}")
+            except ValueError as err:
+                raise ValidationError(f"{arg} is not a valid {self.Enum.__name__}") from err
 
     def validate_output(self, arg) -> Any:
         try:
             return self.Enum(arg)
-        except ValueError:
-            raise ValidationError(f"Got unexpected response {arg}")
+        except ValueError as err:
+            raise ValidationError(f"Got unexpected response {arg}") from err
 
 
 class SetValidator(Validator):
@@ -166,7 +166,7 @@ class SetValidator(Validator):
 
 
 class DictValidator(Validator):
-    def __init__(self, arg_string: str, response_pattern: Union[re.Pattern, str]) -> None:
+    def __init__(self, arg_string: str, response_pattern: re.Pattern | str) -> None:
         self.arg_string = arg_string
         if isinstance(response_pattern, str):
             self.pattern = re.compile(response_pattern)
@@ -177,7 +177,7 @@ class DictValidator(Validator):
         try:
             return self.arg_string.format(**arg)
         except KeyError as e:
-            raise ValidationError(f"Missing expected argument '{e}'")
+            raise ValidationError(f"Missing expected argument '{e}'") from e
 
     def validate_output(self, arg) -> dict:
         match = self.pattern.fullmatch(arg)
@@ -209,10 +209,10 @@ class BooleanValidator(Validator):
     falsey = ['0', 'off', 'false']
 
     def __init__(
-        self, 
-        true_response: Optional[str] = None, 
-        false_response: Optional[str] = None, 
-        true_setting: str='1', 
+        self,
+        true_response: str | None = None,
+        false_response: str | None = None,
+        true_setting: str='1',
         false_setting: str='0'
     ):
         if true_response:

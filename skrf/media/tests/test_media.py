@@ -1,10 +1,12 @@
-import unittest
 import os
-import numpy as npy
+import unittest
 
-from skrf.media import DefinedGammaZ0
-from skrf.network import Network
+import numpy as npy
+from numpy.testing import assert_array_almost_equal
+
 from skrf.frequency import Frequency
+from skrf.media import DefinedGammaZ0
+from skrf.network import Network, concat_ports, connect
 
 
 class DefinedGammaZ0TestCase(unittest.TestCase):
@@ -50,11 +52,33 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         """
         Test the naming of the network. When circuit is used to connect a
         topology of networks, they should have unique names.
+        Test mismatched splitter.
         """
         name = 'splitter'
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.splitter(3, name = name)
         self.assertEqual(name, skrf_ntwk.name)
+
+    def test_mismatch_splitter(self):
+        """
+        Test mismatched splitter against 50-ohm splitter connected to
+        equivalent mismatched thrus.
+        """
+        freq = Frequency(1, 1, 1, unit='GHz')
+        med = DefinedGammaZ0(frequency=freq, z0=50)
+
+        for n in range(2, 5):
+            z_port = npy.arange(1, n + 1) * 20
+            split =med.splitter(n, z0=z_port)
+            thrus = []
+            for k in range(n):
+                thrus.append(med.thru(z0 = z_port[k]))
+
+            # connect
+            thru = concat_ports(thrus, port_order='second')
+            ref = med.splitter(n)
+            ref = connect(ref, 0, thru, 0, n)
+            assert_array_almost_equal(split.s, ref.s)
 
     def test_thru(self):
         """
@@ -156,7 +180,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         ABCD = npy.full(ntwk.s.shape, [[1, -1+1j],
                                        [0, 1]])
         ABCD[:,0,1] = Z
-        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+        assert_array_almost_equal(ABCD, ntwk.a)
 
     def test_shunt_resistor(self):
         """
@@ -171,7 +195,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         Z = 10 - 4j
         ntwk = self.dummy_media.shunt_resistor(Z)
         ABCD = npy.asarray([[[1, 0], [1/Z, 1]]])
-        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+        assert_array_almost_equal(ABCD, ntwk.a)
 
     def test_capacitor(self):
         """
@@ -192,7 +216,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         ABCD = npy.full(ntwk.s.shape, [[1, -1+1j],
                                        [0, 1]])
         ABCD[:,0,1] = Z
-        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+        assert_array_almost_equal(ABCD, ntwk.a)
 
     def test_shunt_capacitor(self):
         """
@@ -210,7 +234,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         ABCD = npy.full(ntwk.s.shape, [[1, 0],
                                        [-1+1j, 1]])
         ABCD[:,1,0] = 1/Z
-        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+        assert_array_almost_equal(ABCD, ntwk.a)
 
     def test_capacitor_q(self):
         """
@@ -238,7 +262,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         ABCD = npy.full(ntwk.s.shape, [[1, -1+1j],
                                        [0, 1]])
         ABCD[:,0,1] = Z
-        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+        assert_array_almost_equal(ABCD, ntwk.a)
 
     def test_inductor(self):
         """
@@ -259,7 +283,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         ABCD = npy.full(ntwk.s.shape, [[1, -1+1j],
                                        [0, 1]])
         ABCD[:,0,1] = Z
-        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+        assert_array_almost_equal(ABCD, ntwk.a)
 
     def test_shunt_inductor(self):
         """
@@ -277,7 +301,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         ABCD = npy.full(ntwk.s.shape, [[1, 0],
                                        [1-1j, 1]])
         ABCD[:,1,0] = 1/Z
-        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+        assert_array_almost_equal(ABCD, ntwk.a)
 
     def test_inductor_q(self):
         """
@@ -311,7 +335,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         ABCD = npy.full(ntwk.s.shape, [[1, -1+1j],
                                        [0, 1]])
         ABCD[:,0,1] = Z
-        npy.testing.assert_array_almost_equal(ABCD, ntwk.a)
+        assert_array_almost_equal(ABCD, ntwk.a)
 
     def test_attenuator(self):
         """
@@ -413,10 +437,10 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
         Z0 = self.dummy_media.z0
         S11 = (R/Z0) / (R/Z0 + 2)
         S21 = 2 / (R/Z0 + 2)
-        npy.testing.assert_array_almost_equal(ntw.s[:,0,0], S11)
-        npy.testing.assert_array_almost_equal(ntw.s[:,0,1], S21)
-        npy.testing.assert_array_almost_equal(ntw.s[:,1,0], S21)
-        npy.testing.assert_array_almost_equal(ntw.s[:,1,1], S11)
+        assert_array_almost_equal(ntw.s[:,0,0], S11)
+        assert_array_almost_equal(ntw.s[:,0,1], S21)
+        assert_array_almost_equal(ntw.s[:,1,0], S21)
+        assert_array_almost_equal(ntw.s[:,1,1], S11)
 
     def test_s_shunt_element(self):
         """
@@ -437,10 +461,10 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
         Z0 = self.dummy_media.z0
         S11 = -(1/R*Z0) / (1/R*Z0 + 2)
         S21 = 2 / (1/R*Z0 + 2)
-        npy.testing.assert_array_almost_equal(ntw.s[:,0,0], S11)
-        npy.testing.assert_array_almost_equal(ntw.s[:,0,1], S21)
-        npy.testing.assert_array_almost_equal(ntw.s[:,1,0], S21)
-        npy.testing.assert_array_almost_equal(ntw.s[:,1,1], S11)
+        assert_array_almost_equal(ntw.s[:,0,0], S11)
+        assert_array_almost_equal(ntw.s[:,0,1], S21)
+        assert_array_almost_equal(ntw.s[:,1,0], S21)
+        assert_array_almost_equal(ntw.s[:,1,1], S11)
 
     def test_s_lossless_line(self):
         """
@@ -466,10 +490,10 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
             (2*_z1*npy.cos(beta*l) + 1j*(_z1**2 + 1)*npy.sin(beta*l))
         S21 = 2*_z1 / \
             (2*_z1*npy.cos(beta*l) + 1j*(_z1**2 + 1)*npy.sin(beta*l))
-        npy.testing.assert_array_almost_equal(ntw.s[:,0,0], S11)
-        npy.testing.assert_array_almost_equal(ntw.s[:,0,1], S21)
-        npy.testing.assert_array_almost_equal(ntw.s[:,1,0], S21)
-        npy.testing.assert_array_almost_equal(ntw.s[:,1,1], S11)
+        assert_array_almost_equal(ntw.s[:,0,0], S11)
+        assert_array_almost_equal(ntw.s[:,0,1], S21)
+        assert_array_almost_equal(ntw.s[:,1,0], S21)
+        assert_array_almost_equal(ntw.s[:,1,1], S11)
 
     def test_s_lossy_line(self):
         """
@@ -513,10 +537,10 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         """
         R = 1.0  # Ohm
         ntw = self.dummy_media.resistor(R)
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,0], 1.0)
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,1], R)
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,0], 0.0)
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,1], 1.0)
+        assert_array_almost_equal(ntw.a[:,0,0], 1.0)
+        assert_array_almost_equal(ntw.a[:,0,1], R)
+        assert_array_almost_equal(ntw.a[:,1,0], 0.0)
+        assert_array_almost_equal(ntw.a[:,1,1], 1.0)
 
     def test_abcd_shunt_element(self):
         """
@@ -534,10 +558,10 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         """
         R = 1.0  # Ohm
         ntw = self.dummy_media.shunt(self.dummy_media.resistor(R)**self.dummy_media.short())
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,0], 1.0)
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,1], 0.0)
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,0], 1.0/R)
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,1], 1.0)
+        assert_array_almost_equal(ntw.a[:,0,0], 1.0)
+        assert_array_almost_equal(ntw.a[:,0,1], 0.0)
+        assert_array_almost_equal(ntw.a[:,1,0], 1.0/R)
+        assert_array_almost_equal(ntw.a[:,1,1], 1.0)
 
     def test_abcd_series_shunt_elements(self):
         """
@@ -559,10 +583,10 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
 
         ntw = serie_resistor ** shunt_resistor
 
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,0], 1.0+Rs/Rp)
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,1], Rs)
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,0], 1.0/Rp)
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,1], 1.0)
+        assert_array_almost_equal(ntw.a[:,0,0], 1.0+Rs/Rp)
+        assert_array_almost_equal(ntw.a[:,0,1], Rs)
+        assert_array_almost_equal(ntw.a[:,1,0], 1.0/Rp)
+        assert_array_almost_equal(ntw.a[:,1,1], 1.0)
 
     def test_abcd_thru(self):
         """
@@ -571,10 +595,10 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         [ 0  1 ]
         """
         ntw = self.dummy_media.thru()
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,0], 1.0)
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,1], 0.0)
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,0], 0.0)
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,1], 1.0)
+        assert_array_almost_equal(ntw.a[:,0,0], 1.0)
+        assert_array_almost_equal(ntw.a[:,0,1], 0.0)
+        assert_array_almost_equal(ntw.a[:,1,0], 0.0)
+        assert_array_almost_equal(ntw.a[:,1,1], 1.0)
 
     def test_abcd_lossless_line(self):
         """
@@ -594,10 +618,10 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         z0 = 80
         ntw = self.dummy_media.line(d=l, unit='m', z0=z0)
         beta = self.dummy_media.beta
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,0], npy.cos(beta*l))
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,1], 1j*z0*npy.sin(beta*l))
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,0], 1j/z0*npy.sin(beta*l))
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,1], npy.cos(beta*l))
+        assert_array_almost_equal(ntw.a[:,0,0], npy.cos(beta*l))
+        assert_array_almost_equal(ntw.a[:,0,1], 1j*z0*npy.sin(beta*l))
+        assert_array_almost_equal(ntw.a[:,1,0], 1j/z0*npy.sin(beta*l))
+        assert_array_almost_equal(ntw.a[:,1,1], npy.cos(beta*l))
 
     def test_abcd_lossy_line(self):
         """
@@ -624,10 +648,10 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
             )
         ntw = lossy_media.line(d=l, unit='m', z0=z0)
         gamma = lossy_media.gamma
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,0], npy.cosh(gamma*l))
-        npy.testing.assert_array_almost_equal(ntw.a[:,0,1], z0*npy.sinh(gamma*l))
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,0], 1.0/z0*npy.sinh(gamma*l))
-        npy.testing.assert_array_almost_equal(ntw.a[:,1,1], npy.cosh(gamma*l))
+        assert_array_almost_equal(ntw.a[:,0,0], npy.cosh(gamma*l))
+        assert_array_almost_equal(ntw.a[:,0,1], z0*npy.sinh(gamma*l))
+        assert_array_almost_equal(ntw.a[:,1,0], 1.0/z0*npy.sinh(gamma*l))
+        assert_array_almost_equal(ntw.a[:,1,1], npy.cosh(gamma*l))
 
 class DefinedGammaZ0_s_def(unittest.TestCase):
     """Test various media constructs with complex ports and different s_def"""
@@ -678,3 +702,6 @@ class DefinedGammaZ0_s_def(unittest.TestCase):
         npy.testing.assert_allclose(thru_traveling.s, mismatch_traveling.s, rtol=1e-3)
         npy.testing.assert_allclose(thru_pseudo.s, mismatch_pseudo.s, rtol=1e-3)
         npy.testing.assert_allclose(thru_power.s, mismatch_power.s, rtol=1e-3)
+
+if __name__ == '__main__':
+    unittest.main()

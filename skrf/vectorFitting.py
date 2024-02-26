@@ -1,18 +1,19 @@
-import os
+from __future__ import annotations
+
 import logging
+import os
 import warnings
 from timeit import default_timer as timer
-from typing import Any, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from scipy.signal import find_peaks
 
 try:
     from matplotlib.ticker import EngFormatter
 except ImportError:
     pass
 
-from .util import axes_kwarg, Axes
+from .util import Axes, axes_kwarg
 
 # imports for type hinting
 if TYPE_CHECKING:
@@ -63,7 +64,7 @@ class VectorFitting:
     .. [#vectfit_website] Vector Fitting website: https://www.sintef.no/projectweb/vectorfitting/
     """
 
-    def __init__(self, network: 'Network'):
+    def __init__(self, network: Network):
         self.network = network
         """ Instance variable holding the Network to be fitted. This is the Network passed during initialization,
         which may be changed or set to *None*. """
@@ -162,9 +163,9 @@ class VectorFitting:
 
         parameter_type : str, optional
             Representation type of the frequency responses to be fitted. Either *scattering* (`'s'` or `'S'`),
-            *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). As scikit-rf can currently only read S parameters
-            from a Touchstone file, the fit should also be performed on the original S parameters. Otherwise, scikit-rf
-            will convert the responses from S to Z or Y, which might work for the fit but can cause other issues.
+            *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). It's recommended to perform the fit on the
+            original S parameters. Otherwise, scikit-rf will convert the responses from S to Z or Y, which might work
+            for the fit but can cause other issues.
 
         fit_constant : bool, optional
             Include a constant term **d** in the fit.
@@ -1043,7 +1044,7 @@ class VectorFitting:
 
         return np.sqrt(error_mean_squared)
 
-    def _get_ABCDE(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def _get_ABCDE(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Private method.
         Returns the real-valued system matrices of the state-space representation of the current rational model, as
@@ -1856,7 +1857,7 @@ class VectorFitting:
                     responses = self.network.y
                 else:
                     raise ValueError('The network parameter type is not valid, must be `s`, `z`, or `y`, '
-                                     'got `{}`.'.format(parameter))
+                                     f'got `{parameter}`.')
 
                 i_samples = 0
                 for i in list_i:
@@ -2126,7 +2127,6 @@ class VectorFitting:
         A, B, C, D, E = self._get_ABCDE()
 
         n_ports = np.shape(D)[0]
-        singvals = np.zeros((n_ports, len(freqs)))
 
         # calculate and save singular values for each frequency
         u, sigma, vh = np.linalg.svd(self._get_s_from_ABCDE(freqs, A, B, C, D, E))

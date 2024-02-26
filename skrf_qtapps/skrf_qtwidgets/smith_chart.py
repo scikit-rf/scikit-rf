@@ -1,6 +1,7 @@
-from math import sqrt, acos, degrees
+from math import acos, degrees, sqrt
+
 import pyqtgraph as pg
-from pyqtgraph.Qt.QtWidgets import QGraphicsPathItem, QGraphicsEllipseItem
+from pyqtgraph.Qt.QtWidgets import QGraphicsEllipseItem, QGraphicsPathItem
 
 R_vals_default = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 10, 20, 50]
 X_vals_default = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 10, 20, 50]

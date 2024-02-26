@@ -50,25 +50,29 @@ General Purpose Objects
     HomoDict
 
 """
+from __future__ import annotations
+
+import collections
 import contextlib
 import fnmatch
 import os
-from typing import Iterable, Tuple, List, Union, Any, TypeVar, Callable
-import warnings
-import numpy as npy
-from datetime import datetime
-import collections
 import pprint
 import re
-from subprocess import Popen, PIPE
 import sys
+import warnings
+from datetime import datetime
 from functools import wraps
+from subprocess import PIPE, Popen
+from typing import Any, Callable, Iterable, TypeVar
+
+import numpy as npy
+
 from .constants import Number
 
 try:
-    from matplotlib.figure import Figure
-    from matplotlib.axes import Axes
     import matplotlib.pyplot as plt
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 except ImportError:
     Figure = TypeVar("Figure")
     Axes = TypeVar("Axes")
@@ -100,8 +104,8 @@ def axes_kwarg(func):
         try:
             if ax is None:
                 ax = plt.gca()
-        except NameError:
-            raise RuntimeError("Plotting is not available")
+        except NameError as err:
+            raise RuntimeError("Plotting is not available") from err
         func(*args, ax=ax, **kwargs)
 
     return wrapper
@@ -114,7 +118,7 @@ def copy_doc(copy_func: Callable) -> Callable:
     return wrapper
 
 
-def subplots(*args, **kwargs) -> Tuple[Figure, npy.ndarray]:
+def subplots(*args, **kwargs) -> tuple[Figure, npy.ndarray]:
     """
     Wraps the matplotlib subplots call and raises if not available.
 
@@ -126,8 +130,8 @@ def subplots(*args, **kwargs) -> Tuple[Figure, npy.ndarray]:
 
     try:
         return plt.subplots(*args, **kwargs)
-    except NameError:
-        raise RuntimeError("Plotting is not available")
+    except NameError as err:
+        raise RuntimeError("Plotting is not available") from err
 
 def now_string() -> str:
     """
@@ -345,7 +349,7 @@ def git_version(modname: str) -> str:
     return out
 
 
-def dict_2_recarray(d: dict, delim: str, dtype: List[Tuple]) -> npy.ndarray:
+def dict_2_recarray(d: dict, delim: str, dtype: list[tuple]) -> npy.ndarray:
     """
     Turn a dictionary of structured keys to a record array of objects.
 
@@ -419,7 +423,7 @@ def findReplace(directory: str, find: str, replace: str, file_pattern: str):
     ----------
     .. [1] http://stackoverflow.com/questions/4205854/python-way-to-recursively-find-and-replace-string-in-text-files
     """
-    for path, dirs, files in os.walk(os.path.abspath(directory)):
+    for path, _dirs, files in os.walk(os.path.abspath(directory)):
         for filename in fnmatch.filter(files, file_pattern):
             filepath = os.path.join(path, filename)
             with open(filepath) as f:
@@ -663,7 +667,7 @@ class HomoDict(collections.abc.MutableMapping):
         return a
 
 
-def has_duplicate_value(value: Any, values: Iterable, index: int) -> Union[bool, int]:
+def has_duplicate_value(value: Any, values: Iterable, index: int) -> bool | int:
     """
     Check if there is another value of the current index in the list.
 

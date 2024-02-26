@@ -3,43 +3,44 @@ skrf is an object-oriented approach to microwave engineering,
 implemented in Python.
 """
 
-__version__ = '0.30.0'
+__version__ = '0.31.0'
 ## Import all  module names for coherent reference of name-space
 #import io
 
 
-from . import frequency
-from . import network
-from . import networkSet
-from . import media
-from . import circuit
-
-from . import calibration
-from . import mathFunctions
-from . import tlineFunctions
-from . import taper
-from . import constants
-from . import util
-from . import io
-from . import instances
-from . import vectorFitting
-from . import qfactor
+from . import (
+    calibration,
+    circuit,
+    constants,
+    frequency,
+    instances,
+    io,
+    mathFunctions,
+    media,
+    network,
+    networkSet,
+    qfactor,
+    taper,
+    tlineFunctions,
+    util,
+    vectorFitting,
+)
+from .calibration import *
+from .circuit import *
+from .constants import *
 
 # Import contents into current namespace for ease of calling
 from .frequency import *
+from .instances import *
+from .io import *
+from .mathFunctions import *
 from .network import *
 from .networkSet import *
-from .calibration import *
-from .util import *
-from .circuit import *
-from .mathFunctions import *
-from .tlineFunctions import *
-from .io import *
-from .constants import *
-from .taper import *
-from .instances import *
-from .vectorFitting import *
 from .qfactor import *
+from .taper import *
+from .tlineFunctions import *
+from .util import *
+from .vectorFitting import *
 
 # Try to import vi, but if except if pyvisa not installed
 try:
@@ -60,7 +61,6 @@ def __getattr__(name: str):
 
 ## built-in imports
 from copy import deepcopy as copy
-
 
 ## Shorthand Names
 F = Frequency

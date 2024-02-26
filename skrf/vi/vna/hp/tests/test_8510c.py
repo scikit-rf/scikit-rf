@@ -1,8 +1,9 @@
-import numpy as np
-import pytest
 import sys
 
+import pytest
+
 import skrf
+
 try:
     from skrf.vi.validators import ValidationError
     from skrf.vi.vna import ValuesFormat, hp
@@ -34,13 +35,13 @@ def mocked_ff(mocker):
     ]
 )
 def test_params(
-    mocker, 
-    mocked_ff, 
-    param, 
-    expected_query, 
+    mocker,
+    mocked_ff,
+    param,
+    expected_query,
     expected_write,
-    query_response, 
-    expected_val, 
+    query_response,
+    expected_val,
     write_val
 ):
     if expected_query is not None:

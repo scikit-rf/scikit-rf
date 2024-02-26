@@ -15,12 +15,15 @@ behaviour is frequency invariant.
 
    DefinedAEpTandZ0
 """
-from typing import Union
+from __future__ import annotations
+
 import warnings
-from scipy.constants import  c
-from numpy import real, imag, sqrt, ones, pi, log
-from .. constants import NumberLike
-from .. frequency import Frequency
+
+from numpy import imag, log, ones, pi, real, sqrt
+from scipy.constants import c
+
+from ..constants import NumberLike
+from ..frequency import Frequency
 from .media import Media
 
 
@@ -124,12 +127,12 @@ class DefinedAEpTandZ0(Media):
 
     """
 
-    def __init__(self, frequency: Union[Frequency, None] = None,
+    def __init__(self, frequency: Frequency| None = None,
                  A: float = 0.0, f_A: float = 1.0,
                  ep_r: NumberLike = 1.0, tanD: NumberLike = 0.0,
-                 z0_port: Union[NumberLike, None] = None,
+                 z0_port: NumberLike | None = None,
                  z0: float = 50.0,
-                 Z0: Union[NumberLike, None] = None,
+                 Z0: NumberLike | None = None,
                  f_low: float = 1.0e3, f_high: float = 1.0e12, f_ep: float = 1.0e9,
                  model: str = 'frequencyinvariant', *args, **kwargs):
 
@@ -139,7 +142,7 @@ class DefinedAEpTandZ0(Media):
         self.z0_characteristic = z0
         self.f_low, self.f_high, self.f_ep = f_low, f_high, f_ep
         self.model = model
-        
+
         if Z0 is not None:
             # warns of deprecation
             warnings.warn(
@@ -228,7 +231,7 @@ class DefinedAEpTandZ0(Media):
     def z0_characteristic(self) -> NumberLike:
         """
         Characteristic Impedance, :math:`z_0`
-        
+
         Returns
         -------
         z0_characteristic : npy.ndarray

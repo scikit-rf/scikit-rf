@@ -1,5 +1,7 @@
-import skrf as rf
 import unittest
+
+import skrf as rf
+
 
 class HomoDictTest(unittest.TestCase):
     """

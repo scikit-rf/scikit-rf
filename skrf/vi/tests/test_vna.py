@@ -1,5 +1,6 @@
-import pytest
 import sys
+
+import pytest
 
 try:
     from skrf.vi.vna import vna

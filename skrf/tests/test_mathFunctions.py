@@ -1,11 +1,14 @@
-from skrf.mathFunctions import LOG_OF_NEG
-import skrf as rf
 import unittest
+
 import numpy as npy
-from numpy import log, pi, isnan, inf
-from numpy.testing import assert_equal, assert_almost_equal
 import pytest
+from numpy import inf, isnan, log, pi
+from numpy.testing import assert_almost_equal, assert_equal
+
+import skrf as rf
 from skrf.constants import EIG_MIN
+from skrf.mathFunctions import LOG_OF_NEG
+
 
 class TestUnitConversions(unittest.TestCase):
     """
@@ -172,8 +175,9 @@ class TestUnitConversions(unittest.TestCase):
         assert_equal(rf.inf_to_num(x), y)
 
     def test_rsolve(self):
-        A = npy.random.random((3, 2, 2)) + 1j*npy.random.random((3, 2, 2))
-        B = npy.random.random((3, 2, 2)) + 1j*npy.random.random((3, 2, 2))
+        rng = npy.random.default_rng()
+        A = rng.random((3, 2, 2)) + 1j*rng.random((3, 2, 2))
+        B = rng.random((3, 2, 2)) + 1j*rng.random((3, 2, 2))
         # Make sure they are not singular
         A = rf.nudge_eig(A)
         B = rf.nudge_eig(B)

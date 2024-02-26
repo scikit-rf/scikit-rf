@@ -24,17 +24,154 @@ Functions related to reading/writing touchstones.
    read_zipped_touchstones
 
 """
-import re
+from __future__ import annotations
+
 import os
+import re
 import typing
+import warnings
 import zipfile
-import numpy
+from dataclasses import dataclass, field
+from typing import Callable
+
 import numpy as npy
 
-from ..util import get_fid
-from ..network import Network
+from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT
 from ..media import DefinedGammaZ0
-from .. import mathFunctions as mf
+from ..network import Network
+from ..util import get_fid
+
+
+def remove_prefix(text: str, prefix: str) -> str:
+    if text.startswith(prefix):
+        return text[len(prefix) :]
+    return text
+
+
+@dataclass
+class ParserState:
+    """Class to hold dynamic variables while parsing the touchstone file.
+    """
+    rank: int | None = None
+    option_line_parsed: bool = False
+    hfss_gamma: list[list[float]] = field(default_factory=list)
+    hfss_impedance: list[list[float]] = field(default_factory=list)
+    comments: list[str] = field(default_factory=list)
+    comments_after_option_line: list[str] = field(default_factory=list)
+    matrix_format: str = "full"
+    parse_network: bool = True
+    _parse_noise: bool = False
+    f: list[float] = field(default_factory=list)
+    f_noise: list[float] = field(default_factory=list)
+    s: list[float] = field(default_factory=list)
+    noise: list[float] = field(default_factory=list)
+    two_port_order_legacy: bool = True
+    number_noise_freq: int = 0
+    port_names: dict[int, str] = field(default_factory=dict)
+    ansys_data_type: str | None = None
+    mixed_mode_order: list[str] | None = None
+    frequency_unit: str = "ghz"
+    parameter: str = "s"
+    format: str = "ma"
+    resistance: complex = complex(50)
+
+    @property
+    def n_ansys_impedance_values(self) -> int:
+        """Returns the number of port impedances returned by Ansys HFSS.
+
+        Currently this function returns rank * 2.
+
+        Returns:
+            int: number of impedance values.
+        """
+        # See https://github.com/scikit-rf/scikit-rf/issues/354 for details.
+        #if self.ansys_data_type == "terminal":
+        #    return self.rank**2 * 2
+
+        return self.rank * 2
+
+    @property
+    def numbers_per_line(self) -> int:
+        """Returns data points per frequency point.
+
+        Returns:
+            int: Number of data points per frequency point.
+        """
+        if self.matrix_format == "full":
+            return self.rank**2 * 2
+        return self.rank**2 * self.rank
+
+    @property
+    def parse_noise(self) -> bool:
+        """Returns true if the parser expects noise data.
+
+        Returns:
+            bool: True, if noise data is expected.
+        """
+        return self._parse_noise
+
+    @parse_noise.setter
+    def parse_noise(self, x: bool) -> None:
+        self.parse_network = False
+        self._parse_noise = x
+
+    @property
+    def frequency_mult(self) -> float:
+        _units = {k.lower(): v for k,v in FREQ_UNITS.items()}
+        return _units[self.frequency_unit]
+
+    def parse_port(self, line: str):
+        """Regex parser for port names.
+
+        Args:
+            line (str): Touchstone line.
+        """
+        m = re.match(r"! Port\[(\d+)\]\s*=\s*(.*)$", line)
+        if m:
+            self.port_names[int(m.group(1)) - 1] = m.group(2)
+
+    def append_comment(self, line: str) -> None:
+        """Append comment, and append appropriate comment list.
+
+        Args:
+            line (str): Line to parse
+        """
+        if self.option_line_parsed:
+            self.comments_after_option_line.append(line)
+        else:
+            self.comments.append(line)
+
+    def parse_option_line(self, line: str) -> None:
+        """Parse the option line starting with #
+
+        Args:
+            line (str): Line to parse
+
+        Raises:
+            ValueError: If option line contains invalid options.
+
+        """
+        if self.option_line_parsed:
+            return
+        toks = line.lower()[1:].strip().split()
+        # fill the option line with the missing defaults
+        toks.extend(["ghz", "s", "ma", "r", "50"][len(toks) :])
+        self.frequency_unit = toks[0]
+        self.parameter = toks[1]
+        self.format = toks[2]
+        self.resistance = complex(toks[4])
+        err_msg = ""
+        if self.frequency_unit not in ["hz", "khz", "mhz", "ghz"]:
+            err_msg = f"ERROR: illegal frequency_unit {self.frequency_unit}\n"
+        if self.parameter not in "syzgh":
+            err_msg = f"ERROR: illegal parameter value {self.parameter}\n"
+        if self.format not in ["ma", "db", "ri"]:
+            err_msg = f"ERROR: illegal format value {self.format}\n"
+
+        if err_msg:
+            raise ValueError(err_msg)
+
+        self.option_line_parsed = True
 
 
 class Touchstone:
@@ -50,8 +187,8 @@ class Touchstone:
     .. [#] https://ibis.org/interconnect_wip/touchstone_spec2_draft.pdf
     .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
-    def __init__(self, file: typing.Union[str, typing.TextIO],
-                 encoding: typing.Union[str, None] = None):
+
+    def __init__(self, file: str | typing.TextIO, encoding: str | None = None):
         """
         constructor
 
@@ -80,7 +217,8 @@ class Touchstone:
 
         From a io.StringIO object
 
-        >>> link = 'https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/examples/basic_touchstone_plotting/horn antenna.s1p'
+        >>> link = 'https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/examples/
+            basic_touchstone_plotting/horn antenna.s1p'
         >>> r = requests.get(link)
         >>> stringio = io.StringIO(r.text)
         >>> stringio.name = 'horn.s1p'  # must be provided for the Touchstone parser
@@ -89,9 +227,9 @@ class Touchstone:
         """
         ## file format version.
         # Defined by default to 1.0, since version number can be omitted in V1.0 format
-        self.version = '1.0'
+        self._version = "1.0"
         ## comments in the file header
-        self.comments = None
+        self.comments = ""
         ## unit of the frequency (Hz, kHz, MHz, GHz)
         self.frequency_unit = None
         ## number of frequency points
@@ -105,8 +243,6 @@ class Touchstone:
         ## reference impedance for each s-parameter
         self.reference = None
 
-        ## numpy array of original s-parameter data
-        self.sparameters = None
         ## numpy array of original noise data
         self.noise = None
 
@@ -116,9 +252,12 @@ class Touchstone:
         self.port_names = None
 
         self.comment_variables = None
-
-        # Does the input file have HFSS per frequency port impedances
+        # Does the input file has HFSS per frequency port impedances
         self.has_hfss_port_impedances = False
+        self.gamma = None
+        self.z0 = None
+        self.s_def = None
+        self.port_modes = None
 
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
@@ -139,27 +278,183 @@ class Touchstone:
 
         except UnicodeDecodeError:
             # Unicode fails -> Force Latin-1
-            fid = get_fid(file, encoding='ISO-8859-1')
+            fid = get_fid(file, encoding="ISO-8859-1")
             self.filename = fid.name
             self.load_file(fid)
 
         except ValueError:
             # Assume Microsoft UTF-8 variant encoding with BOM
-            fid = get_fid(file, encoding='utf-8-sig')
+            fid = get_fid(file, encoding="utf-8-sig")
             self.filename = fid.name
             self.load_file(fid)
 
         except Exception as e:
-            raise ValueError(f'Something went wrong by the file opening: {e}')
+            raise ValueError("Something went wrong by the file opening") from e
 
         finally:
-            self.gamma = []
-            self.z0 = []
-
-            if self.has_hfss_port_impedances:
-                self.get_gamma_z0_from_fid(fid)
-
             fid.close()
+
+    @staticmethod
+    def _parse_n_floats(*, line: str, fid: typing.TextIO, n: int, before_comment: bool) -> list[float]:
+        """Parse a specified number of floats either in our outside a comment.
+
+        Args:
+            line (str): Actual line to parse.
+            fid (typing.TextIO): File descriptor to get new lines if necessary.
+            n (int): Number of floats to parse.
+            before_comment (bool): True, if the floats should get parsed in or outside a comment.
+
+        Returns:
+            list[float]: The parsed float values
+        """
+        def get_part_of_line(line: str) -> str:
+            """Return either the part after or before a exclamation mark.
+
+            Args:
+                line (str): Line to parse.
+
+            Returns:
+                str: string subset.
+            """
+            if before_comment:
+                return line.partition("!")[0]
+            else:
+                return line.rpartition("!")[2]
+
+        values = get_part_of_line(line).split()
+        ret = []
+        while True:
+            if len(ret) == n:
+                break
+
+            if not values:
+                values = get_part_of_line(fid.readline()).split()
+            try:
+                ret.append(float(values.pop(0)))
+            except ValueError:
+                pass
+
+        return ret
+
+    @property
+    def version(self) -> str:
+        """The version string.
+
+        Returns:
+            str: Version
+        """
+        return self._version
+
+    @version.setter
+    def version(self, x: str) -> None:
+        self._version = x
+        if x == "2.0":
+            self._parse_dict.update(self._parse_dict_v2)
+
+    def _parse_file(self, fid: typing.TextIO) -> ParserState:
+        """
+        Parse the raw file and generate an structured view.
+
+        Parameters
+        ----------
+        fid : file object
+
+        Returns
+        -------
+        state: File content as ParserState
+
+        """
+        state = ParserState()
+
+        # Check the filename extension.
+        # Should be .sNp for Touchstone format V1.0, and .ts for V2
+        extension = self.filename.split(".")[-1].lower()
+
+        m = re.match(r"s(\d+)p", extension)
+        if m:
+            state.rank = int(m.group(1))
+        elif extension != "ts":
+            msg = (f"{self.filename} does not have a s-parameter extension ({extension})."
+                    "Please, correct the extension to of form: 'sNp', where N is any integer for Touchstone v1,"
+                    "or ts for Touchstone v2.")
+            raise ValueError(msg)
+
+        # Lookup dictionary for parser
+        # Dictionary has string keys and values contains functions which
+        # need the current line as string argument. The type hints allow
+        # the IDE to provide full typing support
+        # Take care of the order of the elements when inserting new key words.
+        self._parse_dict: dict[str, Callable[[str], None]] = {
+            "[version]": lambda x: setattr(self, "version", x.split()[1]),
+            "#": lambda x: state.parse_option_line(x),
+            "! gamma": lambda x: state.hfss_gamma.append(
+                self._parse_n_floats(line=x, fid=fid, n=state.rank * 2, before_comment=False)
+            ),
+            "! port impedance": lambda x: state.hfss_impedance.append(
+                self._parse_n_floats(
+                    line=remove_prefix(x.lower(), "! port impedance"),
+                    fid=fid,
+                    n=state.n_ansys_impedance_values,
+                    before_comment=False,
+                )
+            ),
+            "! port": state.parse_port,
+            "! terminal data exported": lambda _: setattr(state, "ansys_data_type", "terminal"),
+            "! modal data exported": lambda _: setattr(state, "ansys_data_type", "modal"),
+            "!": state.append_comment,
+        }
+
+        self._parse_dict_v2: dict[str, Callable[[str], None]] = {
+            "[number of ports]": lambda x: setattr(state, "rank", int(x.split()[3])),
+            "[reference]": lambda x: setattr(
+                state, "resistance", self._parse_n_floats(line=x, fid=fid, n=state.rank, before_comment=True)
+            ),
+            "[number of frequencies]": lambda x: setattr(self, "frequency_nb", int(x.split()[3])),
+            "[matrix format]": lambda x: setattr(state, "matrix_format", x.split()[2].lower()),
+            "[network data]": lambda _: setattr(state, "parse_network", True),
+            "[noise data]": lambda _: setattr(state, "parse_noise", True),
+            "[two-port data order]": lambda x: setattr(state, "two_port_order_legacy", "21_12" in x),
+            "[number of noise frequencies]": lambda x: setattr(
+                state, "number_noise_freq", int(x.partition("]")[2].strip())
+            ),
+            "[mixed-mode order]": lambda line: setattr(state, "mixed_mode_order", line.lower().split()[2:]),
+            "[end]": lambda x: None,
+        }
+
+        while True:
+            line = fid.readline()
+            if not line:
+                break
+
+            line_l = line.lower()
+
+            for k, v in self._parse_dict.items():
+                if line_l.startswith(k):
+                    v(line)
+                    break
+            else:
+                values = [float(v) for v in line.partition("!")[0].split()]
+                if not values:
+                    continue
+
+                if (
+                    state.f
+                    and len(state.s) % state.numbers_per_line == 0
+                    and values[0] < state.f[-1]
+                    and state.rank == 2
+                    and self.version == "1.0"
+                ):
+                    state.parse_noise = True
+
+                if state.parse_network:
+                    if len(state.s) % state.numbers_per_line == 0:
+                        state.f.append(values.pop(0))
+                    state.s.extend(values)
+
+                elif state.parse_noise:
+                    state.noise.append(values)
+
+        return state
 
     def load_file(self, fid: typing.TextIO):
         """
@@ -171,147 +466,126 @@ class Touchstone:
 
         """
 
-        filename = self.filename
+        state = self._parse_file(fid=fid)
 
-        # Check the filename extension.
-        # Should be .sNp for Touchstone format V1.0, and .ts for V2
-        extension = filename.split('.')[-1].lower()
+        self.comments = "\n".join([line.strip()[1:] for line in state.comments])
+        self.comments_after_option_line = "\n".join([line.strip()[1:] for line in state.comments_after_option_line])
+        self.rank = state.rank
+        self.frequency_unit = state.frequency_unit
+        self.parameter = state.parameter
+        self.format = state.format
+        self.resistance = state.resistance
 
-        if (extension[0] == 's') and (extension[-1] == 'p'): # sNp
-            # check if N is a correct number
-            try:
-                self.rank = int(extension[1:-1])
-            except (ValueError):
-                raise (ValueError("filename does not have a s-parameter extension. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extension)))
-        elif extension == 'ts':
-            pass
+        if state.port_names:
+            self.port_names = [""] * state.rank
+            for k, v in state.port_names.items():
+                self.port_names[k] = v
+
+        if state.hfss_gamma:
+            self.gamma = npy.array(state.hfss_gamma).view(npy.complex128)
+
+
+        # Impedance is parsed in the following order:
+        # - HFSS comments for each frequency point and each port.
+        # - TS v2 Reference keyword for each port.
+        # - Reference impedance from option line.
+        if state.hfss_impedance:
+            self.z0 = npy.array(state.hfss_impedance).view(npy.complex128)
+            # Comment the line in, when we need when to expect port impedances in NxN format.
+            # See https://github.com/scikit-rf/scikit-rf/issues/354 for details.
+            #if state.ansys_data_type == "terminal":
+            #    self.z0 = npy.diagonal(self.z0.reshape(-1, self.rank, self.rank), axis1=1, axis2=2)
+
+            self.s_def = S_DEF_HFSS_DEFAULT
+            self.has_hfss_port_impedances = True
+        elif self.reference is None:
+            self.z0 = npy.broadcast_to(self.resistance, (len(state.f), state.rank)).copy()
         else:
-            raise Exception('Filename does not have the expected Touchstone extension (.sNp or .ts)')
+            self.z0 = npy.empty((len(state.f), state.rank), dtype=complex).fill(self.reference)
 
-        values = []
-        while True:
-            line = fid.readline()
-            if not line:
-                break
-            # store comments if they precede the option line
-            line = line.split('!', 1)
-            if len(line) == 2:
-                if not self.parameter:
-                    if self.comments is None:
-                        self.comments = ''
-                    self.comments = self.comments + line[1]
-                elif line[1].startswith(' Port['):
-                    try:
-                        port_string, name = line[1].split('=', 1) #throws ValueError on unpack
-                        name = name.strip()
-                        garbage, index = port_string.strip().split('[', 1) #throws ValueError on unpack
-                        index = int(index.rstrip(']')) #throws ValueError on not int-able
-                        if index > self.rank or index <= 0:
-                            print(f"Port name {name} provided for port number {index} but that's out of range for a file with extension s{self.rank}p")
-                        else:
-                            if self.port_names is None: #Initialize the array at the last minute
-                                self.port_names = [''] * self.rank
-                            self.port_names[index - 1] = name
-                    except ValueError as e:
-                        print(f"Error extracting port names from line: {line}")
-                elif line[1].strip().lower().startswith('port impedance'):
-                    self.has_hfss_port_impedances = True
+        self.f = npy.array(state.f)
+        if not len(self.f):
+            self.s = npy.empty((0, state.rank, state.rank))
+            return
 
-            # remove the comment (if any) so rest of line can be processed.
-            # touchstone files are case-insensitive
-            line = line[0].strip().lower()
+        raw = npy.array(state.s).reshape(len(self.f), -1)
 
-            # skip the line if there was nothing except comments
-            if len(line) == 0:
-                continue
+        if self.format == "db":
+            raw[:, 0::2] = 10 ** (raw[:, 0::2] / 20.0)
 
-            # grab the [version] string
-            if line[:9] == '[version]':
-                self.version = line.split()[1]
-                continue
+        if self.format in (["ma", "db"]):
+            s_flat = raw[:, 0::2] * npy.exp(1j * raw[:, 1::2] * npy.pi / 180)
+        elif self.format == "ri":
+            s_flat = raw.view(npy.complex128)
 
-            # grab the [reference] string
-            if line[:11] == '[reference]':
-                # The reference impedances can be span after the keyword
-                # or on the following line
-                self.reference = [ float(r) for r in line.split()[2:] ]
-                if not self.reference:
-                    line = fid.readline()
-                    self.reference = [ float(r) for r in line.split()]
-                continue
+        self.s_flat = s_flat
 
-            # grab the [Number of Ports] string
-            if line[:17] == '[number of ports]':
-                self.rank = int(line.split()[-1])
-                continue
+        self.s = npy.empty((len(self.f), state.rank * state.rank), dtype=complex)
+        if state.matrix_format == "full":
+            self.s[:] = s_flat
+        else:
+            index = npy.tril_indices(state.rank) if state.matrix_format == "lower" else npy.triu_indices(self.rank)
+            index_flat = npy.ravel_multi_index(index, (state.rank, state.rank))
+            self.s[:, index_flat] = s_flat
 
-            # grab the [Number of Frequencies] string
-            if line[:23] == '[number of frequencies]':
-                self.frequency_nb = line.split()[-1]
-                continue
+        if state.rank == 2 and state.two_port_order_legacy:
+            self.s = npy.transpose(self.s.reshape((-1, state.rank, state.rank)), axes=(0, 2, 1))
+        else:
+            self.s = self.s.reshape((-1, state.rank, state.rank))
 
-            # skip the [Network Data] keyword
-            if line[:14] == '[network data]':
-                continue
+        if state.matrix_format != "full":
+            self.s = npy.nanmax((self.s, self.s.transpose(0, 2, 1)), axis=0)
 
-            # skip the [End] keyword
-            if line[:5] == '[end]':
-                continue
+        self.port_modes = npy.array(["S"] * state.rank)
+        if state.mixed_mode_order:
+            new_order = [None] * state.rank
+            for i, mm in enumerate(state.mixed_mode_order):
+                if mm.startswith("s"):
+                    new_order[i] = int(mm[1:]) - 1
+                else:
+                    p1, p2 = sorted([int(e) - 1 for e in mm[1:].split(",")])
 
-            # the option line
-            if line[0] == '#':
-                toks = line[1:].strip().split()
-                # fill the option line with the missing defaults
-                toks.extend(['ghz', 's', 'ma', 'r', '50'][len(toks):])
-                self.frequency_unit = toks[0]
-                self.parameter = toks[1]
-                self.format = toks[2]
-                self.resistance = complex(toks[4])
-                if self.frequency_unit not in ['hz', 'khz', 'mhz', 'ghz']:
-                    print('ERROR: illegal frequency_unit [%s]',  self.frequency_unit)
-                    # TODO: Raise
-                if self.parameter not in 'syzgh':
-                    print('ERROR: illegal parameter value [%s]', self.parameter)
-                    # TODO: Raise
-                if self.format not in ['ma', 'db', 'ri']:
-                    print('ERROR: illegal format value [%s]', self.format)
-                    # TODO: Raise
+                    if mm.startswith("d"):
+                        new_order[i] = p1
+                    else:
+                        new_order[i] = p2
+                self.port_modes[new_order[i]] = mm[0].upper()
 
-                continue
+            order = npy.arange(self.rank, dtype=int)
+            self.s[:, new_order, :] = self.s[:, order, :]
+            self.s[:, :, new_order] = self.s[:, :, order]
+            self.z0[:, self.port_modes == "D"] *= 2
+            self.z0[:, self.port_modes == "C"] /= 2
 
-            # collect all values without taking care of there meaning
-            # we're separating them later
-            values.extend([ float(v) for v in line.split() ])
+        if self.parameter in ["g", "h", "y", "z"]:
+            if self.version == "1.0":
+                self.s = self.s * self.z0[:,:, None]
 
-        # let's do some post-processing to the read values
-        # for s2p parameters there may be noise parameters in the value list
-        values = numpy.asarray(values)
-        if self.rank == 2:
-            # the first frequency value that is smaller than the last one is the
-            # indicator for the start of the noise section
-            # each set of the s-parameter section is 9 values long
-            pos = numpy.where(numpy.sign(numpy.diff(values[::9])) == -1)
-            if len(pos[0]) != 0:
-                # we have noise data in the values
-                pos = pos[0][0] + 1   # add 1 because diff reduced it by 1
-                noise_values = values[pos*9:]
-                values = values[:pos*9]
-                self.noise = noise_values.reshape((-1,5))
+            func_name = f"{self.parameter}2s"
+            from .. import network
+            self.s: npy.ndarray = getattr(network, func_name)(self.s, self.z0)
 
-        if len(values)%(1+2*(self.rank)**2) != 0 :
-            # incomplete data line / matrix found
-            raise AssertionError
 
-        # reshape the values to match the rank
-        self.sparameters = values.reshape((-1, 1 + 2*self.rank**2))
         # multiplier from the frequency unit
-        self.frequency_mult = {'hz':1.0, 'khz':1e3,
-                               'mhz':1e6, 'ghz':1e9}.get(self.frequency_unit)
-        # set the reference to the resistance value if no [reference] is provided
-        if not self.reference:
-            self.reference = [self.resistance] * self.rank
+        self.frequency_mult = state.frequency_mult
 
-    def get_comments(self, ignored_comments=['Created with skrf']):
+        if state.noise:
+            self.noise = npy.array(state.noise)
+            self.noise[:, 0] *= self.frequency_mult
+
+        self.f *= self.frequency_mult
+
+    @property
+    def sparameters(self) -> npy.ndarray:
+        """Touchstone data in tabular format.
+
+        Returns:
+            npy.ndarray: Frequency and data array.
+        """
+        warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
+        return npy.hstack((self.f[:, None], self.s_flat.view(npy.float64).reshape(len(self.f), -1)))
+
+    def get_comments(self, ignored_comments: list[str]=None) -> str:
         """
         Returns the comments which appear anywhere in the file.
 
@@ -324,18 +598,20 @@ class Touchstone:
         processed_comments : string
 
         """
-        processed_comments = ''
+        if ignored_comments is None:
+            ignored_comments = ["Created with skrf"]
+        processed_comments = ""
         if self.comments is None:
-            self.comments = ''
-        for comment_line in self.comments.split('\n'):
+            self.comments = ""
+        for comment_line in self.comments.split("\n"):
             for ignored_comment in ignored_comments:
                 if ignored_comment in comment_line:
-                        comment_line = None
+                    comment_line = None
             if comment_line:
-                processed_comments = processed_comments + comment_line + '\n'
+                processed_comments = processed_comments + comment_line + "\n"
         return processed_comments
 
-    def get_comment_variables(self):
+    def get_comment_variables(self) -> dict[str, str]:
         """
         Convert hfss variable comments to a dict of vars.
 
@@ -345,19 +621,19 @@ class Touchstone:
             Dictionnary containing the comments
         """
         comments = self.comments
-        p1 = re.compile(r'\w* = \w*.*')
-        p2 = re.compile(r'\s*(\d*\.?\d*)\s*(\w*)')
+        p1 = re.compile(r"\w* = \w*.*")
+        p2 = re.compile(r"\s*(\d*\.?\d*)\s*(\w*)")
         var_dict = {}
         for k in re.findall(p1, comments):
             try:
-                var, value = k.split('=')
-                var=var.rstrip()
+                var, value = k.split("=")
+                var = var.rstrip()
                 var_dict[var] = p2.match(value).groups()
             except ValueError:
                 pass
         return var_dict
 
-    def get_format(self, format="ri"):
+    def get_format(self, format="ri") -> str:
         """
         Returns the file format string used for the given format.
 
@@ -368,16 +644,14 @@ class Touchstone:
         format : string
 
         """
-        if format == 'orig':
+        if format == "orig":
             frequency = self.frequency_unit
             format = self.format
         else:
-            frequency = 'hz'
-        return "%s %s %s r %s" %(frequency, self.parameter,
-                                 format, self.resistance)
+            frequency = "hz"
+        return f"{frequency} {self.parameter} {format} r {self.resistance}"
 
-
-    def get_sparameter_names(self, format="ri"):
+    def get_sparameter_names(self, format: str="ri") -> list[str]:
         """
         Generate a list of column names for the s-parameter data.
         The names are different for each format.
@@ -385,7 +659,7 @@ class Touchstone:
         Parameters
         ----------
         format : str
-          Format: ri, ma, db, orig (where orig refers to one of the three others)
+          Format: ri, ma, db
 
         Returns
         -------
@@ -393,33 +667,19 @@ class Touchstone:
             list of strings
 
         """
-        names = ['frequency']
-        if format == 'orig':
-            format = self.format
-        ext1, ext2 = {'ri':('R','I'),'ma':('M','A'), 'db':('DB','A')}.get(format)
-        file_name_ending = self.filename.split('.')[-1].lower()
-        for r1 in range(self.rank):
-            for r2 in range(self.rank):
-                # Transpose Touchstone V1 2-port files (.2p), as the order is (11) (21) (12) (22)
-                if self.rank == 2 and file_name_ending == "s2p":
-                    names.append(f"S{r2+1}{r1+1}{ext1}")
-                    names.append(f"S{r2+1}{r1+1}{ext2}")
-                else:
-                    names.append(f"S{r1+1}{r2+1}{ext1}")
-                    names.append(f"S{r1+1}{r2+1}{ext2}")
-        return names
+        warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
+        return self.get_sparameter_data(format).keys()
 
-    def get_sparameter_data(self, format='ri'):
+    def get_sparameter_data(self, format: str="ri") -> dict[str, npy.ndarray]:
         """
         Get the data of the s-parameter with the given format.
 
         Parameters
         ----------
         format : str
-          Format: ri, ma, db, orig
+          Format: ri, ma, db
 
         supported formats are:
-          orig:  unmodified s-parameter data
           ri:    data in real/imaginary
           ma:    data in magnitude and angle (degree)
           db:    data in log magnitude and angle (degree)
@@ -430,41 +690,29 @@ class Touchstone:
             list of numpy.arrays
 
         """
-        ret = {}
-        if format == 'orig':
-            values = self.sparameters
-        else:
-            values = self.sparameters.copy()
-            # use frequency in hz unit
-            values[:,0] = values[:,0]*self.frequency_mult
-            if (self.format == 'db') and (format == 'ma'):
-                values[:,1::2] = 10**(values[:,1::2]/20.0)
-            elif (self.format == 'db') and (format == 'ri'):
-                v_complex = ((10**values[:,1::2]/20.0)
-                             * numpy.exp(1j*numpy.pi/180 * values[:,2::2]))
-                values[:,1::2] = numpy.real(v_complex)
-                values[:,2::2] = numpy.imag(v_complex)
-            elif (self.format == 'ma') and (format == 'db'):
-                values[:,1::2] = 20*numpy.log10(values[:,1::2])
-            elif (self.format == 'ma') and (format == 'ri'):
-                v_complex = (values[:,1::2] * numpy.exp(1j*numpy.pi/180 * values[:,2::2]))
-                values[:,1::2] = numpy.real(v_complex)
-                values[:,2::2] = numpy.imag(v_complex)
-            elif (self.format == 'ri') and (format == 'ma'):
-                v_complex = values[:,1::2] + 1j* values[:,2::2]
-                values[:,1::2] = numpy.absolute(v_complex)
-                values[:,2::2] = numpy.angle(v_complex)*(180/numpy.pi)
-            elif (self.format == 'ri') and (format == 'db'):
-                v_complex = values[:,1::2] + 1j* values[:,2::2]
-                values[:,1::2] = 20*numpy.log10(numpy.absolute(v_complex))
-                values[:,2::2] = numpy.angle(v_complex)*(180/numpy.pi)
+        warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
+        ret = {"frequency": self.f}
+        for j in range(self.rank):
+            for k in range(self.rank):
+                prefix = f"S{j+1}{k+1}"
+                val = self.s[:, j, k]
+                if self.rank == 2 and self.filename.split(".")[-1].lower() == "s2p":
+                    prefix = f"S{k+1}{j+1}"
+                    val = self.s[:, k, j]
 
-        for i,n in enumerate(self.get_sparameter_names(format=format)):
-            ret[n] = values[:,i]
+                if format == "ri":
+                    ret[f"{prefix}R"] = val.real
+                    ret[f"{prefix}I"] = val.imag
+                elif format == "ma":
+                    ret[f"{prefix}M"] = npy.abs(val)
+                    ret[f"{prefix}A"] = npy.angle(val, deg=True)
+                elif format == "db":
+                    ret[f"{prefix}DB"] = 20 * npy.log10(npy.abs(val))
+                    ret[f"{prefix}A"] = npy.angle(val, deg=True)
 
         return ret
 
-    def get_sparameter_arrays(self):
+    def get_sparameter_arrays(self) -> tuple[npy.ndarray, npy.ndarray]:
         """
         Returns the s-parameters as a tuple of arrays.
 
@@ -481,27 +729,10 @@ class Touchstone:
         >>> s11 = a[:, 0, 0]
 
         """
-        v = self.sparameters
-
-        if self.format == 'ri':
-            v_complex = v[:,1::2] + 1j* v[:,2::2]
-        elif self.format == 'ma':
-            v_complex = (v[:,1::2] * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
-        elif self.format == 'db':
-            v_complex = ((10**(v[:,1::2]/20.0)) * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
-
-        if self.rank == 2 :
-            # this return is tricky; it handles the way touchtone lines are
-            # in case of rank==2: order is s11,s21,s12,s22
-            return (v[:,0] * self.frequency_mult,
-                    numpy.transpose(v_complex.reshape((-1, self.rank, self.rank)),axes=(0,2,1)))
-        else:
-            return (v[:,0] * self.frequency_mult,
-                    v_complex.reshape((-1, self.rank, self.rank)))
+        return self.f, self.s
 
     def get_noise_names(self):
-        raise NotImplementedError('not yet implemented')
-
+        raise NotImplementedError("not yet implemented")
 
     def get_noise_data(self):
         # TBD = 1
@@ -510,71 +741,7 @@ class Touchstone:
         # noise_source_reflection = noise_values[:,2]
         # noise_source_phase = noise_values[:,3]
         # noise_normalized_resistance = noise_values[:,4]
-        raise NotImplementedError('not yet implemented')
-
-    def get_gamma_z0_from_fid(self, fid):
-        """
-        Extracts Z0 and Gamma comments from fid.
-
-        Parameters
-        ----------
-        fid : file object
-        """
-        gamma = []
-        z0 = []
-        def line2ComplexVector(s):
-            return mf.scalar2Complex(npy.array([k for k in s.strip().split(' ')
-                                                if k != ''][self.rank*-2:],
-                                                dtype='float'))
-        fid.seek(0)
-        while True:
-            line = fid.readline()
-            if not line:
-                break
-            line = line.replace('\t', ' ')
-
-            # HFSS adds gamma and z0 data in .sNp files using comments.
-            # NB : each line(s) describe gamma and z0.
-            #  But, depending on the HFSS version, either:
-            #  - up to 4 ports only.
-                #  - up to 4 ports only.
-            #        for N > 4, gamma and z0 are given by additional lines
-            #  - all gamma and z0 are given on a single line (since 2020R2)
-            # In addition, some spurious '!' can remain in these lines
-            if '! Gamma' in line:
-                _line = line.replace('! Gamma', '').replace('!', '').rstrip()
-
-                # check how many elements are in the first line
-                nb_elem = len(_line.split())
-
-                if nb_elem == 2*self.rank:
-                    # case of all data in a single line
-                    gamma.append(line2ComplexVector(_line.replace('!', '').rstrip()))
-                else:
-                    # case of Nport > 4 *and* data on additional multiple lines
-                    for _ in range(int(npy.ceil(self.rank/4.0)) - 1):
-                        _line += fid.readline().replace('!', '').rstrip()
-                    gamma.append(line2ComplexVector(_line))
-
-
-            if '! Port Impedance' in line:
-                _line = line.replace('! Port Impedance', '').rstrip()
-                nb_elem = len(_line.split())
-
-                if nb_elem == 2*self.rank:
-                    z0.append(line2ComplexVector(_line.replace('!', '').rstrip()))
-                else:
-                    for _ in range(int(npy.ceil(self.rank/4.0)) - 1):
-                        _line += fid.readline().replace('!', '').rstrip()
-                    z0.append(line2ComplexVector(_line))
-
-        # If the file does not contain valid port impedance comments, set to default one
-        if len(z0) == 0:
-            z0 = npy.array(self.resistance, dtype=complex)
-            #raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
-
-        self.gamma = npy.array(gamma)
-        self.z0 = npy.array(z0)
+        raise NotImplementedError("not yet implemented")
 
     def get_gamma_z0(self):
         """
@@ -589,7 +756,8 @@ class Touchstone:
         """
         return self.gamma, self.z0
 
-def hfss_touchstone_2_gamma_z0(filename):
+
+def hfss_touchstone_2_gamma_z0(filename: str) -> tuple[npy.ndarray, npy.ndarray, npy.ndarray]:
     """
     Extracts Z0 and Gamma comments from touchstone file.
 
@@ -620,7 +788,7 @@ def hfss_touchstone_2_gamma_z0(filename):
     return ntwk.frequency.f, ntwk.gamma, ntwk.z0
 
 
-def hfss_touchstone_2_media(filename, f_unit='ghz'):
+def hfss_touchstone_2_media(filename: str) -> list[DefinedGammaZ0]:
     """
     Creates a :class:`~skrf.media.Media` object from a a HFSS-style Touchstone file with Gamma and Z0 comments.
 
@@ -628,9 +796,6 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
     ----------
     filename : string
         the HFSS-style Touchstone file
-    f_unit : string
-        'hz', 'khz', 'mhz' or 'ghz', which is passed to the `f_unit` parameter
-        to :class:`~skrf.frequency.Frequency` constructor
 
     Returns
     -------
@@ -652,23 +817,15 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
     gamma = ntwk.gamma
     z0 = ntwk.z0
 
-
     media_list = []
 
     for port_n in range(gamma.shape[1]):
-        media_list.append(\
-            DefinedGammaZ0(
-                frequency = freq,
-                gamma =  gamma[:, port_n],
-                z0 = z0[:, port_n]
-                )
-            )
-
+        media_list.append(DefinedGammaZ0(frequency=freq, gamma=gamma[:, port_n], z0=z0[:, port_n]))
 
     return media_list
 
 
-def hfss_touchstone_2_network(filename, f_unit='ghz'):
+def hfss_touchstone_2_network(filename: str) -> Network:
     """
     Creates a :class:`~skrf.Network` object from a a HFSS-style Touchstone file.
 
@@ -676,9 +833,6 @@ def hfss_touchstone_2_network(filename, f_unit='ghz'):
     ----------
     filename : string
         the HFSS-style Touchstone file
-    f_unit : string
-        'hz', 'khz', 'mhz' or 'ghz', which is passed to the `f_unit` parameter
-        to :class:`~skrf.frequency.Frequency` constructor
 
     Returns
     -------
@@ -693,11 +847,11 @@ def hfss_touchstone_2_network(filename, f_unit='ghz'):
     --------
     hfss_touchstone_2_gamma_z0 : returns gamma, and z0
     """
-    my_network = Network(file=filename, f_unit=f_unit)
-    return(my_network)
+    my_network = Network(file=filename)
+    return my_network
 
 
-def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> typing.Dict[str, Network]:
+def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> dict[str, Network]:
     """
     similar to skrf.io.read_all_networks, which works for directories but only for Touchstones in ziparchives.
 
@@ -716,8 +870,8 @@ def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> typin
     """
     networks = dict()
     for fname in ziparchive.namelist():  # type: str
-        directory, filename = os.path.split(fname)
-        if dir == directory and fname[-4:].lower() in (".s1p", ".s2p", ".s3p", ".s4p"):
+        directory = os.path.split(fname)[0]
+        if dir == directory and  re.match(r"s\d+p", fname.lower()):
             network = Network.zipped_touchstone(fname, ziparchive)
             networks[network.name] = network
     return networks

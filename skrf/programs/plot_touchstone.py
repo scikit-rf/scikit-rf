@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import optparse
+
 import pylab as plb
 
 try:
@@ -34,7 +35,7 @@ def main():
     ax_1 = plb.subplot(221)
     ax_2 = plb.subplot(222)
     ax_3 = plb.subplot(223)
-    ax_4 = plb.subplot(224)
+    ax_4 = plb.subplot(224)  # noqa: F841
 
     for touchstone_filename in args:
         print(touchstone_filename)

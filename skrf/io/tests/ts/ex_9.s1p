@@ -1,0 +1,8 @@
+!1-port Z-parameter file, multiple frequency points
+# MHz Z MA R 75
+!freq magZ11 angZ11
+100 0.99 -4
+200 0.80 -22
+300 0.707 -45
+400 0.40 -62
+500 0.01 -89

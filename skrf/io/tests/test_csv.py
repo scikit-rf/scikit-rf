@@ -1,11 +1,12 @@
-import unittest
-import pytest
 import os
+import unittest
+
 import numpy as npy
+import pytest
 
 import skrf as rf
-
 from skrf.util import suppress_warning_decorator
+
 
 class AgilentCSVTestCase(unittest.TestCase):
     """

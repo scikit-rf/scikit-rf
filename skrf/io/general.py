@@ -62,37 +62,47 @@ JSON
 
 
 """
-from typing import List, Tuple, Optional
+from __future__ import annotations
 
 import glob
 import inspect
 import json
 import os
 import pickle
-from pickle import UnpicklingError
 import sys
 import warnings
-import numpy as npy
-from pandas import DataFrame, Series, ExcelWriter
 from io import StringIO
+from pickle import UnpicklingError
+from typing import Any
 
-from ..util import get_extn, get_fid
-from ..network import Network
+import numpy as npy
+from pandas import DataFrame, ExcelWriter, Series
+
 from ..frequency import Frequency
-from ..media import Media
+from ..network import Network
 from ..networkSet import NetworkSet
-from ..calibration.calibration import Calibration
+from ..util import get_extn, get_fid
 
-# file extension conventions for skrf objects.
-OBJ_EXTN = [
-    [Frequency, 'freq'],
-    [Network, 'ntwk'],
-    [NetworkSet, 'ns'],
-    [Calibration, 'cal'],
-    [Media, 'med'],
-    [object, 'p'],
+
+def _get_extension(inst: Any) -> str:
+    """File extension conventions for skrf objects.
+    """
+    from ..calibration.calibration import Calibration
+    from ..media import Media
+
+    extensions = [
+        (Frequency, "freq"),
+        (Network, "ntwk"),
+        (NetworkSet, "ns"),
+        (Calibration, "cal"),
+        (Media, "med"),
     ]
 
+    for cls, ext in extensions:
+        print(cls, ext)
+        if isinstance(inst, cls):
+            return ext
+    return "p"
 
 def read(file, *args, **kwargs):
     r"""
@@ -135,7 +145,7 @@ def read(file, *args, **kwargs):
     fid = get_fid(file, mode='rb')
     try:
         obj = pickle.load(fid, *args, **kwargs)
-    except (UnpicklingError, UnicodeDecodeError) as e:
+    except (UnpicklingError, UnicodeDecodeError):
         # if fid is seekable then reset to beginning of file
         fid.seek(0)
 
@@ -227,15 +237,11 @@ def write(file, obj, overwrite = True):
         extn = get_extn(file)
         if extn is None:
             # if there is not extension add one
-            for obj_extn in OBJ_EXTN:
-                if isinstance(obj, obj_extn[0]):
-                    extn = obj_extn[1]
-                    break
-            file = file + '.' + extn
+            file += f".{_get_extension(obj)}"
 
         if os.path.exists(file):
             if not overwrite:
-                warnings.warn('file exists, and overwrite option is False. Not writing.')
+                warnings.warn('file exists, and overwrite option is False. Not writing.', stacklevel=2)
                 return
 
         with open(file, 'wb') as fid:
@@ -246,7 +252,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir: str ='.', sort = True, contains = None, f_unit = None, 
+def read_all(dir: str ='.', sort = True, contains = None, f_unit = None,
         obj_type=None, files: list=None, recursive=False) -> dict:
     """
     Read all skrf objects in a directory.
@@ -365,8 +371,6 @@ def read_all_networks(*args, **kwargs):
     --------
     read_all
     """
-    if 'f_unit' not in kwargs:
-        kwargs.update({'f_unit':'ghz'})
     return read_all(*args,obj_type='Network', **kwargs)
 
 ran = read_all_networks
@@ -424,17 +428,13 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
         extn = get_extn(filename)
         if extn is None:
             # if there is not extension add one
-            for obj_extn in OBJ_EXTN:
-                if isinstance(obj, obj_extn[0]):
-                    extn = obj_extn[1]
-                    break
-            filename = filename + '.' + extn
+            filename += f".{_get_extension(obj)}"
         try:
             with open(os.path.join(dir+'/', filename), 'wb') as fid:
                 write(fid, obj,*args, **kwargs)
         except Exception as inst:
             print(inst)
-            warnings.warn('couldnt write %s: %s'%(k,str(inst)))
+            warnings.warn(f'couldnt write {k}: {inst}', stacklevel=2)
 
             pass
 
@@ -529,7 +529,6 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
     for f in os.listdir (dir):
         if contains is not None and contains not in f:
             continue
-        fullname = os.path.join(dir,f)
         keyname,extn = os.path.splitext(f)
         extn = extn.lower()
         try:
@@ -557,7 +556,7 @@ def write_dict_of_networks(ntwkDict, dir='.'):
 
 
     """
-    warnings.warn('Deprecated. use write_all.', DeprecationWarning)
+    warnings.warn('Deprecated. use write_all.', DeprecationWarning, stacklevel=2)
     for ntwkKey in ntwkDict:
         ntwkDict[ntwkKey].write_touchstone(filename = dir+'/'+ntwkKey)
 
@@ -595,7 +594,6 @@ def read_csv(filename):
         ntwk.s = data[:,1] +1j*data[:,2]
 
     ntwk.frequency.f = data[:,0]
-    ntwk.frequency.unit='ghz'
 
     return ntwk
 
@@ -632,7 +630,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
     if remove_tmp_file:
         os.rename(new_file_name,file_name)
 
-def network_2_spreadsheet(ntwk: Network, file_name: str = None, 
+def network_2_spreadsheet(ntwk: Network, file_name: str = None,
         file_type: str = 'excel', form: str ='db', *args, **kwargs):
     r"""
     Write a Network object to a spreadsheet, for your boss.
@@ -711,10 +709,10 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
 
     df = DataFrame(d)
     df.__getattribute__('to_%s'%file_type)(file_name,
-        index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
+        index_label='Freq(%s)'%ntwk.frequency.unit, **kwargs)
 
-def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'], 
-        ports: List[Tuple[int, int]] = None, port_sep: Optional[str] = None):
+def network_2_dataframe(ntwk: Network, attrs: list[str] =None,
+        ports: list[tuple[int, int]] = None, port_sep: str | None = None):
     """
     Convert one or more attributes of a network to a pandas DataFrame.
 
@@ -728,15 +726,17 @@ def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'],
         list of port pairs to write. defaults to ntwk.port_tuples
         (like [(0,0)])
     port_sep : string
-        defaults to None, which means a empty string "" is used for 
+        defaults to None, which means a empty string "" is used for
         networks with lower than 10 ports. (s_db 11, s_db 21)
         For more than ten ports a "_" is used to avoid ambiguity.
-        (s_db 1_1, s_db 2_1)    
+        (s_db 1_1, s_db 2_1)
 
     Returns
     -------
     df : pandas DataFrame Object
     """
+    if attrs is None:
+        attrs = ["s_db"]
     if ports is None:
         ports = ntwk.port_tuples
 
@@ -750,7 +750,7 @@ def network_2_dataframe(ntwk: Network, attrs: List[str] =['s_db'],
             d[f'{attr} {m+1}{port_sep}{n+1}'] = attr_array[:, m, n]
     return DataFrame(d, index=ntwk.frequency.f)
 
-def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_type: str = 'excel',
+def networkset_2_spreadsheet(ntwkset: NetworkSet, file_name: str = None, file_type: str = 'excel',
     *args, **kwargs):
     r"""
     Write a NetworkSet object to a spreadsheet, for your boss.
@@ -799,7 +799,7 @@ def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_
         if not file_name.endswith('.xlsx'):
             file_name += '.xlsx'
         with ExcelWriter(file_name) as writer:
-            [network_2_spreadsheet(k, writer, sheet_name=k.name, *args, **kwargs) for k in ntwkset]
+            [network_2_spreadsheet(k, writer, sheet_name=k.name, **kwargs) for k in ntwkset]
     else:
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
 

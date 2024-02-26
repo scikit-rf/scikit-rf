@@ -1,10 +1,13 @@
-import unittest
-import os
-import numpy as np
-import skrf as rf
 import glob
+import os
 import sys
+import unittest
+
+import numpy as np
 import pytest
+
+import skrf as rf
+
 
 class NetworkSetTestCase(unittest.TestCase):
     """
@@ -16,6 +19,8 @@ class NetworkSetTestCase(unittest.TestCase):
         Initialize tests.
         """
         # Touchstone files
+
+        rng = np.random.default_rng()
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
         self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
@@ -26,13 +31,13 @@ class NetworkSetTestCase(unittest.TestCase):
         self.freq1 = rf.Frequency(75, 110, 101, 'ghz')
         self.freq2 = rf.Frequency(75, 110, 201, 'ghz')
         self.ntwk_freq1_1p = rf.Network(frequency=self.freq1)
-        self.ntwk_freq1_1p.s = np.random.rand(len(self.freq1), 1, 1)
+        self.ntwk_freq1_1p.s = rng.random((len(self.freq1), 1, 1))
         self.ntwk_freq1_2p = rf.Network(frequency=self.freq1)
-        self.ntwk_freq1_2p.s = np.random.rand(len(self.freq1), 2, 2)
+        self.ntwk_freq1_2p.s = rng.random((len(self.freq1), 2, 2))
         self.ntwk_freq2_1p = rf.Network(frequency=self.freq2)
-        self.ntwk_freq2_1p.s = np.random.rand(len(self.freq2), 1, 1)
+        self.ntwk_freq2_1p.s = rng.random((len(self.freq2), 1, 1))
         self.ntwk_freq2_2p = rf.Network(frequency=self.freq2)
-        self.ntwk_freq2_2p.s = np.random.rand(len(self.freq2), 2, 2)
+        self.ntwk_freq2_2p.s = rng.random((len(self.freq2), 2, 2))
 
         # dummy networks with associated parameters
         # total number of different networks
@@ -48,7 +53,7 @@ class NetworkSetTestCase(unittest.TestCase):
 
         # create M dummy networks
         self.ntwks_params = [rf.Network(frequency=self.freq1,
-                                        s=np.random.rand(len(self.freq1),2,2),
+                                        s=rng.random((len(self.freq1),2,2)),
                                         name=f'ntwk_{m}',
                                         comment=f'ntwk_{m}',
                                         params=params) \
@@ -206,7 +211,7 @@ class NetworkSetTestCase(unittest.TestCase):
         ns.name = 'testing'
         ns.write()  # write 'testing.ns'
         os.remove('testing.ns')
-    
+
     @pytest.mark.skipif("openpyxl" not in sys.modules, reason="Requires openpyxl in sys.modules.")
     def test_write_spreadsheet(self):
         """

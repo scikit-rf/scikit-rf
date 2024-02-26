@@ -13,15 +13,20 @@ Citi class and utilities
    Citi
 
 """
-import numpy as np
+from __future__ import annotations
+
 import typing
-from ..util import get_fid
+
+import numpy as np
+
 from ..frequency import Frequency
+from ..mathFunctions import magdeg_2_reim
 from ..network import Network, z2s
 from ..networkSet import NetworkSet
-from ..mathFunctions import magdeg_2_reim
+from ..util import get_fid
 
-class Citi():
+
+class Citi:
     """
     Class to read CITI N-port files.
 
@@ -38,7 +43,8 @@ class Citi():
     References
     ----------
     .. [#] https://na.support.keysight.com/plts/help/WebHelp/FilePrint/CITIfile_Format.htm
-    .. [#] Handbook of Microwave Component Measurements: with Advanced VNA Techniques, Joel P. Dunsmore, 2020, Section 6.1.6.1
+    .. [#] Handbook of Microwave Component Measurements: with Advanced VNA Techniques, Joel P. Dunsmore, 2020,
+    Section 6.1.6.1
 
     Examples
     --------
@@ -51,7 +57,7 @@ class Citi():
     >>> file = open('network.cti')
     >>> m = rf.Citi(file)
     """
-    def __init__(self, file: typing.Union[str, typing.TextIO]):
+    def __init__(self, file: str | typing.TextIO):
         """
         Constructor
 
@@ -165,7 +171,7 @@ class Citi():
                 # read the number of occurence lines for a param (FIFO param)
                 _param_values = []
                 cur_name = params_list.pop(0)
-                for idx in range(self._params[cur_name]['occurences']):
+                for _idx in range(self._params[cur_name]['occurences']):
                     line = lines.pop(0)  # goes next line
                     # reads the nb of occurences
                     _param_values.append(line.strip())
@@ -178,7 +184,7 @@ class Citi():
                 # data are ordered for each param(s), then for each frequency
                 # so number of lines to read is the product of the occurences of each param
                 nb_lines = np.prod([self._params[name]['occurences'] for name in self._params.keys()])
-                for idx in range(nb_lines):
+                for _idx in range(nb_lines):
                     line = lines.pop(0)  # goes next line
                     # Expect:
                     #    val1, val2
@@ -259,7 +265,7 @@ class Citi():
                 zname = 'PORTZ'
 
             for m in range(rank):
-                for (idx_set, params_set) in enumerate(params_sets):
+                for idx_set in range(len(params_sets)):
                     z0s[idx_set,:,m] = self._data[f'{zname}[{m+1}]']['values'].reshape((int(occ), len(freq)))[idx_set,:]
 
         # create list of Networks assuming the following ordering:
@@ -281,7 +287,7 @@ class Citi():
                     ntwkprm = 'S'
 
                 # network param (m,n) for the current set of params
-                for (idx_set, params_set) in enumerate(params_sets):
+                for idx_set in range(len(params_sets)):
                     p[idx_set,:,m,n] = pp[idx_set,:]
 
         # generate networks from the network parameters and set of params
