@@ -294,7 +294,8 @@ class VectorFitting:
                 max_cond = np.amax(self.history_cond_A)
                 max_deficiency = np.amax(self.history_rank_deficiency)
                 if max_cond > 1e10:
-                    hint_illcond = f'\nHint: the linear system was ill-conditioned (max. condition number was {max_cond}).'
+                    hint_illcond = ('\nHint: the linear system was ill-conditioned (max. condition number was '
+                                    f'{max_cond}).')
                 else:
                     hint_illcond = ''
                 if max_deficiency < 0:
@@ -615,8 +616,8 @@ class VectorFitting:
             pole_freqs_real = None
             pole_freqs_cmplx = None
         else:
-            warnings.warn('Invalid choice of initial pole spacing; proceeding with linear spacing.', UserWarning,
-                          stacklevel=2)
+            warnings.warn('Invalid choice of initial pole spacing; proceeding with linear spacing.',
+                          UserWarning, stacklevel=2)
             pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
             pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
 
@@ -900,7 +901,7 @@ class VectorFitting:
 
         # solve least squares and obtain results as stack of real part vector and imaginary part vector
         x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((A.real, A.imag)),
-                                                            np.hstack((freq_responses.real, freq_responses.imag)).transpose(),
+                                                            np.hstack((freq_responses.real, freq_responses.imag)).T,
                                                             rcond=None)
 
         # extract residues from solution vector and align them with poles to get matching pole-residue pairs
@@ -931,7 +932,8 @@ class VectorFitting:
                 model += residues[:, i, None] / (s - pole)
             else:
                 # complex conjugate pole
-                model += residues[:, i, None] / (s - pole) + np.conjugate(residues[:, i, None]) / (s - np.conjugate(pole))
+                model += (residues[:, i, None] / (s - pole) +
+                          np.conjugate(residues[:, i, None]) / (s - np.conjugate(pole)))
 
         # compute weighted error and return global maximum at each frequency across all individual responses
         delta = np.abs(model - freq_responses) * weights_responses[:, None]
@@ -1442,9 +1444,9 @@ class VectorFitting:
         # deal with unbounded violation interval (f_viol_max == np.inf)
         if np.isinf(f_viol_max):
             f_viol_max = 1.5 * violation_bands[-1, 0]
-            warnings.warn('Passivity enforcement: The passivity violations of this model are unbounded. Passivity '
-                          'enforcement might still work, but consider re-fitting with a lower number of poles and/or '
-                          'without the constants (`fit_constant=False`) if the results are not satisfactory.',
+            warnings.warn('Passivity enforcement: The passivity violations of this model are unbounded. '
+                          'Passivity enforcement might still work, but consider re-fitting with a lower number of poles '
+                          'and/or without the constants (`fit_constant=False`) if the results are not satisfactory.',
                           UserWarning, stacklevel=2)
 
         # the frequency band for the passivity evaluation is from dc to 20% above the highest relevant frequency
@@ -1549,8 +1551,8 @@ class VectorFitting:
 
         # PASSIVATION PROCESS DONE; model is either passive or max. number of iterations have been exceeded
         if t == self.max_iterations:
-            warnings.warn('Passivity enforcement: Aborting after the max. number of iterations has been exceeded.',
-                          RuntimeWarning, stacklevel=2)
+            warnings.warn('Passivity enforcement: Aborting after the max. number of iterations has been '
+                          'exceeded.', RuntimeWarning, stacklevel=2)
 
         # save/update model parameters (perturbed residues)
         self.history_max_sigma = np.array(self.history_max_sigma)
@@ -1745,17 +1747,20 @@ class VectorFitting:
         """
 
         if self.poles is None:
-            warnings.warn('Returning a zero-vector; Poles have not been fitted.', RuntimeWarning, stacklevel=2)
+            warnings.warn('Returning a zero-vector; Poles have not been fitted.',
+                          RuntimeWarning, stacklevel=2)
             return np.zeros_like(freqs)
         if self.residues is None:
-            warnings.warn('Returning a zero-vector; Residues have not been fitted.', RuntimeWarning, stacklevel=2)
+            warnings.warn('Returning a zero-vector; Residues have not been fitted.',
+                          RuntimeWarning, stacklevel=2)
             return np.zeros_like(freqs)
         if self.proportional_coeff is None:
-            warnings.warn('Returning a zero-vector; Proportional coefficients have not been fitted.', RuntimeWarning,
-                          stacklevel=2)
+            warnings.warn('Returning a zero-vector; Proportional coefficients have not been fitted.',
+                          RuntimeWarning, stacklevel=2)
             return np.zeros_like(freqs)
         if self.constant_coeff is None:
-            warnings.warn('Returning a zero-vector; Constants have not been fitted.', RuntimeWarning, stacklevel=2)
+            warnings.warn('Returning a zero-vector; Constants have not been fitted.',
+                          RuntimeWarning, stacklevel=2)
             return np.zeros_like(freqs)
         if freqs is None:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
