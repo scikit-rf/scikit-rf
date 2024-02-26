@@ -343,17 +343,18 @@ class VectorFitting:
 
     def autofit(self, parameter_type: str = 's'):
         n_poles_init_real = 3
-        n_poles_init_cmplx = 0
-        model_order_max = 200
-        n_poles_add = 5
+        n_poles_init_cmplx = 10
+        model_order_max = 100
+        n_poles_add = 2
 
         i_start = 3
         i_inter = 3
-        i_final = 3
+        i_final = 5
 
-        eps_min = 1e-3
+        eps_min = 1e-2
         alpha = 0.03
         gamma = 0.03
+        nu = 0.01
 
         eps_peak_history = []
         model_order_history = []
@@ -364,6 +365,7 @@ class VectorFitting:
         norm = np.average(self.network.f)
         # norm = np.exp(np.mean(np.log(self.network.f)))
         freqs_norm = np.array(self.network.f) / norm
+        omega_norm = 2 * np.pi * freqs_norm
 
         # get initial poles
         poles = self._init_poles(freqs_norm, n_poles_init_real, n_poles_init_cmplx, 'lin')
@@ -412,9 +414,9 @@ class VectorFitting:
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
         # RESIDUE FITTING FOR ERROR COMPUTATION
-        residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
-                                                                          fit_constant=fit_constant,
-                                                                          fit_proportional=fit_proportional)
+        poles, residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
+                                                                                 fit_constant=fit_constant,
+                                                                                 fit_proportional=fit_proportional)
         delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                 weights_responses)
         eps_peak = np.max(delta)
@@ -423,21 +425,20 @@ class VectorFitting:
         model_order = np.sum((poles.imag != 0) + 1)
         model_order_history.append(model_order)
 
-        delta_eps = 1
+        delta_eps = 10 * alpha
 
         # POLE SKIMMING AND ADDING LOOP
         while eps_peak > eps_min and model_order < model_order_max and delta_eps > alpha:
 
             # SKIMMING OF SPURIOUS POLES
-            spurious = self.get_spurious(poles, residues, gamma=gamma)
+            spurious = self.get_spurious(poles, residues, n_freqs=len(freqs_norm), gamma=gamma)
             n_skim = np.sum(spurious)
-            print(f'skimming {n_skim} poles')
             poles = poles[~spurious]
+            # residues = residues[:, ~spurious]
+            print(f'skimming {n_skim} poles')
 
             # REPLACING SPURIOUS POLE AND ADDING NEW POLES
             idx_freqs_start, idx_freqs_stop, idx_freqs_max, delta_mean_bands = self._find_error_bands(freqs_norm, delta)
-            #print(f'replacement candidate frequencies: {2 * np.pi * freqs_norm[idx_freqs_max]}')
-            #print(f'existing pole frequencies: {poles}')
 
             n_bands = len(idx_freqs_max)
             if n_bands < n_skim:
@@ -445,11 +446,50 @@ class VectorFitting:
             elif n_bands < n_skim + n_poles_add:
                 n_add = n_bands
             else:
-                n_add = n_poles_add
+                n_add = n_skim + n_poles_add
 
             print(f'adding {n_add} poles')
+
+            # poles_add = (-0.01 + 1j) * omega_norm[idx_freqs_max]
+            # height_stem = np.max(delta_mean_bands)
+            # import matplotlib.pyplot as mplt
+            # mplt.figure()
+            # mplt.hlines(delta_mean_bands, omega_norm[idx_freqs_start], omega_norm[idx_freqs_stop])
+            # mplt.stem(poles.imag, height_stem * np.ones_like(poles.imag), '-')
+            # mplt.stem(poles_add.imag, height_stem * np.ones_like(poles_add.imag), '-')
+            # #mplt.xlim(0, omega[-1])
+            # mplt.show()
+
             for i in range(n_add):
-                poles = np.append(poles, [(-0.01 + 1j) * 2 * np.pi * freqs_norm[idx_freqs_max[i]]])
+                #omega_band = omega_norm[idx_freqs_start[i]:idx_freqs_stop[i]]
+                omega_add = omega_norm[idx_freqs_max[i]]
+                pole_add = (-0.01 + 1j) * omega_add
+
+                # compute distance to neighbouring poles
+                abs_poles_existing = np.abs(poles) - pole_add.imag  # (equation 16)
+                #abs_poles_existing = np.abs(poles - pole_add)   # (equation 17)
+
+                # avoid forbidden bands (too close to neighbour)
+                if np.min(abs_poles_existing) < nu or pole_add.imag < nu:
+                    print('handling forbidden band')
+                    # decide shift direction (towards higher or lower frequencies)
+                    if idx_freqs_max[i] > 0:
+                        delta_below = delta[idx_freqs_max[i] - 1]
+                    else:
+                        delta_below = 0
+                    if idx_freqs_max[i] < len(omega_norm) - 1:
+                        delta_above = delta[idx_freqs_max[i] + 1]
+                    else:
+                        delta_above = 0
+
+                    if delta_above > delta_below:
+                        # shift to higher frequencies
+                        pole_add += (-0.01 + 1j) * nu
+                    else:
+                        # shift to lower frequencies
+                        pole_add += (-0.01 - 1j) * nu
+
+                poles = np.append(poles, [pole_add])
 
             # INTERMEDIATE POLE RELOCATION FOR i_inter ITERATIONS
             for i in range(i_inter):
@@ -457,26 +497,40 @@ class VectorFitting:
                     poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
             # RESIDUE FITTING FOR ERROR COMPUTATION
-            residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
-                                                                              fit_constant=fit_constant,
-                                                                              fit_proportional=fit_proportional)
+            poles, residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
+                                                                                     fit_constant=fit_constant,
+                                                                                     fit_proportional=fit_proportional)
             delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                     weights_responses)
             eps_peak = np.max(delta)
+            print(f'{eps_peak = }')
             eps_peak_history.append(eps_peak)
 
-            if len(eps_peak_history) > 3:
-                delta_eps = abs(eps_peak_history[-4] - eps_peak_history[-1])
+            m = 3
+            if len(eps_peak_history) > m:
+                delta_eps = np.mean(np.abs(np.diff(eps_peak_history[-1 - m:-1])))
+                #delta_eps = np.abs(eps_peak_history[-1 - m] - eps_peak_history[-1])
             else:
-                delta_eps = 1
+                delta_eps = 10 * alpha
+
+            print(f'{delta_eps = }')
+            print()
 
             model_order = np.sum((poles.imag != 0) + 1)
             model_order_history.append(model_order)
 
+            s = 1j * omega_norm
+            model = proportional_coeff[:, None] * s + constant_coeff[:, None]
+            for i, pole in enumerate(poles):
+                if np.imag(pole) == 0.0:
+                    # real pole
+                    model += residues[:, i, None] / (s - pole)
+                else:
+                    # complex conjugate pole
+                    model += residues[:, i, None] / (s - pole) + np.conjugate(residues[:, i, None]) / (s - np.conjugate(pole))
+
         # SKIMMING OF SPURIOUS POLES
         spurious = self.get_spurious(poles, residues, gamma=gamma)
-        n_skim = np.sum(spurious)
-        print(f'skimming {n_skim} poles')
         poles = poles[~spurious]
 
         # FINAL POLE RELOCATION FOR i_final ITERATIONS
@@ -485,9 +539,9 @@ class VectorFitting:
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
         # FINAL RESIDUE FITTING
-        residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
-                                                                          fit_constant=fit_constant,
-                                                                          fit_proportional=fit_proportional)
+        poles, residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
+                                                                                 fit_constant=fit_constant,
+                                                                                 fit_proportional=fit_proportional)
 
         # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
@@ -497,6 +551,8 @@ class VectorFitting:
 
         timer_stop = timer()
         self.wall_clock_time = timer_stop - timer_start
+
+        return eps_peak_history, model_order_history
 
     @staticmethod
     def _init_poles(freqs: list, n_poles_real: int, n_poles_cmplx: int, init_pole_spacing: str):
@@ -823,7 +879,7 @@ class VectorFitting:
         else:
             proportional_coeff = np.zeros(n_responses)
 
-        return residues, constant_coeff, proportional_coeff
+        return poles, residues, constant_coeff, proportional_coeff
 
     @staticmethod
     def _get_delta(poles, residues, constant_coeff, proportional_coeff, freqs, freq_responses, weights_responses):
@@ -839,7 +895,9 @@ class VectorFitting:
 
         # compute weighted error and return global maximum at each frequency across all individual responses
         delta = np.abs(model - freq_responses) * weights_responses[:, None]
-        return np.max(delta, axis=0)
+
+        # return np.max(delta, axis=0)
+        return np.mean(delta, axis=0)
 
     @staticmethod
     def _find_error_bands(freqs, delta):
