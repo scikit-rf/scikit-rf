@@ -327,9 +327,8 @@ class VectorFitting:
         logging.info('\n### Starting residues calculation process.\n')
 
         # finally, solve for the residues with the previously calculated poles
-        residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
-                                                                          fit_constant=fit_constant,
-                                                                          fit_proportional=fit_proportional)
+        residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
 
         # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
@@ -485,9 +484,8 @@ class VectorFitting:
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
         # RESIDUE FITTING FOR ERROR COMPUTATION
-        residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
-                                                                          fit_constant=fit_constant,
-                                                                          fit_proportional=fit_proportional)
+        residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
         delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                 weights_responses)
         error_peak = np.max(delta)
@@ -552,9 +550,8 @@ class VectorFitting:
                     poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
             # RESIDUE FITTING FOR ERROR COMPUTATION
-            residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
-                                                                              fit_constant=fit_constant,
-                                                                              fit_proportional=fit_proportional)
+            residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
+                poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
             delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                     weights_responses)
             error_peak_history.append(np.max(delta))
@@ -578,9 +575,8 @@ class VectorFitting:
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
         # FINAL RESIDUE FITTING
-        residues, constant_coeff, proportional_coeff = self._fit_residues(poles, freqs_norm, freq_responses,
-                                                                          fit_constant=fit_constant,
-                                                                          fit_proportional=fit_proportional)
+        residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
 
         # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
@@ -920,7 +916,7 @@ class VectorFitting:
         else:
             proportional_coeff = np.zeros(n_responses)
 
-        return residues, constant_coeff, proportional_coeff
+        return residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals
 
     @staticmethod
     def _get_delta(poles, residues, constant_coeff, proportional_coeff, freqs, freq_responses, weights_responses):
