@@ -366,7 +366,7 @@ class VectorFitting:
                               '`passivity_enforce()` to enforce passivity before using this model.',
                               UserWarning, stacklevel=2)
 
-    def autofit(self, n_poles_init_real: int = 3, n_poles_init_cmplx: int = 3, n_poles_add: int = 3,
+    def auto_fit(self, n_poles_init_real: int = 3, n_poles_init_cmplx: int = 3, n_poles_add: int = 3,
                 model_order_max: int = 100, iters_start: int = 3, iters_inter:int = 3, iters_final: int = 5,
                 target_error: float = 1e-2, alpha: float = 0.03, gamma: float = 0.03, nu_samples: float = 1.0,
                 parameter_type: str = 's') -> (np.ndarray, np.ndarray):
