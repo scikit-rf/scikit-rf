@@ -429,6 +429,7 @@ class VectorFitting:
         self.delta_max_history = []
         self.history_cond_A = []
         self.history_rank_deficiency = []
+        max_singular = 1
         error_peak_history = []
         model_order_history = []
 
@@ -486,7 +487,14 @@ class VectorFitting:
         for i in range(iters_start):
             poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+
             self.d_res_history.append(d_res)
+
+            new_max_singular = np.amax(singular_vals)
+            delta_max = np.abs(1 - new_max_singular / max_singular)
+            self.delta_max_history.append(delta_max)
+            logging.info(f'Max. relative change in residues = {delta_max}\n')
+            max_singular = new_max_singular
 
         # RESIDUE FITTING FOR ERROR COMPUTATION
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
@@ -553,7 +561,14 @@ class VectorFitting:
             for i in range(iters_inter):
                 poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                     poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+
                 self.d_res_history.append(d_res)
+
+                new_max_singular = np.amax(singular_vals)
+                delta_max = np.abs(1 - new_max_singular / max_singular)
+                self.delta_max_history.append(delta_max)
+                logging.info(f'Max. relative change in residues = {delta_max}\n')
+                max_singular = new_max_singular
 
             # RESIDUE FITTING FOR ERROR COMPUTATION
             residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
@@ -579,7 +594,14 @@ class VectorFitting:
         for i in range(iters_final):
             poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+
             self.d_res_history.append(d_res)
+
+            new_max_singular = np.amax(singular_vals)
+            delta_max = np.abs(1 - new_max_singular / max_singular)
+            self.delta_max_history.append(delta_max)
+            logging.info(f'Max. relative change in residues = {delta_max}\n')
+            max_singular = new_max_singular
 
         # FINAL RESIDUE FITTING
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
