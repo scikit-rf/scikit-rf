@@ -141,6 +141,24 @@ class VectorFitting:
         spurious = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
         return spurious
 
+    @staticmethod
+    def get_model_order(poles: np.ndarray) -> int:
+        """
+        Returns the model order calculated with :math:`N_{real} + 2 N_{complex}` for a given set of poles.
+
+        Parameters
+        ----------
+        poles: ndarray
+            The poles of the model as a list or NumPy array.
+
+        Returns
+        -------
+        order: int
+        """
+        # poles.imag != 0 is True(1) for complex poles, False (0) for real poles.
+        # Adding one to each element gives 2 columns for complex and 1 column for real poles.
+        return np.sum((poles.imag != 0) + 1)
+
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """
@@ -510,7 +528,7 @@ class VectorFitting:
         error_peak = np.max(delta)
         error_peak_history.append(error_peak)
 
-        model_order = np.sum((poles.imag != 0) + 1)
+        model_order = self.get_model_order(poles)
         model_order_history.append(model_order)
 
         delta_eps = 10 * alpha
@@ -595,7 +613,7 @@ class VectorFitting:
             else:
                 delta_eps = 1
 
-            model_order = np.sum((poles.imag != 0) + 1)
+            model_order = self.get_model_order(poles)
             model_order_history.append(model_order)
 
         # SKIMMING OF SPURIOUS POLES
@@ -702,9 +720,8 @@ class VectorFitting:
         # (ratio #real/#complex poles might change during iterations)
 
         # We need two columns for complex poles and one column for real poles in A matrix.
-        # poles.imag != 0 is True(1) for complex poles, False (0) for real poles.
-        # Adding one to each element gives 2 columns for complex and 1 column for real poles.
-        n_cols_unused = np.sum((poles.imag != 0) + 1)
+        # This number equals the model order.
+        n_cols_unused = VectorFitting.get_model_order(poles)
 
         n_cols_used = n_cols_unused
         n_cols_used += 1
@@ -877,9 +894,8 @@ class VectorFitting:
         s = 1j * omega
 
         # We need two columns for complex poles and one column for real poles in A matrix.
-        # poles.imag != 0 is True(1) for complex poles, False (0) for real poles.
-        # Adding one to each element gives 2 columns for complex and 1 column for real poles.
-        n_cols = np.sum((poles.imag != 0) + 1)
+        # This number equals the model order.
+        n_cols = VectorFitting.get_model_order(poles)
 
         idx_constant = []
         idx_proportional = []
