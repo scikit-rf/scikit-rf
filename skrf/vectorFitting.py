@@ -490,6 +490,12 @@ class VectorFitting:
 
             self.d_res_history.append(d_res)
 
+            logging.info(f'Condition number of coefficient matrix is {int(cond)}')
+            self.history_cond_A.append(cond)
+
+            self.history_rank_deficiency.append(rank_deficiency)
+            logging.info(f'Rank deficiency is {rank_deficiency}.')
+
             new_max_singular = np.amax(singular_vals)
             delta_max = np.abs(1 - new_max_singular / max_singular)
             self.delta_max_history.append(delta_max)
@@ -564,6 +570,12 @@ class VectorFitting:
 
                 self.d_res_history.append(d_res)
 
+                logging.info(f'Condition number of coefficient matrix is {int(cond)}')
+                self.history_cond_A.append(cond)
+
+                self.history_rank_deficiency.append(rank_deficiency)
+                logging.info(f'Rank deficiency is {rank_deficiency}.')
+
                 new_max_singular = np.amax(singular_vals)
                 delta_max = np.abs(1 - new_max_singular / max_singular)
                 self.delta_max_history.append(delta_max)
@@ -596,6 +608,12 @@ class VectorFitting:
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
             self.d_res_history.append(d_res)
+
+            logging.info(f'Condition number of coefficient matrix is {int(cond)}')
+            self.history_cond_A.append(cond)
+
+            self.history_rank_deficiency.append(rank_deficiency)
+            logging.info(f'Rank deficiency is {rank_deficiency}.')
 
             new_max_singular = np.amax(singular_vals)
             delta_max = np.abs(1 - new_max_singular / max_singular)
