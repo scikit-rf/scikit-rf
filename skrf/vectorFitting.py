@@ -425,6 +425,10 @@ class VectorFitting:
             Compatibility, vol. 48, no. 1, pp. 104-120, Feb. 2006, DOI: https://doi.org/10.1109/TEMC.2006.870814
         """
 
+        self.d_res_history = []
+        self.delta_max_history = []
+        self.history_cond_A = []
+        self.history_rank_deficiency = []
         error_peak_history = []
         model_order_history = []
 
@@ -482,6 +486,7 @@ class VectorFitting:
         for i in range(iters_start):
             poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+            self.d_res_history.append(d_res)
 
         # RESIDUE FITTING FOR ERROR COMPUTATION
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
@@ -548,6 +553,7 @@ class VectorFitting:
             for i in range(iters_inter):
                 poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                     poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+                self.d_res_history.append(d_res)
 
             # RESIDUE FITTING FOR ERROR COMPUTATION
             residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
@@ -573,6 +579,7 @@ class VectorFitting:
         for i in range(iters_final):
             poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+            self.d_res_history.append(d_res)
 
         # FINAL RESIDUE FITTING
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
