@@ -101,7 +101,7 @@ class VectorFitting:
         self.history_rank_deficiency = []
 
     @staticmethod
-    def get_spurious(poles : np.ndarray, residues : np.ndarray, n_freqs: int = 101, gamma: float = 0.03) -> np.ndarray:
+    def get_spurious(poles: np.ndarray, residues: np.ndarray, n_freqs: int = 101, gamma: float = 0.03) -> np.ndarray:
         """
         Classifies fitted pole-residue pairs as spurious or not spurious. The implementation is based on the evaluation
         of band-limited energy norms (p=2) of the resonance curves of individual pole-residue pairs, as proposed in
