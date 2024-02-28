@@ -367,7 +367,7 @@ class VectorFitting:
                               UserWarning, stacklevel=2)
 
     def auto_fit(self, n_poles_init_real: int = 3, n_poles_init_cmplx: int = 3, n_poles_add: int = 3,
-                 model_order_max: int = 100, iters_start: int = 3, iters_inter:int = 3, iters_final: int = 5,
+                 model_order_max: int = 100, iters_start: int = 3, iters_inter: int = 3, iters_final: int = 5,
                  target_error: float = 1e-2, alpha: float = 0.03, gamma: float = 0.03, nu_samples: float = 1.0,
                  parameter_type: str = 's') -> (np.ndarray, np.ndarray):
         """
@@ -429,12 +429,8 @@ class VectorFitting:
 
         Returns
         -------
-        error_peak_history, ndarray
-            The history of the largest error magnitude during the fitting iterations.
-
-        model_order_history, ndarray
-            The history of the model order during the fitting iterations, calculated with
-            :math:`N_{real} + 2 N_{complex}`.
+        None
+            No return value.
 
         References
         ----------
@@ -651,8 +647,6 @@ class VectorFitting:
 
         timer_stop = timer()
         self.wall_clock_time = timer_stop - timer_start
-
-        return error_peak_history, model_order_history
 
     @staticmethod
     def _init_poles(freqs: list, n_poles_real: int, n_poles_cmplx: int, init_pole_spacing: str):
