@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as npy
 from numpy import fft
 from scipy import signal
@@ -384,6 +386,9 @@ class Network:
                  *args,  **kw):
         """
         """
+        warnings.warn(
+            "`network2.Network` is deprecated and will be removed in Version 1.0.0.", DeprecationWarning, stacklevel=2
+        )
         if 's' in kw:
             self.s = kw['s']
         elif 'z' in kw:
