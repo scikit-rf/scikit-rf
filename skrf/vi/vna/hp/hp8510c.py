@@ -63,7 +63,7 @@ class HP8510C(VNA):
         get_cmd='POIN;OUTPACTI;',
         set_cmd="STEP; POIN <arg>;",
         doc="""Number of frequency points""",
-        validator=SetValidator(_supported_npoints)
+        validator=SetValidator(_supported_npoints, lambda x: int(float(x.strip())))
     )
 
     is_continuous = VNA.command(
@@ -158,6 +158,7 @@ class HP8510C(VNA):
         ntwk.s = self.get_complex_data("OUTPDATA")
         f = self.frequency
         ntwk.frequency = f
+        ntwk.z0 = 50
 
         return ntwk
 
@@ -175,6 +176,7 @@ class HP8510C(VNA):
             [s12, s22]
         ]).transpose().reshape((-1, 2, 2))
         ntwk.frequency = freq
+        ntwk.z0 = 50
 
         return ntwk
 

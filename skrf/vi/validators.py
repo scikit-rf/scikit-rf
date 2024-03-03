@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any, Sequence, Callable
 
 import re
 from abc import ABC, abstractmethod
@@ -116,7 +116,7 @@ class FreqValidator(Validator):
 
         else:
             try:
-                return int(arg)
+                return int(float(arg))
             except ValueError as err:
                 raise ValidationError("Could not convert {arg} to an int") from err
 
@@ -149,17 +149,17 @@ class EnumValidator(Validator):
 
 
 class SetValidator(Validator):
-    def __init__(self, valid: Sequence) -> None:
+    def __init__(self, valid: Sequence, parse_func: Callable = None) -> None:
         dtype = type(valid[0])
         if not all(isinstance(x, dtype) for x in valid):
             raise ValueError("All elements of set must be of the same type.")
-
+        self.parse_func = parse_func
         self.valid = valid
         self.dtype = dtype
 
     def validate_input(self, arg) -> Any:
-        if isinstance(arg, str):
-            arg = arg.strip()
+        if self.parse_func is not None:
+            arg = self.parse_func(arg)
         arg = self.dtype(arg)
         if arg in self.valid:
             return arg
