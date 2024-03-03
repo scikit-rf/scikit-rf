@@ -142,6 +142,9 @@ class HP8510C(VNA):
         vals_complex = (vals[:,0] + 1j * vals[:,1]).flatten()
         return vals_complex
 
+    def sweep(self):
+        self.write('SING;')
+
     def _get_oneport(self, parameter: tuple[int, int], sweep: bool=True):
         if any(p not in {1,2} for p in parameter):
             raise ValueError("The elements of parameter must be 1, or 2.")
@@ -153,7 +156,8 @@ class HP8510C(VNA):
 
         ntwk = skrf.Network(name=f"S{parameter[0]}{parameter[1]}")
         ntwk.s = self.get_complex_data("OUTPDATA")
-        ntwk.frequency = self.frequency
+        f = self.frequency
+        ntwk.frequency = f
 
         return ntwk
 
@@ -180,7 +184,7 @@ class HP8510C(VNA):
             raise ValueError("This instrument only has two ports. Must pass 1, 2, or (1,2)")
 
         if len(ports) == 1:
-            p = ports[0]
+            p = list(ports)[0]
             return self._get_oneport((p, p))
         else:
             return self._get_twoport()

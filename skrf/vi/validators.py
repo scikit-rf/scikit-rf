@@ -158,6 +158,8 @@ class SetValidator(Validator):
         self.dtype = dtype
 
     def validate_input(self, arg) -> Any:
+        if isinstance(arg, str):
+            arg = arg.strip()
         arg = self.dtype(arg)
         if arg in self.valid:
             return arg
