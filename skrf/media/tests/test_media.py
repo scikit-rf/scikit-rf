@@ -6,7 +6,7 @@ from numpy.testing import assert_array_almost_equal
 
 from skrf.frequency import Frequency
 from skrf.media import DefinedGammaZ0
-from skrf.network import concat_ports, connect, Network
+from skrf.network import Network, concat_ports, connect
 
 
 class DefinedGammaZ0TestCase(unittest.TestCase):
@@ -58,7 +58,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
         skrf_ntwk = self.dummy_media.splitter(3, name = name)
         self.assertEqual(name, skrf_ntwk.name)
-        
+
     def test_mismatch_splitter(self):
         """
         Test mismatched splitter against 50-ohm splitter connected to
@@ -73,7 +73,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
             thrus = []
             for k in range(n):
                 thrus.append(med.thru(z0 = z_port[k]))
-            
+
             # connect
             thru = concat_ports(thrus, port_order='second')
             ref = med.splitter(n)
@@ -702,6 +702,6 @@ class DefinedGammaZ0_s_def(unittest.TestCase):
         npy.testing.assert_allclose(thru_traveling.s, mismatch_traveling.s, rtol=1e-3)
         npy.testing.assert_allclose(thru_pseudo.s, mismatch_pseudo.s, rtol=1e-3)
         npy.testing.assert_allclose(thru_power.s, mismatch_power.s, rtol=1e-3)
-        
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as npy
 from numpy import fft
 from scipy import signal
@@ -384,6 +386,9 @@ class Network:
                  *args,  **kw):
         """
         """
+        warnings.warn(
+            "`network2.Network` is deprecated and will be removed in Version 1.0.0.", DeprecationWarning, stacklevel=2
+        )
         if 's' in kw:
             self.s = kw['s']
         elif 'z' in kw:
@@ -391,7 +396,7 @@ class Network:
         elif 'y' in kw:
             self.s = y2s(kw['y'],z0)
         else:
-            s=npy.zeros(len(frequency))
+            self.s=npy.zeros(len(frequency))
 
         self.frequency = frequency
         self.z0 = z0
@@ -458,7 +463,6 @@ class Network:
         if isinstance(key, str):
             # they passed a string. try to read the string and convert
             # it into a  slice. then slice self on that
-            re_numbers = re.compile(r'.*\d')
             re_hyphen = re.compile(r'\s*-\s*')
             re_letters = re.compile('[a-zA-Z]+')
 

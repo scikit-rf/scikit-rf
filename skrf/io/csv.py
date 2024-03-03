@@ -153,7 +153,6 @@ def pna_csv_2_df(filename):
     warn("deprecated", DeprecationWarning, stacklevel=2)
     from pandas import DataFrame, Index
     header, comments, d = read_pna_csv(filename)
-    f_unit = header.split(',')[0].split(')')[0].split('(')[1]
 
     names = header.split(',')
 
@@ -365,7 +364,7 @@ class AgilentCSV:
         """
         Frequency object : :class:`~skrf.frequency.Frequency`.
         """
-        header, comments, d = self.header, self.comments, self.data
+        d = self.data
         #try to pull out frequency unit
         cols = self.columns
         try:
@@ -435,7 +434,8 @@ class AgilentCSV:
             list of Networks representing the data contained in each column
 
         """
-        header, comments, d = self.header, self.comments, self.data
+        comments = self.comments
+        d = self.data
         n_traces =  d.shape[1] - 1 # because theres is one frequency column
         cols = self.columns
         freq = self.frequency
@@ -477,7 +477,8 @@ class AgilentCSV:
 
         """
         names = self.columns
-        header, comments, d= self.header,self.comments, self.data
+        comments = self.comments
+        d = self.data
 
         ntwk_list = []
         if (self.n_traces)//2 == 0 : # / --> // for Python3 compatibility
