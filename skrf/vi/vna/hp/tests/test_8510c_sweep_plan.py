@@ -28,6 +28,9 @@ try:
 except ImportError:
     pass
 
+if "matplotlib" not in sys.modules:
+    pytest.skip(allow_module_level=True)
+
 def test_800pt_swp():
     """ Test: magic size - 1
     """
