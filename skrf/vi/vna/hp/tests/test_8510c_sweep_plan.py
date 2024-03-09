@@ -1,6 +1,9 @@
 import unittest
 import numpy as np
-from skrf.vi.vna.hp.hp8510c_sweep_plan import SweepSection, SweepPlan
+try:
+    from skrf.vi.vna.hp.hp8510c_sweep_plan import SweepPlan
+except ImportError:
+    pass
 
 class TestHP8510SweepPlan(unittest.TestCase):
     """
