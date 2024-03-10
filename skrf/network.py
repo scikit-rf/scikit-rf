@@ -172,11 +172,6 @@ from numpy.linalg import inv as npy_inv
 from scipy import stats  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    pass
-
 from . import mathFunctions as mf
 from . import plotting as rfplt
 from .constants import K_BOLTZMANN, S_DEF_DEFAULT, S_DEFINITIONS, T0, ZERO, NumberLike
@@ -4585,16 +4580,7 @@ class Network:
                 # name if it exists, and they didn't pass a name key in
                 # the kwargs
                 if gen_label:
-                    label_string = ""
-                    if self.name is not None:
-                        label_string += f"{self.name}, "
-
-                    if plt.rcParams['text.usetex']:
-                        label_string += f"${attribute[0].upper()}_{{{self._fmt_trace_name(m,n)}}}$"
-                    else:
-                        label_string += f"{attribute[0].upper()}{self._fmt_trace_name(m,n)}"
-
-                    kwargs['label'] = label_string
+                    kwargs['label'] = rfplt._get_label_str(self, attribute[0].upper(), m, n)
 
                 if conversion in ["time_impulse", "time_step"]:
                     xlabel = "Time (ns)"
