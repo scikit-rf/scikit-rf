@@ -1,6 +1,10 @@
 import sys
 
-import matplotlib as mpl
+try:
+    import matplotlib as mpl
+except ImportError:
+    pass
+
 import pytest
 
 import skrf as rf
