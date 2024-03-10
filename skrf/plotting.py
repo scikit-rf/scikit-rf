@@ -1513,7 +1513,7 @@ def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0):
 
     """
     if self.name is not None:
-        plt.title(r'Uncertainty Decomposition: %s $S_{%i%i}$'%(self.name,m,n))
+        plt.title(f"Uncertainty Decomposition: {self.name} $S_{{{self.ntwk_set[0]._fmt.trace_name(m,n)}}}$")
     self.std_s.plot_s_mag(label='Distance', m=m,n=n)
     self.std_s_re.plot_s_mag(label='Real',  m=m,n=n)
     self.std_s_im.plot_s_mag(label='Imaginary',  m=m,n=n)
@@ -1800,20 +1800,14 @@ def plot_prop_complex(netw: Network, prop_name: str,
             # name if it exists, and they didn't pass a name key in
             # the kwargs
             if gen_label:
-                if netw.name is None:
-                    if plt.rcParams['text.usetex']:
-                        label_string = '$%s_{%i%i}$'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                    else:
-                        label_string = '%s%i%i'%\
-                        (prop_name[0].upper(),m+1,n+1)
+                label_string = ""
+                if netw.name is not None:
+                    label_string += f"{netw.name}, "
+
+                if plt.rcParams['text.usetex']:
+                    label_string += f"${prop_name[0].upper()}_{{{netw._fmt_trace_name(m,n)}}}$"
                 else:
-                    if plt.rcParams['text.usetex']:
-                        label_string = netw.name+', $%s_{%i%i}$'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                    else:
-                        label_string = netw.name+', %s%i%i'%\
-                        (prop_name[0].upper(),m+1,n+1)
+                    label_string += f"{prop_name[0].upper()}{netw._fmt_trace_name(m,n)}"
                 kwargs['label'] = label_string
 
             # plot the desired attribute vs frequency
@@ -1879,20 +1873,14 @@ def plot_prop_polar(netw: Network, prop_name: str,
             # name if it exists, and they didn't pass a name key in
             # the kwargs
             if gen_label:
-                if netw.name is None:
-                    if plt.rcParams['text.usetex']:
-                        label_string = '$%s_{%i%i}$'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                    else:
-                        label_string = '%s%i%i'%\
-                        (prop_name[0].upper(),m+1,n+1)
+                label_string = ""
+                if netw.name is not None:
+                    label_string += f"{netw.name}, "
+
+                if plt.rcParams['text.usetex']:
+                    label_string += f"${prop_name[0].upper()}_{{{netw._fmt_trace_name(m,n)}}}$"
                 else:
-                    if plt.rcParams['text.usetex']:
-                        label_string = netw.name+', $%s_{%i%i}$'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                    else:
-                        label_string = netw.name+', %s%i%i'%\
-                        (prop_name[0].upper(),m+1,n+1)
+                    label_string += f"{prop_name[0].upper()}{netw._fmt_trace_name(m,n)}"
                 kwargs['label'] = label_string
 
             # plot the desired attribute vs frequency
