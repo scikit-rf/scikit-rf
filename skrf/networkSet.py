@@ -1355,10 +1355,6 @@ class NetworkSet:
     def plot_uncertainty_decomposition(self, *args, **kwargs):
         skrf_plt.plot_uncertainty_decomposition(self, *args, **kwargs)
 
-    @copy_doc(skrf_plt.plot_uncertainty_bounds_s)
-    def plot_uncertainty_bounds_s(self, *args, **kwargs):
-        skrf_plt.plot_uncertainty_bounds_s(self, *args, **kwargs)
-
     @copy_doc(skrf_plt.plot_logsigma)
     def plot_logsigma(self, *args, **kwargs):
         skrf_plt.plot_logsigma(self, *args, **kwargs)
