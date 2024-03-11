@@ -816,7 +816,7 @@ class Calibration:
         return caled_sets
 
     @property
-    def biased_error(self):
+    def biased_error(self) -> NetworkSet:
         """
         Estimate of biased error for overdetermined calibration with
         multiple connections of each standard.
@@ -853,7 +853,7 @@ class Calibration:
         return out
 
     @property
-    def unbiased_error(self):
+    def unbiased_error(self) -> NetworkSet:
         """
         Estimate of unbiased error for overdetermined calibration with
         multiple connections of each standard.
@@ -886,7 +886,7 @@ class Calibration:
         return out
 
     @property
-    def total_error(self):
+    def total_error(self) -> NetworkSet:
         """
         Estimate of total error for overdetermined calibration with
         multiple connections of each standard.This is the combined
@@ -990,7 +990,7 @@ class Calibration:
 
         port_list = self.biased_error.port_tuples
         for m,n in port_list:
-            ax.set_title('S%i%i'%(m+1,n+1))
+            ax.set_title(f"S{self.biased_error.ntwk_set[0]._fmt_trace_name(m,n)}")
             self.unbiased_error.plot_s_db(m,n,**kwargs)
             self.biased_error.plot_s_db(m,n,**kwargs)
             self.total_error.plot_s_db(m,n,**kwargs)
@@ -1019,9 +1019,9 @@ class Calibration:
 
         kwargs.update({'show_legend':show_legend})
 
-        for ax ,mn in zip(axes, ns[0].port_tuples):
-            ax.set_title('S%i%i'%(mn[0]+1,mn[1]+1))
-            ns.__getattribute__('plot_'+attr)(*mn, **kwargs)
+        for ax ,(m, n) in zip(axes, ns[0].port_tuples):
+            ax.set_title(f"S{ns.ntwk_set[0]._fmt_trace_name(m,n)}")
+            ns.__getattribute__('plot_'+attr)(m, n, **kwargs)
 
         fig.tight_layout()
 

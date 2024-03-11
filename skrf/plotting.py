@@ -626,7 +626,7 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
         plt.draw()
 
 
-def subplot_params(ntwk, param: str = 's', proj: str = 'db',
+def subplot_params(ntwk: Network, param: str = 's', proj: str = 'db',
                    size_per_port: int = 4, newfig: bool = True,
                    add_titles: bool = True, keep_it_tight: bool = True,
                    subplot_kw: dict = None,
@@ -675,7 +675,7 @@ def subplot_params(ntwk, param: str = 's', proj: str = 'db',
         plot_func = ntwk.__getattribute__(f'plot_{param}_{proj}')
         plot_func(m=ports[0], n=ports[1], ax=ax, **kwargs)
         if add_titles:
-            ax.set_title('%s%i%i'%(param.upper(),ports[0]+1, ports[1]+1))
+            ax.set_title(f"{param.upper()}{ntwk._fmt_trace_name(ports[0], ports[1])}")
     if keep_it_tight:
        plt.tight_layout()
     return f, axs
@@ -948,7 +948,7 @@ def plot_reciprocity(netw: Network, db=False, *args, **kwargs):
         for n in range(netw.nports):
             if m > n:
                 if 'label' not in kwargs.keys():
-                    kwargs['label'] = 'ports %i%i' % (m, n)
+                    kwargs['label'] = f"ports {netw._fmt_trace_name(m, n)}"
                 y = netw.reciprocity[:, m, n].flatten()
                 y = mf.complex_2_db(y) if db else npy.abs(y)
                 netw.frequency.plot(y, *args, **kwargs)
@@ -979,7 +979,7 @@ def plot_reciprocity2(netw: Network, db=False, *args, **kwargs):
         for n in range(netw.nports):
             if m > n:
                 if 'label' not in kwargs.keys():
-                    kwargs['label'] = 'ports %i%i' % (m, n)
+                    kwargs['label'] = f"ports {netw._fmt_trace_name(m, n)}"
                 y = netw.reciprocity2[:, m, n].flatten()
                 if db:
                     y = mf.complex_2_db(y)
