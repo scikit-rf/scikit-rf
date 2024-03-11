@@ -1020,7 +1020,7 @@ class Calibration:
         kwargs.update({'show_legend':show_legend})
 
         for ax ,(m, n) in zip(axes, ns[0].port_tuples):
-            ax.set_title(f"S{ns.ntwk_set[0]._fmt_trace_name(m,n)}")
+            ax.set_title(f"S{ns.ntwk_set[0]._fmt_trace_name(m, n)}")
             ns.__getattribute__('plot_'+attr)(m, n, **kwargs)
 
         fig.tight_layout()
