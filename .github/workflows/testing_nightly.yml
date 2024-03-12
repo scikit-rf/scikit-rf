@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 env:
   PIP_INDEX_URL: https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-  PIP_EXTRA_INDEX_URL: https://pypi.org
+  PIP_EXTRA_INDEX_URL: https://pypi.org/simple
 
 jobs:
   test-nightly:
