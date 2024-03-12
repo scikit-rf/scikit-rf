@@ -2,6 +2,10 @@ name: nightly testing
 
 on: [push, pull_request]
 
+env:
+  PIP_INDEX_URL: https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+  PIP_EXTRA_INDEX_URL: https://pypi.org
+
 jobs:
   test-nightly:
 
@@ -22,7 +26,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install .[test] tox-gh-actions
-        pip install --upgrade --index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy scipy pandas networkx matplotlib contourpy
 
     # test code
     - name: Test the code
