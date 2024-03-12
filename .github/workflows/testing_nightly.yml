@@ -1,9 +1,9 @@
-name: notebooks testing
+name: nightlies testing
 
 on: [push, pull_request]
 
 jobs:
-  test-notebooks:
+  test-nightlies:
 
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
@@ -24,8 +24,8 @@ jobs:
         pip install .[test] tox-gh-actions
         pip install --upgrade --index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy scipy pandas networkx matplotlib
 
-    # test code *and* notebooks (tutorials and examples)
-    - name: Test the code, tutorials and examples
+    # test code
+    - name: Test the code
       if: ${{ always() }}
       run: |
-        tox --skip-env minimal-dependencies -- --nbval-lax --nbval-current-env
+        tox
