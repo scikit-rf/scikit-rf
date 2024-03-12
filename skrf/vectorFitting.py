@@ -423,9 +423,9 @@ class VectorFitting:
 
         parameter_type: str, optional
             Representation type of the frequency responses to be fitted. Either *scattering* (`'s'` or `'S'`),
-            *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). As scikit-rf can currently only read S parameters
-            from a Touchstone file, the fit should also be performed on the original S parameters. Otherwise, scikit-rf
-            will convert the responses from S to Z or Y, which might work for the fit but can cause other issues.
+            *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). It's recommended to perform the fit on the
+            original S parameters. Otherwise, scikit-rf will convert the responses from S to Z or Y, which might work
+            for the fit but can cause other issues.
 
         Returns
         -------
@@ -498,7 +498,7 @@ class VectorFitting:
         # weights_responses = 10 / np.exp(np.mean(np.log(np.abs(freq_responses)), axis=1))
 
         # INITIAL POLE RELOCATION FOR i_start ITERATIONS
-        for i in range(iters_start):
+        for _ in range(iters_start):
             poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
@@ -578,7 +578,7 @@ class VectorFitting:
                 poles = np.append(poles, [pole_add])
 
             # INTERMEDIATE POLE RELOCATION FOR i_inter ITERATIONS
-            for i in range(iters_inter):
+            for _ in range(iters_inter):
                 poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                     poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
@@ -617,7 +617,7 @@ class VectorFitting:
         poles = poles[~spurious]
 
         # FINAL POLE RELOCATION FOR i_final ITERATIONS
-        for i in range(iters_final):
+        for _ in range(iters_final):
             poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
                 poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
@@ -1497,10 +1497,11 @@ class VectorFitting:
         # deal with unbounded violation interval (f_viol_max == np.inf)
         if np.isinf(f_viol_max):
             f_viol_max = 1.5 * violation_bands[-1, 0]
-            warnings.warn('Passivity enforcement: The passivity violations of this model are unbounded. '
-                          'Passivity enforcement might still work, but consider re-fitting with a lower number of poles '
-                          'and/or without the constants (`fit_constant=False`) if the results are not satisfactory.',
-                          UserWarning, stacklevel=2)
+            warnings.warn(
+                'Passivity enforcement: The passivity violations of this model are unbounded. '
+                'Passivity enforcement might still work, but consider re-fitting with a lower number of poles '
+                'and/or without the constants (`fit_constant=False`) if the results are not satisfactory.',
+                UserWarning, stacklevel=2)
 
         # the frequency band for the passivity evaluation is from dc to 20% above the highest relevant frequency
         if f_viol_max < f_samples_max:
