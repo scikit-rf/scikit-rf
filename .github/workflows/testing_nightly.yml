@@ -1,0 +1,31 @@
+name: notebooks testing
+
+on: [push, pull_request]
+
+jobs:
+  test-notebooks:
+
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install .[test] tox-gh-actions
+        pip install --upgrade --index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy scipy pandas networkx matplotlib
+
+    # test code *and* notebooks (tutorials and examples)
+    - name: Test the code, tutorials and examples
+      if: ${{ always() }}
+      run: |
+        tox --skip-env minimal-dependencies -- --nbval-lax --nbval-current-env
