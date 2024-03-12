@@ -294,8 +294,8 @@ class VectorFitting:
             if delta_max < self.max_tol:
                 if converged:
                     # is really converged, finish
-                    logging.info('Pole relocation process converged after {} iterations.'.format(
-                        self.max_iterations - iterations + 1))
+                    logging.info(f'Pole relocation process converged after {self.max_iterations - iterations + 1} '
+                                  'iterations.')
                     stop = True
                 else:
                     # might be converged, but do one last run to be sure
@@ -1634,8 +1634,8 @@ class VectorFitting:
         violation_bands = self.passivity_test()
         if len(violation_bands) > 0:
             warnings.warn('Passivity enforcement was not successful.\nModel is still non-passive in these frequency '
-                          'bands: {}.\nTry running this routine again with a larger number of samples (parameter '
-                          '`n_samples`).'.format(violation_bands), RuntimeWarning, stacklevel=2)
+                          f'bands: {violation_bands}.\nTry running this routine again with a larger number of samples '
+                          '(parameter `n_samples`).', RuntimeWarning, stacklevel=2)
 
     def write_npz(self, path: str) -> None:
         """
@@ -2341,10 +2341,10 @@ class VectorFitting:
                     # add CCCS to generate the scattered current I_nj at port n
                     # control current is measured by the dummy voltage source at the transfer network Y_nj
                     # the scattered current is injected into the port (source positive connected to ground)
-                    f.write('F{}{} 0 a{} V{}{} {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1,
-                                                            formatter(1 / np.real(self.network.z0[0, n]))))
-                    f.write('F{}{}_inv a{} 0 V{}{}_inv {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1,
-                                                                    formatter(1 / np.real(self.network.z0[0, n]))))
+                    f.write(f'F{n + 1}{j + 1} 0 a{n + 1} V{n + 1}{j + 1}'
+                            f'{formatter(1 / np.real(self.network.z0[0, n]))}\n')
+                    f.write(f'F{n + 1}{j + 1}_inv a{n + 1} 0 V{n + 1}{j + 1}_inv '
+                            f'{formatter(1 / np.real(self.network.z0[0, n]))}\n')
 
                     # add dummy voltage source (V=0) in series with Y_nj to measure current through transfer admittance
                     f.write(f'V{n + 1}{j + 1} nt{j + 1} nt{n + 1}{j + 1} 0\n')
@@ -2400,12 +2400,8 @@ class VectorFitting:
                                 m = -1
                             else:
                                 m = 1
-                            f.write(node + ' 0 rcl_vccs_admittance res={} cap={} ind={} gm={} mult={}\n'.format(
-                                formatter(r),
-                                formatter(c),
-                                formatter(l),
-                                formatter(np.abs(gm_add)),
-                                int(m)))
+                            f.write(node + f' 0 rcl_vccs_admittance res={formatter(r)} cap={formatter(c)} '
+                                           f'ind={formatter(l)} gm={formatter(np.abs(gm_add))} mult={int(m)}\n')
 
             f.write('.ENDS s_equivalent\n')
 
