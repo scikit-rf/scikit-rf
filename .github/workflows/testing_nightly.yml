@@ -1,9 +1,9 @@
-name: nightlies testing
+name: nightly testing
 
 on: [push, pull_request]
 
 jobs:
-  test-nightlies:
+  test-nightly:
 
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
