@@ -1,4 +1,4 @@
-name: Code linting and testing
+name: Code testing
 
 on: [push, pull_request]
 
