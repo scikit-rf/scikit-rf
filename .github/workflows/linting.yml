@@ -2,6 +2,11 @@ name: Code linting
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+  checks: write
+  id-token: write
+
 jobs:
   Tests:
 
