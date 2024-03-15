@@ -12,23 +12,23 @@ Instrument Class
     :toctree: generated/
 
 Basic one-port:
->>> vna = skrf.vi.vna.hp.HP8510C('TCPIP::ad007-right.lan::gpib0,16::INSTR')
+>>> vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
 >>> vna.set_frequency_sweep(2e9,3e9,201)
 >>> vna.get_snp_network(ports=(1,))
 
 Basic two-port:
->>> vna = skrf.vi.vna.hp.HP8510C('TCPIP::ad007-right.lan::gpib0,16::INSTR')
+>>> vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
 >>> vna.set_frequency_sweep(2e9,3e9,201)
 >>> vna.get_snp_network(ports=(1,2))
 
 Intermediate example -- note that 1001 point sweeps are not natively supported by the instrument; this driver
 takes multiple sweeps and pastes the results together.
->>> vna = skrf.vi.vna.hp.HP8510C('TCPIP::ad007-right.lan::gpib0,16::INSTR')
+>>> vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
 >>> vna.set_frequency_sweep(2e9,3e9,1001)
 >>> vna.get_snp_network(ports=(1,2))
 
 Advanced example.
->>> vna = skrf.vi.vna.hp.HP8510C('TCPIP::ad007-right.lan::gpib0,16::INSTR')
+>>> vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
 >>> freq_block_1 = np.linspace(1e9,2e9,801)
 >>> freq_block_2 = [10e9,11e9,12e9]
 >>> freqs = np.concatenate((freq_block_1, freq_block_2))
@@ -36,7 +36,7 @@ Advanced example.
 >>> vna.get_snp_network(ports=(1,2))
 """
 
-import numpy as npy
+import numpy as np
 import pyvisa
 import time
 import skrf
@@ -53,20 +53,20 @@ class HP8510C(VNA):
     max_hz = None
     compound_sweep_plan = None
 
-    def __init__(self, address="TCPIP::ad007-right.lan::gpib0,16::INSTR", backend='@py', **kwargs):
-        super(HP8510C, self).__init__(address, backend=backend, **kwargs)
+    def __init__(self, address : str, backend : str = "@py", **kwargs):
+        super().__init__(address, backend, **kwargs)
         # Tested 2024-03-09:
         #     HP8510C.07.14
         #     AD007 (a VXI11-complaint GPIB-Ethernet adapter)
         #     address="TCPIP::ad007-right.lan::gpib0,16::INSTR", backend="@py"
 
         # 8510s are slow. This check ensures we won't wait 60s for connection error.
-        self._resource.timeout = 2_000 #set_visa_attribute(pyvisa.constants.ResourceAttribute.timeout_value, 2000)
+        self._resource.timeout = 2_000
         id_str = self.query('OUTPIDEN;')
         assert('HP8510' in id_str) # example: 'HP8510C.07.14: Aug 26  1998 '
         
         # 8510s are slow. Actual work might take acutal 60 seconds.
-        self._resource.timeout = 60_000 #set_visa_attribute(pyvisa.constants.ResourceAttribute.timeout_value, 60000)
+        self._resource.timeout = 60_000
         self._resource.read_termination = False # Binary mode doesn't work if we allow premature termination on \n
         self.read_raw = self._resource.read_raw
         self.reset()
@@ -111,7 +111,7 @@ class HP8510C(VNA):
             elif trace.upper()=='S21':
                 trace_out = self.s21
             else:
-                raise(ValueError(trace+" is not a valid trace. Options: "+' '.join(self.get_list_of_traces())))
+                raise(ValueError(f"{trace} is not a valid trace. Options: {' '.join(self.get_list_of_traces())}"))
 
     def get_snp_network(self, ports, **kwargs):
         ports = tuple(ports)
@@ -179,8 +179,8 @@ class HP8510C(VNA):
         ''' List sweep using hz, an array of frequencies. If hz is too long, multiple sweeps will automatically be performed.'''
         hz = frequency_obj.f
         valid = (self.min_hz<=hz) & (hz<=self.max_hz)
-        if not npy.all(valid):
-            print("set_frequency called with %i/%i points out of VNA frequency range. Dropping them."%(npy.sum(valid),len(valid)))
+        if not np.all(valid):
+            print("set_frequency called with %i/%i points out of VNA frequency range. Dropping them."%(np.sum(valid),len(valid)))
             hz = hz[valid]
         self.compound_sweep_plan = SweepPlan.from_hz(hz)
 
@@ -295,7 +295,7 @@ class HP8510C(VNA):
         buf = self.read_raw()
         float_bin = buf[4:] # Skip 4 header bytes and trailing newline
         try:
-            floats = npy.frombuffer(float_bin, dtype='>f4').reshape((-1,2))
+            floats = np.frombuffer(float_bin, dtype='>f4').reshape((-1,2))
         except ValueError as e:
             print(buf)
             print("len(buf): %i"%(len(buf),))
@@ -358,7 +358,7 @@ class HP8510C(VNA):
         s21 = self._one_port(expected_hz=expected_hz, fresh_sweep=fresh_sweep).s[:,0,0]
 
         ntwk = skrf.Network()
-        ntwk.s = npy.array(\
+        ntwk.s = np.array(\
                 [[s11,s21],\
                 [ s12, s22]]\
                 ).transpose().reshape(-1,2,2)

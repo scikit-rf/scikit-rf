@@ -1,16 +1,17 @@
 import dataclasses
 import numpy as np
+import skrf
 from typing import List, Union
 from abc import ABC, abstractmethod
 
 
 class SweepSection(ABC):
     @abstractmethod
-    def get_hz(self):
+    def get_hz(self) -> List[float]:
         ''' List of hz represented by this section after applying mask '''
         pass
 
-    def get_raw_hz(self):
+    def get_raw_hz(self) -> List[float]:
         ''' List of hz fetched from the instrument before applying mask '''
         return self.get_hz()
 
@@ -18,7 +19,7 @@ class SweepSection(ABC):
     def apply_8510(self, hp8510c):
         pass
 
-    def mask_8510(self, network):
+    def mask_8510(self, network : skrf.Network) -> skrf.Network:
         return network
 
 
@@ -28,7 +29,7 @@ class LinearBuiltinSweepSection(SweepSection):
     hz_max: float
     n_points: int
 
-    def get_hz(self):
+    def get_hz(self) -> List[float]:
         return np.linspace(self.hz_min, self.hz_max, self.n_points)
 
     def apply_8510(self, hp8510c):
@@ -42,16 +43,16 @@ class LinearMaskedSweepSection(SweepSection):
     n_points: int
     mask: object
 
-    def get_hz(self):
+    def get_hz(self) -> List[float]:
         return self.get_raw_hz()[self.mask]
 
-    def get_raw_hz(self):
+    def get_raw_hz(self) -> List[float]:
         return np.linspace(self.hz_min, self.hz_max, self.n_points)
 
     def apply_8510(self, hp8510c):
         hp8510c._set_instrument_step_state(self.hz_min, self.hz_max, self.n_points)
 
-    def mask_8510(self, network):
+    def mask_8510(self, network : skrf.Network) -> skrf.Network:
         return network[self.mask]
 
 
@@ -61,10 +62,10 @@ class LinearCustomSweepSection(SweepSection):
     hz_max: float
     n_points: int
 
-    def get_hz(self):
+    def get_hz(self) -> List[float]:
         return np.linspace(self.hz_min, self.hz_max, self.n_points)
 
-    def get_raw_hz(self):
+    def get_raw_hz(self) -> List[float]:
         if self.n_points==1:
             return [self.hz_min, self.hz_min+1]
         return np.linspace(self.hz_min, self.hz_max, self.n_points)
@@ -76,7 +77,7 @@ class LinearCustomSweepSection(SweepSection):
             return
         hp8510c._set_instrument_step_state(self.hz_min, self.hz_max, self.n_points)
 
-    def mask_8510(self, network):
+    def mask_8510(self, network : skrf.Network) -> skrf.Network:
         if self.n_points==1:
             return network[0]
         return network
@@ -86,10 +87,10 @@ class LinearCustomSweepSection(SweepSection):
 class RandomSweepSection(SweepSection):
     hz_list: List[float]
 
-    def get_hz(self):
+    def get_hz(self) -> List[float]:
         return self.hz_list
 
-    def get_raw_hz(self):
+    def get_raw_hz(self) -> List[float]:
         ''' List of hz fetched from the instrument before applying mask '''
         if len(self.hz_list)==1:
             return [self.hz_list[0], self.hz_list[0]+1]  # 8510 treats length 1 like length 2
@@ -98,12 +99,12 @@ class RandomSweepSection(SweepSection):
     def apply_8510(self, hp8510c):
         hp8510c._set_instrument_cwstep_state(self.hz_list)
 
-    def mask_8510(self, network):
+    def mask_8510(self, network : skrf.Network) -> skrf.Network:
         if len(self.hz_list)==1:
             return network[0]
         return network
 
-def _sweep_sectionsfrom_hz(hz):
+def _sweep_sectionsfrom_hz(hz) -> List[SweepSection]:
     """
     Take a list of hz, return a SweepPlan, a list of 8510C compatible
     SweepSections that can be executed to cover the original list of frequencies.
@@ -175,10 +176,6 @@ def _sweep_sectionsfrom_hz(hz):
     return sweep_sections
 
 class SweepPlan:
-    def get_hz(self):
-        raise NotImplementedError
-
-class SweepPlan:
     """
     The user requests a big sweep with different spacings in different frequency
     blocks, but the HP8510 instrument only supports smaller sweeps with fixed
@@ -204,7 +201,7 @@ class SweepPlan:
         self._sections = sections
 
     @classmethod
-    def from_hz(cls, hz):
+    def from_hz(cls, hz : List[float]):
         sweep_sections = _sweep_sectionsfrom_hz(hz)
         plan = SweepPlan(sweep_sections)
         assert plan._matches_f_list(hz)
@@ -213,14 +210,14 @@ class SweepPlan:
     def get_sections(self):
         return self._sections
 
-    def get_hz(self):
+    def get_hz(self) -> List[float]:
         """Get a list of all frequency points in the entire sweep plan."""
         ret = []
         for s in self._sections:
             ret.extend(s.get_hz())
         return ret
 
-    def _matches_f_list(self, golden_hz):
+    def _matches_f_list(self, golden_hz : List[float]):
         """
         Returns True iff the frequencies this SweepPlan intends to sweep
         equal those in the list golden_hz.
