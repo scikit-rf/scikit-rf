@@ -41,7 +41,7 @@ class LinearMaskedSweepSection(SweepSection):
     hz_min: float
     hz_max: float
     n_points: int
-    mask: object
+    mask: List[bool]
 
     def get_hz(self) -> List[float]:
         return self.get_raw_hz()[self.mask]
