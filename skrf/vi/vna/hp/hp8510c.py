@@ -1,15 +1,18 @@
 """
-.. module:: skrf.vi.vna.hp.8510c
+.. module:: skrf.vi.vna.hp.hp8510c
 =================================================
-HP 8510C (:mod:`skrf.vi.vna.hp.8510c`)
+HP 8510C (:mod:`skrf.vi.vna.hp.hp8510c`)
 =================================================
 
-Instrument Class
+HP8510C Class
 ================
 
 .. autosummary::
     :nosignatures:
     :toctree: generated/
+
+Examples
+============
 
 Basic one-port:
 >>> vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
