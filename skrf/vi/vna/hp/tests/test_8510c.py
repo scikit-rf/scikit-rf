@@ -1,12 +1,9 @@
 import sys
-
 import pytest
-
 import skrf
 
 try:
-    from skrf.vi.validators import ValidationError
-    from skrf.vi.vna import ValuesFormat, hp
+    from skrf.vi.vna import hp
 except ImportError:
     pass
 

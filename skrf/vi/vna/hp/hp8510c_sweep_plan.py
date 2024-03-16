@@ -1,17 +1,17 @@
+from __future__ import annotations
 import dataclasses
 import numpy as np
 import skrf
-from typing import List, Union
 from abc import ABC, abstractmethod
 
 
 class SweepSection(ABC):
     @abstractmethod
-    def get_hz(self) -> List[float]:
+    def get_hz(self) -> list[float]:
         ''' List of hz represented by this section after applying mask '''
         pass
 
-    def get_raw_hz(self) -> List[float]:
+    def get_raw_hz(self) -> list[float]:
         ''' List of hz fetched from the instrument before applying mask '''
         return self.get_hz()
 
@@ -29,7 +29,7 @@ class LinearBuiltinSweepSection(SweepSection):
     hz_max: float
     n_points: int
 
-    def get_hz(self) -> List[float]:
+    def get_hz(self) -> list[float]:
         return np.linspace(self.hz_min, self.hz_max, self.n_points)
 
     def apply_8510(self, hp8510c):
@@ -41,12 +41,12 @@ class LinearMaskedSweepSection(SweepSection):
     hz_min: float
     hz_max: float
     n_points: int
-    mask: List[bool]
+    mask: list[bool]
 
-    def get_hz(self) -> List[float]:
+    def get_hz(self) -> list[float]:
         return self.get_raw_hz()[self.mask]
 
-    def get_raw_hz(self) -> List[float]:
+    def get_raw_hz(self) -> list[float]:
         return np.linspace(self.hz_min, self.hz_max, self.n_points)
 
     def apply_8510(self, hp8510c):
@@ -62,10 +62,10 @@ class LinearCustomSweepSection(SweepSection):
     hz_max: float
     n_points: int
 
-    def get_hz(self) -> List[float]:
+    def get_hz(self) -> list[float]:
         return np.linspace(self.hz_min, self.hz_max, self.n_points)
 
-    def get_raw_hz(self) -> List[float]:
+    def get_raw_hz(self) -> list[float]:
         if self.n_points==1:
             return [self.hz_min, self.hz_min+1]
         return np.linspace(self.hz_min, self.hz_max, self.n_points)
@@ -85,12 +85,12 @@ class LinearCustomSweepSection(SweepSection):
 
 @dataclasses.dataclass
 class RandomSweepSection(SweepSection):
-    hz_list: List[float]
+    hz_list: list[float]
 
-    def get_hz(self) -> List[float]:
+    def get_hz(self) -> list[float]:
         return self.hz_list
 
-    def get_raw_hz(self) -> List[float]:
+    def get_raw_hz(self) -> list[float]:
         ''' List of hz fetched from the instrument before applying mask '''
         if len(self.hz_list)==1:
             return [self.hz_list[0], self.hz_list[0]+1]  # 8510 treats length 1 like length 2
@@ -104,7 +104,7 @@ class RandomSweepSection(SweepSection):
             return network[0]
         return network
 
-def _sweep_sectionsfrom_hz(hz) -> List[SweepSection]:
+def _sweep_sectionsfrom_hz(hz) -> list[SweepSection]:
     """
     Take a list of hz, return a SweepPlan, a list of 8510C compatible
     SweepSections that can be executed to cover the original list of frequencies.
@@ -195,13 +195,13 @@ class SweepPlan:
     801 point sweep and discarding a point saved 20 minutes in a recent script.
     """
 
-    _sections: List[SweepSection]
+    _sections: list[SweepSection]
 
     def __init__(self, sections):
         self._sections = sections
 
     @classmethod
-    def from_hz(cls, hz : List[float]):
+    def from_hz(cls, hz : list[float]):
         sweep_sections = _sweep_sectionsfrom_hz(hz)
         plan = SweepPlan(sweep_sections)
         assert plan._matches_f_list(hz)
@@ -210,21 +210,21 @@ class SweepPlan:
     def get_sections(self):
         return self._sections
 
-    def get_hz(self) -> List[float]:
+    def get_hz(self) -> list[float]:
         """Get a list of all frequency points in the entire sweep plan."""
         ret = []
         for s in self._sections:
             ret.extend(s.get_hz())
         return ret
 
-    def _matches_f_list(self, golden_hz : List[float]):
+    def _matches_f_list(self, golden_hz : list[float]):
         """
         Returns True iff the frequencies this SweepPlan intends to sweep
         equal those in the list golden_hz.
         """
         plan_hz = np.array(sorted(self.get_hz()))
         if len(golden_hz) != len(plan_hz):
-            print(f"Planner output has different length.")
+            print("Planner output has different length.")
             return False
         good = True
         for h in golden_hz:

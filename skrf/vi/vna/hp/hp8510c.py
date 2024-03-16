@@ -17,9 +17,8 @@ import pyvisa
 import time
 import skrf
 import skrf.network
-from skrf.vi import vna
 from skrf.vi.vna import VNA
-from .hp8510c_sweep_plan import SweepPlan, SweepSection
+from .hp8510c_sweep_plan import SweepPlan
 
 class HP8510C(VNA):
     '''
@@ -140,7 +139,7 @@ class HP8510C(VNA):
         # raw_data = kwargs.get("raw_data", True)
         if ports==(1,):
             self.write('s11;')
-            return self.one_port(fresh_sweep=sweep);
+            return self.one_port(fresh_sweep=sweep)
         elif ports==(2,):
             self.write('s22;')
             return self.one_port(fresh_sweep=sweep)
@@ -242,7 +241,7 @@ class HP8510C(VNA):
     
     @freq_start.setter
     def freq_start(self, new_start_hz):
-        self.write('STEP; STAR {new_start_hz};'.format(new_start_hz=new_start_hz))
+        self.write(f'STEP; STAR {new_start_hz};')
 
     @property
     def freq_stop(self):
@@ -251,7 +250,7 @@ class HP8510C(VNA):
     
     @freq_stop.setter
     def freq_stop(self, new_stop_hz):
-        self.write('STEP; STOP {new_stop_hz};'.format(new_stop_hz=new_stop_hz))
+        self.write(f'STEP; STOP {new_stop_hz};')
 
     @property
     def _npoints(self):
@@ -309,7 +308,7 @@ class HP8510C(VNA):
         self.write('CLEL;')
         for hz in hz_list:
             self.write('SADD;')
-            self.write('CWFREQ {hz};'.format(hz=int(hz)))
+            self.write(f'CWFREQ {int(hz)};')
         self.write('SDON; EDITDONE; LISFREQ;')        
 
     def ask_for_cmplx(self, outp_cmd, timeout_s=30):
