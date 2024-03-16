@@ -20,6 +20,7 @@ Keysight
 
    keysight.FieldFox
    keysight.PNA
+   hp.HP8510C
 
 The Base Class and Writing an Instrument Driver
 ===============================================
