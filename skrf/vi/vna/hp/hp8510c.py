@@ -145,6 +145,12 @@ class HP8510C(VNA):
             raise(ValueError("Invalid ports "+str(ports)+". Options: (1,) (2,) (1,2)."))
 
     def get_switch_terms(self, ports=(1, 2), **kwargs):
+        '''
+        Returns (forward_one_port,reverse_one_port) switch terms.
+        The ports short be connected with a half decent THRU before calling.
+        These measure how much signal is reflected from the imperfect switched
+        termination on the non-stimulated port.
+        '''
         return self.switch_terms()
 
     @property
@@ -401,7 +407,7 @@ class HP8510C(VNA):
         return stitched_network
 
     def wait_for_status(self, max_wait_seconds=30):
-        ''' Fetches status bytes, tanking timeouts received along the way. '''
+        ''' Fetches status bytes respecting max_wait_seconds even if it must tank a few timeouts along the way. '''
         t0 = time.time()
         while True:
             try:
@@ -418,8 +424,10 @@ class HP8510C(VNA):
 
     def switch_terms(self):
         '''
-        measures forward and reverse switch terms and returns them as a
-        pair of one-port networks.
+        Returns (forward_one_port,reverse_one_port) switch terms.
+        The ports short be connected with a half decent THRU before calling.
+        These measure how much signal is reflected from the imperfect switched
+        termination on the non-stimulated port.
         '''
         print('forward')
         self.write('USER2;DRIVPORT1;LOCKA1;NUMEB2;DENOA2;CONV1S;')
