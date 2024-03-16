@@ -23,7 +23,7 @@ from .hp8510c_sweep_plan import SweepPlan, SweepSection
 
 class HP8510C(VNA):
     '''
-    8510 driver that is capable of compound sweeps, segmented sweeps,
+    HP 8510 driver that is capable of compound sweeps, segmented sweeps,
     and fast binary transfers. These features make this venerable old instrument
     much more pleasant to use in the 21st century. Likely works with "A" and
     "B" versions of the instrument as well.

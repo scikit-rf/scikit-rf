@@ -15,9 +15,9 @@ VNA Classes
     :nosignatures:
     :toctree: generated/
 
+   hp.HP8510C
    keysight.FieldFox
    keysight.PNA
-   hp.HP8510C
    nanovna.NanoVNA
 
 The Base Class and Writing an Instrument Driver
