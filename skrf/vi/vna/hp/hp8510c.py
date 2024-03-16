@@ -10,49 +10,6 @@ HP8510C Class
 .. autosummary::
     :nosignatures:
     :toctree: generated/
-
-Examples
-============
-
-Basic one-port:
-
-.. code-block:: python
-
-    vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
-    vna.set_frequency_sweep(2e9,3e9,201)
-    vna.get_snp_network(ports=(1,))
-
-
-
-Basic two-port:
-
-.. code-block:: python
-
-    vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
-    vna.set_frequency_sweep(2e9,3e9,201)
-    vna.get_snp_network(ports=(1,2))
-
-    
-
-Intermediate example -- note that 1001 point sweeps are not natively supported by the instrument; this driver
-takes multiple sweeps and pastes the results together.
-
-.. code-block:: python
-
-    vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
-    vna.set_frequency_sweep(2e9,3e9,1001)
-    vna.get_snp_network(ports=(1,2))
-
-Advanced example.
-
-.. code-block:: python
-
-    vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
-    freq_block_1 = np.linspace(1e9,2e9,801)
-    freq_block_2 = [10e9,11e9,12e9]
-    freqs = np.concatenate((freq_block_1, freq_block_2))
-    vna.frequency = skrf.Frequency.from_f(freqs)
-    vna.get_snp_network(ports=(1,2))
 """
 
 import numpy as np
@@ -66,7 +23,53 @@ from .hp8510c_sweep_plan import SweepPlan, SweepSection
 
 class HP8510C(VNA):
     '''
-    8510 driver that is capable of compound sweeps.
+    8510 driver that is capable of compound sweeps. For example, the 8510C
+    only natively supports up to 801 point sweeps but if you ask this class
+    for a 1001 point sweep it will do one 801 point sweep and one 200 point
+    sweep and stitch them together.
+
+    Examples
+    ============
+
+    Basic one-port:
+
+    .. code-block:: python
+
+        vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
+        vna.set_frequency_sweep(2e9,3e9,201)
+        vna.get_snp_network(ports=(1,))
+
+
+
+    Basic two-port:
+
+    .. code-block:: python
+
+        vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
+        vna.set_frequency_sweep(2e9,3e9,201)
+        vna.get_snp_network(ports=(1,2))
+
+        
+
+    Intermediate example -- note that 1001 point sweeps are not natively supported by the instrument; this driver
+    takes multiple sweeps and pastes the results together.
+
+    .. code-block:: python
+
+        vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
+        vna.set_frequency_sweep(2e9,3e9,1001)
+        vna.get_snp_network(ports=(1,2))
+
+    Advanced example.
+
+    .. code-block:: python
+
+        vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
+        freq_block_1 = np.linspace(1e9,2e9,801)
+        freq_block_2 = [10e9,11e9,12e9]
+        freqs = np.concatenate((freq_block_1, freq_block_2))
+        vna.frequency = skrf.Frequency.from_f(freqs)
+        vna.get_snp_network(ports=(1,2))
     '''
     min_hz = None
     max_hz = None
