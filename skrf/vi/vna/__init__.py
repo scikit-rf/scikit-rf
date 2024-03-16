@@ -8,11 +8,8 @@ vna (:mod:`skrf.vi.vna`)
 Provides classes to interact with Vector Network Analyzers (VNAs) from numerous
 manufacturers.
 
-VNA Classes (organized by manufacturer)
+VNA Classes
 =======================================
-
-Keysight
---------
 
 .. autosummary::
     :nosignatures:
@@ -21,6 +18,7 @@ Keysight
    keysight.FieldFox
    keysight.PNA
    hp.HP8510C
+   nanovna.NanoVNA
 
 The Base Class and Writing an Instrument Driver
 ===============================================
