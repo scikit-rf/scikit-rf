@@ -12,13 +12,17 @@ HP8510C Class
     :toctree: generated/
 """
 
+import time
+
 import numpy as np
 import pyvisa
-import time
+
 import skrf
 import skrf.network
 from skrf.vi.vna import VNA
+
 from .hp8510c_sweep_plan import SweepPlan
+
 
 class HP8510C(VNA):
     '''
@@ -100,7 +104,7 @@ class HP8510C(VNA):
         self._resource.timeout = 2_000
         id_str = self.query('OUTPIDEN;')
         assert('HP8510' in id_str) # example: 'HP8510C.07.14: Aug 26  1998 '
-        
+
         # 8510s are slow. Actual work might take acutal 60 seconds.
         self._resource.timeout = 60_000
         self._resource.read_termination = False # Binary mode doesn't work if we allow premature termination on \n
@@ -124,7 +128,7 @@ class HP8510C(VNA):
         ''' Preset instrument. '''
         self.write("FACTPRES;")
         self.wait_until_finished()
-    
+
     def clear(self):
         self._resource.clear()
 
@@ -238,7 +242,7 @@ class HP8510C(VNA):
     def freq_start(self):
         ''' Start frequency [hz] '''
         return float(self.query('STAR;OUTPACTI;'))
-    
+
     @freq_start.setter
     def freq_start(self, new_start_hz):
         self.write(f'STEP; STAR {new_start_hz};')
@@ -247,7 +251,7 @@ class HP8510C(VNA):
     def freq_stop(self):
         ''' Stop frequency [hz] '''
         return float(self.query('STOP;OUTPACTI;'))
-    
+
     @freq_stop.setter
     def freq_stop(self, new_stop_hz):
         self.write(f'STEP; STOP {new_stop_hz};')
@@ -267,7 +271,7 @@ class HP8510C(VNA):
         if self.compound_sweep_plan is None:
             return self._npoints
         return len(self.compound_sweep_plan.get_hz())
-    
+
     @npoints.setter
     def npoints(self, npoint):
         ''' Set number of points in sweep'''
@@ -277,14 +281,14 @@ class HP8510C(VNA):
             self._set_instrument_step_state(hz_start, hz_stop, npoint)
         else:
             self.compound_sweep_plan = SweepPlan.from_ssn(hz_start, hz_stop, npoint)
-    
+
     def _instrument_natively_supports_steps(self, npoint):
         if npoint in [51,101,201,401,801]:
             return True
         if npoint<=792: # Supported with a single native list sweep
             return True
         return False
-    
+
     def _set_instrument_step_state(self, hz_start, hz_stop, npoint=801):
         assert(self._instrument_natively_supports_steps(npoint))
         if self._resource is not None:
@@ -309,7 +313,7 @@ class HP8510C(VNA):
         for hz in hz_list:
             self.write('SADD;')
             self.write(f'CWFREQ {int(hz)};')
-        self.write('SDON; EDITDONE; LISFREQ;')        
+        self.write('SDON; EDITDONE; LISFREQ;')
 
     def ask_for_cmplx(self, outp_cmd, timeout_s=30):
         """Like ask_for_values, but use FORM2 binary transfer, much faster than ASCII."""
@@ -394,7 +398,7 @@ class HP8510C(VNA):
         ntwk.frequency= skrf.Frequency.from_f(hz,unit='hz')
 
         return ntwk
-    
+
     def two_port(self, **kwargs):
         ''' Performs a single sweep OR COMPOUND SWEEP and returns Network data. '''
         if self.compound_sweep_plan is None:
@@ -445,4 +449,4 @@ class HP8510C(VNA):
 
         return (forward,reverse)
 
-        
+

@@ -1,8 +1,11 @@
 from __future__ import annotations
+
 import dataclasses
-import numpy as np
-import skrf
 from abc import ABC, abstractmethod
+
+import numpy as np
+
+import skrf
 
 
 class SweepSection(ABC):
@@ -206,7 +209,7 @@ class SweepPlan:
         plan = SweepPlan(sweep_sections)
         assert plan._matches_f_list(hz)
         return plan
-    
+
     def get_sections(self):
         return self._sections
 

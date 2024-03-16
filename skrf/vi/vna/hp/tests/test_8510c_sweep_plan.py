@@ -21,8 +21,11 @@ SweepPlan.from_hz returns a plan that hits exactly the frequencies it is
 supposed to.
 """
 
-import pytest, sys
+import sys
+
 import numpy as np
+import pytest
+
 try:
     from skrf.vi.vna.hp.hp8510c_sweep_plan import SweepPlan
 except ImportError:
