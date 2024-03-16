@@ -23,10 +23,20 @@ from .hp8510c_sweep_plan import SweepPlan, SweepSection
 
 class HP8510C(VNA):
     '''
-    8510 driver that is capable of compound sweeps. For example, the 8510C
-    only natively supports up to 801 point sweeps but if you ask this class
-    for a 1001 point sweep it will do one 801 point sweep and one 200 point
-    sweep and stitch them together.
+    8510 driver that is capable of compound sweeps, segmented sweeps,
+    and fast binary transfers. These features make this venerable old instrument
+    much more pleasant to use in the 21st century.
+
+    Compound sweeps occur automatically when the user requests a sweep larger
+    than what the instrument natively supports (51/101/201/401/801pts). This
+    driver takes multiple shorter sweeps and stitches them together.
+
+    Segmented sweeps occur automatically when the user requests a short or
+    irregularly spaced sweep (see "Advanced Example" below). The 8510 actually
+    does support sweeps other than 51/101/201/401/801pts, but only in a separate
+    mode (segmented sweep mode) and with significant restrictions. This driver
+    knows how to handle segmented sweep mode to get what it wants.
+
 
     Examples
     ============
@@ -52,7 +62,7 @@ class HP8510C(VNA):
         
 
     Intermediate example -- note that 1001 point sweeps are not natively supported by the instrument; this driver
-    takes multiple sweeps and pastes the results together.
+    takes multiple sweeps and stitches the results together.
 
     .. code-block:: python
 
@@ -71,9 +81,9 @@ class HP8510C(VNA):
         vna.frequency = skrf.Frequency.from_f(freqs)
         vna.get_snp_network(ports=(1,2))
     '''
-    min_hz = None
-    max_hz = None
-    compound_sweep_plan = None
+    min_hz = None  #: Minimum frequency supported by instrument
+    max_hz = None  #: Maximum frequency supported by instrument
+    compound_sweep_plan = None  #: If None, get_snp_network()/one_port()/two_port() just ask the VNA for data. If populated, those methods perform the multiple sweeps in the plan and stitch together the results.
 
     def __init__(self, address : str, backend : str = "@py", **kwargs):
         super().__init__(address, backend, **kwargs)
