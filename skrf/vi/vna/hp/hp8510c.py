@@ -116,26 +116,9 @@ class HP8510C(VNA):
 
     def wait_until_finished(self):
         self.query("OUTPIDEN;")
-    
-    def get_list_of_traces(self,**kwargs):
-        ''' The 8510 doesn't really support multiple traces, so we just list S params. '''
-        return ["S11", "S21", "S12", "S22"]
-
-    def get_traces(self, traces, **kwargs):
-        traces_out = []
-        for trace in traces:
-            if trace.upper()=='S11':
-                trace_out = self.s11
-            elif trace.upper()=='S22':
-                trace_out = self.s22
-            elif trace.upper()=='S12':
-                trace_out = self.s12
-            elif trace.upper()=='S21':
-                trace_out = self.s21
-            else:
-                raise(ValueError(f"{trace} is not a valid trace. Options: {' '.join(self.get_list_of_traces())}"))
 
     def get_snp_network(self, ports, **kwargs):
+        ''' MAIN METHOD for obtaining S parameters, like get_snp_network((1,)) or get_snp_network((1,2)). '''
         ports = tuple(ports)
         sweep = kwargs.get("sweep", True)
         # name = kwargs.get("name", "")
@@ -207,6 +190,7 @@ class HP8510C(VNA):
         self.compound_sweep_plan = SweepPlan.from_hz(hz)
 
     def set_frequency_sweep(self, f_start, f_stop, f_npoints, **kwargs):
+        ''' Interprets units and calls set_frequency_step '''
         f_unit = kwargs.get("f_unit", "hz").lower()
         if f_unit != "hz":
             hz_start = self.to_hz(f_start, f_unit)
@@ -250,6 +234,7 @@ class HP8510C(VNA):
 
     @property
     def _npoints(self):
+        ''' Number of points in non-compound sweep '''
         instrument_ret_val = self.query('POIN;OUTPACTI;')
         v1 = instrument_ret_val.strip()
         v2 = float(v1)
@@ -258,7 +243,7 @@ class HP8510C(VNA):
 
     @property
     def npoints(self):
-        ''' Number of points in non-compound sweep '''
+        ''' Number of points in compound sweep (if programmed) or non-compound sweep '''
         if self.compound_sweep_plan is None:
             return self._npoints
         return len(self.compound_sweep_plan.get_hz())
