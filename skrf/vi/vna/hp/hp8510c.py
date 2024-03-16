@@ -25,7 +25,8 @@ class HP8510C(VNA):
     '''
     8510 driver that is capable of compound sweeps, segmented sweeps,
     and fast binary transfers. These features make this venerable old instrument
-    much more pleasant to use in the 21st century.
+    much more pleasant to use in the 21st century. Likely works with "A" and
+    "B" versions of the instrument as well.
 
     Compound sweeps occur automatically when the user requests a sweep larger
     than what the instrument natively supports (51/101/201/401/801pts). This
@@ -70,7 +71,11 @@ class HP8510C(VNA):
         vna.set_frequency_sweep(2e9,3e9,1001)
         vna.get_snp_network(ports=(1,2))
 
-    Advanced example.
+    Advanced example. The driver is handed a bucket of frequencies containing
+    two separate bands mashed together. Behind the scenes it will construct a
+    sweep plan consisting of one native sweep and one segmented sweep, perform
+    both, and stitch the results together -- but all the user need worry about
+    is constructing the request and interpreting the results.
 
     .. code-block:: python
 
