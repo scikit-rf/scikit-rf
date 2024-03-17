@@ -43,7 +43,6 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "tox >= 3.26.0",
-    "tox-uv >= 1.6.0",
     "pytest >=7.0",
     "pytest-mock >= 3.10",
     "pytest-xdist >= 3.5.0",
