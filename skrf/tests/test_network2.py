@@ -2,10 +2,10 @@ import os
 import unittest
 
 import numpy as np
+import pytest
 
 import skrf as rf
 from skrf import network2 as n2
-import pytest
 
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 

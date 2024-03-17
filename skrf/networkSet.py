@@ -145,7 +145,7 @@ class NetworkSet:
 
         # dict is authorized for convenience
         # but if a dict is passed instead of a list -> list
-        if hasattr(ntwk_set, 'values'):
+        if isinstance(ntwk_set, dict):
             ntwk_set = list(ntwk_set.values())
 
         # did they pass a list of Networks?
@@ -162,7 +162,7 @@ class NetworkSet:
 
         ## initialization
         # we are good to go
-        self.ntwk_set = ntwk_set
+        self.ntwk_set: list[Network] = ntwk_set
         self.name = name
 
         # extract the dimensions of the set
@@ -400,7 +400,7 @@ class NetworkSet:
     def __repr__(self):
         return self.__str__()
 
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         """
         Return an element of the network set.
         """
@@ -1354,10 +1354,6 @@ class NetworkSet:
     @copy_doc(skrf_plt.plot_uncertainty_decomposition)
     def plot_uncertainty_decomposition(self, *args, **kwargs):
         skrf_plt.plot_uncertainty_decomposition(self, *args, **kwargs)
-
-    @copy_doc(skrf_plt.plot_uncertainty_bounds_s)
-    def plot_uncertainty_bounds_s(self, *args, **kwargs):
-        skrf_plt.plot_uncertainty_bounds_s(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.plot_logsigma)
     def plot_logsigma(self, *args, **kwargs):
