@@ -243,8 +243,8 @@ class NetworkPlotWidget(QtWidgets.QWidget):
             S11 = curve.xData[index] + 1j * curve.yData[index]
             Z = (1 + S11) / (1 - S11)
             self.data_info_label.setText(
-                "Freq: {:g} ({:s}), S(re): {:g}, S(im): {:g}  -  R: {:g}, X: {:g}".format(
-                    frequency, curve.ntwk.frequency.unit, S11.real, S11.imag, Z.real, Z.imag))
+                f"Freq: {frequency:g} ({curve.ntwk.frequency.unit:s}), S(re): {S11.real:g}, S(im): {S11.imag:g}  -  "
+                f"R: {Z.real:g}, X: {Z.imag:g}")
 
     def _plot_attr(self, ntwk, attr, colors, trace, n_, m_):
         for n in range(ntwk.s.shape[2]):
