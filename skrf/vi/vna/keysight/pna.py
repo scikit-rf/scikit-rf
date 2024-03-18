@@ -52,24 +52,32 @@ class AveragingMode(Enum):
 
 
 class PNA(VNA):
+    '''
+    Keysight PNA, PNA-L, PNA-X.
+
+    PNA Models
+    ==========
+    E8361A, E8362B, E8363B, E8364B, N5221A, N5222A, N5224A, N5225A, N5227A
+    N5224B, N5222B, N5227B, N5225B, N5221B, E8356A, E8357A, E8358A, E8361A
+    E8361C, E8362A, E8362C, E8363A, E8363B, E8363C, E8364A, E8364B, E8364C
+    E8801A, E8802A, E8803A, N3381A, N3382A, N3383A, N5250C
+
+    PNA-L Models
+    ============
+    N5230A, N5230C, N5231A, N5232A, N5234A, N5235A, N5239A, N5234B, N5235B
+    N5231B, N5232B, N5239B
+
+    PNA-X Models
+    ============
+    N5241A, N5242A, N5244A, N5245A, N5247A, N5249A, N5247B, N5245B, N5244B
+    N5242B, N5241B, N5249B, N5264A, N5264B
+    '''
     # TODO:
     # - active_calset_name: SENS<self:cnum>:CORR:CSET:ACT? NAME
     # - create_calset: SENS<self:cnum>:CORR:CSET:CRE <name>
     # - calset_data: SENS<self:cnum>:CORR:CSET:DATA?  <eterm>,<port a>,<port b> '<receiver>'
 
-    # PNA Models:
-    # E8361A, E8362B, E8363B, E8364B, N5221A, N5222A, N5224A, N5225A, N5227A
-    # N5224B, N5222B, N5227B, N5225B, N5221B, E8356A, E8357A, E8358A, E8361A
-    # E8361C, E8362A, E8362C, E8363A, E8363B, E8363C, E8364A, E8364B, E8364C
-    # E8801A, E8802A, E8803A, N3381A, N3382A, N3383A, N5250C
 
-    # PNA-L Models:
-    # N5230A, N5230C, N5231A, N5232A, N5234A, N5235A, N5239A, N5234B, N5235B
-    # N5231B, N5232B, N5239B
-
-    # PNA-X Models:
-    # N5241A, N5242A, N5244A, N5245A, N5247A, N5249A, N5247B, N5245B, N5244B
-    # N5242B, N5241B, N5249B, N5264A, N5264B
     _models = {
         "default": {"nports": 2, "unsupported": []},
         "E8362C": {"nports": 2, "unsupported": ["nports", "freq_step", "fast_sweep"]},
