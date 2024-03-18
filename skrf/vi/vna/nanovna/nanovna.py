@@ -44,6 +44,7 @@ class REG_ADDR(bytes, Enum):
 
 
 class NanoVNA(vna.VNA):
+    '''NanoVNA.'''
     _scpi = False
 
     def __init__(self, address, backend: str = "@py"):

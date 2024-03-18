@@ -690,21 +690,21 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
 
     if form =='db':
         for m,n in ntwk.port_tuples:
-            d['S%i%i Log Mag(dB)'%(m+1,n+1)] = \
+            d[f'S{ntwk._fmt_trace_name(m,n)} Log Mag(dB)'] = \
                 Series(ntwk.s_db[:,m,n], index = index)
-            d['S%i%i Phase(deg)'%(m+1,n+1)] = \
+            d[f'S{ntwk._fmt_trace_name(m,n)} Phase(deg)'] = \
                 Series(ntwk.s_deg[:,m,n], index = index)
     elif form =='ma':
         for m,n in ntwk.port_tuples:
-            d['S%i%i Mag(lin)'%(m+1,n+1)] = \
+            d[f'S{ntwk._fmt_trace_name(m,n)} Mag(lin)'] = \
                 Series(ntwk.s_mag[:,m,n], index = index)
-            d['S%i%i Phase(deg)'%(m+1,n+1)] = \
+            d[f'S{ntwk._fmt_trace_name(m,n)} Phase(deg)'] = \
                 Series(ntwk.s_deg[:,m,n], index = index)
     elif form =='ri':
         for m,n in ntwk.port_tuples:
-            d['S%i%i Real'%(m+1,n+1)] = \
+            d[f'S{ntwk._fmt_trace_name(m,n)} Real'] = \
                 Series(ntwk.s_re[:,m,n], index = index)
-            d['S%i%i Imag'%(m+1,n+1)] = \
+            d[f'S{ntwk._fmt_trace_name(m,n)} Imag'] = \
                 Series(ntwk.s_im[:,m,n], index = index)
 
     df = DataFrame(d)

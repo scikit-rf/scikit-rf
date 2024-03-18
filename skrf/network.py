@@ -172,11 +172,6 @@ from numpy.linalg import inv as npy_inv
 from scipy import stats  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    pass
-
 from . import mathFunctions as mf
 from . import plotting as rfplt
 from .constants import K_BOLTZMANN, S_DEF_DEFAULT, S_DEFINITIONS, T0, ZERO, NumberLike
@@ -4585,21 +4580,7 @@ class Network:
                 # name if it exists, and they didn't pass a name key in
                 # the kwargs
                 if gen_label:
-                    if self.name is None:
-                        if plt.rcParams['text.usetex']:
-                            label_string = '$%s_{%i%i}$'%\
-                            (attribute[0].upper(),m+1,n+1)
-                        else:
-                            label_string = '%s%i%i'%\
-                            (attribute[0].upper(),m+1,n+1)
-                    else:
-                        if plt.rcParams['text.usetex']:
-                            label_string = self.name+', $%s_{%i%i}$'%\
-                            (attribute[0].upper(),m+1,n+1)
-                        else:
-                            label_string = self.name+', %s%i%i'%\
-                            (attribute[0].upper(),m+1,n+1)
-                    kwargs['label'] = label_string
+                    kwargs['label'] = rfplt._get_label_str(self, attribute[0].upper(), m, n)
 
                 if conversion in ["time_impulse", "time_step"]:
                     xlabel = "Time (ns)"
@@ -4698,6 +4679,12 @@ class Network:
     @copy_doc(rfplt.plot_prop_polar)
     def plot_prop_polar(self, *args, **kwargs):
         return rfplt.plot_prop_polar(self, *args, **kwargs)
+
+    def _fmt_trace_name(self, m: int, n: int) -> str:
+        port_sep = "_" if self.nports > 9 else ""
+
+        return f"{m + 1}{port_sep}{n + 1}"
+
 
 for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
 
@@ -5664,7 +5651,7 @@ def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network
 
 
 def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
-        offby:int = 1, **kwargs) -> Network:
+        offby: int = 1, port_sep: str = "", **kwargs) -> Network:
     r"""
     Build an N-port Network from list of two-ports.
 
@@ -5681,9 +5668,16 @@ def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
     ntwk_list : list of :class:`Network` objects
         the names must contain the port index, ie 'p12' or 'p43',
         ie. define the Network.name property of the :class:`Network` object.
+    nports: int
+        Number of ports to expect by the parser.
     offby : int
         starting value for s-parameters indices. ie  a value of `1`,
         assumes that a s21 = ntwk.s[:,1,0]
+    port_sep: str, default ""
+        string separating port 1 connection from port 2 for the vna connected to the
+        DUT. If constructing nport network with a maximum of 10 ports, it can be left as "".
+        To avoid ambiguity for more than 10 ports, port_sep is required to format the trace names
+        like S{}
 
     \*args, \*\*kwargs :
         passed to :func:`Network.__init__` for the N-port
@@ -5698,6 +5692,10 @@ def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
     concat_ports : concatenate ntwks along their ports
     """
 
+    if (nports > 10) and (port_sep == ""):
+        msg = "`port_sep` must not be empty when having more than 10 ports!"
+        raise ValueError(msg)
+
     frequency = ntwk_list[0].frequency
     nport = Network(frequency=frequency,
                     s=npy.zeros(shape=(frequency.npoints, nports, nports)),
@@ -5706,9 +5704,9 @@ def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
     for subntwk in ntwk_list:
         for m, n in nport.port_tuples:
             if m != n and m > n:
-                if '%i%i' % (m + offby, n + offby) in subntwk.name:
+                if f"{m + offby}{port_sep}{n + offby}" in subntwk.name:
                     pass
-                elif '%i%i' % (n + offby, m + offby) in subntwk.name:
+                elif f"{n + offby}{port_sep}{m + offby}" in subntwk.name:
                     subntwk = subntwk.flipped()
                 else:
                     continue

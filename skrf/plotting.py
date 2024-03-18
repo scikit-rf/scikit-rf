@@ -82,6 +82,17 @@ if TYPE_CHECKING:
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
 SI_CONVERSION = {key: 10**((8-i)*3) for i, key in enumerate(SI_PREFIXES_ASCII)}
 
+def _get_label_str(netw: Network, param: str, m: int, n: int) -> str:
+    label_string = ""
+    if netw.name is not None:
+        label_string += f"{netw.name}, "
+
+    if plt.rcParams['text.usetex']:
+        label_string += f"${param}_{{{netw._fmt_trace_name(m,n)}}}$"
+    else:
+        label_string += f"{param}{netw._fmt_trace_name(m,n)}"
+    return label_string
+
 
 def scale_frequency_ticks(ax: plt.Axes, funit: str):
     """
@@ -615,7 +626,7 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
         plt.draw()
 
 
-def subplot_params(ntwk, param: str = 's', proj: str = 'db',
+def subplot_params(ntwk: Network, param: str = 's', proj: str = 'db',
                    size_per_port: int = 4, newfig: bool = True,
                    add_titles: bool = True, keep_it_tight: bool = True,
                    subplot_kw: dict = None,
@@ -664,7 +675,7 @@ def subplot_params(ntwk, param: str = 's', proj: str = 'db',
         plot_func = ntwk.__getattribute__(f'plot_{param}_{proj}')
         plot_func(m=ports[0], n=ports[1], ax=ax, **kwargs)
         if add_titles:
-            ax.set_title('%s%i%i'%(param.upper(),ports[0]+1, ports[1]+1))
+            ax.set_title(f"{param.upper()}{ntwk._fmt_trace_name(ports[0], ports[1])}")
     if keep_it_tight:
        plt.tight_layout()
     return f, axs
@@ -937,7 +948,7 @@ def plot_reciprocity(netw: Network, db=False, *args, **kwargs):
         for n in range(netw.nports):
             if m > n:
                 if 'label' not in kwargs.keys():
-                    kwargs['label'] = 'ports %i%i' % (m, n)
+                    kwargs['label'] = f"ports {netw._fmt_trace_name(m, n)}"
                 y = netw.reciprocity[:, m, n].flatten()
                 y = mf.complex_2_db(y) if db else npy.abs(y)
                 netw.frequency.plot(y, *args, **kwargs)
@@ -968,7 +979,7 @@ def plot_reciprocity2(netw: Network, db=False, *args, **kwargs):
         for n in range(netw.nports):
             if m > n:
                 if 'label' not in kwargs.keys():
-                    kwargs['label'] = 'ports %i%i' % (m, n)
+                    kwargs['label'] = f"ports {netw._fmt_trace_name(m, n)}"
                 y = netw.reciprocity2[:, m, n].flatten()
                 if db:
                     y = mf.complex_2_db(y)
@@ -1059,19 +1070,7 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
             # set the legend label for this trace to the networks name if it
             # exists, and they didnt pass a name key in the kwargs
             if generate_label:
-                if netw.name is None:
-                    if plt.rcParams['text.usetex']:
-                        label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
-                    else:
-                        label_string = 'S'+repr(m+1) + repr(n+1)
-                else:
-                    if plt.rcParams['text.usetex']:
-                        label_string = netw.name+', $S_{'+repr(m+1) + \
-                                repr(n+1)+'}$'
-                    else:
-                        label_string = netw.name+', S'+repr(m+1) + repr(n+1)
-
-                kwargs['label'] = label_string
+                kwargs['label'] = _get_label_str(netw, "S", m, n)
 
             # plot the desired attribute vs frequency
             if len (ax.patches) == 0:
@@ -1513,66 +1512,12 @@ def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0):
 
     """
     if self.name is not None:
-        plt.title(r'Uncertainty Decomposition: %s $S_{%i%i}$'%(self.name,m,n))
+        plt.title(f"Uncertainty Decomposition: {self.name} $S_{{{self.ntwk_set[0]._fmt.trace_name(m,n)}}}$")
     self.std_s.plot_s_mag(label='Distance', m=m,n=n)
     self.std_s_re.plot_s_mag(label='Real',  m=m,n=n)
     self.std_s_im.plot_s_mag(label='Imaginary',  m=m,n=n)
     self.std_s_mag.plot_s_mag(label='Magnitude',  m=m,n=n)
     self.std_s_arcl.plot_s_mag(label='Arc-length',  m=m,n=n)
-
-def plot_uncertainty_bounds_s(self: NetworkSet, multiplier: float = 200, *args, **kwargs):
-    """
-    Plot complex uncertainty bounds plot on smith chart.
-
-    This function plots the complex uncertainty of a NetworkSet
-    as circles on the smith chart. At each frequency a circle
-    with radii proportional to the complex standard deviation
-    of the set at that frequency is drawn. Due to the fact that
-    the `markersize` argument is in pixels, the radii can scaled by
-    the input argument  `multiplier`.
-
-    default kwargs are
-        {
-        'marker':'o',
-        'color':'b',
-        'mew':0,
-        'ls':'',
-        'alpha':.1,
-        'label':None,
-        }
-
-    Parameters
-    ----------
-    multiplier : float
-        controls the circle sizes, by multiples of the standard
-        deviation.
-
-    """
-    default_kwargs = {
-        'marker':'o',
-        'color':'b',
-        'mew':0,
-        'ls':'',
-        'alpha':.1,
-        'label':None,
-        }
-    default_kwargs.update(**kwargs)
-
-    if plt.isinteractive():
-        was_interactive = True
-        plt.interactive(0)
-    else:
-        was_interactive = False
-
-    [
-        self.mean_s[k].plot_s_smith(*args, ms = self.std_s[k].s_mag*multiplier, **default_kwargs)
-        for k in range(len(self[0]))
-    ]
-
-    if was_interactive:
-        plt.interactive(1)
-    plt.draw()
-    plt.show()
 
 def plot_logsigma(self: NetworkSet, label_axis: bool = True, *args,**kwargs):
     r"""
@@ -1800,21 +1745,7 @@ def plot_prop_complex(netw: Network, prop_name: str,
             # name if it exists, and they didn't pass a name key in
             # the kwargs
             if gen_label:
-                if netw.name is None:
-                    if plt.rcParams['text.usetex']:
-                        label_string = '$%s_{%i%i}$'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                    else:
-                        label_string = '%s%i%i'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                else:
-                    if plt.rcParams['text.usetex']:
-                        label_string = netw.name+', $%s_{%i%i}$'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                    else:
-                        label_string = netw.name+', %s%i%i'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                kwargs['label'] = label_string
+                kwargs['label'] = _get_label_str(netw, prop_name[0].upper(), m, n)
 
             # plot the desired attribute vs frequency
             plot_complex_rectangular(
@@ -1879,21 +1810,7 @@ def plot_prop_polar(netw: Network, prop_name: str,
             # name if it exists, and they didn't pass a name key in
             # the kwargs
             if gen_label:
-                if netw.name is None:
-                    if plt.rcParams['text.usetex']:
-                        label_string = '$%s_{%i%i}$'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                    else:
-                        label_string = '%s%i%i'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                else:
-                    if plt.rcParams['text.usetex']:
-                        label_string = netw.name+', $%s_{%i%i}$'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                    else:
-                        label_string = netw.name+', %s%i%i'%\
-                        (prop_name[0].upper(),m+1,n+1)
-                kwargs['label'] = label_string
+                kwargs['label'] = _get_label_str(netw, prop_name[0].upper(), m, n)
 
             # plot the desired attribute vs frequency
             plot_complex_polar(

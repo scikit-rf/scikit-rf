@@ -24,3 +24,5 @@ qtapps/sandbox*
 .coverage*
 
 poetry.lock
+lint.xml
+.venv/
