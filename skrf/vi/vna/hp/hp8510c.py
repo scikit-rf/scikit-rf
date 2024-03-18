@@ -454,5 +454,3 @@ class HP8510C(VNA):
         reverse.name = 'reverse switch term'
 
         return (forward,reverse)
-
-
