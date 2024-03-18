@@ -63,7 +63,7 @@ class HP8510C(VNA):
         vna.set_frequency_sweep(2e9,3e9,201)
         vna.get_snp_network(ports=(1,2))
 
-        
+
 
     Intermediate example -- note that 1001 point sweeps are not natively supported by the instrument; this driver
     takes multiple sweeps and stitches the results together.
@@ -91,7 +91,9 @@ class HP8510C(VNA):
     '''
     min_hz = None  #: Minimum frequency supported by instrument
     max_hz = None  #: Maximum frequency supported by instrument
-    compound_sweep_plan = None  #: If None, get_snp_network()/one_port()/two_port() just ask the VNA for data. If populated, those methods perform the multiple sweeps in the plan and stitch together the results.
+    compound_sweep_plan = None
+    #: If None, get_snp_network()/one_port()/two_port() just ask the VNA for data.
+    # If populated, those methods perform the multiple sweeps in the plan and stitch together the results.
 
     def __init__(self, address : str, backend : str = "@py", **kwargs):
         super().__init__(address, backend, **kwargs)
@@ -204,12 +206,14 @@ class HP8510C(VNA):
         return skrf.Frequency.from_f(self.compound_sweep_plan.get_hz(), unit='hz')
 
     @frequency.setter
-    def frequency(self, frequency_obj):
-        ''' List sweep using hz, an array of frequencies. If hz is too long, multiple sweeps will automatically be performed.'''
+    def frequency(self, frequency_obj: skrf.Frequency):
+        ''' List sweep using hz, an array of frequencies.
+        If hz is too long, multiple sweeps will automatically be performed.'''
         hz = frequency_obj.f
         valid = (self.min_hz<=hz) & (hz<=self.max_hz)
         if not np.all(valid):
-            print("set_frequency called with %i/%i points out of VNA frequency range. Dropping them."%(np.sum(valid),len(valid)))
+            print("set_frequency called with %i/%i points out of VNA frequency range. Dropping them."
+                  %(np.sum(valid),len(valid)))
             hz = hz[valid]
         self.compound_sweep_plan = SweepPlan.from_hz(hz)
 
@@ -356,7 +360,8 @@ class HP8510C(VNA):
             sweep_section.apply_8510(self)
             chunk_net_nomask = self._one_port(expected_hz=sweep_section.get_raw_hz())
             chunk_net = sweep_section.mask_8510(chunk_net_nomask)
-            stitched_network = chunk_net if stitched_network is None else skrf.network.stitch(stitched_network,chunk_net)
+            stitched_network = (chunk_net if stitched_network is None
+                                else skrf.network.stitch(stitched_network, chunk_net))
         self.freq_start = old_start_hz
         self.freq_stop  = old_stop_hz
         return stitched_network
@@ -409,7 +414,8 @@ class HP8510C(VNA):
             sweep_chunk.apply_8510(self)
             chunk_net_nomask = self._two_port(expected_hz=sweep_chunk.get_raw_hz())
             chunk_net = sweep_chunk.mask_8510(chunk_net_nomask)
-            stitched_network = chunk_net if stitched_network is None else skrf.network.stitch(stitched_network,chunk_net)
+            stitched_network = (chunk_net if stitched_network is None
+                                else skrf.network.stitch(stitched_network,chunk_net))
         self.freq_start = old_start_hz
         self.freq_stop  = old_stop_hz
         return stitched_network
