@@ -204,6 +204,10 @@ class VectorFitting:
         a similar number of complex conjugate poles is required. Be careful not to use too many poles, as excessive
         poles will not only increase the computation workload during the fitting and the subsequent use of the model,
         but they can also introduce unwanted resonances at frequencies well outside the fit interval.
+
+        See Also
+        --------
+        auto_fit : Automatic vector fitting routine with pole adding and skimming.
         """
 
         timer_start = timer()
@@ -374,7 +378,7 @@ class VectorFitting:
         Automatic fitting routine implementing the "vector fitting with adding and skimming" algorithm as proposed in
         [#Grivet-Talocia]_. This algorithm is able to provide high quality macromodels with automatic model order
         optimization, while improving both the rate of convergence and the fit quality in case of noisy data.
-        The resulting model paramters will be stored in the class variables :attr:`poles`, :attr:`residues`,
+        The resulting model parameters will be stored in the class variables :attr:`poles`, :attr:`residues`,
         :attr:`proportional_coeff` and :attr:`constant_coeff`.
 
         Parameters
@@ -410,16 +414,16 @@ class VectorFitting:
             the final error, and the final model order (number of poles used in the model).
 
         alpha: float, optional
-            Threshold for the error decay to stop the refinement loop in case of error stall. This parameter provides
-            another stopping criterion for cases where the model already has enough poles but the target error still
-            cannot be reached because of excess noise (target error too small for noise level in the data).
+            Threshold for the error decay to stop the refinement loop in case of error stagnation. This parameter
+            provides another stopping criterion for cases where the model already has enough poles but the target error
+            still cannot be reached because of excess noise (target error too small for noise level in the data).
 
         gamma: float, optional
             Threshold for the detection of spurious poles.
 
         nu_samples: float, optional
-            Required and enforced (relative) spacing between relocated or added poles, specified in frequency samples.
-            The number can be a float, it does not have to be an integer.
+            Required and enforced (relative) spacing in termins of frequency samples between existing poles and
+            relocated or added poles. The number can be a float, it does not have to be an integer.
 
         parameter_type: str, optional
             Representation type of the frequency responses to be fitted. Either *scattering* (`'s'` or `'S'`),
@@ -431,6 +435,10 @@ class VectorFitting:
         -------
         None
             No return value.
+
+        See Also
+        --------
+        vector_fit : Regular vector fitting routine.
 
         References
         ----------
