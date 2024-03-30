@@ -267,7 +267,7 @@ def magnitude_2_db(z: NumberLike, zero_nan: bool = True):
     """
     out = 20 * npy.log10(z)
     if zero_nan:
-        return npy.nan_to_num(out, copy=False, nan=LOG_OF_NEG, neginf=-npy.inf)
+        return npy.nan_to_num(out, nan=LOG_OF_NEG, neginf=-npy.inf)
     return out
 
 mag_2_db = magnitude_2_db
@@ -291,7 +291,7 @@ def mag_2_db10(z: NumberLike, zero_nan:bool = True):
     """
     out = 10 * npy.log10(z)
     if zero_nan:
-        return npy.nan_to_num(out, copy=False, nan=LOG_OF_NEG, neginf=-npy.inf)
+        return npy.nan_to_num(out, nan=LOG_OF_NEG, neginf=-npy.inf)
     return out
 
 
@@ -721,7 +721,7 @@ def inf_to_num(x: NumberLike):
     x : Number of array_like
         Input without with +/- inf replaced by large numbers
     """
-    x = npy.nan_to_num(x, copy=False, nan=npy.nan, posinf=INF, neginf=-1*INF)
+    x = npy.nan_to_num(x, nan=npy.nan, posinf=INF, neginf=-1*INF)
     return x
 
 

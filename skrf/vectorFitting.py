@@ -98,8 +98,66 @@ class VectorFitting:
         self.delta_max_history = []
         self.history_max_sigma = []
         self.history_cond_A = []
-        self.history_rank_A = []
-        self.full_rank = 0
+        self.history_rank_deficiency = []
+
+    @staticmethod
+    def get_spurious(poles: np.ndarray, residues: np.ndarray, n_freqs: int = 101, gamma: float = 0.03) -> np.ndarray:
+        """
+        Classifies fitted pole-residue pairs as spurious or not spurious. The implementation is based on the evaluation
+        of band-limited energy norms (p=2) of the resonance curves of individual pole-residue pairs, as proposed in
+        [#Grivet-Talocia]_.
+
+        Parameters
+        ----------
+        poles : ndarray, shape (N)
+            Array of fitted poles
+
+        residues : ndarray, shape (M, N)
+            Array of fitted residues
+
+        n_freqs : int, optional
+            Number of frequencies for the evaluation. The frequency range is chosen automatically and the default
+            101 frequencies should be appropriate in most cases.
+
+        gamma : float, optional
+            Sensitivity threshold for the classification. Typical values range from 0.01 to 0.05.
+
+        Returns
+        -------
+        ndarray, bool, shape (M)
+            Boolean array having the same shape as :attr:`poles`. `True` marks the respective pole as spurious.
+
+        References
+        ----------
+        .. [#Grivet-Talocia] S. Grivet-Talocia and M. Bandinu, "Improving the convergence of vector fitting for
+            equivalent circuit extraction from noisy frequency responses," in IEEE Transactions on Electromagnetic
+            Compatibility, vol. 48, no. 1, pp. 104-120, Feb. 2006, DOI: https://doi.org/10.1109/TEMC.2006.870814
+        """
+
+        omega_eval = np.linspace(np.min(poles.imag) / 3, np.max(poles.imag) * 3, n_freqs)
+        h = (residues[:, None, :] / (1j * omega_eval[:, None] - poles)
+             + np.conj(residues[:, None, :]) / (1j * omega_eval[:, None] - np.conj(poles)))
+        norm2 = np.sqrt(np.trapz(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
+        spurious = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
+        return spurious
+
+    @staticmethod
+    def get_model_order(poles: np.ndarray) -> int:
+        """
+        Returns the model order calculated with :math:`N_{real} + 2 N_{complex}` for a given set of poles.
+
+        Parameters
+        ----------
+        poles: ndarray
+            The poles of the model as a list or NumPy array.
+
+        Returns
+        -------
+        order: int
+        """
+        # poles.imag != 0 is True(1) for complex poles, False (0) for real poles.
+        # Adding one to each element gives 2 columns for complex and 1 column for real poles.
+        return np.sum((poles.imag != 0) + 1)
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
@@ -150,65 +208,27 @@ class VectorFitting:
 
         timer_start = timer()
 
-        # create initial poles and space them across the frequencies in the provided Touchstone file
         # use normalized frequencies during the iterations (seems to be more stable during least-squares fit)
         norm = np.average(self.network.f)
-        #norm = np.exp(np.mean(np.log(self.network.f)))
+        # norm = np.exp(np.mean(np.log(self.network.f)))
         freqs_norm = np.array(self.network.f) / norm
 
-        fmin = np.amin(freqs_norm)
-        fmax = np.amax(freqs_norm)
+        # get initial poles
+        poles = self._init_poles(freqs_norm, n_poles_real, n_poles_cmplx, init_pole_spacing)
 
-        # poles cannot be at f=0; hence, f_min for starting pole must be greater than 0
-        if fmin == 0.0:
-            # random choice: use 1/1000 of first non-zero frequency
-            fmin = freqs_norm[1] / 1000
-
-        init_pole_spacing = init_pole_spacing.lower()
-        if init_pole_spacing == 'log':
-            pole_freqs_real = np.geomspace(fmin, fmax, n_poles_real)
-            pole_freqs_cmplx = np.geomspace(fmin, fmax, n_poles_cmplx)
-        elif init_pole_spacing == 'lin':
-            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
-            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
-        elif init_pole_spacing == 'custom':
-            pole_freqs_real = None
-            pole_freqs_cmplx = None
+        # check and normalize custom poles
+        if poles is None:
             if self.poles is not None and len(self.poles) > 0:
                 poles = self.poles / norm
             else:
                 raise ValueError('Initial poles must be provided in `self.poles` when calling with '
                                  '`init_pole_spacing == \'custom\'`.')
-        else:
-            warnings.warn('Invalid choice of initial pole spacing; proceeding with linear spacing.', UserWarning,
-                          stacklevel=2)
-            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
-            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
-
-        if pole_freqs_real is not None and pole_freqs_cmplx is not None:
-            # init poles array of correct length
-            poles = np.zeros(n_poles_real + n_poles_cmplx, dtype=complex)
-
-            # add real poles
-            for i, f in enumerate(pole_freqs_real):
-                omega = 2 * np.pi * f
-                poles[i] = -1 * omega
-
-            # add complex-conjugate poles (store only positive imaginary parts)
-            i_offset = len(pole_freqs_real)
-            for i, f in enumerate(pole_freqs_cmplx):
-                omega = 2 * np.pi * f
-                poles[i_offset + i] = (-0.01 + 1j) * omega
 
         # save initial poles (un-normalize first)
         initial_poles = poles * norm
         max_singular = 1
 
         logging.info('### Starting pole relocation process.\n')
-
-        n_responses = self.network.nports ** 2
-        n_freqs = len(freqs_norm)
-        n_samples = n_responses * n_freqs
 
         # select network representation type
         if parameter_type.lower() == 's':
@@ -238,207 +258,30 @@ class VectorFitting:
         #weights_responses = np.ones(self.network.nports ** 2)
         #weights_responses = 10 / np.exp(np.mean(np.log(np.abs(freq_responses)), axis=1))
 
-        # weight of extra equation to avoid trivial solution
-        weight_extra = np.linalg.norm(weights_responses[:, None] * freq_responses) / n_samples
-
-        # weights w are applied directly to the samples, which get squared during least-squares fitting; hence sqrt(w)
-        weights_responses = np.sqrt(weights_responses)
-        weight_extra = np.sqrt(weight_extra)
-
         # ITERATIVE FITTING OF POLES to the provided frequency responses
         # initial set of poles will be replaced with new poles after every iteration
         iterations = self.max_iterations
         self.d_res_history = []
         self.delta_max_history = []
         self.history_cond_A = []
-        self.history_rank_A = []
+        self.history_rank_deficiency = []
         converged = False
 
-        omega = 2 * np.pi * freqs_norm
-        s = 1j * omega
-
+        # POLE RELOCATION LOOP
         while iterations > 0:
             logging.info(f'Iteration {self.max_iterations - iterations + 1}')
 
-            # count number of rows and columns in final coefficient matrix to solve for (c_res, d_res)
-            # (ratio #real/#complex poles might change during iterations)
+            poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
+                poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
 
-            # We need two columns for complex poles and one column for real poles in A matrix.
-            # poles.imag != 0 is True(1) for complex poles, False (0) for real poles.
-            # Adding one to each element gives 2 columns for complex and 1 column for real poles.
-            n_cols_unused = np.sum((poles.imag != 0) + 1)
+            logging.info(f'Condition number of coefficient matrix is {int(cond)}')
+            self.history_cond_A.append(cond)
 
-            n_cols_used = n_cols_unused
-            n_cols_used += 1
-            idx_constant = []
-            idx_proportional = []
-            if fit_constant:
-                idx_constant = [n_cols_unused]
-                n_cols_unused += 1
-            if fit_proportional:
-                idx_proportional = [n_cols_unused]
-                n_cols_unused += 1
-
-            real_mask = poles.imag == 0
-            # list of indices in 'poles' with real values
-            idx_poles_real = np.nonzero(real_mask)[0]
-            # list of indices in 'poles' with complex values
-            idx_poles_complex = np.nonzero(~real_mask)[0]
-
-            # positions (columns) of coefficients for real and complex-conjugate terms in the rows of A determine the
-            # respective positions of the calculated residues in the results vector.
-            # to have them ordered properly for the subsequent assembly of the test matrix H for eigenvalue extraction,
-            # place real poles first, then complex-conjugate poles with their respective real and imaginary parts:
-            # [r1', r2', ..., (r3', r3''), (r4', r4''), ...]
-            n_real = len(idx_poles_real)
-            n_cmplx = len(idx_poles_complex)
-            idx_res_real = np.arange(n_real)
-            idx_res_complex_re = n_real + 2 * np.arange(n_cmplx)
-            idx_res_complex_im = idx_res_complex_re + 1
-
-            # complex coefficient matrix of shape [N_responses, N_freqs, n_cols_unused + n_cols_used]
-            # layout of each row:
-            # [pole1, pole2, ..., (constant), (proportional), pole1, pole2, ..., constant]
-            A = np.empty((n_responses, n_freqs, n_cols_unused + n_cols_used), dtype=complex)
-
-            # calculate coefficients for real and complex residues in the solution vector
-            #
-            # real pole-residue term (r = r', p = p'):
-            # fractional term is r' / (s - p')
-            # coefficient for r' is 1 / (s - p')
-            coeff_real = 1 / (s[:, None] - poles[None, idx_poles_real])
-
-            # complex-conjugate pole-residue pair (r = r' + j r'', p = p' + j p''):
-            # fractional term is r / (s - p) + conj(r) / (s - conj(p))
-            #                   = [1 / (s - p) + 1 / (s - conj(p))] * r' + [1j / (s - p) - 1j / (s - conj(p))] * r''
-            # coefficient for r' is 1 / (s - p) + 1 / (s - conj(p))
-            # coefficient for r'' is 1j / (s - p) - 1j / (s - conj(p))
-            coeff_complex_re = (1 / (s[:, None] - poles[None, idx_poles_complex]) +
-                                1 / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
-            coeff_complex_im = (1j / (s[:, None] - poles[None, idx_poles_complex]) -
-                                1j / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
-
-            # part 1: first sum of rational functions (variable c)
-            A[:, :, idx_res_real] = coeff_real
-            A[:, :, idx_res_complex_re] = coeff_complex_re
-            A[:, :, idx_res_complex_im] = coeff_complex_im
-
-            # part 2: constant (variable d) and proportional term (variable e)
-            A[:, :, idx_constant] = 1
-            A[:, :, idx_proportional] = s[:, None]
-
-            # part 3: second sum of rational functions multiplied with frequency response (variable c_res)
-            A[:, :, n_cols_unused + idx_res_real] = -1 * freq_responses[:, :, None] * coeff_real
-            A[:, :, n_cols_unused + idx_res_complex_re] = -1 * freq_responses[:, :, None] * coeff_complex_re
-            A[:, :, n_cols_unused + idx_res_complex_im] = -1 * freq_responses[:, :, None] * coeff_complex_im
-
-            # part 4: constant (variable d_res)
-            A[:, :, -1] = -1 * freq_responses
-
-            # calculation of matrix sizes after QR decomposition:
-            # stacked coefficient matrix (A.real, A.imag) has shape (L, M, N)
-            # with
-            # L = n_responses = n_ports ** 2
-            # M = 2 * n_freqs (because of hstack with 2x n_freqs)
-            # N = n_cols_unused + n_cols_used
-            # then
-            # R has shape (L, K, N) with K = min(M, N)
-            dim_k = min(2 * n_freqs, n_cols_unused + n_cols_used)
-
-            # QR decomposition
-            # R = np.linalg.qr(np.hstack((A.real, A.imag)), 'r')
-
-            # direct QR of stacked matrices for linalg.qr() only works with numpy>=1.22.0
-            # workaround for old numpy:
-            R = np.empty((n_responses, dim_k, n_cols_unused + n_cols_used))
-            A_ri = np.hstack((A.real, A.imag))
-            for i in range(n_responses):
-                R[i] = np.linalg.qr(A_ri[i], mode='r')
-
-            # only R22 is required to solve for c_res and d_res
-            # R12 and R22 can have a different number of rows, depending on K
-            if dim_k == 2 * n_freqs:
-                n_rows_r12 = n_freqs
-                n_rows_r22 = n_freqs
-            else:
-                n_rows_r12 = n_cols_unused
-                n_rows_r22 = n_cols_used
-            R22 = R[:, n_rows_r12:, n_cols_unused:]
-
-            # weighting
-            R22 = weights_responses[:, None, None] * R22
-
-            # assemble compressed coefficient matrix A_fast by row-stacking individual upper triangular matrices R22
-            A_fast = np.empty((n_responses * n_rows_r22 + 1, n_cols_used))
-            A_fast[:-1, :] = R22.reshape((n_responses * n_rows_r22, n_cols_used))
-
-            # extra equation to avoid trivial solution
-            A_fast[-1, idx_res_real] = np.sum(coeff_real.real, axis=0)
-            A_fast[-1, idx_res_complex_re] = np.sum(coeff_complex_re.real, axis=0)
-            A_fast[-1, idx_res_complex_im] = np.sum(coeff_complex_im.real, axis=0)
-            A_fast[-1, -1] = n_freqs
-
-            # weighting
-            A_fast[-1, :] = weight_extra * A_fast[-1, :]
-
-            # right hand side vector (weighted)
-            b = np.zeros(n_responses * n_rows_r22 + 1)
-            b[-1] = weight_extra * n_samples
-
-            # check condition of the linear system
-            cond_A = np.linalg.cond(A_fast)
-            logging.info(f'Condition number of coefficient matrix is {int(cond_A)}')
-            self.history_cond_A.append(cond_A)
-
-            # solve least squares for real parts
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
-
-            self.history_rank_A.append(rank)
-            self.full_rank = np.min(A_fast.shape)
-            logging.info(f'The rank of the coefficient matrix is {rank}. Rank deficiency is {self.full_rank - rank}.')
-
-            # assemble individual result vectors from single LS result x
-            c_res = x[:-1]
-            d_res = x[-1]
-
-            # check if d_res is suited for zeros calculation
-            tol_res = 1e-8
-            if np.abs(d_res) < tol_res:
-                # d_res is too small, discard solution and proceed the |d_res| = tol_res
-                logging.info(f'Replacing d_res solution as it was too small ({d_res}).')
-                d_res = tol_res * (d_res / np.abs(d_res))
-                # warnings.warn('Replacing d_res solution as it was too small. This is a sign for an '
-                #               'ill-conditioned linear system.\n'
-                #               f'The condition number of the coefficient matrix is {cond_A}.\n'
-                #               f'There could be too many or not enough poles.',
-                #               RuntimeWarning, stacklevel=2)
+            self.history_rank_deficiency.append(rank_deficiency)
+            logging.info(f'Rank deficiency is {rank_deficiency}.')
 
             self.d_res_history.append(d_res)
             logging.info(f'd_res = {d_res}')
-
-            # build test matrix H, which will hold the new poles as eigenvalues
-            H = np.zeros((len(c_res), len(c_res)))
-
-            poles_real = poles[np.nonzero(real_mask)]
-            poles_cplx = poles[np.nonzero(~real_mask)]
-
-            H[idx_res_real, idx_res_real] = poles_real.real
-            H[idx_res_real] -= c_res / d_res
-
-            H[idx_res_complex_re, idx_res_complex_re] = poles_cplx.real
-            H[idx_res_complex_re, idx_res_complex_im] = poles_cplx.imag
-            H[idx_res_complex_im, idx_res_complex_re] = -1 * poles_cplx.imag
-            H[idx_res_complex_im, idx_res_complex_im] = poles_cplx.real
-            H[idx_res_complex_re] -= 2 * c_res / d_res
-
-            poles_new = np.linalg.eigvals(H)
-
-            # replace poles for next iteration
-            # complex poles need to come in complex conjugate pairs; append only the positive part
-            poles = poles_new[np.nonzero(poles_new.imag >= 0)]
-
-            # flip real part of unstable poles (real part needs to be negative for stability)
-            poles.real = -1 * np.abs(poles.real)
 
             # calculate relative changes in the singular values; stop iteration loop once poles have converged
             new_max_singular = np.amax(singular_vals)
@@ -451,8 +294,8 @@ class VectorFitting:
             if delta_max < self.max_tol:
                 if converged:
                     # is really converged, finish
-                    logging.info('Pole relocation process converged after {} iterations.'.format(
-                        self.max_iterations - iterations + 1))
+                    logging.info(f'Pole relocation process converged after {self.max_iterations - iterations + 1} '
+                                  'iterations.')
                     stop = True
                 else:
                     # might be converged, but do one last run to be sure
@@ -467,15 +310,15 @@ class VectorFitting:
             if iterations == 0:
                 # loop ran into iterations limit; trying to assess the issue
                 max_cond = np.amax(self.history_cond_A)
-                min_rank = np.amin(self.history_rank_A)
+                max_deficiency = np.amax(self.history_rank_deficiency)
                 if max_cond > 1e10:
-                    hint_illcond = ("\nHint: the linear system was ill-conditioned "
-                        f"(max. condition number was {max_cond}).")
+                    hint_illcond = ('\nHint: the linear system was ill-conditioned (max. condition number was '
+                                    f'{max_cond}).')
                 else:
                     hint_illcond = ''
-                if min_rank < self.full_rank:
-                    hint_rank = (f'\nHint: the coefficient matrix was rank-deficient (min. rank was {min_rank}, full '
-                                 f'rank is {self.full_rank}).')
+                if max_deficiency < 0:
+                    hint_rank = ('\nHint: the coefficient matrix was rank-deficient (max. rank deficiency was '
+                                 f'{max_deficiency}).')
                 else:
                     hint_rank = ''
                 if converged and stop is False:
@@ -502,11 +345,551 @@ class VectorFitting:
         logging.info('\n### Starting residues calculation process.\n')
 
         # finally, solve for the residues with the previously calculated poles
+        residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
+
+        # save poles, residues, d, e in actual frequencies (un-normalized)
+        self.poles = poles * norm
+        self.residues = np.array(residues) * norm
+        self.constant_coeff = np.array(constant_coeff)
+        self.proportional_coeff = np.array(proportional_coeff) / norm
+
+        timer_stop = timer()
+        self.wall_clock_time = timer_stop - timer_start
+
+        logging.info(f'\n### Vector fitting finished in {self.wall_clock_time} seconds.\n')
+
+        # raise a warning if the fitted Network is passive but the fit is not (only without proportional_coeff):
+        if self.network.is_passive() and not fit_proportional:
+            if not self.is_passive():
+                warnings.warn('The fitted network is passive, but the vector fit is not passive. Consider running '
+                              '`passivity_enforce()` to enforce passivity before using this model.',
+                              UserWarning, stacklevel=2)
+
+    def auto_fit(self, n_poles_init_real: int = 3, n_poles_init_cmplx: int = 3, n_poles_add: int = 3,
+                 model_order_max: int = 100, iters_start: int = 3, iters_inter: int = 3, iters_final: int = 5,
+                 target_error: float = 1e-2, alpha: float = 0.03, gamma: float = 0.03, nu_samples: float = 1.0,
+                 parameter_type: str = 's') -> (np.ndarray, np.ndarray):
+        """
+        Automatic fitting routine implementing the "vector fitting with adding and skimming" algorithm as proposed in
+        [#Grivet-Talocia]_. This algorithm is able to provide high quality macromodels with automatic model order
+        optimization, while improving both the rate of convergence and the fit quality in case of noisy data.
+        The resulting model paramters will be stored in the class variables :attr:`poles`, :attr:`residues`,
+        :attr:`proportional_coeff` and :attr:`constant_coeff`.
+
+        Parameters
+        ----------
+        n_poles_init_real: int, optional
+            Number of real poles in the initial model.
+
+        n_poles_init_cmplx: int, optional
+            Number of complex conjugate poles in the initial model.
+
+        n_poles_add: int, optional
+            Number of new poles allowed to be added in each refinement iteration, if possible. This controls how fast
+            the model order is allowed to grow. Unnecessary poles will have to be skimmed and removed later. This
+            parameter has a strong effect on the convergence.
+
+        model_order_max: int, optional
+            Maximum model order as calculated with :math:`N_{real} + 2 N_{complex}`. This parameter provides a stopping
+            criterion in case the refinement process is not converging.
+
+        iters_start: int, optional
+            Number of initial iterations for pole relocations as in regular vector fitting.
+
+        iters_inter: int, optional
+            Number of intermediate iterations for pole relocations during each iteration of the refinement process.
+
+        iters_final: int, optional
+            Number of final iterations for pole relocations after the refinement process.
+
+        target_error: float, optional
+            Target for the model error to be reached during the refinement process. The actual achievable error is
+            bound by the noise in the data. If specified with a number greater than the noise floor, this parameter
+            provides another stopping criterion for the refinement process. It therefore affects both the convergence,
+            the final error, and the final model order (number of poles used in the model).
+
+        alpha: float, optional
+            Threshold for the error decay to stop the refinement loop in case of error stall. This parameter provides
+            another stopping criterion for cases where the model already has enough poles but the target error still
+            cannot be reached because of excess noise (target error too small for noise level in the data).
+
+        gamma: float, optional
+            Threshold for the detection of spurious poles.
+
+        nu_samples: float, optional
+            Required and enforced (relative) spacing between relocated or added poles, specified in frequency samples.
+            The number can be a float, it does not have to be an integer.
+
+        parameter_type: str, optional
+            Representation type of the frequency responses to be fitted. Either *scattering* (`'s'` or `'S'`),
+            *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). It's recommended to perform the fit on the
+            original S parameters. Otherwise, scikit-rf will convert the responses from S to Z or Y, which might work
+            for the fit but can cause other issues.
+
+        Returns
+        -------
+        None
+            No return value.
+
+        References
+        ----------
+        .. [#Grivet-Talocia] S. Grivet-Talocia and M. Bandinu, "Improving the convergence of vector fitting for
+            equivalent circuit extraction from noisy frequency responses," in IEEE Transactions on Electromagnetic
+            Compatibility, vol. 48, no. 1, pp. 104-120, Feb. 2006, DOI: https://doi.org/10.1109/TEMC.2006.870814
+        """
+
+        self.d_res_history = []
+        self.delta_max_history = []
+        self.history_cond_A = []
+        self.history_rank_deficiency = []
+        max_singular = 1
+        error_peak_history = []
+        model_order_history = []
+
+        timer_start = timer()
+
+        # use normalized frequencies during the iterations (seems to be more stable during least-squares fit)
+        norm = np.average(self.network.f)
+        # norm = np.exp(np.mean(np.log(self.network.f)))
+        freqs_norm = np.array(self.network.f) / norm
+        omega_norm = 2 * np.pi * freqs_norm
+        nu = (omega_norm[1] - omega_norm[0]) * nu_samples
+
+        # get initial poles
+        poles = self._init_poles(freqs_norm, n_poles_init_real, n_poles_init_cmplx, 'lin')
+
+        logging.info('### Starting pole relocation process.\n')
+
+        # select network representation type
+        if parameter_type.lower() == 's':
+            nw_responses = self.network.s
+            fit_constant = True
+            fit_proportional = False
+        elif parameter_type.lower() == 'z':
+            nw_responses = self.network.z
+            fit_constant = True
+            fit_proportional = True
+        elif parameter_type.lower() == 'y':
+            nw_responses = self.network.y
+            fit_constant = True
+            fit_proportional = True
+        else:
+            warnings.warn('Invalid choice of matrix parameter type (S, Z, or Y); proceeding with scattering '
+                          'representation.', UserWarning, stacklevel=2)
+            nw_responses = self.network.s
+            fit_constant = True
+            fit_proportional = False
+
+        # stack frequency responses as a single vector
+        # stacking order (row-major):
+        # s11, s12, s13, ..., s21, s22, s23, ...
+        freq_responses = []
+        for i in range(self.network.nports):
+            for j in range(self.network.nports):
+                freq_responses.append(nw_responses[:, i, j])
+        freq_responses = np.array(freq_responses)
+
+        # responses will be weighted according to their norm;
+        # alternative: equal weights with weight_response = 1.0
+        # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
+        weights_responses = np.linalg.norm(freq_responses, axis=1)
+        # weights_responses = np.ones(self.network.nports ** 2)
+        # weights_responses = 10 / np.exp(np.mean(np.log(np.abs(freq_responses)), axis=1))
+
+        # INITIAL POLE RELOCATION FOR i_start ITERATIONS
+        for _ in range(iters_start):
+            poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
+                poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+
+            self.d_res_history.append(d_res)
+
+            logging.info(f'Condition number of coefficient matrix is {int(cond)}')
+            self.history_cond_A.append(cond)
+
+            self.history_rank_deficiency.append(rank_deficiency)
+            logging.info(f'Rank deficiency is {rank_deficiency}.')
+
+            new_max_singular = np.amax(singular_vals)
+            delta_max = np.abs(1 - new_max_singular / max_singular)
+            self.delta_max_history.append(delta_max)
+            logging.info(f'Max. relative change in residues = {delta_max}\n')
+            max_singular = new_max_singular
+
+        # RESIDUE FITTING FOR ERROR COMPUTATION
+        residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
+        delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
+                                weights_responses)
+        error_peak = np.max(delta)
+        error_peak_history.append(error_peak)
+
+        model_order = self.get_model_order(poles)
+        model_order_history.append(model_order)
+
+        delta_eps = 10 * alpha
+
+        # POLE SKIMMING AND ADDING LOOP
+        while error_peak > target_error and model_order < model_order_max and delta_eps > alpha:
+
+            # SKIMMING OF SPURIOUS POLES
+            spurious = self.get_spurious(poles, residues, gamma=gamma)
+            n_skim = np.sum(spurious)
+            poles = poles[~spurious]
+
+            # REPLACING SPURIOUS POLE AND ADDING NEW POLES
+            idx_freqs_start, idx_freqs_stop, idx_freqs_max, delta_mean_bands = self._find_error_bands(freqs_norm, delta)
+
+            n_bands = len(idx_freqs_max)
+            if n_bands < n_skim:
+                n_add = n_bands
+            elif n_bands < n_skim + n_poles_add:
+                n_add = n_bands
+            else:
+                n_add = n_skim + n_poles_add
+
+            for i in range(n_add):
+                omega_add = omega_norm[idx_freqs_max[i]]
+                pole_add = (-0.01 + 1j) * omega_add
+
+                # compute distance to neighbouring poles
+                abs_poles_existing = np.abs(poles) - pole_add.imag  # (equation 16)
+                #abs_poles_existing = np.abs(poles - pole_add)   # (equation 17)
+
+                # avoid forbidden bands (too close to neighbour)
+                if np.min(abs_poles_existing) < nu or pole_add.imag < nu:
+                    # decide shift direction (towards higher or lower frequencies)
+                    if idx_freqs_max[i] > 0:
+                        delta_below = delta[idx_freqs_max[i] - 1]
+                    else:
+                        delta_below = 0
+                    if idx_freqs_max[i] < len(omega_norm) - 1:
+                        delta_above = delta[idx_freqs_max[i] + 1]
+                    else:
+                        delta_above = 0
+
+                    if delta_above > delta_below:
+                        # shift to higher frequencies
+                        pole_add += 1j * nu
+                    else:
+                        # shift to lower frequencies
+                        pole_add -= 1j * nu
+
+                poles = np.append(poles, [pole_add])
+
+            # INTERMEDIATE POLE RELOCATION FOR i_inter ITERATIONS
+            for _ in range(iters_inter):
+                poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
+                    poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+
+                self.d_res_history.append(d_res)
+
+                logging.info(f'Condition number of coefficient matrix is {int(cond)}')
+                self.history_cond_A.append(cond)
+
+                self.history_rank_deficiency.append(rank_deficiency)
+                logging.info(f'Rank deficiency is {rank_deficiency}.')
+
+                new_max_singular = np.amax(singular_vals)
+                delta_max = np.abs(1 - new_max_singular / max_singular)
+                self.delta_max_history.append(delta_max)
+                logging.info(f'Max. relative change in residues = {delta_max}\n')
+                max_singular = new_max_singular
+
+            # RESIDUE FITTING FOR ERROR COMPUTATION
+            residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
+                poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
+            delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
+                                    weights_responses)
+            error_peak_history.append(np.max(delta))
+
+            m = 3
+            if len(error_peak_history) > m:
+                delta_eps = np.mean(np.abs(np.diff(error_peak_history[-1-m:-1])))
+            else:
+                delta_eps = 1
+
+            model_order = self.get_model_order(poles)
+            model_order_history.append(model_order)
+
+        # SKIMMING OF SPURIOUS POLES
+        spurious = self.get_spurious(poles, residues, gamma=gamma)
+        poles = poles[~spurious]
+
+        # FINAL POLE RELOCATION FOR i_final ITERATIONS
+        for _ in range(iters_final):
+            poles, d_res, cond, rank_deficiency, residuals, singular_vals = self._pole_relocation(
+                poles, freqs_norm, freq_responses, weights_responses, fit_constant, fit_proportional)
+
+            self.d_res_history.append(d_res)
+
+            logging.info(f'Condition number of coefficient matrix is {int(cond)}')
+            self.history_cond_A.append(cond)
+
+            self.history_rank_deficiency.append(rank_deficiency)
+            logging.info(f'Rank deficiency is {rank_deficiency}.')
+
+            new_max_singular = np.amax(singular_vals)
+            delta_max = np.abs(1 - new_max_singular / max_singular)
+            self.delta_max_history.append(delta_max)
+            logging.info(f'Max. relative change in residues = {delta_max}\n')
+            max_singular = new_max_singular
+
+        # FINAL RESIDUE FITTING
+        residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
+
+        # save poles, residues, d, e in actual frequencies (un-normalized)
+        self.poles = poles * norm
+        self.residues = np.array(residues) * norm
+        self.constant_coeff = np.array(constant_coeff)
+        self.proportional_coeff = np.array(proportional_coeff) / norm
+
+        timer_stop = timer()
+        self.wall_clock_time = timer_stop - timer_start
+
+    @staticmethod
+    def _init_poles(freqs: list, n_poles_real: int, n_poles_cmplx: int, init_pole_spacing: str):
+        # create initial poles and space them across the frequencies in the provided Touchstone file
+
+        fmin = np.amin(freqs)
+        fmax = np.amax(freqs)
+
+        # poles cannot be at f=0; hence, f_min for starting pole must be greater than 0
+        if fmin == 0.0:
+            # random choice: use 1/1000 of first non-zero frequency
+            fmin = freqs[1] / 1000
+
+        init_pole_spacing = init_pole_spacing.lower()
+        if init_pole_spacing == 'log':
+            pole_freqs_real = np.geomspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.geomspace(fmin, fmax, n_poles_cmplx)
+        elif init_pole_spacing == 'lin':
+            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
+        elif init_pole_spacing == 'custom':
+            pole_freqs_real = None
+            pole_freqs_cmplx = None
+        else:
+            warnings.warn('Invalid choice of initial pole spacing; proceeding with linear spacing.',
+                          UserWarning, stacklevel=2)
+            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
+
+        if pole_freqs_real is not None and pole_freqs_cmplx is not None:
+            # init poles array of correct length
+            poles = np.zeros(n_poles_real + n_poles_cmplx, dtype=complex)
+
+            # add real poles
+            for i, f in enumerate(pole_freqs_real):
+                omega = 2 * np.pi * f
+                poles[i] = -1 * omega
+
+            # add complex-conjugate poles (store only positive imaginary parts)
+            i_offset = len(pole_freqs_real)
+            for i, f in enumerate(pole_freqs_cmplx):
+                omega = 2 * np.pi * f
+                poles[i_offset + i] = (-0.01 + 1j) * omega
+
+            return poles
+
+        else:
+            return None
+
+    @staticmethod
+    def _pole_relocation(poles, freqs, freq_responses, weights_responses, fit_constant, fit_proportional):
+        n_responses, n_freqs = np.shape(freq_responses)
+        n_samples = n_responses * n_freqs
+        omega = 2 * np.pi * freqs
+        s = 1j * omega
+
+        # weight of extra equation to avoid trivial solution
+        weight_extra = np.linalg.norm(weights_responses[:, None] * freq_responses) / n_samples
+
+        # weights w are applied directly to the samples, which get squared during least-squares fitting; hence sqrt(w)
+        weights_responses = np.sqrt(weights_responses)
+        weight_extra = np.sqrt(weight_extra)
+
+        # count number of rows and columns in final coefficient matrix to solve for (c_res, d_res)
+        # (ratio #real/#complex poles might change during iterations)
 
         # We need two columns for complex poles and one column for real poles in A matrix.
-        # poles.imag != 0 is True(1) for complex poles, False (0) for real poles.
-        # Adding one to each element gives 2 columns for complex and 1 column for real poles.
-        n_cols = np.sum((poles.imag != 0) + 1)
+        # This number equals the model order.
+        n_cols_unused = VectorFitting.get_model_order(poles)
+
+        n_cols_used = n_cols_unused
+        n_cols_used += 1
+        idx_constant = []
+        idx_proportional = []
+        if fit_constant:
+            idx_constant = [n_cols_unused]
+            n_cols_unused += 1
+        if fit_proportional:
+            idx_proportional = [n_cols_unused]
+            n_cols_unused += 1
+
+        real_mask = poles.imag == 0
+        # list of indices in 'poles' with real values
+        idx_poles_real = np.nonzero(real_mask)[0]
+        # list of indices in 'poles' with complex values
+        idx_poles_complex = np.nonzero(~real_mask)[0]
+
+        # positions (columns) of coefficients for real and complex-conjugate terms in the rows of A determine the
+        # respective positions of the calculated residues in the results vector.
+        # to have them ordered properly for the subsequent assembly of the test matrix H for eigenvalue extraction,
+        # place real poles first, then complex-conjugate poles with their respective real and imaginary parts:
+        # [r1', r2', ..., (r3', r3''), (r4', r4''), ...]
+        n_real = len(idx_poles_real)
+        n_cmplx = len(idx_poles_complex)
+        idx_res_real = np.arange(n_real)
+        idx_res_complex_re = n_real + 2 * np.arange(n_cmplx)
+        idx_res_complex_im = idx_res_complex_re + 1
+
+        # complex coefficient matrix of shape [N_responses, N_freqs, n_cols_unused + n_cols_used]
+        # layout of each row:
+        # [pole1, pole2, ..., (constant), (proportional), pole1, pole2, ..., constant]
+        A = np.empty((n_responses, n_freqs, n_cols_unused + n_cols_used), dtype=complex)
+
+        # calculate coefficients for real and complex residues in the solution vector
+        #
+        # real pole-residue term (r = r', p = p'):
+        # fractional term is r' / (s - p')
+        # coefficient for r' is 1 / (s - p')
+        coeff_real = 1 / (s[:, None] - poles[None, idx_poles_real])
+
+        # complex-conjugate pole-residue pair (r = r' + j r'', p = p' + j p''):
+        # fractional term is r / (s - p) + conj(r) / (s - conj(p))
+        #                   = [1 / (s - p) + 1 / (s - conj(p))] * r' + [1j / (s - p) - 1j / (s - conj(p))] * r''
+        # coefficient for r' is 1 / (s - p) + 1 / (s - conj(p))
+        # coefficient for r'' is 1j / (s - p) - 1j / (s - conj(p))
+        coeff_complex_re = (1 / (s[:, None] - poles[None, idx_poles_complex]) +
+                            1 / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
+        coeff_complex_im = (1j / (s[:, None] - poles[None, idx_poles_complex]) -
+                            1j / (s[:, None] - np.conj(poles[None, idx_poles_complex])))
+
+        # part 1: first sum of rational functions (variable c)
+        A[:, :, idx_res_real] = coeff_real
+        A[:, :, idx_res_complex_re] = coeff_complex_re
+        A[:, :, idx_res_complex_im] = coeff_complex_im
+
+        # part 2: constant (variable d) and proportional term (variable e)
+        A[:, :, idx_constant] = 1
+        A[:, :, idx_proportional] = s[:, None]
+
+        # part 3: second sum of rational functions multiplied with frequency response (variable c_res)
+        A[:, :, n_cols_unused + idx_res_real] = -1 * freq_responses[:, :, None] * coeff_real
+        A[:, :, n_cols_unused + idx_res_complex_re] = -1 * freq_responses[:, :, None] * coeff_complex_re
+        A[:, :, n_cols_unused + idx_res_complex_im] = -1 * freq_responses[:, :, None] * coeff_complex_im
+
+        # part 4: constant (variable d_res)
+        A[:, :, -1] = -1 * freq_responses
+
+        # calculation of matrix sizes after QR decomposition:
+        # stacked coefficient matrix (A.real, A.imag) has shape (L, M, N)
+        # with
+        # L = n_responses = n_ports ** 2
+        # M = 2 * n_freqs (because of hstack with 2x n_freqs)
+        # N = n_cols_unused + n_cols_used
+        # then
+        # R has shape (L, K, N) with K = min(M, N)
+        dim_k = min(2 * n_freqs, n_cols_unused + n_cols_used)
+
+        # QR decomposition
+        # R = np.linalg.qr(np.hstack((A.real, A.imag)), 'r')
+
+        # direct QR of stacked matrices for linalg.qr() only works with numpy>=1.22.0
+        # workaround for old numpy:
+        R = np.empty((n_responses, dim_k, n_cols_unused + n_cols_used))
+        A_ri = np.hstack((A.real, A.imag))
+        for i in range(n_responses):
+            R[i] = np.linalg.qr(A_ri[i], mode='r')
+
+        # only R22 is required to solve for c_res and d_res
+        # R12 and R22 can have a different number of rows, depending on K
+        if dim_k == 2 * n_freqs:
+            n_rows_r12 = n_freqs
+            n_rows_r22 = n_freqs
+        else:
+            n_rows_r12 = n_cols_unused
+            n_rows_r22 = n_cols_used
+        R22 = R[:, n_rows_r12:, n_cols_unused:]
+
+        # weighting
+        R22 = weights_responses[:, None, None] * R22
+
+        # assemble compressed coefficient matrix A_fast by row-stacking individual upper triangular matrices R22
+        A_fast = np.empty((n_responses * n_rows_r22 + 1, n_cols_used))
+        A_fast[:-1, :] = R22.reshape((n_responses * n_rows_r22, n_cols_used))
+
+        # extra equation to avoid trivial solution
+        A_fast[-1, idx_res_real] = np.sum(coeff_real.real, axis=0)
+        A_fast[-1, idx_res_complex_re] = np.sum(coeff_complex_re.real, axis=0)
+        A_fast[-1, idx_res_complex_im] = np.sum(coeff_complex_im.real, axis=0)
+        A_fast[-1, -1] = n_freqs
+
+        # weighting
+        A_fast[-1, :] = weight_extra * A_fast[-1, :]
+
+        # right hand side vector (weighted)
+        b = np.zeros(n_responses * n_rows_r22 + 1)
+        b[-1] = weight_extra * n_samples
+
+        # check condition of the linear system
+        cond = np.linalg.cond(A_fast)
+        full_rank = np.min(A_fast.shape)
+
+        # solve least squares for real parts
+        x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
+
+        # rank deficiency
+        rank_deficiency = full_rank - rank
+
+        # assemble individual result vectors from single LS result x
+        c_res = x[:-1]
+        d_res = x[-1]
+
+        # check if d_res is suited for zeros calculation
+        tol_res = 1e-8
+        if np.abs(d_res) < tol_res:
+            # d_res is too small, discard solution and proceed the |d_res| = tol_res
+            logging.info(f'Replacing d_res solution as it was too small ({d_res}).')
+            d_res = tol_res * (d_res / np.abs(d_res))
+
+        # build test matrix H, which will hold the new poles as eigenvalues
+        H = np.zeros((len(c_res), len(c_res)))
+
+        poles_real = poles[np.nonzero(real_mask)]
+        poles_cplx = poles[np.nonzero(~real_mask)]
+
+        H[idx_res_real, idx_res_real] = poles_real.real
+        H[idx_res_real] -= c_res / d_res
+
+        H[idx_res_complex_re, idx_res_complex_re] = poles_cplx.real
+        H[idx_res_complex_re, idx_res_complex_im] = poles_cplx.imag
+        H[idx_res_complex_im, idx_res_complex_re] = -1 * poles_cplx.imag
+        H[idx_res_complex_im, idx_res_complex_im] = poles_cplx.real
+        H[idx_res_complex_re] -= 2 * c_res / d_res
+
+        poles_new = np.linalg.eigvals(H)
+
+        # replace poles for next iteration
+        # complex poles need to come in complex conjugate pairs; append only the positive part
+        poles = poles_new[np.nonzero(poles_new.imag >= 0)]
+
+        # flip real part of unstable poles (real part needs to be negative for stability)
+        poles.real = -1 * np.abs(poles.real)
+
+        return poles, d_res, cond, rank_deficiency, residuals, singular_vals
+
+    @staticmethod
+    def _fit_residues(poles, freqs, freq_responses, fit_constant, fit_proportional):
+        n_responses, n_freqs = np.shape(freq_responses)
+        omega = 2 * np.pi * freqs
+        s = 1j * omega
+
+        # We need two columns for complex poles and one column for real poles in A matrix.
+        # This number equals the model order.
+        n_cols = VectorFitting.get_model_order(poles)
 
         idx_constant = []
         idx_proportional = []
@@ -570,14 +953,16 @@ class VectorFitting:
         logging.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A))}')
 
         # solve least squares and obtain results as stack of real part vector and imaginary part vector
-        x, _, rank, singular_vals = np.linalg.lstsq(np.vstack((A.real, A.imag)),
+        x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((A.real, A.imag)),
                                                             np.hstack((freq_responses.real, freq_responses.imag)).T,
                                                             rcond=None)
 
-        # align poles and residues arrays to get matching pole-residue pairs
-        poles = np.concatenate((poles[idx_poles_real], poles[idx_poles_complex]))
-        residues = np.concatenate((x[idx_res_real], x[idx_res_complex_re] + 1j * x[idx_res_complex_im]), axis=0).T
+        # extract residues from solution vector and align them with poles to get matching pole-residue pairs
+        residues = np.empty((len(freq_responses), len(poles)), dtype=complex)
+        residues[:, idx_poles_real] = np.transpose(x[idx_res_real])
+        residues[:, idx_poles_complex] = np.transpose(x[idx_res_complex_re] + 1j * x[idx_res_complex_im])
 
+        # extract constant and proportional coefficient, if available
         if fit_constant:
             constant_coeff = x[idx_constant][0]
         else:
@@ -588,23 +973,66 @@ class VectorFitting:
         else:
             proportional_coeff = np.zeros(n_responses)
 
-        # save poles, residues, d, e in actual frequencies (un-normalized)
-        self.poles = poles * norm
-        self.residues = np.array(residues) * norm
-        self.constant_coeff = np.array(constant_coeff)
-        self.proportional_coeff = np.array(proportional_coeff) / norm
+        return residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals
 
-        timer_stop = timer()
-        self.wall_clock_time = timer_stop - timer_start
+    @staticmethod
+    def _get_delta(poles, residues, constant_coeff, proportional_coeff, freqs, freq_responses, weights_responses):
+        s = 2j * np.pi * freqs
+        model = proportional_coeff[:, None] * s + constant_coeff[:, None]
+        for i, pole in enumerate(poles):
+            if np.imag(pole) == 0.0:
+                # real pole
+                model += residues[:, i, None] / (s - pole)
+            else:
+                # complex conjugate pole
+                model += (residues[:, i, None] / (s - pole) +
+                          np.conjugate(residues[:, i, None]) / (s - np.conjugate(pole)))
 
-        logging.info(f'\n### Vector fitting finished in {self.wall_clock_time} seconds.\n')
+        # compute weighted error and return global maximum at each frequency across all individual responses
+        delta = np.abs(model - freq_responses) * weights_responses[:, None]
 
-        # raise a warning if the fitted Network is passive but the fit is not (only without proportional_coeff):
-        if self.network.is_passive() and not fit_proportional:
-            if not self.is_passive():
-                warnings.warn('The fitted network is passive, but the vector fit is not passive. Consider running '
-                              '`passivity_enforce()` to enforce passivity before using this model.',
-                              UserWarning, stacklevel=2)
+        return np.max(delta, axis=0)
+
+    @staticmethod
+    def _find_error_bands(freqs, delta):
+        # compute error bands (maximal fit deviation)
+        delta_mean = np.mean(delta)
+        error = delta - delta_mean
+
+        # find limits of error bands
+        idx_limits = np.nonzero(np.diff(error > 0))[0]
+        idx_limits_filtered = idx_limits[np.diff(idx_limits, prepend=0) > 2]
+
+        freqs_bands = np.split(freqs, idx_limits_filtered)
+        error_bands = np.split(error, idx_limits_filtered)
+        n_bands = len(freqs_bands)
+
+        idx_freqs_start = []
+        idx_freqs_stop = []
+        idx_freqs_max = []
+        delta_mean_bands = []
+        for i_band in range(n_bands):
+            band_error_mean = np.mean(error_bands[i_band])
+            if band_error_mean > 0:
+                # band with excess error;
+                # find frequency index of error maximum inside this band
+                i_band_max_error = np.argmax(error_bands[i_band])
+                i_start = np.nonzero(freqs == freqs_bands[i_band][0])[0][0]
+                i_stop = np.nonzero(freqs == freqs_bands[i_band][-1])[0][0]
+                i_max = np.nonzero(freqs == freqs_bands[i_band][i_band_max_error])[0][0]
+                idx_freqs_start.append(i_start)
+                idx_freqs_stop.append(i_stop)
+                idx_freqs_max.append(i_max)
+                delta_mean_bands.append(np.mean(delta[i_start:i_stop]))
+
+        idx_freqs_start = np.array(idx_freqs_start)
+        idx_freqs_stop = np.array(idx_freqs_stop)
+        idx_freqs_max = np.array(idx_freqs_max)
+        delta_mean_bands = np.array(delta_mean_bands)
+
+        i_sort = np.flip(np.argsort(delta_mean_bands))
+
+        return idx_freqs_start[i_sort], idx_freqs_stop[i_sort], idx_freqs_max[i_sort], delta_mean_bands[i_sort]
 
     def get_rms_error(self, i=-1, j=-1, parameter_type: str = 's'):
         r"""
@@ -1069,10 +1497,11 @@ class VectorFitting:
         # deal with unbounded violation interval (f_viol_max == np.inf)
         if np.isinf(f_viol_max):
             f_viol_max = 1.5 * violation_bands[-1, 0]
-            warnings.warn('Passivity enforcement: The passivity violations of this model are unbounded. Passivity '
-                          'enforcement might still work, but consider re-fitting with a lower number of poles and/or '
-                          'without the constants (`fit_constant=False`) if the results are not satisfactory.',
-                          UserWarning, stacklevel=2)
+            warnings.warn(
+                'Passivity enforcement: The passivity violations of this model are unbounded. '
+                'Passivity enforcement might still work, but consider re-fitting with a lower number of poles '
+                'and/or without the constants (`fit_constant=False`) if the results are not satisfactory.',
+                UserWarning, stacklevel=2)
 
         # the frequency band for the passivity evaluation is from dc to 20% above the highest relevant frequency
         if f_viol_max < f_samples_max:
@@ -1176,8 +1605,8 @@ class VectorFitting:
 
         # PASSIVATION PROCESS DONE; model is either passive or max. number of iterations have been exceeded
         if t == self.max_iterations:
-            warnings.warn('Passivity enforcement: Aborting after the max. number of iterations has been exceeded.',
-                          RuntimeWarning, stacklevel=2)
+            warnings.warn('Passivity enforcement: Aborting after the max. number of iterations has been '
+                          'exceeded.', RuntimeWarning, stacklevel=2)
 
         # save/update model parameters (perturbed residues)
         self.history_max_sigma = np.array(self.history_max_sigma)
@@ -1205,8 +1634,8 @@ class VectorFitting:
         violation_bands = self.passivity_test()
         if len(violation_bands) > 0:
             warnings.warn('Passivity enforcement was not successful.\nModel is still non-passive in these frequency '
-                          'bands: {}.\nTry running this routine again with a larger number of samples (parameter '
-                          '`n_samples`).'.format(violation_bands), RuntimeWarning, stacklevel=2)
+                          f'bands: {violation_bands}.\nTry running this routine again with a larger number of samples '
+                          '(parameter `n_samples`).', RuntimeWarning, stacklevel=2)
 
     def write_npz(self, path: str) -> None:
         """
@@ -1372,17 +1801,20 @@ class VectorFitting:
         """
 
         if self.poles is None:
-            warnings.warn('Returning a zero-vector; Poles have not been fitted.', RuntimeWarning, stacklevel=2)
+            warnings.warn('Returning a zero-vector; Poles have not been fitted.',
+                          RuntimeWarning, stacklevel=2)
             return np.zeros_like(freqs)
         if self.residues is None:
-            warnings.warn('Returning a zero-vector; Residues have not been fitted.', RuntimeWarning, stacklevel=2)
+            warnings.warn('Returning a zero-vector; Residues have not been fitted.',
+                          RuntimeWarning, stacklevel=2)
             return np.zeros_like(freqs)
         if self.proportional_coeff is None:
-            warnings.warn('Returning a zero-vector; Proportional coefficients have not been fitted.', RuntimeWarning,
-                          stacklevel=2)
+            warnings.warn('Returning a zero-vector; Proportional coefficients have not been fitted.',
+                          RuntimeWarning, stacklevel=2)
             return np.zeros_like(freqs)
         if self.constant_coeff is None:
-            warnings.warn('Returning a zero-vector; Constants have not been fitted.', RuntimeWarning, stacklevel=2)
+            warnings.warn('Returning a zero-vector; Constants have not been fitted.',
+                          RuntimeWarning, stacklevel=2)
             return np.zeros_like(freqs)
         if freqs is None:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
@@ -1909,10 +2341,10 @@ class VectorFitting:
                     # add CCCS to generate the scattered current I_nj at port n
                     # control current is measured by the dummy voltage source at the transfer network Y_nj
                     # the scattered current is injected into the port (source positive connected to ground)
-                    f.write('F{}{} 0 a{} V{}{} {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1,
-                                                            formatter(1 / np.real(self.network.z0[0, n]))))
-                    f.write('F{}{}_inv a{} 0 V{}{}_inv {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1,
-                                                                    formatter(1 / np.real(self.network.z0[0, n]))))
+                    f.write(f'F{n + 1}{j + 1} 0 a{n + 1} V{n + 1}{j + 1}'
+                            f'{formatter(1 / np.real(self.network.z0[0, n]))}\n')
+                    f.write(f'F{n + 1}{j + 1}_inv a{n + 1} 0 V{n + 1}{j + 1}_inv '
+                            f'{formatter(1 / np.real(self.network.z0[0, n]))}\n')
 
                     # add dummy voltage source (V=0) in series with Y_nj to measure current through transfer admittance
                     f.write(f'V{n + 1}{j + 1} nt{j + 1} nt{n + 1}{j + 1} 0\n')
@@ -1968,12 +2400,8 @@ class VectorFitting:
                                 m = -1
                             else:
                                 m = 1
-                            f.write(node + ' 0 rcl_vccs_admittance res={} cap={} ind={} gm={} mult={}\n'.format(
-                                formatter(r),
-                                formatter(c),
-                                formatter(l),
-                                formatter(np.abs(gm_add)),
-                                int(m)))
+                            f.write(node + f' 0 rcl_vccs_admittance res={formatter(r)} cap={formatter(c)} '
+                                           f'ind={formatter(l)} gm={formatter(np.abs(gm_add))} mult={int(m)}\n')
 
             f.write('.ENDS s_equivalent\n')
 
