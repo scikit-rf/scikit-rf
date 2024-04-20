@@ -204,6 +204,10 @@ class VectorFitting:
         a similar number of complex conjugate poles is required. Be careful not to use too many poles, as excessive
         poles will not only increase the computation workload during the fitting and the subsequent use of the model,
         but they can also introduce unwanted resonances at frequencies well outside the fit interval.
+
+        See Also
+        --------
+        auto_fit : Automatic vector fitting routine with pole adding and skimming.
         """
 
         timer_start = timer()
@@ -294,8 +298,8 @@ class VectorFitting:
             if delta_max < self.max_tol:
                 if converged:
                     # is really converged, finish
-                    logging.info('Pole relocation process converged after {} iterations.'.format(
-                        self.max_iterations - iterations + 1))
+                    logging.info(f'Pole relocation process converged after {self.max_iterations - iterations + 1} '
+                                  'iterations.')
                     stop = True
                 else:
                     # might be converged, but do one last run to be sure
@@ -374,7 +378,7 @@ class VectorFitting:
         Automatic fitting routine implementing the "vector fitting with adding and skimming" algorithm as proposed in
         [#Grivet-Talocia]_. This algorithm is able to provide high quality macromodels with automatic model order
         optimization, while improving both the rate of convergence and the fit quality in case of noisy data.
-        The resulting model paramters will be stored in the class variables :attr:`poles`, :attr:`residues`,
+        The resulting model parameters will be stored in the class variables :attr:`poles`, :attr:`residues`,
         :attr:`proportional_coeff` and :attr:`constant_coeff`.
 
         Parameters
@@ -410,16 +414,16 @@ class VectorFitting:
             the final error, and the final model order (number of poles used in the model).
 
         alpha: float, optional
-            Threshold for the error decay to stop the refinement loop in case of error stall. This parameter provides
-            another stopping criterion for cases where the model already has enough poles but the target error still
-            cannot be reached because of excess noise (target error too small for noise level in the data).
+            Threshold for the error decay to stop the refinement loop in case of error stagnation. This parameter
+            provides another stopping criterion for cases where the model already has enough poles but the target error
+            still cannot be reached because of excess noise (target error too small for noise level in the data).
 
         gamma: float, optional
             Threshold for the detection of spurious poles.
 
         nu_samples: float, optional
-            Required and enforced (relative) spacing between relocated or added poles, specified in frequency samples.
-            The number can be a float, it does not have to be an integer.
+            Required and enforced (relative) spacing in termins of frequency samples between existing poles and
+            relocated or added poles. The number can be a float, it does not have to be an integer.
 
         parameter_type: str, optional
             Representation type of the frequency responses to be fitted. Either *scattering* (`'s'` or `'S'`),
@@ -431,6 +435,10 @@ class VectorFitting:
         -------
         None
             No return value.
+
+        See Also
+        --------
+        vector_fit : Regular vector fitting routine.
 
         References
         ----------
@@ -1634,8 +1642,8 @@ class VectorFitting:
         violation_bands = self.passivity_test()
         if len(violation_bands) > 0:
             warnings.warn('Passivity enforcement was not successful.\nModel is still non-passive in these frequency '
-                          'bands: {}.\nTry running this routine again with a larger number of samples (parameter '
-                          '`n_samples`).'.format(violation_bands), RuntimeWarning, stacklevel=2)
+                          f'bands: {violation_bands}.\nTry running this routine again with a larger number of samples '
+                          '(parameter `n_samples`).', RuntimeWarning, stacklevel=2)
 
     def write_npz(self, path: str) -> None:
         """
@@ -2341,10 +2349,10 @@ class VectorFitting:
                     # add CCCS to generate the scattered current I_nj at port n
                     # control current is measured by the dummy voltage source at the transfer network Y_nj
                     # the scattered current is injected into the port (source positive connected to ground)
-                    f.write('F{}{} 0 a{} V{}{} {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1,
-                                                            formatter(1 / np.real(self.network.z0[0, n]))))
-                    f.write('F{}{}_inv a{} 0 V{}{}_inv {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1,
-                                                                    formatter(1 / np.real(self.network.z0[0, n]))))
+                    f.write(f'F{n + 1}{j + 1} 0 a{n + 1} V{n + 1}{j + 1}'
+                            f'{formatter(1 / np.real(self.network.z0[0, n]))}\n')
+                    f.write(f'F{n + 1}{j + 1}_inv a{n + 1} 0 V{n + 1}{j + 1}_inv '
+                            f'{formatter(1 / np.real(self.network.z0[0, n]))}\n')
 
                     # add dummy voltage source (V=0) in series with Y_nj to measure current through transfer admittance
                     f.write(f'V{n + 1}{j + 1} nt{j + 1} nt{n + 1}{j + 1} 0\n')
@@ -2400,12 +2408,8 @@ class VectorFitting:
                                 m = -1
                             else:
                                 m = 1
-                            f.write(node + ' 0 rcl_vccs_admittance res={} cap={} ind={} gm={} mult={}\n'.format(
-                                formatter(r),
-                                formatter(c),
-                                formatter(l),
-                                formatter(np.abs(gm_add)),
-                                int(m)))
+                            f.write(node + f' 0 rcl_vccs_admittance res={formatter(r)} cap={formatter(c)} '
+                                           f'ind={formatter(l)} gm={formatter(np.abs(gm_add))} mult={int(m)}\n')
 
             f.write('.ENDS s_equivalent\n')
 
