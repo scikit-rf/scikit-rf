@@ -50,7 +50,7 @@ from io import BytesIO
 from numbers import Number
 from typing import Any, Mapping, TextIO
 
-import numpy as npy
+import numpy as np
 from scipy.interpolate import interp1d
 
 from . import mathFunctions as mf
@@ -157,7 +157,7 @@ class NetworkSet:
             raise(ValueError('All elements in list of Networks must have same number of ports'))
 
         # is all frequency information the same?
-        if not npy.all([(ntwk_set[0].frequency == ntwk.frequency) for ntwk in ntwk_set]):
+        if not np.all([(ntwk_set[0].frequency == ntwk.frequency) for ntwk in ntwk_set]):
             raise(ValueError('All elements in list of Networks must have same frequency information'))
 
         ## initialization
@@ -193,11 +193,11 @@ class NetworkSet:
             ['passivity','s']
 
         # dynamically generate properties. this is slick.
-        max, min = npy.max, npy.min
+        max, min = np.max, np.min
         max.__name__ = 'max'
         min.__name__ = 'min'
         for network_property_name in network_property_list:
-            for func in [npy.mean, npy.std, max, min]:
+            for func in [np.mean, np.std, max, min]:
                 self.__add_a_func_on_property(func, network_property_name)
 
             if 'db' not in network_property_name:# != 's_db' and network_property_name != 's':
@@ -649,7 +649,7 @@ class NetworkSet:
             number of samples to return (default is 1)
 
         """
-        idx = npy.random.default_rng().randint(0,len(self), n)
+        idx = np.random.default_rng().randint(0,len(self), n)
         out = [self.ntwk_set[k] for k in idx]
 
         if n ==1:
@@ -684,7 +684,7 @@ class NetworkSet:
         """
         return NetworkSet([k for k in self if s in k.name])
 
-    def scalar_mat(self, param: str = 's') -> npy.ndarray:
+    def scalar_mat(self, param: str = 's') -> np.ndarray:
         """
         Return a scalar ndarray representing `param` data vs freq and element idx.
 
@@ -699,25 +699,25 @@ class NetworkSet:
 
         Return
         ------
-        x : :class: npy.ndarray
+        x : :class: np.ndarray
 
         """
         ntwk = self[0]
         nfreq = len(ntwk)
         # x will have the axes (frequency, observations, ports)
-        x = npy.array([[mf.flatten_c_mat(getattr(k, param)[f]) \
+        x = np.array([[mf.flatten_c_mat(getattr(k, param)[f]) \
             for k in self] for f in range(nfreq)])
 
         return x
 
-    def cov(self, **kw) -> npy.ndarray:
+    def cov(self, **kw) -> np.ndarray:
         """
         Covariance matrix.
 
         shape of output  will be  (nfreq, 2*nports**2, 2*nports**2)
         """
         smat=self.scalar_mat(**kw)
-        return npy.array([npy.cov(k.T) for k in smat])
+        return np.array([np.cov(k.T) for k in smat])
 
     @property
     def mean_s_db(self) -> Network:
@@ -803,12 +803,12 @@ class NetworkSet:
             return stats.norm(loc=0, scale=x).rvs(1)[0]
         ugimme_norm = frompyfunc(gimme_norm,1,1)
 
-        s_deg_rv = npy.array(map(ugimme_norm, self.std_s_deg.s_re), dtype=float)
-        s_mag_rv = npy.array(map(ugimme_norm, self.std_s_mag.s_re), dtype=float)
+        s_deg_rv = np.array(map(ugimme_norm, self.std_s_deg.s_re), dtype=float)
+        s_mag_rv = np.array(map(ugimme_norm, self.std_s_mag.s_re), dtype=float)
 
         mag = ntwk.s_mag + s_mag_rv
         deg = ntwk.s_deg + s_deg_rv
-        ntwk.s = mag * npy.exp(1j*npy.pi/180*deg)
+        ntwk.s = mag * np.exp(1j*np.pi/180*deg)
         return ntwk
 
     def set_wise_function(self, func, a_property: str, *args, **kwargs):
@@ -1044,7 +1044,7 @@ class NetworkSet:
         """
         ntw = self[0].copy()
         # Interpolating the scattering parameters
-        s = npy.array([self[idx].s for idx in range(len(self))])
+        s = np.array([self[idx].s for idx in range(len(self))])
         f = interp1d(ntw_param, s, axis=0, kind=interp_kind)
         ntw.s = f(x)
 
@@ -1399,7 +1399,7 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
     >>> func_on_networks(ntwk_list, mean)
 
     """
-    data_matrix = npy.array([getattr(ntwk, attribute) for ntwk in ntwk_list])
+    data_matrix = np.array([getattr(ntwk, attribute) for ntwk in ntwk_list])
 
     new_ntwk = ntwk_list[0].copy()
     new_ntwk.s = func(data_matrix,axis=0,**kwargs)
@@ -1451,13 +1451,13 @@ def getset(ntwk_dict, s, *args, **kwargs):
 
 
 def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=21, TNWformat=True):
-    r = npy.linspace(0.1,0.9,r_lin)
-    a = npy.linspace(0,2*npy.pi,phi_lin)
-    r_, a_ = npy.meshgrid(r,a)
-    c_ = r_ *npy.exp(1j * a_)
+    r = np.linspace(0.1,0.9,r_lin)
+    a = np.linspace(0,2*np.pi,phi_lin)
+    r_, a_ = np.meshgrid(r,a)
+    c_ = r_ *np.exp(1j * a_)
     g= c_.flatten()
-    x =  npy.real(g)
-    y =  npy.imag(g)
+    x =  np.real(g)
+    y =  np.imag(g)
 
     if TNWformat :
         TNL = dict()

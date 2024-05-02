@@ -258,7 +258,7 @@ class CPW(Media):
 
         Returns
         -------
-        z0_characteristic : npy.ndarray
+        z0_characteristic : np.ndarray
             Characteristic Impedance in units of ohms
         """
         return self._z_characteristic
