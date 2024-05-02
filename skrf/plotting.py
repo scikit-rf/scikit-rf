@@ -73,7 +73,7 @@ with warnings.catch_warnings():
     ticker = lazy.load("matplotlib.ticker", error_on_import=True)
     dates = lazy.load("matplotlib.dates", error_on_import=True)
 
-import numpy as npy
+import numpy as np
 
 from . import mathFunctions as mf
 from .constants import NumberLike
@@ -208,11 +208,11 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     #TODO: fix this
     # these could be dynamically coded in the future, but work good'nuff for now
     if not draw_labels:
-        rLightList = npy.logspace(3,-5,9,base=.5)
-        xLightList = npy.hstack([npy.logspace(2,-5,8,base=.5), -1*npy.logspace(2,-5,8,base=.5)])
+        rLightList = np.logspace(3,-5,9,base=.5)
+        xLightList = np.hstack([np.logspace(2,-5,8,base=.5), -1*np.logspace(2,-5,8,base=.5)])
     else:
-        rLightList = npy.array( [ 0.2, 0.5, 1.0, 2.0, 5.0 ] )
-        xLightList = npy.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
+        rLightList = np.array( [ 0.2, 0.5, 1.0, 2.0, 5.0 ] )
+        xLightList = np.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
 
     # vswr lines
     if isinstance(draw_vswr, (tuple,list)):
@@ -226,7 +226,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     # cheap way to make a ok-looking smith chart at larger than 1 radii
     if smithR > 1:
         rMax = (1.+smithR)/(1.-smithR)
-        rLightList = npy.hstack([ npy.linspace(0,rMax,11)  , rLightList ])
+        rLightList = np.hstack([ np.linspace(0,rMax,11)  , rLightList ])
 
     if chart_type.startswith('y'):
         y_flip_sign = -1
@@ -282,7 +282,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     ax.axvline(1*y_flip_sign, color='k', clip_path=clipc)
     ax.grid(0)
     # Set axis limits by plotting white points so zooming works properly
-    ax.plot(smithR*npy.array([-1.1, 1.1]), smithR*npy.array([-1.1, 1.1]), 'w.', markersize = 0)
+    ax.plot(smithR*np.array([-1.1, 1.1]), smithR*np.array([-1.1, 1.1]), 'w.', markersize = 0)
     ax.axis('image') # Combination of 'equal' and 'tight'
 
 
@@ -303,7 +303,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
         # Make annotations only if the radius is 1
         if smithR == 1:
             #Make room for annotation
-            ax.plot(npy.array([-1.25, 1.25]), npy.array([-1.1, 1.1]), 'w.', markersize = 0)
+            ax.plot(np.array([-1.25, 1.25]), np.array([-1.1, 1.1]), 'w.', markersize = 0)
             ax.axis('image')
 
             #Annotate real part
@@ -543,8 +543,8 @@ def plot_complex_rectangular(z: NumberLike,
     plot_smith : plot complex data on smith chart
 
     """
-    x = npy.real(z)
-    y = npy.imag(z)
+    x = np.real(z)
+    y = np.imag(z)
     plot_rectangular(x=x, y=y, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, **kwargs)
@@ -582,8 +582,8 @@ def plot_complex_polar(z: NumberLike,
     plot_complex_polar : plot complex data on polar plane
     plot_smith : plot complex data on smith chart
     """
-    theta = npy.angle(z)
-    r = npy.abs(z)
+    theta = np.angle(z)
+    r = np.abs(z)
     plot_polar(theta=theta, r=r, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis_equal=axis_equal,
         ax=ax, **kwargs)
@@ -649,7 +649,7 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, **kwargs)
 
-    ax.axis(smith_r*npy.array([-1.1, 1.1, -1.1, 1.1]))
+    ax.axis(smith_r*np.array([-1.1, 1.1, -1.1, 1.1]))
     if plt.isinteractive():
         plt.draw()
 
@@ -697,7 +697,7 @@ def subplot_params(ntwk: Network, param: str = 's', proj: str = 'db',
                                       **subplot_kw)
     else:
         f = plt.gcf()
-        axs = npy.array(f.get_axes())
+        axs = np.array(f.get_axes())
 
     for ports,ax in zip(ntwk.port_tuples, axs.flatten()):
         plot_func = ntwk.__getattribute__(f'plot_{param}_{proj}')
@@ -860,7 +860,7 @@ def scrape_legend(n: int | None = None,
     if n>len(handles):
         raise ValueError('number of entries is too large')
 
-    k_list = [int(k) for k in npy.linspace(0,len(handles)-1,n)]
+    k_list = [int(k) for k in np.linspace(0,len(handles)-1,n)]
     ax.legend([handles[k] for k in k_list], [labels[k] for k in k_list])
 
 
@@ -978,7 +978,7 @@ def plot_reciprocity(netw: Network, db=False, *args, **kwargs):
                 if 'label' not in kwargs.keys():
                     kwargs['label'] = f"ports {netw._fmt_trace_name(m, n)}"
                 y = netw.reciprocity[:, m, n].flatten()
-                y = mf.complex_2_db(y) if db else npy.abs(y)
+                y = mf.complex_2_db(y) if db else np.abs(y)
                 netw.frequency.plot(y, *args, **kwargs)
 
     plt.legend()
@@ -1108,7 +1108,7 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
     #draw legend
     if show_legend:
         ax.legend()
-    ax.axis(npy.array([-1.1,1.1,-1.1,1.1])*r)
+    ax.axis(np.array([-1.1,1.1,-1.1,1.1])*r)
 
     if label_axes:
         ax.set_xlabel('Real')
@@ -1341,7 +1341,7 @@ def plot_uncertainty_bounds_component(
                 ntwk_mean.s = ppf(ntwk_mean.s)
                 upper_bound = ppf(upper_bound)
                 lower_bound = ppf(lower_bound)
-                lower_bound[npy.isnan(lower_bound)] = min(lower_bound)
+                lower_bound[np.isnan(lower_bound)] = min(lower_bound)
                 if ppf in [mf.magnitude_2_db, mf.mag_2_db]:  # fix of wrong ylabels due to usage of ppf for *_db plots
                     if attribute == 's_mag':
                         plot_attribute = 's_db'
@@ -1444,7 +1444,7 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
         ntwk_mean.s = ppf(ntwk_mean.s)
         upper_bound = ppf(upper_bound)
         lower_bound = ppf(lower_bound)
-        lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+        lower_bound[np.isnan(lower_bound)]=min(lower_bound)
         if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
             if attribute == 's_mag':
                 attribute = 's_db'
@@ -1599,7 +1599,7 @@ def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag'
         passed to :func:`~pylab.imshow`
     """
 
-    mat = npy.array([self[k].__getattribute__(component)[:, m, n] \
+    mat = np.array([self[k].__getattribute__(component)[:, m, n] \
                      for k in range(len(self))])
 
     # if vmax is None:
@@ -1685,24 +1685,24 @@ def plot_contour(freq: Frequency,
     """
     from . import Network
 
-    ri =  npy.linspace(0,1, 50)
-    ti =  npy.linspace(0,2*npy.pi, 150)
-    Ri , Ti = npy.meshgrid(ri, ti)
-    xi = npy.linspace(-1,1, 50)
-    Xi, Yi = npy.meshgrid(xi, xi)
+    ri =  np.linspace(0,1, 50)
+    ti =  np.linspace(0,2*np.pi, 150)
+    Ri , Ti = np.meshgrid(ri, ti)
+    xi = np.linspace(-1,1, 50)
+    Xi, Yi = np.meshgrid(xi, xi)
     triang = tri.Triangulation(x, y)
     interpolator = tri.LinearTriInterpolator(triang, z)
     Zi = interpolator(Xi, Yi)
     if min0max1 == 1 :
-        VALopt = npy.max(z)
+        VALopt = np.max(z)
     else :
-        VALopt = npy.min(z)
+        VALopt = np.min(z)
     GAMopt = Network(f=[freq], s=x[z==VALopt] +1j*y[z==VALopt])
 
     if graph :
         fig, ax = plt.subplots(**kwargs)
-        an = npy.linspace(0, 2*npy.pi, 50)
-        cs, sn = npy.cos(an), npy.sin(an)
+        an = np.linspace(0, 2*np.pi, 50)
+        cs, sn = np.cos(an), np.sin(an)
         plt.plot(cs, sn, color='k', lw=0.25)
         plt.plot(cs, sn*0, color='g', lw=0.25)
         plt.plot((1+cs)/2, sn/2, color='k', lw=0.25)

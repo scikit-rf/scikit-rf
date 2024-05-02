@@ -2,7 +2,7 @@ import os
 import unittest
 from pathlib import Path
 
-import numpy as npy
+import numpy as np
 import pytest
 
 from skrf.io.touchstone import Touchstone
@@ -27,8 +27,8 @@ class TouchstoneTestCase(unittest.TestCase):
         touch = Touchstone(filename)
         f, s = touch.get_sparameter_arrays()
         z0 = complex(touch.resistance)
-        f_true = npy.array([1.00000000e+09, 1.10000000e+09])
-        s_true = npy.array([[[1.+2.j, 5.+6.j], [3.+4.j, 7.+8.j]],
+        f_true = np.array([1.00000000e+09, 1.10000000e+09])
+        s_true = np.array([[[1.+2.j, 5.+6.j], [3.+4.j, 7.+8.j]],
                             [[9.+10.j, 13.+14.j], [11.+12.j, 15.+16.j]]])
         z0_true = 50+50j
 
@@ -71,8 +71,8 @@ class TouchstoneTestCase(unittest.TestCase):
             touch = Touchstone(fid)
         f, s = touch.get_sparameter_arrays()
         z0 = complex(touch.resistance)
-        f_true = npy.array([1.00000000e+09, 1.10000000e+09])
-        s_true = npy.array([[[1.+2.j, 5.+6.j], [3.+4.j, 7.+8.j]],
+        f_true = np.array([1.00000000e+09, 1.10000000e+09])
+        s_true = np.array([[[1.+2.j, 5.+6.j], [3.+4.j, 7.+8.j]],
                             [[9.+10.j, 13.+14.j], [11.+12.j, 15.+16.j]]])
         z0_true = 50+50j
 
@@ -109,31 +109,31 @@ class TouchstoneTestCase(unittest.TestCase):
 
         # test data contents
         expected_sp_ri = {
-            'frequency': npy.array([1.0e+09, 1.1e+09]),
-            'S11R': npy.array([1., 9.]),
-            'S11I': npy.array([ 2., 10.]),
-            'S21R': npy.array([ 3., 11.]),
-            'S21I': npy.array([ 4., 12.]),
-            'S12R': npy.array([ 5., 13.]),
-            'S12I': npy.array([ 6., 14.]),
-            'S22R': npy.array([ 7., 15.]),
-            'S22I': npy.array([ 8., 16.]),
+            'frequency': np.array([1.0e+09, 1.1e+09]),
+            'S11R': np.array([1., 9.]),
+            'S11I': np.array([ 2., 10.]),
+            'S21R': np.array([ 3., 11.]),
+            'S21I': np.array([ 4., 12.]),
+            'S12R': np.array([ 5., 13.]),
+            'S12I': np.array([ 6., 14.]),
+            'S22R': np.array([ 7., 15.]),
+            'S22I': np.array([ 8., 16.]),
         }
 
-        S11 = npy.array([1., 9.]) + 1j*npy.array([ 2., 10.])
-        S21 = npy.array([ 3., 11.]) + 1j*npy.array([ 4., 12.])
-        S12 = npy.array([ 5., 13.]) + 1j*npy.array([ 6., 14.])
-        S22 = npy.array([ 7., 15.]) + 1j*npy.array([ 8., 16.])
+        S11 = np.array([1., 9.]) + 1j*np.array([ 2., 10.])
+        S21 = np.array([ 3., 11.]) + 1j*np.array([ 4., 12.])
+        S12 = np.array([ 5., 13.]) + 1j*np.array([ 6., 14.])
+        S22 = np.array([ 7., 15.]) + 1j*np.array([ 8., 16.])
         expected_sp_db = {
-            'frequency': npy.array([1.0e+09, 1.1e+09]),
-            'S11DB': 20*npy.log10(npy.abs(S11)),
-            'S11A': npy.angle(S11, deg=True),
-            'S21DB': 20*npy.log10(npy.abs(S21)),
-            'S21A': npy.angle(S21, deg=True),
-            'S12DB': 20*npy.log10(npy.abs(S12)),
-            'S12A': npy.angle(S12, deg=True),
-            'S22DB': 20*npy.log10(npy.abs(S22)),
-            'S22A': npy.angle(S22, deg=True),
+            'frequency': np.array([1.0e+09, 1.1e+09]),
+            'S11DB': 20*np.log10(np.abs(S11)),
+            'S11A': np.angle(S11, deg=True),
+            'S21DB': 20*np.log10(np.abs(S21)),
+            'S21A': np.angle(S21, deg=True),
+            'S12DB': 20*np.log10(np.abs(S12)),
+            'S12A': np.angle(S12, deg=True),
+            'S22DB': 20*np.log10(np.abs(S22)),
+            'S22A': np.angle(S22, deg=True),
         }
 
         for k in sp_ri:
@@ -154,7 +154,7 @@ class TouchstoneTestCase(unittest.TestCase):
                 if k[0] != 'S':
                     # frequency doesn't match because of Hz vs GHz.
                     continue
-                self.assertTrue(npy.all(expected_sp_ri[k] == v))
+                self.assertTrue(np.all(expected_sp_ri[k] == v))
 
 
     def test_HFSS_touchstone_files(self):
@@ -205,21 +205,21 @@ class TouchstoneTestCase(unittest.TestCase):
 
     def test_ansys_modal_data(self):
         net = Touchstone(os.path.join(self.test_dir, "ansys_modal_data.s2p"))
-        z0 = npy.array([
+        z0 = np.array([
             [51. +1.j, 52. +2.j],
             [61.+11.j, 62.+12.j]
         ])
-        assert npy.allclose(net.z0, z0)
+        assert np.allclose(net.z0, z0)
 
     @pytest.mark.skip
     def test_ansys_terminal_data(self):
         net = Touchstone(os.path.join(self.test_dir, "ansys_terminal_data.s4p"))
 
-        z0 = npy.array([
+        z0 = np.array([
             [51. +1.j, 52. +2.j, 53. +3.j, 54. +4.j],
             [61.+11.j, 62.+12.j, 63.+13.j, 64.+14.j]
         ])
-        assert npy.allclose(net.z0, z0)
+        assert np.allclose(net.z0, z0)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TouchstoneTestCase)

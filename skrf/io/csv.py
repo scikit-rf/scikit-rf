@@ -50,7 +50,7 @@ Reading/Writing Anritsu VectorStar
 import os
 from warnings import warn
 
-import numpy as npy
+import numpy as np
 
 from .. import mathFunctions as mf
 from .. import util
@@ -111,7 +111,7 @@ def read_pna_csv(filename, *args, **kwargs):
         footer = k - end_line
 
     try:
-        data = npy.genfromtxt(
+        data = np.genfromtxt(
             filename,
             delimiter = ',',
             skip_header = begin_line + 2,
@@ -120,7 +120,7 @@ def read_pna_csv(filename, *args, **kwargs):
             )
     except(ValueError):
         # carrage returns require a doubling of skiplines
-        data = npy.genfromtxt(
+        data = np.genfromtxt(
             filename,
             delimiter = ',',
             skip_header = (begin_line + 2)*2,
@@ -180,7 +180,7 @@ def pna_csv_2_ntwks2(filename, *args, **kwargs):
 
 
     try:
-        s=npy.zeros((len(f),2,2), dtype=complex)
+        s=np.zeros((len(f),2,2), dtype=complex)
         s[:,0,0] = ntwk_dict['S11'].s.flatten()
         s[:,1,1] = ntwk_dict['S22'].s.flatten()
         s[:,1,0] = ntwk_dict['S21'].s.flatten()
@@ -212,7 +212,7 @@ def pna_csv_2_ntwks3(filename):
     col_headers = pna_csv_header_split(filename)
 
     # set impedance to 50 Ohm (doesn't matter for now)
-    z0 = npy.ones(npy.shape(d)[0])*50
+    z0 = np.ones(np.shape(d)[0])*50
     # read f values, convert to GHz
     f = d[:,0]/1e9
 
@@ -221,7 +221,7 @@ def pna_csv_2_ntwks3(filename):
     if 'db' in header.lower() and 'deg' in header.lower():
         # this is a cvs in DB/DEG format
         # -> convert db/deg values to real/imag values
-        s = npy.zeros((len(f),2,2), dtype=complex)
+        s = np.zeros((len(f),2,2), dtype=complex)
 
         for k, h in enumerate(col_headers[1:]):
             if 's11' in h.lower() and 'db' in h.lower():
@@ -336,7 +336,7 @@ class AgilentCSV:
             footer = k - end_line
 
         try:
-            data = npy.genfromtxt(
+            data = np.genfromtxt(
                 self.filename,
                 delimiter = ',',
                 skip_header = begin_line + 2,
@@ -344,7 +344,7 @@ class AgilentCSV:
                 )
         except(ValueError):
             # carrage returns require a doubling of skiplines
-            data = npy.genfromtxt(
+            data = np.genfromtxt(
                 self.filename,
                 delimiter = ',',
                 skip_header = (begin_line + 2)*2,
@@ -742,7 +742,7 @@ def read_zva_dat(filename, *args, **kwargs):
                 header = line
                 begin_line = k+1
 
-    data = npy.genfromtxt(
+    data = np.genfromtxt(
         filename,
         delimiter = ',',
         skip_header = begin_line,
@@ -771,7 +771,7 @@ def zva_dat_2_ntwks(filename):
     col_headers = header.split(',')
 
     # set impedance to 50 Ohm (doesn't matter for now)
-    z0 = npy.ones(npy.shape(d)[0])*50
+    z0 = np.ones(np.shape(d)[0])*50
     # read f values, convert to GHz
     f = d[:,0]/1e9
 
@@ -780,7 +780,7 @@ def zva_dat_2_ntwks(filename):
     if 're' in header.lower() and 'im' in header.lower():
         # this is a cvs in re/im format
         # -> no conversion required
-        s = npy.zeros((len(f),2,2), dtype=complex)
+        s = np.zeros((len(f),2,2), dtype=complex)
 
         for k, h in enumerate(col_headers):
             if 's11' in h.lower() and 're' in h.lower():
@@ -795,7 +795,7 @@ def zva_dat_2_ntwks(filename):
     elif 'db' in header.lower() and "deg" not in header.lower():
         # this is a cvs in db format (no deg values)
         # -> conversion required
-        s = npy.zeros((len(f),2,2), dtype=complex)
+        s = np.zeros((len(f),2,2), dtype=complex)
 
         for k, h in enumerate(col_headers):
             # this doesn't always work! (depends on no. of channels, sequence of adding traces etc.
@@ -880,7 +880,7 @@ def read_vectorstar_csv(filename, *args, **kwargs):
         fid.seek(0)
         header = [line for line in fid if line.startswith('PNT')]
         fid.close()
-        data = npy.genfromtxt(
+        data = np.genfromtxt(
             filename,
             comments='!',
             delimiter =',',

@@ -48,7 +48,7 @@ import re
 import warnings
 from numbers import Number
 
-import numpy as npy
+import numpy as np
 from numpy import (
     geomspace,
     gradient,  # used to center attribute `t` at 0
@@ -229,16 +229,16 @@ class Frequency:
             else:
                 raise ValueError()
             try:
-                output._f = npy.array(output.f[slicer]).reshape(-1)
+                output._f = np.array(output.f[slicer]).reshape(-1)
                 return output
             except(IndexError) as err:
                 raise IndexError('slicing frequency is incorrect') from err
 
 
         if output.f.shape[0] > 0:
-            output._f = npy.array(output.f[key]).reshape(-1)
+            output._f = np.array(output.f[key]).reshape(-1)
         else:
-            output._f = npy.empty(shape=(0))
+            output._f = np.empty(shape=(0))
 
         return output
 
@@ -270,13 +270,13 @@ class Frequency:
 
         Examples
         --------
-        >>> f = npy.linspace(75,100,101)
+        >>> f = np.linspace(75,100,101)
         >>> rf.Frequency.from_f(f, unit='ghz')
         """
-        if npy.isscalar(f):
+        if np.isscalar(f):
             f = [f]
         temp_freq =  cls(0,0,0,*args, **kwargs)
-        temp_freq._f = npy.asarray(f) * temp_freq.multiplier
+        temp_freq._f = np.asarray(f) * temp_freq.multiplier
         temp_freq.check_monotonic_increasing()
 
         return temp_freq
@@ -325,7 +325,7 @@ class Frequency:
         InvalidFrequencyWarning:
             If frequency points are not monotonously increasing
         """
-        increase = npy.diff(self.f) > 0
+        increase = np.diff(self.f) > 0
         if not increase.all():
             warnings.warn("Frequency values are not monotonously increasing!\n"
             "To get rid of the invalid values call `drop_non_monotonic_increasing`",
@@ -337,9 +337,9 @@ class Frequency:
         Returns:
             list[int]: The dropped indices
         """
-        invalid = npy.diff(self.f, prepend=self.f[0]-1) <= 0
+        invalid = np.diff(self.f, prepend=self.f[0]-1) <= 0
         self._f = self._f[~invalid]
-        return list(npy.flatnonzero(invalid))
+        return list(np.flatnonzero(invalid))
 
     @property
     def start(self) -> float:
@@ -445,7 +445,7 @@ class Frequency:
         return abs(self.stop_scaled-self.start_scaled)
 
     @property
-    def f(self) -> npy.ndarray:
+    def f(self) -> np.ndarray:
         """
         Frequency vector in Hz.
 
@@ -464,7 +464,7 @@ class Frequency:
 
 
     @property
-    def f_scaled(self) -> npy.ndarray:
+    def f_scaled(self) -> np.ndarray:
         """
         Frequency vector in units of :attr:`unit`.
 
@@ -481,7 +481,7 @@ class Frequency:
         return self.f/self.multiplier
 
     @property
-    def w(self) -> npy.ndarray:
+    def w(self) -> np.ndarray:
         r"""
         Angular frequency in radians/s.
 
@@ -504,7 +504,7 @@ class Frequency:
         return 2*pi*self.f
 
     @property
-    def df(self) -> npy.ndarray:
+    def df(self) -> np.ndarray:
         """
         The gradient of the frequency vector.
 
@@ -518,7 +518,7 @@ class Frequency:
         return gradient(self.f)
 
     @property
-    def df_scaled(self) -> npy.ndarray:
+    def df_scaled(self) -> np.ndarray:
         """
         The gradient of the frequency vector (in unit of :attr:`unit`).
 
@@ -531,7 +531,7 @@ class Frequency:
         return gradient(self.f_scaled)
 
     @property
-    def dw(self) -> npy.ndarray:
+    def dw(self) -> np.ndarray:
         """
         The gradient of the frequency vector (in radians).
 
@@ -588,16 +588,16 @@ class Frequency:
         return freq
 
     @property
-    def t(self) -> npy.ndarray:
+    def t(self) -> np.ndarray:
         """
         Time vector in s.
 
         t_period = 2*(n-1)/f_step
         """
-        return npy.fft.fftshift(npy.fft.fftfreq(self.npoints, self.step))
+        return np.fft.fftshift(np.fft.fftfreq(self.npoints, self.step))
 
     @property
-    def t_ns(self) -> npy.ndarray:
+    def t_ns(self) -> np.ndarray:
         """
         Time vector in ns.
 
@@ -628,7 +628,7 @@ class Frequency:
         if isinstance(val, str):
             val = self.multiplier_dict[val.lower()]
 
-        self.f = npy.round(self.f/val)*val
+        self.f = np.round(self.f/val)*val
 
     def overlap(self,f2: Frequency) -> Frequency:
         """
@@ -652,9 +652,9 @@ class Frequency:
             'lin' if linearly increasing, 'log' or 'unknown'.
 
         """
-        if npy.allclose(self.f, linspace(self.f[0], self.f[-1], self.npoints), rtol=0.05):
+        if np.allclose(self.f, linspace(self.f[0], self.f[-1], self.npoints), rtol=0.05):
             sweep_type = 'lin'
-        elif self.f[0] and npy.allclose(self.f, geomspace(self.f[0], self.f[-1], self.npoints), rtol=0.05):
+        elif self.f[0] and np.allclose(self.f, geomspace(self.f[0], self.f[-1], self.npoints), rtol=0.05):
             sweep_type = 'log'
         else:
             sweep_type = 'unknown'
@@ -690,13 +690,13 @@ class Frequency:
         from .plotting import scale_frequency_ticks
 
         try:
-            if len(npy.shape(y)) > 2:
+            if len(np.shape(y)) > 2:
                 # perhaps the dimensions are empty, try to squeeze it down
                 y = y.squeeze()
-                if len(npy.shape(y)) > 2:
+                if len(np.shape(y)) > 2:
                     # the dimensions are full, so lets loop and plot each
-                    for m in range(npy.shape(y)[1]):
-                        for n in range(npy.shape(y)[2]):
+                    for m in range(np.shape(y)[1]):
+                        for n in range(np.shape(y)[2]):
                             self.plot(y[:, m, n], *args, **kwargs)
                     return
             if len(y) == len(self):
@@ -706,7 +706,7 @@ class Frequency:
                 raise IndexError(['thing to plot doesn\'t have same'
                                 ' number of points as f'])
         except(TypeError):
-            y = y * npy.ones(len(self))
+            y = y * np.ones(len(self))
 
         # plt.plot(self.f_scaled, y, *args, **kwargs)
         ax.plot(self.f, y, *args, **kwargs)

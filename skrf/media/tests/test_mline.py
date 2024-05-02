@@ -1,7 +1,7 @@
 import os
 import unittest
 
-import numpy as npy
+import numpy as np
 
 import skrf as rf
 from skrf.frequency import Frequency
@@ -114,12 +114,12 @@ class MLineTestCase(unittest.TestCase):
                        diel = 'frequencyinvariant', disp = 'hammerstadjensen',
                        compatibility_mode = 'qucs')
 
-        self.assertTrue(npy.abs((mline1.z0[0] - 49.142) / 49.142) < 0.01)
-        self.assertTrue(npy.abs((mline1.ep_reff_f[0] - 3.324) / 3.324) < 0.01)
-        self.assertTrue(npy.abs(mline2.w_eff - mline2.w) < 1e-16)
-        self.assertTrue(npy.abs(mline2.alpha_conductor) < 1e-16)
-        self.assertTrue(npy.abs(mline3.w_eff - mline3.w) < 1e-16)
-        self.assertTrue(npy.abs(mline3.alpha_conductor) < 1e-16)
+        self.assertTrue(np.abs((mline1.z0[0] - 49.142) / 49.142) < 0.01)
+        self.assertTrue(np.abs((mline1.ep_reff_f[0] - 3.324) / 3.324) < 0.01)
+        self.assertTrue(np.abs(mline2.w_eff - mline2.w) < 1e-16)
+        self.assertTrue(np.abs(mline2.alpha_conductor) < 1e-16)
+        self.assertTrue(np.abs(mline3.w_eff - mline3.w) < 1e-16)
+        self.assertTrue(np.abs(mline3.alpha_conductor) < 1e-16)
 
 
     def test_line_qucs(self):
@@ -151,8 +151,8 @@ class MLineTestCase(unittest.TestCase):
             res.name = 'residuals ' + ref['n'].name
 
             # test if within limit lines
-            self.assertTrue(npy.all(npy.abs(res.s_db) < limit_db))
-            self.assertTrue(npy.all(npy.abs(res.s_deg) < limit_deg))
+            self.assertTrue(np.all(np.abs(res.s_db) < limit_db))
+            self.assertTrue(np.all(np.abs(res.s_deg) < limit_deg))
 
             if self.verbose:
                 line.plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'],
@@ -225,11 +225,11 @@ class MLineTestCase(unittest.TestCase):
             # fixme: still a small deviation of S11 at low frequency
             #        limit line multiplied by 10 for S11 as for now
             self.assertTrue(
-                npy.all(npy.abs(res.s_db[:, 0, 0]) < 10. *limit_db))
+                np.all(np.abs(res.s_db[:, 0, 0]) < 10. *limit_db))
             self.assertTrue(
-                npy.all(npy.abs(res.s_deg[:, 0, 0]) < 10. * limit_deg))
-            self.assertTrue(npy.all(npy.abs(res.s_db[:, 1, 0]) < limit_db))
-            self.assertTrue(npy.all(npy.abs(res.s_deg[:, 1, 0]) < limit_deg))
+                np.all(np.abs(res.s_deg[:, 0, 0]) < 10. * limit_deg))
+            self.assertTrue(np.all(np.abs(res.s_db[:, 1, 0]) < limit_db))
+            self.assertTrue(np.all(np.abs(res.s_deg[:, 1, 0]) < limit_deg))
 
             if self.verbose:
                 line.plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'],

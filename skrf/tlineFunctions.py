@@ -111,7 +111,7 @@ Transmission Line Physics
         surface_resistivity
 """
 
-import numpy as npy
+import numpy as np
 from numpy import array, exp, pi, real, sqrt
 from scipy.constants import mu_0
 
@@ -406,7 +406,7 @@ def load_impedance_2_reflection_coefficient(z0: NumberLike, zl: NumberLike):
     zl = array(zl, dtype=complex).reshape(-1)
 
     # handle singularity  by numerically representing inf as big number
-    zl[(zl == npy.inf)] = INF
+    zl[(zl == np.inf)] = INF
 
     return ((zl - z0)/(zl + z0))
 
@@ -581,7 +581,7 @@ def reflection_coefficient_2_propagation_constant(Gamma_in: NumberLike, Gamma_l:
     represented by the positive imaginary part of gamma.
 
     """
-    gamma = -1/(2*d) * npy.log(Gamma_in/Gamma_l)
+    gamma = -1/(2*d) * np.log(Gamma_in/Gamma_l)
     # the imaginary part of gamma (=beta) cannot be negative with the given
     # definition of gamma. Thus one should take the first modulo positive value
     gamma.imag = gamma.imag % (pi/d)
@@ -609,7 +609,7 @@ def Gamma0_2_swr(Gamma0: NumberLike):
         Standing Wave Ratio.
 
     """
-    return (1 + npy.abs(Gamma0)) / (1 - npy.abs(Gamma0))
+    return (1 + np.abs(Gamma0)) / (1 - np.abs(Gamma0))
 
 
 def zl_2_swr(z0: NumberLike, zl: NumberLike):
@@ -684,16 +684,16 @@ def voltage_current_propagation(v1: NumberLike, i1: NumberLike, z0: NumberLike, 
         total current at z=d, directed outward the transmission line
     """
     # outer product by broadcasting of the electrical length
-    # theta = gamma[:, npy.newaxis] * d  # (nbfreqs x nbd)
+    # theta = gamma[:, np.newaxis] * d  # (nbfreqs x nbd)
     # ABCD parameters of a transmission line (gamma, z0)
-    A = npy.cosh(theta)
-    B = z0*npy.sinh(theta)
-    C = npy.sinh(theta)/z0
-    D = npy.cosh(theta)
+    A = np.cosh(theta)
+    B = z0*np.sinh(theta)
+    C = np.sinh(theta)/z0
+    D = np.cosh(theta)
     # transpose and de-transpose operations are necessary
     # for linalg.inv to inverse square matrices
-    ABCD = npy.array([[A, B],[C, D]]).transpose()
-    inv_ABCD = npy.linalg.inv(ABCD).transpose()
+    ABCD = np.array([[A, B],[C, D]]).transpose()
+    inv_ABCD = np.linalg.inv(ABCD).transpose()
 
     v2 = inv_ABCD[0,0] * v1 + inv_ABCD[0,1] * i1
     i2 = inv_ABCD[1,0] * v1 + inv_ABCD[1,1] * i1
@@ -730,8 +730,8 @@ def zl_2_total_loss(z0: NumberLike, zl: NumberLike, theta: NumberLike):
         https://www.fars.k6ya.org/docs/K6OIK-A_Transmission_Line_Power_Paradox_and_Its_Resolution.pdf
 
     """
-    Rin = npy.real(zl_2_zin(z0, zl, theta))
-    total_loss = Rin/npy.real(zl)*npy.abs(npy.cosh(theta) + zl/z0*npy.sinh(theta))**2
+    Rin = np.real(zl_2_zin(z0, zl, theta))
+    total_loss = Rin/np.real(zl)*np.abs(np.cosh(theta) + zl/z0*np.sinh(theta))**2
     return total_loss
 
 

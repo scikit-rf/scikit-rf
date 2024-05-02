@@ -24,7 +24,7 @@ import warnings
 # imports for type hinting
 from typing import TYPE_CHECKING, Callable
 
-import numpy as npy
+import numpy as np
 from numpy.fft import fft, fftshift, ifft, ifftshift, irfft, rfft
 
 from .util import find_nearest_index
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from .network import Network
 
 
-def indexes(y: npy.ndarray, thres: float = 0.3, min_dist: int = 1) -> npy.ndarray:
+def indexes(y: np.ndarray, thres: float = 0.3, min_dist: int = 1) -> np.ndarray:
     """
     Peak detection routine.
 
@@ -88,44 +88,44 @@ def indexes(y: npy.ndarray, thres: float = 0.3, min_dist: int = 1) -> npy.ndarra
     #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     #THE SOFTWARE.
 
-    if isinstance(y, npy.ndarray) and npy.issubdtype(y.dtype, npy.unsignedinteger):
+    if isinstance(y, np.ndarray) and np.issubdtype(y.dtype, np.unsignedinteger):
         raise ValueError("y must be signed")
 
-    thres = thres * (npy.max(y) - npy.min(y)) + npy.min(y)
+    thres = thres * (np.max(y) - np.min(y)) + np.min(y)
     min_dist = int(min_dist)
 
     # compute first order difference
-    dy = npy.diff(y)
+    dy = np.diff(y)
 
     # propagate left and right values successively to fill all plateau pixels (0-value)
-    zeros, = npy.where(dy == 0)
+    zeros, = np.where(dy == 0)
 
     # check if the singal is totally flat
     if len(zeros) == len(y) - 1:
-        return npy.array([])
+        return np.array([])
 
     while len(zeros):
         # add pixels 2 by 2 to propagate left and right value onto the zero-value pixel
-        zerosr = npy.hstack([dy[1:], 0.])
-        zerosl = npy.hstack([0., dy[:-1]])
+        zerosr = np.hstack([dy[1:], 0.])
+        zerosl = np.hstack([0., dy[:-1]])
 
         # replace 0 with right value if non zero
         dy[zeros]=zerosr[zeros]
-        zeros, = npy.where(dy == 0)
+        zeros, = np.where(dy == 0)
 
         # replace 0 with left value if non zero
         dy[zeros] = zerosl[zeros]
-        zeros, = npy.where(dy == 0)
+        zeros, = np.where(dy == 0)
 
     # find the peaks by using the first order difference
-    peaks = npy.where((npy.hstack([dy, 0.]) < 0.)
-                     & (npy.hstack([0., dy]) > 0.)
+    peaks = np.where((np.hstack([dy, 0.]) < 0.)
+                     & (np.hstack([0., dy]) > 0.)
                      & (y > thres))[0]
 
     # handle multiple peaks, respecting the minimum distance
     if peaks.size > 1 and min_dist > 1:
-        highest = peaks[npy.argsort(y[peaks])][::-1]
-        rem = npy.ones(y.size, dtype=bool)
+        highest = peaks[np.argsort(y[peaks])][::-1]
+        rem = np.ones(y.size, dtype=bool)
         rem[peaks] = False
 
         for peak in highest:
@@ -134,18 +134,18 @@ def indexes(y: npy.ndarray, thres: float = 0.3, min_dist: int = 1) -> npy.ndarra
                 rem[sl] = True
                 rem[peak] = False
 
-        peaks = npy.arange(y.size)[~rem]
+        peaks = np.arange(y.size)[~rem]
 
     return peaks
 
 
-def find_n_peaks(x: npy.ndarray, n: int, thres: float = 0.9, **kwargs) -> list[int]:
+def find_n_peaks(x: np.ndarray, n: int, thres: float = 0.9, **kwargs) -> list[int]:
     """
     Find a given number of peaks in a signal.
 
     Parameters
     ----------
-    x : npy.ndarray
+    x : np.ndarray
         signal
     n : int
         number of peaks to search for
@@ -225,7 +225,7 @@ def detect_span(ntwk: Network, t_unit: str = "") -> float:
 
     return span / time_lookup_dict[t_unit]
 
-def get_window(window: str | tuple | Callable, Nx: int, **kwargs) -> npy.ndarray:
+def get_window(window: str | tuple | Callable, Nx: int, **kwargs) -> np.ndarray:
     """Calls a custom window function or `scipy.signal.get_window()` depending on the window argument.
 
     Parameters
@@ -238,7 +238,7 @@ def get_window(window: str | tuple | Callable, Nx: int, **kwargs) -> npy.ndarray
 
     Returns
     -------
-    window : npy.ndarray
+    window : np.ndarray
         Window samples.
     """
 
@@ -389,7 +389,7 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
         # frequency-domain gating
         n_td = n_fd
         # create dummy-window
-        window_fd = npy.ones(n_fd)
+        window_fd = np.ones(n_fd)
 
     elif method == 'fft':
         # time-domain band-pass mode
@@ -399,7 +399,7 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
             window_fd = get_window(fft_window, n_fd)
         else:
             # create dummy-window
-            window_fd = npy.ones(n_fd)
+            window_fd = np.ones(n_fd)
 
     elif method == 'rfft':
         # time-domain low-pass mode
@@ -416,7 +416,7 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
             window_fd = window_fd[n_fd:]
         else:
             # create dummy-window
-            window_fd = npy.ones(n_fd)
+            window_fd = np.ones(n_fd)
 
     else:
         raise ValueError(f'Invalid parameter method=`{method}`')
@@ -425,7 +425,7 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
     ntwk_gated.s[:, 0, 0] = ntwk_gated.s[:, 0, 0] * window_fd
 
     # create time vector
-    t = npy.fft.fftshift(npy.fft.fftfreq(n_td, df))
+    t = np.fft.fftshift(np.fft.fftfreq(n_td, df))
     # find start/stop gate indices
     start_idx = find_nearest_index(t, start)
     stop_idx = find_nearest_index(t, stop)
@@ -435,7 +435,7 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
     window = get_window(window, window_width)
 
     # create the gate by padding the window with zeros
-    gate = npy.zeros_like(t)
+    gate = np.zeros_like(t)
     gate[start_idx:stop_idx+1] = window
 
     if method == 'convolution':

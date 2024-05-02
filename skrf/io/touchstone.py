@@ -39,7 +39,7 @@ import zipfile
 from dataclasses import dataclass, field
 from typing import Callable
 
-import numpy as npy
+import numpy as np
 
 from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT
 from ..network import Network
@@ -486,7 +486,7 @@ class Touchstone:
                 self.port_names[k] = v
 
         if state.hfss_gamma:
-            self.gamma = npy.array(state.hfss_gamma).view(npy.complex128)
+            self.gamma = np.array(state.hfss_gamma).view(np.complex128)
 
 
         # Impedance is parsed in the following order:
@@ -494,53 +494,53 @@ class Touchstone:
         # - TS v2 Reference keyword for each port.
         # - Reference impedance from option line.
         if state.hfss_impedance:
-            self.z0 = npy.array(state.hfss_impedance).view(npy.complex128)
+            self.z0 = np.array(state.hfss_impedance).view(np.complex128)
             # Comment the line in, when we need when to expect port impedances in NxN format.
             # See https://github.com/scikit-rf/scikit-rf/issues/354 for details.
             #if state.ansys_data_type == "terminal":
-            #    self.z0 = npy.diagonal(self.z0.reshape(-1, self.rank, self.rank), axis1=1, axis2=2)
+            #    self.z0 = np.diagonal(self.z0.reshape(-1, self.rank, self.rank), axis1=1, axis2=2)
 
             self.s_def = S_DEF_HFSS_DEFAULT
             self.has_hfss_port_impedances = True
         elif self.reference is None:
-            self.z0 = npy.broadcast_to(self.resistance, (len(state.f), state.rank)).copy()
+            self.z0 = np.broadcast_to(self.resistance, (len(state.f), state.rank)).copy()
         else:
-            self.z0 = npy.empty((len(state.f), state.rank), dtype=complex).fill(self.reference)
+            self.z0 = np.empty((len(state.f), state.rank), dtype=complex).fill(self.reference)
 
-        self.f = npy.array(state.f)
+        self.f = np.array(state.f)
         if not len(self.f):
-            self.s = npy.empty((0, state.rank, state.rank))
+            self.s = np.empty((0, state.rank, state.rank))
             return
 
-        raw = npy.array(state.s).reshape(len(self.f), -1)
+        raw = np.array(state.s).reshape(len(self.f), -1)
 
         if self.format == "db":
             raw[:, 0::2] = 10 ** (raw[:, 0::2] / 20.0)
 
         if self.format in (["ma", "db"]):
-            s_flat = raw[:, 0::2] * npy.exp(1j * raw[:, 1::2] * npy.pi / 180)
+            s_flat = raw[:, 0::2] * np.exp(1j * raw[:, 1::2] * np.pi / 180)
         elif self.format == "ri":
-            s_flat = raw.view(npy.complex128)
+            s_flat = raw.view(np.complex128)
 
         self.s_flat = s_flat
 
-        self.s = npy.empty((len(self.f), state.rank * state.rank), dtype=complex)
+        self.s = np.empty((len(self.f), state.rank * state.rank), dtype=complex)
         if state.matrix_format == "full":
             self.s[:] = s_flat
         else:
-            index = npy.tril_indices(state.rank) if state.matrix_format == "lower" else npy.triu_indices(self.rank)
-            index_flat = npy.ravel_multi_index(index, (state.rank, state.rank))
+            index = np.tril_indices(state.rank) if state.matrix_format == "lower" else np.triu_indices(self.rank)
+            index_flat = np.ravel_multi_index(index, (state.rank, state.rank))
             self.s[:, index_flat] = s_flat
 
         if state.rank == 2 and state.two_port_order_legacy:
-            self.s = npy.transpose(self.s.reshape((-1, state.rank, state.rank)), axes=(0, 2, 1))
+            self.s = np.transpose(self.s.reshape((-1, state.rank, state.rank)), axes=(0, 2, 1))
         else:
             self.s = self.s.reshape((-1, state.rank, state.rank))
 
         if state.matrix_format != "full":
-            self.s = npy.nanmax((self.s, self.s.transpose(0, 2, 1)), axis=0)
+            self.s = np.nanmax((self.s, self.s.transpose(0, 2, 1)), axis=0)
 
-        self.port_modes = npy.array(["S"] * state.rank)
+        self.port_modes = np.array(["S"] * state.rank)
         if state.mixed_mode_order:
             new_order = [None] * state.rank
             for i, mm in enumerate(state.mixed_mode_order):
@@ -555,7 +555,7 @@ class Touchstone:
                         new_order[i] = p2
                 self.port_modes[new_order[i]] = mm[0].upper()
 
-            order = npy.arange(self.rank, dtype=int)
+            order = np.arange(self.rank, dtype=int)
             self.s[:, new_order, :] = self.s[:, order, :]
             self.s[:, :, new_order] = self.s[:, :, order]
             self.z0[:, self.port_modes == "D"] *= 2
@@ -567,27 +567,27 @@ class Touchstone:
 
             func_name = f"{self.parameter}2s"
             from .. import network
-            self.s: npy.ndarray = getattr(network, func_name)(self.s, self.z0)
+            self.s: np.ndarray = getattr(network, func_name)(self.s, self.z0)
 
 
         # multiplier from the frequency unit
         self.frequency_mult = state.frequency_mult
 
         if state.noise:
-            self.noise = npy.array(state.noise)
+            self.noise = np.array(state.noise)
             self.noise[:, 0] *= self.frequency_mult
 
         self.f *= self.frequency_mult
 
     @property
-    def sparameters(self) -> npy.ndarray:
+    def sparameters(self) -> np.ndarray:
         """Touchstone data in tabular format.
 
         Returns:
-            npy.ndarray: Frequency and data array.
+            np.ndarray: Frequency and data array.
         """
         warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
-        return npy.hstack((self.f[:, None], self.s_flat.view(npy.float64).reshape(len(self.f), -1)))
+        return np.hstack((self.f[:, None], self.s_flat.view(np.float64).reshape(len(self.f), -1)))
 
     def get_comments(self, ignored_comments: list[str]=None) -> str:
         """
@@ -674,7 +674,7 @@ class Touchstone:
         warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
         return self.get_sparameter_data(format).keys()
 
-    def get_sparameter_data(self, format: str="ri") -> dict[str, npy.ndarray]:
+    def get_sparameter_data(self, format: str="ri") -> dict[str, np.ndarray]:
         """
         Get the data of the s-parameter with the given format.
 
@@ -708,15 +708,15 @@ class Touchstone:
                     ret[f"{prefix}R"] = val.real
                     ret[f"{prefix}I"] = val.imag
                 elif format == "ma":
-                    ret[f"{prefix}M"] = npy.abs(val)
-                    ret[f"{prefix}A"] = npy.angle(val, deg=True)
+                    ret[f"{prefix}M"] = np.abs(val)
+                    ret[f"{prefix}A"] = np.angle(val, deg=True)
                 elif format == "db":
-                    ret[f"{prefix}DB"] = 20 * npy.log10(npy.abs(val))
-                    ret[f"{prefix}A"] = npy.angle(val, deg=True)
+                    ret[f"{prefix}DB"] = 20 * np.log10(np.abs(val))
+                    ret[f"{prefix}A"] = np.angle(val, deg=True)
 
         return ret
 
-    def get_sparameter_arrays(self) -> tuple[npy.ndarray, npy.ndarray]:
+    def get_sparameter_arrays(self) -> tuple[np.ndarray, np.ndarray]:
         """
         Returns the s-parameters as a tuple of arrays.
 
@@ -753,15 +753,15 @@ class Touchstone:
 
         Returns
         -------
-        gamma : complex npy.ndarray
+        gamma : complex np.ndarray
             complex  propagation constant
-        z0 : npy.ndarray
+        z0 : np.ndarray
             complex port impedance
         """
         return self.gamma, self.z0
 
 
-def hfss_touchstone_2_gamma_z0(filename: str) -> tuple[npy.ndarray, npy.ndarray, npy.ndarray]:
+def hfss_touchstone_2_gamma_z0(filename: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Extracts Z0 and Gamma comments from touchstone file.
 
@@ -776,11 +776,11 @@ def hfss_touchstone_2_gamma_z0(filename: str) -> tuple[npy.ndarray, npy.ndarray,
 
     Returns
     -------
-    f : npy.ndarray
+    f : np.ndarray
         frequency vector (in Hz)
-    gamma : complex npy.ndarray
+    gamma : complex np.ndarray
         complex  propagation constant
-    z0 : npy.ndarray
+    z0 : np.ndarray
         complex port impedance
 
     Examples
