@@ -162,6 +162,7 @@ class CircularWaveguide(Media):
             passed to :class:`~skrf.media.media.Media`'s constructor
             (:func:`~skrf.media.media.Media.__init__`
         """
+        from scipy.special import jnp_zeros
 
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r

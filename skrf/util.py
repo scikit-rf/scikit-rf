@@ -63,7 +63,7 @@ import warnings
 from datetime import datetime
 from functools import wraps
 from subprocess import PIPE, Popen
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, Callable, Iterable
 
 import numpy as npy
 

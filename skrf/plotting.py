@@ -54,8 +54,6 @@ Convenience plotting functions
 from __future__ import annotations
 
 import os
-import sys
-import warnings
 from numbers import Number
 from typing import TYPE_CHECKING, Callable
 from functools import wraps

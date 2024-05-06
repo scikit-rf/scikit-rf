@@ -16,6 +16,7 @@ except ImportError:
 # imports for type hinting
 if TYPE_CHECKING:
     from .network import Network
+    from .plotting import Axes
 
 from .plotting import axes_kwarg
 

@@ -1224,6 +1224,9 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
                 z11x = z11[x]
 
             if self.verbose:
+                from ..plotting import plt
+                subplots = plt.subplots
+
                 fig, (ax1, ax2) = subplots(2,1)
                 fig.suptitle('Midpoint length and impedance determination')
                 ax1.plot(t21, label = 't21')
@@ -2105,6 +2108,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             s11dut = s_dut.s[:, 0, 0]
             s22dut = s_dut.s[:, 1, 1]
             if self.verbose:
+                from ..plotting import plt
+                subplots = plt.subplots
+
                 if i == 0:
                     fig, axs = subplots(2, 2)
                     axs[0, 0].plot(z1, color = 'k')
@@ -2151,6 +2157,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             s_dut = sTL1.inv ** s_dut
             s11dut = s_dut.s[:, 0, 0]
             if self.verbose:
+                from ..plotting import plt
+                subplots = plt.subplots
+
                 if i == 0:
                     fig, axs = subplots(1, 2)
                     axs[0].plot(z1, color = 'k')

@@ -1455,7 +1455,7 @@ class Network:
             raise ValueError('network does not have noise')
 
         if self.noise_freq.f.size > 1 :
-            from scipy.interpolate import interp1d 
+            from scipy.interpolate import interp1d
             noise_real = interp1d(self.noise_freq.f, self.noise.real, axis=0, kind=Network.noise_interp_kind)
             noise_imag = interp1d(self.noise_freq.f, self.noise.imag, axis=0, kind=Network.noise_interp_kind)
             return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
@@ -2797,7 +2797,7 @@ class Network:
             #Not supported by rational_interp
             del kwargs['kind']
         else:
-            from scipy.interpolate import interp1d 
+            from scipy.interpolate import interp1d
             f_interp = interp1d
 
         # interpret input
@@ -2964,7 +2964,7 @@ class Network:
             #interp1d can't extrapolate with other methods.
             #TODO: Option to enforce passivity
 
-            from scipy.interpolate import interp1d 
+            from scipy.interpolate import interp1d
 
             x = result.s[:2]
             f = result.frequency.f[:2]
@@ -3542,7 +3542,7 @@ class Network:
 
 
         """
-        from scipy import stats 
+        from scipy import stats
 
         phase_rv = stats.norm(loc=0, scale=phase_dev).rvs( \
             size=self.s.shape)
