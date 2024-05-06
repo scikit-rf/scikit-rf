@@ -10,6 +10,7 @@ jobs:
       contents: read
       checks: write
       id-token: write
+      pull-requests: write
     strategy:
       matrix:
         python-version: ['3.12']
