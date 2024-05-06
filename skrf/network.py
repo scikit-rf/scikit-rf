@@ -4617,7 +4617,7 @@ class Network:
                             y = npy.abs(y)
 
                     else:
-                        xlabel = 'Frequency (%s)' % self.frequency.unit
+                        xlabel = f'Frequency ({self.frequency.unit})'
                         # x = self.frequency.f_scaled
                         x = self.frequency.f  # always plot f, and then scale the ticks instead
                         y = self.attribute(attribute, conversion)[:, m, n]

@@ -170,13 +170,13 @@ def pna_csv_2_ntwks2(filename, *args, **kwargs):
     for param in param_set:
         try:
             s = mf.dbdeg_2_reim(
-                df['%s Log Mag(dB)'%param].values,
-                df['%s Phase(deg)'%param].values,
+                df[f'{param} Log Mag(dB)'].values,
+                df[f'{param} Phase(deg)'].values,
                 )
         except(KeyError):
             s = mf.dbdeg_2_reim(
-                df['%s (REAL)'%param].values,
-                df['%s (IMAG)'%param].values,
+                df[f'{param} (REAL)'].values,
+                df[f'{param} (IMAG)'].values,
                 )
 
         ntwk_dict[param] = Network(f=f, s=s, name=param, comments=comments)
@@ -532,7 +532,7 @@ class AgilentCSV:
 
         index = Index(
             self.frequency.f_scaled,
-            name = 'Frequency(%s)'%self.frequency.unit)
+            name = f'Frequency({self.frequency.unit})')
 
         return DataFrame(
                 { self.columns[k]:self.data[:,k] \

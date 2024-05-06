@@ -398,7 +398,7 @@ class Calibration:
                     std = idx
 
         if isinstance(std, str):
-            raise (ValueError('standard %s not found in ideals'%std))
+            raise (ValueError(f'standard {std} not found in ideals'))
 
         return (self.ideals.pop(std),  self.measured.pop(std))
 
@@ -1647,8 +1647,8 @@ class TwelveTerm(Calibration):
         # update coefs
         coefs = {}
 
-        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
-        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
+        coefs.update({f'forward {k}': p1_coefs[k] for k in p1_coefs})
+        coefs.update({f'reverse {k}': p2_coefs[k] for k in p2_coefs})
         eight_term_coefs = convert_12term_2_8term(coefs)
 
         coefs.update({l: eight_term_coefs[l] for l in \
@@ -4027,8 +4027,8 @@ class UnknownThru(EightTerm):
         coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
-        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
-        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
+        coefs.update({f'forward {k}': p1_coefs[k] for k in p1_coefs})
+        coefs.update({f'reverse {k}': p2_coefs[k] for k in p2_coefs})
 
         if self.switch_terms is not None:
             coefs.update({
@@ -4818,8 +4818,8 @@ class MRC(UnknownThru):
         # create single dictionary for all error terms
         coefs = {}
 
-        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
-        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
+        coefs.update({f'forward {k}': p1_coefs[k] for k in p1_coefs})
+        coefs.update({f'reverse {k}': p2_coefs[k] for k in p2_coefs})
 
         coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
