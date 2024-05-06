@@ -32,11 +32,11 @@ jobs:
         tox -- --junitxml=pytest.xml
 
     - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Test Results (Python ${{ matrix.python-version }})
-          path: pytest.xml
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Test Results (Python ${{ matrix.python-version }})
+        path: pytest.xml
                   
 
     # Upload coverage data to coveralls.io
