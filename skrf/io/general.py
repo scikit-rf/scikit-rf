@@ -76,7 +76,8 @@ from pickle import UnpicklingError
 from typing import Any
 
 import numpy as npy
-from pandas import DataFrame, ExcelWriter, Series
+import lazy_loader as lazy
+pd = lazy.load("pandas")
 
 from ..frequency import Frequency
 from ..network import Network
@@ -691,23 +692,23 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
     if form =='db':
         for m,n in ntwk.port_tuples:
             d[f'S{ntwk._fmt_trace_name(m,n)} Log Mag(dB)'] = \
-                Series(ntwk.s_db[:,m,n], index = index)
+                pd.Series(ntwk.s_db[:,m,n], index = index)
             d[f'S{ntwk._fmt_trace_name(m,n)} Phase(deg)'] = \
-                Series(ntwk.s_deg[:,m,n], index = index)
+                pd.Series(ntwk.s_deg[:,m,n], index = index)
     elif form =='ma':
         for m,n in ntwk.port_tuples:
             d[f'S{ntwk._fmt_trace_name(m,n)} Mag(lin)'] = \
-                Series(ntwk.s_mag[:,m,n], index = index)
+                pd.Series(ntwk.s_mag[:,m,n], index = index)
             d[f'S{ntwk._fmt_trace_name(m,n)} Phase(deg)'] = \
-                Series(ntwk.s_deg[:,m,n], index = index)
+                pd.Series(ntwk.s_deg[:,m,n], index = index)
     elif form =='ri':
         for m,n in ntwk.port_tuples:
             d[f'S{ntwk._fmt_trace_name(m,n)} Real'] = \
-                Series(ntwk.s_re[:,m,n], index = index)
+                pd.Series(ntwk.s_re[:,m,n], index = index)
             d[f'S{ntwk._fmt_trace_name(m,n)} Imag'] = \
-                Series(ntwk.s_im[:,m,n], index = index)
+                pd.Series(ntwk.s_im[:,m,n], index = index)
 
-    df = DataFrame(d)
+    df = pd.DataFrame(d)
     df.__getattribute__('to_%s'%file_type)(file_name,
         index_label='Freq(%s)'%ntwk.frequency.unit, **kwargs)
 
@@ -748,7 +749,7 @@ def network_2_dataframe(ntwk: Network, attrs: list[str] =None,
         attr_array = getattr(ntwk, attr)
         for m, n in ports:
             d[f'{attr} {m+1}{port_sep}{n+1}'] = attr_array[:, m, n]
-    return DataFrame(d, index=ntwk.frequency.f)
+    return pd.DataFrame(d, index=ntwk.frequency.f)
 
 def networkset_2_spreadsheet(ntwkset: NetworkSet, file_name: str = None, file_type: str = 'excel',
     *args, **kwargs):
@@ -798,7 +799,7 @@ def networkset_2_spreadsheet(ntwkset: NetworkSet, file_name: str = None, file_ty
         # add file extension if missing
         if not file_name.endswith('.xlsx'):
             file_name += '.xlsx'
-        with ExcelWriter(file_name) as writer:
+        with pd.ExcelWriter(file_name) as writer:
             [network_2_spreadsheet(k, writer, sheet_name=k.name, **kwargs) for k in ntwkset]
     else:
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]

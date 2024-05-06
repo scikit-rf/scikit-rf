@@ -54,33 +54,62 @@ Convenience plotting functions
 from __future__ import annotations
 
 import os
+import sys
 import warnings
 from numbers import Number
 from typing import TYPE_CHECKING, Callable
+from functools import wraps
 
-try:
-    import matplotlib as mpl
-    import matplotlib.pyplot as plt
-    import matplotlib.tri as tri
-    from matplotlib import rcParams, ticker
-    from matplotlib.dates import date2num
-    from matplotlib.patches import Circle  # for drawing smith chart
-    from matplotlib.pyplot import quiver
-except ImportError:
-    pass
+if TYPE_CHECKING:
+    from typing import TypeVar
+    Figure = TypeVar("Figure")
+    Axes = TypeVar("Axes")
+
+import lazy_loader as lazy
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    mpl = lazy.load("matplotlib", error_on_import=True)
+    plt = lazy.load("matplotlib.pyplot", error_on_import=True)
+    tri = lazy.load("matplotlib.tri", error_on_import=True)
+    ticker = lazy.load("matplotlib.ticker", error_on_import=True)
+    dates = lazy.load("matplotlib.dates", error_on_import=True)
 
 import numpy as npy
 
 from . import mathFunctions as mf
 from .constants import NumberLike
-from .frequency import Frequency
-from .util import axes_kwarg, now_string_2_dt
+from .util import now_string_2_dt
 
 if TYPE_CHECKING:
     from . import Network, NetworkSet
+    from .frequency import Frequency
 
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
 SI_CONVERSION = {key: 10**((8-i)*3) for i, key in enumerate(SI_PREFIXES_ASCII)}
+
+def axes_kwarg(func):
+    """
+    This decorator checks if a :class:`matplotlib.axes.Axes` object is passed,
+    if not the current axis will be gathered through :func:`plt.gca`.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to run the decorated function without matplotlib
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            ax = kwargs.pop('ax', None)
+            if ax is None:
+                ax = plt.gca()
+        except ImportError:
+            raise RuntimeError("Plotting not available")
+        func(*args, ax=ax, **kwargs)
+
+    return wrapper
 
 def _get_label_str(netw: Network, param: str, m: int, n: int) -> str:
     label_string = ""
@@ -94,7 +123,7 @@ def _get_label_str(netw: Network, param: str, m: int, n: int) -> str:
     return label_string
 
 
-def scale_frequency_ticks(ax: plt.Axes, funit: str):
+def scale_frequency_ticks(ax: Axes, funit: str):
     """
     Scale frequency axis ticks.
 
@@ -123,7 +152,7 @@ def scale_frequency_ticks(ax: plt.Axes, funit: str):
 
 @axes_kwarg
 def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
-          border: bool = False, ax: plt.Axes | None = None, ref_imm: float = 1.0,
+          border: bool = False, ax: Axes | None = None, ref_imm: float = 1.0,
           draw_vswr: list | bool | None = None):
     """
     Plot the Smith chart of a given radius.
@@ -168,6 +197,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     .. [#] https://en.wikipedia.org/wiki/Smith_chart
 
     """
+    from matplotlib.patches import Circle
 
     # contour holds matplotlib instances of: pathes.Circle, and lines.Line2D, which
     # are the contours on the smith chart
@@ -349,7 +379,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
 def plot_rectangular(x: NumberLike, y: NumberLike,
                      x_label: str | None = None, y_label: str | None = None,
                      title: str | None = None, show_legend: bool = True,
-                     axis: str = 'tight', ax: plt.Axes | None = None,
+                     axis: str = 'tight', ax: Axes | None = None,
                      *args, **kwargs):
     r"""
     Plot rectangular data and optionally label axes.
@@ -407,7 +437,7 @@ def plot_rectangular(x: NumberLike, y: NumberLike,
 def plot_polar(theta: NumberLike, r: NumberLike,
                x_label: str | None = None, y_label: str | None = None,
                title: str | None = None, show_legend: bool = True,
-               axis_equal: bool = False, ax: plt.Axes | None = None,
+               axis_equal: bool = False, ax: Axes | None = None,
                *args, **kwargs):
     r"""
     Plot polar data on a polar plot and optionally label axes.
@@ -485,7 +515,7 @@ def plot_polar(theta: NumberLike, r: NumberLike,
 def plot_complex_rectangular(z: NumberLike,
                              x_label: str = 'Real', y_label: str = 'Imag',
                              title: str = 'Complex Plane', show_legend: bool = True,
-                             axis: str = 'equal', ax: plt.Axes | None = None,
+                             axis: str = 'equal', ax: Axes | None = None,
                              **kwargs):
     r"""
     Plot complex data on the complex plane.
@@ -525,7 +555,7 @@ def plot_complex_rectangular(z: NumberLike,
 def plot_complex_polar(z: NumberLike,
                        x_label: str | None = None, y_label: str | None = None,
                        title: str | None = None, show_legend: bool = True,
-                       axis_equal: bool = False, ax: plt.Axes | None = None,
+                       axis_equal: bool = False, ax: Axes | None = None,
                        **kwargs):
     r"""
     Plot complex data in polar format.
@@ -563,7 +593,7 @@ def plot_complex_polar(z: NumberLike,
 
 def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
                x_label: str = 'Real', y_label: str = 'Imaginary', title: str = 'Complex Plane',
-               show_legend: bool = True, axis: str = 'equal', ax: plt.Axes | None = None,
+               show_legend: bool = True, axis: str = 'equal', ax: Axes | None = None,
                force_chart: bool = False, draw_vswr: list | bool | None = None, draw_labels: bool = False,
                **kwargs):
     r"""
@@ -757,7 +787,7 @@ def save_all_figs(dir: str = './', format: None | list[str] = None,
 saf = save_all_figs
 
 @axes_kwarg
-def add_markers_to_lines(ax: plt.Axes = None,
+def add_markers_to_lines(ax: Axes = None,
                          marker_list: list = None,
                          markevery: int = 10):
     """
@@ -806,7 +836,7 @@ def legend_off(ax: plt.Axes = None):
 
 @axes_kwarg
 def scrape_legend(n: int | None = None,
-                  ax:plt.Axes = None):
+                  ax: Axes = None):
     """
     Scrape a legend with redundant labels.
 
@@ -879,7 +909,7 @@ def plot_vector(a: complex, off: complex = 0+0j, **kwargs):
     -------
     quiver : matplotlib.pyplot.quiver
     """
-    return quiver(off.real, off.imag, a.real, a.imag, scale_units='xy',
+    return plt.quiver(off.real, off.imag, a.real, a.imag, scale_units='xy',
            angles='xy', scale=1, **kwargs)
 
 
@@ -891,7 +921,7 @@ def colors() -> list[str]:
     -------
     colors : List[str]
     """
-    return [c['color'] for c in rcParams['axes.prop_cycle']]
+    return [c['color'] for c in plt.rcParams['axes.prop_cycle']]
 
 
 ## specific plotting functions
@@ -1230,7 +1260,7 @@ def plot_uncertainty_bounds_component(
         m: int | None = None, n: int | None = None,
         type: str = 'shade', n_deviations: int = 3,
         alpha: float = .3, color_error: str | None = None,
-        markevery_error: int = 20, ax: plt.Axes = None,
+        markevery_error: int = 20, ax: Axes = None,
         ppf: bool = None, kwargs_error: dict = None,
         **kwargs):
     r"""
@@ -1349,7 +1379,7 @@ def plot_uncertainty_bounds_component(
 def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
                                  type: str = 'shade', n_deviations: int = 3,
                                  alpha: float = .3, color_error: str | None = None,
-                                 markevery_error: int = 20, ax: plt.Axes = None,
+                                 markevery_error: int = 20, ax: Axes = None,
                                  ppf: bool = None, kwargs_error: dict = None,
                                  **kwargs):
     r"""
@@ -1580,7 +1610,7 @@ def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag'
     if vs_time:
         # create a datetime index
         dt_idx = [now_string_2_dt(k.name) for k in self]
-        mpl_times = date2num(dt_idx)
+        mpl_times = dates.date2num(dt_idx)
         y_max = mpl_times[0]
         y_min = mpl_times[-1]
 

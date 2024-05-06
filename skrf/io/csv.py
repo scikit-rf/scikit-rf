@@ -57,9 +57,6 @@ from .. import util
 from ..frequency import Frequency
 from ..network import Network
 
-# delayed imports
-# from pandas import Series, Index, DataFrame
-
 def read_pna_csv(filename, *args, **kwargs):
     r"""
     Reads data from a csv file written by an Agilient PNA.

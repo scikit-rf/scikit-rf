@@ -89,7 +89,6 @@ from typing import Callable
 
 import numpy as npy
 from numpy import imag, pi, real, unwrap
-from scipy import signal
 
 from .constants import ALMOST_ZERO, EIG_COND, EIG_MIN, INF, LOG_OF_NEG, NumberLike
 
@@ -917,7 +916,7 @@ def psd2TimeDomain(f: npy.ndarray, y: npy.ndarray, windowType: str = 'hamming'):
     If spectrum is not baseband then, `timeSignal` is modulated by `exp(t*2*pi*f[0])`.
     So keep in mind units. Also, due to this, `f` must be increasing left to right.
     """
-
+    from scipy import signal
 
     # apply window function
     # make sure windowType exists in scipy.signal

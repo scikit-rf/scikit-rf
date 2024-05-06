@@ -7,14 +7,13 @@ __version__ = '1.0.0'
 ## Import all  module names for coherent reference of name-space
 #import io
 
-
 from . import (
     calibration,
     circuit,
     constants,
     frequency,
-    instances,
     io,
+    instances,
     mathFunctions,
     media,
     network,
@@ -31,8 +30,8 @@ from .constants import *
 
 # Import contents into current namespace for ease of calling
 from .frequency import *
-from .instances import *
 from .io import *
+from .instances import *
 from .mathFunctions import *
 from .network import *
 from .networkSet import *

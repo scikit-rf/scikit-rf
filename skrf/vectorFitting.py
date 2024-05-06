@@ -13,11 +13,11 @@ try:
 except ImportError:
     pass
 
-from .util import Axes, axes_kwarg
-
 # imports for type hinting
 if TYPE_CHECKING:
     from .network import Network
+
+from .plotting import axes_kwarg
 
 
 class VectorFitting:

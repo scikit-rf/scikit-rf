@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 import numpy as npy
 from numpy import sqrt, where
 from scipy.constants import epsilon_0, mu_0, pi
-from scipy.special import jn_zeros, jnp_zeros
 
 from ..constants import NumberLike
 from ..data import materials
@@ -237,6 +236,8 @@ class CircularWaveguide(Media):
         kc : number
             cut-off wavenumber
         """
+        from scipy.special import jn_zeros, jnp_zeros
+
         if self.mode_type =="te":
             u = jnp_zeros(self.m, self.n)[-1]
         elif self.mode_type =="tm":

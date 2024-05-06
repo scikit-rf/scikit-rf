@@ -59,11 +59,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 from numpy import angle, concatenate, conj, exp, flip, real, zeros
 from numpy.fft import fft, fftshift, ifftshift, irfft
-from scipy.interpolate import interp1d
 
 from ..frequency import Frequency
 from ..network import Network, concat_ports, overlap_multi, subnetwork
-from ..util import subplots
 
 
 class Deembedding(ABC):
@@ -1102,6 +1100,8 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         enforces symmetric upon the first 10 points and interpolates the DC
         point.
         """
+        from scipy.interpolate import interp1d
+
         sp = s[0:9]
         fp = f[0:9]
 
@@ -1159,6 +1159,8 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
 
     def split2xthru(self, s2xthru):
+        from scipy.interpolate import interp1d
+
         f = s2xthru.frequency.f
         s = s2xthru.s
 
@@ -1835,6 +1837,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         enforces symmetric upon the first 10 points and interpolates the DC
         point.
         """
+        from scipy.interpolate import interp1d
+
         sp = s[0:9]
         fp = f[0:9]
 

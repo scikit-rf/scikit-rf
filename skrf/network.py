@@ -153,6 +153,12 @@ Misc Functions
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, NoReturn, Sequence, Sized, TextIO, TypeVar
+    Axes = TypeVar("Axes")
+
 import io
 import os
 import re
@@ -164,20 +170,18 @@ from itertools import product
 from numbers import Number
 from pathlib import Path
 from pickle import UnpicklingError
-from typing import Any, Callable, NoReturn, Sequence, Sized, TextIO
 
 import numpy as npy
 from numpy import gradient, ndarray, shape
 from numpy.linalg import inv as npy_inv
-from scipy import stats  # for Network.add_noise_*, and Network.windowed
-from scipy.interpolate import interp1d  # for Network.interpolate()
 
 from . import mathFunctions as mf
 from . import plotting as rfplt
 from .constants import K_BOLTZMANN, S_DEF_DEFAULT, S_DEFINITIONS, T0, ZERO, NumberLike
 from .frequency import Frequency
 from .time import get_window, time_gate
-from .util import Axes, axes_kwarg, copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
+from .util import copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
+from .plotting import axes_kwarg
 
 
 class Network:
@@ -1451,6 +1455,7 @@ class Network:
             raise ValueError('network does not have noise')
 
         if self.noise_freq.f.size > 1 :
+            from scipy.interpolate import interp1d 
             noise_real = interp1d(self.noise_freq.f, self.noise.real, axis=0, kind=Network.noise_interp_kind)
             noise_imag = interp1d(self.noise_freq.f, self.noise.imag, axis=0, kind=Network.noise_interp_kind)
             return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
@@ -2792,6 +2797,7 @@ class Network:
             #Not supported by rational_interp
             del kwargs['kind']
         else:
+            from scipy.interpolate import interp1d 
             f_interp = interp1d
 
         # interpret input
@@ -2957,6 +2963,9 @@ class Network:
             #Interpolate DC point alone first using linear interpolation, because
             #interp1d can't extrapolate with other methods.
             #TODO: Option to enforce passivity
+
+            from scipy.interpolate import interp1d 
+
             x = result.s[:2]
             f = result.frequency.f[:2]
             rad = npy.unwrap(npy.angle(x), axis=0)
@@ -3487,6 +3496,7 @@ class Network:
                 standard deviation of phase [in degrees]
 
         """
+        from scipy import stats
 
         phase_rv = stats.norm(loc=0, scale=phase_dev).rvs(size=self.s.shape)
         mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size=self.s.shape)
@@ -3508,6 +3518,8 @@ class Network:
                 standard deviation of phase [in degrees]
 
         """
+        from scipy import stats
+
         phase_rv = stats.norm(loc=0, scale=phase_dev).rvs(size=self.s[0].shape)
         mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size=self.s[0].shape)
 
@@ -3530,6 +3542,8 @@ class Network:
 
 
         """
+        from scipy import stats 
+
         phase_rv = stats.norm(loc=0, scale=phase_dev).rvs( \
             size=self.s.shape)
         mag_rv = stats.norm(loc=1, scale=mag_dev).rvs( \
@@ -4778,6 +4792,8 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     >>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
 
     """
+    from scipy.interpolate import interp1d
+
     # some checking
     try:
         check_frequency_equal(ntwkA, ntwkB)

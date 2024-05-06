@@ -38,6 +38,12 @@ Misc
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import TypeVar
+    Axes = TypeVar("Axes")
+
 import re
 import warnings
 from numbers import Number
@@ -51,8 +57,9 @@ from numpy import (
 )
 
 from .constants import FREQ_UNITS, ZERO, NumberLike
-from .util import Axes, axes_kwarg, find_nearest_index, slice_domain
+from .util import find_nearest_index, slice_domain
 
+from .plotting import axes_kwarg
 
 class InvalidFrequencyWarning(UserWarning):
     """Thrown if frequency values aren't monotonously increasing

@@ -51,7 +51,6 @@ from numbers import Number
 from typing import Any, Mapping, TextIO
 
 import numpy as npy
-from scipy.interpolate import interp1d
 
 from . import mathFunctions as mf
 from .network import COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency, Network
@@ -1042,6 +1041,8 @@ class NetworkSet:
 
 
         """
+        from scipy.interpolate import interp1d
+
         ntw = self[0].copy()
         # Interpolating the scattering parameters
         s = npy.array([self[idx].s for idx in range(len(self))])
