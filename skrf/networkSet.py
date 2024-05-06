@@ -993,10 +993,10 @@ class NetworkSet:
         from pandas import DataFrame, Index, Series
         index = Index(
             self[0].frequency.f_scaled,
-            name='Freq(%s)'%self[0].frequency.unit
+            name=f'Freq({self[0].frequency.unit})'
             )
         df = DataFrame(
-            {'%s'%(k.name):
+            {f'{k.name}':
                 Series(getattr(k, attr)[:,m,n],index=index)
                 for k in self},
             index = index,
@@ -1447,7 +1447,7 @@ def getset(ntwk_dict, s, *args, **kwargs):
     if len(ntwk_list) > 0:
         return NetworkSet( ntwk_list,*args, **kwargs)
     else:
-        print('Warning: No keys in ntwk_dict contain \'%s\''%s)
+        print(f'Warning: No keys in ntwk_dict contain \'{s}\'')
         return None
 
 

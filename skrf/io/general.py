@@ -418,7 +418,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
 
     """
     if not os.path.exists('.'):
-        raise OSError('No such directory: %s'%dir)
+        raise OSError(f'No such directory: {dir}')
 
 
 
@@ -624,7 +624,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
 
     # This breaks compatibility with python 2.6 and older
     with open(file_name) as old_file, open(new_file_name, 'w') as new_file:
-        new_file.write('%s\n'%header_string)
+        new_file.write(f'{header_string}\n')
         for line in old_file:
             new_file.write(line)
 
