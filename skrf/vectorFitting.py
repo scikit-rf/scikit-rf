@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 
 from .plotting import axes_kwarg
 
+from .plotting import axes_kwarg
+
 
 class VectorFitting:
     """
