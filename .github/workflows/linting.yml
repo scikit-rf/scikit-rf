@@ -2,15 +2,14 @@ name: Code linting
 
 on: [push, pull_request]
 
-permissions:
-  contents: read
-  checks: write
-  id-token: write
-
 jobs:
   Tests:
 
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      id-token: write
     strategy:
       matrix:
         python-version: ['3.12']
