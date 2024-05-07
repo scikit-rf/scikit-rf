@@ -29,14 +29,14 @@ jobs:
     - name: Test the code, tutorials and examples
       if: ${{ always() }}
       run: |
-        tox -- --junitxml=pytest.xml
+        tox
 
     - name: Upload Test Results
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: Test Results (Python ${{ matrix.python-version }})
-        path: pytest.xml
+        path: test-results/*.xml
                   
 
     # Upload coverage data to coveralls.io
