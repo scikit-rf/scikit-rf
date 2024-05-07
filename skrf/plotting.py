@@ -69,11 +69,14 @@ import lazy_loader as lazy
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    mpl = lazy.load("matplotlib")
-    plt = lazy.load("matplotlib.pyplot")
-    tri = lazy.load("matplotlib.tri")
-    ticker = lazy.load("matplotlib.ticker")
-    dates = lazy.load("matplotlib.dates")
+    try:
+        mpl = lazy.load("matplotlib", error_on_import=True)
+        plt = lazy.load("matplotlib.pyplot", error_on_import=True)
+        tri = lazy.load("matplotlib.tri", error_on_import=True)
+        ticker = lazy.load("matplotlib.ticker", error_on_import=True)
+        dates = lazy.load("matplotlib.dates", error_on_import=True)
+    except ModuleNotFoundError:
+        pass
 
 import numpy as np
 
@@ -105,7 +108,7 @@ def axes_kwarg(func):
             ax = kwargs.pop('ax', None)
             if ax is None:
                 ax = plt.gca()
-        except ImportError as err:
+        except NameError as err:
             raise RuntimeError("Plotting not available") from err
         func(*args, ax=ax, **kwargs)
 
