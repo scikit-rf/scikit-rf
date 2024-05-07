@@ -1644,7 +1644,7 @@ class Media(ABC):
             csv file written from this function
         """
 
-        header = 'f[%s], Re(z0), Im(z0), Re(gamma), Im(gamma), Re(z0_port), Im(z0_port)\n'%self.frequency.unit
+        header = f'f[{self.frequency.unit}], Re(z0), Im(z0), Re(gamma), Im(gamma), Re(z0_port), Im(z0_port)\n'
 
         g,z,pz  = self.gamma, \
                 self.z0, self.z0_port if self.z0_port is not None else self.z0

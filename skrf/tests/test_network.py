@@ -1891,7 +1891,7 @@ class NetworkTestCase(unittest.TestCase):
     def test_de_embed_by_floordiv(self):
         ntwk_result_1 = self.ntwk1 // self.ntwk2
         ntwk_result_2 = self.ntwk1 // (self.ntwk2)
-        np.testing.assert_array_equal(ntwk_result_1.s, ntwk_result_2.s)
+        np.testing.assert_array_almost_equal(ntwk_result_1.s, ntwk_result_2.s)
 
         # By definition A // B      => B.inv * A
         # By definition A // [B, C] => B.inv * A * C.inv

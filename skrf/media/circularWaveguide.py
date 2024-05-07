@@ -131,8 +131,7 @@ class CircularWaveguide(Media):
         output =  \
                 'Circular Waveguide Media.  %i-%i %s.  %i points'%\
                 (f.f_scaled[0], f.f_scaled[-1], f.unit, f.npoints) + \
-                '\n r= %.2em'% \
-                (self.r)
+                f'\n r= {self.r:.2e}m'
         return output
 
     def __repr__(self) -> str:
