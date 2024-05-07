@@ -25,3 +25,5 @@ dist/
 poetry.lock
 lint.xml
 .venv/
+test-results/*.xml
+testing.xlsx

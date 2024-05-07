@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 import functools
 import inspect
 import re
-from abc import ABC
 from enum import Enum, auto
 
 import numpy as np
@@ -78,7 +77,7 @@ class Channel:
         self.query_values = self.parent.query_values
 
 
-class VNA(ABC):
+class VNA:
     _scpi = True  # Set to false in subclasses that don't use SCPI
 
     def __init__(

@@ -669,7 +669,7 @@ class Frequency:
                 returned by :func:`matplotlib.gca()`
         """
 
-        ax.set_xlabel('Frequency (%s)' % self.unit)
+        ax.set_xlabel(f'Frequency ({self.unit})')
 
     @axes_kwarg
     def plot(self, y: NumberLike, *args, ax: Axes=None, **kwargs):
