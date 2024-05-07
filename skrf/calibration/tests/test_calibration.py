@@ -42,7 +42,7 @@ WG = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*rf.mil,
 def _compare_dicts_allclose(first: dict, second: dict) -> None:
     assert first.keys() == second.keys()
     for k in first.keys():
-        npy.testing.assert_allclose(first[k], second[k], err_msg=f"Values from key '{k}' not equal!")
+        np.testing.assert_allclose(first[k], second[k], err_msg=f"Values from key '{k}' not equal!")
 
 
 class DetermineTest(unittest.TestCase):
