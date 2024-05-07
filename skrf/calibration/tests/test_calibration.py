@@ -39,6 +39,11 @@ WG_lossless = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'),
 WG = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*rf.mil,
                                       rho='gold', z0_override=50)
 
+def _compare_dicts_allclose(first: dict, second: dict) -> None:
+    assert first.keys() == second.keys()
+    for k in first.keys():
+        npy.testing.assert_allclose(first[k], second[k], err_msg=f"Values from key '{k}' not equal!")
+
 
 class DetermineTest(unittest.TestCase):
     def setUp(self):
@@ -580,7 +585,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         self.assertEqual(self.cal.coefs_8term, self.cal.coefs)
 
     def test_coefs_12term(self):
-        self.assertEqual(self.cal.coefs_12term, rf.convert_8term_2_12term(self.cal.coefs))
+        _compare_dicts_allclose(self.cal.coefs_12term, rf.convert_8term_2_12term(self.cal.coefs))
 
     def test_input_not_modified(self):
         dut_before = self.X.copy()
