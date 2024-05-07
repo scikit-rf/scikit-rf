@@ -179,9 +179,9 @@ from . import mathFunctions as mf
 from . import plotting as rfplt
 from .constants import K_BOLTZMANN, S_DEF_DEFAULT, S_DEFINITIONS, T0, ZERO, NumberLike
 from .frequency import Frequency
+from .plotting import axes_kwarg
 from .time import get_window, time_gate
 from .util import copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
-from .plotting import axes_kwarg
 
 
 class Network:

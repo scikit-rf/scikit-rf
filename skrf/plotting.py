@@ -54,17 +54,19 @@ Convenience plotting functions
 from __future__ import annotations
 
 import os
+from functools import wraps
 from numbers import Number
 from typing import TYPE_CHECKING, Callable
-from functools import wraps
 
 if TYPE_CHECKING:
     from typing import TypeVar
     Figure = TypeVar("Figure")
     Axes = TypeVar("Axes")
 
-import lazy_loader as lazy
 import warnings
+
+import lazy_loader as lazy
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     mpl = lazy.load("matplotlib", error_on_import=True)
@@ -103,8 +105,8 @@ def axes_kwarg(func):
             ax = kwargs.pop('ax', None)
             if ax is None:
                 ax = plt.gca()
-        except ImportError:
-            raise RuntimeError("Plotting not available")
+        except ImportError as err:
+            raise RuntimeError("Plotting not available") from err
         func(*args, ax=ax, **kwargs)
 
     return wrapper

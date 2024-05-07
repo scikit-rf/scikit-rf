@@ -75,14 +75,15 @@ from io import StringIO
 from pickle import UnpicklingError
 from typing import Any
 
-import numpy as np
 import lazy_loader as lazy
-pd = lazy.load("pandas")
+import numpy as np
 
 from ..frequency import Frequency
 from ..network import Network
 from ..networkSet import NetworkSet
 from ..util import get_extn, get_fid
+
+pd = lazy.load("pandas")
 
 
 def _get_extension(inst: Any) -> str:
@@ -709,8 +710,8 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
                 pd.Series(ntwk.s_im[:,m,n], index = index)
 
     df = pd.DataFrame(d)
-    df.__getattribute__('to_%s'%file_type)(file_name,
-        index_label='Freq(%s)'%ntwk.frequency.unit, **kwargs)
+    df.__getattribute__(f'to_{file_type}')(file_name,
+        index_label=f'Freq({ntwk.frequency.unit})', **kwargs)
 
 def network_2_dataframe(ntwk: Network, attrs: list[str] =None,
         ports: list[tuple[int, int]] = None, port_sep: str | None = None):

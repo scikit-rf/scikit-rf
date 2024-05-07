@@ -3,17 +3,17 @@ skrf is an object-oriented approach to microwave engineering,
 implemented in Python.
 """
 
-__version__ = '1.0.0'
+__version__ = "1.0.0"
 ## Import all  module names for coherent reference of name-space
-#import io
+# import io
 
 from . import (
     calibration,
     circuit,
     constants,
     frequency,
-    io,
     instances,
+    io,
     mathFunctions,
     media,
     network,
@@ -30,8 +30,8 @@ from .constants import *
 
 # Import contents into current namespace for ease of calling
 from .frequency import *
-from .io import *
 from .instances import *
+from .io import *
 from .mathFunctions import *
 from .network import *
 from .networkSet import *
@@ -55,8 +55,10 @@ try:
 except Exception:
     pass
 
+
 def __getattr__(name: str):
     return getattr(instances._instances, name)
+
 
 ## built-in imports
 from copy import deepcopy as copy
@@ -88,7 +90,7 @@ def setup_pylab() -> bool:
 
 
 def setup_plotting():
-    plotting_environment = os.environ.get('SKRF_PLOT_ENV', "pylab").lower()
+    plotting_environment = os.environ.get("SKRF_PLOT_ENV", "pylab").lower()
 
     if plotting_environment == "pylab":
         setup_pylab()
@@ -96,6 +98,7 @@ def setup_plotting():
         if setup_pylab():
             stylely()
     # elif some different plotting environment
-        # set that up
+    # set that up
+
 
 plotting_available = setup_plotting()

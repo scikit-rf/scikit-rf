@@ -127,7 +127,6 @@ from ..network import (
     zipfile,
 )
 from ..networkSet import NetworkSet
-
 from ..plotting import axes_kwarg
 
 ComplexArray = np.typing.NDArray[complex]

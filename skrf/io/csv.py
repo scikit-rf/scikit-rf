@@ -57,6 +57,7 @@ from .. import util
 from ..frequency import Frequency
 from ..network import Network
 
+
 def read_pna_csv(filename, *args, **kwargs):
     r"""
     Reads data from a csv file written by an Agilient PNA.

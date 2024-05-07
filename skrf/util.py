@@ -69,6 +69,7 @@ import numpy as np
 
 from .constants import Number
 
+
 def partial_with_docs(func, *args1, **kwargs1):
     @wraps(func)
     def method(self, *args2, **kwargs2):

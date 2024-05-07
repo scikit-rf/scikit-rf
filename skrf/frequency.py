@@ -57,9 +57,9 @@ from numpy import (
 )
 
 from .constants import FREQ_UNITS, ZERO, NumberLike
+from .plotting import axes_kwarg
 from .util import find_nearest_index, slice_domain
 
-from .plotting import axes_kwarg
 
 class InvalidFrequencyWarning(UserWarning):
     """Thrown if frequency values aren't monotonously increasing

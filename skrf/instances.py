@@ -58,7 +58,7 @@ References
 
 from .constants import mil
 from .frequency import Frequency
-from .media import Freespace, RectangularWaveguide, DefinedGammaZ0
+from .media import DefinedGammaZ0, Freespace, RectangularWaveguide  # noqa : F401
 
 
 class StaticInstances:
