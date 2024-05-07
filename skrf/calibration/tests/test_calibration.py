@@ -1,7 +1,7 @@
 import unittest
 import warnings
 
-import numpy as npy
+import numpy as np
 import pytest
 
 import skrf as rf
@@ -42,7 +42,7 @@ WG = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*rf.mil,
 def _compare_dicts_allclose(first: dict, second: dict) -> None:
     assert first.keys() == second.keys()
     for k in first.keys():
-        npy.testing.assert_allclose(first[k], second[k], err_msg=f"Values from key '{k}' not equal!")
+        np.testing.assert_allclose(first[k], second[k], err_msg=f"Values from key '{k}' not equal!")
 
 
 class DetermineTest(unittest.TestCase):
@@ -98,11 +98,11 @@ class DetermineTest(unittest.TestCase):
 
         short = rf.two_port_reflect(medium.short(), medium.short())
         r = determine_reflect(thru, short, line)
-        npy.testing.assert_array_almost_equal( r.s, -npy.ones_like(r.s))
+        np.testing.assert_array_almost_equal( r.s, -np.ones_like(r.s))
 
         reflect = rf.two_port_reflect(medium.open(), medium.open())
         r = determine_reflect(thru, reflect, line, reflect_approx = medium.open())
-        npy.testing.assert_array_almost_equal(r.s, npy.ones_like(r.s))
+        np.testing.assert_array_almost_equal(r.s, np.ones_like(r.s))
 
     def test_determine_reflect_matched_thru_and_line(self):
         freq = rf.F(.25, .7, 40, unit = 'GHz')
@@ -112,11 +112,11 @@ class DetermineTest(unittest.TestCase):
         line = medium.line(0.12, 'm')
         short = medium.short()
 
-        rng = npy.random.default_rng(12)
+        rng = np.random.default_rng(12)
         short.s[:, 0, 0] += rng.uniform(-.02, 0.02, freq.f.size) + rng.uniform(-.02, 0.02, freq.f.size)*1j
 
         r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
-        npy.testing.assert_array_almost_equal( r.s, short.s)
+        np.testing.assert_array_almost_equal( r.s, short.s)
 
 
     def test_determine_reflect_regression(self):
@@ -128,7 +128,7 @@ class DetermineTest(unittest.TestCase):
         short = rf.Network(frequency=freq, s=[[[(-1.+0.017870117714376983j)] ] ])
 
         r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
-        npy.testing.assert_array_almost_equal( r.s, short.s)
+        np.testing.assert_array_almost_equal( r.s, short.s)
 
 class ComputeSwitchTermsTest(unittest.TestCase):
     '''
@@ -154,10 +154,10 @@ class ComputeSwitchTermsTest(unittest.TestCase):
         self.gamma_f_indirect, self.gamma_r_indirect = compute_switch_terms(stands_meas)
 
     def test_gamma_f(self):
-        self.assertTrue(all(npy.abs(self.gamma_f_indirect.s - self.gamma_f.s) < 1e-9))
+        self.assertTrue(all(np.abs(self.gamma_f_indirect.s - self.gamma_f.s) < 1e-9))
 
     def test_gamma_r(self):
-        self.assertTrue(all(npy.abs(self.gamma_r_indirect.s - self.gamma_r.s) < 1e-9))
+        self.assertTrue(all(np.abs(self.gamma_r_indirect.s - self.gamma_r.s) < 1e-9))
 
 class CalibrationTest:
     """
@@ -284,7 +284,7 @@ class SDDLTest(OnePortTest):
         wg = self.wg
 
         self.E = wg.random(n_ports =2, name = 'E')
-        #self.E.s[0,:,:] = npy.array([[.1j,1],[1j,1j+2]])
+        #self.E.s[0,:,:] = np.array([[.1j,1],[1j,1j+2]])
         #print self.E.s[0]
 
         ideals = [
@@ -350,7 +350,7 @@ class SDDLWeikle(OnePortTest):
         self.wg = WG_lossless
         wg = self.wg
         self.E = wg.random(n_ports =2, name = 'E')
-        #self.E.s[0,:,:] = npy.array([[.1j,1],[1j,1j+2]])
+        #self.E.s[0,:,:] = np.array([[.1j,1],[1j,1j+2]])
         #print self.E.s[0]
 
         ideals = [
@@ -833,7 +833,7 @@ class NISTMultilineTRLTest(EightTermTest):
             )
 
     def test_gamma(self):
-        self.assertTrue(max(npy.abs(self.wg.gamma-self.cal.gamma)) < 1e-3)
+        self.assertTrue(max(np.abs(self.wg.gamma-self.cal.gamma)) < 1e-3)
 
 
 class NISTMultilineTRLTest2(NISTMultilineTRLTest):
@@ -845,11 +845,11 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
         self.wg = WG
         wg = self.wg
 
-        rng = npy.random.default_rng()
+        rng = np.random.default_rng()
 
         r = rng.uniform(10,100,NPTS)
         l = 1e-9*rng.uniform(100,200,NPTS)
-        g = npy.zeros(NPTS)
+        g = np.zeros(NPTS)
         c = 1e-12*rng.uniform(100,200,NPTS)
 
         rlgc = DistributedCircuit(frequency=wg.frequency, z0=None, R=r, L=l, G=g, C=c)
@@ -901,14 +901,14 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
             )
 
     def test_gamma(self):
-        self.assertTrue(max(npy.abs(self.rlgc.gamma-self.cal.gamma)) < 1e-3)
+        self.assertTrue(max(np.abs(self.rlgc.gamma-self.cal.gamma)) < 1e-3)
 
     def test_z0(self):
-        self.assertTrue(max(npy.abs(self.rlgc.z0-self.cal.z0)) < 1e-3)
+        self.assertTrue(max(np.abs(self.rlgc.z0-self.cal.z0)) < 1e-3)
 
     def test_shift(self):
         for k in self.cal.coefs.keys():
-            self.assertTrue(all(npy.abs(self.cal.coefs[k] - self.cal_shift.coefs[k]) < 1e-9))
+            self.assertTrue(all(np.abs(self.cal.coefs[k] - self.cal_shift.coefs[k]) < 1e-9))
 
 
     def test_numpy_float_arguments(self):
@@ -916,7 +916,7 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
         cal = NISTMultilineTRL(
             measured = self.measured[:3],
             Grefls = [-1],
-            l = [npy.float64(1000e-6), 1010e-6],
+            l = [np.float64(1000e-6), 1010e-6],
             switch_terms = (self.gamma_f, self.gamma_r),
             )
         cal.run()
@@ -926,8 +926,8 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
             measured = self.measured[:3],
             Grefls = [-1],
             l = [1000e-6, 1010e-6],
-            z0_ref = npy.float64(50),
-            z0_line = npy.float64(50),
+            z0_ref = np.float64(50),
+            z0_line = np.float64(50),
             switch_terms = (self.gamma_f, self.gamma_r),
             )
         cal.run()
@@ -971,7 +971,7 @@ class TUGMultilineTest(EightTermTest):
             )
 
     def test_gamma(self):
-        self.assertTrue(max(npy.abs(self.wg.gamma-self.cal.gamma)) < 1e-3)
+        self.assertTrue(max(np.abs(self.wg.gamma-self.cal.gamma)) < 1e-3)
 
 @pytest.mark.skip()
 class TREightTermTest(unittest.TestCase, CalibrationTest):
@@ -1443,7 +1443,7 @@ class LRMTest(EightTermTest):
             )
 
     def test_solved_r(self):
-        self.assertTrue(all(npy.abs(self.s.s - self.cal.solved_r.s) < 1e-7))
+        self.assertTrue(all(np.abs(self.s.s - self.cal.solved_r.s) < 1e-7))
 
 class LRRMTest(EightTermTest):
     def setUp(self):
@@ -1472,7 +1472,7 @@ class LRRMTest(EightTermTest):
         s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
         o = wg.shunt_capacitor(5e-15) ** wg.open(nports=1, name='open')
 
-        self.match_l = npy.random.default_rng().uniform(1e-12, 20e-12)
+        self.match_l = np.random.default_rng().uniform(1e-12, 20e-12)
         l = wg.inductor(L=self.match_l)
         m = l**m_i
 
@@ -1515,14 +1515,14 @@ class LRRMTest(EightTermTest):
     # Test the solved standards, don't use exact equality because of inductance
     # fitting tolerance.
     def test_solved_inductance(self):
-        solved_l = npy.mean(self.cal.solved_l)
-        self.assertTrue(npy.abs(self.match_l - solved_l) < 1e-3*self.match_l)
+        solved_l = np.mean(self.cal.solved_l)
+        self.assertTrue(np.abs(self.match_l - solved_l) < 1e-3*self.match_l)
 
     def test_solved_r1(self):
-        self.assertTrue(all(npy.abs(self.s.s - self.cal.solved_r1.s) < 1e-7))
+        self.assertTrue(all(np.abs(self.s.s - self.cal.solved_r1.s) < 1e-7))
 
     def test_solved_r2(self):
-        self.assertTrue(all(npy.abs(self.o.s - self.cal.solved_r2.s) < 1e-7))
+        self.assertTrue(all(np.abs(self.o.s - self.cal.solved_r2.s) < 1e-7))
 
 class LRRMTestNoFit(LRRMTest):
     def setUp(self):
@@ -1548,7 +1548,7 @@ class LRRMTestNoFit(LRRMTest):
         s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
         o = wg.shunt_capacitor(5e-15) ** wg.open(nports=1, name='open')
 
-        self.match_l = npy.random.default_rng().uniform(1e-12, 20e-12)
+        self.match_l = np.random.default_rng().uniform(1e-12, 20e-12)
         l = wg.inductor(L=self.match_l)
         m = l**m_i
 
@@ -1973,8 +1973,8 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
             if k in self.cal16.coefs.keys():
                 if 'isolation' in k:
                     continue
-                self.assertTrue(all(npy.abs(self.cal8.coefs[k] - self.cal16.coefs[k]) < 1e-10))
-                self.assertTrue(all(npy.abs(self.cal8.coefs[k] - self.cal_lmr16.coefs[k]) < 1e-10))
+                self.assertTrue(all(np.abs(self.cal8.coefs[k] - self.cal16.coefs[k]) < 1e-10))
+                self.assertTrue(all(np.abs(self.cal8.coefs[k] - self.cal_lmr16.coefs[k]) < 1e-10))
 
 
 class LMR16Test(SixteenTermTest):
@@ -1998,7 +1998,7 @@ class LMR16Test(SixteenTermTest):
         mr = rf.two_port_reflect(m, r)
         rr = rf.two_port_reflect(r, r)
 
-        thru_length = npy.random.default_rng().uniform(0,10)
+        thru_length = np.random.default_rng().uniform(0,10)
         thru = wg.line(thru_length,'deg',name='line')
 
         self.thru = thru
@@ -2074,11 +2074,11 @@ class MultiportCalTest(unittest.TestCase):
         # Test coefs
         nports = self.n_ports
         for e, c in enumerate(self.cal.coefs):
-            assert npy.allclose(c['directivity'], self.Z.s[:,e,e])
-            assert npy.allclose(c['source match'], self.Z.s[:,nports+e,nports+e])
-            assert npy.allclose(c['reflection tracking'], self.Z.s[:,e,nports+e] * self.Z.s[:,nports+e,e])
-            assert npy.allclose(c['switch term'], self.gammas[e].s)
-            assert npy.allclose(c['k']/self.cal.coefs[0]['k'], self.Z.s[:,nports+0,0]/self.Z.s[:,nports+e,e])
+            assert np.allclose(c['directivity'], self.Z.s[:,e,e])
+            assert np.allclose(c['source match'], self.Z.s[:,nports+e,nports+e])
+            assert np.allclose(c['reflection tracking'], self.Z.s[:,e,nports+e] * self.Z.s[:,nports+e,e])
+            assert np.allclose(c['switch term'], self.gammas[e].s)
+            assert np.allclose(c['k']/self.cal.coefs[0]['k'], self.Z.s[:,nports+0,0]/self.Z.s[:,nports+e,e])
 
         # Test DUT correction
         dut_cal = self.cal.apply_cal(dut_meas)
@@ -2094,7 +2094,7 @@ class MultiportCalTest(unittest.TestCase):
 
         # Test gamma solved by TRL
         for p in [(0, 1), (0, 2)]:
-            self.assertTrue(max(npy.abs(self.wg.gamma-self.cal.cals[p].gamma)) < 1e-3)
+            self.assertTrue(max(np.abs(self.wg.gamma-self.cal.cals[p].gamma)) < 1e-3)
 
     def make_error_networks(self, wg, nports):
         self.Z = wg.random(n_ports = 2*nports, name = 'Z')
@@ -2178,11 +2178,11 @@ class MultiportSOLTTest(MultiportCalTest):
                 # Test coefs
                 nports = self.n_ports
                 for e, c in enumerate(self.cal.coefs):
-                    assert npy.allclose(c['directivity'], self.Z.s[:,e,e])
-                    assert npy.allclose(c['source match'], self.Z.s[:,nports+e,nports+e])
-                    assert npy.allclose(c['reflection tracking'], self.Z.s[:,e,nports+e] * self.Z.s[:,nports+e,e])
-                    assert npy.allclose(c['switch term'], self.gammas[e].s)
-                    assert npy.allclose(c['k']/self.cal.coefs[0]['k'], self.Z.s[:,nports+0,0]/self.Z.s[:,nports+e,e])
+                    assert np.allclose(c['directivity'], self.Z.s[:,e,e])
+                    assert np.allclose(c['source match'], self.Z.s[:,nports+e,nports+e])
+                    assert np.allclose(c['reflection tracking'], self.Z.s[:,e,nports+e] * self.Z.s[:,nports+e,e])
+                    assert np.allclose(c['switch term'], self.gammas[e].s)
+                    assert np.allclose(c['k']/self.cal.coefs[0]['k'], self.Z.s[:,nports+0,0]/self.Z.s[:,nports+e,e])
 
                 # Test DUT correction
                 dut_cal = self.cal.apply_cal(dut_meas)

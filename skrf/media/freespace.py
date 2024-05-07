@@ -282,7 +282,7 @@ class Freespace(Media):
 
         Returns
         -------
-        gamma : npy.ndarray
+        gamma : np.ndarray
             Propagation Constant,
 
         Note
@@ -306,7 +306,7 @@ class Freespace(Media):
 
         Returns
         -------
-        z0_characteristic : npy.ndarray
+        z0_characteristic : np.ndarray
             Characteristic Impedance in units of ohms
         """
         ep = self.ep_with_rho

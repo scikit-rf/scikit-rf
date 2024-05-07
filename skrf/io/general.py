@@ -75,7 +75,7 @@ from io import StringIO
 from pickle import UnpicklingError
 from typing import Any
 
-import numpy as npy
+import numpy as np
 from pandas import DataFrame, ExcelWriter, Series
 
 from ..frequency import Frequency
@@ -581,15 +581,15 @@ def read_csv(filename):
 
     ntwk = Network(name=filename[:-4])
     try:
-        data = npy.loadtxt(filename, skiprows=3,delimiter=',',\
+        data = np.loadtxt(filename, skiprows=3,delimiter=',',\
                 usecols=range(9))
         s11 = data[:,1] +1j*data[:,2]
         s21 = data[:,3] +1j*data[:,4]
         s12 = data[:,5] +1j*data[:,6]
         s22 = data[:,7] +1j*data[:,8]
-        ntwk.s = npy.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
+        ntwk.s = np.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
     except(IndexError):
-        data = npy.loadtxt(filename, skiprows=3,delimiter=',',\
+        data = np.loadtxt(filename, skiprows=3,delimiter=',',\
                 usecols=range(3))
         ntwk.s = data[:,1] +1j*data[:,2]
 
@@ -814,10 +814,10 @@ class TouchstoneEncoder(json.JSONEncoder):
     and breaking down frequency objects into dicts.
     """
     def default(self, obj):
-        if isinstance(obj, npy.ndarray):
+        if isinstance(obj, np.ndarray):
             return obj.tolist()
         if isinstance(obj, complex):
-            return npy.real(obj), npy.imag(obj)  # split into [real, im]
+            return np.real(obj), np.imag(obj)  # split into [real, im]
         if isinstance(obj, Frequency):
             return {'flist': obj.f_scaled.tolist(), 'funit': obj.unit}
         return json.JSONEncoder.default(self, obj)
@@ -849,8 +849,8 @@ def from_json_string(obj_string):
     ntwk.name = obj['name']
     ntwk.comments = obj['comments']
     ntwk.port_names = obj['port_names']
-    ntwk.z0 = npy.array(obj['_z0'])[..., 0] + npy.array(obj['_z0'])[..., 1] * 1j  # recreate complex numbers
-    ntwk.s = npy.array(obj['_s'])[..., 0] + npy.array(obj['_s'])[..., 1] * 1j
-    ntwk.frequency = Frequency.from_f(npy.array(obj['_frequency']['flist']),
+    ntwk.z0 = np.array(obj['_z0'])[..., 0] + np.array(obj['_z0'])[..., 1] * 1j  # recreate complex numbers
+    ntwk.s = np.array(obj['_s'])[..., 0] + np.array(obj['_s'])[..., 1] * 1j
+    ntwk.frequency = Frequency.from_f(np.array(obj['_frequency']['flist']),
                                          unit=obj['_frequency']['funit'])
     return ntwk

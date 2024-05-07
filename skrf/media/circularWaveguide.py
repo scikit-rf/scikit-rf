@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as npy
+import numpy as np
 from numpy import sqrt, where
 from scipy.constants import epsilon_0, mu_0, pi
 from scipy.special import jn_zeros, jnp_zeros
@@ -259,7 +259,7 @@ class CircularWaveguide(Media):
         and v= 1/sqrt(ep*mu) is the bulk velocity inside the filling material.
         """
         v = 1/sqrt(self.ep*self.mu)
-        return v* self.kc/(2*npy.pi)
+        return v* self.kc/(2*np.pi)
 
     @property
     def f_norm(self) -> NumberLike:
@@ -417,7 +417,7 @@ class CircularWaveguide(Media):
 
         Returns
         -------
-        z0_characteristic : npy.ndarray
+        z0_characteristic : np.ndarray
             Characteristic Impedance in units of ohms
         """
         omega = self.frequency.w
