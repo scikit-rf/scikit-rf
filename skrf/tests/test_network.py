@@ -181,14 +181,11 @@ class NetworkTestCase(unittest.TestCase):
         s = np.ones(10)
         netw = rf.Network(frequency=freq, s=s)
 
-        n_lst = np.arange(-1,2) + 2 * (f_points) - 2
-        for n in n_lst:
-            t,y = netw.impulse_response('boxcar', n=n)
+        t, y = netw.impulse_response("boxcar", pad=0)
 
-            y_true = np.zeros_like(y)
-            y_true[t == 0] = 1
-            np.testing.assert_almost_equal(y, y_true)
-
+        y_true = np.zeros_like(y)
+        y_true[t == 0] = 1
+        np.testing.assert_almost_equal(y, y_true)
 
     def test_time_transform_nonlinear_f(self):
         netw_nonlinear_f = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))

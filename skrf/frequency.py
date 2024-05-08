@@ -580,6 +580,26 @@ class Frequency:
         freq.unit = self.unit
         return freq
 
+    def _t_padded(self, *, pad: int = 0, n: int | None = None, bandpass: bool | None = None) -> np.ndarray:
+        if bandpass is None:
+            bandpass = self.f[0] != 0
+
+        if n is None:
+            n = self.npoints + pad
+            n = n if bandpass else n * 2 - 1
+
+        if bandpass:
+            dt = 1 / (n * self.step)
+            t_stop = (n - 1) // 2 * dt
+            t_start = -t_stop - dt if n % 2 == 0 else (-n // 2 + 1) * dt
+
+            t = np.linspace(t_start, t_stop, num=n, endpoint=True)
+        else:
+            dt = 1 / (n * self.step)
+            t = np.linspace(-dt * (n // 2), dt * (n // 2), num=n, endpoint=True)
+
+        return t
+
     @property
     def t(self) -> np.ndarray:
         """
@@ -587,7 +607,7 @@ class Frequency:
 
         t_period = 2*(n-1)/f_step
         """
-        return np.fft.fftshift(np.fft.fftfreq(self.npoints, self.step))
+        return self._t_padded(bandpass=True)
 
     @property
     def t_ns(self) -> np.ndarray:

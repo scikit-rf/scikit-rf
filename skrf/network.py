@@ -4014,16 +4014,24 @@ class Network:
             Xi[:, 4 * l:4 * l + 4, 4 * l:4 * l + 4] = self._X(l * 2, l * 2 + 1, l, p, z0_se, z0_mm, s_def)
         return Xi
 
-    def _Xi_tilde(self, p: int, z0_se: np.ndarray, z0_mm: np.ndarray, s_def : str) -> np.ndarray:  # (31)
+    def _Xi_tilde(
+        self, p: int, z0_se: np.ndarray, z0_mm: np.ndarray, s_def: str
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:  # (31)
         n = self.nports
         P = np.ones(self.f.shape[0])[:, np.newaxis, np.newaxis] * self._P(p)
         QT = np.ones(self.f.shape[0])[:, np.newaxis, np.newaxis] * self._Q().T
         Xi = self._Xi(p, z0_se, z0_mm, s_def)
-        Xi_tilde = np.einsum('...ij,...jk->...ik', np.einsum('...ij,...jk->...ik', P, Xi), QT)
+        Xi_tilde: np.ndarray = np.einsum("...ij,...jk->...ik", np.einsum("...ij,...jk->...ik", P, Xi), QT)
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
-    def impulse_response(self, window: str = 'hamming', n: int = None, pad: int = 1000,
-                        bandpass: bool = None, squeeze: bool = True) -> tuple[np.ndarray, np.ndarray]:
+    def impulse_response(
+        self,
+        window: str = "hamming",
+        n: int | None = None,
+        pad: int = 1000,
+        bandpass: bool | None = None,
+        squeeze: bool = True,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate time-domain impulse response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -4060,9 +4068,9 @@ class Network:
 
         Returns
         -------
-        t : class:`np.ndarray`
+        t : class:`npy.ndarray`
             Time vector
-        y : class:`np.ndarray`
+        y : class:`npy.ndarray`
             Impulse response
 
         See Also
@@ -4070,33 +4078,47 @@ class Network:
             step_response
             extrapolate_to_dc
         """
-        if n is None:
-            # Use zero-padding specification. Note that this does not allow n odd.
-            n = 2 * (self.frequency.npoints + pad - 1)
 
-        fstep = self.frequency.step
-        if n % 2 == 0:
-            t = np.fft.ifftshift(np.fft.fftfreq(n, fstep))
-        else:
-            t = np.fft.ifftshift(np.fft.fftfreq(n+1, fstep))[1:]
-        if bandpass in (True, False):
-            center_to_dc = not bandpass
-        else:
-            center_to_dc = None
+        if bandpass is None:
+            bandpass = self.f[0] != 0
+
+        # if n is None:
+        #    n = self.frequency.npoints + pad
+        #    n = n if bandpass else n * 2 - 1
+
+        # if bandpass:
+        #    dt = 1 / (n * self.frequency.step)
+        #    t_stop = (n - 1) // 2 * dt
+        #    t_start = -t_stop - dt if n % 2 == 0 else (-n // 2 + 1) * dt
+
+        #    t = np.linspace(t_start, t_stop, num=n, endpoint=True)
+        #    cmd = np.fft.ifft
+        # else:
+        #    dt = 1 / (n * self.frequency.step)
+        #    t = np.linspace(-dt * (n // 2), dt * (n // 2), num=n, endpoint=True)
+        #    cmd = np.fft.irfft
+
+        t = self.frequency._t_padded(pad=pad, n=n, bandpass=bandpass)
+        n = len(t)
+
         if window is not None:
-            w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
+            w = self.windowed(window=window, normalize=False, center_to_dc=not bandpass)
         else:
             w = self
 
-        ir = mf.irfft(w.s, n=n)
+        if bandpass:
+            ir = np.fft.fftshift(np.fft.ifft(w.s, axis=0, n=n), axes=0)
+        else:
+            ir = np.fft.fftshift(np.fft.irfft(w.s, axis=0, n=n), axes=0)
+
         if squeeze:
             ir = ir.squeeze()
 
         return t, ir
 
     def step_response(
-            self, window: str = 'hamming', n: int = None, pad: int = 1000, squeeze: bool = True
-            ) -> tuple[np.ndarray, np.ndarray]:
+        self, window: str = "hamming", n: int | None = None, pad: int = 1000, squeeze: bool = True
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate time-domain step response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
