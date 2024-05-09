@@ -91,7 +91,7 @@ import numpy as np
 
 from .constants import INF, S_DEF_DEFAULT, NumberLike
 from .media import media
-from .network import Network, s2s
+from .network import Network, s2s, connect
 from .util import subplots
 
 if TYPE_CHECKING:
@@ -1320,3 +1320,66 @@ class Circuit:
         # remove x and y axis and labels
         ax.axis('off')
         fig.tight_layout()
+
+    @classmethod
+    def reduce_circuit(cls, circuit: Circuit) -> Circuit:
+        """
+        Return a Returns an reduced equivalent circuit with fewer components.
+
+        The reduced equivalent circuit allows faster calculation of the circuit network.
+
+        Parameters
+        ----------
+        circuit: The circuit need to reduce.
+
+        Returns
+        -------
+        reduced_circuit: The reduced circuit.
+        """
+        # Use list comprehension to find the connection need to be reduced
+        gen = (
+            (idx, cnx)
+            for idx, cnx in enumerate(circuit.connections)
+            if not (
+                any(getattr(ntwk, "_is_circuit_port", False) for ntwk, _ in cnx)
+                or len(cnx) != 2
+            )
+        )
+
+        # Get the first connection need to be reduced
+        skip_idx, cnx_to_reduce = next(gen, (-1, [(Network(), -1)] * 2))
+
+        # If there is no connection need to reduce, return the original circuit
+        if skip_idx == -1:
+            return circuit
+
+        # Connect the connecions need to be reduced
+        (ntwk1, k), (ntwk2, l) = cnx_to_reduce
+        ntwks_name = (ntwk1.name, ntwk2.name)
+
+        # Generate the connected network and the original port index
+        ntwk_tmp = connect(ntwkA=ntwk1, k=k, ntwkB=ntwk2, l=l)
+        orig_p = tuple(
+            tuple(i for i in range(ntwk.nports) if i != p) for ntwk, p in cnx_to_reduce
+        )
+
+        # Perform the reduction to get the reduced circuit connections
+        # Skip the connection that connected and replace the network and port index
+        reduced_cnxs = [
+            [
+                (
+                    (
+                        ntwk_tmp,
+                        orig_p[ntwks_name.index(ntwk.name)].index(port)
+                        + len(orig_p[: ntwks_name.index(ntwk.name)]),
+                    )
+                    if ntwk.name in ntwks_name
+                    else (ntwk, port)
+                )
+                for ntwk, port in cnx
+            ]
+            for idx, cnx in enumerate(circuit.connections)
+            if idx != skip_idx
+        ]
+
+        return cls.reduce_circuit(Circuit(reduced_cnxs))
