@@ -87,7 +87,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-import numpy as npy
+import numpy as np
 from numpy import imag, pi, real, unwrap
 from scipy import signal
 
@@ -109,7 +109,7 @@ def complex_2_magnitude(z: NumberLike):
     mag : ndarray or scalar
 
     """
-    return npy.abs(z)
+    return np.abs(z)
 
 
 def complex_2_db(z: NumberLike):
@@ -128,7 +128,7 @@ def complex_2_db(z: NumberLike):
     -------
     mag20dB : ndarray or scalar
     """
-    return magnitude_2_db(npy.abs(z))
+    return magnitude_2_db(np.abs(z))
 
 
 def complex_2_db10(z: NumberLike):
@@ -147,7 +147,7 @@ def complex_2_db10(z: NumberLike):
     -------
     mag10dB : ndarray or scalar
     """
-    return mag_2_db10(npy.abs(z))
+    return mag_2_db10(np.abs(z))
 
 
 def complex_2_radian(z: NumberLike):
@@ -165,7 +165,7 @@ def complex_2_radian(z: NumberLike):
         The counterclockwise angle from the positive real axis on the complex
         plane in the range ``(-pi, pi]``, with dtype as numpy.float64.
     """
-    return npy.angle(z)
+    return np.angle(z)
 
 
 def complex_2_degree(z: NumberLike):
@@ -181,7 +181,7 @@ def complex_2_degree(z: NumberLike):
     -------
     ang_deg : ndarray or scalar
     """
-    return npy.angle(z, deg=True)
+    return np.angle(z, deg=True)
 
 
 def complex_2_quadrature(z: NumberLike):
@@ -202,7 +202,7 @@ def complex_2_quadrature(z: NumberLike):
     arc_length : array like or scalar
         arc-length from real axis: angle*magnitude
     """
-    return (npy.abs(z), npy.angle(z)*npy.abs(z))
+    return (np.abs(z), np.angle(z)*np.abs(z))
 
 
 def complex_2_reim(z: NumberLike):
@@ -221,7 +221,7 @@ def complex_2_reim(z: NumberLike):
     imag : array like or scalar
         imaginary part of input
     """
-    return (npy.real(z), npy.imag(z))
+    return (np.real(z), np.imag(z))
 
 
 def complex_components(z: NumberLike):
@@ -246,7 +246,7 @@ def complex_components(z: NumberLike):
     c_arc : array like or scalar
         arclength from real axis, angle*magnitude
     """
-    return (*complex_2_reim(z), npy.angle(z,deg=True), *complex_2_quadrature(z))
+    return (*complex_2_reim(z), np.angle(z,deg=True), *complex_2_quadrature(z))
 
 
 def magnitude_2_db(z: NumberLike, zero_nan: bool = True):
@@ -265,9 +265,9 @@ def magnitude_2_db(z: NumberLike, zero_nan: bool = True):
     z : number or array_like
        Magnitude in dB given by 20*log10(|z|)
     """
-    out = 20 * npy.log10(z)
+    out = 20 * np.log10(z)
     if zero_nan:
-        return npy.nan_to_num(out, nan=LOG_OF_NEG, neginf=-npy.inf)
+        return np.nan_to_num(out, nan=LOG_OF_NEG, neginf=-np.inf)
     return out
 
 mag_2_db = magnitude_2_db
@@ -289,9 +289,9 @@ def mag_2_db10(z: NumberLike, zero_nan:bool = True):
     z : array_like
        Magnitude in dB given by 10*log10(|z|)
     """
-    out = 10 * npy.log10(z)
+    out = 10 * np.log10(z)
     if zero_nan:
-        return npy.nan_to_num(out, nan=LOG_OF_NEG, neginf=-npy.inf)
+        return np.nan_to_num(out, nan=LOG_OF_NEG, neginf=-np.inf)
     return out
 
 
@@ -348,7 +348,7 @@ def magdeg_2_reim(mag: NumberLike, deg: NumberLike):
         A complex number or sequence of complex numbers
 
     """
-    return mag*npy.exp(1j*deg*pi/180.)
+    return mag*np.exp(1j*deg*pi/180.)
 
 def dbdeg_2_reim(db: NumberLike, deg: NumberLike):
     """
@@ -383,7 +383,7 @@ def db_2_np(db: NumberLike):
     np : number or array_like
         A real number of sequence of real numbers
     """
-    return (npy.log(10)/20) * db
+    return (np.log(10)/20) * db
 
 
 def np_2_db(x: NumberLike):
@@ -400,7 +400,7 @@ def np_2_db(x: NumberLike):
     db : number or array_like
         A real number of sequence of real numbers
     """
-    return 20/npy.log(10) * x
+    return 20/np.log(10) * x
 
 
 def radian_2_degree(rad: NumberLike):
@@ -542,9 +542,9 @@ def sqrt_known_sign(z_squared: NumberLike, z_approx: NumberLike):
     z : number, array-like (same type as z_squared)
         square root of z_squared.
     """
-    z = npy.sqrt(z_squared)
-    return npy.where(
-        npy.sign(npy.angle(z)) == npy.sign(npy.angle(z_approx)),
+    z = np.sqrt(z_squared)
+    return np.where(
+        np.sign(np.angle(z)) == np.sign(np.angle(z_approx)),
         z, z.conj())
 
 
@@ -571,13 +571,13 @@ def find_correct_sign(z1: NumberLike, z2: NumberLike, z_approx: NumberLike):
 
     Returns
     -------
-    z3 : npy.array
+    z3 : np.array
         array built from z1 and z2 by
         z1 where sign(z1) == sign(z_approx), z2 else
 
     """
-    return npy.where(
-    npy.sign(npy.angle(z1)) == npy.sign(npy.angle(z_approx)),z1, z2)
+    return np.where(
+    np.sign(np.angle(z1)) == np.sign(np.angle(z_approx)),z1, z2)
 
 
 def find_closest(z1: NumberLike, z2: NumberLike, z_approx: NumberLike):
@@ -595,14 +595,14 @@ def find_closest(z1: NumberLike, z2: NumberLike, z_approx: NumberLike):
 
     Returns
     -------
-    z3 : npy.array
+    z3 : np.array
         array built from z1 and z2
 
     """
     z1_dist = abs(z1-z_approx)
     z2_dist = abs(z2-z_approx)
 
-    return npy.where(z1_dist<z2_dist,z1, z2)
+    return np.where(z1_dist<z2_dist,z1, z2)
 
 def sqrt_phase_unwrap(z: NumberLike):
     r"""
@@ -625,8 +625,8 @@ def sqrt_phase_unwrap(z: NumberLike):
     z : number of array_like
         A complex number or sequence of complex numbers
     """
-    return npy.sqrt(abs(z))*\
-            npy.exp(0.5*1j*unwrap_rad(complex_2_radian(z)))
+    return np.sqrt(abs(z))*\
+            np.exp(0.5*1j*unwrap_rad(complex_2_radian(z)))
 
 
 # mathematical functions
@@ -684,7 +684,7 @@ def neuman(x: NumberLike):
     return 2. - dirac_delta(x)
 
 
-def null(A: npy.ndarray, eps: float = 1e-15):
+def null(A: np.ndarray, eps: float = 1e-15):
     """
     Calculate the null space of matrix A.
 
@@ -702,8 +702,8 @@ def null(A: npy.ndarray, eps: float = 1e-15):
     https://scipy-cookbook.readthedocs.io/items/RankNullspace.html
     https://stackoverflow.com/questions/5889142/python-numpy-scipy-finding-the-null-space-of-a-matrix
     """
-    u, s, vh = npy.linalg.svd(A)
-    null_space = npy.compress(s <= eps, vh, axis=0)
+    u, s, vh = np.linalg.svd(A)
+    null_space = np.compress(s <= eps, vh, axis=0)
     return null_space.T
 
 
@@ -721,7 +721,7 @@ def inf_to_num(x: NumberLike):
     x : Number of array_like
         Input without with +/- inf replaced by large numbers
     """
-    x = npy.nan_to_num(x, nan=npy.nan, posinf=INF, neginf=-1*INF)
+    x = np.nan_to_num(x, nan=np.nan, posinf=INF, neginf=-1*INF)
     return x
 
 
@@ -817,12 +817,12 @@ def complex2Scalar(z: NumberLike):
     --------
     scalar2Complex
     """
-    z = npy.array(z)
+    z = np.array(z)
     re_im = []
     for k in z:
-        re_im.append(npy.real(k))
-        re_im.append(npy.imag(k))
-    return npy.array(re_im).flatten()
+        re_im.append(np.real(k))
+        re_im.append(np.imag(k))
+    return np.array(re_im).flatten()
 
 def scalar2Complex(s: NumberLike):
     """
@@ -845,12 +845,12 @@ def scalar2Complex(s: NumberLike):
     --------
     complex2Scalar
     """
-    s = npy.array(s)
+    s = np.array(s)
     z = []
 
     for k in range(0,len(s),2):
         z.append(s[k] + 1j*s[k+1])
-    return npy.array(z).flatten()
+    return np.array(z).flatten()
 
 
 def flatten_c_mat(s: NumberLike, order: str = 'F'):
@@ -872,7 +872,7 @@ def flatten_c_mat(s: NumberLike, order: str = 'F'):
     return complex2Scalar(s.flatten(order='F'))
 
 
-def rand_c(*size) -> npy.ndarray:
+def rand_c(*size) -> np.ndarray:
     """
     Creates a complex random array of shape s.
 
@@ -887,21 +887,21 @@ def rand_c(*size) -> npy.ndarray:
     ---------
     >>> x = rf.rand_c(2,2)
     """
-    rng = npy.random.default_rng()
+    rng = np.random.default_rng()
     return 1-2*rng.random(size) + \
         1j-2j*rng.random(size)
 
 
 
-def psd2TimeDomain(f: npy.ndarray, y: npy.ndarray, windowType: str = 'hamming'):
+def psd2TimeDomain(f: np.ndarray, y: np.ndarray, windowType: str = 'hamming'):
     """
     Convert a one sided complex spectrum into a real time-signal.
 
     Parameters
     ----------
-    f : list or npy.ndarray
+    f : list or np.ndarray
         frequency array
-    y : list of npy.ndarray
+    y : list of np.ndarray
         complex PSD array
     windowType: string
         windowing function, defaults to 'hamming''
@@ -926,17 +926,17 @@ def psd2TimeDomain(f: npy.ndarray, y: npy.ndarray, windowType: str = 'hamming'):
         y = y * window
 
     #create other half of spectrum
-    spectrum = (npy.hstack([npy.real(y[:0:-1]),npy.real(y)])) + \
-            1j*(npy.hstack([-npy.imag(y[:0:-1]),npy.imag(y)]))
+    spectrum = (np.hstack([np.real(y[:0:-1]),np.real(y)])) + \
+            1j*(np.hstack([-np.imag(y[:0:-1]),np.imag(y)]))
 
     # do the transform
     df = abs(f[1]-f[0])
     T = 1./df
-    timeVector = npy.linspace(-T/2.,T/2,2*len(f)-1)
-    signalVector = npy.fft.ifftshift(npy.fft.ifft(npy.fft.ifftshift(spectrum)))
+    timeVector = np.linspace(-T/2.,T/2,2*len(f)-1)
+    signalVector = np.fft.ifftshift(np.fft.ifft(np.fft.ifftshift(spectrum)))
 
     #the imaginary part of this signal should be from fft errors only,
-    signalVector= npy.real(signalVector)
+    signalVector= np.real(signalVector)
     # the response of frequency shifting is
     # exp(1j*2*pi*timeVector*f[0])
     # but I would have to manually undo this for the inverse, which is just
@@ -947,8 +947,8 @@ def psd2TimeDomain(f: npy.ndarray, y: npy.ndarray, windowType: str = 'hamming'):
 
 
 def rational_interp(
-        x: npy.ndarray,
-        y: npy.ndarray,
+        x: np.ndarray,
+        y: np.ndarray,
         d: int = 4,
         epsilon: float = 1e-9,
         axis: int = 0,
@@ -964,8 +964,8 @@ def rational_interp(
 
     Parameters
     ----------
-    x : npy.ndarray
-    y : npy.ndarray
+    x : np.ndarray
+    y : np.ndarray
     d : int, optional
         order of the polynomial, by default 4
     epsilon : float, optional
@@ -995,7 +995,7 @@ def rational_interp(
         raise NotImplementedError("Axis other than 0 is not implemented")
 
     if not assume_sorted:
-        sort_indices = npy.argsort(x, axis=axis)
+        sort_indices = np.argsort(x, axis=axis)
         x = x[sort_indices]
         y = y[sort_indices]
 
@@ -1003,7 +1003,7 @@ def rational_interp(
     if n <= d:
         raise ValueError('Not enough x-axis points')
 
-    w = npy.zeros(n)
+    w = np.zeros(n)
     # Scaling to give close to 1 weights
     hd = (x[n//2] - x[n//2-1])**d
     for k in range(n):
@@ -1027,13 +1027,13 @@ def rational_interp(
         # The method will divide by zero if new x value is exactly existing x value.
         # To avoid this we need to check for too close values and replace them with
         # y value at that position.
-        idx = npy.searchsorted(x, xi)
+        idx = np.searchsorted(x, xi)
         idx[idx == len(x)] = len(x) - 1
-        nearest_idx = npy.where(npy.abs(x[idx] - xi) < epsilon)[0]
+        nearest_idx = np.where(np.abs(x[idx] - xi) < epsilon)[0]
         nearest_value = y[idx[nearest_idx]]
 
         xi = xi.reshape(*w_shape)
-        with npy.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide='ignore', invalid='ignore'):
             assert axis == 0
             v = sum(y[i]*w[i]/(xi - x[i]) for i in range(n))\
                 /sum(w[i]/(xi - x[i]) for i in range(n))
@@ -1046,7 +1046,7 @@ def rational_interp(
 
     return fx
 
-def ifft(x: npy.ndarray) -> npy.ndarray:
+def ifft(x: np.ndarray) -> np.ndarray:
     """
     Transforms S-parameters to time-domain bandpass.
 
@@ -1064,10 +1064,10 @@ def ifft(x: npy.ndarray) -> npy.ndarray:
     --------
     irfft
     """
-    return npy.fft.fftshift(npy.fft.ifft(npy.fft.ifftshift(x, axes=0), axis=0), axes=0)
+    return np.fft.fftshift(np.fft.ifft(np.fft.ifftshift(x, axes=0), axis=0), axes=0)
 
 
-def irfft(x: npy.ndarray, n:int = None) -> npy.ndarray:
+def irfft(x: np.ndarray, n:int = None) -> np.ndarray:
     """
     Transforms S-parameters to time-domain, assuming complex conjugates for
     values corresponding to negative frequencies.
@@ -1088,16 +1088,16 @@ def irfft(x: npy.ndarray, n:int = None) -> npy.ndarray:
     --------
     ifft
     """
-    return npy.fft.fftshift(npy.fft.irfft(x, axis=0, n=n), axes=0)
+    return np.fft.fftshift(np.fft.irfft(x, axis=0, n=n), axes=0)
 
 
-def is_square(mat: npy.ndarray) -> bool:
+def is_square(mat: np.ndarray) -> bool:
     """
     Tests whether mat is a square matrix.
 
     Parameters
     ----------
-    mat : npy.ndarray
+    mat : np.ndarray
         Matrix to test for being square
 
     Returns
@@ -1112,13 +1112,13 @@ def is_square(mat: npy.ndarray) -> bool:
     return mat.shape[0] == mat.shape[1]
 
 
-def is_unitary(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
+def is_unitary(mat: np.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     Tests mat for unitariness.
 
     Parameters
     ----------
-    mat : npy.ndarray
+    mat : np.ndarray
         Matrix to test for unitariness
     tol : float
         Absolute tolerance. Defaults to :data:`ALMOST_ZERO`
@@ -1135,17 +1135,17 @@ def is_unitary(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     if not is_square(mat):
         return False
-    return npy.allclose(get_Hermitian_transpose(mat) @ mat,
-                        npy.identity(mat.shape[0]), atol=tol)
+    return np.allclose(get_Hermitian_transpose(mat) @ mat,
+                        np.identity(mat.shape[0]), atol=tol)
 
 
-def is_symmetric(mat: npy.ndarray, tol: int = ALMOST_ZERO) -> bool:
+def is_symmetric(mat: np.ndarray, tol: int = ALMOST_ZERO) -> bool:
     """
     Tests mat for symmetry.
 
     Parameters
     ----------
-    mat : npy.ndarray
+    mat : np.ndarray
         Matrix to test for symmetry
     tol : float, optional
         Absolute tolerance. Defaults to :data:`ALMOST_ZERO`
@@ -1161,33 +1161,33 @@ def is_symmetric(mat: npy.ndarray, tol: int = ALMOST_ZERO) -> bool:
     """
     if not is_square(mat):
         return False
-    return npy.allclose(mat, mat.transpose(), atol=tol)
+    return np.allclose(mat, mat.transpose(), atol=tol)
 
 
-def get_Hermitian_transpose(mat: npy.ndarray) -> npy.ndarray:
+def get_Hermitian_transpose(mat: np.ndarray) -> np.ndarray:
     """
     Returns the conjugate transpose of mat.
 
     Parameters
     ----------
-    mat : npy.ndarray
+    mat : np.ndarray
         Matrix to compute the conjugate transpose of
 
     Returns
     -------
-    mat : npy.ndarray
+    mat : np.ndarray
 
     """
     return mat.transpose().conjugate()
 
 
-def is_Hermitian(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
+def is_Hermitian(mat: np.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     Tests whether mat is Hermitian.
 
     Parameters
     ----------
-    mat : npy.ndarray
+    mat : np.ndarray
         Matrix to test for being Hermitian
     tol : float
         Absolute tolerance
@@ -1203,10 +1203,10 @@ def is_Hermitian(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     if not is_square(mat):
         return False
-    return npy.allclose(mat, get_Hermitian_transpose(mat), atol=tol)
+    return np.allclose(mat, get_Hermitian_transpose(mat), atol=tol)
 
 
-def is_positive_definite(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
+def is_positive_definite(mat: np.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     Tests mat for positive definiteness.
 
@@ -1216,7 +1216,7 @@ def is_positive_definite(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
 
     Parameters
     ----------
-    mat : npy.ndarray
+    mat : np.ndarray
         Matrix to test for positive definiteness
     tol : float, optional
         Absolute tolerance. Defaults to :data:`ALMOST_ZERO`
@@ -1233,13 +1233,13 @@ def is_positive_definite(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
     if not is_Hermitian(mat, tol=tol):
         return False
     try:
-        npy.linalg.cholesky(mat)
+        np.linalg.cholesky(mat)
         return True
-    except npy.linalg.LinAlgError:
+    except np.linalg.LinAlgError:
         return False
 
 
-def is_positive_semidefinite(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
+def is_positive_semidefinite(mat: np.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     Tests mat for positive semidefiniteness.
 
@@ -1247,7 +1247,7 @@ def is_positive_semidefinite(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool
 
     Parameters
     ----------
-    mat : npy.ndarray
+    mat : np.ndarray
         Matrix to test for positive semidefiniteness
     tol : float, optional
         Absolute tolerance in determining nonnegativity due to loss of precision
@@ -1265,36 +1265,36 @@ def is_positive_semidefinite(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool
     if not is_Hermitian(mat):
         return False
     try:
-        v = npy.linalg.eigvalsh(mat)
-    except npy.linalg.LinAlgError:
+        v = np.linalg.eigvalsh(mat)
+    except np.linalg.LinAlgError:
         return False
-    return npy.all(v > -tol)
+    return np.all(v > -tol)
 
-def rsolve(A: npy.ndarray, B: npy.ndarray) -> npy.ndarray:
+def rsolve(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     r"""Solves x @ A = B.
 
     Calls numpy.linalg.solve with transposed matrices.
 
-    Same as B @ npy.linalg.inv(A) but avoids calculating the inverse and
+    Same as B @ np.linalg.inv(A) but avoids calculating the inverse and
     should be numerically slightly more accurate.
 
     Input should have dimension of similar to (nfreqs, nports, nports).
 
     Parameters
     ----------
-    A : npy.ndarray
-    B : npy.ndarray
+    A : np.ndarray
+    B : np.ndarray
 
     Returns
     -------
-    x : npy.ndarray
+    x : np.ndarray
     """
-    return npy.transpose(npy.linalg.solve(npy.transpose(A, (0, 2, 1)).conj(),
-            npy.transpose(B, (0, 2, 1)).conj()), (0, 2, 1)).conj()
+    return np.transpose(np.linalg.solve(np.transpose(A, (0, 2, 1)).conj(),
+            np.transpose(B, (0, 2, 1)).conj()), (0, 2, 1)).conj()
 
-def nudge_eig(mat: npy.ndarray,
+def nudge_eig(mat: np.ndarray,
               cond: float | None = None,
-              min_eig: float | None  = None) -> npy.ndarray:
+              min_eig: float | None  = None) -> np.ndarray:
     r"""Nudge eigenvalues with absolute value smaller than
     max(cond * max(eigenvalue), min_eig) to that value.
     Can be used to avoid singularities in solving matrix equations.
@@ -1303,7 +1303,7 @@ def nudge_eig(mat: npy.ndarray,
 
     Parameters
     ----------
-    mat : npy.ndarray
+    mat : np.ndarray
         Matrices to nudge
     cond : float, optional
         Minimum eigenvalue ratio compared to the maximum eigenvalue.
@@ -1313,7 +1313,7 @@ def nudge_eig(mat: npy.ndarray,
         Default value is set by `skrf.constants.EIG_MIN`.
     Returns
     -------
-    res : npy.ndarray
+    res : np.ndarray
         Nudged matrices
     """
     # use current constants
@@ -1323,21 +1323,21 @@ def nudge_eig(mat: npy.ndarray,
         min_eig = EIG_MIN
 
     # Eigenvalues and vectors
-    eigw, eigv = npy.linalg.eig(mat)
+    eigw, eigv = np.linalg.eig(mat)
     # Max eigenvalue for each frequency
-    max_eig = npy.amax(npy.abs(eigw), axis=1)
+    max_eig = np.amax(np.abs(eigw), axis=1)
     # Calculate mask for positions where problematic eigenvalues are
-    mask = npy.logical_or(npy.abs(eigw) < cond * max_eig[:, None], npy.abs(eigw) < min_eig)
+    mask = np.logical_or(np.abs(eigw) < cond * max_eig[:, None], np.abs(eigw) < min_eig)
     if not mask.any():
         # Nothing to do. Return the original array.
         return mat
 
-    mask_cond = cond * npy.repeat(max_eig[:, None], mat.shape[-1], axis=-1)[mask]
-    mask_min = min_eig * npy.ones(mask_cond.shape)
+    mask_cond = cond * np.repeat(max_eig[:, None], mat.shape[-1], axis=-1)[mask]
+    mask_min = min_eig * np.ones(mask_cond.shape)
     # Correct the eigenvalues
-    eigw[mask] = npy.maximum(mask_cond, mask_min)
+    eigw[mask] = np.maximum(mask_cond, mask_min)
 
     # Now assemble the eigendecomposited matrices back
-    e = npy.zeros_like(mat)
-    npy.einsum('ijj->ij', e)[...] = eigw
+    e = np.zeros_like(mat)
+    np.einsum('ijj->ij', e)[...] = eigw
     return rsolve(eigv, eigv @ e)

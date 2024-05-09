@@ -29,7 +29,7 @@ from __future__ import annotations
 from numbers import Number
 from typing import TYPE_CHECKING
 
-import numpy as npy
+import numpy as np
 from numpy import exp, sqrt, where
 from scipy.constants import epsilon_0, mu_0, pi
 
@@ -296,7 +296,7 @@ class RectangularWaveguide(Media):
 
         """
         v = 1/sqrt(self.ep*self.mu)
-        return v* self.kc/(2*npy.pi)
+        return v* self.kc/(2*np.pi)
 
     @property
     def f_norm(self) -> NumberLike:
@@ -473,7 +473,7 @@ class RectangularWaveguide(Media):
 
         Returns
         -------
-        z0_characteristic : npy.ndarray
+        z0_characteristic : np.ndarray
             Characteristic Impedance in units of ohms
         """
         omega = self.frequency.w

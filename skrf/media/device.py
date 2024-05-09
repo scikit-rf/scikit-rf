@@ -30,7 +30,7 @@ Example Devices
 
 from abc import ABCMeta, abstractproperty
 
-import numpy as npy
+import numpy as np
 from numpy import exp, sqrt
 
 from .. import mathFunctions as mf
@@ -121,7 +121,7 @@ class MatchedSymmetricCoupler(Device):
         t_rad = mf.degree_2_radian(self.t_phase)
         c_rad = t_rad + mf.degree_2_radian(self.phase_diff)
 
-        self._t = npy.sqrt(1- npy.abs(c)**2)*exp(1j*t_rad)
+        self._t = np.sqrt(1- np.abs(c)**2)*exp(1j*t_rad)
         self._c = c*exp(1j*c_rad)
 
     @property
@@ -133,7 +133,7 @@ class MatchedSymmetricCoupler(Device):
         t_rad = mf.degree_2_radian(self.t_phase)
         c_rad = t_rad + mf.degree_2_radian(self.phase_diff)
         self._t= t*exp(1j*t_rad)
-        self._c = npy.sqrt(1- npy.abs(t)**2)*exp(1j*c_rad)
+        self._c = np.sqrt(1- np.abs(t)**2)*exp(1j*c_rad)
 
 
     @property

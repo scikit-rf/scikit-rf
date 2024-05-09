@@ -1,7 +1,7 @@
 import os
 import unittest
 
-import numpy as npy
+import numpy as np
 import pytest
 
 import skrf as rf
@@ -42,7 +42,7 @@ class AgilentCSVTestCase(unittest.TestCase):
         This tests reading in of the data of the test file.
         """
         self.assertTrue((self.acsv.data ==
-                         npy.array([[750000000000, 1, 2, 3, 4],
+                         np.array([[750000000000, 1, 2, 3, 4],
                                     [1100000000000, 5, 6, 7,8],
                                    ])).all())
 

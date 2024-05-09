@@ -96,7 +96,7 @@ from numbers import Number
 from textwrap import dedent
 from warnings import warn
 
-import numpy as npy
+import numpy as np
 from numpy import angle, einsum, exp, imag, invert, linalg, ones, poly1d, real, sqrt, zeros
 from numpy.linalg import det
 from scipy.optimize import least_squares
@@ -120,7 +120,7 @@ from ..network import (
 )
 from ..networkSet import NetworkSet
 
-ComplexArray = npy.typing.NDArray[complex]
+ComplexArray = np.typing.NDArray[complex]
 
 global coefs_list_12term
 coefs_list_12term =[
@@ -398,7 +398,7 @@ class Calibration:
                     std = idx
 
         if isinstance(std, str):
-            raise (ValueError('standard %s not found in ideals'%std))
+            raise (ValueError(f'standard {std} not found in ideals'))
 
         return (self.ideals.pop(std),  self.measured.pop(std))
 
@@ -1143,30 +1143,30 @@ class OnePort(Calibration):
         fLength = len(mList[0])
 
         #initialize outputs
-        abc = npy.zeros((fLength,numCoefs),dtype=complex)
-        residuals =     npy.zeros((fLength,\
-                npy.sign(numStds-numCoefs)),dtype=complex)
-        parameter_variance = npy.zeros((fLength, 3,3),dtype=complex)
-        measurement_variance = npy.zeros((fLength, 1),dtype=complex)
+        abc = np.zeros((fLength,numCoefs),dtype=complex)
+        residuals =     np.zeros((fLength,\
+                np.sign(numStds-numCoefs)),dtype=complex)
+        parameter_variance = np.zeros((fLength, 3,3),dtype=complex)
+        measurement_variance = np.zeros((fLength, 1),dtype=complex)
         # loop through frequencies and form m, a vectors and
         # the matrix M. where M = i1, 1, i1*m1
         #                         i2, 1, i2*m2
         #                                 ...etc
         for f in list(range(fLength)):
             #create  m, i, and 1 vectors
-            one = npy.ones(shape=(numStds,1))
-            m = npy.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
-            i = npy.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f
+            one = np.ones(shape=(numStds,1))
+            m = np.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
+            i = np.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f
 
             # construct the matrix
-            Q = npy.hstack([i, one, i*m])
+            Q = np.hstack([i, one, i*m])
             # calculate least squares
-            abcTmp, residualsTmp = npy.linalg.lstsq(Q,m,rcond=None)[0:2]
+            abcTmp, residualsTmp = np.linalg.lstsq(Q,m,rcond=None)[0:2]
             if numStds > 3:
                 measurement_variance[f,:]= residualsTmp/(numStds-numCoefs)
                 parameter_variance[f,:] = \
                         abs(measurement_variance[f,:])*\
-                        npy.linalg.inv(npy.dot(Q.T,Q))
+                        np.linalg.inv(np.dot(Q.T,Q))
 
 
             abc[f,:] = abcTmp.flatten()
@@ -1199,12 +1199,12 @@ class OnePort(Calibration):
     def apply_cal(self, ntwk):
         er_ntwk = Network(frequency = self.frequency, name=ntwk.name)
         tracking  = self.coefs['reflection tracking']
-        s12 = npy.sqrt(tracking)
+        s12 = np.sqrt(tracking)
         s21 = s12
 
         s11 = self.coefs['directivity']
         s22 = self.coefs['source match']
-        er_ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose(2,0,1)
+        er_ntwk.s = np.array([[s11, s12],[s21,s22]]).transpose(2,0,1)
         return er_ntwk.inv**ntwk
 
     def embed(self,ntwk):
@@ -1458,8 +1458,8 @@ class PHN(OnePort):
         distance2 = abs(a2_s - a_guess) + abs(b2_s - b_guess)
 
 
-        b_found = npy.where(distance1<distance2, b1, b2)
-        a_found = npy.where(distance1<distance2, a1, a2)
+        b_found = np.where(distance1<distance2, b1, b2)
+        a_found = np.where(distance1<distance2, a1, a2)
 
 
         self.ideals[0].s = z2s(a_found.reshape(-1,1,1),1)
@@ -1558,7 +1558,7 @@ class TwelveTerm(Calibration):
             n_thrus=0
             for k in self.ideals:
                 mean_trans = NetworkSet([k.s21, k.s12]).mean_s_mag
-                trans_mag = npy.mean(mean_trans.s_mag.flatten())
+                trans_mag = np.mean(mean_trans.s_mag.flatten())
                 # this number is arbitrary but reasonable
                 if trans_mag > trans_thres_mag:
                     n_thrus +=1
@@ -1574,7 +1574,7 @@ class TwelveTerm(Calibration):
         # more transmissive standards last, by sorted measured/ideals
         # based on mean s21
         if self.sloppy_input:
-            trans = [npy.mean(k.s21.s_mag) for k in self.ideals]
+            trans = [np.mean(k.s21.s_mag) for k in self.ideals]
             # see http://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
             # get order of indices of sorted means s21
             order = [x for (y,x) in sorted(zip(trans, range(len(trans))),\
@@ -1605,8 +1605,8 @@ class TwelveTerm(Calibration):
             p1_coefs['isolation'] = self.kwargs['isolation'].s21.s.flatten()
             p2_coefs['isolation'] = self.kwargs['isolation'].s12.s.flatten()
         else:
-            p1_coefs['isolation'] = npy.zeros(len(self.frequency), dtype=complex)
-            p2_coefs['isolation'] = npy.zeros(len(self.frequency), dtype=complex)
+            p1_coefs['isolation'] = np.zeros(len(self.frequency), dtype=complex)
+            p2_coefs['isolation'] = np.zeros(len(self.frequency), dtype=complex)
 
 
         # loop thru thrus, and calculate error terms for each one
@@ -1638,8 +1638,8 @@ class TwelveTerm(Calibration):
 
             thru.flip(), thru_i.flip() # flip em back
 
-        p1_coefs['transmission tracking'] = npy.mean(npy.array(tt1),axis=0).flatten()
-        p2_coefs['transmission tracking'] = npy.mean(npy.array(tt2),axis=0).flatten()
+        p1_coefs['transmission tracking'] = np.mean(np.array(tt1),axis=0).flatten()
+        p2_coefs['transmission tracking'] = np.mean(np.array(tt2),axis=0).flatten()
         p1_coefs['load match'] = NetworkSet(lm1).mean_s.s.flatten()
         p2_coefs['load match'] = NetworkSet(lm2).mean_s.s.flatten()
 
@@ -1647,8 +1647,8 @@ class TwelveTerm(Calibration):
         # update coefs
         coefs = {}
 
-        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
-        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
+        coefs.update({f'forward {k}': p1_coefs[k] for k in p1_coefs})
+        coefs.update({f'reverse {k}': p2_coefs[k] for k in p2_coefs})
         eight_term_coefs = convert_12term_2_8term(coefs)
 
         coefs.update({l: eight_term_coefs[l] for l in \
@@ -2144,10 +2144,10 @@ class EightTerm(Calibration):
 
         fLength = len(mList[0])
         #initialize outputs
-        error_vector = npy.zeros(shape=(fLength,numCoefs),dtype=complex)
-        residuals = npy.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex)
-        Q = npy.zeros((numStds*4, 7),dtype=complex)
-        M = npy.zeros((numStds*4, 1),dtype=complex)
+        error_vector = np.zeros(shape=(fLength,numCoefs),dtype=complex)
+        residuals = np.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex)
+        Q = np.zeros((numStds*4, 7),dtype=complex)
+        M = np.zeros((numStds*4, 1),dtype=complex)
         # loop through frequencies and form m, a vectors and
         # the matrix M. where M =       e00 + S11i
         #                                                       i2, 1, i2*m2
@@ -2156,14 +2156,14 @@ class EightTerm(Calibration):
             # loop through standards and fill matrix
             for k in list(range(numStds)):
                 m,i  = mList[k][f,:,:],iList[k][f,:,:] # 2x2 s-matrices
-                Q[k*4:k*4+4,:] = npy.array([\
+                Q[k*4:k*4+4,:] = np.array([\
                         [ 1, i[0,0]*m[0,0], -i[0,0],    0,  i[1,0]*m[0,1],        0,         0   ],\
                         [ 0, i[0,1]*m[0,0], -i[0,1],    0,  i[1,1]*m[0,1],        0,     -m[0,1] ],\
                         [ 0, i[0,0]*m[1,0],     0,      0,  i[1,0]*m[1,1],   -i[1,0],        0   ],\
                         [ 0, i[0,1]*m[1,0],     0,      1,  i[1,1]*m[1,1],   -i[1,1],    -m[1,1] ],\
                         ])
                 #pdb.set_trace()
-                M[k*4:k*4+4,:] = npy.array([\
+                M[k*4:k*4+4,:] = np.array([\
                         [ m[0,0]],\
                         [       0       ],\
                         [ m[1,0]],\
@@ -2171,7 +2171,7 @@ class EightTerm(Calibration):
                         ])
 
             # calculate least squares
-            error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M,rcond=None)[0:2]
+            error_vector_at_f, residuals_at_f = np.linalg.lstsq(Q,M,rcond=None)[0:2]
             #if len (residualsTmp )==0:
             #       raise ValueError( 'matrix has singular values, check standards')
 
@@ -2201,8 +2201,8 @@ class EightTerm(Calibration):
                 })
         else:
             self._coefs.update({
-                'forward switch term': npy.zeros(fLength, dtype=complex),
-                'reverse switch term': npy.zeros(fLength, dtype=complex),
+                'forward switch term': np.zeros(fLength, dtype=complex),
+                'reverse switch term': np.zeros(fLength, dtype=complex),
                 })
         # output is a dictionary of information
         self._output_from_run = {
@@ -2277,8 +2277,8 @@ class EightTerm(Calibration):
         """
         ec = self.coefs
         npoints = len(ec['k'])
-        one = npy.ones(npoints,dtype=complex)
-        zero = npy.zeros(npoints,dtype=complex)
+        one = np.ones(npoints,dtype=complex)
+        zero = np.zeros(npoints,dtype=complex)
 
         Edf = self.coefs['forward directivity']
         Esf = self.coefs['forward source match']
@@ -2291,19 +2291,19 @@ class EightTerm(Calibration):
         detX = Edf*Esf-Erf
         detY = Edr*Esr-Err
 
-        T1 = npy.array([
+        T1 = np.array([
                 [ -detX, zero    ],
                 [ zero,  -k*detY ]
                 ]).transpose(2,0,1)
-        T2 = npy.array([
+        T2 = np.array([
                 [ Edf,    zero ],
                 [ zero,  k*Edr ]
                 ]).transpose(2,0,1)
-        T3 = npy.array([
+        T3 = np.array([
                 [ -Esf,   zero ],
                 [ zero, -k*Esr ]
                 ]).transpose(2,0,1)
-        T4 = npy.array([
+        T4 = np.array([
                 [ one, zero ],
                 [ zero, k   ]
                 ]).transpose(2,0,1)
@@ -2322,7 +2322,7 @@ class EightTerm(Calibration):
         """
         ec = self.coefs
         npoints = len(ec['k'])
-        one = npy.ones(npoints,dtype=complex)
+        one = np.ones(npoints,dtype=complex)
 
         Edf = self.coefs['forward directivity']
         Esf = self.coefs['forward source match']
@@ -2332,12 +2332,12 @@ class EightTerm(Calibration):
         Err = self.coefs['reverse reflection tracking']
         k = self.coefs['k']
 
-        S1 = npy.array([
+        S1 = np.array([
                 [ Edf,  Erf/k ],
                 [ k,    Esf ]
                 ]).transpose(2,0,1)
 
-        S2 = npy.array([
+        S2 = np.array([
                 [ Edr,  one ],
                 [ Err,  Esr ]
                 ]).transpose(2,0,1)
@@ -2345,7 +2345,7 @@ class EightTerm(Calibration):
         #Port impedances before renormalization.
         #Only the DUT side (port 2) is renormalized.
         #VNA side (port 1) stays unchanged.
-        z = npy.array([z0_new, z0_old]).transpose()
+        z = np.array([z0_new, z0_old]).transpose()
 
         if powerwave:
             S1 = renormalize_s(S1, z, z0_new, s_def='power')
@@ -2508,7 +2508,7 @@ class TRL(EightTerm):
 
         orig_ideal_thru = None
 
-        if npy.any(ideals[0].s[:,1,0] != 1) or npy.any(ideals[0].s[:,0,1] != 1):
+        if np.any(ideals[0].s[:,1,0] != 1) or np.any(ideals[0].s[:,0,1] != 1):
             orig_ideal_thru = ideals[0]
             ideals[0] = ideals[0].copy()
             ideals[0].s[:,0,0] = 0
@@ -2731,7 +2731,7 @@ class NISTMultilineTRL(EightTerm):
         """
         self.refl_offset = refl_offset
 
-        if npy.isscalar(ref_plane):
+        if np.isscalar(ref_plane):
             ref_plane = [ref_plane, ref_plane]
         self.ref_plane = ref_plane
         self.er_est = er_est
@@ -2744,14 +2744,14 @@ class NISTMultilineTRL(EightTerm):
         self.z0_line = z0_line
 
         fpoints = len(measured[0].frequency)
-        if npy.isscalar(self.z0_ref):
+        if np.isscalar(self.z0_ref):
             self.z0_ref = [self.z0_ref] * fpoints
-        if npy.isscalar(self.z0_line):
+        if np.isscalar(self.z0_line):
             self.z0_line = [self.z0_line] * fpoints
-        if npy.isscalar(self.z0_ref):
+        if np.isscalar(self.z0_ref):
             self.c0 = [self.c0] * fpoints
 
-        if npy.isscalar(self.Grefls):
+        if np.isscalar(self.Grefls):
             # assume a single reflect
             self.Grefls = [self.Grefls]
 
@@ -2760,7 +2760,7 @@ class NISTMultilineTRL(EightTerm):
         if self.refl_offset is None:
             self.refl_offset = [0] * len(self.Grefls)
 
-        if npy.isscalar(self.refl_offset):
+        if np.isscalar(self.refl_offset):
             self.refl_offset = [self.refl_offset] * n_reflects
 
         if len(measured) != len(self.Grefls) + len(l):
@@ -2797,12 +2797,12 @@ class NISTMultilineTRL(EightTerm):
 
     def run(self):
         c = 299792458.0
-        pi = npy.pi
+        pi = np.pi
 
         inv = linalg.inv
-        exp = npy.exp
-        log = npy.log
-        abs = npy.abs
+        exp = np.exp
+        log = np.log
+        abs = np.abs
 
         gamma_est_user = self.kwargs.get('gamma_est', None)
 
@@ -2815,28 +2815,28 @@ class NISTMultilineTRL(EightTerm):
         freqs = measured_lines[0].f
         fpoints = len(freqs)
         lines = len(l)
-        gamma = npy.zeros(fpoints, dtype=complex)
-        z0 = npy.zeros(fpoints, dtype=complex)
+        gamma = np.zeros(fpoints, dtype=complex)
+        z0 = np.zeros(fpoints, dtype=complex)
 
-        gamma_est = (1j*2*pi*freqs[0]/c)*npy.sqrt(er_est.real + 1j*er_est.imag/(freqs[0]*1e-9))
+        gamma_est = (1j*2*pi*freqs[0]/c)*np.sqrt(er_est.real + 1j*er_est.imag/(freqs[0]*1e-9))
 
-        line_c = npy.zeros(fpoints, dtype=int)
-        er_eff = npy.zeros(fpoints, dtype=complex)
+        line_c = np.zeros(fpoints, dtype=int)
+        er_eff = np.zeros(fpoints, dtype=complex)
 
-        Tmat1 = npy.ones(shape=(fpoints, 2, 2), dtype=complex)
-        Tmat2 = npy.ones(shape=(fpoints, 2, 2), dtype=complex)
+        Tmat1 = np.ones(shape=(fpoints, 2, 2), dtype=complex)
+        Tmat2 = np.ones(shape=(fpoints, 2, 2), dtype=complex)
 
-        Smat1 = npy.ones(shape=(fpoints, 2, 2), dtype=complex)
-        Smat2 = npy.ones(shape=(fpoints, 2, 2), dtype=complex)
+        Smat1 = np.ones(shape=(fpoints, 2, 2), dtype=complex)
+        Smat2 = np.ones(shape=(fpoints, 2, 2), dtype=complex)
 
-        e = npy.zeros(shape=(fpoints, 7), dtype=complex)
-        nstd = npy.zeros(shape=(fpoints), dtype=float)
+        e = np.zeros(shape=(fpoints, 7), dtype=complex)
+        nstd = np.zeros(shape=(fpoints), dtype=float)
 
         def t2s_single(t):
-            return t2s(t[npy.newaxis,:,:])[0]
+            return t2s(t[np.newaxis,:,:])[0]
 
         def s2t_single(s):
-            return s2t(s[npy.newaxis,:,:])[0]
+            return s2t(s[np.newaxis,:,:])[0]
 
         def root_choice(Mij, dl, gamma_est):
             e_val = linalg.eigvals(Mij)
@@ -2852,19 +2852,19 @@ class NISTMultilineTRL(EightTerm):
                     eij1 = e_val[1]
                     eij2 = e_val[0]
                 ea = (eij1 + 1/eij2)/2
-                periods = npy.round(((gamma_est*dl).imag - (-log(ea)).imag)/(2*pi))
+                periods = np.round(((gamma_est*dl).imag - (-log(ea)).imag)/(2*pi))
                 ga[i] = (-log(ea) + 1j*2*pi*periods)/dl
                 Da[i] = abs(ga[i]*dl - gamma_est*dl)/abs(gamma_est*dl)
 
                 eb = (eij2 + 1/eij1)/2
-                periods = npy.round(-((gamma_est*dl).imag + (-log(eb)).imag)/(2*pi))
+                periods = np.round(-((gamma_est*dl).imag + (-log(eb)).imag)/(2*pi))
                 gb[i] = (-log(eb) + 1j*2*pi*periods)/dl
                 Db[i] = abs(gb[i]*dl + gamma_est*dl)/abs(-gamma_est*dl)
             if Da[0] + Db[0] < 0.1*(Da[1] + Db[1]):
                 return e_val
             if Da[1] + Db[1] < 0.1*(Da[0] + Db[0]):
                 return e_val[::-1]
-            if npy.sign((ga[0]).real) != npy.sign((gb[0]).real):
+            if np.sign((ga[0]).real) != np.sign((gb[0]).real):
                 if Da[0] + Db[0] < Da[1] + Db[1]:
                     return e_val
                 else:
@@ -2885,24 +2885,24 @@ class NISTMultilineTRL(EightTerm):
             #Unreachable
             return e_val
 
-        V_inv = npy.eye(lines-1, dtype=complex) \
-                - (1.0/lines)*npy.ones(shape=(lines-1, lines-1), dtype=complex)
+        V_inv = np.eye(lines-1, dtype=complex) \
+                - (1.0/lines)*np.ones(shape=(lines-1, lines-1), dtype=complex)
 
-        b1_vec = npy.zeros(lines-1, dtype=complex)
-        b2_vec = npy.zeros(lines-1, dtype=complex)
-        CoA1_vec = npy.zeros(lines-1, dtype=complex)
-        CoA2_vec = npy.zeros(lines-1, dtype=complex)
+        b1_vec = np.zeros(lines-1, dtype=complex)
+        b2_vec = np.zeros(lines-1, dtype=complex)
+        CoA1_vec = np.zeros(lines-1, dtype=complex)
+        CoA2_vec = np.zeros(lines-1, dtype=complex)
 
-        b1_vec2 = npy.zeros(lines-1, dtype=complex)
-        b2_vec2 = npy.zeros(lines-1, dtype=complex)
-        CoA1_vec2 = npy.zeros(lines-1, dtype=complex)
-        CoA2_vec2 = npy.zeros(lines-1, dtype=complex)
+        b1_vec2 = np.zeros(lines-1, dtype=complex)
+        b2_vec2 = np.zeros(lines-1, dtype=complex)
+        CoA1_vec2 = np.zeros(lines-1, dtype=complex)
+        CoA2_vec2 = np.zeros(lines-1, dtype=complex)
 
         if self.z0_line is not None and self.c0 is not None:
             raise ValueError('Only one of c0 or z0_line can be given.')
 
         for m in range(fpoints):
-            min_phi_eff = pi*npy.ones(lines)
+            min_phi_eff = pi*np.ones(lines)
             #Find the best common line to use
             for n in range(lines):
                 for k in range(lines):
@@ -2911,12 +2911,12 @@ class NISTMultilineTRL(EightTerm):
                     dl = l[k] - l[n]
                     pd = abs(exp(-gamma_est*dl) - exp(gamma_est*dl))/2
                     if -1 <= pd <= 1:
-                        phi_eff = npy.arcsin( pd )
+                        phi_eff = np.arcsin( pd )
                     else:
-                        phi_eff = npy.pi/2
+                        phi_eff = np.pi/2
                     min_phi_eff[n] = min(min_phi_eff[n], phi_eff)
             #Common line is selected to be one with the largest phase difference
-            line_c[m] = npy.argmax(min_phi_eff)
+            line_c[m] = np.argmax(min_phi_eff)
 
             #Pre-calculate inverse T-matrix of the common line
             inv_line_c = inv(measured_lines_t[line_c[m]][m])
@@ -2924,8 +2924,8 @@ class NISTMultilineTRL(EightTerm):
             #Propagation constant extraction
             #Compute eigenvalues of each line pair
 
-            g_dl = npy.zeros(lines-1, dtype=complex)
-            dl_vec = npy.zeros(lines-1, dtype=complex)
+            g_dl = np.zeros(lines-1, dtype=complex)
+            dl_vec = np.zeros(lines-1, dtype=complex)
             k = 0
 
             for n in range(lines):
@@ -2963,8 +2963,8 @@ class NISTMultilineTRL(EightTerm):
                     else:
                         #Use estimate from earlier iterations
                         g_est = gamma_est
-                    periods1 = npy.round( ((gamma_est*dl).imag - g_dl1.imag)/(2*pi))
-                    periods2 = npy.round( ((gamma_est*dl).imag - g_dl2.imag)/(2*pi))
+                    periods1 = np.round( ((gamma_est*dl).imag - g_dl1.imag)/(2*pi))
+                    periods2 = np.round( ((gamma_est*dl).imag - g_dl2.imag)/(2*pi))
                     g_dl1 += 1j*2*pi*periods1
                     g_dl2 += 1j*2*pi*periods2
 
@@ -2973,7 +2973,7 @@ class NISTMultilineTRL(EightTerm):
                     else:
                         g_dl[k] = g_dl2
                 else:
-                    periods = npy.round(((gamma_est*dl).imag - (g_dl[k].imag))/(2*pi))
+                    periods = np.round(((gamma_est*dl).imag - (g_dl[k].imag))/(2*pi))
                     g_dl[k] += 1j*2*pi*periods
                 dl_vec[k] = dl
                 k = k + 1
@@ -3002,10 +3002,10 @@ class NISTMultilineTRL(EightTerm):
                 T = measured_lines[n].s[m,1,0]*measured_lines[line_c[m]].s[m,0,1]*T
                 e_val = linalg.eigvals(T)
 
-                B1 = npy.array([\
+                B1 = np.array([\
                     [T[0,1]/(e_val[0]-T[0,0]), T[0,1]/(e_val[1]-T[0,0])],
                     [(e_val[0]-T[1,1])/T[1,0], (e_val[1]-T[1,1])/T[1,0]]])
-                CoA1 = npy.array([\
+                CoA1 = np.array([\
                     [T[1,0]/(e_val[1]-T[1,1]), T[1,0]/(e_val[0]-T[1,1])],
                     [(e_val[1]-T[0,0])/T[0,1], (e_val[0]-T[0,0])/T[0,1]]])
                 B_est1 = T[0,1]/(exp(gamma[m]*(l[n]-l[line_c[m]]) - T[0,0]))
@@ -3029,21 +3029,21 @@ class NISTMultilineTRL(EightTerm):
                     CoA1_vec[p] = CoA1[1,1]
                     CoA1_vec2[p] = CoA1[1,0]
 
-                d1[0] += npy.sum(dB1[:,root1[-1][1]]) + npy.sum(dCoA1[:,root1[-1][1]])
-                d1[1] += npy.sum(dB1[:,int(not root1[-1][1])]) + npy.sum(dCoA1[:,int(not root1[-1][1])])
+                d1[0] += np.sum(dB1[:,root1[-1][1]]) + np.sum(dCoA1[:,root1[-1][1]])
+                d1[1] += np.sum(dB1[:,int(not root1[-1][1])]) + np.sum(dCoA1[:,int(not root1[-1][1])])
 
                 #Port 2
-                k = npy.array([[0,1],[1,0]], dtype=complex)
+                k = np.array([[0,1],[1,0]], dtype=complex)
 
                 T = s2t_single(k.dot(measured_lines[n].s[m]).dot(k)).dot(\
                         inv(s2t_single(k.dot(measured_lines[line_c[m]].s[m]).dot(k))))
                 T = measured_lines[n].s[m][0,1]*measured_lines[line_c[m]].s[m][1,0]*T
                 e_val = linalg.eigvals(T)
 
-                B2 = npy.array([\
+                B2 = np.array([\
                     [T[0,1]/(e_val[0]-T[0,0]), T[0,1]/(e_val[1]-T[0,0])],
                     [(e_val[0]-T[1,1])/T[1,0], (e_val[1]-T[1,1])/T[1,0]]])
-                CoA2 = npy.array([\
+                CoA2 = np.array([\
                     [T[1,0]/(e_val[1]-T[1,1]), T[1,0]/(e_val[0]-T[1,1])],
                     [(e_val[1]-T[0,0])/T[0,1], (e_val[0]-T[0,0])/T[0,1]]])
                 B_est2 = T[0,1]/(exp(gamma[m]*(l[n]-l[line_c[m]]) - T[0,0]))
@@ -3067,13 +3067,13 @@ class NISTMultilineTRL(EightTerm):
                     CoA2_vec[p] = CoA2[1,1]
                     CoA2_vec2[p] = CoA2[1,0]
 
-                d2[0] += npy.sum(dB2[:,root2[-1][1]]) + npy.sum(dCoA2[:,root2[-1][1]])
-                d2[1] += npy.sum(dB2[:,int(not root2[-1][1])]) + npy.sum(dCoA2[:,int(not root2[-1][1])])
+                d2[0] += np.sum(dB2[:,root2[-1][1]]) + np.sum(dCoA2[:,root2[-1][1]])
+                d2[1] += np.sum(dB2[:,int(not root2[-1][1])]) + np.sum(dCoA2[:,int(not root2[-1][1])])
 
                 p += 1
 
-            Vb = npy.zeros(shape=(lines-1,lines-1), dtype=complex)
-            Vc = npy.zeros(shape=(lines-1,lines-1), dtype=complex)
+            Vb = np.zeros(shape=(lines-1,lines-1), dtype=complex)
+            Vc = np.zeros(shape=(lines-1,lines-1), dtype=complex)
             #Fill in upper triangular matrix
             l_not_common = [i for i in l if i != l[line_c[m]]]
             for b in range(len(l_not_common)):
@@ -3115,8 +3115,8 @@ class NISTMultilineTRL(EightTerm):
                 Ap = B1*B2 - B1*S_thru[1,1] - B2*S_thru[0,0] + linalg.det(S_thru)
                 Ap = -Ap/(1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*linalg.det(S_thru))
 
-                A1_vals = npy.zeros(len(measured_reflects), dtype=complex)
-                A2_vals = npy.zeros(len(measured_reflects), dtype=complex)
+                A1_vals = np.zeros(len(measured_reflects), dtype=complex)
+                A2_vals = np.zeros(len(measured_reflects), dtype=complex)
 
                 for n in range(len(measured_reflects)):
                     S_r = measured_reflects[n].s[m]
@@ -3127,21 +3127,21 @@ class NISTMultilineTRL(EightTerm):
                     Arr = (S_r11 - B1)/(1 - S_r11*CoA1)* \
                             (1 - S_r22*CoA2)/(S_r22 - B2)
                     Gr_est = self.Grefls[n]*exp(-2*gamma[m]*(self.refl_offset[n] - l[0]/2.))
-                    G_trial = (S_r11 - B1)/(npy.sqrt(Ap*Arr)*(1 - S_r11*CoA1))
-                    if abs( Gr_est/abs(Gr_est) - G_trial/abs(G_trial) ) > npy.sqrt(2):
-                        A1_vals[n] = -npy.sqrt(Ap*Arr)
+                    G_trial = (S_r11 - B1)/(np.sqrt(Ap*Arr)*(1 - S_r11*CoA1))
+                    if abs( Gr_est/abs(Gr_est) - G_trial/abs(G_trial) ) > np.sqrt(2):
+                        A1_vals[n] = -np.sqrt(Ap*Arr)
                     else:
-                        A1_vals[n] = npy.sqrt(Ap*Arr)
+                        A1_vals[n] = np.sqrt(Ap*Arr)
                     A2_vals[n] = A1_vals[n]/Arr
 
-                A1 = npy.mean(A1_vals)
-                A2 = npy.mean(A2_vals)
+                A1 = np.mean(A1_vals)
+                A2 = np.mean(A2_vals)
                 return A1, A2
 
             inv_Vb = inv(Vb)
             inv_Vc = inv(Vc)
-            sum_inv_Vb = npy.sum(inv_Vb)
-            sum_inv_Vc = npy.sum(inv_Vc)
+            sum_inv_Vb = np.sum(inv_Vb)
+            sum_inv_Vc = np.sum(inv_Vc)
             values = []
             #List possible root choices for B and CoA
             for i in [(0,0), (0,1), (1,0), (1,1)]:
@@ -3159,10 +3159,10 @@ class NISTMultilineTRL(EightTerm):
                     b2 = b2_vec2
                     coa2 = CoA2_vec2
 
-                B1 = npy.sum(inv_Vb.dot(b1))/sum_inv_Vb
-                B2 = npy.sum(inv_Vb.dot(b2))/sum_inv_Vb
-                CoA1 = npy.sum(inv_Vc.dot(coa1))/sum_inv_Vc
-                CoA2 = npy.sum(inv_Vc.dot(coa2))/sum_inv_Vc
+                B1 = np.sum(inv_Vb.dot(b1))/sum_inv_Vb
+                B2 = np.sum(inv_Vb.dot(b2))/sum_inv_Vb
+                CoA1 = np.sum(inv_Vc.dot(coa1))/sum_inv_Vc
+                CoA2 = np.sum(inv_Vc.dot(coa2))/sum_inv_Vc
 
                 denom = 1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*\
                 (S_thru[0,0]*S_thru[1,1] - S_thru[0,1]*S_thru[1,0])
@@ -3187,25 +3187,25 @@ class NISTMultilineTRL(EightTerm):
                     C2 = CoA2*A2
                     R = S_thru[0,1]*(1 - C1*C2)/(A1 - B1*C1)
 
-                    T1 = R*npy.array([[A1, B1],[C1, 1]])
-                    g = npy.array([[0,1],[1,0]])
-                    T2 = npy.array([[A2, B2],[C2, 1]])
+                    T1 = R*np.array([[A1, B1],[C1, 1]])
+                    g = np.array([[0,1],[1,0]])
+                    T2 = np.array([[A2, B2],[C2, 1]])
 
                     error = 0
                     for n in range(lines):
                         meas = measured_lines[n].s[m]
-                        ideal = npy.array([[exp(-gamma[m]*l[n]), 0],[0,exp(gamma[m]*l[n])]])
+                        ideal = np.array([[exp(-gamma[m]*l[n]), 0],[0,exp(gamma[m]*l[n])]])
                         embedded = t2s_single(T1.dot(ideal).dot(g.dot(inv(T2).dot(g))))
 
-                        error += npy.sum(abs(embedded - meas))
+                        error += np.sum(abs(embedded - meas))
                     if best_error is None or error < best_error:
                         best_error = error
                         best_values = v
                 B1, B2, CoA1, CoA2 = best_values[1:]
                 A1, A2 = solve_A(B1, B2, CoA1, CoA2, S_thru, m)
 
-            sigmab = npy.sqrt(1/(npy.sum(inv_Vb).real))
-            sigmac = npy.sqrt(1/(npy.sum(inv_Vc).real))
+            sigmab = np.sqrt(1/(np.sum(inv_Vb).real))
+            sigmac = np.sqrt(1/(np.sum(inv_Vc).real))
 
             nstd[m] = (sigmab + sigmac)/2
 
@@ -3217,7 +3217,7 @@ class NISTMultilineTRL(EightTerm):
                 p1_len_est = self.kwargs.get('p1_len_est', 0)
                 p2_len_est = self.kwargs.get('p2_len_est', 0)
 
-                z0_phase = npy.angle( npy.sqrt(er_eff[m]) )
+                z0_phase = np.angle( np.sqrt(er_eff[m]) )
                 Qox = ( 1 - 1j*z0_phase)
                 Qoy = ( 1 - 1j*z0_phase)
 
@@ -3226,16 +3226,16 @@ class NISTMultilineTRL(EightTerm):
                 de = (A1-B1*C1)*(R1R2*(A2-B2*C2))**2
                 beta_sqr = (abs(de)**2 + abs(gam)**2)/\
                         (de.conjugate()*Qox + de.conjugate()*Qoy)
-                s21y = npy.sqrt( beta_sqr )
+                s21y = np.sqrt( beta_sqr )
                 R2 = ((A2 -B2*C2)/s21y)**-1
 
                 R2_est = exp(gamma[m]*p2_len_est)
-                if abs( R2_est/abs(R2_est) -R2/abs(R2) ) > npy.sqrt(2):
+                if abs( R2_est/abs(R2_est) -R2/abs(R2) ) > np.sqrt(2):
                     R2 = -R2
                 R1 = R1R2/R2
                 R1_est = exp(gamma[m]*p1_len_est)
 
-                if abs( R1_est/abs(R1_est) - R1/abs(R1) ) > npy.sqrt(2):
+                if abs( R1_est/abs(R1_est) - R1/abs(R1) ) > np.sqrt(2):
                     warn('Inconsistencies detected', stacklevel=2)
             elif self.k_method == 'multical':
                 denom = 1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*\
@@ -3246,7 +3246,7 @@ class NISTMultilineTRL(EightTerm):
                 raise ValueError(f'Unknown k_method: {self.k_method}')
 
             #Reference plane shift
-            if npy.any(self.ref_plane):
+            if np.any(self.ref_plane):
                 shift1 = exp(-2*gamma[m]*self.ref_plane[0])
                 shift2 = exp(-2*gamma[m]*self.ref_plane[1])
                 A1 *= shift1
@@ -3259,7 +3259,7 @@ class NISTMultilineTRL(EightTerm):
             if self.c0 is not None:
                 #Estimate the line characteristic impedance
                 #using known capacitance/length
-                z0[m] = gamma[m]/(1j*2*npy.pi*freqs[m]*self.c0[m])
+                z0[m] = gamma[m]/(1j*2*np.pi*freqs[m]*self.c0[m])
             else:
                 #Set the known line characteristic impedance
                 if self.z0_line is not None:
@@ -3268,8 +3268,8 @@ class NISTMultilineTRL(EightTerm):
                     z0[m] = self.z0_ref[m]
 
             #Error matrices
-            Tmat1[m,:,:] = R1*npy.array([[A1, B1],[C1, 1]])
-            Tmat2[m,:,:] = R2*npy.array([[A2, B2],[C2, 1]])
+            Tmat1[m,:,:] = R1*np.array([[A1, B1],[C1, 1]])
+            Tmat2[m,:,:] = R2*np.array([[A2, B2],[C2, 1]])
 
             Smat1[m,:,:] = t2s_single(Tmat1[m,:,:])
             Smat2[m,:,:] = t2s_single(Tmat2[m,:,:])
@@ -3317,8 +3317,8 @@ class NISTMultilineTRL(EightTerm):
                 })
         else:
             self._coefs.update({
-                'forward switch term': npy.zeros(fpoints, dtype=complex),
-                'reverse switch term': npy.zeros(fpoints, dtype=complex),
+                'forward switch term': np.zeros(fpoints, dtype=complex),
+                'reverse switch term': np.zeros(fpoints, dtype=complex),
                 })
         # output is a dictionary of information
         self._output_from_run = {
@@ -3326,7 +3326,7 @@ class NISTMultilineTRL(EightTerm):
                 }
 
         #Reference impedance renormalization
-        if self.z0_ref is not None and npy.any(z0 != self.z0_ref):
+        if self.z0_ref is not None and np.any(z0 != self.z0_ref):
             powerwave = self.kwargs.get('powerwave', False)
             self.renormalize(z0, self.z0_ref, powerwave=powerwave)
 
@@ -3627,15 +3627,15 @@ class TUGMultilineTRL(EightTerm):
             raise ValueError("Less than two lines have been found.")
 
         self.freq = self.line_meas[0].frequency
-        s_nan = npy.array([ npy.eye(2)*npy.nan for f in self.freq.f])
+        s_nan = np.array([ np.eye(2)*np.nan for f in self.freq.f])
 
         self.reflect_meas = (
             [Network(s=s_nan, frequency=self.freq)]
             if reflect_meas is None
             else (reflect_meas if isinstance(reflect_meas, list) else [reflect_meas])
         )
-        self.reflect_est    = npy.atleast_1d(reflect_est)
-        self.reflect_offset = npy.atleast_1d(reflect_offset)*npy.ones(len(self.reflect_est))
+        self.reflect_est    = np.atleast_1d(reflect_est)
+        self.reflect_offset = np.atleast_1d(reflect_offset)*np.ones(len(self.reflect_est))
 
         if len(self.reflect_meas) != len(self.reflect_est):
             raise ValueError("Different amount of measured reflects and estimated reflects found.")
@@ -3653,19 +3653,19 @@ class TUGMultilineTRL(EightTerm):
         self.line_meas = self.measured_unterminated[:n_lines]
         self.reflect_meas = self.reflect_meas if reflect_meas is None else self.measured_unterminated[n_lines:]
 
-        self.ref_plane = npy.atleast_1d(ref_plane)*npy.ones(2)
+        self.ref_plane = np.atleast_1d(ref_plane)*np.ones(2)
 
     def run(self):
         # Constants
         c0 = 299792458  # speed of light in vacuum (m/s)
-        Q  = npy.array([[0,0,0,1], [0,-1,0,0], [0,0,-1,0], [1,0,0,0]])
-        P  = npy.array([[1,0,0,0], [0, 0,1,0], [0,1, 0,0], [0,0,0,1]])
+        Q  = np.array([[0,0,0,1], [0,-1,0,0], [0,0,-1,0], [1,0,0,0]])
+        P  = np.array([[1,0,0,0], [0, 0,1,0], [0,1, 0,0], [0,0,0,1]])
 
         # Functions used throughout the calibration
         def gamma2ereff(x, f):
-            return -(c0 / 2 / npy.pi / f * x) ** 2
+            return -(c0 / 2 / np.pi / f * x) ** 2
         def ereff2gamma(x, f):
-            return 2 * npy.pi * f / c0 * npy.sqrt(-x)
+            return 2 * np.pi * f / c0 * np.sqrt(-x)
 
         def s2t_single(S, pseudo=False):
             T = S.copy()
@@ -3691,10 +3691,10 @@ class TUGMultilineTRL(EightTerm):
             "Singular value decomposition for the Takagi factorization of symmetric matrices,"
             Applied Mathematics and Computation, Volume 234, 2014, Pages 380-384, https://doi.org/10.1016/j.amc.2014.01.170.
             '''
-            u,s,vh = npy.linalg.svd(A)
+            u,s,vh = np.linalg.svd(A)
             u,s,vh = u[:,:2],s[:2],vh[:2,:]  # low-rank truncated (Eckart-Young theorem)
-            phi = npy.sqrt( s*npy.diag(vh@u.conj()) )
-            G = u@npy.diag(phi)
+            phi = np.sqrt( s*np.diag(vh@u.conj()) )
+            G = u@np.diag(phi)
             # this is the eigenvalue of the weighted eigenvalue problem (1/2 squared Frobenius norm of W)
             lambd = s[0]*s[1]
             return G, lambd
@@ -3706,26 +3706,26 @@ class TUGMultilineTRL(EightTerm):
 
         def Vgl(N):
             # inverse covariance matrix for propagation constant computation
-            return npy.eye(N-1, dtype=complex) - (1/N)*npy.ones(shape=(N-1, N-1), dtype=complex)
+            return np.eye(N-1, dtype=complex) - (1/N)*np.ones(shape=(N-1, N-1), dtype=complex)
 
         def compute_gamma(X_inv, M, lengths, gamma_est, inx=0):
             # gamma = alpha + 1j*beta is determined through linear weighted least-squares
             # with inx you can choose the refrence line. doesn't make any difference.
             lengths = lengths - lengths[inx]
             EX = (X_inv@M)[[0,-1],:]             # extract z and y columns
-            EX = npy.diag(1/EX[:,inx])@EX        # normalize to a reference line based on index `inx` (can be any)
-            del_inx = npy.arange(len(lengths)) != inx  # get rid of the reference line
+            EX = np.diag(1/EX[:,inx])@EX        # normalize to a reference line based on index `inx` (can be any)
+            del_inx = np.arange(len(lengths)) != inx  # get rid of the reference line
 
             # solve for alpha
             l = -2*lengths[del_inx]
-            gamma_l = npy.log(EX[0,:]/EX[-1,:])[del_inx]
+            gamma_l = np.log(EX[0,:]/EX[-1,:])[del_inx]
             alpha =  WLS(l, gamma_l.real, Vgl(len(l)+1))
 
             # solve for beta
             l = -lengths[del_inx]
-            gamma_l = npy.log((EX[0,:] + 1/EX[-1,:])/2)[del_inx]
-            n = npy.round( (gamma_l - gamma_est*l).imag/npy.pi/2 )
-            gamma_l = gamma_l - 1j*2*npy.pi*n # unwrap
+            gamma_l = np.log((EX[0,:] + 1/EX[-1,:])/2)[del_inx]
+            n = np.round( (gamma_l - gamma_est*l).imag/np.pi/2 )
+            gamma_l = gamma_l - 1j*2*np.pi*n # unwrap
             beta = WLS(l, gamma_l.imag, Vgl(len(l)+1))
             return alpha + 1j*beta
 
@@ -3734,7 +3734,7 @@ class TUGMultilineTRL(EightTerm):
             # The variable `inx` allowes to reuse the function to shuffel the coeffiecient to get other error terms.
             v12,v13 = v1[inx]
             v22,v23 = v2[inx]
-            mask = npy.ones(v1.shape, bool)
+            mask = np.ones(v1.shape, bool)
             mask[inx] = False
             v11,v14 = v1[mask]
             v21,v24 = v2[mask]
@@ -3742,55 +3742,55 @@ class TUGMultilineTRL(EightTerm):
                 k2 = -v11*v22*v24/v12 + v11*v14*v22**2/v12**2 + v21*v24 - v14*v21*v22/v12
                 k1 = v11*v24/v12 - 2*v11*v14*v22/v12**2 - v23 + v13*v22/v12 + v14*v21/v12
                 k0 = v11*v14/v12**2 - v13/v12
-                c2 = npy.array([(-k1 - npy.sqrt(-4*k0*k2 + k1**2))/(2*k2), (-k1 + npy.sqrt(-4*k0*k2 + k1**2))/(2*k2)])
+                c2 = np.array([(-k1 - np.sqrt(-4*k0*k2 + k1**2))/(2*k2), (-k1 + np.sqrt(-4*k0*k2 + k1**2))/(2*k2)])
                 c1 = (1 - c2*v22)/v12
             else:
                 k2 = -v11*v12*v24/v22 + v11*v14 + v12**2*v21*v24/v22**2 - v12*v14*v21/v22
                 k1 = v11*v24/v22 - 2*v12*v21*v24/v22**2 + v12*v23/v22 - v13 + v14*v21/v22
                 k0 = v21*v24/v22**2 - v23/v22
-                c1 = npy.array([(-k1 - npy.sqrt(-4*k0*k2 + k1**2))/(2*k2), (-k1 + npy.sqrt(-4*k0*k2 + k1**2))/(2*k2)])
+                c1 = np.array([(-k1 - np.sqrt(-4*k0*k2 + k1**2))/(2*k2), (-k1 + np.sqrt(-4*k0*k2 + k1**2))/(2*k2)])
                 c2 = (1 - c1*v12)/v22
-            x = npy.array( [v1*x + v2*y for x,y in zip(c1,c2)] )  # 2 solutions
-            mininx = npy.argmin( abs(x - x_est).sum(axis=1) )
+            x = np.array( [v1*x + v2*y for x,y in zip(c1,c2)] )  # 2 solutions
+            mininx = np.argmin( abs(x - x_est).sum(axis=1) )
             return x[mininx]
 
-        line_meas_S    = npy.array([x.s for x in self.line_meas])    # get the S-parameters
-        reflect_meas_S = npy.array([x.s for x in self.reflect_meas]) # get the S-parameters
-        lengths = npy.atleast_1d( self.line_lengths )  # make numpy array
+        line_meas_S    = np.array([x.s for x in self.line_meas])    # get the S-parameters
+        reflect_meas_S = np.array([x.s for x in self.reflect_meas]) # get the S-parameters
+        lengths = np.atleast_1d( self.line_lengths )  # make numpy array
         er_est = self.er_est
         reflect_est = self.reflect_est
         reflect_offset = self.reflect_offset
 
         fpoints = len(self.freq.f)
-        Xs = npy.zeros(shape=(fpoints, 4, 4), dtype=complex)  # to store the combined error boxes (6 error terms)
-        ks = npy.zeros(shape=(fpoints,), dtype=complex)  # to store the 7th transmission error terms
-        er_effs = npy.zeros(shape=(fpoints,), dtype=complex)
-        gammas = npy.zeros(shape=(fpoints,), dtype=complex)
-        lambds = npy.zeros(shape=(fpoints,), dtype=float)  # to store the eigenvalue of the weighted eigendecomposition
+        Xs = np.zeros(shape=(fpoints, 4, 4), dtype=complex)  # to store the combined error boxes (6 error terms)
+        ks = np.zeros(shape=(fpoints,), dtype=complex)  # to store the 7th transmission error terms
+        er_effs = np.zeros(shape=(fpoints,), dtype=complex)
+        gammas = np.zeros(shape=(fpoints,), dtype=complex)
+        lambds = np.zeros(shape=(fpoints,), dtype=float)  # to store the eigenvalue of the weighted eigendecomposition
 
         # compute the calibration at each frequency point
         for m, f in enumerate(self.freq.f):
             # measurements
-            Mi   = npy.array([s2t_single(x) for x in line_meas_S[:,m,:,:]]) # convert to T-parameters
-            M    = npy.array([x.flatten('F') for x in Mi]).T
-            Dinv = npy.diag([1/npy.linalg.det(x) for x in Mi])
+            Mi   = np.array([s2t_single(x) for x in line_meas_S[:,m,:,:]]) # convert to T-parameters
+            M    = np.array([x.flatten('F') for x in Mi]).T
+            Dinv = np.diag([1/np.linalg.det(x) for x in Mi])
 
             ## Compute W via Takagi decomposition (also the eigenvalue lambda)
             G, lambd = compute_G_with_takagi(Dinv@M.T@P@Q@M)
-            W = (G@npy.array([[0,1j],[-1j,0]])@G.T).conj()
+            W = (G@np.array([[0,1j],[-1j,0]])@G.T).conj()
 
             gamma_est = ereff2gamma(er_est, f)
             gamma_est = abs(gamma_est.real) + 1j*abs(gamma_est.imag)  # this to avoid sign inconsistencies
 
-            z_est = npy.exp(-gamma_est*lengths)
+            z_est = np.exp(-gamma_est*lengths)
             y_est = 1/z_est
-            W_est = (npy.outer(y_est,z_est) - npy.outer(z_est,y_est)).conj()
+            W_est = (np.outer(y_est,z_est) - np.outer(z_est,y_est)).conj()
             W = -W if abs(W-W_est).sum() > abs(W+W_est).sum() else W # resolve the sign ambiguity
 
             ## weighted eigenvalue problem
             F = M@W@Dinv@M.T@P@Q
-            eigval, eigvec = npy.linalg.eig(F+lambd*npy.eye(4))
-            inx = npy.argsort(abs(eigval))
+            eigval, eigvec = np.linalg.eig(F+lambd*np.eye(4))
+            inx = np.argsort(abs(eigval))
             v1 = eigvec[:,inx[0]]
             v2 = eigvec[:,inx[1]]
             v3 = eigvec[:,inx[2]]
@@ -3799,8 +3799,8 @@ class TUGMultilineTRL(EightTerm):
             x1__est[-1] = x1__est[1]*x1__est[2]
             x4_est = v4/v4[-1]
             x4_est[0] = x4_est[1]*x4_est[2]
-            x2__est = npy.array([x4_est[2], 1, x4_est[2]*x1__est[2], x1__est[2]])
-            x3__est = npy.array([x4_est[1], x4_est[1]*x1__est[1], 1, x1__est[1]])
+            x2__est = np.array([x4_est[2], 1, x4_est[2]*x1__est[2], x1__est[2]])
+            x3__est = np.array([x4_est[1], x4_est[1]*x1__est[1], 1, x1__est[1]])
 
             # solve quadratic equation for each column
             x1_ = solve_quadratic(v1, v4, [0,3], x1__est) # range
@@ -3813,9 +3813,9 @@ class TUGMultilineTRL(EightTerm):
             b21 = (x3_[0] + x4[1])/2
             a21_a11 = (x1_[1] + x3_[3])/2
             b12_b11 = (x1_[2] + x2_[3])/2
-            X_ = npy.kron([[1,b21],[b12_b11,1]], [[1,a12],[a21_a11,1]]) # normalized cal coefficients
+            X_ = np.kron([[1,b21],[b12_b11,1]], [[1,a12],[a21_a11,1]]) # normalized cal coefficients
 
-            X_inv = npy.linalg.inv(X_)
+            X_inv = np.linalg.inv(X_)
 
             ## compute propagation constant
             gamma = compute_gamma(X_inv, M, lengths, gamma_est)
@@ -3826,20 +3826,20 @@ class TUGMultilineTRL(EightTerm):
             ka11b11,_,_,k = X_inv@M[:,0]
             a11b11 = ka11b11/k
             # shift plane to edges of the thru standard plus defined reference plane
-            a11b11 = a11b11*npy.exp(2*gamma*(lengths[0] - self.ref_plane.sum()))
-            k = k*npy.exp(-gamma*(lengths[0] - self.ref_plane.sum()))
+            a11b11 = a11b11*np.exp(2*gamma*(lengths[0] - self.ref_plane.sum()))
+            k = k*np.exp(-gamma*(lengths[0] - self.ref_plane.sum()))
 
-            if npy.isnan(reflect_meas_S[0,m,0,0]):
+            if np.isnan(reflect_meas_S[0,m,0,0]):
                 # no reflect measurement available.
-                a11 = npy.sqrt(a11b11)
+                a11 = np.sqrt(a11b11)
                 b11 = a11
             else:
                 # solve for a11/b11, a11 and b11 (use redundant reflect measurement, if available)
-                reflect_est_offset = reflect_est*npy.exp(-2*gamma*reflect_offset) # shift estimated reflect
-                Mr = npy.array([s2t_single(x, pseudo=True).flatten('F') for x in reflect_meas_S[:,m,:,:]]).T
+                reflect_est_offset = reflect_est*np.exp(-2*gamma*reflect_offset) # shift estimated reflect
+                Mr = np.array([s2t_single(x, pseudo=True).flatten('F') for x in reflect_meas_S[:,m,:,:]]).T
                 T  = X_inv@Mr
                 a11_b11 = -T[2,:]/T[1,:]
-                a11 = npy.sqrt(a11_b11*a11b11)
+                a11 = np.sqrt(a11_b11*a11b11)
                 b11 = a11b11/a11
                 G_cal = (
                     (reflect_meas_S[:,m,0,0] - a12) / (1 - reflect_meas_S[:,m,0,0]*a21_a11)/a11
@@ -3853,7 +3853,7 @@ class TUGMultilineTRL(EightTerm):
                 a11 = a11.mean()
                 b11 = b11.mean()
 
-            X  = X_@npy.diag([a11b11, b11, a11, 1]) # build the calibration matrix (de-normalize)
+            X  = X_@np.diag([a11b11, b11, a11, 1]) # build the calibration matrix (de-normalize)
 
             Xs[m] = X
             ks[m] = k
@@ -3865,7 +3865,7 @@ class TUGMultilineTRL(EightTerm):
         self._gamma  = gammas
         self._lambd  = lambds
 
-        e = npy.zeros(shape=(len(self.freq.f), 7), dtype=complex)
+        e = np.zeros(shape=(len(self.freq.f), 7), dtype=complex)
         e[:,0] =  Xs[:,2,3]
         e[:,1] = -Xs[:,3,2]
         e[:,2] = -Xs[:,2,2]
@@ -3893,8 +3893,8 @@ class TUGMultilineTRL(EightTerm):
                 })
         else:
             self._coefs.update({
-                'forward switch term': npy.zeros(fpoints, dtype=complex),
-                'reverse switch term': npy.zeros(fpoints, dtype=complex),
+                'forward switch term': np.zeros(fpoints, dtype=complex),
+                'reverse switch term': np.zeros(fpoints, dtype=complex),
                 })
         # output is a dictionary of information
         self._output_from_run = {
@@ -4013,7 +4013,7 @@ class UnknownThru(EightTerm):
         k_approx = et.coefs['k'].flatten()
 
         # this is equivalent to sqrt(detX*detY/detM)
-        e10e32 = npy.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
+        e10e32 = np.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
 
         k_ = e10e32/e_rr.s.flatten()
         k_ = find_closest(k_, -1*k_, k_approx)
@@ -4027,8 +4027,8 @@ class UnknownThru(EightTerm):
         coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
-        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
-        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
+        coefs.update({f'forward {k}': p1_coefs[k] for k in p1_coefs})
+        coefs.update({f'reverse {k}': p2_coefs[k] for k in p2_coefs})
 
         if self.switch_terms is not None:
             coefs.update({
@@ -4038,8 +4038,8 @@ class UnknownThru(EightTerm):
         else:
             warn('No switch terms provided', stacklevel=2)
             coefs.update({
-                'forward switch term': npy.zeros(len(self.frequency), dtype=complex),
-                'reverse switch term': npy.zeros(len(self.frequency), dtype=complex),
+                'forward switch term': np.zeros(len(self.frequency), dtype=complex),
+                'reverse switch term': np.zeros(len(self.frequency), dtype=complex),
                 })
 
         coefs.update({'k':k_})
@@ -4121,7 +4121,7 @@ class LRM(EightTerm):
                 warnings.warn('Reflect ideal port 1 and port 2 are different. Using port 1 reflect also for port 2.',
                               stacklevel=2)
 
-        inv = npy.linalg.inv
+        inv = np.linalg.inv
 
         tl = self.ideals[0].t
 
@@ -4137,30 +4137,30 @@ class LRM(EightTerm):
         lm21 = lm.s[:,1,0]
         lm22 = lm.s[:,1,1]
 
-        ones = npy.ones(fpoints, dtype=complex)
-        zeros = npy.zeros(fpoints, dtype=complex)
+        ones = np.ones(fpoints, dtype=complex)
+        zeros = np.zeros(fpoints, dtype=complex)
 
-        wlr1 = npy.transpose(npy.array([[ones, ones], [r1, m1]]), [2,0,1])
-        wll1 = npy.transpose(npy.array([[ones, zeros], [lm11, lm12]]), [2,0,1])
-        wll2 = npy.transpose(npy.array([[zeros, ones], [lm21, lm22]]), [2,0,1])
-        wlr2 = npy.transpose(npy.array([[ones, ones], [r2, m2]]), [2,0,1])
+        wlr1 = np.transpose(np.array([[ones, ones], [r1, m1]]), [2,0,1])
+        wll1 = np.transpose(np.array([[ones, zeros], [lm11, lm12]]), [2,0,1])
+        wll2 = np.transpose(np.array([[zeros, ones], [lm21, lm22]]), [2,0,1])
+        wlr2 = np.transpose(np.array([[ones, ones], [r2, m2]]), [2,0,1])
 
         wl = inv(wlr1) @ wll1 @ inv(wll2) @ wlr2
 
         # xyz2 == (x/y)*z**2
-        xyz2 = -npy.linalg.det(tl) / npy.linalg.det(wl)
+        xyz2 = -np.linalg.det(tl) / np.linalg.det(wl)
 
         c2 = wl[:, 0, 0]
         c1 = -tl[:, 1, 0] - tl[:, 0, 1]
         c0 = wl[:, 1, 1] * xyz2
 
-        z0 = -c1 + npy.sqrt(c1**2 - 4*c2*c0)/(2*c2)
-        z1 = -c1 - npy.sqrt(c1**2 - 4*c2*c0)/(2*c2)
-        zs = npy.stack([z0, z1])
+        z0 = -c1 + np.sqrt(c1**2 - 4*c2*c0)/(2*c2)
+        z1 = -c1 - np.sqrt(c1**2 - 4*c2*c0)/(2*c2)
+        zs = np.stack([z0, z1])
 
-        grs = npy.zeros((2, fpoints), dtype=complex)
-        xs = npy.zeros((2, fpoints), dtype=complex)
-        er = npy.zeros((2, fpoints), dtype=complex)
+        grs = np.zeros((2, fpoints), dtype=complex)
+        xs = np.zeros((2, fpoints), dtype=complex)
+        er = np.zeros((2, fpoints), dtype=complex)
 
         for root in [0, 1]:
             z = zs[root]
@@ -4174,25 +4174,25 @@ class LRM(EightTerm):
             x = w12 / (tl[:, 1, 0] + tl[:, 1, 1]*gm - w22)
             gr = (w11 - tl[:, 1, 0] + w21*x) / tl[:, 1, 1]
 
-            er[root] = npy.abs(gr - self.ideals[1].s[:,0,0])
+            er[root] = np.abs(gr - self.ideals[1].s[:,0,0])
 
             grs[root] = gr
             xs[root] = x
 
         root = er[0] < er[1]
 
-        gr = npy.where(root, grs[0], grs[1])
-        x = npy.where(root, xs[0], xs[1])
-        z = npy.where(root, zs[0], zs[1])
+        gr = np.where(root, grs[0], grs[1])
+        x = np.where(root, xs[0], xs[1])
+        z = np.where(root, zs[0], zs[1])
         y = x * z**2 / xyz2
 
         self._solved_r = Network(s=gr, frequency=self.measured[0].frequency)
 
         # Calculate error matrices
-        t10 = npy.transpose(npy.array([[ones, x], [gr, gm*x]]), [2,0,1]) \
-                @ inv(npy.transpose(npy.array([[ones,ones],[r1, m1]]), [2,0,1]))
-        t23 = npy.transpose((1/z)*npy.array([[ones, y], [gr, gm*y]]), [2,0,1]) \
-                @ inv(npy.transpose(npy.array([[ones,ones],[r2, m2]]), [2,0,1]))
+        t10 = np.transpose(np.array([[ones, x], [gr, gm*x]]), [2,0,1]) \
+                @ inv(np.transpose(np.array([[ones,ones],[r1, m1]]), [2,0,1]))
+        t23 = np.transpose((1/z)*np.array([[ones, y], [gr, gm*y]]), [2,0,1]) \
+                @ inv(np.transpose(np.array([[ones,ones],[r2, m2]]), [2,0,1]))
 
         Smat1 = t2s(t10)
         Smat2 = t2s(t23)
@@ -4233,8 +4233,8 @@ class LRM(EightTerm):
                 })
         else:
             self._coefs.update({
-                'forward switch term': npy.zeros(fpoints, dtype=complex),
-                'reverse switch term': npy.zeros(fpoints, dtype=complex),
+                'forward switch term': np.zeros(fpoints, dtype=complex),
+                'reverse switch term': np.zeros(fpoints, dtype=complex),
                 })
         # output is a dictionary of information
         self._output_from_run = {
@@ -4367,11 +4367,11 @@ class LRRM(EightTerm):
         r2m = mList[2]
         mm = mList[3]
 
-        inv = npy.linalg.inv
+        inv = np.linalg.inv
 
         tl = self.ideals[0].t
 
-        w = 2*npy.pi*self.measured[0].f
+        w = 2*np.pi*self.measured[0].f
         fpoints = len(mList[0])
 
         r11 = r1m.s[:,0,0]
@@ -4388,41 +4388,41 @@ class LRRM(EightTerm):
 
         thru_s21 = self.ideals[0].s[:,1,0]
 
-        ones = npy.ones(fpoints, dtype=complex)
-        zeros = npy.zeros(fpoints, dtype=complex)
+        ones = np.ones(fpoints, dtype=complex)
+        zeros = np.zeros(fpoints, dtype=complex)
 
-        wlr1 = npy.transpose(npy.array([[ones, ones], [r11, r21]]), [2,0,1])
-        wll1 = npy.transpose(npy.array([[ones, zeros], [lm11, lm12]]), [2,0,1])
-        wll2 = npy.transpose(npy.array([[zeros, ones], [lm21, lm22]]), [2,0,1])
-        wlr2 = npy.transpose(npy.array([[ones, ones], [r12, r22]]), [2,0,1])
+        wlr1 = np.transpose(np.array([[ones, ones], [r11, r21]]), [2,0,1])
+        wll1 = np.transpose(np.array([[ones, zeros], [lm11, lm12]]), [2,0,1])
+        wll2 = np.transpose(np.array([[zeros, ones], [lm21, lm22]]), [2,0,1])
+        wlr2 = np.transpose(np.array([[ones, ones], [r12, r22]]), [2,0,1])
 
         wl = inv(wlr1) @ wll1 @ inv(wll2) @ wlr2
 
         # xyz2 == (x/y)*z**2
-        xyz2 = -npy.linalg.det(tl) / npy.linalg.det(wl)
+        xyz2 = -np.linalg.det(tl) / np.linalg.det(wl)
 
         c2 = wl[:, 0, 0]
         c1 = -tl[:, 1, 0] - tl[:, 0, 1]
         c0 = wl[:, 1, 1] * xyz2
 
-        z0 = (-c1 + npy.sqrt(c1**2 - 4*c2*c0))/(2*c2)
-        z1 = (-c1 - npy.sqrt(c1**2 - 4*c2*c0))/(2*c2)
-        zs = npy.stack([z0, z1])
+        z0 = (-c1 + np.sqrt(c1**2 - 4*c2*c0))/(2*c2)
+        z1 = (-c1 - np.sqrt(c1**2 - 4*c2*c0))/(2*c2)
+        zs = np.stack([z0, z1])
 
         # wm and solve_gr equations are different if match is on the second port.
         assert self.match_port == 0
-        wm_t1 = inv(npy.transpose(npy.array([[ones, ones],[r11, r21]]), [2,0,1]))
-        wm_t2 = npy.transpose(npy.array([[ones], [mm1]]), [2,0,1])
+        wm_t1 = inv(np.transpose(np.array([[ones, ones],[r11, r21]]), [2,0,1]))
+        wm_t2 = np.transpose(np.array([[ones], [mm1]]), [2,0,1])
         wm = wm_t1 @ wm_t2
         wm1 = wm[:, 0, 0]
         wm2 = wm[:, 1, 0]
 
         def solve_gr(gm):
-            gr1s = npy.zeros((2, fpoints), dtype=complex)
-            gr2s = npy.zeros((2, fpoints), dtype=complex)
-            xs = npy.zeros((2, fpoints), dtype=complex)
-            er = npy.zeros((2, fpoints), dtype=complex)
-            efs = npy.zeros((2, 4, fpoints), dtype=complex)
+            gr1s = np.zeros((2, fpoints), dtype=complex)
+            gr2s = np.zeros((2, fpoints), dtype=complex)
+            xs = np.zeros((2, fpoints), dtype=complex)
+            er = np.zeros((2, fpoints), dtype=complex)
+            efs = np.zeros((2, 4, fpoints), dtype=complex)
 
             for root in [0, 1]:
                 z = zs[root]
@@ -4444,8 +4444,8 @@ class LRRM(EightTerm):
                 gr1 = ((w11 - tl[:, 1, 0]) * (tl[:, 1, 0] + tl[:, 1, 1] * gr2 - w22) + w21*w12) \
                     / (tl[:, 1, 1] * (tl[:, 1, 0] + tl[:, 1, 1] * gr2 - w22))
 
-                egr1 = npy.abs(gr1 - self.ideals[1].s[:,0,0])
-                egr2 = npy.abs(gr2 - self.ideals[2].s[:,0,0])
+                egr1 = np.abs(gr1 - self.ideals[1].s[:,0,0])
+                egr2 = np.abs(gr2 - self.ideals[2].s[:,0,0])
 
                 er[root] = egr1 + egr2
                 gr1s[root] = gr1
@@ -4458,11 +4458,11 @@ class LRRM(EightTerm):
 
             root = er[0] < er[1]
 
-            gr1 = npy.where(root, gr1s[0], gr1s[1])
-            gr2 = npy.where(root, gr2s[0], gr2s[1])
-            x = npy.where(root, xs[0], xs[1])
-            z = npy.where(root, zs[0], zs[1])
-            efs = npy.where(root, efs[0], efs[1])
+            gr1 = np.where(root, gr1s[0], gr1s[1])
+            gr2 = np.where(root, gr2s[0], gr2s[1])
+            x = np.where(root, xs[0], xs[1])
+            z = np.where(root, zs[0], zs[1])
+            efs = np.where(root, efs[0], efs[1])
             y = x * z**2 / xyz2
 
             return gr1, gr2, x, y, z, efs
@@ -4482,18 +4482,18 @@ class LRRM(EightTerm):
         # Next solve for match inductance
         R = (self.z0 * (1 + gmi)/(1 - gmi)).real # Resistance of the match
 
-        a = 2*gr2.real + npy.abs(gr2)**2 - \
-            2*(gr2*thru_s21**(-2)).real - npy.abs(gr2*thru_s21**(-2))**2
+        a = 2*gr2.real + np.abs(gr2)**2 - \
+            2*(gr2*thru_s21**(-2)).real - np.abs(gr2*thru_s21**(-2))**2
         b = 4*R*(gr2.imag + (gr2*thru_s21**(-2)).imag)
-        c = 4*R**2*(npy.abs(gr2)**2 - 1)
+        c = 4*R**2*(np.abs(gr2)**2 - 1)
 
         det = b**2 - 4*a*c
-        if npy.any(det < 0):
+        if np.any(det < 0):
             warnings.warn('Load inductance determination failed. Calibration might be incorrect.', stacklevel=2)
         det[det < 0] = 0
         wL = [None, None]
-        wL[0] = (-b+npy.sqrt(det))/(2*a)
-        wL[1] = (-b-npy.sqrt(det))/(2*a)
+        wL[0] = (-b+np.sqrt(det))/(2*a)
+        wL[1] = (-b-np.sqrt(det))/(2*a)
 
         gm_guess = [None, None]
         for p in [0,1]:
@@ -4501,21 +4501,21 @@ class LRRM(EightTerm):
 
         # Choose the root according to which one is closer to the ideal
         m_ideal = self.ideals[3].s[:,0,0]
-        root = (npy.abs(gm_guess[0] - m_ideal) > npy.abs(gm_guess[1] - m_ideal)).astype(int)
+        root = (np.abs(gm_guess[0] - m_ideal) > np.abs(gm_guess[1] - m_ideal)).astype(int)
 
         # L from reactance
-        match_l = npy.choose(root, wL)/w
+        match_l = np.choose(root, wL)/w
         match_c = zeros
 
         # Weight L estimate by frequency
-        l0 = npy.sum(w * match_l) / npy.sum(w)
+        l0 = np.sum(w * match_l) / np.sum(w)
 
         e1 = efs[0, :]
         e0 = efs[1, :]
         f1 = efs[2, :]
         f0 = efs[3, :]
 
-        gr2_abs = npy.abs(self.ideals[2].s[:,0,0])
+        gr2_abs = np.abs(self.ideals[2].s[:,0,0])
 
         if self.match_fit == 'l':
 
@@ -4525,21 +4525,21 @@ class LRRM(EightTerm):
                 the match inductance.
                 """
                 gm = (R + 1j*w*l - self.z0)/(R + 1j*w*l + self.z0)
-                return gr2_abs - npy.abs((f0 - e0 * gm) / (f1 - e1 * gm))
+                return gr2_abs - np.abs((f0 - e0 * gm) / (f1 - e1 * gm))
 
             # Try some alternative initial guesses
-            init_x = npy.linspace(-10, 10, 10)
+            init_x = np.linspace(-10, 10, 10)
             init_l = init_x / (w[-1])
-            init_guess = [npy.mean(min_l(l)**2) for l in init_l]
-            li = npy.argmin(init_guess)
+            init_guess = [np.mean(min_l(l)**2) for l in init_l]
+            li = np.argmin(init_guess)
             best_guess = init_l[li]
 
             # Choose the best guess for the least squares initial value
-            if init_guess[li] < npy.mean(min_l(l0)**2):
+            if init_guess[li] < np.mean(min_l(l0)**2):
                 l0 = best_guess
 
             sol = least_squares(min_l, l0, method='lm')
-            match_l = sol.x * npy.ones(match_l.shape)
+            match_l = sol.x * np.ones(match_l.shape)
             match_c = zeros
 
         elif self.match_fit == 'lc':
@@ -4548,10 +4548,10 @@ class LRRM(EightTerm):
                 warnings.warn("2nd reflect assumed to be open, but 2nd ideal ' \
                 'doesn't look like open. Calibration is likely incorrect.", stacklevel=2)
 
-            match_c = -1/(npy.choose(root, wL)*w)
-            c0 = npy.sum(w * match_c) / npy.sum(w)
+            match_c = -1/(np.choose(root, wL)*w)
+            c0 = np.sum(w * match_c) / np.sum(w)
 
-            cw = w < 2 * npy.pi * self.lc_fit_c_freq
+            cw = w < 2 * np.pi * self.lc_fit_c_freq
             cw = cw.astype(float)
 
             def min_lc(x):
@@ -4562,38 +4562,38 @@ class LRRM(EightTerm):
 
                 # Fit capacitance to gr2
                 cgr2 = (1j*(-1 + gr2))/((1 + gr2)*w*self.z0)
-                cgr2 = npy.mean(cgr2.real)
+                cgr2 = np.mean(cgr2.real)
                 gr2_c = (1j + cgr2*w*self.z0)/(1j - cgr2*w*self.z0)
 
                 # Error between fitted open capacitor and calculated open
                 # capacitance
                 e_c = gr2_c + (f0 - e0 * gm) / (f1 - e1 * gm)
-                e_abs = gr2_abs - npy.abs((f0 - e0 * gm) / (f1 - e1 * gm))
+                e_abs = gr2_abs - np.abs((f0 - e0 * gm) / (f1 - e1 * gm))
                 e = e_c * cw + (1 - cw) * e_abs
-                return npy.abs(e)
+                return np.abs(e)
 
             # Biggest capacitance value assuming given gm matching.
             worst_match = 0.4 # -7 dB
-            max_init_c = (2*worst_match)/(npy.sqrt(1 - worst_match**2)*w[-1]*self.z0)
+            max_init_c = (2*worst_match)/(np.sqrt(1 - worst_match**2)*w[-1]*self.z0)
 
             # Initial reactance guess, try to find positive L, C.
-            init_x = npy.linspace(0, 20, 10)
+            init_x = np.linspace(0, 20, 10)
             init_l = init_x / (w[-1])
-            init_c = npy.linspace(0, max_init_c, 10)
+            init_c = np.linspace(0, max_init_c, 10)
             init_lc = [(l, c) for l in init_l for c in init_c]
             if l0 > 0:
                 init_lc.append((l0, 0))
             if c0 > 0:
                 init_lc.append((0, c0))
-            init_guess = [npy.mean(min_lc(x)**2) for x in init_lc]
-            best_guess = init_lc[npy.argmin(init_guess)]
+            init_guess = [np.mean(min_lc(x)**2) for x in init_lc]
+            best_guess = init_lc[np.argmin(init_guess)]
 
             l0 = best_guess[0]
             c0 = best_guess[1]
 
             sol = least_squares(min_lc, [l0, c0], method='lm')
-            match_l = sol.x[0] * npy.ones(match_l.shape)
-            match_c = sol.x[1] * npy.ones(match_l.shape)
+            match_l = sol.x[0] * np.ones(match_l.shape)
+            match_c = sol.x[1] * np.ones(match_l.shape)
 
         elif self.match_fit == 'none' or self.match_fit is None:
             pass
@@ -4613,10 +4613,10 @@ class LRRM(EightTerm):
         self._solved_r2 = Network(s=gr2, frequency=freq, name='LRRM reflect 2')
 
         # Calculate error matrices
-        t10 = npy.transpose(npy.array([[ones, x], [gr1, gr2*x]]), [2,0,1]) \
-                @ inv(npy.transpose(npy.array([[ones,ones],[r11, r21]]), [2,0,1]))
-        t23 = npy.transpose((1/z)*npy.array([[ones, y], [gr1, gr2*y]]), [2,0,1]) \
-                @ inv(npy.transpose(npy.array([[ones,ones],[r12, r22]]), [2,0,1]))
+        t10 = np.transpose(np.array([[ones, x], [gr1, gr2*x]]), [2,0,1]) \
+                @ inv(np.transpose(np.array([[ones,ones],[r11, r21]]), [2,0,1]))
+        t23 = np.transpose((1/z)*np.array([[ones, y], [gr1, gr2*y]]), [2,0,1]) \
+                @ inv(np.transpose(np.array([[ones,ones],[r12, r22]]), [2,0,1]))
 
         Smat1 = t2s(t10)
         Smat2 = t2s(t23)
@@ -4657,8 +4657,8 @@ class LRRM(EightTerm):
                 })
         else:
             self._coefs.update({
-                'forward switch term': npy.zeros(fpoints, dtype=complex),
-                'reverse switch term': npy.zeros(fpoints, dtype=complex),
+                'forward switch term': np.zeros(fpoints, dtype=complex),
+                'reverse switch term': np.zeros(fpoints, dtype=complex),
                 })
         # output is a dictionary of information
         self._output_from_run = {
@@ -4807,7 +4807,7 @@ class MRC(UnknownThru):
         k_approx = et.coefs['k'].flatten()
 
         # this is equivalent to sqrt(detX*detY/detM)
-        e10e32 = npy.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
+        e10e32 = np.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
 
         k_ = e10e32/e_rr.s.flatten()
         k_ = find_closest(k_, -1*k_, k_approx)
@@ -4818,8 +4818,8 @@ class MRC(UnknownThru):
         # create single dictionary for all error terms
         coefs = {}
 
-        coefs.update({'forward %s'%k: p1_coefs[k] for k in p1_coefs})
-        coefs.update({'reverse %s'%k: p2_coefs[k] for k in p2_coefs})
+        coefs.update({f'forward {k}': p1_coefs[k] for k in p1_coefs})
+        coefs.update({f'reverse {k}': p2_coefs[k] for k in p2_coefs})
 
         coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
@@ -4832,8 +4832,8 @@ class MRC(UnknownThru):
         else:
             warn('No switch terms provided', stacklevel=2)
             coefs.update({
-                'forward switch term': npy.zeros(len(self.frequency), dtype=complex),
-                'reverse switch term': npy.zeros(len(self.frequency), dtype=complex),
+                'forward switch term': np.zeros(len(self.frequency), dtype=complex),
+                'reverse switch term': np.zeros(len(self.frequency), dtype=complex),
                 })
 
         coefs.update({'k':k_})
@@ -4936,10 +4936,10 @@ class SixteenTerm(Calibration):
 
         fLength = len(mList[0])
         #initialize outputs
-        error_vector = npy.zeros(shape=(fLength,numCoefs),dtype=complex)
-        residuals = npy.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex)
-        Q = npy.zeros((numStds*4, 15),dtype=complex)
-        M = npy.zeros((numStds*4, 1),dtype=complex)
+        error_vector = np.zeros(shape=(fLength,numCoefs),dtype=complex)
+        residuals = np.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex)
+        Q = np.zeros((numStds*4, 15),dtype=complex)
+        M = np.zeros((numStds*4, 1),dtype=complex)
         # loop through frequencies and form m, a vectors and
         # the matrix M.
         #i[j,k] = Actual S-parameters
@@ -4949,14 +4949,14 @@ class SixteenTerm(Calibration):
             # loop through standards and fill matrix
             for k in list(range(numStds)):
                 m,i  = mList[k][f,:,:],iList[k][f,:,:] # 2x2 s-matrices
-                Q[k*4:k*4+4,:] = npy.array([
+                Q[k*4:k*4+4,:] = np.array([
                         [ i[0,0], i[1,0], 0     , 0     , 1, 0, 0, 0, -m[0,0]*i[0,0], -m[0,0]*i[1,0], -m[0,1]*i[0,0], -m[0,1]*i[1,0], -m[0,0] , 0       , -m[0,1] ],  # noqa: E501
                         [ i[0,1], i[1,1], 0     , 0     , 0, 1, 0, 0, -m[0,0]*i[0,1], -m[0,0]*i[1,1], -m[0,1]*i[0,1], -m[0,1]*i[1,1], 0       , -m[0,0] , 0       ],  # noqa: E501
                         [ 0     , 0     , i[0,0], i[1,0], 0, 0, 1, 0, -m[1,0]*i[0,0], -m[1,0]*i[1,0], -m[1,1]*i[0,0], -m[1,1]*i[1,0], -m[1,0] , 0       , -m[1,1] ],  # noqa: E501
                         [ 0     , 0     , i[0,1], i[1,1], 0 ,0 ,0, 1, -m[1,0]*i[0,1], -m[1,0]*i[1,1], -m[1,1]*i[0,1], -m[1,1]*i[1,1], 0       , -m[1,0] , 0       ],  # noqa: E501
                         ])
                 #pdb.set_trace()
-                M[k*4:k*4+4,:] = npy.array([\
+                M[k*4:k*4+4,:] = np.array([\
                         [    0    ],\
                         [ m[0,1]  ],\
                         [    0    ],\
@@ -4964,7 +4964,7 @@ class SixteenTerm(Calibration):
                         ])
 
             ## calculate least squares
-            error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M,rcond=None)[0:2]
+            error_vector_at_f, residuals_at_f = np.linalg.lstsq(Q,M,rcond=None)[0:2]
             ##if len (residualsTmp )==0:
             ##       raise ValueError( 'matrix has singular values, check standards')
 
@@ -4979,10 +4979,10 @@ class SixteenTerm(Calibration):
         for i in range(len(e[0])):
             e[:,i] *= c
 
-        T1 = npy.zeros(shape=(fLength, 2, 2), dtype=complex)
-        T2 = npy.zeros(shape=(fLength, 2, 2), dtype=complex)
-        T3 = npy.zeros(shape=(fLength, 2, 2), dtype=complex)
-        T4 = npy.zeros(shape=(fLength, 2, 2), dtype=complex)
+        T1 = np.zeros(shape=(fLength, 2, 2), dtype=complex)
+        T2 = np.zeros(shape=(fLength, 2, 2), dtype=complex)
+        T3 = np.zeros(shape=(fLength, 2, 2), dtype=complex)
+        T4 = np.zeros(shape=(fLength, 2, 2), dtype=complex)
 
         T1[:,0,0] = e[:,0]
         T1[:,0,1] = e[:,1]
@@ -5033,8 +5033,8 @@ class SixteenTerm(Calibration):
                 })
         else:
             self._coefs.update({
-                'forward switch term': npy.zeros(fLength, dtype=complex),
-                'reverse switch term': npy.zeros(fLength, dtype=complex),
+                'forward switch term': np.zeros(fLength, dtype=complex),
+                'reverse switch term': np.zeros(fLength, dtype=complex),
                 })
 
         # output is a dictionary of information
@@ -5105,7 +5105,7 @@ class SixteenTerm(Calibration):
         e400 = ec['forward source match']
         e411 = ec['reverse source match']
         e300 = ec['k']
-        e311 = npy.ones(npoints)
+        e311 = np.ones(npoints)
         e200 = ec['forward reflection tracking']/e300
         e211 = ec['reverse reflection tracking']
         e110 = ec['forward isolation']
@@ -5117,19 +5117,19 @@ class SixteenTerm(Calibration):
         e401 = ec['reverse port isolation']
         e410 = ec['forward port isolation']
 
-        E1 = npy.array([
+        E1 = np.array([
                 [ e100 , e101],
                 [ e110 , e111]
                 ]).transpose(2,0,1)
-        E2 = npy.array([
+        E2 = np.array([
                 [ e200 , e201],
                 [ e210 , e211]
                 ]).transpose(2,0,1)
-        E3 = npy.array([
+        E3 = np.array([
                 [ e300 , e301],
                 [ e310 , e311]
                 ]).transpose(2,0,1)
-        E4 = npy.array([
+        E4 = np.array([
                 [ e400 , e401],
                 [ e410 , e411]
                 ]).transpose(2,0,1)
@@ -5151,7 +5151,7 @@ class SixteenTerm(Calibration):
         E1,E2,E3,E4 : numpy ndarray
         """
 
-        invT4 = linalg.inv(npy.array(T4))
+        invT4 = linalg.inv(np.array(T4))
 
         E1 = T2 @ invT4
         E2 = T1 - T2 @ invT4 @ T3
@@ -5294,21 +5294,21 @@ class LMR16(SixteenTerm):
                 self.sign = 1
 
             for sign_tries in [0,1,2]:
-                gt = self.sign*npy.sqrt(m*o/(n*p))
+                gt = self.sign*np.sqrt(m*o/(n*p))
                 if self.through is None:
                     g = self.reflect.s[f][0,0]
                     t = g/gt
-                    self._solved_through.s[f] = npy.array([[0,t],[t,0]])
+                    self._solved_through.s[f] = np.array([[0,t],[t,0]])
                 else:
                     t = self.through.s[f][1,0]
                     g = gt*t
-                    self._solved_reflect.s[f] = npy.array([g])
+                    self._solved_reflect.s[f] = np.array([g])
                 t15 = -(p/o)*(pp[0,0]/mm[1,1])*gt*t12
                 #If correct sign is not specified try to choose it based
                 #on the fact that with correct sign t15/t12 ~= +1
                 #Assuming that test fixtures are symmetric
                 if auto_sign:
-                    auto_sign_abs.append(npy.abs(1 - t15/t12))
+                    auto_sign_abs.append(np.abs(1 - t15/t12))
                     if sign_tries == 0:
                         self.sign = -self.sign
                     if sign_tries == 1:
@@ -5339,15 +5339,15 @@ class LMR16(SixteenTerm):
             t6 = mb[1,0]*t12 + mb[1,1]*t14
             t7 = mb[1,0]*t13 + mb[1,1]*t15
 
-            T1.append( c*npy.array([[t0,t1],[t2,t3]]) )
-            T2.append( c*npy.array([[t4,t5],[t6,t7]]) )
-            T3.append( c*npy.array([[t8,t9],[t10,t11]]) )
-            T4.append( c*npy.array([[t12,t13],[t14,t15]]) )
+            T1.append( c*np.array([[t0,t1],[t2,t3]]) )
+            T2.append( c*np.array([[t4,t5],[t6,t7]]) )
+            T3.append( c*np.array([[t8,t9],[t10,t11]]) )
+            T4.append( c*np.array([[t12,t13],[t14,t15]]) )
 
-        T1 = npy.array(T1)
-        T2 = npy.array(T2)
-        T3 = npy.array(T3)
-        T4 = npy.array(T4)
+        T1 = np.array(T1)
+        T2 = np.array(T2)
+        T3 = np.array(T3)
+        T4 = np.array(T4)
 
         #Convert T-matrix to S-parameters
         #and put error terms in human readable form
@@ -5378,8 +5378,8 @@ class LMR16(SixteenTerm):
                 })
         else:
             self._coefs.update({
-                'forward switch term': npy.zeros(fLength, dtype=complex),
-                'reverse switch term': npy.zeros(fLength, dtype=complex),
+                'forward switch term': np.zeros(fLength, dtype=complex),
+                'reverse switch term': np.zeros(fLength, dtype=complex),
                 })
 
 
@@ -5569,7 +5569,7 @@ class MultiportCal:
             for i in range(nports):
                 isolation.s[:,i,i] = 0
         else:
-            s = npy.zeros((len(frequency), nports, nports), dtype=complex)
+            s = np.zeros((len(frequency), nports, nports), dtype=complex)
             isolation = Network(s=s, z0=z0, frequency=frequency)
         self.isolation = isolation
         self.cal_dict = cal_dict
@@ -5629,7 +5629,7 @@ class MultiportCal:
 
         coefs = cal.coefs_8term
         S1, S2 = self.coefs_to_ntwks(coefs, k_side=k_side)
-        one = npy.ones(coefs['k'].shape, dtype=complex)
+        one = np.ones(coefs['k'].shape, dtype=complex)
         for c in cal.coefs_8term:
             if 'forward' in c:
                 c2 = c.replace('forward ', '')
@@ -5701,7 +5701,7 @@ class MultiportCal:
         T1,T2,T3,T4 : numpy ndarray
         """
         npoints = len(self.coefs[0]['k'])
-        zero = npy.zeros(npoints, dtype=complex)
+        zero = np.zeros(npoints, dtype=complex)
 
         Edf = self.coefs[p1]['directivity']
         Esf = self.coefs[p1]['source match']
@@ -5715,19 +5715,19 @@ class MultiportCal:
         detX = Edf*Esf-Erf
         detY = Edr*Esr-Err
 
-        T1 = npy.array([
+        T1 = np.array([
                 [ -k1*detX, zero    ],
                 [ zero,  -k2*detY ]
                 ]).transpose(2,0,1)
-        T2 = npy.array([
+        T2 = np.array([
                 [ k1*Edf,    zero ],
                 [ zero,  k2*Edr ]
                 ]).transpose(2,0,1)
-        T3 = npy.array([
+        T3 = np.array([
                 [ -k1*Esf,   zero ],
                 [ zero, -k2*Esr ]
                 ]).transpose(2,0,1)
-        T4 = npy.array([
+        T4 = np.array([
                 [ k1, zero ],
                 [ zero, k2   ]
                 ]).transpose(2,0,1)
@@ -5746,7 +5746,7 @@ class MultiportCal:
         caled.s_def = 'traveling'
 
         fpoints = len(ntwk.frequency)
-        ports = npy.arange(self.nports)
+        ports = np.arange(self.nports)
         port_combos = list(combinations(ports, 2))
         for p in port_combos:
             T1, T2, T3, T4 = self.T_matrices(p[0], p[1])
@@ -5756,7 +5756,7 @@ class MultiportCal:
 
             caled_2p = self.unterminate_2port(caled_2p, p[0], p[1])
             caled_2p.s = linalg.inv(-caled_2p.s @ T3 + T1) @ (caled_2p.s @ T4 - T2)
-            z = npy.zeros((fpoints, 2), dtype=complex)
+            z = np.zeros((fpoints, 2), dtype=complex)
             z[:,0] = self.terminations[p[0]].z[:,0,0]
             z[:,1] = self.terminations[p[1]].z[:,0,0]
             caled_2p.renormalize(z)
@@ -5778,7 +5778,7 @@ class MultiportCal:
         nports = self.nports
         nout = ntwk.copy()
 
-        Z = npy.zeros((fpoints, 2*nports, 2*nports), dtype=complex)
+        Z = np.zeros((fpoints, 2*nports, 2*nports), dtype=complex)
 
         gammas = []
         for e, c in enumerate(self.coefs):
@@ -5807,7 +5807,7 @@ class MultiportCal:
             Port to put 'k' coefficient.
         """
         npoints = len(coefs['k'])
-        one = npy.ones(npoints, dtype=complex)
+        one = np.ones(npoints, dtype=complex)
 
         Edf = coefs['forward directivity']
         Esf = coefs['forward source match']
@@ -5818,22 +5818,22 @@ class MultiportCal:
         k = coefs['k']
 
         if k_side == 0:
-            S1 = npy.array([
+            S1 = np.array([
                     [ Edf,  Erf/k ],
                     [ k,    Esf ]
                     ]).transpose(2,0,1)
 
-            S2 = npy.array([
+            S2 = np.array([
                     [ Edr,  one ],
                     [ Err,  Esr ]
                     ]).transpose(2,0,1)
         elif k_side == 1:
-            S1 = npy.array([
+            S1 = np.array([
                     [ Edf,  Erf ],
                     [ one,    Esf ]
                     ]).transpose(2,0,1)
 
-            S2 = npy.array([
+            S2 = np.array([
                     [ Edr,  one/k ],
                     [ Err*k,  Esr ]
                     ]).transpose(2,0,1)
@@ -6054,7 +6054,7 @@ def unterminate(ntwk, gamma_f, gamma_r):
     m, gamma_r, gamma_f = ntwk.s, gamma_r.s, gamma_f.s
     u = m.copy()
 
-    one = npy.ones(ntwk.frequency.npoints)
+    one = np.ones(ntwk.frequency.npoints)
 
     d = one - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0]*gamma_f[:,0,0]
     u[:,0,0] = (m[:,0,0] - m[:,0,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
@@ -6146,9 +6146,9 @@ def terminate_nport(ntwk, gammas):
     fpoints = len(ntwk.frequency)
     if len(gammas) != ntwk.nports:
         raise ValueError("len(gammas) doesn't match the number of network ports")
-    ones = npy.ones(len(ntwk.s))
+    ones = np.ones(len(ntwk.s))
     for i in range(nports):
-        term = npy.zeros((fpoints, 2*nports, 2*nports), dtype=complex)
+        term = np.zeros((fpoints, 2*nports, 2*nports), dtype=complex)
         for j in range(nports):
             if i == j:
                 term[:,nports+j,j] = ones
@@ -6200,14 +6200,14 @@ def compute_switch_terms(ntwks):
         raise ValueError("At least three networks are required.")
 
     fpoints = len(ntwks[0].frequency)
-    Gamma21_fill = npy.zeros(shape=(fpoints,), dtype=complex)  # forward switch term
-    Gamma12_fill = npy.zeros(shape=(fpoints,), dtype=complex)  # reverse switch term
+    Gamma21_fill = np.zeros(shape=(fpoints,), dtype=complex)  # forward switch term
+    Gamma12_fill = np.zeros(shape=(fpoints,), dtype=complex)  # reverse switch term
     for inx in range(fpoints): # iterate through all frequency points
         # create the system matrix
-        H = npy.array([
+        H = np.array([
             [-ntwk.s[inx,0,0]*ntwk.s[inx,0,1]/ntwk.s[inx,1,0], -ntwk.s[inx,1,1], 1, ntwk.s[inx,0,1]/ntwk.s[inx,1,0]]
             for ntwk in ntwks])
-        _,_,vh = npy.linalg.svd(H)    # compute the SVD
+        _,_,vh = np.linalg.svd(H)    # compute the SVD
         nullspace = vh[-1,:].conj()   # get the nullspace
         Gamma21_fill[inx] = nullspace[1]/nullspace[2]
         Gamma12_fill[inx] = nullspace[0]/nullspace[3]
@@ -6270,7 +6270,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     """
 
     npts = len(thru_m)
-    zero = npy.zeros(npts)
+    zero = np.zeros(npts)
 
     if line_approx is None:
         # estimate line length, by assuming error networks are well
@@ -6286,14 +6286,14 @@ def determine_line(thru_m, line_m, line_approx=None):
     s12_0, s12_1 = w[:,0], w[:,1]
     s12 = find_correct_sign(s12_0, s12_1, line_approx_s21)
     found_line = line_m.copy()
-    found_line.s = npy.array([[zero, s12],[s12,zero]]).transpose(2,0,1)
+    found_line.s = np.array([[zero, s12],[s12,zero]]).transpose(2,0,1)
     return found_line
 
 
 def _regularize_inplace(z : ComplexArray, epsilon : float=1e-7) -> ComplexArray:
     """ Regularize an array inplace around zero """
-    zero_idx = npy.abs(z)<epsilon
-    z[zero_idx] = .5*(epsilon * npy.exp(npy.angle(z[zero_idx])*1j)+z[zero_idx])
+    zero_idx = np.abs(z)<epsilon
+    z[zero_idx] = .5*(epsilon * np.exp(np.angle(z[zero_idx])*1j)+z[zero_idx])
     return z
 
 def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
@@ -6628,23 +6628,23 @@ def align_measured_ideals(measured, ideals):
 def two_port_error_vector_2_Ts(error_coefficients):
     ec = error_coefficients
     npoints = len(ec['k'])
-    one = npy.ones(npoints,dtype=complex)
-    zero = npy.zeros(npoints,dtype=complex)
-    #T_1 = npy.zeros((npoints, 2,2),dtype=complex)
+    one = np.ones(npoints,dtype=complex)
+    zero = np.zeros(npoints,dtype=complex)
+    #T_1 = np.zeros((npoints, 2,2),dtype=complex)
     #T_1[:,0,0],T_1[:,1,1] = -1*ec['det_X'], -1*ec['k']*ec['det_Y']
     #T_1[:,1,1] = -1*ec['k']*ec['det_Y']
 
 
-    T1 = npy.array([\
+    T1 = np.array([\
             [       -1*ec['det_X'], zero    ],\
             [       zero,           -1*ec['k']*ec['det_Y']]]).transpose().reshape(-1,2,2)
-    T2 = npy.array([\
+    T2 = np.array([\
             [       ec['e00'], zero ],\
             [       zero,                   ec['k']*ec['e33']]]).transpose().reshape(-1,2,2)
-    T3 = npy.array([\
+    T3 = np.array([\
             [       -1*ec['e11'], zero      ],\
             [       zero,                   -1*ec['k']*ec['e22']]]).transpose().reshape(-1,2,2)
-    T4 = npy.array([\
+    T4 = np.array([\
             [       one, zero       ],\
             [       zero,                   ec['k']]]).transpose().reshape(-1,2,2)
     return T1,T2,T3,T4
@@ -6662,18 +6662,18 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
             #TODO: make this better and maybe have phase continuity
             # functionality
             tracking  = coefs['reflection tracking']
-            #s12 = npy.sqrt(tracking)
-            #s21 = npy.sqrt(tracking)
+            #s12 = np.sqrt(tracking)
+            #s21 = np.sqrt(tracking)
             s12 =  sqrt_phase_unwrap(tracking)
             s21 =  sqrt_phase_unwrap(tracking)
 
         else:
             s21 = coefs['reflection tracking']
-            s12 = npy.ones(len(s21), dtype=complex)
+            s12 = np.ones(len(s21), dtype=complex)
 
         s11 = coefs['directivity']
         s22 = coefs['source match']
-        ntwk.s = npy.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
+        ntwk.s = np.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
         ntwk.frequency = frequency
         return ntwk
 
