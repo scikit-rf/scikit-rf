@@ -220,7 +220,8 @@ class Circuit:
         # Check that a (ntwk, port) combination appears only once in the connexion map
         nodes = [(ntwk.name, port) for (con_idx, (ntwk, port)) in [con for con in self.connections_list]]
         if len(nodes) > len(set(nodes)):
-            raise AttributeError('A (network, port) node appears twice in the connection description.')
+            duplicate_nodes = [node for node in nodes if nodes.count(node) > 1]
+            raise AttributeError(f'Nodes {duplicate_nodes} appears twice in the connection description.')
 
 
     def _is_named(self, ntw):
@@ -1359,13 +1360,14 @@ def reduce_circuit(circuit: Circuit) -> Circuit:
     def is_port(ntwk):
         return getattr(ntwk, "_is_circuit_port", False)
 
+    def invalide_to_reduce(cnx):
+        return any(is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
+
     # Use list comprehension to find the connection need to be reduced
     gen = (
         (idx, cnx)
         for idx, cnx in enumerate(circuit.connections)
-        if not (
-            any(is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
-        )
+        if not invalide_to_reduce(cnx)
     )
 
     # Get the first connection need to be reduced
@@ -1389,7 +1391,7 @@ def reduce_circuit(circuit: Circuit) -> Circuit:
         # if ntwkB is a 2port, then keep port indices where you expect.
         port_idx = (
             tuple([(i if i != k else -1) for i in range(ntwkA.nports)]),
-            ((-1, k) if l == 0 else (k, -1))
+            ((-1, k) if l == 0 else (k, -1)),
         )
     else:
         portA = list(range(ntwkA.nports - 1))
@@ -1397,9 +1399,7 @@ def reduce_circuit(circuit: Circuit) -> Circuit:
         portB = [i + ntwkA.nports - 1 for i in range(ntwkB.nports - 1)]
         portB.insert(l, -1)
 
-        port_idx = tuple(
-            [tuple(portA), tuple(portB)]
-        )
+        port_idx = (tuple(portA), tuple(portB))
 
     # Perform the reduction to get the reduced circuit connections
     # Skip the connection that connected and replace the network and port index
@@ -1420,9 +1420,7 @@ def reduce_circuit(circuit: Circuit) -> Circuit:
             # Update the connected network and port index
             if ntwk_changed:
                 ntwk_tmp = ntwk_cnt
-
-                name_idx = ntwks_name.index(name)
-                port_tmp = port_idx[name_idx][port]
+                port_tmp = port_idx[ntwks_name.index(name)][port]
 
             tmp_cnx.append((ntwk_tmp, port_tmp))
 
