@@ -71,6 +71,13 @@ Circuit internals
    Circuit.C
    Circuit.X
 
+Circuit reduction
+------------------
+.. autosummary::
+   :toctree: generated/
+
+   reduce_circuit
+
 Graph representation
 --------------------
 .. autosummary::
@@ -1321,65 +1328,104 @@ class Circuit:
         ax.axis('off')
         fig.tight_layout()
 
-    @classmethod
-    def reduce_circuit(cls, circuit: Circuit) -> Circuit:
-        """
-        Return a Returns an reduced equivalent circuit with fewer components.
+## Functions operating on Circuit
+def reduce_circuit(circuit: Circuit) -> Circuit:
+    """
+    Return a Returns an reduced equivalent circuit with fewer components.
 
-        The reduced equivalent circuit allows faster calculation of the circuit network.
+    The reduced equivalent circuit allows faster calculation of the circuit network.
 
-        Parameters
-        ----------
-        circuit: The circuit need to reduce.
 
-        Returns
-        -------
-        reduced_circuit: The reduced circuit.
-        """
-        # Use list comprehension to find the connection need to be reduced
-        gen = (
-            (idx, cnx)
-            for idx, cnx in enumerate(circuit.connections)
-            if not (
-                any(getattr(ntwk, "_is_circuit_port", False) for ntwk, _ in cnx)
-                or len(cnx) != 2
-            )
+    Parameters
+    ----------
+    circuit: The circuit need to reduce.
+
+
+    Returns
+    -------
+    reduced_circuit: The reduced circuit.
+
+
+    Examples
+    --------
+    >>> import skrf as rf
+    >>> import numpy as np
+    >>> circuit = rf.Circuit(connections)
+    >>> ntwkA = circuit.network
+    >>> ntwkB = rf.reduce_circuit(circuit).network
+    >>> np.allclose(ntwkA.s, ntwkB.s)
+    True
+    """
+    def is_port(ntwk):
+        return getattr(ntwk, "_is_circuit_port", False)
+
+    # Use list comprehension to find the connection need to be reduced
+    gen = (
+        (idx, cnx)
+        for idx, cnx in enumerate(circuit.connections)
+        if not (
+            any(is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
+        )
+    )
+
+    # Get the first connection need to be reduced
+    skip_idx, cnx_to_reduce = next(gen, (-1, [(Network(), -1)] * 2))
+
+    # If there is no connection need to reduce, return the original circuit
+    if skip_idx == -1:
+        return circuit
+
+    # Connect the connecions need to be reduced
+    (ntwkA, k), (ntwkB, l) = cnx_to_reduce
+    ntwks_name = (ntwkA.name, ntwkB.name)
+
+    # Generate the connected network and the original port index
+    ntwk_cnt = connect(ntwkA=ntwkA, k=k, ntwkB=ntwkB, l=l)
+
+    # Generate the port index, the index is the original port index
+    # and the value is the new port index, -1 means the port is removed.
+    port_idx = tuple()
+    if ntwkB.nports == 2 and ntwkA.nports > 2:
+        # if ntwkB is a 2port, then keep port indices where you expect.
+        port_idx = (
+            tuple([(i if i != k else -1) for i in range(ntwkA.nports)]),
+            ((-1, k) if l == 0 else (k, -1))
+        )
+    else:
+        portA = list(range(ntwkA.nports - 1))
+        portA.insert(k, -1)
+        portB = [i + ntwkA.nports - 1 for i in range(ntwkB.nports - 1)]
+        portB.insert(l, -1)
+
+        port_idx = tuple(
+            [tuple(portA), tuple(portB)]
         )
 
-        # Get the first connection need to be reduced
-        skip_idx, cnx_to_reduce = next(gen, (-1, [(Network(), -1)] * 2))
+    # Perform the reduction to get the reduced circuit connections
+    # Skip the connection that connected and replace the network and port index
+    reduced_cnxs = []
+    for idx, cnx in enumerate(circuit.connections):
+        # Skip the connection reduced
+        if idx == skip_idx:
+            continue
 
-        # If there is no connection need to reduce, return the original circuit
-        if skip_idx == -1:
-            return circuit
+        tmp_cnx = []
+        for ntwk, port in cnx:
+            name = ntwk.name
+            ntwk_changed = name in ntwks_name
 
-        # Connect the connecions need to be reduced
-        (ntwk1, k), (ntwk2, l) = cnx_to_reduce
-        ntwks_name = (ntwk1.name, ntwk2.name)
+            ntwk_tmp = ntwk
+            port_tmp = port
 
-        # Generate the connected network and the original port index
-        ntwk_tmp = connect(ntwkA=ntwk1, k=k, ntwkB=ntwk2, l=l)
-        orig_p = tuple(
-            tuple(i for i in range(ntwk.nports) if i != p) for ntwk, p in cnx_to_reduce
-        )
+            # Update the connected network and port index
+            if ntwk_changed:
+                ntwk_tmp = ntwk_cnt
 
-        # Perform the reduction to get the reduced circuit connections
-        # Skip the connection that connected and replace the network and port index
-        reduced_cnxs = [
-            [
-                (
-                    (
-                        ntwk_tmp,
-                        orig_p[ntwks_name.index(ntwk.name)].index(port)
-                        + len(orig_p[: ntwks_name.index(ntwk.name)]),
-                    )
-                    if ntwk.name in ntwks_name
-                    else (ntwk, port)
-                )
-                for ntwk, port in cnx
-            ]
-            for idx, cnx in enumerate(circuit.connections)
-            if idx != skip_idx
-        ]
+                name_idx = ntwks_name.index(name)
+                port_tmp = port_idx[name_idx][port]
 
-        return cls.reduce_circuit(Circuit(reduced_cnxs))
+            tmp_cnx.append((ntwk_tmp, port_tmp))
+
+        reduced_cnxs.append(tmp_cnx)
+
+    return reduce_circuit(Circuit(reduced_cnxs))
