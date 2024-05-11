@@ -5853,28 +5853,40 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
     """
 
     if k > A.shape[-1] - 1 or l > A.shape[-1] - 1:
-        raise (ValueError('port indices are out of range'))
+        raise (ValueError("port indices are out of range"))
 
     nA = A.shape[1]  # num of ports on input s-matrix
-    # create an empty s-matrix, to store the result
-    C = np.zeros(shape=A.shape, dtype='complex')
+    restore_idx = [i for i in range(nA) if i not in (k, l)]
+
+    # create buffer matrix and common factors
+    Akl = 1.0 - A[:, k, l]
+    Alk = 1.0 - A[:, l, k]
+    Akk = A[:, k, k]
+    All = A[:, l, l]
+
+    buffer = (Akl * Alk - Akk * All)
+
+    # create sub-matrices for k and l ports, easy to manipulate
+    A_k_ = A[:, k, restore_idx].T
+    A_l_ = A[:, l, restore_idx].T
+    A__k = A[:, restore_idx, k].T
+    A__l = A[:, restore_idx, l].T
+
+    # create an suit-sized s-matrix, to store the result
+    x, y = np.meshgrid(restore_idx, restore_idx)
+    ext_mat = A[:, y, x]
 
     # loop through ports and calculates resultant s-parameters
-    for i in range(nA):
-        for j in range(nA):
-            C[:, i, j] = \
-                A[:, i, j] + \
-                (A[:, k, j] * A[:, i, l] * (1 - A[:, l, k]) + \
-                 A[:, l, j] * A[:, i, k] * (1 - A[:, k, l]) + \
-                 A[:, k, j] * A[:, l, l] * A[:, i, k] + \
-                 A[:, l, j] * A[:, k, k] * A[:, i, l]) / \
-                ((1 - A[:, k, l]) * (1 - A[:, l, k]) - A[:, k, k] * A[:, l, l])
+    for i in range(nA - 2):
+        for j in range(nA - 2):
+            ext_mat[:, i, j] += (
+                A_k_[j] * A__l[i] * Alk
+                + A_l_[j] * A__k[i] * Akl
+                + A_k_[j] * A__k[i] * All
+                + A_l_[j] * A__l[i] * Akk
+            ) / buffer
 
-    # remove ports that were `connected`
-    C = np.delete(C, (k, l), 1)
-    C = np.delete(C, (k, l), 2)
-
-    return C
+    return ext_mat
 
 
 ## network parameter conversion
