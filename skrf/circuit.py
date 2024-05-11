@@ -139,7 +139,7 @@ class Circuit:
         except ImportError as err:
             raise ImportError('networkx package as not been installed and is required.') from err
 
-    def __init__(self, connections: list[list[tuple]], name: str = None,) -> None:
+    def __init__(self, connections: list[list[tuple]], name: str = None, auto_reduce: bool = False) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -152,6 +152,10 @@ class Circuit:
             Port number indexing starts from zero.
         name : string, optional
             Name assigned to the circuit (Network). Default is None.
+        auto_reduce : bool, optional
+            If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
+            Default is False. This will change the circuit connections, potentially affecting current and voltage distributions.
+            Suitable for cases where only the S-parameters of the final circuit ports are of interest.
 
 
         Examples
@@ -218,7 +222,18 @@ class Circuit:
         self.frequency = ntws[0].frequency
 
         # Check that a (ntwk, port) combination appears only once in the connexion map
-        nodes = [(ntwk.name, port) for (con_idx, (ntwk, port)) in [con for con in self.connections_list]]
+        Circuit._check_duplicate_names(self.connections_list)
+
+        # Reduce the circuit if requested
+        if auto_reduce:
+            self.connections = reduce_circuit(self.connections, check_duplication=False)
+
+    @classmethod
+    def _check_duplicate_names(cls, connections_list: list):
+        """
+        Check that a (ntwk, port) combination appears only once in the connexion map
+        """
+        nodes = [(ntwk.name, port) for (con_idx, (ntwk, port)) in [con for con in connections_list]]
         if len(nodes) > len(set(nodes)):
             duplicate_nodes = [node for node in nodes if nodes.count(node) > 1]
             raise AttributeError(f'Nodes {duplicate_nodes} appears twice in the connection description.')
@@ -1330,21 +1345,23 @@ class Circuit:
         fig.tight_layout()
 
 ## Functions operating on Circuit
-def reduce_circuit(circuit: Circuit) -> Circuit:
+def reduce_circuit(connections: list[list[tuple]],
+                   check_duplication: bool = True) -> list[list[tuple]]:
     """
-    Return a Returns an reduced equivalent circuit with fewer components.
+    Return a reduced equivalent circuit connections with fewer components.
 
-    The reduced equivalent circuit allows faster calculation of the circuit network.
+    The reduced equivalent circuit connections allows faster calculation of the circuit network.
 
 
     Parameters
     ----------
-    circuit: The circuit need to reduce.
+    connections: The connections need to reduce.
+    check_duplication: If True, check if the connections have duplicate names.
 
 
     Returns
     -------
-    reduced_circuit: The reduced circuit.
+    reduced_cnxs: The reduced connections.
 
 
     Examples
@@ -1352,8 +1369,10 @@ def reduce_circuit(circuit: Circuit) -> Circuit:
     >>> import skrf as rf
     >>> import numpy as np
     >>> circuit = rf.Circuit(connections)
+    >>> reduced_cnxs = rf.reduce_circuit(connections)
+    >>> reduced_circuit = rf.Circuit(reduced_cnxs)
     >>> ntwkA = circuit.network
-    >>> ntwkB = rf.reduce_circuit(circuit).network
+    >>> ntwkB = reduced_circuit.network
     >>> np.allclose(ntwkA.s, ntwkB.s)
     True
     """
@@ -1363,10 +1382,15 @@ def reduce_circuit(circuit: Circuit) -> Circuit:
     def invalide_to_reduce(cnx):
         return any(is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
 
+    # check if the connections are valid
+    if check_duplication:
+        connections_list = [[idx_cnx, cnx] for (idx_cnx, cnx) in enumerate(chain.from_iterable(connections))]
+        Circuit._check_duplicate_names(connections_list)
+
     # Use list comprehension to find the connection need to be reduced
     gen = (
         (idx, cnx)
-        for idx, cnx in enumerate(circuit.connections)
+        for idx, cnx in enumerate(connections)
         if not invalide_to_reduce(cnx)
     )
 
@@ -1375,7 +1399,7 @@ def reduce_circuit(circuit: Circuit) -> Circuit:
 
     # If there is no connection need to reduce, return the original circuit
     if skip_idx == -1:
-        return circuit
+        return connections
 
     # Connect the connecions need to be reduced
     (ntwkA, k), (ntwkB, l) = cnx_to_reduce
@@ -1404,7 +1428,7 @@ def reduce_circuit(circuit: Circuit) -> Circuit:
     # Perform the reduction to get the reduced circuit connections
     # Skip the connection that connected and replace the network and port index
     reduced_cnxs = []
-    for idx, cnx in enumerate(circuit.connections):
+    for idx, cnx in enumerate(connections):
         # Skip the connection reduced
         if idx == skip_idx:
             continue
@@ -1426,4 +1450,4 @@ def reduce_circuit(circuit: Circuit) -> Circuit:
 
         reduced_cnxs.append(tmp_cnx)
 
-    return reduce_circuit(Circuit(reduced_cnxs))
+    return reduce_circuit(connections=reduced_cnxs, check_duplication=False)

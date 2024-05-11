@@ -72,6 +72,16 @@ class CircuitTestConstructor(unittest.TestCase):
         # s_act should be equal to s22 if a = [0,1]
         assert_array_almost_equal(circuit.s_active([0, 1])[:,1], circuit.s_external[:,1,1])
 
+    def test_auto_reduce(self):
+        """
+        Test the auto_reduce parameter of the Circuit constructor
+        """
+        connections = [[(self.port1, 0), (self.ntwk1, 0)],
+                       [(self.ntwk1, 1), (self.ntwk2, 0)],
+                       [(self.ntwk2, 1), (self.port2, 0)]]
+        full_circuit = rf.Circuit(connections)
+        reduced_circuit = rf.Circuit(connections, auto_reduce=True)
+        assert_array_almost_equal(full_circuit.s_external, reduced_circuit.s_external)
 
 class CircuitClassMethods(unittest.TestCase):
     """
@@ -735,7 +745,8 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         circuit = rf.Circuit(connections)
 
         # Reduce the circuit
-        reduced_circuit = rf.reduce_circuit(circuit)
+        reduced_cnxs = rf.reduce_circuit(connections)
+        reduced_circuit = rf.Circuit(reduced_cnxs)
 
         assert_array_almost_equal(circuit.network.s, reduced_circuit.network.s)
 
