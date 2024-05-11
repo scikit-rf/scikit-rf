@@ -785,9 +785,39 @@ class Circuit:
             Scattering parameters of the circuit for the external ports.
             Shape `f x nb_ports x nb_ports`
         """
-        port_indexes = self.port_indexes
-        a, b = np.meshgrid(port_indexes, port_indexes, indexing='ij')
-        S_ext = self.s[:, a, b]
+
+        def gen_idx(idx: np.ndarray, n=-1):
+            n = n if n != -1 else idx.size
+            return np.repeat(idx, n).reshape(-1, n)
+
+        port_i: np.ndarray = np.array(self.port_indexes)
+        inter_i: np.ndarray = np.setdiff1d(np.arange(self.dim), port_i)
+
+        idx_a = gen_idx(port_i)
+        idx_b = gen_idx(port_i, inter_i.size)
+        idx_c = gen_idx(inter_i, port_i.size)
+        idx_d = gen_idx(inter_i)
+
+        x = self.X
+        c = self.C
+
+        # get the submatrix of X
+        xA = x[:, idx_a, idx_a.T]
+        xB = x[:, idx_b, idx_c.T]
+
+        # get the submatrix of T
+        t: np.ndarray = np.identity(x.shape[-1]) - c @ x
+
+        tA = t[:, idx_a, idx_a.T]
+        tB = t[:, idx_b, idx_c.T]
+        tC = t[:, idx_c, idx_b.T]
+        tD = t[:, idx_d, idx_d.T]
+
+        tmp_mat = np.linalg.inv(tD) @ tC
+        tA_inv: np.ndarray = np.linalg.inv(tA - tB @ tmp_mat)
+        tC_inv: np.ndarray = -tmp_mat @ tA_inv
+
+        S_ext = xA @ tA_inv + xB @ tC_inv
         S_ext = s2s(S_ext, self.port_z0, S_DEF_DEFAULT, 'traveling')
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
 
