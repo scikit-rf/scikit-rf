@@ -5856,34 +5856,37 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
         raise (ValueError("port indices are out of range"))
 
     nA = A.shape[1]  # num of ports on input s-matrix
-    restore_idx = [i for i in range(nA) if i not in (k, l)]
 
-    # create buffer matrix and common factors
+    # external ports index
+    ext_i = [i for i in range(nA) if i not in (k, l)]
+
+    # Indexing sub-matrices of internal ports (only k, l)
     Akl = 1.0 - A[:, k, l]
     Alk = 1.0 - A[:, l, k]
     Akk = A[:, k, k]
     All = A[:, l, l]
 
-    buffer = (Akl * Alk - Akk * All)
+    # Indexing sub-matrices of other external ports
+    Ake = A[:, k, ext_i].T
+    Ale = A[:, l, ext_i].T
+    Aek = A[:, ext_i, k].T
+    Ael = A[:, ext_i, l].T
 
-    # create sub-matrices for k and l ports, easy to manipulate
-    A_k_ = A[:, k, restore_idx].T
-    A_l_ = A[:, l, restore_idx].T
-    A__k = A[:, restore_idx, k].T
-    A__l = A[:, restore_idx, l].T
+    # Create an suit-sized s-matrix, to store the result
+    x, y = np.meshgrid(ext_i, ext_i)
+    C = A[:, y, x]
 
-    # create an suit-sized s-matrix, to store the result
-    x, y = np.meshgrid(restore_idx, restore_idx)
-    ext_mat = A[:, y, x]
-    tmp_a = (A__l * Alk + A__k * All) / buffer
-    tmp_b = (A__l * Akk + A__k * Akl) / buffer
+    # create temporary matrices for calculation
+    det = (Akl * Alk - Akk * All)
+    tmp_a = (Ael * Alk + Aek * All) / det
+    tmp_b = (Ael * Akk + Aek * Akl) / det
 
     # loop through ports and calculates resultant s-parameters
     for i in range(nA - 2):
         for j in range(nA - 2):
-            ext_mat[:, i, j] += A_k_[j] * tmp_a[i] + A_l_[j] * tmp_b[i]
+            C[:, i, j] += Ake[j] * tmp_a[i] + Ale[j] * tmp_b[i]
 
-    return ext_mat
+    return C
 
 
 ## network parameter conversion
