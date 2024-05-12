@@ -5876,6 +5876,12 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
     x, y = np.meshgrid(restore_idx, restore_idx)
     ext_mat = A[:, y, x]
 
+    # calculate common factors
+    Akl = Akl / buffer
+    Alk = Alk / buffer
+    Akk = Akk / buffer
+    All = All / buffer
+
     # loop through ports and calculates resultant s-parameters
     for i in range(nA - 2):
         for j in range(nA - 2):
@@ -5884,7 +5890,7 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
                 + A_l_[j] * A__k[i] * Akl
                 + A_k_[j] * A__k[i] * All
                 + A_l_[j] * A__l[i] * Akk
-            ) / buffer
+            )
 
     return ext_mat
 
