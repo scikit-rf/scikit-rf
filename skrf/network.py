@@ -4068,9 +4068,9 @@ class Network:
 
         Returns
         -------
-        t : class:`npy.ndarray`
+        t : class:`np.ndarray`
             Time vector
-        y : class:`npy.ndarray`
+        y : class:`np.ndarray`
             Impulse response
 
         See Also
@@ -4081,22 +4081,6 @@ class Network:
 
         if bandpass is None:
             bandpass = self.f[0] != 0
-
-        # if n is None:
-        #    n = self.frequency.npoints + pad
-        #    n = n if bandpass else n * 2 - 1
-
-        # if bandpass:
-        #    dt = 1 / (n * self.frequency.step)
-        #    t_stop = (n - 1) // 2 * dt
-        #    t_start = -t_stop - dt if n % 2 == 0 else (-n // 2 + 1) * dt
-
-        #    t = np.linspace(t_start, t_stop, num=n, endpoint=True)
-        #    cmd = np.fft.ifft
-        # else:
-        #    dt = 1 / (n * self.frequency.step)
-        #    t = np.linspace(-dt * (n // 2), dt * (n // 2), num=n, endpoint=True)
-        #    cmd = np.fft.irfft
 
         t = self.frequency._t_padded(pad=pad, n=n, bandpass=bandpass)
         n = len(t)
