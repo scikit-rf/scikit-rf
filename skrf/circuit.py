@@ -154,7 +154,7 @@ class Circuit:
             Name assigned to the circuit (Network). Default is None.
         auto_reduce : bool, optional
             If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
-            Default is False. This will change the circuit connections, potentially affecting current and voltage distributions.
+            This will change the circuit connections description, potentially affecting inner current and voltage distributions. Default is False. 
             Suitable for cases where only the S-parameters of the final circuit ports are of interest.
 
 
@@ -1355,13 +1355,16 @@ def reduce_circuit(connections: list[list[tuple]],
 
     Parameters
     ----------
-    connections: The connections need to reduce.
-    check_duplication: If True, check if the connections have duplicate names.
+    connections : list.
+            The connection list to reduce.
+    check_duplication : bool, optional.
+            If True, check if the connections have duplicate names. Default is True.
 
 
     Returns
     -------
-    reduced_cnxs: The reduced connections.
+    reduced_cnxs : list.
+            The reduced connections.
 
 
     Examples
@@ -1401,7 +1404,7 @@ def reduce_circuit(connections: list[list[tuple]],
     if skip_idx == -1:
         return connections
 
-    # Connect the connecions need to be reduced
+    # Connect the connections that need to be reduced
     (ntwkA, k), (ntwkB, l) = cnx_to_reduce
     ntwks_name = (ntwkA.name, ntwkB.name)
 
