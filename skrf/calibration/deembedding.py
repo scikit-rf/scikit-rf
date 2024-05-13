@@ -2292,7 +2292,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         if self.NRP_enable:
             s_side1, _ = self.NRP(s_side1, TD, 0)
             s_side2, _ = self.NRP(s_side2, TD, 1)
-            
+
         # unflip FIX-2 as per IEEEP370 numbering recommandation
         return (s_side1, s_side2.flipped)
 
