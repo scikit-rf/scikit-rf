@@ -2254,14 +2254,14 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                                               gamma, self.z0, self.pullback1)
             s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru,
                                               gamma, self.z0, self.pullback2)
-            s_side2 = s_side2.flipped
+            s_side2 = s_side2.flipped()
         elif self.side1:
             s_side1 = self.makeErrorBox_v8(sfix_dut_fix, s2xthru,
                                               gamma, self.z0, self.pullback1)
         elif self.side2:
             s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru,
                                               gamma, self.z0, self.pullback2)
-            s_side2 = s_side2.flipped
+            s_side2 = s_side2.flipped()
         else:
             warnings.warn(
                "no output because no output was requested",
@@ -2294,7 +2294,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             s_side2, _ = self.NRP(s_side2, TD, 1)
 
         # unflip FIX-2 as per IEEEP370 numbering recommandation
-        return (s_side1, s_side2.flipped)
+        return (s_side1, s_side2.flipped())
 
 
 class IEEEP370_MM_ZC_2xThru(Deembedding):
