@@ -701,22 +701,25 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         """
         Test reducing multi-port cascade circuit
         """
-        freq = rf.Frequency(start=1, stop=2, npoints=101, unit='GHz')
+        freq_n = 101
+        freq = rf.Frequency(start=1, stop=2, npoints=freq_n, unit='GHz')
         line = rf.media.DefinedGammaZ0(frequency=freq, z0=50)
 
         # network A
         ntwkA = rf.Network(name='a')
         ntwkA.frequency = freq
         ntwkA_z0 = (60, 70, 80, 90, 100)
-        ntwkA.z0 = [ntwkA_z0]*101
-        ntwkA.s = np.random.default_rng().random(101 * len(ntwkA_z0)**2).reshape(101, len(ntwkA_z0), len(ntwkA_z0))
+        ntwkA_np = len(ntwkA_z0)
+        ntwkA.z0 = [ntwkA_z0]*freq_n
+        ntwkA.s = np.random.default_rng().random(freq_n * ntwkA_np**2).reshape(freq_n, ntwkA_np, ntwkA_np)
 
         # network B
         ntwkB = rf.Network(name='b')
         ntwkB.frequency = freq
         ntwkB_z0 = (10, 20, 30)
-        ntwkB.z0 = [ntwkB_z0]*101
-        ntwkB.s = np.random.default_rng().random(101 * len(ntwkB_z0)**2).reshape(101, len(ntwkB_z0), len(ntwkB_z0))
+        ntwkB_np = len(ntwkB_z0)
+        ntwkB.z0 = [ntwkB_z0]*freq_n
+        ntwkB.s = np.random.default_rng().random(freq_n * ntwkB_np**2).reshape(freq_n, ntwkB_np, ntwkB_np)
 
         # Construct the connection
         port1 = rf.Circuit.Port(frequency=freq, name='port1', z0=50)

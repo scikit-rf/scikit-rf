@@ -222,14 +222,14 @@ class Circuit:
         self.frequency = ntws[0].frequency
 
         # Check that a (ntwk, port) combination appears only once in the connexion map
-        Circuit._check_duplicate_names(self.connections_list)
+        Circuit.check_duplicate_names(self.connections_list)
 
         # Reduce the circuit if requested
         if auto_reduce:
             self.connections = reduce_circuit(self.connections, check_duplication=False)
 
     @classmethod
-    def _check_duplicate_names(cls, connections_list: list):
+    def check_duplicate_names(cls, connections_list: list):
         """
         Check that a (ntwk, port) combination appears only once in the connexion map
         """
@@ -751,9 +751,7 @@ class Circuit:
         """
         X = self.X
         C = self.C
-        T = - C @ X
-        idx = np.arange(self.dim)
-        T.real[:, idx, idx] += 1.0
+        T = - C @ X + np.identity(self.dim)
         return X @ np.linalg.inv(T)
 
     @property
@@ -1393,7 +1391,7 @@ def reduce_circuit(connections: list[list[tuple]],
     # check if the connections are valid
     if check_duplication:
         connections_list = [[idx_cnx, cnx] for (idx_cnx, cnx) in enumerate(chain.from_iterable(connections))]
-        Circuit._check_duplicate_names(connections_list)
+        Circuit.check_duplicate_names(connections_list)
 
     # Use list comprehension to find the connection need to be reduced
     gen = (
