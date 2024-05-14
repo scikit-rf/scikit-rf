@@ -785,11 +785,15 @@ class Circuit:
             Scattering parameters of the circuit for the external ports.
             Shape `f x nb_ports x nb_ports`
         """
-        # Global matrix version by indexing into s matrix
+        # The external S-matrix is the submatrix corresponding to external ports:
         # port_indexes = self.port_indexes
         # a, b = np.meshgrid(port_indexes, port_indexes, indexing='ij')
         # S_ext = self.s[:, a, b]
 
+        # Instead of calculating all S-parameters and taking a submatrix,
+        # the following faster approach only calculates external the S-parameters
+        # from block-matrix operations.
+        
         # generate index lists of internal and external ports
         port_indexes = self.port_indexes
         in_idxs = [(i,) for i in range(self.dim) if i not in port_indexes]
