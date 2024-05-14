@@ -797,7 +797,7 @@ class Circuit:
         ext_l, in_l = len(ext_idxs), len(in_idxs)
 
         # generate index slices for each sub-matrices
-        idx_a, idx_b, idx_c, idx_d = [
+        idx_a, idx_b, idx_c, idx_d = (
             np.repeat(i, l, axis=1)
             for i, l in (
                 (ext_idxs, ext_l),
@@ -805,7 +805,7 @@ class Circuit:
                 (in_idxs, ext_l),
                 (in_idxs, in_l),
             )
-        ]
+        )
 
         # sub-matrices index, Matrix = [[A, B], [C, D]]]
         A_idx = (slice(None), idx_a, idx_a.T)
