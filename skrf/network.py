@@ -5857,6 +5857,17 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
 
     nA = A.shape[1]  # num of ports on input s-matrix
 
+    # Vectorized version of the following loop 
+    # through ports to calculate resultant s-parameters
+    # for i in range(nA):
+    #    for j in range(nA):
+    #        C[:, i, j] = A[:, i, j] + (
+    #            A[:, k, j] * A[:, i, l] * (1 - A[:, l, k])
+    #            + A[:, l, j] * A[:, i, k] * (1 - A[:, k, l])
+    #            + A[:, k, j] * A[:, l, l] * A[:, i, k]
+    #            + A[:, l, j] * A[:, k, k] * A[:, i, l]
+    #        ) / ((1 - A[:, k, l]) * (1 - A[:, l, k]) - A[:, k, k] * A[:, l, l])
+    #
     # external ports index
     ext_i = [i for i in range(nA) if i not in (k, l)]
 
