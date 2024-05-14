@@ -785,39 +785,47 @@ class Circuit:
             Scattering parameters of the circuit for the external ports.
             Shape `f x nb_ports x nb_ports`
         """
+        # Global matrix version by indexing into s matrix
+        # port_indexes = self.port_indexes
+        # a, b = np.meshgrid(port_indexes, port_indexes, indexing='ij')
+        # S_ext = self.s[:, a, b]
 
-        def gen_idx(idx: np.ndarray, n=-1):
-            n = n if n != -1 else idx.size
-            return np.repeat(idx, n).reshape(-1, n)
+        # generate index lists of internal and external ports
+        port_indexes = self.port_indexes
+        in_idxs = [(i,) for i in range(self.dim) if i not in port_indexes]
+        ext_idxs = [(i,) for i in port_indexes]
+        ext_l, in_l = len(ext_idxs), len(in_idxs)
 
-        port_i: np.ndarray = np.array(self.port_indexes)
-        inter_i: np.ndarray = np.setdiff1d(np.arange(self.dim), port_i)
+        # generate index slices for each sub-matrices
+        idx_a, idx_b, idx_c, idx_d = [
+            np.repeat(i, l, axis=1)
+            for i, l in (
+                (ext_idxs, ext_l),
+                (ext_idxs, in_l),
+                (in_idxs, ext_l),
+                (in_idxs, in_l),
+            )
+        ]
 
-        idx_a = gen_idx(port_i)
-        idx_b = gen_idx(port_i, inter_i.size)
-        idx_c = gen_idx(inter_i, port_i.size)
-        idx_d = gen_idx(inter_i)
+        # sub-matrices index, Matrix = [[A, B], [C, D]]]
+        A_idx = (slice(None), idx_a, idx_a.T)
+        B_idx = (slice(None), idx_b, idx_c.T)
+        C_idx = (slice(None), idx_c, idx_b.T)
+        D_idx = (slice(None), idx_d, idx_d.T)
 
-        x = self.X
-        c = self.C
+        # Get the buffer of global matrix X, C and intermediate temporary matrix t
+        x, c = self.X, self.C
+        t = np.identity(x.shape[-1]) - c @ x
 
-        # get the submatrix of X
-        xA = x[:, idx_a, idx_a.T]
-        xB = x[:, idx_b, idx_c.T]
+        # Get the sub-matrices of inverse of intermediate temporary matrix t
+        tmp_mat = np.linalg.inv(t[D_idx]) @ t[C_idx]
+        tA_inv = np.linalg.inv(t[A_idx] - t[B_idx] @ tmp_mat)
+        tC_inv = -tmp_mat @ tA_inv
 
-        # get the submatrix of T
-        t: np.ndarray = np.identity(x.shape[-1]) - c @ x
+        # Get the external S-parameters for the external ports
+        # Calculated by multiplying the sub-matrices of x and t
+        S_ext = x[A_idx] @ tA_inv + x[B_idx] @ tC_inv
 
-        tA = t[:, idx_a, idx_a.T]
-        tB = t[:, idx_b, idx_c.T]
-        tC = t[:, idx_c, idx_b.T]
-        tD = t[:, idx_d, idx_d.T]
-
-        tmp_mat = np.linalg.inv(tD) @ tC
-        tA_inv: np.ndarray = np.linalg.inv(tA - tB @ tmp_mat)
-        tC_inv: np.ndarray = -tmp_mat @ tA_inv
-
-        S_ext = xA @ tA_inv + xB @ tC_inv
         S_ext = s2s(S_ext, self.port_z0, S_DEF_DEFAULT, 'traveling')
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
 
