@@ -154,8 +154,8 @@ class Circuit:
             Name assigned to the circuit (Network). Default is None.
         auto_reduce : bool, optional
             If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
-            This will change the circuit connections description, potentially affecting inner current and voltage distributions. Default is False. 
-            Suitable for cases where only the S-parameters of the final circuit ports are of interest.
+            This will change the circuit connections description, affecting inner current and voltage distributions.
+            Suitable for cases where only the S-parameters of the final circuit ports are of interest. Default is False.
 
 
         Examples
@@ -247,6 +247,13 @@ class Circuit:
             return False
         else:
             return True
+
+    @classmethod
+    def _is_port(cls, ntw):
+        """
+        Return True is the network is a port, False otherwise
+        """
+        return getattr(ntw, "_is_circuit_port", False)
 
     @classmethod
     def Port(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
@@ -705,7 +712,7 @@ class Circuit:
             Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
         """
         # list all networks which are not considered as "ports",
-        ntws = {k:v for k,v in self.networks_dict().items() if not getattr(v, '_is_circuit_port', False)}
+        ntws = {k:v for k,v in self.networks_dict().items() if not Circuit._is_port(v)}
 
         # generate the port reordering indexes from each connections
         ntws_ports_reordering = {ntw:[] for ntw in ntws}
@@ -761,7 +768,7 @@ class Circuit:
         port_indexes = []
         for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections)):
             ntw, ntw_port = cnx
-            if getattr(ntw, '_is_circuit_port', False):
+            if Circuit._is_port(ntw):
                 port_indexes.append(idx_cnx)
         return port_indexes
 
@@ -1379,11 +1386,9 @@ def reduce_circuit(connections: list[list[tuple]],
     >>> np.allclose(ntwkA.s, ntwkB.s)
     True
     """
-    def is_port(ntwk):
-        return getattr(ntwk, "_is_circuit_port", False)
 
     def invalide_to_reduce(cnx):
-        return any(is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
+        return any(Circuit._is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
 
     # check if the connections are valid
     if check_duplication:
