@@ -793,7 +793,6 @@ class Circuit:
         # Instead of calculating all S-parameters and taking a submatrix,
         # the following faster approach only calculates external the S-parameters
         # from block-matrix operations.
-        
         # generate index lists of internal and external ports
         port_indexes = self.port_indexes
         in_idxs = [(i,) for i in range(self.dim) if i not in port_indexes]
