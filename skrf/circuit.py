@@ -98,7 +98,7 @@ import numpy as np
 
 from .constants import INF, S_DEF_DEFAULT, NumberLike
 from .media import media
-from .network import Network, s2s, connect
+from .network import connect, Network, s2s
 from .util import subplots
 
 if TYPE_CHECKING:
