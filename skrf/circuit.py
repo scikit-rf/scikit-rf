@@ -785,9 +785,50 @@ class Circuit:
             Scattering parameters of the circuit for the external ports.
             Shape `f x nb_ports x nb_ports`
         """
+        # The external S-matrix is the submatrix corresponding to external ports:
+        # port_indexes = self.port_indexes
+        # a, b = np.meshgrid(port_indexes, port_indexes, indexing='ij')
+        # S_ext = self.s[:, a, b]
+
+        # Instead of calculating all S-parameters and taking a submatrix,
+        # the following faster approach only calculates external the S-parameters
+        # from block-matrix operations.
+        # generate index lists of internal and external ports
         port_indexes = self.port_indexes
-        a, b = np.meshgrid(port_indexes, port_indexes, indexing='ij')
-        S_ext = self.s[:, a, b]
+        in_idxs = [(i,) for i in range(self.dim) if i not in port_indexes]
+        ext_idxs = [(i,) for i in port_indexes]
+        ext_l, in_l = len(ext_idxs), len(in_idxs)
+
+        # generate index slices for each sub-matrices
+        idx_a, idx_b, idx_c, idx_d = (
+            np.repeat(i, l, axis=1)
+            for i, l in (
+                (ext_idxs, ext_l),
+                (ext_idxs, in_l),
+                (in_idxs, ext_l),
+                (in_idxs, in_l),
+            )
+        )
+
+        # sub-matrices index, Matrix = [[A, B], [C, D]]]
+        A_idx = (slice(None), idx_a, idx_a.T)
+        B_idx = (slice(None), idx_b, idx_c.T)
+        C_idx = (slice(None), idx_c, idx_b.T)
+        D_idx = (slice(None), idx_d, idx_d.T)
+
+        # Get the buffer of global matrix X, C and intermediate temporary matrix t
+        x, c = self.X, self.C
+        t = np.identity(x.shape[-1]) - c @ x
+
+        # Get the sub-matrices of inverse of intermediate temporary matrix t
+        tmp_mat = np.linalg.inv(t[D_idx]) @ t[C_idx]
+        tA_inv = np.linalg.inv(t[A_idx] - t[B_idx] @ tmp_mat)
+        tC_inv = -tmp_mat @ tA_inv
+
+        # Get the external S-parameters for the external ports
+        # Calculated by multiplying the sub-matrices of x and t
+        S_ext = x[A_idx] @ tA_inv + x[B_idx] @ tC_inv
+
         S_ext = s2s(S_ext, self.port_z0, S_DEF_DEFAULT, 'traveling')
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
 
