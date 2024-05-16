@@ -5853,26 +5853,49 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
     """
 
     if k > A.shape[-1] - 1 or l > A.shape[-1] - 1:
-        raise (ValueError('port indices are out of range'))
+        raise (ValueError("port indices are out of range"))
 
     nA = A.shape[1]  # num of ports on input s-matrix
-    # create an empty s-matrix, to store the result
-    C = np.zeros(shape=A.shape, dtype='complex')
+
+    # Vectorized version of the following loop
+    # through ports to calculate resultant s-parameters
+    # for i in range(nA):
+    #    for j in range(nA):
+    #        C[:, i, j] = A[:, i, j] + (
+    #            A[:, k, j] * A[:, i, l] * (1 - A[:, l, k])
+    #            + A[:, l, j] * A[:, i, k] * (1 - A[:, k, l])
+    #            + A[:, k, j] * A[:, l, l] * A[:, i, k]
+    #            + A[:, l, j] * A[:, k, k] * A[:, i, l]
+    #        ) / ((1 - A[:, k, l]) * (1 - A[:, l, k]) - A[:, k, k] * A[:, l, l])
+    #
+    # external ports index
+    ext_i = [i for i in range(nA) if i not in (k, l)]
+
+    # Indexing sub-matrices of internal ports (only k, l)
+    Akl = 1.0 - A[:, k, l]
+    Alk = 1.0 - A[:, l, k]
+    Akk = A[:, k, k]
+    All = A[:, l, l]
+
+    # Indexing sub-matrices of other external ports
+    Ake = A[:, k, ext_i].T
+    Ale = A[:, l, ext_i].T
+    Aek = A[:, ext_i, k].T
+    Ael = A[:, ext_i, l].T
+
+    # Create an suit-sized s-matrix, to store the result
+    x, y = np.meshgrid(ext_i, ext_i)
+    C = A[:, y, x]
+
+    # create temporary matrices for calculation
+    det = (Akl * Alk - Akk * All)
+    tmp_a = (Ael * Alk + Aek * All) / det
+    tmp_b = (Ael * Akk + Aek * Akl) / det
 
     # loop through ports and calculates resultant s-parameters
-    for i in range(nA):
-        for j in range(nA):
-            C[:, i, j] = \
-                A[:, i, j] + \
-                (A[:, k, j] * A[:, i, l] * (1 - A[:, l, k]) + \
-                 A[:, l, j] * A[:, i, k] * (1 - A[:, k, l]) + \
-                 A[:, k, j] * A[:, l, l] * A[:, i, k] + \
-                 A[:, l, j] * A[:, k, k] * A[:, i, l]) / \
-                ((1 - A[:, k, l]) * (1 - A[:, l, k]) - A[:, k, k] * A[:, l, l])
-
-    # remove ports that were `connected`
-    C = np.delete(C, (k, l), 1)
-    C = np.delete(C, (k, l), 2)
+    for i in range(nA - 2):
+        for j in range(nA - 2):
+            C[:, i, j] += Ake[j] * tmp_a[i] + Ale[j] * tmp_b[i]
 
     return C
 
