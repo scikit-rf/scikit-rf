@@ -716,7 +716,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         # network B
         ntwkB = rf.Network(name='b')
         ntwkB.frequency = freq
-        ntwkB_z0 = (10, 20, 30)
+        ntwkB_z0 = (10, 20, 30, 40, 50)
         ntwkB_np = len(ntwkB_z0)
         ntwkB.z0 = [ntwkB_z0]*freq_n
         ntwkB.s = np.random.default_rng().random(freq_n * ntwkB_np**2).reshape(freq_n, ntwkB_np, ntwkB_np)
@@ -742,6 +742,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
             [(ntwkA, 4), (ntwkB, 0)],
             [(ntwkB, 1), (port3, 0)],
             [(ntwkB, 2), (port4, 0)],
+            [(ntwkB, 3), (ntwkB, 4)],
         ]
 
         # Circuit connecting

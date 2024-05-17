@@ -98,7 +98,7 @@ import numpy as np
 
 from .constants import INF, S_DEF_DEFAULT, NumberLike
 from .media import media
-from .network import Network, connect, s2s
+from .network import Network, connect, innerconnect, s2s
 from .util import subplots
 
 if TYPE_CHECKING:
@@ -1412,12 +1412,21 @@ def reduce_circuit(connections: list[list[tuple]],
     ntwks_name = (ntwkA.name, ntwkB.name)
 
     # Generate the connected network and the original port index
-    ntwk_cnt = connect(ntwkA=ntwkA, k=k, ntwkB=ntwkB, l=l)
+    ntwk_cnt = Network()
+    if ntwkA.name == ntwkB.name:
+        ntwk_cnt = innerconnect(ntwkA=ntwkA, k=k, l=l)
+    else:
+        ntwk_cnt = connect(ntwkA=ntwkA, k=k, ntwkB=ntwkB, l=l)
 
     # Generate the port index, the index is the original port index
     # and the value is the new port index, -1 means the port is removed.
     port_idx = tuple()
-    if ntwkB.nports == 2 and ntwkA.nports > 2:
+    if ntwkA.name == ntwkB.name:
+        port_cnt = list(range(ntwk_cnt.nports))
+        port_cnt.insert(min(k, l), -1)
+        port_cnt.insert(max(k, l), -1)
+        port_idx = (tuple(port_cnt), tuple(port_cnt))
+    elif ntwkB.nports == 2 and ntwkA.nports > 2:
         # if ntwkB is a 2port, then keep port indices where you expect.
         port_idx = (
             tuple([(i if i != k else -1) for i in range(ntwkA.nports)]),
