@@ -6474,7 +6474,7 @@ def convert_8term_2_12term(coefs_8term):
 
     coefs_12term = {}
 
-    if True or (not (np.allclose(gamma_f, np.zeros_like(gamma_f))\
+    if (not (np.allclose(gamma_f, np.zeros_like(gamma_f))\
             and np.allclose(gamma_r, np.zeros_like(gamma_r)))):
         # taken from eq (36)-(39) in the Roger Marks paper given in the
         # docstring
