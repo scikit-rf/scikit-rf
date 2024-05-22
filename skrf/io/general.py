@@ -75,15 +75,12 @@ from io import StringIO
 from pickle import UnpicklingError
 from typing import Any
 
-import lazy_loader as lazy
 import numpy as np
 
 from ..frequency import Frequency
 from ..network import Network
 from ..networkSet import NetworkSet
 from ..util import get_extn, get_fid
-
-pd = lazy.load("pandas")
 
 
 def _get_extension(inst: Any) -> str:
@@ -670,6 +667,8 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
     --------
     networkset_2_spreadsheet : writes a spreadsheet for many networks
     """
+    import pandas as pd
+
     file_extns = {'csv':'csv','excel':'xls','html':'html'}
 
     form = form.lower()
@@ -737,6 +736,8 @@ def network_2_dataframe(ntwk: Network, attrs: list[str] =None,
     -------
     df : pandas DataFrame Object
     """
+    import pandas as pd
+
     if attrs is None:
         attrs = ["s_db"]
     if ports is None:
@@ -791,6 +792,8 @@ def networkset_2_spreadsheet(ntwkset: NetworkSet, file_name: str = None, file_ty
     --------
     networkset_2_spreadsheet : writes a spreadsheet for many networks
     """
+    import pandas as pd
+
     if ntwkset.name is None and file_name is None:
         raise(ValueError('Either ntwkset must have name or give a file_name'))
     if file_name is None:
