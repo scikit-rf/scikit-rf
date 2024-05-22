@@ -750,9 +750,7 @@ class Circuit:
             global scattering parameters of the circuit.
         """
         X = self.X
-        C = self.C
-        T = - C @ X + np.identity(self.dim)
-        return X @ np.linalg.inv(T)
+        return X @ np.linalg.inv(np.identity(self.dim) - self.C @ X)
 
     @property
     def port_indexes(self) -> list:
