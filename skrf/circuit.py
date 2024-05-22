@@ -71,6 +71,13 @@ Circuit internals
    Circuit.C
    Circuit.X
 
+Circuit reduction
+------------------
+.. autosummary::
+   :toctree: generated/
+
+   reduce_circuit
+
 Graph representation
 --------------------
 .. autosummary::
@@ -91,7 +98,7 @@ import numpy as np
 
 from .constants import INF, S_DEF_DEFAULT, NumberLike
 from .media import media
-from .network import Network, s2s
+from .network import Network, connect, innerconnect, s2s
 from .util import subplots
 
 if TYPE_CHECKING:
@@ -132,7 +139,7 @@ class Circuit:
         except ImportError as err:
             raise ImportError('networkx package as not been installed and is required.') from err
 
-    def __init__(self, connections: list[list[tuple]], name: str = None,) -> None:
+    def __init__(self, connections: list[list[tuple]], name: str = None, auto_reduce: bool = False) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -145,6 +152,10 @@ class Circuit:
             Port number indexing starts from zero.
         name : string, optional
             Name assigned to the circuit (Network). Default is None.
+        auto_reduce : bool, optional
+            If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
+            This will change the circuit connections description, affecting inner current and voltage distributions.
+            Suitable for cases where only the S-parameters of the final circuit ports are of interest. Default is False.
 
 
         Examples
@@ -211,9 +222,21 @@ class Circuit:
         self.frequency = ntws[0].frequency
 
         # Check that a (ntwk, port) combination appears only once in the connexion map
-        nodes = [(ntwk.name, port) for (con_idx, (ntwk, port)) in [con for con in self.connections_list]]
+        Circuit.check_duplicate_names(self.connections_list)
+
+        # Reduce the circuit if requested
+        if auto_reduce:
+            self.connections = reduce_circuit(self.connections, check_duplication=False)
+
+    @classmethod
+    def check_duplicate_names(cls, connections_list: list):
+        """
+        Check that a (ntwk, port) combination appears only once in the connexion map
+        """
+        nodes = [(ntwk.name, port) for (con_idx, (ntwk, port)) in [con for con in connections_list]]
         if len(nodes) > len(set(nodes)):
-            raise AttributeError('A (network, port) node appears twice in the connection description.')
+            duplicate_nodes = [node for node in nodes if nodes.count(node) > 1]
+            raise AttributeError(f'Nodes {duplicate_nodes} appears twice in the connection description.')
 
 
     def _is_named(self, ntw):
@@ -224,6 +247,13 @@ class Circuit:
             return False
         else:
             return True
+
+    @classmethod
+    def _is_port(cls, ntw):
+        """
+        Return True is the network is a port, False otherwise
+        """
+        return getattr(ntw, "_is_circuit_port", False)
 
     @classmethod
     def Port(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
@@ -682,7 +712,7 @@ class Circuit:
             Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
         """
         # list all networks which are not considered as "ports",
-        ntws = {k:v for k,v in self.networks_dict().items() if not getattr(v, '_is_circuit_port', False)}
+        ntws = {k:v for k,v in self.networks_dict().items() if not Circuit._is_port(v)}
 
         # generate the port reordering indexes from each connections
         ntws_ports_reordering = {ntw:[] for ntw in ntws}
@@ -719,7 +749,8 @@ class Circuit:
         S : :class:`numpy.ndarray`
             global scattering parameters of the circuit.
         """
-        return self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X)
+        X = self.X
+        return X @ np.linalg.inv(np.identity(self.dim) - self.C @ X)
 
     @property
     def port_indexes(self) -> list:
@@ -733,7 +764,7 @@ class Circuit:
         port_indexes = []
         for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections)):
             ntw, ntw_port = cnx
-            if getattr(ntw, '_is_circuit_port', False):
+            if Circuit._is_port(ntw):
                 port_indexes.append(idx_cnx)
         return port_indexes
 
@@ -1356,3 +1387,121 @@ class Circuit:
         # remove x and y axis and labels
         ax.axis('off')
         fig.tight_layout()
+
+## Functions operating on Circuit
+def reduce_circuit(connections: list[list[tuple]],
+                   check_duplication: bool = True) -> list[list[tuple]]:
+    """
+    Return a reduced equivalent circuit connections with fewer components.
+
+    The reduced equivalent circuit connections allows faster calculation of the circuit network.
+
+
+    Parameters
+    ----------
+    connections : list.
+            The connection list to reduce.
+    check_duplication : bool, optional.
+            If True, check if the connections have duplicate names. Default is True.
+
+
+    Returns
+    -------
+    reduced_cnxs : list.
+            The reduced connections.
+
+
+    Examples
+    --------
+    >>> import skrf as rf
+    >>> import numpy as np
+    >>> circuit = rf.Circuit(connections)
+    >>> reduced_cnxs = rf.reduce_circuit(connections)
+    >>> reduced_circuit = rf.Circuit(reduced_cnxs)
+    >>> ntwkA = circuit.network
+    >>> ntwkB = reduced_circuit.network
+    >>> np.allclose(ntwkA.s, ntwkB.s)
+    True
+    """
+
+    def invalide_to_reduce(cnx):
+        return any(Circuit._is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
+
+    # check if the connections are valid
+    if check_duplication:
+        connections_list = [[idx_cnx, cnx] for (idx_cnx, cnx) in enumerate(chain.from_iterable(connections))]
+        Circuit.check_duplicate_names(connections_list)
+
+    # Use list comprehension to find the connection need to be reduced
+    gen = (
+        (idx, cnx)
+        for idx, cnx in enumerate(connections)
+        if not invalide_to_reduce(cnx)
+    )
+
+    # Get the first connection need to be reduced
+    skip_idx, cnx_to_reduce = next(gen, (-1, [(Network(), -1)] * 2))
+
+    # If there is no connection need to reduce, return the original circuit
+    if skip_idx == -1:
+        return connections
+
+    # Connect the connections that need to be reduced
+    (ntwkA, k), (ntwkB, l) = cnx_to_reduce
+    ntwks_name = (ntwkA.name, ntwkB.name)
+
+    # Generate the connected network and the original port index
+    ntwk_cnt = Network()
+    if ntwkA.name == ntwkB.name:
+        ntwk_cnt = innerconnect(ntwkA=ntwkA, k=k, l=l)
+    else:
+        ntwk_cnt = connect(ntwkA=ntwkA, k=k, ntwkB=ntwkB, l=l)
+
+    # Generate the port index, the index is the original port index
+    # and the value is the new port index, -1 means the port is removed.
+    port_idx = tuple()
+    if ntwkA.name == ntwkB.name:
+        port_cnt = list(range(ntwk_cnt.nports))
+        port_cnt.insert(min(k, l), -1)
+        port_cnt.insert(max(k, l), -1)
+        port_idx = (tuple(port_cnt), tuple(port_cnt))
+    elif ntwkB.nports == 2 and ntwkA.nports > 2:
+        # if ntwkB is a 2port, then keep port indices where you expect.
+        port_idx = (
+            tuple([(i if i != k else -1) for i in range(ntwkA.nports)]),
+            ((-1, k) if l == 0 else (k, -1)),
+        )
+    else:
+        portA = list(range(ntwkA.nports - 1))
+        portA.insert(k, -1)
+        portB = [i + ntwkA.nports - 1 for i in range(ntwkB.nports - 1)]
+        portB.insert(l, -1)
+
+        port_idx = (tuple(portA), tuple(portB))
+
+    # Perform the reduction to get the reduced circuit connections
+    # Skip the connection that connected and replace the network and port index
+    reduced_cnxs = []
+    for idx, cnx in enumerate(connections):
+        # Skip the connection reduced
+        if idx == skip_idx:
+            continue
+
+        tmp_cnx = []
+        for ntwk, port in cnx:
+            name = ntwk.name
+            ntwk_changed = name in ntwks_name
+
+            ntwk_tmp = ntwk
+            port_tmp = port
+
+            # Update the connected network and port index
+            if ntwk_changed:
+                ntwk_tmp = ntwk_cnt
+                port_tmp = port_idx[ntwks_name.index(name)][port]
+
+            tmp_cnx.append((ntwk_tmp, port_tmp))
+
+        reduced_cnxs.append(tmp_cnx)
+
+    return reduce_circuit(connections=reduced_cnxs, check_duplication=False)

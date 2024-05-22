@@ -72,6 +72,16 @@ class CircuitTestConstructor(unittest.TestCase):
         # s_act should be equal to s22 if a = [0,1]
         assert_array_almost_equal(circuit.s_active([0, 1])[:,1], circuit.s_external[:,1,1])
 
+    def test_auto_reduce(self):
+        """
+        Test the auto_reduce parameter of the Circuit constructor
+        """
+        connections = [[(self.port1, 0), (self.ntwk1, 0)],
+                       [(self.ntwk1, 1), (self.ntwk2, 0)],
+                       [(self.ntwk2, 1), (self.port2, 0)]]
+        full_circuit = rf.Circuit(connections)
+        reduced_circuit = rf.Circuit(connections, auto_reduce=True)
+        assert_array_almost_equal(full_circuit.s_external, reduced_circuit.s_external)
 
 class CircuitClassMethods(unittest.TestCase):
     """
@@ -686,6 +696,63 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         cap_shunt_from_circuit = rf.Circuit(connections).network
 
         assert_array_almost_equal(cap_shunt_manual.s, cap_shunt_from_circuit.s)
+
+    def test_reduce_circuit(self):
+        """
+        Test reducing multi-port cascade circuit
+        """
+        freq_n = 101
+        freq = rf.Frequency(start=1, stop=2, npoints=freq_n, unit='GHz')
+        line = rf.media.DefinedGammaZ0(frequency=freq, z0=50)
+
+        # network A
+        ntwkA = rf.Network(name='a')
+        ntwkA.frequency = freq
+        ntwkA_z0 = (60, 70, 80, 90, 100)
+        ntwkA_np = len(ntwkA_z0)
+        ntwkA.z0 = [ntwkA_z0]*freq_n
+        ntwkA.s = np.random.default_rng().random(freq_n * ntwkA_np**2).reshape(freq_n, ntwkA_np, ntwkA_np)
+
+        # network B
+        ntwkB = rf.Network(name='b')
+        ntwkB.frequency = freq
+        ntwkB_z0 = (10, 20, 30, 40, 50)
+        ntwkB_np = len(ntwkB_z0)
+        ntwkB.z0 = [ntwkB_z0]*freq_n
+        ntwkB.s = np.random.default_rng().random(freq_n * ntwkB_np**2).reshape(freq_n, ntwkB_np, ntwkB_np)
+
+        # Construct the connection
+        port1 = rf.Circuit.Port(frequency=freq, name='port1', z0=50)
+        port2 = rf.Circuit.Port(frequency=freq, name='port2', z0=50)
+        ground1 = rf.Circuit.Ground(frequency=freq, name='ground1', z0=50)
+        ground2 = rf.Circuit.Ground(frequency=freq, name='ground2', z0=50)
+        open_port = rf.Circuit.Open(frequency=freq, name='open_port', z0=50)
+        ind_shunt = line.inductor(50e-12, name='ind_shunt')
+        cap_series = line.capacitor(30e-9, name='cap_series')
+        port3 = rf.Circuit.Port(frequency=freq, name='port3', z0=50)
+        port4 = rf.Circuit.Port(frequency=freq, name='port4', z0=50)
+
+        connections = [
+            [(ntwkA, 0), (cap_series, 0)],
+            [(port1, 0), (ind_shunt, 0), (cap_series, 1)],
+            [(ground1, 0), (ind_shunt, 1)],
+            [(ntwkA, 1), (port2, 0)],
+            [(ntwkA, 2), (ground2, 0)],
+            [(ntwkA, 3), (open_port, 0)],
+            [(ntwkA, 4), (ntwkB, 0)],
+            [(ntwkB, 1), (port3, 0)],
+            [(ntwkB, 2), (port4, 0)],
+            [(ntwkB, 3), (ntwkB, 4)],
+        ]
+
+        # Circuit connecting
+        circuit = rf.Circuit(connections)
+
+        # Reduce the circuit
+        reduced_cnxs = rf.reduce_circuit(connections)
+        reduced_circuit = rf.Circuit(reduced_cnxs)
+
+        assert_array_almost_equal(circuit.network.s, reduced_circuit.network.s)
 
 class CircuitTestVariableCoupler(unittest.TestCase):
     """
