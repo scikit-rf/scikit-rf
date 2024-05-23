@@ -63,7 +63,7 @@ if TYPE_CHECKING:
     Figure = TypeVar("Figure")
     Axes = TypeVar("Axes")
     import matplotlib.pyplot as plt
-    from matplotlib import dates, ticker, tri
+    from matplotlib import dates
 
 import warnings
 

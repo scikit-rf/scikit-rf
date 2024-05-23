@@ -97,9 +97,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from .constants import INF, S_DEF_DEFAULT, NumberLike
-from .media import media
 from .network import Network, connect, innerconnect, s2s
-from .util import subplots
 
 if TYPE_CHECKING:
     from .frequency import Frequency
