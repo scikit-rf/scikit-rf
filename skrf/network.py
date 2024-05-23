@@ -4078,7 +4078,6 @@ class Network:
             step_response
             extrapolate_to_dc
         """
-
         if bandpass is None:
             bandpass = self.f[0] != 0
 

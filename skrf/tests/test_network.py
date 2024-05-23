@@ -159,7 +159,6 @@ class NetworkTestCase(unittest.TestCase):
 
             np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
             np.testing.assert_allclose(ref[:,1], tdr, rtol=5e-5)
-                
 
 
     def test_time_transform_v2(self):
