@@ -4515,6 +4515,104 @@ class Network:
         gc = (gc_real + 1j * gc_imag).T
         return gc
 
+    def nf_circle(self, nf: float, npoints: int = 181): -> np.ndarray:
+        r"""
+        Returns loci of noise figure circles for a specified noise figure. The network must have two ports and noise data.
+        The center and radius of the noise figure circle are calculated by the following equations
+        [#]_.
+
+        .. math::
+
+                C_{F} = \frac{\Gamma_{opt}}{N + 1}
+
+                R_{F} = \frac{\sqrt{N(N +1 - |\Gamma_{opt}|**2)}}{N + 1}
+
+        where :math:`g_{S}` is obtained by normalizing the specified gain by the maximum gain of the source
+        matching network :math:`G_{Smax}`
+
+        .. math::
+
+                g_{S} = \frac{gain}{G_{Smax}} = gain * (1 - |S_{11}|^{2})
+
+
+        Parameters
+        ----------
+        nf : float
+            Noise figure of network in decibels.
+        npoints : int, optional
+            The number of points on the circumference of the circle.
+            More points result in a smoother circle, but require more computation. Default is 181.
+
+        Returns
+        -------
+        gc : :class:`numpy.ndarray` (shape is `npoints x f`)
+            Loci of gain circles in complex numbers
+
+        Example
+        --------
+        >>> import skrf as rf
+        >>> import matplotlib.pyplot as plt
+
+        Create a two-port network object
+
+        >>> ntwk = rf.Network('fet.s2p')
+
+        Calculate the source gain circles for all the frequencies at a noise figure of 1 dB
+
+        >>> nfc = ntwk.nf_circle(nf=1.0)
+
+        Plot the circles on the smith chart
+
+        >>> rf.plotting.plot_smith(s=nfc, smith_r=1, marker='o')
+        >>> plt.show()
+
+        Slicing the network allows you to specify a frequency
+
+        >>> nfc = ntwk['1GHz'].nf(nf=1.0)
+        >>> rf.plotting.plot_smith(s=nfc, smith_r=1, marker='o')
+        >>> plt.show()
+
+        References
+        ----------
+        ..  [#] David. M. Pozar, "Microwave Engineering, Fource Edition," Wiley, p. 580, 2011.
+
+        See Also
+        --------
+        stability_circle
+        gamma_opt: The optimum source reflection coefficient to minimize noise.
+        nf_min : The minimum noise figure of the network.
+        rn : The equivalent noise resistance of the network.
+
+        """
+        if self.nports != 2:
+            raise ValueError("Noise figure circles are defined only for two-port networks")
+
+        if npoints <= 0:
+            raise ValueError("npoints must be a positive integer")
+
+        if not self.noisy:
+            raise ValueError("Network must have noise data")
+
+        if nf < self.nf_min:
+            warnings.warn("The specified noise figure is less than the minimum achievable by the matching network. "
+                          "Specify a larger noise figure.", RuntimeWarning, stacklevel=2)
+
+        # Compute noise figure circle center and radius
+        N = np.abs(1+self.gamma_opt)**2 * (nf - self.nfmin) / (4*self.rn / self.z0[0, 0])
+        nfc_center = self.gamma_opt / (N + 1)
+        nfc_radius = np.sqrt(N*(N + 1 - abs(self.gamma_opt) ** 2)) / (N + 1)
+
+        # Generate theta values for the points on the circle
+        theta = np.linspace(0, 2 * np.pi, npoints)
+
+        # Calculate real and imaginary parts of points on the noise figure circle
+        nfc_real = np.outer(nfc_center.real, np.ones(npoints)) + np.outer(nfc_radius, np.cos(theta))
+        nfc_imag = np.outer(nfc_center.imag, np.ones(npoints)) + np.outer(nfc_radius, np.sin(theta))
+
+        # Combine real and imaginary parts to create the load noise figure circle
+        nfc = (nfc_real + 1j * nfc_imag).T
+        return nfc
+
     _plot_attribute_doc = r"""
     plot the Network attribute :attr:`{attribute}_{conversion}` component vs {x_axis}.
 
