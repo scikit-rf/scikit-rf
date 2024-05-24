@@ -147,7 +147,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(len(gated)== len(ntwk))
 
     def test_lpi(self):
-        path = Path("/home/franz/Workspaces/python/scikit-rf/skrf/tests/metas_tdr/")
+        path = Path(self.test_dir) / "metas_tdr"
 
         for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g"]:
 
