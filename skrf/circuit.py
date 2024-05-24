@@ -226,7 +226,7 @@ class Circuit:
 
         # Reduce the circuit if requested
         if auto_reduce:
-            self.connections = reduce_circuit(self.connections, check_duplication=False)
+            self.connections = reduce_circuit(self.connections, check_duplication=False, reorder=True)
 
     @classmethod
     def check_duplicate_names(cls, connections_list: list):
@@ -1349,7 +1349,8 @@ class Circuit:
 
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple]],
-                   check_duplication: bool = True) -> list[list[tuple]]:
+                   check_duplication: bool = True,
+                   reorder: bool = False) -> list[list[tuple]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
 
@@ -1362,6 +1363,8 @@ def reduce_circuit(connections: list[list[tuple]],
             The connection list to reduce.
     check_duplication : bool, optional.
             If True, check if the connections have duplicate names. Default is True.
+    reorder : bool, optional.
+            If True, reorder the connections to reduce the number of components. Default is False.
 
 
     Returns
@@ -1385,6 +1388,33 @@ def reduce_circuit(connections: list[list[tuple]],
 
     def invalide_to_reduce(cnx):
         return any(Circuit._is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
+
+    if reorder:
+        # get the total number of network ports in the specified connection
+        def calculate_ports(cnx: list[tuple[Network, int]]) -> int:
+            if invalide_to_reduce(cnx):
+                return -1
+
+            unique_networks = len(set(ntwk.name for ntwk, _ in cnx))
+            total_ports = sum(ntwk.nports for ntwk, _ in cnx)
+
+            # Return total_ports if there are 2 unique networks, otherwise return half of total_ports
+            return total_ports if unique_networks == 2 else total_ports // 2
+
+        # List of tuples containing connection indices and their calculated ports
+        cnx_ports_list = [(idx, calculate_ports(cnx)) for idx, cnx in enumerate(connections)]
+
+        # Indices of connections that should remain unchanged
+        unchanged_indices = [idx for idx, metric in cnx_ports_list if metric == -1]
+
+        # Indices of connections that need to be reordered, sorted by the number of ports
+        reorder_indices = sorted(
+            (idx for idx, metric in cnx_ports_list if metric != -1),
+            key=lambda idx: cnx_ports_list[idx][1],
+        )
+
+        # Reorder connections
+        connections = [connections[i] for i in unchanged_indices + reorder_indices]
 
     # check if the connections are valid
     if check_duplication:
