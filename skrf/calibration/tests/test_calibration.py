@@ -595,7 +595,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
     def test_convert_8term_2_12term(self):
         coefs_12term = rf.convert_8term_2_12term(self.cal.coefs)
         coefs_8term = rf.convert_12term_2_8term(coefs_12term)
-        for k,v in self.cal.coefs.items():
+        for k in self.cal.coefs.keys():
             np.testing.assert_almost_equal(coefs_8term[k], self.cal.coefs[k])
 
     def test_convert_8term_2_12term_no_switch_terms(self):
@@ -603,7 +603,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         self.cal.coefs['reverse switch term'] = np.zeros(self.cal.frequency.npoints, dtype=complex)
         coefs_12term = rf.convert_8term_2_12term(self.cal.coefs)
         coefs_8term = rf.convert_12term_2_8term(coefs_12term)
-        for k,v in self.cal.coefs.items():
+        for k in self.cal.coefs.keys():
             np.testing.assert_almost_equal(coefs_8term[k], self.cal.coefs[k])
 
 
