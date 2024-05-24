@@ -592,6 +592,21 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         self.cal.apply_cal(self.X)
         self.assertEqual(dut_before, self.X)
 
+    def test_convert_8term_2_12term(self):
+        coefs_12term = rf.convert_8term_2_12term(self.cal.coefs)
+        coefs_8term = rf.convert_12term_2_8term(coefs_12term)
+        for k,v in self.cal.coefs.items():
+            np.testing.assert_almost_equal(coefs_8term[k], self.cal.coefs[k])
+
+    def test_convert_8term_2_12term_no_switch_terms(self):
+        self.cal.coefs['forward switch term'] = np.zeros(self.cal.frequency.npoints, dtype=complex)
+        self.cal.coefs['reverse switch term'] = np.zeros(self.cal.frequency.npoints, dtype=complex)
+        coefs_12term = rf.convert_8term_2_12term(self.cal.coefs)
+        coefs_8term = rf.convert_12term_2_8term(coefs_12term)
+        for k,v in self.cal.coefs.items():
+            np.testing.assert_almost_equal(coefs_8term[k], self.cal.coefs[k])
+
+
 class TRLTest(EightTermTest):
     def setUp(self):
         self.n_ports = 2
