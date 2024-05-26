@@ -1,7 +1,7 @@
 import os
 import unittest
 
-import numpy as npy
+import numpy as np
 from numpy.testing import assert_array_almost_equal
 
 import skrf as rf
@@ -119,13 +119,13 @@ class CPWTestCase(unittest.TestCase):
             res = line - ref['n']
 
             # test if within limit
-            self.assertTrue(npy.all(npy.abs(res.s) < limit))
+            self.assertTrue(np.all(np.abs(res.s) < limit))
 
             if self.verbose:
-                ax3.plot(npy.abs(res.s[0,0]))
-                ax3.plot(npy.abs(res.s[0,1]))
-                ax3.plot(npy.abs(res.s[1,0]))
-                ax3.plot(npy.abs(res.s[1,1]))
+                ax3.plot(np.abs(res.s[0,0]))
+                ax3.plot(np.abs(res.s[0,1]))
+                ax3.plot(np.abs(res.s[1,0]))
+                ax3.plot(np.abs(res.s[1,1]))
                 res = line / ref['n']
                 res.name = 'residuals ' + ref['n'].name
                 line.plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'],
@@ -195,13 +195,13 @@ class CPWTestCase(unittest.TestCase):
             res = line - ref['n']
 
             # test if within limit
-            self.assertTrue(npy.all(npy.abs(res.s) < limit))
+            self.assertTrue(np.all(np.abs(res.s) < limit))
 
             if self.verbose:
-                ax3.plot(npy.abs(res.s[0,0]))
-                ax3.plot(npy.abs(res.s[0,1]))
-                ax3.plot(npy.abs(res.s[1,0]))
-                ax3.plot(npy.abs(res.s[1,1]))
+                ax3.plot(np.abs(res.s[0,0]))
+                ax3.plot(np.abs(res.s[0,1]))
+                ax3.plot(np.abs(res.s[1,0]))
+                ax3.plot(np.abs(res.s[1,1]))
                 res = line / ref['n']
                 res.name = 'residuals ' + ref['n'].name
                 line.plot_s_db(0, 0, ax = axs[0, 0], color = ref['color'],
@@ -265,7 +265,7 @@ class CPWTestCase(unittest.TestCase):
 
         Reference data comes from Qucs Documentation (Fig 12.2)
         """
-        w_over_s_qucs, z0_qucs = npy.loadtxt(
+        w_over_s_qucs, z0_qucs = np.loadtxt(
             os.path.join(self.data_dir_qucs, 'cpw_qucs_ep_r9dot5.csv'),
             delimiter=';', unpack=True)
 
@@ -279,8 +279,8 @@ class CPWTestCase(unittest.TestCase):
         # all to a 3% relative difference
         # this is quite a large discrepancy, but I extracted the ref values from the plot
         # one could do better eventually by extracting values from Qucs directly
-        rel_diff = (z0_qucs-npy.array(z0))/z0_qucs
-        self.assertTrue(npy.all(npy.abs(rel_diff) < 0.03))
+        rel_diff = (z0_qucs-np.array(z0))/z0_qucs
+        self.assertTrue(np.all(np.abs(rel_diff) < 0.03))
 
     def test_alpha_warning(self):
         """

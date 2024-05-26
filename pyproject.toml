@@ -82,21 +82,10 @@ docs = [
     "openpyxl >= 3"
 ]
 
-qtapps = [
-    "qtpy >= 2.2",
-    "pyqtgraph >= 0.13",
-    "pyqt5 >= 5.15"
-]
-
 [project.urls]
 homepage = "https://scikit-rf.org/"
 repository = "https://github.com/scikit-rf/scikit-rf"
 documentation = "https://scikit-rf.readthedocs.io/en/latest/"
-
-[project.gui-scripts]
-data-grabber = "skrf_qtapps.data_grabber:main"
-multiline-trl = "skrf_qtapps.multiline_trl:main"
-
 
 [build-system]
 requires = [
@@ -113,11 +102,10 @@ license-files = ["LICENSE.txt"]
 version = {attr = "skrf.__version__"}
 
 [tool.setuptools.packages.find]
-include = ["skrf*", "skrf_qtapps*"]
+include = ["skrf*"]
 
 [tool.setuptools.package-data]
 skrf = ["data/*.s*p", "data/*.cal", "data/*.mplstyle"]
-skrf_qtapps = ["skrf_qtwidgets/images/*.*"]
 
 [tool.pytest.ini_options]
 testpaths = [

@@ -1,7 +1,7 @@
 import os
 import unittest
 
-import numpy as npy
+import numpy as np
 
 import skrf as rf
 from skrf.io import Touchstone, network_2_dataframe
@@ -108,8 +108,8 @@ class IOTestCase(unittest.TestCase):
     def test_readwrite_media(self):
         a_media = rf.media.DefinedGammaZ0(
             frequency = self.freq,
-            gamma = 1j*npy.ones(101) ,
-            z0 =  50*npy.ones(101),
+            gamma = 1j*np.ones(101) ,
+            z0 =  50*np.ones(101),
             )
         self.read_write(a_media)
     @unittest.skip
@@ -130,7 +130,7 @@ class IOTestCase(unittest.TestCase):
         self.read_write(a_media)
     @unittest.skip
     def test_readwrite_DistributedCircuit(self):
-        one = npy.ones(self.freq.npoints)
+        one = np.ones(self.freq.npoints)
         a_media = rf.media.DistributedCircuit(
             frequency = self.freq,
             R=1e5*one, G=1*one, I=1e-6*one, C=8e-12*one
@@ -173,7 +173,7 @@ class IOTestCase(unittest.TestCase):
         assert df_method.equals(df_function)
 
     def test_network_2_dataframe_columns(self):
-        s = npy.random.default_rng().standard_normal((1, 11, 11))
+        s = np.random.default_rng().standard_normal((1, 11, 11))
         f = [1]
         netw = rf.Network(s=s, f=f)
 
@@ -192,7 +192,7 @@ class IOTestCase(unittest.TestCase):
     def test_network_2_dataframe_port_sep_auto(self):
         f = [1]
         for ports in [1, 2, 4, 8, 10, 11, 16]:
-            s = npy.random.default_rng().standard_normal((1, ports, ports))
+            s = np.random.default_rng().standard_normal((1, ports, ports))
             netw = rf.Network(s=s, f=f)
 
             df = netw.to_dataframe()

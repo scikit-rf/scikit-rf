@@ -1,7 +1,7 @@
 import os
 import unittest
 
-import numpy as npy
+import numpy as np
 
 import skrf as rf
 
@@ -77,7 +77,7 @@ class ConvenienceTestCase(unittest.TestCase):
         nw_50 = rf.Network(self.hfss_threeport_file_50ohm)
         nw = rf.Network(self.hfss_threeport_file)
         nw.renormalize(z_new=50)
-        self.assertTrue(npy.all(npy.abs(nw.s - nw_50.s) < 1e-6))
+        self.assertTrue(np.all(np.abs(nw.s - nw_50.s) < 1e-6))
 
     def test_is_hfss_touchstone(self):
         """
@@ -102,9 +102,9 @@ class ConvenienceTestCase(unittest.TestCase):
         nw_hfss_50 = rf.Network(os.path.join(self.test_dir, 'hfss_threeport_MA_50Ohm.s3p'))
         nw_hfss_z0 = rf.Network(os.path.join(self.test_dir, 'hfss_threeport_MA.s3p'))
         # Test if the values read are the same
-        self.assertTrue(npy.allclose(nw_hfss_50.s, nw_hfss_wo_z0.s))
+        self.assertTrue(np.allclose(nw_hfss_50.s, nw_hfss_wo_z0.s))
         nw_hfss_z0.renormalize(50)
-        self.assertTrue(npy.allclose(nw_hfss_50.s, nw_hfss_z0.s))
+        self.assertTrue(np.allclose(nw_hfss_50.s, nw_hfss_z0.s))
 
     def test_cst_touchstone_2_network(self):
         """
@@ -133,11 +133,11 @@ class ConvenienceTestCase(unittest.TestCase):
         filename = 'Agilent_E5071B.s4p'
         ntwk = rf.Network(os.path.join(self.test_dir, filename))
         # Check if port characteristic impedance is correctly parsed
-        self.assertTrue(npy.isclose(npy.unique(ntwk.z0), 75))
+        self.assertTrue(np.isclose(np.unique(ntwk.z0), 75))
 
-        self.assertTrue(npy.allclose(ntwk.s_db[0][1], # check s2n_mag
+        self.assertTrue(np.allclose(ntwk.s_db[0][1], # check s2n_mag
                                     [-5.252684e+001, -2.278388e-001, -4.435702e+001, -8.235984e+001]))
-        self.assertTrue(npy.allclose(ntwk.s_deg[0][1], # check s2n_deg
+        self.assertTrue(np.allclose(ntwk.s_deg[0][1], # check s2n_deg
                                     [-1.350884e+002, 8.767636e+001,	-1.585657e+002,	7.708928e+001]))
 
     def test_RS_touchstone_4ports(self):
@@ -147,11 +147,11 @@ class ConvenienceTestCase(unittest.TestCase):
         filename = 'RS_ZNB8.s4p'
         ntwk = rf.Network(os.path.join(self.test_dir, filename))
         # Check if port characteristic impedance is correctly parsed
-        self.assertTrue(npy.isclose(npy.unique(ntwk.z0), 50))
+        self.assertTrue(np.isclose(np.unique(ntwk.z0), 50))
         # For this specific file, the port#1 min return loss is @55.5MHz
-        self.assertTrue(ntwk.frequency.f[npy.argmin(ntwk.s11.s_mag)], 55.5e6)
+        self.assertTrue(ntwk.frequency.f[np.argmin(ntwk.s11.s_mag)], 55.5e6)
 
-        self.assertTrue(npy.allclose(ntwk.s_re[0][2], # check s3n_re
+        self.assertTrue(np.allclose(ntwk.s_re[0][2], # check s3n_re
                                     [-9.748145748042E-6, 5.737806652221E-6, -7.2831384009613E-1,  -7.2022385218772E-6]))
-        self.assertTrue(npy.allclose(ntwk.s_im[0][2], # check s3n_im
+        self.assertTrue(np.allclose(ntwk.s_im[0][2], # check s3n_im
                                     [4.4579440784571E-6, 5.3413994843693E-6, -4.5314024673959E-1, 5.6678579987964E-7]))

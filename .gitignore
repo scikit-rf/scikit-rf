@@ -15,7 +15,6 @@ scikit_rf.egg-info/
 dist/
 *.idea/
 *__pycache__/
-qtapps/sandbox*
 *.iml
 
 .vscode/
@@ -26,3 +25,5 @@ qtapps/sandbox*
 poetry.lock
 lint.xml
 .venv/
+test-results/*.xml
+testing.xlsx

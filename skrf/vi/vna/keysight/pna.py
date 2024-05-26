@@ -400,7 +400,7 @@ class PNA(VNA):
                     ntwk.s[:, n, m] = real_rows[i] + 1j * imag_rows[i]
 
             self.parent.query_format = orig_query_fmt
-            self.write("MMEM:STOR:TRACE:FORM:SNP %s" % orig_snp_fmt)
+            self.write(f"MMEM:STOR:TRACE:FORM:SNP {orig_snp_fmt}")
 
             return ntwk
 

@@ -1,7 +1,7 @@
 import os
 import unittest
 
-import numpy as npy
+import numpy as np
 
 import skrf as rf
 from skrf.frequency import InvalidFrequencyWarning
@@ -18,8 +18,8 @@ class FrequencyTestCase(unittest.TestCase):
 
     def test_create_linear_sweep(self):
         freq = rf.Frequency(1,10,10,'ghz')
-        self.assertTrue((freq.f == npy.linspace(1,10,10)*1e9).all())
-        self.assertTrue((freq.f_scaled ==npy.linspace(1,10,10)).all())
+        self.assertTrue((freq.f == np.linspace(1,10,10)*1e9).all())
+        self.assertTrue((freq.f_scaled ==np.linspace(1,10,10)).all())
         self.assertTrue(freq.sweep_type == 'lin')
 
     def test_create_log_sweep(self):
@@ -35,7 +35,7 @@ class FrequencyTestCase(unittest.TestCase):
         self.assertTrue(freq.sweep_type == 'log')
 
     def test_create_rando_sweep(self):
-        f = npy.array([1,5,200])
+        f = np.array([1,5,200])
         freq = rf.Frequency.from_f(f,unit='khz')
         self.assertTrue((freq.f ==f*1e3).all())
         self.assertTrue((freq.f_scaled== f).all())
@@ -51,7 +51,7 @@ class FrequencyTestCase(unittest.TestCase):
         """
         rando_sweep_ntwk = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))
         self.assertTrue((rando_sweep_ntwk.f == \
-            npy.array([1,4,10,20])).all())
+            np.array([1,4,10,20])).all())
 
     def test_slicer(self):
         a = rf.Frequency.from_f([1,2,4,5,6], unit='GHz')
@@ -71,7 +71,7 @@ class FrequencyTestCase(unittest.TestCase):
             freq = rf.Frequency.from_f([1,2,2], unit='Hz')
             inv = freq.drop_non_monotonic_increasing()
             self.assertListEqual(inv, [2])
-            self.assertTrue(npy.allclose(freq.f, [1,2]))
+            self.assertTrue(np.allclose(freq.f, [1,2]))
 
     def test_immutability(self):
         """

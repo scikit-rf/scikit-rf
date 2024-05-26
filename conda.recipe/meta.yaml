@@ -1,5 +1,5 @@
 {% set name = "scikit-rf" %}
-{% set version = "0.32.0" %}
+{% set version = "1.0.0" %}
 {% set hash_val = "8223204281599ba14b685d7e28b7e361" %}
 
 package:
