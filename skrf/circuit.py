@@ -228,8 +228,7 @@ class Circuit:
         if auto_reduce:
             self.connections = reduce_circuit(self.connections,
                                               check_duplication=False,
-                                              split_ground=True,
-                                              reorder=True)
+                                              split_ground=True)
 
     @classmethod
     def check_duplicate_names(cls, connections_list: list):
@@ -1403,8 +1402,7 @@ class Circuit:
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple]],
                    check_duplication: bool = True,
-                   split_ground: bool = False,
-                   reorder: bool = False) -> list[list[tuple]]:
+                   split_ground: bool = False) -> list[list[tuple]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
 
@@ -1419,8 +1417,6 @@ def reduce_circuit(connections: list[list[tuple]],
             If True, check if the connections have duplicate names. Default is True.
     split_ground : bool, optional.
             If True, split the global ground connection to independant ground connections. Default is False.
-    reorder : bool, optional.
-            If True, reorder the connections to reduce the number of components. Default is False.
 
 
     Returns
@@ -1466,24 +1462,23 @@ def reduce_circuit(connections: list[list[tuple]],
 
         connections = tmp_cnxs
 
-    if reorder:
-        # get the total number of network ports in the specified connection
-        def calculate_ports(cnx: list[tuple[Network, int]]) -> int:
-            if invalide_to_reduce(cnx):
-                return -1
+    # get the total number of network ports in the specified connection
+    def calculate_ports(cnx: list[tuple[Network, int]]) -> int:
+        if invalide_to_reduce(cnx):
+            return -1
 
-            unique_networks = len(set(ntwk.name for ntwk, _ in cnx))
-            total_ports = sum(ntwk.nports for ntwk, _ in cnx) - 2
+        unique_networks = len(set(ntwk.name for ntwk, _ in cnx))
+        total_ports = sum(ntwk.nports for ntwk, _ in cnx) - 2
 
-            # Return the number of ports if the connections performed
-            return total_ports if unique_networks == 2 else total_ports // 2 - 1
+        # Return the number of ports if the connections performed
+        return total_ports if unique_networks == 2 else total_ports // 2 - 1
 
-        # List of tuples containing connection indices and their calculated ports
-        cnx_ports_list = [(idx, calculate_ports(cnx)) for idx, cnx in enumerate(connections)]
-        reorder_indices = [idx for idx, _ in sorted(cnx_ports_list, key=lambda x: x[1])]
+    # List of tuples containing connection indices and their calculated ports
+    cnx_ports_list = [(idx, calculate_ports(cnx)) for idx, cnx in enumerate(connections)]
+    reorder_indices = [idx for idx, _ in sorted(cnx_ports_list, key=lambda x: x[1])]
 
-        # Reorder connections
-        connections = [connections[i] for i in reorder_indices]
+    # Reorder connections
+    connections = [connections[i] for i in reorder_indices]
 
     # check if the connections are valid
     if check_duplication:
@@ -1562,4 +1557,4 @@ def reduce_circuit(connections: list[list[tuple]],
 
         reduced_cnxs.append(tmp_cnx)
 
-    return reduce_circuit(connections=reduced_cnxs, check_duplication=False, reorder=True)
+    return reduce_circuit(connections=reduced_cnxs, check_duplication=False)
