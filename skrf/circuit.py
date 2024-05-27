@@ -226,7 +226,10 @@ class Circuit:
 
         # Reduce the circuit if requested
         if auto_reduce:
-            self.connections = reduce_circuit(self.connections, check_duplication=False, reorder=True)
+            self.connections = reduce_circuit(self.connections,
+                                              check_duplication=False,
+                                              split_ground=True,
+                                              reorder=True)
 
     @classmethod
     def check_duplicate_names(cls, connections_list: list):
@@ -254,6 +257,13 @@ class Circuit:
         Return True is the network is a port, False otherwise
         """
         return getattr(ntw, "_is_circuit_port", False)
+
+    @classmethod
+    def _is_ground(cls, ntw):
+        """
+        Return True is the network is a ground, False otherwise
+        """
+        return getattr(ntw, "_is_circuit_ground", False)
 
     @classmethod
     def Port(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
@@ -411,7 +421,9 @@ class Circuit:
             In [18]: ground = rf.Circuit.Ground(freq, name='GND')
 
         """
-        return cls.ShuntAdmittance(frequency, Y=INF, name=name)
+        ground = cls.ShuntAdmittance(frequency, Y=INF, name=name)
+        ground._is_circuit_ground = True
+        return ground
 
     @classmethod
     def Open(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
@@ -1391,6 +1403,7 @@ class Circuit:
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple]],
                    check_duplication: bool = True,
+                   split_ground: bool = False,
                    reorder: bool = False) -> list[list[tuple]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
@@ -1404,6 +1417,8 @@ def reduce_circuit(connections: list[list[tuple]],
             The connection list to reduce.
     check_duplication : bool, optional.
             If True, check if the connections have duplicate names. Default is True.
+    split_ground : bool, optional.
+            If True, split the global ground connection to independant ground connections. Default is False.
     reorder : bool, optional.
             If True, reorder the connections to reduce the number of components. Default is False.
 
@@ -1430,6 +1445,25 @@ def reduce_circuit(connections: list[list[tuple]],
     def invalide_to_reduce(cnx):
         return any(Circuit._is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
 
+    if split_ground:
+        tmp_cnxs = []
+        for cnx in connections:
+            ground_ntwk = next((ntwk for ntwk, _ in cnx if Circuit._is_ground(ntwk)), None)
+            
+            # If there is no ground network or if the connection has exactly 2 elements, append it as is
+            if not ground_ntwk or len(cnx) == 2:
+                tmp_cnxs.append(cnx)
+                continue
+
+            # Otherwise, create new ground connections
+            for ntwk, port in cnx:
+                if Circuit._is_ground(ntwk):
+                    continue
+                tmp_gnd = Circuit.Ground(frequency=ground_ntwk.frequency, name=f'G_{ntwk.name}', z0=ground_ntwk.z0)
+                tmp_cnxs.append([(ntwk, port), (tmp_gnd, 0)])
+
+        connections = tmp_cnxs
+
     if reorder:
         # get the total number of network ports in the specified connection
         def calculate_ports(cnx: list[tuple[Network, int]]) -> int:
@@ -1440,22 +1474,14 @@ def reduce_circuit(connections: list[list[tuple]],
             total_ports = sum(ntwk.nports for ntwk, _ in cnx)
 
             # Return total_ports if there are 2 unique networks, otherwise return half of total_ports
-            return total_ports if unique_networks == 2 else total_ports // 2
+            return total_ports - 2 if unique_networks == 2 else total_ports // 2 - 2
 
         # List of tuples containing connection indices and their calculated ports
         cnx_ports_list = [(idx, calculate_ports(cnx)) for idx, cnx in enumerate(connections)]
-
-        # Indices of connections that should remain unchanged
-        unchanged_indices = [idx for idx, metric in cnx_ports_list if metric == -1]
-
-        # Indices of connections that need to be reordered, sorted by the number of ports
-        reorder_indices = sorted(
-            (idx for idx, metric in cnx_ports_list if metric != -1),
-            key=lambda idx: cnx_ports_list[idx][1],
-        )
+        reorder_indices = [idx for idx, _ in sorted(cnx_ports_list, key=lambda x: x[1])]
 
         # Reorder connections
-        connections = [connections[i] for i in unchanged_indices + reorder_indices]
+        connections = [connections[i] for i in reorder_indices]
 
     # check if the connections are valid
     if check_duplication:
@@ -1534,4 +1560,4 @@ def reduce_circuit(connections: list[list[tuple]],
 
         reduced_cnxs.append(tmp_cnx)
 
-    return reduce_circuit(connections=reduced_cnxs, check_duplication=False)
+    return reduce_circuit(connections=reduced_cnxs, check_duplication=False, reorder=True)
