@@ -4354,11 +4354,12 @@ class Network:
 
         References
         ----------
-        ..  [#] David. M. Pozar, "Microwave Engineering, Fource Edition," Wiley, p. 566, 2011.
+        ..  [#] David. M. Pozar, "Microwave Engineering, Fourth Edition," Wiley, p. 566, 2011.
 
         See Also
         --------
         gain_circle
+        nf_circle
         stability
 
         """
@@ -4469,12 +4470,13 @@ class Network:
 
         References
         ----------
-        ..  [#] David. M. Pozar, "Microwave Engineering, Fource Edition," Wiley, p. 576, 2011.
+        ..  [#] David. M. Pozar, "Microwave Engineering, Fourth Edition," Wiley, p. 576, 2011.
         ..  [#] https://www.allaboutcircuits.com/technical-articles/designing-a-unilateral-rf-amplifier-for-a-specified-gain/
 
         See Also
         --------
         stability_circle
+        nf_circle
         max_gain : Maximum available and stable power gain
         max_stable_gain : Maximum stable power gain
         unilateral_gain : Mason's unilateral power gain
@@ -4515,7 +4517,7 @@ class Network:
         gc = (gc_real + 1j * gc_imag).T
         return gc
 
-    def nf_circle(self, nf: float, npoints: int = 181): -> np.ndarray:
+    def nf_circle(self, nf: float, npoints: int = 181) -> np.ndarray:
         r"""
         Returns loci of noise figure circles for a specified noise figure. The network must have two ports and noise data.
         The center and radius of the noise figure circle are calculated by the following equations
@@ -4523,16 +4525,15 @@ class Network:
 
         .. math::
 
-                C_{F} = \frac{\Gamma_{opt}}{N + 1}
+            C_{F} = \frac{\Gamma_{opt}}{N + 1}
 
-                R_{F} = \frac{\sqrt{N(N +1 - |\Gamma_{opt}|**2)}}{N + 1}
+            R_{F} = \frac{\sqrt{N(N +1 - |\Gamma_{opt}|^2)}}{N + 1}
 
-        where :math:`g_{S}` is obtained by normalizing the specified gain by the maximum gain of the source
-        matching network :math:`G_{Smax}`
+        where :math:`N` is the noise figure parameter defined by
 
         .. math::
 
-                g_{S} = \frac{gain}{G_{Smax}} = gain * (1 - |S_{11}|^{2})
+            N = \frac{|\Gamma_{s}-\Gamma_{opt}|^2}{1-|\Gamma_{s}|^2} = \frac{F-F_{min}}{4R_{N}/Z_{0}}|1+\Gamma_{opt}|^2
 
 
         Parameters
@@ -4545,7 +4546,7 @@ class Network:
 
         Returns
         -------
-        gc : :class:`numpy.ndarray` (shape is `npoints x f`)
+        nfc : :class:`numpy.ndarray` (shape is `npoints x f`)
             Loci of gain circles in complex numbers
 
         Example
@@ -4568,18 +4569,19 @@ class Network:
 
         Slicing the network allows you to specify a frequency
 
-        >>> nfc = ntwk['1GHz'].nf(nf=1.0)
+        >>> nfc = ntwk['1GHz'].nf_circle(nf=1.0)
         >>> rf.plotting.plot_smith(s=nfc, smith_r=1, marker='o')
         >>> plt.show()
 
         References
         ----------
-        ..  [#] David. M. Pozar, "Microwave Engineering, Fource Edition," Wiley, p. 580, 2011.
+        ..  [#] David. M. Pozar, "Microwave Engineering, Fourth Edition," Wiley, p. 580, 2011.
 
         See Also
         --------
         stability_circle
-        gamma_opt: The optimum source reflection coefficient to minimize noise.
+        gain_circle
+        g_opt: The optimum source reflection coefficient to minimize noise.
         nf_min : The minimum noise figure of the network.
         rn : The equivalent noise resistance of the network.
 
@@ -4593,14 +4595,17 @@ class Network:
         if not self.noisy:
             raise ValueError("Network must have noise data")
 
-        if nf < self.nf_min:
+        if nf < self.nfmin_db:
             warnings.warn("The specified noise figure is less than the minimum achievable by the matching network. "
                           "Specify a larger noise figure.", RuntimeWarning, stacklevel=2)
 
         # Compute noise figure circle center and radius
-        N = np.abs(1+self.gamma_opt)**2 * (nf - self.nfmin) / (4*self.rn / self.z0[0, 0])
-        nfc_center = self.gamma_opt / (N + 1)
-        nfc_radius = np.sqrt(N*(N + 1 - abs(self.gamma_opt) ** 2)) / (N + 1)
+        N = np.abs(1+self.g_opt)**2 * (10**(nf/10) - self.nfmin) / (4*self.rn / self.z0[0, 0])
+        nfc_center = self.g_opt / (N + 1)
+        nfc_radius = np.sqrt(N*(N + 1 - abs(self.g_opt) ** 2)) / (N + 1)
+        print(f"N: {N}")
+        print(f"Center: {mf.complex_2_magnitude(nfc_center)} {mf.complex_2_degree(nfc_center)}")
+        print(f"Radius: {nfc_radius}")
 
         # Generate theta values for the points on the circle
         theta = np.linspace(0, 2 * np.pi, npoints)
