@@ -149,14 +149,14 @@ class HP8720B(VNA):
         else:
             raise(ValueError("Invalid ports "+str(ports)+". Options: (1,) (2,) (1,2)."))
 
-    def get_switch_terms(self, ports=(1, 2), **kwargs):  # NOT NEEDED?
-        '''
-        Returns (forward_one_port,reverse_one_port) switch terms.
-        The ports short be connected with a half decent THRU before calling.
-        These measure how much signal is reflected from the imperfect switched
-        termination on the non-stimulated port.
-        '''
-        return self.switch_terms()
+    # def get_switch_terms(self, ports=(1, 2), **kwargs):  # NOT NEEDED?
+    #     '''
+    #     Returns (forward_one_port,reverse_one_port) switch terms.
+    #     The ports short be connected with a half decent THRU before calling.
+    #     These measure how much signal is reflected from the imperfect switched
+    #     termination on the non-stimulated port.
+    #     '''
+    #     return self.switch_terms()
 
     @property
     def error(self):
@@ -436,21 +436,21 @@ class HP8720B(VNA):
     #                 raise e
     #     return s0,s1
 
-    def switch_terms(self):
-        '''
-        Returns (forward_one_port,reverse_one_port) switch terms.
-        The ports short be connected with a half decent THRU before calling.
-        These measure how much signal is reflected from the imperfect switched
-        termination on the non-stimulated port.
-        '''
-        print('forward')
-        self.write('USER2;DRIVPORT1;LOCKA1;NUMEB2;DENOA2;CONV1S;')
-        forward = self.one_port()
-        forward.name = 'forward switch term'
+    # def switch_terms(self):
+    #     '''
+    #     Returns (forward_one_port,reverse_one_port) switch terms.
+    #     The ports short be connected with a half decent THRU before calling.
+    #     These measure how much signal is reflected from the imperfect switched
+    #     termination on the non-stimulated port.
+    #     '''
+    #     print('forward')
+    #     self.write('USER2;DRIVPORT1;LOCKA1;NUMEB2;DENOA2;CONV1S;')
+    #     forward = self.one_port()
+    #     forward.name = 'forward switch term'
 
-        print ('reverse')
-        self.write('USER1;DRIVPORT2;LOCKA2;NUMEB1;DENOA1;CONV1S;')
-        reverse = self.one_port()
-        reverse.name = 'reverse switch term'
+    #     print ('reverse')
+    #     self.write('USER1;DRIVPORT2;LOCKA2;NUMEB1;DENOA1;CONV1S;')
+    #     reverse = self.one_port()
+    #     reverse.name = 'reverse switch term'
 
-        return (forward,reverse)
+    #     return (forward,reverse)
