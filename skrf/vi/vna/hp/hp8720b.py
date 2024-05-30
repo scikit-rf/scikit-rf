@@ -151,7 +151,7 @@ class HP8720B(VNA):
         else:
             raise(ValueError("Invalid ports "+str(ports)+". Options: (1,) (2,) (1,2)."))
 
-    def get_switch_terms(self, ports=(1, 2), **kwargs):  # NOT NEEDED?
+    def get_switch_terms(self, ports=(1, 2), **kwargs):
         '''
         Returns (forward_one_port,reverse_one_port) switch terms.
         The ports short be connected with a half decent THRU before calling.
@@ -176,7 +176,8 @@ class HP8720B(VNA):
         ''' Allowed values (in Hz): 3000, 1000, 300, 100, 30, and 10'''
         if if_bw in [3,10,30,100,300,1000,3000]:
             self.write(f'IFBW {if_bw}')
-            self._resource.timeout = 2_000 * (3_000 / self.if_bandwidth) # Changing the timeout due to change IF BW
+            # Changing the timeout due to change IF BW causing the VNA to be slower
+            self._resource.timeout = 2_000 * (3_000 / self.if_bandwidth) 
         else:
             raise(ValueError('Takes a value from [3,10,30,100,300,1000,3000]'))
 
