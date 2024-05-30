@@ -64,12 +64,13 @@ class WindowFormat(Enum):
 
 
 class FieldFox(vna.VNA):
-    """Keysight FieldFox.
+    '''
+    Keysight FieldFox.
 
     The FieldFox is a class of handheld analyzers with numerous modes with
     different capabilities. This class only provides methods related to the
     network analyzer mode.
-    """
+    '''
 
     freq_start = vna.VNA.command(
         get_cmd="SENS:FREQ:STAR?",
