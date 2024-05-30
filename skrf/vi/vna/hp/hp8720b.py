@@ -58,8 +58,9 @@ class HP8720B(VNA):
 
 
 
-    Intermediate example -- note that 1001 point sweeps are not natively supported by the instrument; this driver
-    takes multiple sweeps and stitches the results together.
+    Intermediate example -- note that 1001 point sweeps are not natively supported by the instrument; instead uses
+    the analysers frequency segment mode. Based off example 4B in the 8720B programming manual. Sometimes breaks 
+    after the first output, for which the analyser requires a hard reset.
 
     .. code-block:: python
 
@@ -67,6 +68,7 @@ class HP8720B(VNA):
         vna.set_frequency_sweep(2e9,3e9,1001)
         vna.get_snp_network(ports=(1,2))
 
+    Currently NOT implemented:
     Advanced example. The driver is handed a bucket of frequencies containing
     two separate bands mashed together. Behind the scenes it will construct a
     sweep plan consisting of one native sweep and one segmented sweep, perform
@@ -149,14 +151,15 @@ class HP8720B(VNA):
         else:
             raise(ValueError("Invalid ports "+str(ports)+". Options: (1,) (2,) (1,2)."))
 
-    # def get_switch_terms(self, ports=(1, 2), **kwargs):  # NOT NEEDED?
-    #     '''
-    #     Returns (forward_one_port,reverse_one_port) switch terms.
-    #     The ports short be connected with a half decent THRU before calling.
-    #     These measure how much signal is reflected from the imperfect switched
-    #     termination on the non-stimulated port.
-    #     '''
-    #     return self.switch_terms()
+    def get_switch_terms(self, ports=(1, 2), **kwargs):  # NOT NEEDED?
+        '''
+        Returns (forward_one_port,reverse_one_port) switch terms.
+        The ports short be connected with a half decent THRU before calling.
+        These measure how much signal is reflected from the imperfect switched
+        termination on the non-stimulated port. 
+        '''
+        # return self.switch_terms()
+        raise(NotImplementedError("Not yet implemented for HP8720B"))
 
     @property
     def error(self):
@@ -436,21 +439,21 @@ class HP8720B(VNA):
     #                 raise e
     #     return s0,s1
 
-    # def switch_terms(self):
-    #     '''
-    #     Returns (forward_one_port,reverse_one_port) switch terms.
-    #     The ports short be connected with a half decent THRU before calling.
-    #     These measure how much signal is reflected from the imperfect switched
-    #     termination on the non-stimulated port.
-    #     '''
-    #     print('forward')
-    #     self.write('USER2;DRIVPORT1;LOCKA1;NUMEB2;DENOA2;CONV1S;')
-    #     forward = self.one_port()
-    #     forward.name = 'forward switch term'
+    def switch_terms(self):
+        '''
+        Returns (forward_one_port,reverse_one_port) switch terms.
+        The ports short be connected with a half decent THRU before calling.
+        These measure how much signal is reflected from the imperfect switched
+        termination on the non-stimulated port.
+        '''
+        print('forward')
+        self.write('USER2;DRIVPORT1;LOCKA1;NUMEB2;DENOA2;CONV1S;')
+        forward = self.one_port()
+        forward.name = 'forward switch term'
 
-    #     print ('reverse')
-    #     self.write('USER1;DRIVPORT2;LOCKA2;NUMEB1;DENOA1;CONV1S;')
-    #     reverse = self.one_port()
-    #     reverse.name = 'reverse switch term'
+        print ('reverse')
+        self.write('USER1;DRIVPORT2;LOCKA2;NUMEB1;DENOA1;CONV1S;')
+        reverse = self.one_port()
+        reverse.name = 'reverse switch term'
 
-    #     return (forward,reverse)
+        return (forward,reverse)
