@@ -4519,9 +4519,8 @@ class Network:
 
     def nf_circle(self, nf: float, npoints: int = 181) -> np.ndarray:
         r"""
-        Returns loci of noise figure circles for a specified noise figure. The network must have two ports and noise data.
-        The center and radius of the noise figure circle are calculated by the following equations
-        [#]_.
+        Returns loci of noise figure circles for a specified noise figure. The network must have two ports and noise
+        data. The center and radius of the noise figure circle are calculated by the following equations [#]_.
 
         .. math::
 
@@ -4595,7 +4594,7 @@ class Network:
         if not self.noisy:
             raise ValueError("Network must have noise data")
 
-        if nf < self.nfmin_db:
+        if nf < self.nfmin_db.any():
             warnings.warn("The specified noise figure is less than the minimum achievable by the matching network. "
                           "Specify a larger noise figure.", RuntimeWarning, stacklevel=2)
 
@@ -4603,9 +4602,6 @@ class Network:
         N = np.abs(1+self.g_opt)**2 * (10**(nf/10) - self.nfmin) / (4*self.rn / self.z0[0, 0])
         nfc_center = self.g_opt / (N + 1)
         nfc_radius = np.sqrt(N*(N + 1 - abs(self.g_opt) ** 2)) / (N + 1)
-        print(f"N: {N}")
-        print(f"Center: {mf.complex_2_magnitude(nfc_center)} {mf.complex_2_degree(nfc_center)}")
-        print(f"Radius: {nfc_radius}")
 
         # Generate theta values for the points on the circle
         theta = np.linspace(0, 2 * np.pi, npoints)
@@ -4614,7 +4610,7 @@ class Network:
         nfc_real = np.outer(nfc_center.real, np.ones(npoints)) + np.outer(nfc_radius, np.cos(theta))
         nfc_imag = np.outer(nfc_center.imag, np.ones(npoints)) + np.outer(nfc_radius, np.sin(theta))
 
-        # Combine real and imaginary parts to create the load noise figure circle
+        # Combine real and imaginary parts to create the noise figure circle
         nfc = (nfc_real + 1j * nfc_imag).T
         return nfc
 
