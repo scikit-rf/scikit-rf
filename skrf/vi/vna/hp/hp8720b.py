@@ -13,7 +13,6 @@ HP8720B Class
 """
 
 import time
-
 import numpy as np
 import pyvisa
 
@@ -337,7 +336,7 @@ class HP8720B(VNA):
         # Benchmarks:
         #  %time i.write('FORM4; OUTPDATA'); i._read(); None      # 543ms
         #  %time i.write('FORM2; OUTPDATA'); i._read_raw(); None  #  97.5ms
-        # self.wait_for_status(max_wait_seconds=timeout_s)
+
         self.write('FORM2;')
         self.write(outp_cmd)
         buf = self.read_raw()
@@ -422,23 +421,6 @@ class HP8720B(VNA):
         # self.freq_start = old_start_hz
         # self.freq_stop  = old_stop_hz
         # return stitched_network
-
-    # def wait_for_status(self, max_wait_seconds=30):
-    #     ''' Fetches status bytes respecting max_wait_seconds even if it must tank a few timeouts along the way. '''
-    #     t0 = time.time()
-    #     while True:
-    #         try:
-    #             status_str = self.query('OUTPSTAT')
-    #             print(status_str)
-    #             s0str, s1str = status_str.strip().split(',')
-    #             s0 = int(s0str)
-    #             s1 = int(s1str)
-    #             break
-    #         except pyvisa.errors.VisaIOError as e:
-    #             waited = time.time()-t0
-    #             if waited > max_wait_seconds:
-    #                 raise e
-    #     return s0,s1
 
     def switch_terms(self):
         '''
