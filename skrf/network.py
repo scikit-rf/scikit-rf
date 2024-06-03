@@ -4526,6 +4526,8 @@ class Network:
 
             C_{F} = \frac{\Gamma_{opt}}{N + 1}
 
+        .. math::
+
             R_{F} = \frac{\sqrt{N(N +1 - |\Gamma_{opt}|^2)}}{N + 1}
 
         where :math:`N` is the noise figure parameter defined by
