@@ -4548,7 +4548,7 @@ class Network:
         Returns
         -------
         nfc : :class:`numpy.ndarray` (shape is `npoints x f`)
-            Loci of gain circles in complex numbers
+            Loci of noise figure circles in complex numbers
 
         Example
         --------
@@ -4557,9 +4557,9 @@ class Network:
 
         Create a two-port network object
 
-        >>> ntwk = rf.Network('fet.s2p')
+        >>> ntwk = rf.Network('ntwk_noise.s2p')
 
-        Calculate the source gain circles for all the frequencies at a noise figure of 1 dB
+        Calculate the noise figure circles for all the frequencies at a noise figure of 1 dB
 
         >>> nfc = ntwk.nf_circle(nf=1.0)
 
