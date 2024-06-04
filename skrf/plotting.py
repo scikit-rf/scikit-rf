@@ -1448,6 +1448,80 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
     scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
     ax.axis('tight')
 
+@axes_kwarg
+def plot_violin_component(
+        self: NetworkSet,
+        attribute: str,
+        m: int = 0,
+        n: int = 0,
+        widths: float = None,
+        showmeans: bool = True,
+        showextrema: bool = True,
+        showmedians: bool = False,
+        quantiles = None,
+        points: int = 100,
+        bw_method = None,
+        ax: plt.Axes = None,
+        **kwargs
+    ):
+    """Plots the violin plot of the network set for the desired attribute. 
+
+    A violin plot provides the distribution of the attribute at each frequency point, and optionally the
+    extrema, mean, and median. The plot becomes cluttered quickly with many frequencies, so reducing the number
+    with :meth:`NetworkSet.interpolate_frequency` is recommended.
+
+    Parameters
+    ----------
+    attribute : str
+        attribute of Network type to analyze
+    m : int
+        first index of attribute matrix
+    n : int
+        second index of attribute matrix
+    widths : float
+        The maximum width of each violin in units of the positions axis.
+        The default is 0.75 of the distance between the first two frequencies.
+    showmeans : bool
+        Whether to show the mean with a line.
+    showextrema : bool
+        Whether to show the extrema with a line.
+    showmedians : bool
+        Whether to show the median with a line.
+    quantiles : ArrayLike
+        If not None, set a list of floats in interval [0, 1] for each violin, 
+        which stands for the quantiles that will be rendered for that violin.
+    points : int
+        The number of points to evaluate each of the gaussian kernel density estimations at.
+    bw_method : {'scott', 'silverman'} or float or callable, default: 'scott'
+        _description_. Defaults to None.
+    ax : matplotlib axes object
+        Axes to plot on. Default is None.
+    \*\*kwargs :
+        passed to :meth:`matplotlib.pyplot.violinplot`
+
+    Note
+    ----
+    For phase plots you probably want s_deg_unwrap, or
+    similar.  Uncertainty for wrapped phase blows up at +-pi.
+    """
+ 
+    freq = self.ntwk_set[0].f
+
+    # default widths to 3/4 distance between frequencies
+    if not widths and len(freq) > 1:
+        widths = (freq[1]-freq[0])*0.75
+    elif not widths:
+        widths = 0.5
+
+    data = np.array([p.__getattribute__(attribute)[:,m,n] for p in self.ntwk_set])
+
+    ax.violinplot(data, freq, vert=True, widths=widths, showmeans=showmeans, showextrema=showextrema,
+                  showmedians=showmedians, quantiles=quantiles, points=points, bw_method=bw_method, **kwargs)
+
+    ax.set_xlabel(f'Frequency ({self.ntwk_set[0].frequency.unit})')
+    ax.set_ylabel(self[0].Y_LABEL_DICT.get(attribute[2:], ''))  # use only the function of the attribute
+    scale_frequency_ticks(ax, self.ntwk_set[0].frequency.unit)
+    ax.axis('tight')
 
 def plot_uncertainty_bounds_s_db(self: NetworkSet, *args, **kwargs):
     """
