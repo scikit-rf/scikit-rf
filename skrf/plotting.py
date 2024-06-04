@@ -1515,7 +1515,7 @@ def plot_violin_component(
 
     data = np.array([p.__getattribute__(attribute)[:,m,n] for p in self.ntwk_set])
 
-    ax.violinplot(data, freq, vert=True, widths=widths, showmeans=showmeans, showextrema=showextrema,
+    ax.violinplot(data, freq, widths=widths, showmeans=showmeans, showextrema=showextrema,
                   showmedians=showmedians, quantiles=quantiles, points=points, bw_method=bw_method, **kwargs)
 
     ax.set_xlabel(f'Frequency ({self.ntwk_set[0].frequency.unit})')
