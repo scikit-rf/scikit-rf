@@ -54,9 +54,9 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from . import mathFunctions as mf
+from .constants import NumberLike
 from .network import COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency, Network
 from .util import copy_doc, now_string_2_dt
-from .constants import NumberLike
 
 try:
     from numpy.typing import ArrayLike
@@ -1076,7 +1076,7 @@ class NetworkSet:
         ntw.s = f(x)
 
         return ntw
-    
+
     def interpolate_frequency(self, freq_or_n: Frequency | NumberLike, basis: str = 's',
                     coords: str = 'cart', f_kwargs: dict = None, **kwargs) -> NetworkSet:
         """Interpolates each network in the set by frequency by calling :meth:`Network.interpolate`.
@@ -1114,7 +1114,7 @@ class NetworkSet:
         NetworkSet : :class:`NetworkSet`
             New NetworkSet with interpolated frequencies
         """
-        
+
         return NetworkSet([ntwk.interpolate(freq_or_n, basis, coords, f_kwargs, **kwargs) for ntwk in self.ntwk_set])
 
     def has_params(self) -> bool:

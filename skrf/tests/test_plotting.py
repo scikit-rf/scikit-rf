@@ -88,7 +88,7 @@ def test_plot_signature():
 
 def test_generated_violin_plots(generated_functions):
     method = f"plot_violin_{generated_functions}"
-    
+
     if "time" not in method:
         fig = getattr(ntwk_set, method)()
     else:

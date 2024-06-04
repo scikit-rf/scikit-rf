@@ -1464,7 +1464,7 @@ def plot_violin_component(
         ax: plt.Axes = None,
         **kwargs
     ):
-    """Plots the violin plot of the network set for the desired attribute. 
+    r"""Plots the violin plot of the network set for the desired attribute.
 
     A violin plot provides the distribution of the attribute at each frequency point, and optionally the
     extrema, mean, and median. The plot becomes cluttered quickly with many frequencies, so reducing the number
@@ -1488,7 +1488,7 @@ def plot_violin_component(
     showmedians : bool
         Whether to show the median with a line.
     quantiles : ArrayLike
-        If not None, set a list of floats in interval [0, 1] for each violin, 
+        If not None, set a list of floats in interval [0, 1] for each violin,
         which stands for the quantiles that will be rendered for that violin.
     points : int
         The number of points to evaluate each of the gaussian kernel density estimations at.
@@ -1504,7 +1504,7 @@ def plot_violin_component(
     For phase plots you probably want s_deg_unwrap, or
     similar.  Uncertainty for wrapped phase blows up at +-pi.
     """
- 
+
     freq = self.ntwk_set[0].f
 
     # default widths to 3/4 distance between frequencies
