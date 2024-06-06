@@ -6474,20 +6474,22 @@ def convert_8term_2_12term(coefs_8term):
 
     coefs_12term = {}
 
-    if np.allclose(gamma_f, np.zeros_like(gamma_f))\
-            or np.allclose(gamma_r, np.zeros_like(gamma_r)):
-        # taken from eq (40)-(44) in the Roger Marks paper given in the
-        # docstring
+    if np.allclose(gamma_f, np.zeros_like(gamma_f)):
+        # taken from eq (40),(41) in the Roger Marks paper
         Elf = Esr
-        Elr = Esf
         Etf = Err * k_first
+    else:
+        # taken from eq (36),(38) in the Roger Marks paper
+        Elf = Esr + (Err * gamma_f) / (1. - Edr * gamma_f)
+        Etf = ((Elf - Esr) / gamma_f) * k_first
+
+    if np.allclose(gamma_r, np.zeros_like(gamma_r)):
+        # taken from eq (43),(44) in the Roger Marks paper
+        Elr = Esf
         Etr = Erf * 1. / k_second
     else:
-        # taken from eq (36)-(39) in the Roger Marks paper given in the
-        # docstring
-        Elf  = Esr + (Err*gamma_f)/(1. - Edr * gamma_f)
+        # taken from eq (37),(39) in the Roger Marks paper
         Elr = Esf  + (Erf *gamma_r)/(1. - Edf  * gamma_r)
-        Etf  = ((Elf  - Esr)/gamma_f) * k_first
         Etr = ((Elr - Esf )/gamma_r) * 1./k_second
 
     coefs_12term['forward load match'] = Elf
