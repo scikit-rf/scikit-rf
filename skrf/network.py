@@ -2029,6 +2029,12 @@ class Network:
           ntwk.noise = self.noise.copy()
           ntwk.noise_freq = self.noise_freq.copy()
 
+        # copy special attributes (such as _is_circuit_port) but skip methods
+        for attr in (set(dir(self)) - set(dir(ntwk))):
+            if callable(getattr(self, attr)):
+                continue
+            setattr(ntwk, attr, copy(getattr(self, attr)))
+
         try:
             ntwk.port_names = copy(self.port_names)
         except(AttributeError):
