@@ -1456,7 +1456,7 @@ def reduce_circuit(connections: list[list[tuple]],
                 if Circuit._is_ground(ntwk):
                     continue
                 tmp_gnd = Circuit.Ground(frequency=ground_ntwk.frequency,
-                                         name=f'G_{ntwk.name}',
+                                         name=f'G_{ntwk.name}_{port}',
                                          z0=ground_ntwk.z0)
                 tmp_cnxs.append([(ntwk, port), (tmp_gnd, 0)])
 
