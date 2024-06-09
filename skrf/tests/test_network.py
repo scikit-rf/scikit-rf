@@ -731,6 +731,18 @@ class NetworkTestCase(unittest.TestCase):
         c = rf.connect(gain,1,flipped,0)
         self.assertTrue(np.all(np.abs(c.s - np.array([[0,1],[1,0]])) < 1e-6))
 
+    def test_renumber(self):
+        ntwk = self.ntwk1
+        from_ports_num = [0,1]
+        to_ports_num = [1,0]
+        from_ports_name = ["A", "B"]
+        to_ports_name = ["B", "A"]
+
+        ntwk.port_names = from_ports_name
+        ntwk_renum = ntwk.renumbered(from_ports_num, to_ports_num)
+
+        np.array_equal(to_ports_name, ntwk_renum.port_names)
+
     def test_de_embed_by_inv(self):
         self.assertEqual(self.ntwk1.inv ** self.ntwk3, self.ntwk2)
         self.assertEqual(self.ntwk3 ** self.ntwk2.inv, self.ntwk1)
