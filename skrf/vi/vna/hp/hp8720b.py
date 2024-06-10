@@ -12,9 +12,7 @@ HP8720B Class
     :toctree: generated/
 """
 
-import time
 import numpy as np
-import pyvisa
 
 import skrf
 import skrf.network
@@ -23,9 +21,9 @@ from skrf.vi.vna import VNA
 
 class HP8720B(VNA):
     '''
-    HP 8720B driver, created by modifiying the 8510C driver and commenting out 
-    the additional sweep options. The instrument natively supports 
-    (3/11/21/51/101/201/401/801/1601pts). 
+    HP 8720B driver, created by modifiying the 8510C driver and commenting out
+    the additional sweep options. The instrument natively supports
+    (3/11/21/51/101/201/401/801/1601pts).
 
     Segmented sweeps occur automatically when the user requests a short or
     irregularly spaced sweep (see "Advanced Example" below). The 8510 actually
@@ -58,7 +56,7 @@ class HP8720B(VNA):
 
 
     Intermediate example -- note that 1001 point sweeps are not natively supported by the instrument; instead uses
-    the analysers frequency segment mode. Based off example 4B in the 8720B programming manual. Sometimes breaks 
+    the analysers frequency segment mode. Based off example 4B in the 8720B programming manual. Sometimes breaks
     after the first output, for which the analyser requires a hard reset.
 
     .. code-block:: python
@@ -155,7 +153,7 @@ class HP8720B(VNA):
         Returns (forward_one_port,reverse_one_port) switch terms.
         The ports short be connected with a half decent THRU before calling.
         These measure how much signal is reflected from the imperfect switched
-        termination on the non-stimulated port. 
+        termination on the non-stimulated port.
         '''
         # return self.switch_terms()
         raise(NotImplementedError("Not yet implemented for HP8720B"))
@@ -176,7 +174,7 @@ class HP8720B(VNA):
         if if_bw in [3,10,30,100,300,1000,3000]:
             self.write(f'IFBW {if_bw}')
             # Changing the timeout due to change IF BW causing the VNA to be slower
-            self._resource.timeout = 2_000 * (3_000 / self.if_bandwidth) 
+            self._resource.timeout = 2_000 * (3_000 / self.if_bandwidth)
         else:
             raise(ValueError('Takes a value from [3,10,30,100,300,1000,3000]'))
 
@@ -330,13 +328,10 @@ class HP8720B(VNA):
     def ask_for_cmplx(self, outp_cmd, timeout_s=30):
         """Like ask_for_values, but use FORM2 binary transfer, much faster than ASCII for HP8720. 
         Also could not get FORM4 working for HP8720B"""
-
-        self._resource.read_termination = False  # Binary mode doesn't work if we allow premature termination on \n
-
         # Benchmarks:
         #  %time i.write('FORM4; OUTPDATA'); i._read(); None      # 543ms
         #  %time i.write('FORM2; OUTPDATA'); i._read_raw(); None  #  97.5ms
-
+        self._resource.read_termination = False # Binary mode doesn't work if we allow premature termination on \n
         self.write('FORM2;')
         self.write(outp_cmd)
         buf = self.read_raw()
@@ -348,9 +343,7 @@ class HP8720B(VNA):
             print("len(buf): %i"%(len(buf),))
             raise(e)
         cmplxs = (floats[:,0] + 1j*floats[:,1]).flatten()
-
-        self._resource.read_termination = '\n'  # Switching back for other outputs
-        
+        self._resource.read_termination = '\n' # Switching back for other outputs
         return cmplxs
 
     def _one_port(self, expected_hz=None, fresh_sweep=True):
