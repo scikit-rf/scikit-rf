@@ -162,12 +162,12 @@ class HP8720B(VNA):
     def error(self):
         ''' Error from OUTPERRO '''
         return self.query('OUTPERRO')
-    
+
     @property
     def if_bandwidth(self):
         ''' Current IF Bandwidth [Hz] '''
         return float(self.query('IFBW?'))
-    
+
     @if_bandwidth.setter
     def if_bandwidth(self, if_bw):
         ''' Allowed values (in Hz): 3000, 1000, 300, 100, 30, and 10'''
@@ -326,7 +326,7 @@ class HP8720B(VNA):
         self.write('SDON; EDITDONE; LISFREQ;')
 
     def ask_for_cmplx(self, outp_cmd, timeout_s=30):
-        """Like ask_for_values, but use FORM2 binary transfer, much faster than ASCII for HP8720. 
+        """Like ask_for_values, but use FORM2 binary transfer, much faster than ASCII for HP8720.
         Also could not get FORM4 working for HP8720B"""
         # Benchmarks:
         #  %time i.write('FORM4; OUTPDATA'); i._read(); None      # 543ms
