@@ -106,7 +106,7 @@ class HP8720B(VNA):
         self.write('CONT;')
 
         self.write('DEBUON;') # Debug HPIB mode ON to displace instrument commands on the instrument screen
-        #  DEBUOFF to turn off (or just remove command)
+        # DEBUOFF to turn off (or just remove command)
 
         # If compound_sweep_plan is None, we rely on the internal state of the analyzer.
         # If compound_sweep_plan is a SweepPlan object, we must take multiple short sweeps
