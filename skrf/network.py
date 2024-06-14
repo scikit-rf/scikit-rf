@@ -3230,6 +3230,10 @@ class Network:
             List of port indices to change. Size between 1 and N_ports.
         to_ports : list-like
             List of desired port indices. Size between 1 and N_ports.
+        only_z0 : bool
+            If true only z0 is renumbered, s-parameters are not affected.
+            This should only be used after executing the "connect_s" method 
+            which keeps the port index where you expect it to be.
 
         NB : from_ports and to_ports must have same size.
 
@@ -5880,6 +5884,8 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.
             S-parameter matrix of `B`, shape is fxnxn
     l : int
             port index on `B`
+    num : int
+            number of consecutive ports to connect (default 1)
 
     Returns
     -------
