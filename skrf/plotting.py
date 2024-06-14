@@ -1513,7 +1513,7 @@ def plot_violin_component(
     elif not widths:
         widths = 0.5
 
-    data = np.array([p.__getattribute__(attribute)[:,m,n] for p in self.ntwk_set])
+    data = np.array([getattr(p, attribute)[:,m,n] for p in self.ntwk_set])
 
     ax.violinplot(data, freq, widths=widths, showmeans=showmeans, showextrema=showextrema,
                   showmedians=showmedians, quantiles=quantiles, points=points, bw_method=bw_method, **kwargs)
