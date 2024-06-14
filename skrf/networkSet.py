@@ -499,8 +499,7 @@ class NetworkSet:
 
         """
         def plot_func(self,*args, **kwargs):
-            kwargs.update({'attribute':network_property_name})
-            self.plot_uncertainty_bounds_component(*args,**kwargs)
+            self.plot_uncertainty_bounds_component(network_property_name, *args,**kwargs)
 
         setattr(self.__class__,'plot_uncertainty_bounds_'+\
                 network_property_name,plot_func)
@@ -524,8 +523,7 @@ class NetworkSet:
 
         """
         def plot_func(self,*args, **kwargs):
-            kwargs.update({'attribute':network_property_name})
-            self.plot_minmax_bounds_component(*args,**kwargs)
+            self.plot_minmax_bounds_component(network_property_name, *args,**kwargs)
 
         setattr(self.__class__,'plot_minmax_bounds_'+\
                 network_property_name,plot_func)
@@ -549,9 +547,8 @@ class NetworkSet:
 
         """
         def plot_func(self,*args, **kwargs):
-            kwargs.update({'attribute':network_property_name})
             if "time" not in network_property_name:
-                self.plot_violin_component(*args,**kwargs)
+                self.plot_violin_component(network_property_name, *args,**kwargs)
             else:
                 raise NotImplementedError("Violin plots are not implemented for time based parameters")
 
