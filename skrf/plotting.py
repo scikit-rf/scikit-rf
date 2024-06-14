@@ -1454,6 +1454,7 @@ def plot_violin_component(
         attribute: str,
         m: int = 0,
         n: int = 0,
+        *, 
         widths: float = None,
         showmeans: bool = True,
         showextrema: bool = True,
