@@ -1266,7 +1266,7 @@ def plot_uncertainty_bounds_component(
         tbd
     type : str
         if type=='bar', this controls frequency of error bars
-    ax : matplotlib axe object
+    ax : matplotlib axes object
         Axes to plot on. Default is None.
     ppf : function
         post processing function. a function applied to the
@@ -1347,20 +1347,23 @@ def plot_uncertainty_bounds_component(
 
 @axes_kwarg
 def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
-                                 type: str = 'shade', n_deviations: int = 3,
-                                 alpha: float = .3, color_error: str | None = None,
+                                 type: str = 'shade', alpha: float = .3, color_error: str | None = None,
                                  markevery_error: int = 20, ax: plt.Axes = None,
                                  ppf: bool = None, kwargs_error: dict = None,
                                  **kwargs):
     r"""
-    Plots mean value of the NetworkSet with +/- uncertainty bounds in an Network's attribute.
+    Plots mean value of the NetworkSet with minimum and maximum bounds in an Network's attribute.
 
-    This is designed to represent uncertainty in a scalar component of the s-parameter. For example
-    plotting the uncertainty in the magnitude would be expressed by
+    This is designed to represent min/max in a scalar component of the s-parameter. For example
+    plotting the min/max in the magnitude would be expressed by
 
     .. math::
 
-        mean(|s|) \pm std(|s|)
+        min(|s|)
+
+        mean(|s|)
+
+        max(|s|)
 
     The order of mean and abs is important.
 
@@ -1374,17 +1377,15 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
         second index of attribute matrix
     type : str
         ['shade' | 'bar'], type of plot to draw
-    n_deviations : int
-        number of std deviations to plot as bounds
     alpha : float
         passed to matplotlib.fill_between() command. [number, 0-1]
     color_error : str
-        color of the +- std dev fill shading. Default is None.
+        color of the min/max fill shading. Default is None.
     markevery_error : float
         tbd
     type : str
         if type=='bar', this controls frequency of error bars
-    ax : matplotlib axe object
+    ax : matplotlib axes object
         Axes to plot on. Default is None.
     ppf : function
         post processing function. a function applied to the

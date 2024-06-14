@@ -6472,24 +6472,37 @@ def convert_8term_2_12term(coefs_8term):
     k_first = coefs_8term.get('k first', k)
     k_second = coefs_8term.get('k second', k)
 
-    # taken from eq (36)-(39) in the Roger Marks paper given in the
-    # docstring
-    Elf  = Esr + (Err*gamma_f)/(1. - Edr * gamma_f)
-    Elr = Esf  + (Erf *gamma_r)/(1. - Edf  * gamma_r)
-    Etf  = ((Elf  - Esr)/gamma_f) * k_first
-    Etr = ((Elr - Esf )/gamma_r) * 1./k_second
-
     coefs_12term = {}
-    for l in ['forward directivity','forward source match',
-        'forward reflection tracking','reverse directivity',
-        'reverse reflection tracking','reverse source match',
-        'forward isolation', 'reverse isolation']:
-        coefs_12term[l] = coefs_8term[l].copy()
+
+    if np.allclose(gamma_f, np.zeros_like(gamma_f)):
+        # taken from eq (40),(41) in the Roger Marks paper
+        Elf = Esr
+        Etf = Err * k_first
+    else:
+        # taken from eq (36),(38) in the Roger Marks paper
+        Elf = Esr + (Err * gamma_f) / (1. - Edr * gamma_f)
+        Etf = ((Elf - Esr) / gamma_f) * k_first
+
+    if np.allclose(gamma_r, np.zeros_like(gamma_r)):
+        # taken from eq (43),(44) in the Roger Marks paper
+        Elr = Esf
+        Etr = Erf * 1. / k_second
+    else:
+        # taken from eq (37),(39) in the Roger Marks paper
+        Elr = Esf  + (Erf *gamma_r)/(1. - Edf  * gamma_r)
+        Etr = ((Elr - Esf )/gamma_r) * 1./k_second
 
     coefs_12term['forward load match'] = Elf
     coefs_12term['reverse load match'] = Elr
-    coefs_12term['forward transmission tracking'] =  Etf
-    coefs_12term['reverse transmission tracking'] =  Etr
+    coefs_12term['forward transmission tracking'] = Etf
+    coefs_12term['reverse transmission tracking'] = Etr
+
+    for l in ['forward directivity', 'forward source match',
+              'forward reflection tracking', 'reverse directivity',
+              'reverse reflection tracking', 'reverse source match',
+              'forward isolation', 'reverse isolation']:
+        coefs_12term[l] = coefs_8term[l].copy()
+
     return coefs_12term
 
 
