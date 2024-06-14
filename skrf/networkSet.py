@@ -981,7 +981,7 @@ class NetworkSet:
         filename : string
             Output MDIF file name.
         values : dictionary or None. Default is None.
-            The keys of the dictionnary are MDIF variables and its values are
+            The keys of the dictionary are MDIF variables and its values are
             a list of the parameter values.
             If None, then the values will be set to the NetworkSet names
             and the datatypes will be set to "string".
@@ -1116,12 +1116,12 @@ class NetworkSet:
 
     def has_params(self) -> bool:
         """
-        Check is all Networks in the NetworkSet have a similar params dictionnary.
+        Check is all Networks in the NetworkSet have a similar params dictionary.
 
         Returns
         -------
         bool
-            True is all Networks have a .params dictionnay (of same size),
+            True is all Networks have a .params dictionary (of same size),
             False otherwise
 
         """
@@ -1164,7 +1164,7 @@ class NetworkSet:
     @property
     def params_values(self) -> dict | None:
         """
-        Return a dictionnary containing all parameters and their values.
+        Return a dictionary containing all parameters and their values.
 
         Returns
         -------
@@ -1186,7 +1186,7 @@ class NetworkSet:
     @property
     def params_types(self) -> dict | None:
         """
-        Return a dictionnary describing the data type of each parameters.
+        Return a dictionary describing the data type of each parameters.
 
         Returns
         -------
@@ -1278,7 +1278,7 @@ class NetworkSet:
             return NetworkSet()
 
         if not isinstance(indexers, dict):
-            raise TypeError('indexers should be a dictionnary.')
+            raise TypeError('indexers should be a dictionary.')
 
         for p in indexers.keys():
             if p not in self.dims:
