@@ -4948,16 +4948,17 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     # impedances.
     # import pdb;pdb.set_trace()
     if not assert_z0_at_ports_equal(ntwkA, k, ntwkB, l):
-        ntwkC.s = connect_s(
-            ntwkA.s, k,
-            impedance_mismatch(ntwkA.z0[:, k], ntwkB.z0[:, l], s_def), 0)
+        # connect a impedance mismatch, which will takes into account the
+        # effect of differing port impedances
+        mismatch = impedance_mismatch(ntwkA.z0[:, k], ntwkB.z0[:, l], s_def)
+        ntwkC.s = connect_s(ntwkA.s, k, mismatch, 0)
         # the connect_s() put the mismatch's output port at the end of
         #   ntwkC's ports.  Fix the new port's impedance, then insert it
         #   at position k where it belongs.
         ntwkC.z0[:, k:] = np.hstack((ntwkC.z0[:, k + 1:], ntwkB.z0[:, [l]]))
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
-                       to_ports=list(range(k, ntwkC.nports)))
-
+                       to_ports=list(range(k, ntwkC.nports)),
+                       only_z0=True)
     # call s-matrix connection function
     ntwkC.s = connect_s(ntwkC.s, k, ntwkB.s, l, num)
 
@@ -5144,7 +5145,8 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
         #   at position k where it belongs.
         ntwkC.z0[:, k:] = np.hstack((ntwkC.z0[:, k + 1:], ntwkC.z0[:, [l]]))
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
-                       to_ports=list(range(k, ntwkC.nports)))
+                       to_ports=list(range(k, ntwkC.nports)),
+                       only_z0=True)
 
     # call s-matrix connection function
     ntwkC.s = innerconnect_s(ntwkC.s, k, l)
