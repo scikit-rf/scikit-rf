@@ -3232,7 +3232,7 @@ class Network:
             List of desired port indices. Size between 1 and N_ports.
         only_z0 : bool
             If true only z0 is renumbered, s-parameters are not affected.
-            This should only be used after executing the "connect_s" method 
+            This should only be used after executing the "connect_s" method
             which keeps the port index where you expect it to be.
 
         NB : from_ports and to_ports must have same size.
