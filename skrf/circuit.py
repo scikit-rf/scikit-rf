@@ -226,7 +226,9 @@ class Circuit:
 
         # Reduce the circuit if requested
         if auto_reduce:
-            self.connections = reduce_circuit(self.connections, check_duplication=False)
+            self.connections = reduce_circuit(self.connections,
+                                              check_duplication=False,
+                                              split_ground=True)
 
     @classmethod
     def check_duplicate_names(cls, connections_list: list):
@@ -254,6 +256,13 @@ class Circuit:
         Return True is the network is a port, False otherwise
         """
         return getattr(ntw, "_is_circuit_port", False)
+
+    @classmethod
+    def _is_ground(cls, ntw):
+        """
+        Return True is the network is a ground, False otherwise
+        """
+        return getattr(ntw, "_is_circuit_ground", False)
 
     @classmethod
     def Port(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
@@ -411,7 +420,9 @@ class Circuit:
             In [18]: ground = rf.Circuit.Ground(freq, name='GND')
 
         """
-        return cls.ShuntAdmittance(frequency, Y=INF, name=name)
+        ground = cls.ShuntAdmittance(frequency, Y=INF, name=name)
+        ground._is_circuit_ground = True
+        return ground
 
     @classmethod
     def Open(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
@@ -1390,7 +1401,8 @@ class Circuit:
 
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple]],
-                   check_duplication: bool = True) -> list[list[tuple]]:
+                   check_duplication: bool = True,
+                   split_ground: bool = False) -> list[list[tuple]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
 
@@ -1403,6 +1415,8 @@ def reduce_circuit(connections: list[list[tuple]],
             The connection list to reduce.
     check_duplication : bool, optional.
             If True, check if the connections have duplicate names. Default is True.
+    split_ground : bool, optional.
+            If True, split the global ground connection to independant ground connections. Default is False.
 
 
     Returns
@@ -1427,9 +1441,48 @@ def reduce_circuit(connections: list[list[tuple]],
     def invalide_to_reduce(cnx):
         return any(Circuit._is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
 
+    if split_ground:
+        tmp_cnxs = []
+        for cnx in connections:
+            ground_ntwk = next((ntwk for ntwk, _ in cnx if Circuit._is_ground(ntwk)), None)
+
+            # If there is no ground network or if the connection has exactly 2 elements, append it as is
+            if not ground_ntwk or len(cnx) == 2:
+                tmp_cnxs.append(cnx)
+                continue
+
+            # Otherwise, create new ground connections
+            for ntwk, port in cnx:
+                if Circuit._is_ground(ntwk):
+                    continue
+                tmp_gnd = Circuit.Ground(frequency=ground_ntwk.frequency,
+                                         name=f'G_{ntwk.name}_{port}',
+                                         z0=ground_ntwk.z0)
+                tmp_cnxs.append([(ntwk, port), (tmp_gnd, 0)])
+
+        connections = tmp_cnxs
+
+    # get the total number of network ports in the specified connection
+    def calculate_ports(cnx: list[tuple[Network, int]]) -> int:
+        if invalide_to_reduce(cnx):
+            return -1
+
+        unique_networks = len(set(ntwk.name for ntwk, _ in cnx))
+        total_ports = sum(ntwk.nports for ntwk, _ in cnx) - 2
+
+        # Return the number of ports if the connections performed
+        return total_ports if unique_networks == 2 else total_ports // 2 - 1
+
+    # List of tuples containing connection indices and their calculated ports
+    cnx_ports_list = [(idx, calculate_ports(cnx)) for idx, cnx in enumerate(connections)]
+    reorder_indices = [idx for idx, _ in sorted(cnx_ports_list, key=lambda x: x[1])]
+
+    # Reorder connections
+    connections = [connections[i] for i in reorder_indices]
+
     # check if the connections are valid
     if check_duplication:
-        connections_list = [[idx_cnx, cnx] for (idx_cnx, cnx) in enumerate(chain.from_iterable(connections))]
+        connections_list = [list(conn) for conn in enumerate(chain.from_iterable(connections))]
         Circuit.check_duplicate_names(connections_list)
 
     # Use list comprehension to find the connection need to be reduced
