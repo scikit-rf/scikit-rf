@@ -3250,52 +3250,73 @@ class Network:
         reorganized. Dummy reference impedances are set only to follow more
         easily the renumbering.
 
-        >>> f = rf.Frequency(1, 1, 1)
-        >>> s = np.ones((1, 3, 3))
+        >>> f = rf.Frequency(1, 1, 1, 'hz')
+        >>> s = np.arange(9).reshape(1, 3, 3)
         >>> z0 = [10, 20, 30]
         >>> ntw = rf.Network(frequency=f, s=s, z0=z0)  # our OEM Network
 
         In picture, we have::
 
-            Order in          Original Order
-            skrf.Network
-                        ┌───────────────────┐
-                        │       OEM         │
-                        │                   │
-            0   ────────┤  A  (10 Ω)        │
-                        │                   │
-                        │                   │
-            1   ────────┤  B  (20 Ω)        │
-                        │                   │
-                        │                   │
-            2   ────────┤  C  (30 Ω)        │
-                        │                   │
-                        └───────────────────┘
+            Order in          Original Order         Scatter Parameters
+            skrf.Network                             0      1      2
+                        ┌───────────────────┐      ┌──────────────────────┐
+                        │       OEM         │      │                      │
+                        │                   │      │                      │
+            0   ────────┤  A  (10 Ω)        │      ┤ 0.+0.j 1.+0.j 2.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            1   ────────┤  B  (20 Ω)        │      ┤ 3.+0.j 4.+0.j 5.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            2   ────────┤  C  (30 Ω)        │      ┤ 6.+0.j 7.+0.j 8.+0.j │
+                        │                   │      │                      │
+                        └───────────────────┘      └──────────────────────┘
 
         While after renumbering
 
-        >>> ntw.renumber([0,1,2], [1, 2, 0])
-
+        >>> ntw.renumber([0, 1, 2], [1, 2, 0])
 
         we now have::
 
-            Order in          Original Order
-            skrf.Network
-                        ┌───────────────────┐
-                        │       OEM         │
-                        │                   │
-            1   ────────┤  A  (10 Ω)        │
-                        │                   │
-                        │                   │
-            2   ────────┤  B  (20 Ω)        │
-                        │                   │
-                        │                   │
-            0   ────────┤  C  (30 Ω)        │
-                        │                   │
-                        └───────────────────┘
+            Order in                                 Scatter Parameters
+            skrf.Network                             0      1      2
+                        ┌───────────────────┐      ┌──────────────────────┐
+                        │       OEM         │      │                      │
+                        │                   │      │                      │
+            0   ────────┤  C  (30 Ω)        │      ┤ 8.+0.j 6.+0.j 7.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            1   ────────┤  A  (10 Ω)        │      ┤ 2.+0.j 0.+0.j 1.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            2   ────────┤  B  (20 Ω)        │      ┤ 5.+0.j 3.+0.j 4.+0.j │
+                        │                   │      │                      │
+                        └───────────────────┘      └──────────────────────┘
 
         **Other examples:**
 
+        Reorganized only the reference impedance of the ports, while keeping
+        the order of the scattering parameters is also supported. This is
+        beneficial in some special cases.
+
+        >>> ntw.renumber([1, 2, 0], [0, 1, 2], only_z0=True)
+
+        we now have::
+
+            Order in                                 Scatter Parameters
+            skrf.Network                             0      1      2
+                        ┌───────────────────┐      ┌──────────────────────┐
+                        │       OEM         │      │                      │
+                        │                   │      │                      │
+            0   ────────┤  A  (10 Ω)        │      ┤ 8.+0.j 6.+0.j 7.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            1   ────────┤  B  (20 Ω)        │      ┤ 2.+0.j 0.+0.j 1.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            2   ────────┤  C  (30 Ω)        │      ┤ 5.+0.j 3.+0.j 4.+0.j │
+                        │                   │      │                      │
+                        └───────────────────┘      └──────────────────────┘
 
         To flip the ports of a 2-port network 'foo':
 
@@ -5931,13 +5952,13 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.
         C[:, :k, k + nB :] = A[:, :k, k:]
         C[:, k + nB :, :k] = A[:, k:, :k]
         C[:, k + nB :, k + nB :] = A[:, k:, k:]
-        C[:, k : k + nB, k : k + nB] = B.copy()
+        C[:, k : k + nB, k : k + nB] = B
 
         # call innerconnect_s() on composit matrix C
         return innerconnect_s(C, k + nB, k + l)
     else:
-        C[:, :nA, :nA] = A.copy()
-        C[:, nA:, nA:] = B.copy()
+        C[:, :nA, :nA] = A
+        C[:, nA:, nA:] = B
 
         # call innerconnect_s() on composit matrix C
         return innerconnect_s(C, k, nA + l)
