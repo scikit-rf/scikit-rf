@@ -2014,11 +2014,10 @@ class Network:
             Copy of the Network
 
         """
-        ntwk = Network(s=self.s,
-                       frequency=self.frequency,
-                       z0=self.z0, s_def=self.s_def,
-                       comments=self.comments
-                       )
+        ntwk = Network(z0=self.z0, s_def=self.s_def, comments=self.comments)
+
+        ntwk.s = self.s
+        ntwk.frequency = self.frequency.copy()
 
         if self.params is not None:
             ntwk.params = self.params.copy()
