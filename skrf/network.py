@@ -3220,7 +3220,7 @@ class Network:
         self.s_def = s_def
         self.z0 = z_new
 
-    def renumber(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> None:
+    def renumber(self, from_ports: Sequence[int], to_ports: Sequence[int], only_z0: bool = False) -> None:
         """
         Renumber ports of a Network (inplace).
 
@@ -3230,6 +3230,10 @@ class Network:
             List of port indices to change. Size between 1 and N_ports.
         to_ports : list-like
             List of desired port indices. Size between 1 and N_ports.
+        only_z0 : bool
+            If true only z0 is renumbered, s-parameters are not affected.
+            This should only be used after executing the "connect_s" method
+            which keeps the port index where you expect it to be.
 
         NB : from_ports and to_ports must have same size.
 
@@ -3246,52 +3250,73 @@ class Network:
         reorganized. Dummy reference impedances are set only to follow more
         easily the renumbering.
 
-        >>> f = rf.Frequency(1, 1, 1)
-        >>> s = np.ones((1, 3, 3))
+        >>> f = rf.Frequency(1, 1, 1, 'hz')
+        >>> s = np.arange(9).reshape(1, 3, 3)
         >>> z0 = [10, 20, 30]
         >>> ntw = rf.Network(frequency=f, s=s, z0=z0)  # our OEM Network
 
         In picture, we have::
 
-            Order in          Original Order
-            skrf.Network
-                        ┌───────────────────┐
-                        │       OEM         │
-                        │                   │
-            0   ────────┤  A  (10 Ω)        │
-                        │                   │
-                        │                   │
-            1   ────────┤  B  (20 Ω)        │
-                        │                   │
-                        │                   │
-            2   ────────┤  C  (30 Ω)        │
-                        │                   │
-                        └───────────────────┘
+            Order in          Original Order         Scatter Parameters
+            skrf.Network                             0      1      2
+                        ┌───────────────────┐      ┌──────────────────────┐
+                        │       OEM         │      │                      │
+                        │                   │      │                      │
+            0   ────────┤  A  (10 Ω)        │      ┤ 0.+0.j 1.+0.j 2.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            1   ────────┤  B  (20 Ω)        │      ┤ 3.+0.j 4.+0.j 5.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            2   ────────┤  C  (30 Ω)        │      ┤ 6.+0.j 7.+0.j 8.+0.j │
+                        │                   │      │                      │
+                        └───────────────────┘      └──────────────────────┘
 
         While after renumbering
 
-        >>> ntw.renumber([0,1,2], [1, 2, 0])
-
+        >>> ntw.renumber([0, 1, 2], [1, 2, 0])
 
         we now have::
 
-            Order in          Original Order
-            skrf.Network
-                        ┌───────────────────┐
-                        │       OEM         │
-                        │                   │
-            1   ────────┤  A  (10 Ω)        │
-                        │                   │
-                        │                   │
-            2   ────────┤  B  (20 Ω)        │
-                        │                   │
-                        │                   │
-            0   ────────┤  C  (30 Ω)        │
-                        │                   │
-                        └───────────────────┘
+            Order in                                 Scatter Parameters
+            skrf.Network                             0      1      2
+                        ┌───────────────────┐      ┌──────────────────────┐
+                        │       OEM         │      │                      │
+                        │                   │      │                      │
+            0   ────────┤  C  (30 Ω)        │      ┤ 8.+0.j 6.+0.j 7.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            1   ────────┤  A  (10 Ω)        │      ┤ 2.+0.j 0.+0.j 1.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            2   ────────┤  B  (20 Ω)        │      ┤ 5.+0.j 3.+0.j 4.+0.j │
+                        │                   │      │                      │
+                        └───────────────────┘      └──────────────────────┘
 
         **Other examples:**
 
+        Reorganized only the reference impedance of the ports, while keeping
+        the order of the scattering parameters is also supported. This is
+        beneficial in some special cases.
+
+        >>> ntw.renumber([1, 2, 0], [0, 1, 2], only_z0=True)
+
+        we now have::
+
+            Order in                                 Scatter Parameters
+            skrf.Network                             0      1      2
+                        ┌───────────────────┐      ┌──────────────────────┐
+                        │       OEM         │      │                      │
+                        │                   │      │                      │
+            0   ────────┤  A  (10 Ω)        │      ┤ 8.+0.j 6.+0.j 7.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            1   ────────┤  B  (20 Ω)        │      ┤ 2.+0.j 0.+0.j 1.+0.j │
+                        │                   │      │                      │
+                        │                   │      │                      │
+            2   ────────┤  C  (30 Ω)        │      ┤ 5.+0.j 3.+0.j 4.+0.j │
+                        │                   │      │                      │
+                        └───────────────────┘      └──────────────────────┘
 
         To flip the ports of a 2-port network 'foo':
 
@@ -3319,8 +3344,9 @@ class Network:
         if any(np.unique(from_ports) != np.unique(to_ports)):
             raise ValueError('from_ports and to_ports must have the same set of indices')
 
-        self.s[:, to_ports, :] = self.s[:, from_ports, :]  # renumber rows
-        self.s[:, :, to_ports] = self.s[:, :, from_ports]  # renumber columns
+        if not only_z0:
+            self.s[:, to_ports, :] = self.s[:, from_ports, :]  # renumber rows
+            self.s[:, :, to_ports] = self.s[:, :, from_ports]  # renumber columns
         self.z0[:, to_ports] = self.z0[:, from_ports]
         if self.port_names is not None:
             self.port_names = np.array(self.port_names)
@@ -4943,18 +4969,18 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     # impedances.
     # import pdb;pdb.set_trace()
     if not assert_z0_at_ports_equal(ntwkA, k, ntwkB, l):
-        ntwkC.s = connect_s(
-            ntwkA.s, k,
-            impedance_mismatch(ntwkA.z0[:, k], ntwkB.z0[:, l], s_def), 0)
+        # connect a impedance mismatch, which will takes into account the
+        # effect of differing port impedances
+        mismatch = impedance_mismatch(ntwkA.z0[:, k], ntwkB.z0[:, l], s_def)
+        ntwkC.s = connect_s(ntwkA.s, k, mismatch, 0, num=-1)
         # the connect_s() put the mismatch's output port at the end of
         #   ntwkC's ports.  Fix the new port's impedance, then insert it
         #   at position k where it belongs.
         ntwkC.z0[:, k:] = np.hstack((ntwkC.z0[:, k + 1:], ntwkB.z0[:, [l]]))
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
                        to_ports=list(range(k, ntwkC.nports)))
-
     # call s-matrix connection function
-    ntwkC.s = connect_s(ntwkC.s, k, ntwkB.s, l)
+    ntwkC.s = connect_s(ntwkC.s, k, ntwkB.s, l, num)
 
     # combine z0 arrays and remove ports which were `connected`
     ntwkC.z0 = np.hstack(
@@ -4973,7 +4999,8 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         to_ports.append(k)
 
         ntwkC.renumber(from_ports=from_ports,
-                       to_ports=to_ports)
+                       to_ports=to_ports,
+                       only_z0=True)
 
     # if ntwkA and ntwkB are both 2port, and either one has noise, calculate ntwkC's noise
     either_are_noisy = False
@@ -5132,7 +5159,7 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
         # connect a impedance mismatch, which will takes into account the
         # effect of differing port impedances
         mismatch = impedance_mismatch(ntwkC.z0[:, k], ntwkC.z0[:, l], ntwkC.s_def)
-        ntwkC.s = connect_s(ntwkC.s, k, mismatch, 0)
+        ntwkC.s = connect_s(ntwkC.s, k, mismatch, 0, num=-1)
         # the connect_s() put the mismatch's output port at the end of
         #   ntwkC's ports.  Fix the new port's impedance, then insert it
         #   at position k where it belongs.
@@ -5859,7 +5886,7 @@ def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Netwo
 
 
 ## Functions operating on s-parameter matrices
-def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int) -> np.ndarray:
+def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.ndarray:
     """
     Connect two n-port networks' s-matrices together.
 
@@ -5878,6 +5905,8 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int) -> np.ndarray:
             S-parameter matrix of `B`, shape is fxnxn
     l : int
             port index on `B`
+    num : int
+            number of consecutive ports to connect (default 1)
 
     Returns
     -------
@@ -5910,11 +5939,29 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int) -> np.ndarray:
 
     # create composite matrix, appending each sub-matrix diagonally
     C = np.zeros((nf, nC, nC), dtype='complex')
-    C[:, :nA, :nA] = A
-    C[:, nA:, nA:] = B
 
-    # call innerconnect_s() on composit matrix C
-    return innerconnect_s(C, k, nA + l)
+    # if ntwkB is a 2port, then keep port indices where you expect.
+    if nB == 2 and nA > 2 and num == 1:
+        """
+        Pre-renumber the s-parameters:
+        |A1 A2|         |A1 0 A2|              |A1 A2 0|
+        |     | + |B| = |0  B 0 |, rather than |A3 A4 0|
+        |A3 A4|         |A3 0 A4|              |0  0  B|
+        """
+        C[:, :k, :k] = A[:, :k, :k]
+        C[:, :k, k + nB :] = A[:, :k, k:]
+        C[:, k + nB :, :k] = A[:, k:, :k]
+        C[:, k + nB :, k + nB :] = A[:, k:, k:]
+        C[:, k : k + nB, k : k + nB] = B
+
+        # call innerconnect_s() on composit matrix C
+        return innerconnect_s(C, k + nB, k + l)
+    else:
+        C[:, :nA, :nA] = A
+        C[:, nA:, nA:] = B
+
+        # call innerconnect_s() on composit matrix C
+        return innerconnect_s(C, k, nA + l)
 
 
 def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
