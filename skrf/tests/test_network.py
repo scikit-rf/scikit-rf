@@ -74,7 +74,8 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_network_copy(self):
         n = self.ntwk1
-        n._test_attr = 'test'
+        setattr(n, '_test_attr', 'test')
+        n._ext_attrs.append('_test_attr')
         n2 = n.copy()
         self.assertEqual( n.frequency, n2.frequency)
         self.assertNotEqual( id(n.frequency), id(n2.frequency))
