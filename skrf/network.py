@@ -2019,6 +2019,7 @@ class Network:
 
         ntwk.s = self.s
         ntwk.frequency = self.frequency.copy()
+        ntwk.port_modes = self.port_modes.copy()
 
         if self.params is not None:
             ntwk.params = self.params.copy()
