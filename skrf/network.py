@@ -2017,8 +2017,8 @@ class Network:
         """
         ntwk = Network(z0=self.z0, s_def=self.s_def, comments=self.comments)
 
-        ntwk.s = self.s
-        ntwk.frequency = self.frequency.copy()
+        ntwk._s = self.s.copy()
+        ntwk.frequency = self.frequency
         ntwk.port_modes = self.port_modes.copy()
 
         if self.params is not None:
