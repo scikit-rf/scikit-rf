@@ -296,7 +296,7 @@ class Circuit:
         """
         _media = media.DefinedGammaZ0(frequency, z0=z0)
         port = _media.match(name=name)
-        setattr(port, '_is_circuit_port', True)
+        port._is_circuit_port = True
         port._ext_attrs.append('_is_circuit_port')
         return port
 
@@ -422,7 +422,7 @@ class Circuit:
 
         """
         ground = cls.ShuntAdmittance(frequency, Y=INF, name=name)
-        setattr(ground, '_is_circuit_ground', True)
+        ground._is_circuit_ground = True
         ground._ext_attrs.append('_is_circuit_ground')
         return ground
 
