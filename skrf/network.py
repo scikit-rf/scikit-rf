@@ -416,7 +416,7 @@ class Network:
         self.noise = None
         self.noise_freq = None
         self._z0 = np.array(50, dtype=complex)
-        self._ext_attrs = []
+        self._ext_attrs = {}
 
         if s_def not in S_DEFINITIONS and s_def is not None:
             raise ValueError('s_def parameter should be either:', S_DEFINITIONS)
@@ -2031,8 +2031,7 @@ class Network:
           ntwk.noise_freq = self.noise_freq.copy()
 
         # copy special attributes (such as _is_circuit_port) but skip methods
-        for attr in self._ext_attrs:
-            setattr(ntwk, attr, copy(getattr(self, attr)))
+        ntwk._ext_attrs = self._ext_attrs.copy()
 
         try:
             ntwk.port_names = copy(self.port_names)

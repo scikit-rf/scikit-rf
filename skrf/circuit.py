@@ -251,18 +251,18 @@ class Circuit:
             return True
 
     @classmethod
-    def _is_port(cls, ntw):
+    def _is_port(cls, ntw: Network):
         """
         Return True is the network is a port, False otherwise
         """
-        return getattr(ntw, "_is_circuit_port", False)
+        return ntw._ext_attrs.get("_is_circuit_port", False)
 
     @classmethod
-    def _is_ground(cls, ntw):
+    def _is_ground(cls, ntw: Network):
         """
         Return True is the network is a ground, False otherwise
         """
-        return getattr(ntw, "_is_circuit_ground", False)
+        return ntw._ext_attrs.get("_is_circuit_ground", False)
 
     @classmethod
     def Port(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
@@ -296,8 +296,7 @@ class Circuit:
         """
         _media = media.DefinedGammaZ0(frequency, z0=z0)
         port = _media.match(name=name)
-        port._is_circuit_port = True
-        port._ext_attrs.append('_is_circuit_port')
+        port._ext_attrs['_is_circuit_port'] = True
         return port
 
     @classmethod
@@ -422,8 +421,7 @@ class Circuit:
 
         """
         ground = cls.ShuntAdmittance(frequency, Y=INF, name=name)
-        ground._is_circuit_ground = True
-        ground._ext_attrs.append('_is_circuit_ground')
+        ground._ext_attrs['_is_circuit_ground'] = True
         return ground
 
     @classmethod
