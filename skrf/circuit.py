@@ -859,8 +859,11 @@ class Circuit:
         D_idx = (slice(None), idx_d, idx_d.T)
 
         # Get the buffer of global matrix X, C and intermediate temporary matrix t
-        x, c = self.X, self.C
-        t = np.identity(x.shape[-1]) - c @ x
+        x, t = self.X, self.C
+        np.matmul(t, x, out=t)
+        np.negative(t, out=t)
+        idx = np.arange(x.shape[-1])
+        t[:, idx, idx] += (1.0+0.j)
 
         # Get the sub-matrices of inverse of intermediate temporary matrix t
         tmp_mat = np.linalg.solve(t[D_idx], t[C_idx])
