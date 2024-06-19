@@ -5750,6 +5750,9 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
     subntwk = Network(frequency=ntwk.frequency, z0=ntwk.z0[:,ports], name=subntwk_name)
     # keep requested rows and columns of the s-matrix. ports can be not contiguous
     subntwk.s = ntwk.s[np.ix_(np.arange(ntwk.s.shape[0]), ports, ports)]
+    # keep port_modes
+    if hasattr(ntwk, 'port_modes'):
+        subntwk.port_modes = [ntwk.port_modes[idx] for idx in ports]
     # keep port_names
     if ntwk.port_names:
         subntwk.port_names = [ntwk.port_names[idx] for idx in ports]
