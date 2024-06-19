@@ -487,6 +487,7 @@ class Media(ABC):
         result = Network(**kwargs)
         result.frequency = self.frequency
         result.s = np.zeros((self.frequency.npoints, nports, nports), dtype=complex)
+        result.port_modes = np.array(["S"] * result.nports)
         if z0 is None:
             if self.z0_port is None:
                 z0 = self.z0
@@ -538,6 +539,7 @@ class Media(ABC):
         result.s = np.array(Gamma0).reshape(-1, 1, 1) * \
             np.eye(nports, dtype=complex).reshape((-1, nports, nports)).\
             repeat(self.frequency.npoints, 0)
+        result.port_modes = np.array(["S"] * result.nports)
         return result
 
     def short(self, nports: int = 1,
@@ -1565,6 +1567,7 @@ class Media(ABC):
         """
         result = self.match(nports = n_ports, **kwargs)
         result.s = mf.rand_c(self.frequency.npoints, n_ports,n_ports)
+        result.port_modes = np.array(["S"] * result.nports)
         if reciprocal and n_ports>1:
             for m in range(n_ports):
                 for n in range(n_ports):

@@ -74,7 +74,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_network_copy(self):
         n = self.ntwk1
-        n._test_attr = 'test'
+        n._ext_attrs['_test_attr'] = 'test'
         n2 = n.copy()
         self.assertEqual( n.frequency, n2.frequency)
         self.assertNotEqual( id(n.frequency), id(n2.frequency))
@@ -83,7 +83,7 @@ class NetworkTestCase(unittest.TestCase):
         n.frequency.f[0] = 0
         self.assertNotEqual(n2.frequency.f[0], 0)
 
-        self.assertEqual('test', getattr(n2, '_test_attr', None))
+        self.assertEqual('test', n2._ext_attrs.get('_test_attr', None))
 
     def test_two_port_reflect(self):
         number_of_data_points = 10

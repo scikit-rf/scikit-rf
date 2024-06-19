@@ -416,6 +416,7 @@ class Network:
         self.noise = None
         self.noise_freq = None
         self._z0 = np.array(50, dtype=complex)
+        self._ext_attrs = {}
 
         if s_def not in S_DEFINITIONS and s_def is not None:
             raise ValueError('s_def parameter should be either:', S_DEFINITIONS)
@@ -2014,11 +2015,11 @@ class Network:
             Copy of the Network
 
         """
-        ntwk = Network(s=self.s,
-                       frequency=self.frequency,
-                       z0=self.z0, s_def=self.s_def,
-                       comments=self.comments
-                       )
+        ntwk = Network(z0=self.z0, s_def=self.s_def, comments=self.comments)
+
+        ntwk._s = self.s.copy()
+        ntwk.frequency = self.frequency
+        ntwk.port_modes = self.port_modes.copy()
 
         if self.params is not None:
             ntwk.params = self.params.copy()
@@ -2030,10 +2031,7 @@ class Network:
           ntwk.noise_freq = self.noise_freq.copy()
 
         # copy special attributes (such as _is_circuit_port) but skip methods
-        for attr in (set(dir(self)) - set(dir(ntwk))):
-            if callable(getattr(self, attr)):
-                continue
-            setattr(ntwk, attr, copy(getattr(self, attr)))
+        ntwk._ext_attrs = self._ext_attrs.copy()
 
         try:
             ntwk.port_names = copy(self.port_names)
@@ -5752,6 +5750,9 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
     subntwk = Network(frequency=ntwk.frequency, z0=ntwk.z0[:,ports], name=subntwk_name)
     # keep requested rows and columns of the s-matrix. ports can be not contiguous
     subntwk.s = ntwk.s[np.ix_(np.arange(ntwk.s.shape[0]), ports, ports)]
+    # keep port_modes
+    if hasattr(ntwk, 'port_modes'):
+        subntwk.port_modes = [ntwk.port_modes[idx] for idx in ports]
     # keep port_names
     if ntwk.port_names:
         subntwk.port_names = [ntwk.port_names[idx] for idx in ports]
