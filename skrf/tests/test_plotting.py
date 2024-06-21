@@ -87,10 +87,8 @@ def test_plot_signature():
     ntwk_set.signature()
 
 def test_generated_violin_plots(generated_functions):
-    method = f"plot_violin_{generated_functions}"
-
-    if "time" not in method:
-        fig = getattr(ntwk_set, method)()
+    if "time" not in generated_functions:
+        fig = ntwk_set.plot_violin(generated_functions)
     else:
         with pytest.raises(NotImplementedError):
-            fig = getattr(ntwk_set, method)()
+            fig = ntwk_set.plot_violin(generated_functions)

@@ -210,7 +210,6 @@ class NetworkSet:
             self.__add_a_element_wise_method('plot_'+network_property_name)
             self.__add_a_element_wise_method('plot_s_db')
             self.__add_a_element_wise_method('plot_s_db_time')
-            self.__add_a_plot_violin(network_property_name)
 
         for network_method_name in \
                 ['write_touchstone','interpolate','plot_s_smith']:
@@ -529,30 +528,6 @@ class NetworkSet:
                 network_property_name,plot_func)
 
         setattr(self.__class__,'plot_mm_'+\
-                network_property_name,plot_func)
-
-    def __add_a_plot_violin(self, network_property_name: str):
-        """
-
-        Parameter
-        ---------
-        network_property_name: str
-            A property of the Network class,
-            which must have a matrix output of shape (f, n, n)
-
-        Example
-        -------
-        >>> my_ntwk_set.__add_a_plot_violin('s')
-
-
-        """
-        def plot_func(self,*args, **kwargs):
-            if "time" not in network_property_name:
-                self.plot_violin_component(network_property_name, *args,**kwargs)
-            else:
-                raise NotImplementedError("Violin plots are not implemented for time based parameters")
-
-        setattr(self.__class__,'plot_violin_'+\
                 network_property_name,plot_func)
 
     def to_dict(self) -> dict:
@@ -1427,9 +1402,12 @@ class NetworkSet:
     def signature(self, *args, **kwargs):
         skrf_plt.signature(self, *args, **kwargs)
 
-    @copy_doc(skrf_plt.plot_violin_component)
-    def plot_violin_component(self, *args, **kwargs):
-        skrf_plt.plot_violin_component(self, *args, **kwargs)
+    @copy_doc(skrf_plt.plot_violin)
+    def plot_violin(self, attribute, *args, **kwargs):
+        if "time" not in attribute:
+            skrf_plt.plot_violin(self, attribute, *args,**kwargs)
+        else:
+            raise NotImplementedError("Violin plots are not implemented for time based parameters")
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):

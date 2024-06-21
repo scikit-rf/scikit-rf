@@ -1451,7 +1451,7 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
     ax.axis('tight')
 
 @axes_kwarg
-def plot_violin_component(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
+def plot_violin(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
                          *, widths: float = None, showmeans: bool = True,
                          showextrema: bool = True, showmedians: bool = False,
                          quantiles = None, points: int = 100, bw_method = None,
