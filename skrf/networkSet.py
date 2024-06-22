@@ -50,10 +50,11 @@ from io import BytesIO
 from numbers import Number
 from typing import Any, Mapping, TextIO
 
-import numpy as npy
+import numpy as np
 from scipy.interpolate import interp1d
 
 from . import mathFunctions as mf
+from .constants import NumberLike
 from .network import COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency, Network
 from .util import copy_doc, now_string_2_dt
 
@@ -157,7 +158,7 @@ class NetworkSet:
             raise(ValueError('All elements in list of Networks must have same number of ports'))
 
         # is all frequency information the same?
-        if not npy.all([(ntwk_set[0].frequency == ntwk.frequency) for ntwk in ntwk_set]):
+        if not np.all([(ntwk_set[0].frequency == ntwk.frequency) for ntwk in ntwk_set]):
             raise(ValueError('All elements in list of Networks must have same frequency information'))
 
         ## initialization
@@ -193,11 +194,11 @@ class NetworkSet:
             ['passivity','s']
 
         # dynamically generate properties. this is slick.
-        max, min = npy.max, npy.min
+        max, min = np.max, np.min
         max.__name__ = 'max'
         min.__name__ = 'min'
         for network_property_name in network_property_list:
-            for func in [npy.mean, npy.std, max, min]:
+            for func in [np.mean, np.std, max, min]:
                 self.__add_a_func_on_property(func, network_property_name)
 
             if 'db' not in network_property_name:# != 's_db' and network_property_name != 's':
@@ -209,6 +210,7 @@ class NetworkSet:
             self.__add_a_element_wise_method('plot_'+network_property_name)
             self.__add_a_element_wise_method('plot_s_db')
             self.__add_a_element_wise_method('plot_s_db_time')
+
         for network_method_name in \
                 ['write_touchstone','interpolate','plot_s_smith']:
             self.__add_a_element_wise_method(network_method_name)
@@ -496,8 +498,7 @@ class NetworkSet:
 
         """
         def plot_func(self,*args, **kwargs):
-            kwargs.update({'attribute':network_property_name})
-            self.plot_uncertainty_bounds_component(*args,**kwargs)
+            self.plot_uncertainty_bounds_component(network_property_name, *args,**kwargs)
 
         setattr(self.__class__,'plot_uncertainty_bounds_'+\
                 network_property_name,plot_func)
@@ -521,15 +522,13 @@ class NetworkSet:
 
         """
         def plot_func(self,*args, **kwargs):
-            kwargs.update({'attribute':network_property_name})
-            self.plot_minmax_bounds_component(*args,**kwargs)
+            self.plot_minmax_bounds_component(network_property_name, *args,**kwargs)
 
         setattr(self.__class__,'plot_minmax_bounds_'+\
                 network_property_name,plot_func)
 
         setattr(self.__class__,'plot_mm_'+\
                 network_property_name,plot_func)
-
 
     def to_dict(self) -> dict:
         """
@@ -649,7 +648,7 @@ class NetworkSet:
             number of samples to return (default is 1)
 
         """
-        idx = npy.random.default_rng().randint(0,len(self), n)
+        idx = np.random.default_rng().randint(0,len(self), n)
         out = [self.ntwk_set[k] for k in idx]
 
         if n ==1:
@@ -684,7 +683,7 @@ class NetworkSet:
         """
         return NetworkSet([k for k in self if s in k.name])
 
-    def scalar_mat(self, param: str = 's') -> npy.ndarray:
+    def scalar_mat(self, param: str = 's') -> np.ndarray:
         """
         Return a scalar ndarray representing `param` data vs freq and element idx.
 
@@ -699,25 +698,25 @@ class NetworkSet:
 
         Return
         ------
-        x : :class: npy.ndarray
+        x : :class: np.ndarray
 
         """
         ntwk = self[0]
         nfreq = len(ntwk)
         # x will have the axes (frequency, observations, ports)
-        x = npy.array([[mf.flatten_c_mat(getattr(k, param)[f]) \
+        x = np.array([[mf.flatten_c_mat(getattr(k, param)[f]) \
             for k in self] for f in range(nfreq)])
 
         return x
 
-    def cov(self, **kw) -> npy.ndarray:
+    def cov(self, **kw) -> np.ndarray:
         """
         Covariance matrix.
 
         shape of output  will be  (nfreq, 2*nports**2, 2*nports**2)
         """
         smat=self.scalar_mat(**kw)
-        return npy.array([npy.cov(k.T) for k in smat])
+        return np.array([np.cov(k.T) for k in smat])
 
     @property
     def mean_s_db(self) -> Network:
@@ -803,12 +802,12 @@ class NetworkSet:
             return stats.norm(loc=0, scale=x).rvs(1)[0]
         ugimme_norm = frompyfunc(gimme_norm,1,1)
 
-        s_deg_rv = npy.array(map(ugimme_norm, self.std_s_deg.s_re), dtype=float)
-        s_mag_rv = npy.array(map(ugimme_norm, self.std_s_mag.s_re), dtype=float)
+        s_deg_rv = np.array(map(ugimme_norm, self.std_s_deg.s_re), dtype=float)
+        s_mag_rv = np.array(map(ugimme_norm, self.std_s_mag.s_re), dtype=float)
 
         mag = ntwk.s_mag + s_mag_rv
         deg = ntwk.s_deg + s_deg_rv
-        ntwk.s = mag * npy.exp(1j*npy.pi/180*deg)
+        ntwk.s = mag * np.exp(1j*np.pi/180*deg)
         return ntwk
 
     def set_wise_function(self, func, a_property: str, *args, **kwargs):
@@ -957,7 +956,7 @@ class NetworkSet:
         filename : string
             Output MDIF file name.
         values : dictionary or None. Default is None.
-            The keys of the dictionnary are MDIF variables and its values are
+            The keys of the dictionary are MDIF variables and its values are
             a list of the parameter values.
             If None, then the values will be set to the NetworkSet names
             and the datatypes will be set to "string".
@@ -994,10 +993,10 @@ class NetworkSet:
         from pandas import DataFrame, Index, Series
         index = Index(
             self[0].frequency.f_scaled,
-            name='Freq(%s)'%self[0].frequency.unit
+            name=f'Freq({self[0].frequency.unit})'
             )
         df = DataFrame(
-            {'%s'%(k.name):
+            {f'{k.name}':
                 Series(getattr(k, attr)[:,m,n],index=index)
                 for k in self},
             index = index,
@@ -1044,20 +1043,60 @@ class NetworkSet:
         """
         ntw = self[0].copy()
         # Interpolating the scattering parameters
-        s = npy.array([self[idx].s for idx in range(len(self))])
+        s = np.array([self[idx].s for idx in range(len(self))])
         f = interp1d(ntw_param, s, axis=0, kind=interp_kind)
         ntw.s = f(x)
 
         return ntw
 
+    def interpolate_frequency(self, freq_or_n: Frequency | NumberLike, basis: str = 's',
+                    coords: str = 'cart', f_kwargs: dict = None, **kwargs) -> NetworkSet:
+        """Interpolates each network in the set by frequency by calling :meth:`Network.interpolate`.
+
+        Parameters
+        ----------
+        freq_or_n : :class:`~skrf.frequency.Frequency` or int or list-like
+            The new frequency over which to interpolate. this arg may be
+            one of the following:
+
+            * a new :class:`~skrf.frequency.Frequency` object
+
+            * an int: the current frequency span is resampled linearly.
+
+            * a list-like: create a new frequency using :meth:`~skrf.frequency.Frequency.from_f`
+
+        basis : ['s','z','y','a'], etc
+            The network parameter to interpolate
+        coords : string
+            Coordinate system to use for interpolation: 'cart' or 'polar':
+            'cart' is cartesian is Re/Im. 'polar' is unwrapped phase/mag
+        f_kwargs : dict
+            Key word arguments that are passed to the new :class:`Frequency` object
+        **kwargs : keyword arguments
+            passed to :func:`scipy.interpolate.interp1d` initializer.
+            `kind` controls interpolation type.
+
+            `kind` = `rational` uses interpolation by rational polynomials.
+
+            `d` kwarg controls the degree of rational polynomials
+            when `kind`=`rational`. Defaults to 4.
+
+        Returns
+        -------
+        NetworkSet : :class:`NetworkSet`
+            New NetworkSet with interpolated frequencies
+        """
+
+        return NetworkSet([ntwk.interpolate(freq_or_n, basis, coords, f_kwargs, **kwargs) for ntwk in self.ntwk_set])
+
     def has_params(self) -> bool:
         """
-        Check is all Networks in the NetworkSet have a similar params dictionnary.
+        Check is all Networks in the NetworkSet have a similar params dictionary.
 
         Returns
         -------
         bool
-            True is all Networks have a .params dictionnay (of same size),
+            True is all Networks have a .params dictionary (of same size),
             False otherwise
 
         """
@@ -1100,7 +1139,7 @@ class NetworkSet:
     @property
     def params_values(self) -> dict | None:
         """
-        Return a dictionnary containing all parameters and their values.
+        Return a dictionary containing all parameters and their values.
 
         Returns
         -------
@@ -1122,7 +1161,7 @@ class NetworkSet:
     @property
     def params_types(self) -> dict | None:
         """
-        Return a dictionnary describing the data type of each parameters.
+        Return a dictionary describing the data type of each parameters.
 
         Returns
         -------
@@ -1214,7 +1253,7 @@ class NetworkSet:
             return NetworkSet()
 
         if not isinstance(indexers, dict):
-            raise TypeError('indexers should be a dictionnary.')
+            raise TypeError('indexers should be a dictionary.')
 
         for p in indexers.keys():
             if p not in self.dims:
@@ -1363,6 +1402,12 @@ class NetworkSet:
     def signature(self, *args, **kwargs):
         skrf_plt.signature(self, *args, **kwargs)
 
+    @copy_doc(skrf_plt.plot_violin)
+    def plot_violin(self, attribute, *args, **kwargs):
+        if "time" not in attribute:
+            skrf_plt.plot_violin(self, attribute, *args,**kwargs)
+        else:
+            raise NotImplementedError("Violin plots are not implemented for time based parameters")
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):
@@ -1399,7 +1444,7 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
     >>> func_on_networks(ntwk_list, mean)
 
     """
-    data_matrix = npy.array([getattr(ntwk, attribute) for ntwk in ntwk_list])
+    data_matrix = np.array([getattr(ntwk, attribute) for ntwk in ntwk_list])
 
     new_ntwk = ntwk_list[0].copy()
     new_ntwk.s = func(data_matrix,axis=0,**kwargs)
@@ -1446,18 +1491,18 @@ def getset(ntwk_dict, s, *args, **kwargs):
     if len(ntwk_list) > 0:
         return NetworkSet( ntwk_list,*args, **kwargs)
     else:
-        print('Warning: No keys in ntwk_dict contain \'%s\''%s)
+        print(f'Warning: No keys in ntwk_dict contain \'{s}\'')
         return None
 
 
 def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=21, TNWformat=True):
-    r = npy.linspace(0.1,0.9,r_lin)
-    a = npy.linspace(0,2*npy.pi,phi_lin)
-    r_, a_ = npy.meshgrid(r,a)
-    c_ = r_ *npy.exp(1j * a_)
+    r = np.linspace(0.1,0.9,r_lin)
+    a = np.linspace(0,2*np.pi,phi_lin)
+    r_, a_ = np.meshgrid(r,a)
+    c_ = r_ *np.exp(1j * a_)
     g= c_.flatten()
-    x =  npy.real(g)
-    y =  npy.imag(g)
+    x =  np.real(g)
+    y =  np.imag(g)
 
     if TNWformat :
         TNL = dict()

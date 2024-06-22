@@ -69,7 +69,7 @@ try:
 except ImportError:
     pass
 
-import numpy as npy
+import numpy as np
 
 from . import mathFunctions as mf
 from .constants import NumberLike
@@ -180,11 +180,11 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     #TODO: fix this
     # these could be dynamically coded in the future, but work good'nuff for now
     if not draw_labels:
-        rLightList = npy.logspace(3,-5,9,base=.5)
-        xLightList = npy.hstack([npy.logspace(2,-5,8,base=.5), -1*npy.logspace(2,-5,8,base=.5)])
+        rLightList = np.logspace(3,-5,9,base=.5)
+        xLightList = np.hstack([np.logspace(2,-5,8,base=.5), -1*np.logspace(2,-5,8,base=.5)])
     else:
-        rLightList = npy.array( [ 0.2, 0.5, 1.0, 2.0, 5.0 ] )
-        xLightList = npy.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
+        rLightList = np.array( [ 0.2, 0.5, 1.0, 2.0, 5.0 ] )
+        xLightList = np.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
 
     # vswr lines
     if isinstance(draw_vswr, (tuple,list)):
@@ -198,7 +198,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     # cheap way to make a ok-looking smith chart at larger than 1 radii
     if smithR > 1:
         rMax = (1.+smithR)/(1.-smithR)
-        rLightList = npy.hstack([ npy.linspace(0,rMax,11)  , rLightList ])
+        rLightList = np.hstack([ np.linspace(0,rMax,11)  , rLightList ])
 
     if chart_type.startswith('y'):
         y_flip_sign = -1
@@ -254,7 +254,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     ax.axvline(1*y_flip_sign, color='k', clip_path=clipc)
     ax.grid(0)
     # Set axis limits by plotting white points so zooming works properly
-    ax.plot(smithR*npy.array([-1.1, 1.1]), smithR*npy.array([-1.1, 1.1]), 'w.', markersize = 0)
+    ax.plot(smithR*np.array([-1.1, 1.1]), smithR*np.array([-1.1, 1.1]), 'w.', markersize = 0)
     ax.axis('image') # Combination of 'equal' and 'tight'
 
 
@@ -275,7 +275,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
         # Make annotations only if the radius is 1
         if smithR == 1:
             #Make room for annotation
-            ax.plot(npy.array([-1.25, 1.25]), npy.array([-1.1, 1.1]), 'w.', markersize = 0)
+            ax.plot(np.array([-1.25, 1.25]), np.array([-1.1, 1.1]), 'w.', markersize = 0)
             ax.axis('image')
 
             #Annotate real part
@@ -515,8 +515,8 @@ def plot_complex_rectangular(z: NumberLike,
     plot_smith : plot complex data on smith chart
 
     """
-    x = npy.real(z)
-    y = npy.imag(z)
+    x = np.real(z)
+    y = np.imag(z)
     plot_rectangular(x=x, y=y, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, **kwargs)
@@ -554,8 +554,8 @@ def plot_complex_polar(z: NumberLike,
     plot_complex_polar : plot complex data on polar plane
     plot_smith : plot complex data on smith chart
     """
-    theta = npy.angle(z)
-    r = npy.abs(z)
+    theta = np.angle(z)
+    r = np.abs(z)
     plot_polar(theta=theta, r=r, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis_equal=axis_equal,
         ax=ax, **kwargs)
@@ -621,7 +621,7 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, **kwargs)
 
-    ax.axis(smith_r*npy.array([-1.1, 1.1, -1.1, 1.1]))
+    ax.axis(smith_r*np.array([-1.1, 1.1, -1.1, 1.1]))
     if plt.isinteractive():
         plt.draw()
 
@@ -669,7 +669,7 @@ def subplot_params(ntwk: Network, param: str = 's', proj: str = 'db',
                                       **subplot_kw)
     else:
         f = plt.gcf()
-        axs = npy.array(f.get_axes())
+        axs = np.array(f.get_axes())
 
     for ports,ax in zip(ntwk.port_tuples, axs.flatten()):
         plot_func = ntwk.__getattribute__(f'plot_{param}_{proj}')
@@ -832,7 +832,7 @@ def scrape_legend(n: int | None = None,
     if n>len(handles):
         raise ValueError('number of entries is too large')
 
-    k_list = [int(k) for k in npy.linspace(0,len(handles)-1,n)]
+    k_list = [int(k) for k in np.linspace(0,len(handles)-1,n)]
     ax.legend([handles[k] for k in k_list], [labels[k] for k in k_list])
 
 
@@ -950,7 +950,7 @@ def plot_reciprocity(netw: Network, db=False, *args, **kwargs):
                 if 'label' not in kwargs.keys():
                     kwargs['label'] = f"ports {netw._fmt_trace_name(m, n)}"
                 y = netw.reciprocity[:, m, n].flatten()
-                y = mf.complex_2_db(y) if db else npy.abs(y)
+                y = mf.complex_2_db(y) if db else np.abs(y)
                 netw.frequency.plot(y, *args, **kwargs)
 
     plt.legend()
@@ -1080,7 +1080,7 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
     #draw legend
     if show_legend:
         ax.legend()
-    ax.axis(npy.array([-1.1,1.1,-1.1,1.1])*r)
+    ax.axis(np.array([-1.1,1.1,-1.1,1.1])*r)
 
     if label_axes:
         ax.set_xlabel('Real')
@@ -1227,7 +1227,7 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
 @axes_kwarg
 def plot_uncertainty_bounds_component(
         self: NetworkSet, attribute: str,
-        m: int | None = None, n: int | None = None,
+        m: int | None = None, n: int | None = None, *,
         type: str = 'shade', n_deviations: int = 3,
         alpha: float = .3, color_error: str | None = None,
         markevery_error: int = 20, ax: plt.Axes = None,
@@ -1266,7 +1266,7 @@ def plot_uncertainty_bounds_component(
         tbd
     type : str
         if type=='bar', this controls frequency of error bars
-    ax : matplotlib axe object
+    ax : matplotlib axes object
         Axes to plot on. Default is None.
     ppf : function
         post processing function. a function applied to the
@@ -1313,7 +1313,7 @@ def plot_uncertainty_bounds_component(
                 ntwk_mean.s = ppf(ntwk_mean.s)
                 upper_bound = ppf(upper_bound)
                 lower_bound = ppf(lower_bound)
-                lower_bound[npy.isnan(lower_bound)] = min(lower_bound)
+                lower_bound[np.isnan(lower_bound)] = min(lower_bound)
                 if ppf in [mf.magnitude_2_db, mf.mag_2_db]:  # fix of wrong ylabels due to usage of ppf for *_db plots
                     if attribute == 's_mag':
                         plot_attribute = 's_db'
@@ -1347,20 +1347,24 @@ def plot_uncertainty_bounds_component(
 
 @axes_kwarg
 def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
-                                 type: str = 'shade', n_deviations: int = 3,
+                                 *, type: str = 'shade',
                                  alpha: float = .3, color_error: str | None = None,
                                  markevery_error: int = 20, ax: plt.Axes = None,
                                  ppf: bool = None, kwargs_error: dict = None,
                                  **kwargs):
     r"""
-    Plots mean value of the NetworkSet with +/- uncertainty bounds in an Network's attribute.
+    Plots mean value of the NetworkSet with minimum and maximum bounds in an Network's attribute.
 
-    This is designed to represent uncertainty in a scalar component of the s-parameter. For example
-    plotting the uncertainty in the magnitude would be expressed by
+    This is designed to represent min/max in a scalar component of the s-parameter. For example
+    plotting the min/max in the magnitude would be expressed by
 
     .. math::
 
-        mean(|s|) \pm std(|s|)
+        min(|s|)
+
+        mean(|s|)
+
+        max(|s|)
 
     The order of mean and abs is important.
 
@@ -1374,17 +1378,15 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
         second index of attribute matrix
     type : str
         ['shade' | 'bar'], type of plot to draw
-    n_deviations : int
-        number of std deviations to plot as bounds
     alpha : float
         passed to matplotlib.fill_between() command. [number, 0-1]
     color_error : str
-        color of the +- std dev fill shading. Default is None.
+        color of the min/max fill shading. Default is None.
     markevery_error : float
         tbd
     type : str
         if type=='bar', this controls frequency of error bars
-    ax : matplotlib axe object
+    ax : matplotlib axes object
         Axes to plot on. Default is None.
     ppf : function
         post processing function. a function applied to the
@@ -1416,7 +1418,7 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
         ntwk_mean.s = ppf(ntwk_mean.s)
         upper_bound = ppf(upper_bound)
         lower_bound = ppf(lower_bound)
-        lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+        lower_bound[np.isnan(lower_bound)]=min(lower_bound)
         if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
             if attribute == 's_mag':
                 attribute = 's_db'
@@ -1448,6 +1450,71 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
     scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
     ax.axis('tight')
 
+@axes_kwarg
+def plot_violin(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
+                         *, widths: float = None, showmeans: bool = True,
+                         showextrema: bool = True, showmedians: bool = False,
+                         quantiles = None, points: int = 100, bw_method = None,
+                         ax: plt.Axes = None, **kwargs
+    ):
+    r"""Plots the violin plot of the network set for the desired attribute.
+
+    A violin plot provides the distribution of the attribute at each frequency point, and optionally the
+    extrema, mean, and median. The plot becomes cluttered quickly with many frequencies, so reducing the number
+    with :meth:`NetworkSet.interpolate_frequency` is recommended.
+
+    Parameters
+    ----------
+    attribute : str
+        attribute of Network type to analyze
+    m : int
+        first index of attribute matrix
+    n : int
+        second index of attribute matrix
+    widths : float
+        The maximum width of each violin in units of the positions axis.
+        The default is 0.75 of the distance between the first two frequencies.
+    showmeans : bool
+        Whether to show the mean with a line.
+    showextrema : bool
+        Whether to show the extrema with a line.
+    showmedians : bool
+        Whether to show the median with a line.
+    quantiles : ArrayLike
+        If not None, set a list of floats in interval [0, 1] for each violin,
+        which stands for the quantiles that will be rendered for that violin.
+    points : int
+        The number of points to evaluate each of the gaussian kernel density estimations at.
+    bw_method : {'scott', 'silverman'} or float or callable, default: 'scott'
+        _description_. Defaults to None.
+    ax : matplotlib axes object
+        Axes to plot on. Default is None.
+    \*\*kwargs :
+        passed to :meth:`matplotlib.pyplot.violinplot`
+
+    Note
+    ----
+    For phase plots you probably want s_deg_unwrap, or
+    similar.  Uncertainty for wrapped phase blows up at +-pi.
+    """
+
+    freq = self.ntwk_set[0].f
+
+    # default widths to 3/4 distance between frequencies
+    if not widths and len(freq) > 1:
+        widths = (freq[1]-freq[0])*0.75
+    elif not widths:
+        widths = 0.5
+
+    data = np.array([getattr(p, attribute)[:,m,n] for p in self.ntwk_set])
+
+    ax.violinplot(data, freq, widths=widths, showmeans=showmeans, showextrema=showextrema,
+                  showmedians=showmedians, quantiles=quantiles, points=points, bw_method=bw_method, **kwargs)
+
+    ax.set_xlabel(f'Frequency ({self.ntwk_set[0].frequency.unit})')
+    ax.set_ylabel(self[0].Y_LABEL_DICT.get(attribute[2:], ''))  # use only the function of the attribute
+    scale_frequency_ticks(ax, self.ntwk_set[0].frequency.unit)
+    ax.axis('tight')
 
 def plot_uncertainty_bounds_s_db(self: NetworkSet, *args, **kwargs):
     """
@@ -1456,8 +1523,8 @@ def plot_uncertainty_bounds_s_db(self: NetworkSet, *args, **kwargs):
     See plot_uncertainty_bounds for help.
 
     """
-    kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
-    self.plot_uncertainty_bounds_component(*args,**kwargs)
+    kwargs.update({'ppf':mf.magnitude_2_db})
+    self.plot_uncertainty_bounds_component("s_mag", *args,**kwargs)
 
 def plot_minmax_bounds_s_db(self: NetworkSet, *args, **kwargs):
     """
@@ -1466,8 +1533,8 @@ def plot_minmax_bounds_s_db(self: NetworkSet, *args, **kwargs):
     See plot_uncertainty_bounds for help.
 
     """
-    kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
-    self.plot_minmax_bounds_component(*args,**kwargs)
+    kwargs.update({'ppf':mf.magnitude_2_db})
+    self.plot_minmax_bounds_component("s_mag", *args,**kwargs)
 
 def plot_minmax_bounds_s_db10(self: NetworkSet, *args, **kwargs):
     """
@@ -1476,8 +1543,8 @@ def plot_minmax_bounds_s_db10(self: NetworkSet, *args, **kwargs):
     see plot_uncertainty_bounds for help
 
     """
-    kwargs.update({'attribute':'s_mag','ppf':mf.mag_2_db10})
-    self.plot_minmax_bounds_component(*args,**kwargs)
+    kwargs.update({'ppf':mf.mag_2_db10})
+    self.plot_minmax_bounds_component("s_mag", *args,**kwargs)
 
 def plot_uncertainty_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
     """
@@ -1486,18 +1553,18 @@ def plot_uncertainty_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
     See plot_uncertainty_bounds for help.
 
     """
-    kwargs.update({'attribute':'s_time_mag','ppf':mf.magnitude_2_db})
-    self.plot_uncertainty_bounds_component(*args,**kwargs)
+    kwargs.update({'ppf':mf.magnitude_2_db})
+    self.plot_uncertainty_bounds_component("s_time_mag", *args,**kwargs)
 
-def plot_minmax_bounds_s_time_db(self, *args, **kwargs):
+def plot_minmax_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
     """
     Call ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``.
 
     See plot_uncertainty_bounds for help.
 
     """
-    kwargs.update({'attribute':'s_time_mag','ppf':mf.magnitude_2_db})
-    self.plot_minmax_bounds_component(*args, **kwargs)
+    kwargs.update({'ppf':mf.magnitude_2_db})
+    self.plot_minmax_bounds_component("s_time_mag", *args, **kwargs)
 
 def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0):
     """
@@ -1571,7 +1638,7 @@ def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag'
         passed to :func:`~pylab.imshow`
     """
 
-    mat = npy.array([self[k].__getattribute__(component)[:, m, n] \
+    mat = np.array([self[k].__getattribute__(component)[:, m, n] \
                      for k in range(len(self))])
 
     # if vmax is None:
@@ -1657,24 +1724,24 @@ def plot_contour(freq: Frequency,
     """
     from . import Network
 
-    ri =  npy.linspace(0,1, 50)
-    ti =  npy.linspace(0,2*npy.pi, 150)
-    Ri , Ti = npy.meshgrid(ri, ti)
-    xi = npy.linspace(-1,1, 50)
-    Xi, Yi = npy.meshgrid(xi, xi)
+    ri =  np.linspace(0,1, 50)
+    ti =  np.linspace(0,2*np.pi, 150)
+    Ri , Ti = np.meshgrid(ri, ti)
+    xi = np.linspace(-1,1, 50)
+    Xi, Yi = np.meshgrid(xi, xi)
     triang = tri.Triangulation(x, y)
     interpolator = tri.LinearTriInterpolator(triang, z)
     Zi = interpolator(Xi, Yi)
     if min0max1 == 1 :
-        VALopt = npy.max(z)
+        VALopt = np.max(z)
     else :
-        VALopt = npy.min(z)
+        VALopt = np.min(z)
     GAMopt = Network(f=[freq], s=x[z==VALopt] +1j*y[z==VALopt])
 
     if graph :
         fig, ax = plt.subplots(**kwargs)
-        an = npy.linspace(0, 2*npy.pi, 50)
-        cs, sn = npy.cos(an), npy.sin(an)
+        an = np.linspace(0, 2*np.pi, 50)
+        cs, sn = np.cos(an), np.sin(an)
         plt.plot(cs, sn, color='k', lw=0.25)
         plt.plot(cs, sn*0, color='g', lw=0.25)
         plt.plot((1+cs)/2, sn/2, color='k', lw=0.25)

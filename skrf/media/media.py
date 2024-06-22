@@ -20,7 +20,7 @@ from copy import deepcopy as copy
 from numbers import Number
 from pathlib import Path
 
-import numpy as npy
+import numpy as np
 from numpy import any, array, gradient, imag, ones, real
 from scipy import stats
 from scipy.constants import c
@@ -181,7 +181,7 @@ class Media(ABC):
         self.frequency.npoints = val
 
     @property
-    def z0_port(self) -> npy.ndarray:
+    def z0_port(self) -> np.ndarray:
         """
         Port Impedance.
 
@@ -198,7 +198,7 @@ class Media(ABC):
         self._z0_port = val
 
     @property
-    def z0_override(self) -> npy.ndarray:
+    def z0_override(self) -> np.ndarray:
         """
         Port Impedance.
 
@@ -238,7 +238,7 @@ class Media(ABC):
 
 
     @property
-    def alpha(self) -> npy.ndarray:
+    def alpha(self) -> np.ndarray:
         """
         Real (attenuation) component of gamma.
 
@@ -249,7 +249,7 @@ class Media(ABC):
         return real(self.gamma)
 
     @property
-    def beta(self) -> npy.ndarray:
+    def beta(self) -> np.ndarray:
         """
         Imaginary (propagating) component of gamma.
 
@@ -268,7 +268,7 @@ class Media(ABC):
 
         Returns
         -------
-        z0_characteristic : npy.ndarray
+        z0_characteristic : np.ndarray
             Characteristic Impedance in units of ohms
         """
         return None
@@ -281,7 +281,7 @@ class Media(ABC):
 
         Returns
         -------
-        z0 : npy.ndarray
+        z0 : np.ndarray
             z0_characteristic or z0_override in units of ohms
         """
         if self.z0_override is None:
@@ -297,7 +297,7 @@ class Media(ABC):
 
         Returns
         -------
-        z0 : npy.ndarray
+        z0 : np.ndarray
             Characteristic Impedance in units of ohms
         """
         # warns of deprecation
@@ -310,7 +310,7 @@ class Media(ABC):
 
 
     @property
-    def v_p(self) -> npy.ndarray:
+    def v_p(self) -> np.ndarray:
         r"""
         Complex phase velocity (in m/s).
 
@@ -421,9 +421,9 @@ class Media(ABC):
 
         gamma = self.gamma
         if bc:
-                return 1.0*theta/npy.imag(gamma[int(gamma.size/2)])
+                return 1.0*theta/np.imag(gamma[int(gamma.size/2)])
         else:
-                return 1.0*theta/npy.imag(gamma)
+                return 1.0*theta/np.imag(gamma)
 
     def electrical_length(self, d: NumberLike, deg: bool = False) -> NumberLike:
         r"""
@@ -486,7 +486,8 @@ class Media(ABC):
         """
         result = Network(**kwargs)
         result.frequency = self.frequency
-        result.s = npy.zeros((self.frequency.npoints, nports, nports), dtype=complex)
+        result.s = np.zeros((self.frequency.npoints, nports, nports), dtype=complex)
+        result.port_modes = np.array(["S"] * result.nports)
         if z0 is None:
             if self.z0_port is None:
                 z0 = self.z0
@@ -535,9 +536,10 @@ class Media(ABC):
         short
         """
         result = self.match(nports, z0 = z0, **kwargs)
-        result.s = npy.array(Gamma0).reshape(-1, 1, 1) * \
-            npy.eye(nports, dtype=complex).reshape((-1, nports, nports)).\
+        result.s = np.array(Gamma0).reshape(-1, 1, 1) * \
+            np.eye(nports, dtype=complex).reshape((-1, nports, nports)).\
             repeat(self.frequency.npoints, 0)
+        result.port_modes = np.array(["S"] * result.nports)
         return result
 
     def short(self, nports: int = 1,
@@ -582,7 +584,7 @@ class Media(ABC):
         s_short = -1
         # Powerwave short is not necessarily -1
         if kwargs.get('s_def', S_DEF_DEFAULT) == 'power':
-            s_short = -npy.conjugate(z0) / z0
+            s_short = -np.conjugate(z0) / z0
         return self.load(s_short, nports, z0 = z0, **kwargs)
 
     def open(self, nports: int = 1, **kwargs) -> Network:
@@ -642,8 +644,8 @@ class Media(ABC):
         inductor
         """
         result = self.match(nports=2, **kwargs)
-        y = npy.zeros(shape=result.s.shape, dtype=complex)
-        R = npy.array(R)
+        y = np.zeros(shape=result.s.shape, dtype=complex)
+        R = np.array(R)
         y[:, 0, 0] = 1.0 / R
         y[:, 1, 1] = 1.0 / R
         y[:, 0, 1] = -1.0 / R
@@ -679,8 +681,8 @@ class Media(ABC):
         """
         result = self.match(nports=2, **kwargs)
         w = self.frequency.w
-        y = npy.zeros(shape=result.s.shape, dtype=complex)
-        C = npy.array(C)
+        y = np.zeros(shape=result.s.shape, dtype=complex)
+        C = np.array(C)
         y[:, 0, 0] = 1j * w * C
         y[:, 1, 1] = 1j * w * C
         y[:, 0, 1] = -1j * w * C
@@ -716,8 +718,8 @@ class Media(ABC):
         """
         result = self.match(nports=2, **kwargs)
         w = self.frequency.w
-        y = npy.zeros(shape=result.s.shape, dtype=complex)
-        L = npy.array(L)
+        y = np.zeros(shape=result.s.shape, dtype=complex)
+        L = np.array(L)
         y[:, 0, 0] = 1.0 / (1j * w * L)
         y[:, 1, 1] = 1.0 / (1j * w * L)
         y[:, 0, 1] = -1.0 / (1j * w * L)
@@ -761,9 +763,9 @@ class Media(ABC):
         """
         result = self.match(nports=2, **kwargs)
         s_def = kwargs.get('s_def', S_DEF_DEFAULT)
-        z1 = npy.array(z1)
-        z2 = npy.array(z2)
-        mismatch = npy.broadcast_to(impedance_mismatch(z1, z2, s_def), result.s.shape)
+        z1 = np.array(z1)
+        z2 = np.array(z2)
+        mismatch = np.broadcast_to(impedance_mismatch(z1, z2, s_def), result.s.shape)
         result.s = mismatch
         return result
 
@@ -833,12 +835,12 @@ class Media(ABC):
         """
         result = self.match(nports, **kwargs)
 
-        y0s = npy.array(1./result.z0)
+        y0s = np.array(1./result.z0)
         y_k = y0s.sum(axis=1)
-        s = npy.zeros((self.frequency.npoints, nports, nports),
+        s = np.zeros((self.frequency.npoints, nports, nports),
                       dtype='complex')
-        s = 2 *npy.sqrt(npy.einsum('ki,kj->kij', y0s, y0s)) / y_k[:, None, None]
-        npy.einsum('kii->ki', s)[:] -= 1  # Sii
+        s = 2 *np.sqrt(np.einsum('ki,kj->kij', y0s, y0s)) / y_k[:, None, None]
+        np.einsum('kii->ki', s)[:] -= 1  # Sii
         result.s =  s
         return result
 
@@ -988,10 +990,10 @@ class Media(ABC):
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
 
-        s11 = npy.zeros(self.frequency.npoints, dtype=complex)
-        s21 = npy.exp(-1*theta)
+        s11 = np.zeros(self.frequency.npoints, dtype=complex)
+        s21 = np.exp(-1*theta)
         result.s = \
-                npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
+                np.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 
         # renormalize (or embed) into z0_port if required
         if self.z0_port is not None:
@@ -1351,7 +1353,7 @@ class Media(ABC):
 
         """
         idea_cap = self.shunt(self.capacitor(C=C, **kwargs), **kwargs)
-        rac = q_factor / (C * 2 * npy.pi * f_0)
+        rac = q_factor / (C * 2 * np.pi * f_0)
         idea_res = self.shunt(self.resistor(R=rac), **kwargs)
 
         return innerconnect(connect(idea_cap, 1, idea_res, 2), 1, 3)
@@ -1384,16 +1386,16 @@ class Media(ABC):
             inductor_q (2-port)
 
         """
-        w_q = 2 * npy.pi * f_0
+        w_q = 2 * np.pi * f_0
 
         if rdc == 0.0:
             rdc = 0.05 * w_q * L / q_factor
 
         rq1 = w_q * L / q_factor
-        rq2 = npy.sqrt(rq1**2 - rdc**2)
+        rq2 = np.sqrt(rq1**2 - rdc**2)
         qt = w_q * L / rq2
         rac = self.frequency.w * L / qt
-        r1 = npy.sqrt(rdc**2 + rac**2)
+        r1 = np.sqrt(rdc**2 + rac**2)
 
         return self.inductor(L=L, **kwargs) ** self.resistor(R=r1)
 
@@ -1425,7 +1427,7 @@ class Media(ABC):
 
         """
 
-        s21 = npy.array(s21)
+        s21 = np.array(s21)
         if db:
             s21 = mf.db_2_magnitude(s21)
 
@@ -1459,16 +1461,16 @@ class Media(ABC):
         """
 
         result = self.match(nports=2, **kwargs)
-        s11 = npy.array(s11)
+        s11 = np.array(s11)
         if db:
             s11 = mf.db_2_magnitude(s11)
 
         result.s[:, 0, 0] = s11
         result.s[:, 1, 1] = s11
 
-        s21_mag = npy.sqrt(1 - npy.abs(s11) ** 2)
-        s21_phase = npy.angle(s11) + npy.pi / 2 * (npy.angle(s11) <= 0) - npy.pi / 2 * (npy.angle(s11) > 0)
-        result.s[:, 0, 1] = s21_mag * npy.exp(1j * s21_phase)
+        s21_mag = np.sqrt(1 - np.abs(s11) ** 2)
+        s21_phase = np.angle(s11) + np.pi / 2 * (np.angle(s11) <= 0) - np.pi / 2 * (np.angle(s11) > 0)
+        result.s[:, 0, 1] = s21_mag * np.exp(1j * s21_phase)
         result.s[:, 1, 0] = result.s[:, 0, 1]
         return result
 
@@ -1533,7 +1535,7 @@ class Media(ABC):
 
         result = Network(**kwargs)
         result.frequency = self.frequency
-        result.s = mag_rv*npy.exp(1j*phase_rv)
+        result.s = mag_rv*np.exp(1j*phase_rv)
         return result
 
     def random(self, n_ports: int = 1, reciprocal: bool = False, matched: bool = False,
@@ -1565,6 +1567,7 @@ class Media(ABC):
         """
         result = self.match(nports = n_ports, **kwargs)
         result.s = mf.rand_c(self.frequency.npoints, n_ports,n_ports)
+        result.port_modes = np.array(["S"] * result.nports)
         if reciprocal and n_ports>1:
             for m in range(n_ports):
                 for n in range(n_ports):
@@ -1644,16 +1647,16 @@ class Media(ABC):
             csv file written from this function
         """
 
-        header = 'f[%s], Re(z0), Im(z0), Re(gamma), Im(gamma), Re(z0_port), Im(z0_port)\n'%self.frequency.unit
+        header = f'f[{self.frequency.unit}], Re(z0), Im(z0), Re(gamma), Im(gamma), Re(z0_port), Im(z0_port)\n'
 
         g,z,pz  = self.gamma, \
                 self.z0, self.z0_port if self.z0_port is not None else self.z0
 
-        data = npy.vstack(\
+        data = np.vstack(\
                 [self.frequency.f_scaled, z.real, z.imag, \
                 g.real, g.imag, pz.real, pz.imag]).T
 
-        npy.savetxt(filename,data,delimiter=',',header=header)
+        np.savetxt(filename,data,delimiter=',',header=header)
 
 
 
@@ -1734,7 +1737,7 @@ class DefinedGammaZ0(Media):
         f_unit = header.split(',')[0].split('[')[1].split(']')[0]
 
         f,z_re,z_im,g_re,g_im,pz_re,pz_im = \
-                npy.loadtxt(fid,  delimiter=',').T
+                np.loadtxt(fid,  delimiter=',').T
 
         if isinstance(filename, (str, Path)):
             fid.close()
@@ -1782,7 +1785,7 @@ class DefinedGammaZ0(Media):
 
         Returns
         -------
-        z0_characteristic : npy.ndarray
+        z0_characteristic : np.ndarray
             Characteristic Impedance in units of ohms
         """
         return self._z0*ones(len(self))
@@ -1837,7 +1840,7 @@ def parse_z0(s: str) -> NumberLike:
 
     Returns
     -------
-    z0 : npy.ndarray
+    z0 : np.ndarray
 
     Raises
     ------

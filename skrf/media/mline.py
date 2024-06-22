@@ -13,7 +13,7 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING
 
-import numpy as npy
+import numpy as np
 from numpy import arctan, cosh, exp, imag, log, log10, ones, real, sqrt, tanh, zeros
 from scipy.constants import c, epsilon_0, mu_0, pi
 
@@ -310,13 +310,13 @@ class MLine(Media):
         return alpha + 1j*beta
 
     @property
-    def z0_characteristic(self) -> npy.ndarray:
+    def z0_characteristic(self) -> np.ndarray:
         """
         Characteristic Impedance, :math:`z_0`
 
         Returns
         -------
-        z0_characteristic : npy.ndarray
+        z0_characteristic : np.ndarray
             Characteristic Impedance in units of ohms
         """
         if self.z0_override is None:
@@ -325,7 +325,7 @@ class MLine(Media):
             return self.z0_override
 
     @property
-    def Z0_f(self) -> npy.ndarray:
+    def Z0_f(self) -> np.ndarray:
         """
         Alias fos Characteristic Impedance for backward compatibility.
         Deprecated, do not use.
@@ -577,7 +577,7 @@ class MLine(Media):
              e = ep_reff * ((1 + k * fp**1.5 / 4) / (1 + fp**1.5 / 4))**2
              # qucs keep quasi-static impedance here
              if self.compatibility_mode == 'qucs':
-                 z =  npy.ones(f.shape) * zl_eff
+                 z =  np.ones(f.shape) * zl_eff
              # use Kirschning Jansen for impedance dispersion by default
              else:
                  fn = f * h * 1e-6
@@ -587,14 +587,14 @@ class MLine(Media):
                  (2 * pi * h * sqrt(ep_r - ep_reff))
              fh = fk / (0.75 + (0.75 - 0.332 / (ep_r**1.73)) * u)
              no = 1 + 1 / (1 + sqrt(u)) + 0.32 * (1 / (1 + sqrt(u)))**3
-             nc = npy.where(u < 0.7,
+             nc = np.where(u < 0.7,
                  1 + 1.4 / (1 + u) * (0.15 - 0.235 * exp(-0.45 * f / fh)),
                  1)
-             n = npy.where(no * nc < 2.32, no * nc, 2.32)
+             n = np.where(no * nc < 2.32, no * nc, 2.32)
              e =  ep_r - (ep_r - ep_reff) / (1 + (f / fh)**n)
              # qucs keep quasi-static impedance here
              if self.compatibility_mode == 'qucs':
-                 z =  npy.ones(f.shape) * zl_eff
+                 z =  np.ones(f.shape) * zl_eff
              # use Kirschning Jansen for impedance dispersion by default
              else:
                  fn = f * h * 1e-6
@@ -628,7 +628,7 @@ class MLine(Media):
         a_dielectric : :class:`numpy.ndarray`
         """
         # limited to only Hammerstad and Jensen model
-        Z0 = npy.sqrt(mu_0/epsilon_0)
+        Z0 = np.sqrt(mu_0/epsilon_0)
 
         # conductor losses
         if t is not None and  t > 0:
@@ -638,7 +638,7 @@ class MLine(Media):
             else:
                 Rs  = surface_resistivity(f=f, rho=rho, mu_r=1)
                 ds = skin_depth(f, rho, mu_r)
-                if(npy.any(t < 3 * ds)):
+                if(np.any(t < 3 * ds)):
                     warnings.warn(
                         'Conductor loss calculation invalid for line'
                         f'height t ({t})  < 3 * skin depth ({ds[0]})',
@@ -692,12 +692,12 @@ def kirsching_zl(u: NumberLike, fn: NumberLike,
     Kirschning Jansen impedance dispersion.
     """
     #fn = f * h * 1e-6 # GHz-mm
-    R1 = npy.minimum(0.03891 * ep_r**1.4, 20.)
-    R2 = npy.minimum(0.2671 * u**7, 20.)
+    R1 = np.minimum(0.03891 * ep_r**1.4, 20.)
+    R2 = np.minimum(0.2671 * u**7, 20.)
     R3 = 4.766 * exp(-3.228 * u**0.641)
     R4 = 0.016 + (0.0514 * ep_r)**4.524
     R5 = (fn / 28.843)**12
-    R6 = npy.minimum(22.20 * u **1.92, 20.)
+    R6 = np.minimum(22.20 * u **1.92, 20.)
     R7 = 1.206 - 0.3144 * exp(-R1) * (1 - exp(-R2))
     R8 = 1 + 1.275 * (1 - exp(-0.004625 * R3 * ep_r**1.674 \
                               * (fn / 18.365)**2.745))

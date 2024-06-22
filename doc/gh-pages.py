@@ -134,5 +134,5 @@ if __name__ == '__main__':
         cd(startdir)
 
     print()
-    print('Now verify the build in: %r' % dest)
+    print(f'Now verify the build in: {dest!r}')
     print("If everything looks good, 'git push'")

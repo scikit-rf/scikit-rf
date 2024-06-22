@@ -1,6 +1,6 @@
 import unittest
 
-import numpy as npy
+import numpy as np
 import pytest
 from numpy import inf, isnan, log, pi
 from numpy.testing import assert_almost_equal, assert_equal
@@ -166,16 +166,16 @@ class TestUnitConversions(unittest.TestCase):
         Test inf_to_num function
         """
         # scalar
-        assert_equal(rf.inf_to_num(npy.inf), rf.INF)
-        assert_equal(rf.inf_to_num(-npy.inf), -rf.INF)
+        assert_equal(rf.inf_to_num(np.inf), rf.INF)
+        assert_equal(rf.inf_to_num(-np.inf), -rf.INF)
 
         # array
-        x = npy.array([0, npy.inf, 0, -npy.inf])
-        y = npy.array([0, rf.INF, 0, -rf.INF])
+        x = np.array([0, np.inf, 0, -np.inf])
+        y = np.array([0, rf.INF, 0, -rf.INF])
         assert_equal(rf.inf_to_num(x), y)
 
     def test_rsolve(self):
-        rng = npy.random.default_rng()
+        rng = np.random.default_rng()
         A = rng.random((3, 2, 2)) + 1j*rng.random((3, 2, 2))
         B = rng.random((3, 2, 2)) + 1j*rng.random((3, 2, 2))
         # Make sure they are not singular
@@ -183,27 +183,27 @@ class TestUnitConversions(unittest.TestCase):
         B = rf.nudge_eig(B)
 
         x = rf.rsolve(A, B)
-        npy.testing.assert_allclose(x @ A, B)
+        np.testing.assert_allclose(x @ A, B)
 
     def test_nudge_eig(self):
-        A = npy.zeros((3, 2, 2))
-        cond_A = npy.linalg.cond(A)
+        A = np.zeros((3, 2, 2))
+        cond_A = np.linalg.cond(A)
         A2 = rf.nudge_eig(A)
 
         self.assertFalse(A is A2)
-        self.assertTrue(npy.all(npy.linalg.cond(A2) < cond_A))
-        npy.testing.assert_allclose(A2, A, atol=1e-9)
+        self.assertTrue(np.all(np.linalg.cond(A2) < cond_A))
+        np.testing.assert_allclose(A2, A, atol=1e-9)
 
     def test_nudge_eig2(self):
-        A = npy.diag([1, 1, 1, 1]).reshape(1, 4, 4)
+        A = np.diag([1, 1, 1, 1]).reshape(1, 4, 4)
         A2 = rf.nudge_eig(A)
         self.assertTrue(A is A2)
 
     def test_nudge_default_params(self):
         "Test default params and passing different optional params"
         # check that Minimum eigenvalue is correctly passed
-        A = npy.zeros((3, 2, 2))
+        A = np.zeros((3, 2, 2))
         A2 = rf.nudge_eig(A)
-        npy.testing.assert_allclose(A2[:,0,0], EIG_MIN)
+        np.testing.assert_allclose(A2[:,0,0], EIG_MIN)
         A3 = rf.nudge_eig(A, min_eig=1e-10)
-        npy.testing.assert_allclose(A3[:,0,0], 1e-10)
+        np.testing.assert_allclose(A3[:,0,0], 1e-10)
