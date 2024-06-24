@@ -2,7 +2,7 @@
 name = "scikit-rf"
 dynamic = ["version"]
 description = "Object Oriented Microwave Engineering"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 authors = [
     {name="Alex Arsenovic", email="alexanderarsenovic@gmail.com"}
 ]
@@ -26,7 +26,6 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
