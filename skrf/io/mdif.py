@@ -444,11 +444,11 @@ class Mdif:
                     if p not in data_types:
                         data_types[p] = "double"
 
-                    var_type = "" if ads_compatible else f" {p}({dict_types[data_types[p]]})"
+                    var_type = "" if ads_compatible else f"({dict_types[data_types[p]]})"
                     if data_types[p] == "string":
-                        var_def_str = f'VAR{var_type} = "{values[p][filenumber]}"'
+                        var_def_str = f'VAR {p}{var_type} = "{values[p][filenumber]}"'
                     else:
-                        var_def_str = f"VAR{var_type} = {values[p][filenumber]}"
+                        var_def_str = f"VAR {p}{var_type} = {values[p][filenumber]}"
                     mdif.write(var_def_str + "\n")
 
                 mdif.write("\nBEGIN ACDATA\n")
