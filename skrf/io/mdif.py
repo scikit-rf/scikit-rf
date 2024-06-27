@@ -365,8 +365,8 @@ class Mdif:
               filename : str,
               values: dict | None = None,
               data_types: dict | None = None,
-              *,
               comments: str | None = None,
+              *,
               skrf_comment: bool = True,
               ads_compatible: bool = True):
         """
