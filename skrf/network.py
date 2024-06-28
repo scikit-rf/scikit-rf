@@ -2400,7 +2400,7 @@ class Network:
             except AttributeError:
                 pass
             if skrf_comment:
-                commented_header += '!Created with skrf (http://scikit-rf.org).\n'
+                commented_header += '! Created with skrf (http://scikit-rf.org).\n'
 
             output.write(commented_header)
 
