@@ -948,7 +948,10 @@ class NetworkSet:
                    filename: str,
                    values: dict | None = None,
                    data_types: dict | None = None,
-                   comments = None):
+                   comments: str | None = None,
+                   *,
+                   skrf_comment: bool = True,
+                   ads_compatible: bool = True):
         """Convert a scikit-rf NetworkSet object to a Generalized MDIF file.
 
         Parameters
@@ -966,6 +969,11 @@ class NetworkSet:
         comments: list of strings
             Comments to add to output_file.
             Each list items is a separate comment line
+        skrf_comment : bool, optional
+            write `created by skrf` comment
+        ads_compatible: bool. Default is True.
+            Indicates whether to write the file in a format that
+            ADS will read properly.
 
         See Also
         --------
@@ -978,7 +986,8 @@ class NetworkSet:
         if comments is None:
             comments = []
         Mdif.write(ns=self, filename=filename, values=values,
-                             data_types=data_types, comments=comments)
+                   data_types=data_types, ads_compatible=ads_compatible,
+                   comments=comments, skrf_comment=skrf_comment)
 
     def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):
         """
