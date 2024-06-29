@@ -43,15 +43,15 @@ class REG_ADDR(bytes, Enum):
     FIRMWARE_MINOR = b"\xf4"
 
 
-class NanoVNA(vna.VNA):
-    '''NanoVNA.'''
+class NanoVNAv2(vna.VNA):
+    '''NanoVNAv2.'''
     _scpi = False
 
     def __init__(self, address, backend: str = "@py"):
         super().__init__(address, backend)
         if not isinstance(self._resource, pyvisa.resources.SerialInstrument):
             raise RuntimeError(
-                "NanoVNA can only be a serial instrument. "
+                "NanoVNAv2 can only be a serial instrument. "
                 f"{address} yields a {self._resource.__class__.__name__}"
             )
 
@@ -99,7 +99,7 @@ class NanoVNA(vna.VNA):
         fw_minor = int.from_bytes(fw_minor, 'little')
 
         return (
-            f"NanoVNA\n"
+            f"NanoVNAv2\n"
             f"\tVariant:{variant}\n"
             f"\tProtocol Version:{protocol}\n"
             f"\tHardware Version: {hardware}\n"
@@ -205,6 +205,6 @@ class NanoVNA(vna.VNA):
         s11.frequency = self._freq.copy()
         s21.frequency = self._freq.copy()
 
-        s11.s, s21.s = NanoVNA._convert_bytes_to_sparams(n, raw)
+        s11.s, s21.s = NanoVNAv2._convert_bytes_to_sparams(n, raw)
 
         return s11, s21
