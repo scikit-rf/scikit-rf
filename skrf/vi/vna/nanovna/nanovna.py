@@ -50,6 +50,11 @@ class NanoVNAv2(vna.VNA):
     It should also be compatible with other devices, if they use the same `protocol <https://nanorfe.com/nanovna-v2-user-manual.html#__RefHeading___Toc2537_2953165397>`_.
     Some variants of the NanoVNA use a text protocol and are not supported.
 
+    .. warning::
+
+        The NanoVNA V2 only returns uncalibrated networks, regardless of the calibration on the device itself.
+        See section `Examples`_.
+
     Notes
     -----
 
@@ -58,6 +63,7 @@ class NanoVNAv2(vna.VNA):
     * `NanoVNA V2 <https://nanorfe.com/de/nanovna-v2.html>`_
     * `LiteVNA <https://www.zeenko.tech/litevna>`_
 
+    .. _Examples:
     Examples
     --------
 
@@ -72,6 +78,29 @@ class NanoVNAv2(vna.VNA):
         # vna = NanoVNAv2("ASRL1::INSTR")  # Windows
         freq = skrf.Frequency(start=1, stop=2, unit='GHz', npoints=101)
         s11, s21 = vna.get_s11_s21()
+
+    1-port calibration assuming ideal reference standards:
+
+    .. code-block:: python
+
+        import skrf
+
+        # load uncalibrated measurement
+        raw_s1p = skrf.Network("measurement.s1p")
+
+        # load s1p networks of measured standards
+        cal_measured = [skrf.Network("short.s1p"), skrf.Network("open.s1p"), skrf.Network("load.s1p"]
+
+        # get ideal standards
+        line = skrf.DefinedGammaZ0(frequency=cal_measured[0].frequency, z0=50)
+        cal_ideals = [line.short(nports=1), line.open(nports=1), line.match(nports=1)]
+
+        # run calibration
+        cal = skrf.OnePort(ideals=cal_ideals, measured=cal_measured)
+        cal.run()
+
+        # apply calibration
+        calibrated_s1p = cal.apply_cal(raw_s1p)
     """
 
     _scpi = False
