@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    pass
+    from typing import Sequence
 
 import functools
 from enum import Enum
@@ -259,3 +259,33 @@ class NanoVNAv2(vna.VNA):
             )
 
         return self.get_s11_s21()[a-1]
+
+    def get_snp_network(self, ports: Sequence[int | None]) -> skrf.Network:
+        """
+        Get custom n-port :class:`skrf.Network`.
+
+        Parameters
+        ----------
+        ports:
+            Port mapping. Can be any sequence of 1, 2 and None
+
+        Returns
+        -------
+        :class:`skrf.Network`
+            Measured S-parameters in custom network
+        """
+        nwk_s11, nwk_s21 = self.get_s11_s21()
+        frequency = self._freq.copy()
+
+        s_parameters = np.zeros((len(frequency), len(ports), len(ports)), dtype=complex)
+        snp_network = skrf.Network(frequency=frequency, s=s_parameters)
+
+        for i, i_port in enumerate(ports):
+            if i_port is not None:
+                for j, j_port in enumerate(ports):
+                    if i_port == 1 and j_port == 1:
+                        snp_network.s[:, i, j] = nwk_s11.s[:, 0, 0]
+                    elif i_port == 2 and j_port == 1:
+                        snp_network.s[:, i, j] = nwk_s21.s[:, 0, 0]
+
+        return snp_network
