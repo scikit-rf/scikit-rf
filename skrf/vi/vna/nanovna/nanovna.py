@@ -236,3 +236,26 @@ class NanoVNAv2(vna.VNA):
         s11.s, s21.s = NanoVNAv2._convert_bytes_to_sparams(n, raw)
 
         return s11, s21
+
+    def get_sdata(self, a: int = 1, b: int = 1) -> skrf.Network:
+        """
+        Get S-parameter as 1-port :class:`skrf.Network`.
+
+        Parameters
+        ----------
+        a:
+            Input port of VNA. Can be 1 or 2, default is 1.
+        b:
+            Output port of VNA. Can only be 1, default is 1.
+
+        Returns
+        -------
+        :class:`skrf.Network`
+            Measured S-parameter
+        """
+        if a not in (1, 2) or b != 1:
+            raise RuntimeError(
+                "NanoVNA V2 can only measure S11 and S21"
+            )
+
+        return self.get_s11_s21()[a-1]
