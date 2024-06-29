@@ -44,7 +44,36 @@ class REG_ADDR(bytes, Enum):
 
 
 class NanoVNAv2(vna.VNA):
-    '''NanoVNAv2.'''
+    """NanoVNAv2.
+
+    This class connects to the NanoVNA V2 using a binary protocol over USB.
+    It should also be compatible with other devices, if they use the same `protocol <https://nanorfe.com/nanovna-v2-user-manual.html#__RefHeading___Toc2537_2953165397>`_.
+    Some variants of the NanoVNA use a text protocol and are not supported.
+
+    Notes
+    -----
+
+    Tested devices:
+
+    * `NanoVNA V2 <https://nanorfe.com/de/nanovna-v2.html>`_
+    * `LiteVNA <https://www.zeenko.tech/litevna>`_
+
+    Examples
+    --------
+
+    Basic S11 and S21 measurement:
+
+    .. code-block:: python
+
+        import skrf
+        from skrf.vi.vna.nanovna import NanoVNAv2
+
+        vna = NanoVNAv2("ASRL/dev/ttyACM0::INSTR")  # Linux
+        # vna = NanoVNAv2("ASRL1::INSTR")  # Windows
+        freq = skrf.Frequency(start=1, stop=2, unit='GHz', npoints=101)
+        s11, s21 = vna.get_s11_s21()
+    """
+
     _scpi = False
 
     def __init__(self, address, backend: str = "@py"):
@@ -186,7 +215,6 @@ class NanoVNAv2(vna.VNA):
             s21[freqIndex] = b2 / a1
 
         return s11, s21
-
 
     def get_s11_s21(self) -> tuple[skrf.Network, skrf.Network]:
         n = self._freq.npoints
