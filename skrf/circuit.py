@@ -863,13 +863,14 @@ class Circuit:
         t = np.identity(x.shape[-1]) - c @ x
 
         # Get the sub-matrices of inverse of intermediate temporary matrix t
-        tmp_mat = np.linalg.inv(t[D_idx]) @ t[C_idx]
-        tA_inv = np.linalg.inv(t[A_idx] - t[B_idx] @ tmp_mat)
-        tC_inv = -tmp_mat @ tA_inv
+        # The method np.linalg.solve(A, B) is equivalent to np.inv(A) @ B, but more efficient
+        tmp_mat = np.linalg.solve(t[D_idx], t[C_idx])
 
         # Get the external S-parameters for the external ports
         # Calculated by multiplying the sub-matrices of x and t
-        S_ext = x[A_idx] @ tA_inv + x[B_idx] @ tC_inv
+        S_ext = (x[A_idx] - x[B_idx] @ tmp_mat) @ np.linalg.inv(
+            t[A_idx] - t[B_idx] @ tmp_mat
+        )
 
         S_ext = s2s(S_ext, self.port_z0, S_DEF_DEFAULT, 'traveling')
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
