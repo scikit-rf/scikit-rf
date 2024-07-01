@@ -1061,6 +1061,29 @@ class CircuitTestVoltagesCurrents(unittest.TestCase):
         # (toward the Circuit's Port)
         np.testing.assert_allclose(self.I_out, -1*I_ports[:,1])
 
+    def test_tline_with_different_impedance(self):
+        ' Test voltages and currents for a simple transmission line with different impedances '
+        line = self.line.copy()
+        line.renormalize(z_new=1./self.Z)
+
+        # Equivalent model with Circuit
+        port1 = rf.Circuit.Port(frequency=self.freq, name='port1', z0=self.Z)
+        port2 = rf.Circuit.Port(frequency=self.freq, name='port2', z0=self.Z)
+        cnx = [
+            [(port1, 0), (line, 0)],
+            [(port2, 0), (line, 1)]
+        ]
+        crt = rf.Circuit(cnx)
+
+        V_ports_uni_z = crt.voltages(self.power, self.phase)
+        I_ports_uni_z = crt.currents(self.power, self.phase)
+
+        V_ports_dif_z = self.crt.voltages(self.power, self.phase)
+        I_ports_dif_z = self.crt.currents(self.power, self.phase)
+
+        np.testing.assert_allclose(I_ports_uni_z, I_ports_dif_z)
+        np.testing.assert_allclose(V_ports_uni_z, V_ports_dif_z)
+
 class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
     def test_isolator(self):
         # Isolator that passes from port 1 to 2
