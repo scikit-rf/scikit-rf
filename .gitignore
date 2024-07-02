@@ -27,3 +27,4 @@ lint.xml
 .venv/
 test-results/*.xml
 testing.xlsx
+test.py
