@@ -92,6 +92,7 @@ Graph representation
 from __future__ import annotations
 
 from itertools import chain
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -139,7 +140,7 @@ class Circuit:
         except ImportError as err:
             raise ImportError('networkx package as not been installed and is required.') from err
 
-    def __init__(self, connections: list[list[tuple]], name: str = None, auto_reduce: bool = False) -> None:
+    def __init__(self, connections: list[list[tuple[Network, int]]], name: str = None, auto_reduce: bool = False) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -201,7 +202,7 @@ class Circuit:
 
 
         """
-        self.connections = connections
+        self._connections = connections
         self.name = name
 
         # check if all networks have a name
@@ -229,6 +230,39 @@ class Circuit:
             self.connections = reduce_circuit(self.connections,
                                               check_duplication=False,
                                               split_ground=True)
+            
+    @property
+    def connections(self) -> list[list[tuple[Network, int]]]:
+        """
+        Circuit connections.
+
+        Description of circuit connections. Each connection is a described by a
+        list of tuple. Each tuple contains (network, network_port_nb). Port number 
+        indexing starts from zero.
+
+        Returns
+        -------
+        connections : :class:`list[list[tuple[Network, int]]]`
+            The circuit connections.
+
+        """
+        return self._connections
+    
+    @connections.setter
+    def connections(self, connections: list[list[tuple[Network, int]]]) -> None:
+        """
+        Set the circuit connections.
+
+        Parameters
+        ----------
+        connections : :class:`list[list[tuple[Network, int]]]`
+            The circuit connections.
+
+        """
+        self._connections = connections
+
+        # invalidate cached properties
+        self.__dict__.pop('s', None)
 
     @classmethod
     def check_duplicate_names(cls, connections_list: list):
@@ -748,7 +782,7 @@ class Circuit:
 
         return S  # shape (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
 
-    @property
+    @cached_property
     def s(self) -> np.ndarray:
         """
         Return the global scattering parameters of the circuit.
@@ -1401,7 +1435,7 @@ class Circuit:
         fig.tight_layout()
 
 ## Functions operating on Circuit
-def reduce_circuit(connections: list[list[tuple]],
+def reduce_circuit(connections: list[list[tuple[Network, int]]],
                    check_duplication: bool = True,
                    split_ground: bool = False) -> list[list[tuple]]:
     """
