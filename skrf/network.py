@@ -3349,6 +3349,7 @@ class Network:
         if self.port_names is not None:
             self.port_names = np.array(self.port_names)
             self.port_names[to_ports] = self.port_names[from_ports]
+        self.port_names = list(self.port_names)
 
     def renumbered(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> Network:
         """
