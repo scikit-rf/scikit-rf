@@ -142,7 +142,7 @@ class Circuit:
 
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
-                 name: str = None,
+                 name: str | None = None,
                  auto_reduce: bool = False) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
@@ -499,7 +499,9 @@ class Circuit:
         """
         return cls.SeriesImpedance(frequency, Z=INF, name=name)
 
-    def networks_dict(self, connections: list = None, min_nports: int = 1) -> dict:
+    def networks_dict(self,
+                      connections: list[list[tuple[Network, int]]] | None = None,
+                      min_nports: int = 1) -> dict[str, Network]:
         """
         Return the dictionary of Networks from the connection setup X.
 
@@ -518,13 +520,15 @@ class Circuit:
         if not connections:
             connections = self.connections
 
-        ntws = []
+        ntws: list[Network] = []
         for cnx in connections:
             for (ntw, _port) in cnx:
                 ntws.append(ntw)
         return {ntw.name: ntw for ntw in ntws  if ntw.nports >= min_nports}
 
-    def networks_list(self, connections: list = None, min_nports: int = 1) -> list:
+    def networks_list(self,
+                      connections: list[list[tuple[Network, int]]] | None = None,
+                      min_nports: int = 1) -> list[Network]:
         """
         Return a list of unique networks (sorted by appearing order in connections).
 
@@ -554,7 +558,7 @@ class Circuit:
         return len(self.connections)
 
     @property
-    def connections_list(self) -> list:
+    def connections_list(self) -> list[tuple[int, tuple[Network, int]]]:
         """
         Return the full list of connections, including intersections.
 
@@ -566,7 +570,7 @@ class Circuit:
              ...
             ]
         """
-        return [[idx_cnx, cnx] for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections))]
+        return [(idx_cnx, cnx) for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections))]
 
     @property
     def networks_nb(self) -> int:
@@ -802,7 +806,7 @@ class Circuit:
         return X @ np.linalg.inv(np.identity(self.dim) - self.C @ X)
 
     @property
-    def port_indexes(self) -> list:
+    def port_indexes(self) -> list[int]:
         """
         Return the indexes of the "external" ports.
 
@@ -1441,7 +1445,7 @@ class Circuit:
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple[Network, int]]],
                    check_duplication: bool = True,
-                   split_ground: bool = False) -> list[list[tuple]]:
+                   split_ground: bool = False) -> list[list[tuple[Network, int]]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
 
