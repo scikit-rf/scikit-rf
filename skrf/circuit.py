@@ -264,7 +264,7 @@ class Circuit:
         """
         self._connections = connections
 
-        # invalidate cached properties
+        # Invalidate cached properties
         for item in ('s', 'X', 'C'):
             self.__dict__.pop(item, None)
 

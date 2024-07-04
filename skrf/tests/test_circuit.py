@@ -83,6 +83,36 @@ class CircuitTestConstructor(unittest.TestCase):
         reduced_circuit = rf.Circuit(connections, auto_reduce=True)
         assert_array_almost_equal(full_circuit.s_external, reduced_circuit.s_external)
 
+    def test_cache_attributes(self):
+        """
+        Test the cached attributes of the Circuit
+        """
+        connections = [[(self.port1, 0), (self.ntwk1, 0)],
+                       [(self.ntwk1, 1), (self.ntwk2, 0)],
+                       [(self.ntwk2, 1), (self.port2, 0)]]
+
+        init_circuit = rf.Circuit(connections)
+
+        cached_attributes = ('s', 'X', 'C')
+
+        # Initial circuit should not have cached attributes
+        for attr in cached_attributes:
+            self.assertFalse(init_circuit.__dict__.get(attr, False))
+
+        # Access the attributes to cache them
+        X = init_circuit.X
+        C = init_circuit.C
+        s = init_circuit.s
+
+        # Check that the cached attributes are set correctly
+        for attr, value in zip(cached_attributes, (s, X, C)):
+            assert_array_almost_equal(init_circuit.__dict__.get(attr, 0.0), value)
+
+        # Modify connections to invalidate the cache
+        init_circuit.connections = connections
+        for attr in cached_attributes:
+            self.assertFalse(init_circuit.__dict__.get(attr, False))
+
 class CircuitClassMethods(unittest.TestCase):
     """
     Test the various class methods of Circuit such as Ground, Port, etc.
