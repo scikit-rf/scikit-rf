@@ -1203,11 +1203,11 @@ class Circuit:
         b = self._b(a)
         z0s = self.z0
         directions = self._currents_directions
-        i_l, i_r = directions[:,0], directions[:,1]
+        i_l, i_r = directions[:, 0], directions[:, 1]
 
         z0_sqrt = np.sqrt(z0s)
-        gamma = (z0s[:,i_r]-z0s[:,i_l]) / (z0s[:,i_r]+z0s[:,i_l])
-        Is = (b[:,i_l] / z0_sqrt[:,i_r] - b[:,i_r] / z0_sqrt[:,i_l]) * np.sqrt(1 - gamma**2)
+        Is = (b[:,i_l] / z0_sqrt[:,i_r] - b[:,i_r] / z0_sqrt[:,i_l]) \
+            * (2*z0_sqrt[:,i_l] * z0_sqrt[:,i_r]) / (z0s[:,i_l] + z0s[:,i_r])
         return Is
 
 
@@ -1237,11 +1237,11 @@ class Circuit:
         b = self._b(a)
         z0s = self.z0
         directions = self._currents_directions
-        i_l, i_r = directions[:,0], directions[:,1]
+        i_l, i_r = directions[:, 0], directions[:, 1]
 
         z0_sqrt = np.sqrt(z0s)
-        gamma = (z0s[:,i_r]-z0s[:,i_l]) / (z0s[:,i_r]+z0s[:,i_l])
-        Vs = (b[:,i_l] * z0_sqrt[:,i_r] + b[:,i_r] * z0_sqrt[:,i_l]) * np.sqrt(1 - gamma**2)
+        Vs = (b[:,i_l] * z0_sqrt[:,i_r] + b[:,i_r] * z0_sqrt[:,i_l]) \
+            * (2*z0_sqrt[:,i_l] * z0_sqrt[:,i_r]) / (z0s[:,i_l] + z0s[:,i_r])
         return Vs
 
     def currents_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
