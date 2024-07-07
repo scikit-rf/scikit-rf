@@ -2080,6 +2080,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         #define the reflections to be mimicked
         s11dut = s_dut.s[:, 0, 0]
         s22dut = s_dut.s[:, 1, 1]
+        if self.verbose:
+            _, z1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
+            _, z2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
         #peel the fixture away and create the fixture model
         #python range to n-1, thus 1 to be added to have proper iteration number
         for i in range(x + 1 - pullback):
@@ -2094,8 +2097,6 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             if i == 0:
                 errorbox1 = sTL1
                 errorbox2 = sTL2
-                _, z1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
-                _, z2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
             else:
                 errorbox1 = errorbox1 ** sTL1
                 errorbox2 = errorbox2 ** sTL2
@@ -2113,23 +2114,26 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             # s_dut.a = abcd_in
             s11dut = s_dut.s[:, 0, 0]
             s22dut = s_dut.s[:, 1, 1]
-            if self.verbose:
-                if i == 0:
-                    fig, axs = subplots(2, 2)
-                    axs[0, 0].plot(z1, color = 'k')
-                    axs[0, 0].set_xlim((0, x))
-                    axs[0, 1].plot(z2, color = 'k')
-                    axs[0, 1].set_xlim((0, x))
-                    axs[1, 0].set_xlim((n-100, n+x*2+10))
-                    axs[1, 1].set_xlim((n-100, n+x*2+10))
-                _, zeb1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
-                _, zeb2 = IEEEP370_SE_ZC_2xThru.getz(errorbox2.s[:, 0, 0], f, z0)
-                _, zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
-                _, zdut2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
-                axs[0, 0].plot(zeb1)
-                axs[0, 1].plot(zeb2)
-                axs[1, 0].plot(ifftshift(zdut1))
-                axs[1, 1].plot(ifftshift(zdut2))
+        if self.verbose:
+            _, zeb1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
+            _, zeb2 = IEEEP370_SE_ZC_2xThru.getz(errorbox2.s[:, 0, 0], f, z0)
+            _, zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
+            _, zdut2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
+            fig, axs = subplots(1, 2, sharex = True, figsize=(2*6.4, 4.8))
+            axs[0].plot(ifftshift(zdut1), label = 'DUT')
+            axs[0].plot(ifftshift(zeb1), label = 'FIX-1')
+            axs[0].plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
+            axs[0].set_xlim((n-50, n+x*2+50))
+            axs[0].legend()
+            axs[0].set_title('Left')
+            axs[0].set_ylabel('Z (ohm)')
+            axs[1].plot(ifftshift(zdut2), label = 'DUT')
+            axs[1].plot(ifftshift(zeb2), label = 'FIX-2')
+            axs[1].plot(ifftshift(z2), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
+            axs[1].set_xlim((n-50, n+x*2+50))
+            axs[1].legend()
+            axs[1].set_title('Right')
+            axs[1].set_ylabel('Z (ohm)')       
         return errorbox1, errorbox2.flipped()
 
     def makeErrorBox_v8(self, s_dut, s2x, gamma, z0, pullback):
@@ -2144,6 +2148,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         l = 1. / (2 * (x + 1))
         #define the reflections to be mimicked
         s11dut = s_dut.s[:, 0, 0]
+        if self.verbose:
+            _, z1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
         #peel the fixture away and create the fixture model
         #python range to n-1, thus 1 to be added to have proper iteration number
         for i in range(x + 1 - pullback):
@@ -2153,22 +2159,20 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             sTL1.s = TL1
             if i == 0:
                 errorbox1 = sTL1
-                _, z1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
             else:
                 errorbox1 = errorbox1 ** sTL1
             # equivalent to function removeTL_side1(in,TL,z0)
             s_dut = sTL1.inv ** s_dut
             s11dut = s_dut.s[:, 0, 0]
-            if self.verbose:
-                if i == 0:
-                    fig, axs = subplots(1, 2)
-                    axs[0].plot(z1, color = 'k')
-                    axs[0].set_xlim((0, x))
-                    axs[1].set_xlim((n-100, n+x*2+10))
-                _, zeb1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
-                _, zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
-                axs[0].plot(zeb1)
-                axs[1].plot(ifftshift(zdut1))
+        _, zeb1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
+        _, zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
+        fig, axs = subplots(1, 1, sharex = True, figsize=(6.4, 4.8))
+        axs.plot(ifftshift(zdut1), label = 'DUT')
+        axs[0].plot(ifftshift(zeb1), label = 'FIX')
+        axs[0].plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
+        axs[0].set_xlim((n-50, n+x*2+50))
+        axs[0].legend()
+        axs[0].set_ylabel('Z (ohm)')
         return errorbox1
 
 
@@ -2250,6 +2254,19 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             alpha_per_length_fit = b[0] * np.sqrt(f) + b[1] * f + b[2] * f**2
             #divide by 2*n + 1 to get prop constant per discrete unit length
             gamma = alpha_per_length_fit + 1j * beta_per_length # gamma without DC
+        if self.verbose:
+            fig, axs = subplots(1, 2, figsize=(2*6.4, 4.8))
+            fig.suptitle('Gamma determination')
+            axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length, label = 'alpha per length')
+            if self.bandwidth_limit != 0:
+                axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length_fit, label = f'alpha per length fit (bandwidth_limit = {self.bandwidth_limit}) Hz')
+            axs[0].legend()
+            axs[0].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
+            axs[0].set_ylabel('Alpha (Neper/length)')
+            axs[1].plot(s2xthru.frequency.f_scaled, beta_per_length, label = 'beta per length')
+            axs[1].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
+            axs[1].set_ylabel('Beta (rad/length)')
+            axs[1].legend()
 
         # extract error boxes
         # make the both error box
