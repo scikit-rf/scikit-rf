@@ -1097,6 +1097,57 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
+    def extrapolate_to_dc(ntwk):
+        """
+        Extrapolate the network to DC using IEEE370 NZC algorithm.
+        This is usefull to compare the fixtures and deembedded networks
+        to the input data in the same conditions used by NZC algorithm.
+        If the network already have a DC point, it will be replaced.
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+            Network to be extrapolated to DC
+
+        Returns
+        -------
+        ntwk_dc : :class:`~skrf.network.Network` object
+            Network with DC point
+
+        """
+        s = ntwk.s
+        f = ntwk.frequency.f
+        # check for already existing DC point
+        if(f[0] == 0):
+            warnings.warn(
+                "Existing DC point is replaced by extrapolated value.",
+                RuntimeWarning, stacklevel=2
+                )
+            f = f[1:]
+            s = s[1:]
+        # check for bad frequency vector
+        df = f[1] - f[0]
+        tol = 0.1 # allow a tolerance of 0.1 from delta-f to starting f (prevent non-issues from precision)
+        if(np.abs(f[0] - df) > tol):
+            warnings.warn(
+               """Non-uniform frequency vector detected. Consider interpolation.""",
+               RuntimeWarning, stacklevel=2
+               )
+        n_ports = ntwk.number_of_ports
+        z0 = ntwk.z0[0]
+        n = len(f)
+        snew = zeros((n + 1, n_ports, n_ports), dtype = complex)
+        snew[1:,:,:] = s
+        for i in range(n_ports):
+            for j in range(n_ports):
+                if i == j:
+                    snew[0, i, j] = IEEEP370_SE_NZC_2xThru.DC(s[:, i, j], f)
+                else:
+                    snew[0, i, j] = IEEEP370_SE_NZC_2xThru.dc_interp(s[:, i, j], f)
+
+        f = concatenate(([0], f))
+        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
+
     def dc_interp(s, f):
         """
         enforces symmetric upon the first 10 points and interpolates the DC
@@ -1591,6 +1642,26 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         if self.port_order != 'second':
             deembedded.renumber(new_order, old_order)
         return deembedded
+
+    def extrapolate_to_dc(ntwk):
+        """
+        Extrapolate the network to DC using IEEE370 NZC algorithm.
+        This is usefull to compare the fixtures and deembedded networks
+        to the input data in the same conditions used by NZC algorithm.
+        If the network already have a DC point, it will be replaced.
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+            Network to be extrapolated to DC
+
+        Returns
+        -------
+        ntwk_dc : :class:`~skrf.network.Network` object
+            Network with DC point
+
+        """
+        return IEEEP370_SE_NZC_2xThru.extrapolate_to_dc(ntwk)
 
     def split2xthru(self, se_2xthru):
         # check if 4-port
