@@ -2316,6 +2316,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         s212x = s2xthru.s[:, 1, 0]
         #get the attenuation and phase constant per length
         beta_per_length = -unwrap(angle(s212x))
+        # because lossless would be abs(S11)**2 + abs(S21)**2 = 1
         attenuation = np.abs(s2xthru.s[:,1,0])**2 / (1. - np.abs(s2xthru.s[:,0,0])**2)
         alpha_per_length = (10.0 * np.log10(attenuation)) / -8.686 # not 20 * log10() because of **2 above
         if self.bandwidth_limit == 0:
