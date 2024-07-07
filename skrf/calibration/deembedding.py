@@ -1858,7 +1858,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
     def add_dc(sin):
         s = sin.s
         f = sin.frequency.f
-
+        z0 = sin.z0[0]
         n = len(f)
         snew = zeros((n + 1, 2,2), dtype = complex)
         snew[1:,:,:] = s
@@ -1868,7 +1868,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         snew[0, 1, 1] = IEEEP370_SE_NZC_2xThru.dc_interp(s[:, 1, 1], f)
 
         f = concatenate(([0], f))
-        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew)
+        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
 
     def DC2(s, f):
         DCpoint = 0.002 # seed for the algorithm
