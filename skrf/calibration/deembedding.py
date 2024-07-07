@@ -57,7 +57,7 @@ import warnings
 from abc import ABC, abstractmethod
 
 import numpy as np
-from numpy import angle, concatenate, conj, exp, flip, real, zeros
+from numpy import angle, concatenate, conj, exp, flip, real, unwrap, zeros
 from numpy.fft import fft, fftshift, ifftshift, irfft
 from scipy.interpolate import interp1d
 
@@ -1137,8 +1137,10 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         ts = np.argmin(np.abs(t - (-3e-9)))
         Hr = IEEEP370_SE_NZC_2xThru.COM_receiver_noise_filter(f, f[-1]/2)
         while(err > allowedError):
-            h1 = IEEEP370_SE_NZC_2xThru.makeStep(fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
-            h2 = IEEEP370_SE_NZC_2xThru.makeStep(fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
+            h1 = IEEEP370_SE_NZC_2xThru.makeStep(
+                fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
+            h2 = IEEEP370_SE_NZC_2xThru.makeStep(
+                fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
             m = (h2[ts] - h1[ts]) / 0.001
             b = h1[ts] - m * DCpoint
             DCpoint = (0 - b) / m
@@ -1795,7 +1797,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             s_side2 = self.s_side2
 
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
-    
+
     def extrapolate_to_dc(ntwk):
         """
         Extrapolate the network to DC using IEEE370 NZC algorithm.
@@ -1881,8 +1883,10 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         ts = np.argmin(np.abs(t - (-3e-9)))
         Hr = IEEEP370_SE_NZC_2xThru.COM_receiver_noise_filter(f, f[-1]/2)
         while(err > allowedError):
-            h1 = IEEEP370_SE_NZC_2xThru.makeStep(fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
-            h2 = IEEEP370_SE_NZC_2xThru.makeStep(fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
+            h1 = IEEEP370_SE_NZC_2xThru.makeStep(
+                fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
+            h2 = IEEEP370_SE_NZC_2xThru.makeStep(
+                fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
             m = (h2[ts] - h1[ts]) / 0.001
             b = h1[ts] - m * DCpoint
             DCpoint = (0 - b) / m
@@ -1922,7 +1926,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         if TD is None:
             TD = np.zeros(X)
             for i in range(X):
-                theta0 = np.angle(p[-1, i, i])
+                theta0 = angle(p[-1, i, i])
                 if theta0 < -np.pi/2:
                     theta = -np.pi - theta0
                 elif theta0 > np.pi/2:
@@ -1931,7 +1935,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                     theta = -theta0
                 TD[i] = -theta / (2 * np.pi * fend)
                 pd = np.zeros((n, X, X), dtype = complex)
-                delay = np.exp(-1j * 2. * np.pi * f * TD[i] / 2.)
+                delay = exp(-1j * 2. * np.pi * f * TD[i] / 2.)
                 if i == 0:
                     pd[:, i + X//2, i] = delay
                     pd[:, i, i + X//2] = delay
@@ -1954,7 +1958,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             pd = np.zeros((n, X, X), dtype = complex)
             if port is not None:
                 i = port
-                delay = np.exp(1j * 2. * np.pi * f * TD[i] / 2.)
+                delay = exp(1j * 2. * np.pi * f * TD[i] / 2.)
                 if i < X//2:
                     pd[:, i + X//2, i] = delay
                     pd[:, i, i + X//2] = delay
@@ -1969,7 +1973,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                     out = nin ** spd
             else:
                 for i in range(X):
-                    delay = np.exp(1j * 2. * np.pi * f * TD[i] / 2)
+                    delay = exp(1j * 2. * np.pi * f * TD[i] / 2)
                     if i == 0:
                         pd[:, i + X//2, i] = delay
                         pd[:, i, i + X//2] = delay
@@ -1996,7 +2000,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         X = nin.nports
         Omega0 = np.pi/n
         Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
-        delay = np.exp(-N * 1j * Omega/2)
+        delay = exp(-N * 1j * Omega/2)
         pd = np.zeros((n, 2, 2), dtype = complex)
         if port < X//2:
             pd[:, port, port + X//2] = delay
@@ -2018,7 +2022,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         X = nin.nports
         Omega0 = np.pi/n
         Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
-        delay = np.exp(-N * 1j * Omega/2)
+        delay = exp(-N * 1j * Omega/2)
         pd = np.zeros((n, 2, 2), dtype = complex)
         for port in range(X):
             if port < X//2:
@@ -2133,7 +2137,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             axs[1].set_xlim((n-50, n+x*2+50))
             axs[1].legend()
             axs[1].set_title('Right')
-            axs[1].set_ylabel('Z (ohm)')       
+            axs[1].set_ylabel('Z (ohm)')
         return errorbox1, errorbox2.flipped()
 
     def makeErrorBox_v8(self, s_dut, s2x, gamma, z0, pullback):
@@ -2240,7 +2244,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         #grabbing s21
         s212x = s2xthru.s[:, 1, 0]
         #get the attenuation and phase constant per length
-        beta_per_length = -np.unwrap(np.angle(s212x))
+        beta_per_length = -unwrap(angle(s212x))
         attenuation = np.abs(s2xthru.s[:,1,0])**2 / (1. - np.abs(s2xthru.s[:,0,0])**2)
         alpha_per_length = (10.0 * np.log10(attenuation)) / -8.686 # not 20 * log10() because of **2 above
         if self.bandwidth_limit == 0:
@@ -2259,7 +2263,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             fig.suptitle('Gamma determination')
             axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length, label = 'alpha per length')
             if self.bandwidth_limit != 0:
-                axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length_fit, label = f'alpha per length fit (bandwidth_limit = {self.bandwidth_limit}) Hz')
+                axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length_fit,
+                            label = f'alpha per length fit (bandwidth_limit = {self.bandwidth_limit}) Hz')
             axs[0].legend()
             axs[0].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
             axs[0].set_ylabel('Alpha (Neper/length)')
@@ -2547,7 +2552,7 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         if self.port_order != 'second':
             deembedded.renumber(new_order, old_order)
         return deembedded
-    
+
     def extrapolate_to_dc(ntwk):
         """
         Extrapolate the network to DC using IEEE370 NZC algorithm.
