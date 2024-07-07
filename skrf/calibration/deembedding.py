@@ -2264,7 +2264,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length, label = 'alpha per length')
             if self.bandwidth_limit != 0:
                 axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length_fit,
-                            label = f'alpha per length fit (bandwidth_limit = {self.bandwidth_limit}) Hz')
+                            label = f'alpha per length fit (bandwidth_limit = {self.bandwidth_limit} Hz)')
             axs[0].legend()
             axs[0].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
             axs[0].set_ylabel('Alpha (Neper/length)')
