@@ -85,3 +85,10 @@ def test_plot_minmax_bounds_s_time_db():
 
 def test_plot_signature():
     ntwk_set.signature()
+
+def test_generated_violin_plots(generated_functions):
+    if "time" not in generated_functions:
+        fig = ntwk_set.plot_violin(generated_functions)
+    else:
+        with pytest.raises(NotImplementedError):
+            fig = ntwk_set.plot_violin(generated_functions)

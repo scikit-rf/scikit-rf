@@ -686,7 +686,7 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
         file_name = ntwk.name + '.'+file_extns[file_type]
 
     d = {}
-    index =ntwk.frequency.f
+    index = ntwk.frequency.f_scaled
 
     if form =='db':
         for m,n in ntwk.port_tuples:

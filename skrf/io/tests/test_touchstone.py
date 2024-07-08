@@ -1,11 +1,13 @@
 import os
 import unittest
 from pathlib import Path
+from zipfile import ZipFile
 
 import numpy as np
 import pytest
 
-from skrf.io.touchstone import Touchstone
+from skrf import Network
+from skrf.io.touchstone import Touchstone, read_zipped_touchstones
 
 
 class TouchstoneTestCase(unittest.TestCase):
@@ -220,6 +222,20 @@ class TouchstoneTestCase(unittest.TestCase):
             [61.+11.j, 62.+12.j, 63.+13.j, 64.+14.j]
         ])
         assert np.allclose(net.z0, z0)
+
+    def test_read_zipped_touchstones(self):
+        file = ZipFile(os.path.join(self.test_dir, "ntwk_zip.zip"))
+        ntwk1 = Network(os.path.join(self.test_dir, "ntwk1.s2p"))
+        ntwk2 = Network(os.path.join(self.test_dir, "ntwk2.s2p"))
+        ntwk3 = Network(os.path.join(self.test_dir, "ntwk3.s2p"))
+
+        read1 = read_zipped_touchstones(file, "Folder1")
+        read2 = read_zipped_touchstones(file, "Folder2")
+        read3 = read_zipped_touchstones(file)
+
+        assert read1 == {"ntwk1": ntwk1}
+        assert read2 == {"ntwk1": ntwk1, "ntwk2": ntwk2}
+        assert read3 == {"ntwk3": ntwk3}
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TouchstoneTestCase)

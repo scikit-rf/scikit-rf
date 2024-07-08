@@ -1,3 +1,4 @@
+import copy
 import unittest
 import warnings
 
@@ -591,6 +592,25 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         dut_before = self.X.copy()
         self.cal.apply_cal(self.X)
         self.assertEqual(dut_before, self.X)
+
+    def test_convert_8term_2_12term_subtests(self):
+
+        for st in [
+            (self.cal.coefs['forward switch term'], self.cal.coefs['reverse switch term']),
+            (np.zeros(self.cal.frequency.npoints, dtype=complex), np.zeros(self.cal.frequency.npoints, dtype=complex)),
+            (self.cal.coefs['forward switch term'], np.zeros(self.cal.frequency.npoints, dtype=complex)),
+            (np.zeros(self.cal.frequency.npoints, dtype=complex), self.cal.coefs['reverse switch term']),
+        ]:
+            with self.subTest(st=st):
+                coefs = copy.deepcopy(self.cal.coefs)
+
+                coefs['forward switch term'] = st[0]
+                coefs['reverse switch term'] = st[1]
+
+                coefs_12term = rf.convert_8term_2_12term(coefs)
+                coefs_8term = rf.convert_12term_2_8term(coefs_12term)
+                for k in self.cal.coefs.keys():
+                    np.testing.assert_almost_equal(coefs_8term[k], coefs[k])
 
 class TRLTest(EightTermTest):
     def setUp(self):
