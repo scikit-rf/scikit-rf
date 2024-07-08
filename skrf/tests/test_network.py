@@ -164,6 +164,18 @@ class NetworkTestCase(unittest.TestCase):
             np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
             np.testing.assert_allclose(ref[:,1], tdr, rtol=5e-5)
 
+    def test_bpi(self):
+        path = Path(self.test_dir) / "metas_tdr"
+
+        for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g"]:
+
+            netw = rf.Network(path / f"{fname}.s1p")
+            ref = np.loadtxt(path / f"{fname}_band_pass_impulse.csv", skiprows=1, delimiter=";")
+            t, y = netw.impulse_response(window="boxcar", pad=0, squeeze=True, bandpass=True)
+
+            np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
+            np.testing.assert_allclose(ref[:,1], np.abs(y), rtol=5e-5)
+
 
     def test_time_transform_v2(self):
         spb = (4, 5)
