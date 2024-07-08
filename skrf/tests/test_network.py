@@ -176,6 +176,19 @@ class NetworkTestCase(unittest.TestCase):
             np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
             np.testing.assert_allclose(ref[:,1], np.abs(y), atol=1e-5)
 
+    def test_auto_use_bandpass(self):
+        path = Path(self.test_dir) / "metas_tdr"
+
+        for fname in ["short_10ps_dc_50g", "short_10ps_10g_50g"]:
+
+            netw = rf.Network(path / f"{fname}.s1p")
+            t, _y = netw.impulse_response(window="boxcar", pad=0, squeeze=True)
+            if netw.frequency.start == 0:
+                assert len(t) == 2 * len(netw) - 1
+            else:
+                assert len(t) == len(netw)
+
+
 
     def test_time_transform_v2(self):
         spb = (4, 5)
