@@ -1177,10 +1177,9 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         #return step[0:len(impulse)]
         return np.cumsum(impulse, axis=0)
 
-    def DC(s, f):
+    def DC(s, f, allowedError = 1e-12):
         DCpoint = 0.002 # seed for the algorithm
         err = 1 # error seed
-        allowedError = 1e-12 # allowable error
         cnt = 0
         df = f[1] - f[0]
         n = len(f)
@@ -1913,7 +1912,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         for i in range(n_ports):
             for j in range(n_ports):
                 if i == j:
-                    snew[0, i, j] = IEEEP370_SE_ZC_2xThru.DC2(s[:, i, j], f)
+                    snew[0, i, j] = IEEEP370_SE_NZC_2xThru.DC(s[:, i, j], f, 1e-10)
                 else:
                     snew[0, i, j] = IEEEP370_SE_NZC_2xThru.dc_interp(s[:, i, j], f)
 
@@ -1943,30 +1942,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         f = concatenate(([0], f))
         return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
 
-    def DC2(s, f):
-        DCpoint = 0.002 # seed for the algorithm
-        err = 1 # error seed
-        allowedError = 1e-10 # allowable error
-        cnt = 0
-        df = f[1] - f[0]
-        n = len(f)
-        t = np.linspace(-1/df,1/df,n*2+1)
-        ts = np.argmin(np.abs(t - (-3e-9)))
-        Hr = IEEEP370_SE_NZC_2xThru.COM_receiver_noise_filter(f, f[-1]/2)
-        while(err > allowedError):
-            h1 = IEEEP370_SE_NZC_2xThru.makeStep(
-                fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
-            h2 = IEEEP370_SE_NZC_2xThru.makeStep(
-                fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
-            m = (h2[ts] - h1[ts]) / 0.001
-            b = h1[ts] - m * DCpoint
-            DCpoint = (0 - b) / m
-            err = np.abs(h1[ts] - 0)
-            cnt += 1
-        return DCpoint
-
     def getz(s, f, z0):
-        DC11 = IEEEP370_SE_ZC_2xThru.DC2(s, f)
+        DC11 = IEEEP370_SE_NZC_2xThru.DC(s, f, 1e-10)
         t112x = irfft(concatenate(([DC11], s)))
         #get the step response of t112x. Shift is needed for makeStep to
         #work properly.
@@ -2335,8 +2312,14 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             fig.suptitle('Gamma determination')
             axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length, label = 'alpha per length')
             if self.bandwidth_limit != 0:
+                f_bw_hz = self.bandwidth_limit
+                f_bw = f_bw_hz / s2xthru.frequency.multiplier
+                unit = s2xthru.frequency.unit
+                alpha_bw = b[0] * np.sqrt(f_bw_hz) + b[1] * f_bw_hz + b[2] * f_bw_hz**2
                 axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length_fit,
-                            label = f'alpha per length fit (bandwidth_limit = {self.bandwidth_limit} Hz)')
+                            label = 'alpha per length fit')
+                axs[0].plot([f_bw], [alpha_bw], color = 'k', marker = 'o', linestyle = None,
+                            label = f'bandwidth_limit = {f_bw} {unit}')
             axs[0].legend()
             axs[0].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
             axs[0].set_ylabel('Alpha (Neper/length)')
