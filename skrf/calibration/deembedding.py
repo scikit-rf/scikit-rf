@@ -1833,6 +1833,11 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         self.verbose = verbose
         self.flag_DC = False
         self.flag_df = False
+        # debug outputs
+        self.gamma = None
+        self.x_end = None
+        self.z_side1 = None
+        self.z_side2 = None
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
         self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru.copy(),
@@ -2126,6 +2131,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         s212x = s2x.s[:, 1, 0]
         DC21 = IEEEP370_SE_NZC_2xThru.dc_interp(s212x, f)
         x = np.argmax(irfft(concatenate(([DC21], s212x))))
+        self.x_end = x - pullback # index of last TDR point of fixture
         #define relative length
         #python first index is 0, thus 1 should be added to get the length
         l = 1. / (2 * (x + 1))
@@ -2137,7 +2143,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             _, z2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
         #peel the fixture away and create the fixture model
         #python range to n-1, thus 1 to be added to have proper iteration number
-        for i in range(x + 1 - pullback):
+        for i in range(self.x_end + 1):
             zline1, _ = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
             zline2, _ = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
             TL1 = self.makeTL(zline1,z0,gamma,l)
@@ -2166,21 +2172,23 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             # s_dut.a = abcd_in
             s11dut = s_dut.s[:, 0, 0]
             s22dut = s_dut.s[:, 1, 1]
+            # store fixture z for debug
+            if(i == self.x_end):
+                _, self.z_side1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
+                _, self.z_side2 = IEEEP370_SE_ZC_2xThru.getz(errorbox2.s[:, 0, 0], f, z0)
         if self.verbose:
-            _, zeb1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
-            _, zeb2 = IEEEP370_SE_ZC_2xThru.getz(errorbox2.s[:, 0, 0], f, z0)
             _, zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
             _, zdut2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
             fig, axs = subplots(1, 2, sharex = True, figsize=(2*6.4, 4.8))
             axs[0].plot(ifftshift(zdut1), label = 'DUT')
-            axs[0].plot(ifftshift(zeb1), label = 'FIX-1')
+            axs[0].plot(ifftshift(self.z_side1), label = 'FIX-1')
             axs[0].plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
             axs[0].set_xlim((n-50, n+x*2+50))
             axs[0].legend()
             axs[0].set_title('Left')
             axs[0].set_ylabel('Z (ohm)')
             axs[1].plot(ifftshift(zdut2), label = 'DUT')
-            axs[1].plot(ifftshift(zeb2), label = 'FIX-2')
+            axs[1].plot(ifftshift(self.z_side2), label = 'FIX-2')
             axs[1].plot(ifftshift(z2), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
             axs[1].set_xlim((n-50, n+x*2+50))
             axs[1].legend()
@@ -2195,6 +2203,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         # extract midpoint of 2x-thru
         DC21 = IEEEP370_SE_NZC_2xThru.dc_interp(s212x, f)
         x = np.argmax(irfft(concatenate(([DC21], s212x))))
+        self.x_end = x - pullback # index of last TDR point of fixture
         #define relative length
         #python first index is 0, thus 1 should be added to get the length
         l = 1. / (2 * (x + 1))
@@ -2204,7 +2213,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             _, z1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
         #peel the fixture away and create the fixture model
         #python range to n-1, thus 1 to be added to have proper iteration number
-        for i in range(x + 1 - pullback):
+        for i in range(self.x_end + 1):
             zline1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)[0]
             TL1 = self.makeTL(zline1,z0,gamma,l)
             sTL1 = s_dut.copy()
@@ -2216,15 +2225,18 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             # equivalent to function removeTL_side1(in,TL,z0)
             s_dut = sTL1.inv ** s_dut
             s11dut = s_dut.s[:, 0, 0]
-        _, zeb1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
-        _, zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
-        fig, axs = subplots(1, 1, sharex = True, figsize=(6.4, 4.8))
-        axs.plot(ifftshift(zdut1), label = 'DUT')
-        axs[0].plot(ifftshift(zeb1), label = 'FIX')
-        axs[0].plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
-        axs[0].set_xlim((n-50, n+x*2+50))
-        axs[0].legend()
-        axs[0].set_ylabel('Z (ohm)')
+            # store fixture z for debug
+            if(i == self.x_end):
+                _, self.z_side1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
+        if self.verbose:
+            _, zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
+            fig, axs = subplots(1, 1, sharex = True, figsize=(6.4, 4.8))
+            axs.plot(ifftshift(zdut1), label = 'DUT')
+            axs[0].plot(ifftshift(self.z_side), label = 'FIX')
+            axs[0].plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
+            axs[0].set_xlim((n-50, n+x*2+50))
+            axs[0].legend()
+            axs[0].set_ylabel('Z (ohm)')
         return errorbox1
 
 
@@ -2298,7 +2310,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         alpha_per_length = (10.0 * np.log10(attenuation)) / -8.686 # not 20 * log10() because of **2 above
         if self.bandwidth_limit == 0:
             #divide by 2*n + 1 to get prop constant per discrete unit length
-            gamma = alpha_per_length + 1j * beta_per_length # gamma without DC
+            self.gamma = alpha_per_length + 1j * beta_per_length # gamma without DC
         else:
             #fit the attenuation up to the limited bandwidth
             bwl_x = np.argmin(np.abs(f - self.bandwidth_limit))
@@ -2306,7 +2318,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             b = np.linalg.lstsq(X.conj().T, alpha_per_length[0:bwl_x+1], rcond=None)[0]
             alpha_per_length_fit = b[0] * np.sqrt(f) + b[1] * f + b[2] * f**2
             #divide by 2*n + 1 to get prop constant per discrete unit length
-            gamma = alpha_per_length_fit + 1j * beta_per_length # gamma without DC
+            self.gamma = alpha_per_length_fit + 1j * beta_per_length # gamma without DC
         if self.verbose:
             fig, axs = subplots(1, 2, figsize=(2*6.4, 4.8))
             fig.suptitle('Gamma determination')
@@ -2338,19 +2350,19 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         # is for comparison ease.
         if self.pullback1 == self.pullback2 and self.side1 and self.side2:
             (s_side1, s_side2) = self.makeErrorBox_v7(sfix_dut_fix, s2xthru,
-                                              gamma, self.z0, self.pullback1)
+                                  self.gamma, self.z0, self.pullback1)
         elif self.side1 and self.side2:
             s_side1 = self.makeErrorBox_v8(sfix_dut_fix, s2xthru,
-                                              gamma, self.z0, self.pullback1)
+                                   self.gamma, self.z0, self.pullback1)
             s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru,
-                                              gamma, self.z0, self.pullback2)
+                                   self.gamma, self.z0, self.pullback2)
             s_side2 = s_side2.flipped()
         elif self.side1:
             s_side1 = self.makeErrorBox_v8(sfix_dut_fix, s2xthru,
-                                              gamma, self.z0, self.pullback1)
+                                   self.gamma, self.z0, self.pullback1)
         elif self.side2:
             s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru,
-                                              gamma, self.z0, self.pullback2)
+                                   self.gamma, self.z0, self.pullback2)
             s_side2 = s_side2.flipped()
         else:
             warnings.warn(
@@ -2555,6 +2567,15 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         self.verbose = verbose
         self.flag_DC = False
         self.flag_df = False
+        # debug outputs
+        self.gamma_dd = None
+        self.x_end_dd = None
+        self.z_side1_dd = None
+        self.z_side2_dd = None
+        self.gamma_cc = None
+        self.x_end_cc = None
+        self.z_side1_cc = None
+        self.z_side2_cc = None
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
         self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru,
@@ -2668,6 +2689,11 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
                                   NRP_enable = self.NRP_enable,
                                   leadin = self.leadin,
                                   verbose = self.verbose)
+        # debug outpus
+        self.gamma_dd = self.gamma
+        self.x_end_dd = self.x_end
+        self.z_side1_dd = self.z_side1
+        self.z_side2_dd = self.z_side2
         dm_cc  = IEEEP370_SE_ZC_2xThru(dummy_2xthru = scc,
                                   dummy_fix_dut_fix = scc_fdf,
                                   z0 = self.z0 / 2,
@@ -2679,7 +2705,11 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
                                   NRP_enable = self.NRP_enable,
                                   leadin = self.leadin,
                                   verbose = self.verbose)
-
+        # debug outpus
+        self.gamma_cc = self.gamma
+        self.x_end_cc = self.x_end
+        self.z_side1_cc = self.z_side1
+        self.z_side2_cc = self.z_side2
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
         se_side1 = mm_side1.copy()
