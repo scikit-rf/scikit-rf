@@ -2690,10 +2690,10 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
                                   leadin = self.leadin,
                                   verbose = self.verbose)
         # debug outpus
-        self.gamma_dd = self.gamma
-        self.x_end_dd = self.x_end
-        self.z_side1_dd = self.z_side1
-        self.z_side2_dd = self.z_side2
+        self.gamma_dd = dm_dd.gamma
+        self.x_end_dd = dm_dd.x_end
+        self.z_side1_dd = dm_dd.z_side1
+        self.z_side2_dd = dm_dd.z_side2
         dm_cc  = IEEEP370_SE_ZC_2xThru(dummy_2xthru = scc,
                                   dummy_fix_dut_fix = scc_fdf,
                                   z0 = self.z0 / 2,
@@ -2706,10 +2706,10 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
                                   leadin = self.leadin,
                                   verbose = self.verbose)
         # debug outpus
-        self.gamma_cc = self.gamma
-        self.x_end_cc = self.x_end
-        self.z_side1_cc = self.z_side1
-        self.z_side2_cc = self.z_side2
+        self.gamma_cc = dm_cc.gamma
+        self.x_end_cc = dm_cc.x_end
+        self.z_side1_cc = dm_cc.z_side1
+        self.z_side2_cc = dm_cc.z_side2
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
         se_side1 = mm_side1.copy()
