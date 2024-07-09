@@ -1066,6 +1066,8 @@ class NetworkTestCase(unittest.TestCase):
         ntwk_orig.write_touchstone(os.path.join(self.test_dir, pwfile_skrf), write_z0=True, form='RI')
         ntwk_skrf = rf.Network(os.path.join(self.test_dir, pwfile_skrf))
 
+        # check if the s_def could be correctly recovered from scikit-rf's Touchstone file
+        self.assertTrue(ntwk_orig.s_def == ntwk_skrf.s_def)
         self.assertTrue(ntwk_orig == ntwk_skrf)
 
     def test_network_from_z_or_y(self):
