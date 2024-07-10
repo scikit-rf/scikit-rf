@@ -1168,6 +1168,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
     def COM_receiver_noise_filter(f,fr):
         """
         receiver filter in COM defined by eq 93A-20
+        As defined in 802.3-2022 - IEEE Standard for Ethernet annex 93A
         """
         fdfr = f / fr
         # eq 93A-20
@@ -1175,6 +1176,9 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
     @staticmethod
     def makeStep(impulse):
+        """
+        Make a time-domain step response from an impulse response.
+        """
         #mhuser : no need to call step function here, cumsum will be enough and efficient
         #step = np.convolve(np.ones((len(impulse))), impulse)
         #return step[0:len(impulse)]
@@ -1182,6 +1186,9 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
     @staticmethod
     def DC(s, f, allowedError = 1e-12):
+        """
+        Advanced reflective DC point extrapolation.
+        """
         DCpoint = 0.002 # seed for the algorithm
         err = 1 # error seed
         cnt = 0
@@ -1204,6 +1211,9 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
 
     def split2xthru(self, s2xthru):
+        """
+        Perform the fixtures extraction.
+        """
         f = s2xthru.frequency.f
         s = s2xthru.s
 
@@ -1668,6 +1678,9 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         return IEEEP370_SE_NZC_2xThru.extrapolate_to_dc(ntwk)
 
     def split2xthru(self, se_2xthru):
+        """
+        Perform the fixtures extraction.
+        """
         # check if 4-port
         if se_2xthru.nports != 4:
             raise(ValueError('2xthru has to be a 4-port network.'))
@@ -2795,6 +2808,9 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370_SE_ZC_2xThru):
         return deembedded
 
     def split2xthru(self, se_2xthru, se_fdf):
+        """
+        Perform the fixtures extraction.
+        """
         # check if 4-port
         if se_2xthru.nports != 4 or se_fdf.nports != 4:
             raise(ValueError('2xthru has to be a 4-port network.'))
