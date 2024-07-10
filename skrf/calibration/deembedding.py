@@ -2030,7 +2030,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         gamma : :array-like
                 Frequency-dependent propagation constant
         l    : :number
-                Length in the same length unit as gamma  
+                Length in the same length unit as gamma
 
         Returns
         -------
@@ -2742,8 +2742,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370_SE_ZC_2xThru):
                      pullback1 = pullback1, pullback2 = pullback2,
                      side1 = side1, side2 = side2,
                      NRP_enable = NRP_enable, leadin = leadin,
-                     verbose = verbose,
-                     *args, **kwargs)
+                     verbose = verbose)
         self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru,
                                                         self.sfix_dut_fix)
 
