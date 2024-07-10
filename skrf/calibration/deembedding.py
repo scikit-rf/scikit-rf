@@ -1931,8 +1931,24 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
 
     @staticmethod
-    def thru(n):
-        out = n.copy()
+    def thru(ntwk):
+        """
+        Create a perfect thru
+    
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+               Network from which copy frequency, z0 and other parameters.
+               The S-parameters will be replaced by zero-length matched lossless
+               thru.
+    
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Network of the perfect thru
+    
+        """
+        out = ntwk.copy()
         out.s[:, 0, 0] = 0
         out.s[:, 1, 0] = 1
         out.s[:, 0, 1] = 1
@@ -1940,10 +1956,24 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         return out
 
     @staticmethod
-    def add_dc(sin):
-        s = sin.s
-        f = sin.frequency.f
-        z0 = sin.z0[0]
+    def add_dc(ntwk):
+        """
+        Extrapolate a network to DC using interpolation for all S-parameters.
+    
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+               Network to be extrapolated to DC
+    
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Network with DC point
+    
+        """
+        s = ntwk.s
+        f = ntwk.frequency.f
+        z0 = ntwk.z0[0]
         n = len(f)
         snew = zeros((n + 1, 2,2), dtype = complex)
         snew[1:,:,:] = s
@@ -1957,6 +1987,25 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
     @staticmethod
     def getz(s, f, z0):
+        """
+        Compute step response to get the time-domain impedance from S-parameters.
+        The S-parameters are DC extrapolated first.
+    
+        Parameters
+        ----------
+        s : :array-like
+            1-Port S-parameters array
+        f : :array-like
+            Frequency array for DC extrapolation
+        z0: :array-like
+            Reference impedance
+    
+        Returns
+        -------
+        z : :array-like
+            Time-domain impedance step response
+    
+        """
         DC11 = IEEEP370_SE_NZC_2xThru.DC(s, f, 1e-10)
         t112x = irfft(concatenate(([DC11], s)))
         #get the step response of t112x. Shift is needed for makeStep to
@@ -1964,11 +2013,30 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         t112xStep = IEEEP370_SE_NZC_2xThru.makeStep(fftshift(t112x))
         #construct the transmission line
         z = -z0 * (t112xStep + 1) / (t112xStep - 1)
-        z = ifftshift(z) #impedance. Shift again to get the first point
-        return z[0], z
+        z = ifftshift(z) #impedance. Shift again to get the first point first.
+        return z
 
     @staticmethod
     def makeTL(zline, z0, gamma, l):
+        """
+        Compute the S-parameters of a transmission line.
+    
+        Parameters
+        ----------
+        zline : :number
+                Characteristic impedance
+        z0    : :number
+                Port impedance to renormalize into
+        gamma : :array-like
+                Frequency-dependent propagation constant
+        l    : :number
+                Length in the same length unit as gamma  
+    
+        Returns
+        -------
+        TL : :array-like
+             S_Parameters of the transmission line
+        """
         # todo: use DefinedGammaZ0 media instead
         n = len(gamma)
         TL = np.zeros((n, 2, 2), dtype = complex)
@@ -1982,6 +2050,28 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
     @staticmethod
     def NRP(ntwk, TD = None, port = None):
+        """
+        Enforce the Nyquist Rate Point.
+        Force the length of the transmissive network to be an integer multiple
+        of the wavelength at the highest frequency.
+        If required, a proper delay is added to meet this condition.
+        The function can also be used to remove the delay.
+    
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+               Network to be extrapolated to DC
+        TD   : :array-like
+               If None, the delay will be computed and added.
+               Else, the delay will be removed (to reset the original length).
+        port: :Number
+              Specify to apply NRP only on a single port of the network
+              
+        Returns
+        -------
+        TL : :array-like
+             S_Parameters of the transmission line
+        """
         p = ntwk.s
         f = ntwk.frequency.f
         n = len(f)
@@ -2152,13 +2242,13 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         s11dut = s_dut.s[:, 0, 0]
         s22dut = s_dut.s[:, 1, 1]
         if self.verbose:
-            _, z1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
-            _, z2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
+            z1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
+            z2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
         #peel the fixture away and create the fixture model
         #python range to n-1, thus 1 to be added to have proper iteration number
         for i in range(self.x_end + 1):
-            zline1, _ = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
-            zline2, _ = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
+            zline1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)[0]
+            zline2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)[0]
             TL1 = self.makeTL(zline1,z0,gamma,l)
             TL2 = self.makeTL(zline2,z0,gamma,l)
             sTL1 = s_dut.copy()
@@ -2187,11 +2277,11 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             s22dut = s_dut.s[:, 1, 1]
             # store fixture z for debug
             if(i == self.x_end):
-                _, self.z_side1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
-                _, self.z_side2 = IEEEP370_SE_ZC_2xThru.getz(errorbox2.s[:, 0, 0], f, z0)
+                self.z_side1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
+                self.z_side2 = IEEEP370_SE_ZC_2xThru.getz(errorbox2.s[:, 0, 0], f, z0)
         if self.verbose:
-            _, zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
-            _, zdut2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
+            zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
+            zdut2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
             fig, axs = subplots(1, 2, sharex = True, figsize=(2*6.4, 4.8))
             axs[0].plot(ifftshift(zdut1), label = 'DUT')
             axs[0].plot(ifftshift(self.z_side1), label = 'FIX-1')
@@ -2223,7 +2313,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         #define the reflections to be mimicked
         s11dut = s_dut.s[:, 0, 0]
         if self.verbose:
-            _, z1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
+            z1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
         #peel the fixture away and create the fixture model
         #python range to n-1, thus 1 to be added to have proper iteration number
         for i in range(self.x_end + 1):
@@ -2240,9 +2330,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             s11dut = s_dut.s[:, 0, 0]
             # store fixture z for debug
             if(i == self.x_end):
-                _, self.z_side1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
+                self.z_side1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
         if self.verbose:
-            _, zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
+            zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
             fig, axs = subplots(1, 1, sharex = True, figsize=(6.4, 4.8))
             axs.plot(ifftshift(zdut1), label = 'DUT')
             axs[0].plot(ifftshift(self.z_side), label = 'FIX')
