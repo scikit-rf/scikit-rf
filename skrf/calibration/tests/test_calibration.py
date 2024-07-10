@@ -174,18 +174,18 @@ class CalibrationTest:
         self.assertEqual(c,a)
 
     def test_error_ntwk(self):
-        a= self.cal.error_ntwk
+        a = self.cal.error_ntwk
 
     def test_coefs_ntwks(self):
-        a= self.cal.coefs_ntwks
+        a = self.cal.coefs_ntwks
 
     @suppress_warning_decorator("only gave a single measurement orientation")
     def test_caled_ntwks(self):
-        a= self.cal.caled_ntwks
+        a = self.cal.caled_ntwks
 
     @suppress_warning_decorator("only gave a single measurement orientation")
     def test_residual_ntwks(self):
-        a= self.cal.residual_ntwks
+        a = self.cal.residual_ntwks
 
     def test_embed_then_apply_cal(self):
         a = self.wg.random(n_ports=self.n_ports)
@@ -207,6 +207,64 @@ class CalibrationTest:
         ntwk = self.wg.random(n_ports=self.n_ports)
         self.assertEqual(cal_from_coefs.apply_cal(self.cal.embed(ntwk)),ntwk)
 
+
+class CalibrationInputsTest(unittest.TestCase):
+    """Test Calibration class input validation"""
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+
+        self.ideals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='load'),
+            wg.thru(name='thru'),
+            ]
+
+        self.measured = [k.copy() for k in self.ideals]
+
+    def init(self):
+        self.cal = rf.Calibration(
+            ideals = self.ideals,
+            measured = self.measured
+            )
+
+    def test_meas_z0(self):
+        self.measured[0].z0 *= 0.5
+        with pytest.raises(ValueError):
+            self.init()
+
+    def test_ideals_z0(self):
+        self.ideals[0].z0 *= 0.5
+        with pytest.raises(ValueError):
+            self.init()
+
+    def test_ideals_frequency(self):
+        freqs = rf.F(1, 10, NPTS+1, unit="GHz")
+        self.ideals[-1] = rf.Network(s=np.zeros([NPTS + 1, 2, 2]), frequency=freqs)
+        with pytest.raises(Exception):
+            self.init()
+
+    def test_measured_frequency(self):
+        freqs = rf.F(1, 10, NPTS+1, unit="GHz")
+        self.measured[-1] = rf.Network(s=np.zeros([NPTS + 1, 2, 2]), frequency=freqs)
+        with pytest.raises(ValueError):
+            self.init()
+
+    def test_ideals_frequency2(self):
+        freqs = self.wg.frequency.copy()
+        freqs._f += 1e9
+        self.ideals[-1].frequency = freqs
+        with pytest.raises(Exception):
+            self.init()
+
+    def test_measured_frequency2(self):
+        freqs = self.wg.frequency.copy()
+        freqs._f += 1e9
+        self.measured[-1].frequency = freqs
+        with pytest.raises(ValueError):
+            self.init()
 
 class OnePortTest(unittest.TestCase, CalibrationTest):
     """
