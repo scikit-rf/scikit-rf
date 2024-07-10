@@ -278,7 +278,12 @@ class Calibration:
         # ensure all the measured Networks' frequency's are the same
         for measure in self.measured:
             if self.measured[0].frequency != measure.frequency:
-                raise(ValueError('measured Networks dont have matching frequencies.'))
+                raise(ValueError("Measured Networks don't have matching frequencies."))
+            if np.any(self.measured[0].z0 != measure.z0):
+                raise(ValueError("Measured Networks don't have matching z0."))
+        if len(self.measured) > 0:
+            if np.any(self.measured[0].z0 != self.measured[0].z0[0,0]):
+                warn("Non-constant z0 in measurements. Expect trouble", stacklevel=2)
         # ensure that all ideals have same frequency of the measured
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
@@ -295,7 +300,8 @@ class Calibration:
 
                 except Exception as err:
                     raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].')) from err
-
+            if np.any(self.ideals[k].z0 != self.measured[0].z0):
+                raise ValueError("Measured and ideals z0 are different.")
 
         # passed to calibration algorithm in run()
         self.kwargs = kwargs
@@ -5553,6 +5559,11 @@ class MultiportCal:
                     frequency = m.frequency
                 elif m.frequency != frequency:
                     raise ValueError("Inconsistent frequency in measured.")
+            if "ideals" in c and z0 is not None:
+                for n in c["ideals"]:
+                    if n.z0[0,0] != z0:
+                        raise ValueError(f"Ideals and measured z0 doesn't match. {n.z0[0,0]} and {z0}")
+
         self.nports = nports = max_key_nports + 1
         if min_key_nports < 0:
             raise ValueError("Negative port number found. Minimum should be zero.")

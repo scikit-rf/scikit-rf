@@ -83,6 +83,36 @@ class CircuitTestConstructor(unittest.TestCase):
         reduced_circuit = rf.Circuit(connections, auto_reduce=True)
         assert_array_almost_equal(full_circuit.s_external, reduced_circuit.s_external)
 
+    def test_cache_attributes(self):
+        """
+        Test the cached attributes of the Circuit
+        """
+        connections = [[(self.port1, 0), (self.ntwk1, 0)],
+                       [(self.ntwk1, 1), (self.ntwk2, 0)],
+                       [(self.ntwk2, 1), (self.port2, 0)]]
+
+        init_circuit = rf.Circuit(connections)
+
+        cached_attributes = ('s', 'X', 'C')
+
+        # Initial circuit should not have cached attributes
+        for attr in cached_attributes:
+            self.assertFalse(init_circuit.__dict__.get(attr, False))
+
+        # Access the attributes to cache them
+        X = init_circuit.X
+        C = init_circuit.C
+        s = init_circuit.s
+
+        # Check that the cached attributes are set correctly
+        for attr, value in zip(cached_attributes, (s, X, C)):
+            assert_array_almost_equal(init_circuit.__dict__.get(attr, 0.0), value)
+
+        # Modify connections to invalidate the cache
+        init_circuit.connections = connections
+        for attr in cached_attributes:
+            self.assertFalse(init_circuit.__dict__.get(attr, False))
+
 class CircuitClassMethods(unittest.TestCase):
     """
     Test the various class methods of Circuit such as Ground, Port, etc.
@@ -1060,6 +1090,29 @@ class CircuitTestVoltagesCurrents(unittest.TestCase):
         # output current is * -1 as Circuit definition is opposite
         # (toward the Circuit's Port)
         np.testing.assert_allclose(self.I_out, -1*I_ports[:,1])
+
+    def test_tline_with_different_impedance(self):
+        ' Test voltages and currents for a simple transmission line with different impedances '
+        line = self.line.copy()
+        line.renormalize(z_new=1./self.Z)
+
+        # Equivalent model with Circuit
+        port1 = rf.Circuit.Port(frequency=self.freq, name='port1', z0=self.Z)
+        port2 = rf.Circuit.Port(frequency=self.freq, name='port2', z0=self.Z)
+        cnx = [
+            [(port1, 0), (line, 0)],
+            [(port2, 0), (line, 1)]
+        ]
+        crt = rf.Circuit(cnx)
+
+        V_ports_uni_z = crt.voltages(self.power, self.phase)
+        I_ports_uni_z = crt.currents(self.power, self.phase)
+
+        V_ports_dif_z = self.crt.voltages(self.power, self.phase)
+        I_ports_dif_z = self.crt.currents(self.power, self.phase)
+
+        np.testing.assert_allclose(I_ports_uni_z, I_ports_dif_z)
+        np.testing.assert_allclose(V_ports_uni_z, V_ports_dif_z)
 
 class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
     def test_isolator(self):
