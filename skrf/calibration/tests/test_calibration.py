@@ -243,7 +243,7 @@ class CalibrationInputsTest(unittest.TestCase):
     def test_ideals_frequency(self):
         freqs = rf.F(1, 10, NPTS+1, unit="GHz")
         self.ideals[-1] = rf.Network(s=np.zeros([NPTS + 1, 2, 2]), frequency=freqs)
-        with pytest.raises(Exception):
+        with pytest.raises(IndexError):
             self.init()
 
     def test_measured_frequency(self):
@@ -256,7 +256,7 @@ class CalibrationInputsTest(unittest.TestCase):
         freqs = self.wg.frequency.copy()
         freqs._f += 1e9
         self.ideals[-1].frequency = freqs
-        with pytest.raises(Exception):
+        with pytest.raises(IndexError):
             self.init()
 
     def test_measured_frequency2(self):
