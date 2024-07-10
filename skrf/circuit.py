@@ -91,6 +91,7 @@ Graph representation
 """
 from __future__ import annotations
 
+from functools import cached_property
 from itertools import chain
 from typing import TYPE_CHECKING
 
@@ -139,7 +140,10 @@ class Circuit:
         except ImportError as err:
             raise ImportError('networkx package as not been installed and is required.') from err
 
-    def __init__(self, connections: list[list[tuple]], name: str = None, auto_reduce: bool = False) -> None:
+    def __init__(self,
+                 connections: list[list[tuple[Network, int]]],
+                 name: str | None = None,
+                 auto_reduce: bool = False) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -201,7 +205,7 @@ class Circuit:
 
 
         """
-        self.connections = connections
+        self._connections = connections
         self.name = name
 
         # check if all networks have a name
@@ -229,6 +233,40 @@ class Circuit:
             self.connections = reduce_circuit(self.connections,
                                               check_duplication=False,
                                               split_ground=True)
+
+    @property
+    def connections(self) -> list[list[tuple[Network, int]]]:
+        """
+        Circuit connections.
+
+        Description of circuit connections. Each connection is a described by a
+        list of tuple. Each tuple contains (network, network_port_nb). Port number
+        indexing starts from zero.
+
+        Returns
+        -------
+        connections : :class:`list[list[tuple[Network, int]]]`
+            The circuit connections.
+
+        """
+        return self._connections
+
+    @connections.setter
+    def connections(self, connections: list[list[tuple[Network, int]]]) -> None:
+        """
+        Set the circuit connections.
+
+        Parameters
+        ----------
+        connections : :class:`list[list[tuple[Network, int]]]`
+            The circuit connections.
+
+        """
+        self._connections = connections
+
+        # Invalidate cached properties
+        for item in ('s', 'X', 'C'):
+            self.__dict__.pop(item, None)
 
     @classmethod
     def check_duplicate_names(cls, connections_list: list):
@@ -461,7 +499,9 @@ class Circuit:
         """
         return cls.SeriesImpedance(frequency, Z=INF, name=name)
 
-    def networks_dict(self, connections: list = None, min_nports: int = 1) -> dict:
+    def networks_dict(self,
+                      connections: list[list[tuple[Network, int]]] | None = None,
+                      min_nports: int = 1) -> dict[str, Network]:
         """
         Return the dictionary of Networks from the connection setup X.
 
@@ -480,13 +520,15 @@ class Circuit:
         if not connections:
             connections = self.connections
 
-        ntws = []
+        ntws: list[Network] = []
         for cnx in connections:
             for (ntw, _port) in cnx:
                 ntws.append(ntw)
         return {ntw.name: ntw for ntw in ntws  if ntw.nports >= min_nports}
 
-    def networks_list(self, connections: list = None, min_nports: int = 1) -> list:
+    def networks_list(self,
+                      connections: list[list[tuple[Network, int]]] | None = None,
+                      min_nports: int = 1) -> list[Network]:
         """
         Return a list of unique networks (sorted by appearing order in connections).
 
@@ -516,7 +558,7 @@ class Circuit:
         return len(self.connections)
 
     @property
-    def connections_list(self) -> list:
+    def connections_list(self) -> list[tuple[int, tuple[Network, int]]]:
         """
         Return the full list of connections, including intersections.
 
@@ -528,7 +570,7 @@ class Circuit:
              ...
             ]
         """
-        return [[idx_cnx, cnx] for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections))]
+        return [(idx_cnx, cnx) for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections))]
 
     @property
     def networks_nb(self) -> int:
@@ -684,7 +726,7 @@ class Circuit:
         np.einsum('kii->ki', Xs)[:] -= 1  # Sii
         return Xs
 
-    @property
+    @cached_property
     def X(self) -> np.ndarray:
         """
         Return the concatenated intersection matrix [X] of the circuit.
@@ -711,7 +753,7 @@ class Circuit:
 
         return Xf
 
-    @property
+    @cached_property
     def C(self) -> np.ndarray:
         """
         Return the global scattering matrix of the networks.
@@ -748,7 +790,7 @@ class Circuit:
 
         return S  # shape (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
 
-    @property
+    @cached_property
     def s(self) -> np.ndarray:
         """
         Return the global scattering parameters of the circuit.
@@ -764,7 +806,7 @@ class Circuit:
         return X @ np.linalg.inv(np.identity(self.dim) - self.C @ X)
 
     @property
-    def port_indexes(self) -> list:
+    def port_indexes(self) -> list[int]:
         """
         Return the indexes of the "external" ports.
 
@@ -1204,7 +1246,11 @@ class Circuit:
         b = self._b(a)
         z0s = self.z0
         directions = self._currents_directions
-        Is = (b[:,directions[:,0]] - b[:,directions[:,1]])/np.sqrt(z0s)
+        i_l, i_r = directions[:, 0], directions[:, 1]
+
+        z0_sqrt = np.sqrt(z0s)
+        Is = (b[:,i_l] / z0_sqrt[:,i_r] - b[:,i_r] / z0_sqrt[:,i_l]) \
+            * (2*z0_sqrt[:,i_l] * z0_sqrt[:,i_r]) / (z0s[:,i_l] + z0s[:,i_r])
         return Is
 
 
@@ -1234,7 +1280,11 @@ class Circuit:
         b = self._b(a)
         z0s = self.z0
         directions = self._currents_directions
-        Vs = (b[:,directions[:,0]] + b[:,directions[:,1]])*np.sqrt(z0s)
+        i_l, i_r = directions[:, 0], directions[:, 1]
+
+        z0_sqrt = np.sqrt(z0s)
+        Vs = (b[:,i_l] * z0_sqrt[:,i_r] + b[:,i_r] * z0_sqrt[:,i_l]) \
+            * (2*z0_sqrt[:,i_l] * z0_sqrt[:,i_r]) / (z0s[:,i_l] + z0s[:,i_r])
         return Vs
 
     def currents_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
@@ -1401,9 +1451,10 @@ class Circuit:
         fig.tight_layout()
 
 ## Functions operating on Circuit
-def reduce_circuit(connections: list[list[tuple]],
+def reduce_circuit(connections: list[list[tuple[Network, int]]],
                    check_duplication: bool = True,
-                   split_ground: bool = False) -> list[list[tuple]]:
+                   split_ground: bool = False,
+                   max_nports: int = 20) -> list[list[tuple[Network, int]]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
 
@@ -1418,6 +1469,11 @@ def reduce_circuit(connections: list[list[tuple]],
             If True, check if the connections have duplicate names. Default is True.
     split_ground : bool, optional.
             If True, split the global ground connection to independant ground connections. Default is False.
+    max_nports : int
+            The maximum number of ports of a Network that can be reduced in circuit. If a Network in the
+            circuit has a number of ports (nports), using the Network.connect() method to reduce the circuit's
+            dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
+            This value depends on the performance of the computer and the scale of the circuit. Default is 20.
 
 
     Returns
@@ -1439,8 +1495,9 @@ def reduce_circuit(connections: list[list[tuple]],
     True
     """
 
-    def invalide_to_reduce(cnx):
-        return any(Circuit._is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
+    def invalide_to_reduce(cnx: list[tuple[Network, int]]) -> bool:
+        return any((Circuit._is_port(ntwk) or ntwk.nports > max_nports)
+                   for ntwk, _ in cnx) or len(cnx) != 2
 
     if split_ground:
         tmp_cnxs = []
