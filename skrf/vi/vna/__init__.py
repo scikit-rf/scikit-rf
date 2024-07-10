@@ -18,7 +18,7 @@ VNA Classes
    hp.HP8510C
    keysight.FieldFox
    keysight.PNA
-   nanovna.NanoVNA
+   nanovna.NanoVNAv2
 
 The Base Class and Writing an Instrument Driver
 ===============================================

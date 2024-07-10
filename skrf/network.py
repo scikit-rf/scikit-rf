@@ -2400,7 +2400,7 @@ class Network:
             except AttributeError:
                 pass
             if skrf_comment:
-                commented_header += '!Created with skrf (http://scikit-rf.org).\n'
+                commented_header += '! Created with skrf (http://scikit-rf.org).\n'
 
             output.write(commented_header)
 
@@ -5431,10 +5431,11 @@ def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
     Examples
     --------
 
-    >>>concat([ntwkA,ntwkB])
-    >>>concat([ntwkA,ntwkB,ntwkC,ntwkD], port_order='second')
+    >>> concat([ntwkA,ntwkB])
+    >>> concat([ntwkA,ntwkB,ntwkC,ntwkD], port_order='second')
 
     To put for lines in parallel
+
     >>> from skrf import air
     >>> l1 = air.line(100, z0=[0,1])
     >>> l2 = air.line(300, z0=[2,3])
@@ -5482,6 +5483,7 @@ def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
     ntwkC = ntwkA.copy()
     ntwkC.s = C
     ntwkC.z0 = np.hstack([ntwkA.z0, ntwkB.z0])
+    ntwkC.port_modes = np.hstack([ntwkA.port_modes, ntwkB.port_modes])
     if port_order == 'second':
         old_order = list(range(nC))
         new_order = list(range(0, nC, 2)) + list(range(1, nC, 2))
