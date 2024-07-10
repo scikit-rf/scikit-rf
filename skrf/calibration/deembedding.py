@@ -2053,7 +2053,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         """
         Enforce the Nyquist Rate Point.
         Force the length of the transmissive network to be an integer multiple
-        of the wavelength at the highest frequency.
+        of half of the wavelength at the highest frequency.
         If required, a proper delay is added to meet this condition.
         The function can also be used to remove the delay.
 
@@ -2150,6 +2150,24 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
     @staticmethod
     def shiftOnePort(ntwk, N, port):
+        """
+        Shift one port of the network of N samples in time-domain.
+        This is achieved by cascading a delay.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be shifted
+        N   : :number
+              Number of point to shift
+        port: :Number
+              Port to be shifted
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Shifted network
+        """
         f = ntwk.frequency.f
         n = len(f)
         X = ntwk.nports
@@ -2173,6 +2191,22 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
     @staticmethod
     def shiftNPoints(ntwk, N):
+        """
+        Shift the whole network of N samples in time-domain.
+        This is achieved by cascading a delay.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be shifted
+        N   : :number
+              Number of point to shift
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Shifted network
+        """
         f = ntwk.frequency.f
         n = len(f)
         X = ntwk.nports
@@ -2197,6 +2231,32 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
     @staticmethod
     def peelNPointsLossless(ntwk, N, z0):
+        """
+        Peel N points of the network on both side and return the corresponding
+        error boxes.
+        This is done in a lossless way without determination of the propagation
+        constant gamma.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be peeled
+        N     : :number
+                Number of points to peel
+        z0    : :number
+                Reference impedance
+        gamma : :array-like
+                Frequency-dependent propagation constant
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Peeled network
+        out : :class:`~skrf.network.Network` object
+              Error box side port 1
+        out : :class:`~skrf.network.Network` object
+              Error box side port 2
+        """
         f = ntwk.frequency.f
         n = len(f)
         out = ntwk.copy()
@@ -2229,6 +2289,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         return out, eb1, eb2
 
     def makeErrorBox_v7(self, s_dut, s2x, gamma, z0, pullback):
+        """
+        Extract the fixtures on both sides.
+        """
         f = s2x.frequency.f
         n = len(f)
         s212x = s2x.s[:, 1, 0]
@@ -2300,6 +2363,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         return errorbox1, errorbox2.flipped()
 
     def makeErrorBox_v8(self, s_dut, s2x, gamma, z0, pullback):
+        """
+        Extract the fixture only on a single side.
+        """
         f = s2x.frequency.f
         n = len(f)
         s212x = s2x.s[:, 1, 0]
@@ -2344,7 +2410,9 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
 
     def split2xthru(self, s2xthru, sfix_dut_fix):
-
+        """
+        Perform the fixtures extraction.
+        """
         f = sfix_dut_fix.frequency.f
         s = sfix_dut_fix.s
 
