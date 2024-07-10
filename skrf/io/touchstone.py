@@ -496,14 +496,12 @@ class Touchstone:
             #if state.ansys_data_type == "terminal":
             #    self.z0 = np.diagonal(self.z0.reshape(-1, self.rank, self.rank), axis1=1, axis2=2)
 
-            # Load the reference impedance convention from the comments
             self.s_def = S_DEF_HFSS_DEFAULT
             self.has_hfss_port_impedances = True
-            # If the s_def definition is found in the comments, use it.
+            # Load the reference impedance convention from the comments
             for s_def in S_DEFINITIONS:
-                if f"{s_def} convention" in self.comments:
+                if f'S-parameter uses the {s_def} definition' in self.comments:
                     self.s_def = s_def
-
         elif self.reference is None:
             self.z0 = np.broadcast_to(self.resistance, (len(state.f), state.rank)).copy()
         else:
