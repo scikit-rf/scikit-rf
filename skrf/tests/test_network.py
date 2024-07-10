@@ -62,6 +62,7 @@ class NetworkTestCase(unittest.TestCase):
         l1 = self.cpw.line(0.20, 'm', z0=50)
         l2 = self.cpw.line(0.07, 'm', z0=50)
         l3 = self.cpw.line(0.47, 'm', z0=50)
+        self.l2 = l2
         self.Fix = rf.concat_ports([l1, l1, l1, l1])
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
@@ -442,11 +443,10 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(self.Fix2 >> self.DUT2 >> self.Fix2.flipped(), self.Meas2)
 
     def test_concat_ports(self):
-        l2 = self.cpw.line(0.07, 'm', z0=50)
         for idx in range(4):
             i,j = 2*idx, 2*(idx+1)
-            self.assertTrue(np.allclose(self.DUT2.s[:, i:j, i:j], l2.s)) # check s-parameters
-            self.assertTrue(np.allclose(self.DUT2.z0[:, i:j], l2.z0)) # check z0
+            self.assertTrue(np.allclose(self.DUT2.s[:, i:j, i:j], self.l2.s)) # check s-parameters
+            self.assertTrue(np.allclose(self.DUT2.z0[:, i:j], self.l2.z0)) # check z0
         self.assertTrue(np.all(self.DUT2.port_modes == np.array(['S']*8))) # check port mode
 
     def test_connect(self):
