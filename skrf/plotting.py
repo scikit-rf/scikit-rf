@@ -63,7 +63,6 @@ if TYPE_CHECKING:
     Figure = TypeVar("Figure")
     Axes = TypeVar("Axes")
     import matplotlib.pyplot as plt
-    from matplotlib import dates
 
 import warnings
 
@@ -1700,6 +1699,7 @@ def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag'
         passed to :func:`~pylab.imshow`
     """
     import matplotlib.pyplot as plt
+    from matplotlib.dates import date2num
 
     mat = np.array([self[k].__getattribute__(component)[:, m, n] \
                      for k in range(len(self))])
@@ -1710,7 +1710,7 @@ def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag'
     if vs_time:
         # create a datetime index
         dt_idx = [now_string_2_dt(k.name) for k in self]
-        mpl_times = dates.date2num(dt_idx)
+        mpl_times = date2num(dt_idx)
         y_max = mpl_times[0]
         y_min = mpl_times[-1]
 
