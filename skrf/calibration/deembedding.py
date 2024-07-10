@@ -1097,6 +1097,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
+    @staticmethod
     def extrapolate_to_dc(ntwk):
         """
         Extrapolate the network to DC using IEEE370 NZC algorithm.
@@ -1148,6 +1149,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         f = concatenate(([0], f))
         return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
 
+    @staticmethod
     def dc_interp(s, f):
         """
         enforces symmetric upon the first 10 points and interpolates the DC
@@ -1162,6 +1164,7 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         snew = interp1d(fnp, snp, axis=0, kind = 'cubic')
         return real(snew(0))
 
+    @staticmethod
     def COM_receiver_noise_filter(f,fr):
         """
         receiver filter in COM defined by eq 93A-20
@@ -1170,13 +1173,14 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         # eq 93A-20
         return 1 / (1 - 3.414214 * fdfr**2 + fdfr**4 + 1j*2.613126*(fdfr - fdfr**3))
 
-
+    @staticmethod
     def makeStep(impulse):
         #mhuser : no need to call step function here, cumsum will be enough and efficient
         #step = np.convolve(np.ones((len(impulse))), impulse)
         #return step[0:len(impulse)]
         return np.cumsum(impulse, axis=0)
 
+    @staticmethod
     def DC(s, f, allowedError = 1e-12):
         DCpoint = 0.002 # seed for the algorithm
         err = 1 # error seed
@@ -1642,6 +1646,7 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             deembedded.renumber(new_order, old_order)
         return deembedded
 
+    @staticmethod
     def extrapolate_to_dc(ntwk):
         """
         Extrapolate the network to DC using IEEE370 NZC algorithm.
@@ -1873,6 +1878,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
+    @staticmethod
     def extrapolate_to_dc(ntwk):
         """
         Extrapolate the network to DC using IEEE370 NZC algorithm.
@@ -1924,6 +1930,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         f = concatenate(([0], f))
         return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
 
+    @staticmethod
     def thru(n):
         out = n.copy()
         out.s[:, 0, 0] = 0
@@ -1932,6 +1939,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         out.s[:, 1, 1] = 0
         return out
 
+    @staticmethod
     def add_dc(sin):
         s = sin.s
         f = sin.frequency.f
@@ -1947,6 +1955,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         f = concatenate(([0], f))
         return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
 
+    @staticmethod
     def getz(s, f, z0):
         DC11 = IEEEP370_SE_NZC_2xThru.DC(s, f, 1e-10)
         t112x = irfft(concatenate(([DC11], s)))
@@ -1958,7 +1967,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         z = ifftshift(z) #impedance. Shift again to get the first point
         return z[0], z
 
-    def makeTL(self, zline, z0, gamma, l):
+    @staticmethod
+    def makeTL(zline, z0, gamma, l):
         # todo: use DefinedGammaZ0 media instead
         n = len(gamma)
         TL = np.zeros((n, 2, 2), dtype = complex)
@@ -1970,11 +1980,12 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                        / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l)))
         return TL
 
-    def NRP(self, nin, TD = None, port = None):
-        p = nin.s
-        f = nin.frequency.f
+    @staticmethod
+    def NRP(ntwk, TD = None, port = None):
+        p = ntwk.s
+        f = ntwk.frequency.f
         n = len(f)
-        X = nin.nports
+        X = ntwk.nports
         fend = f[-1]
         if TD is None:
             TD = np.zeros(X)
@@ -1992,19 +2003,19 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 if i == 0:
                     pd[:, i + X//2, i] = delay
                     pd[:, i, i + X//2] = delay
-                    spd = nin.copy()
+                    spd = ntwk.copy()
                     spd.s = pd
-                    out = spd ** nin
+                    out = spd ** ntwk
                 elif i < X//2:
                     pd[:, i + X//2, i] = delay
                     pd[:, i, i + X//2] = delay
-                    spd = nin.copy()
+                    spd = ntwk.copy()
                     spd.s = pd
                     out = spd ** out
                 else:
                     pd[:, i - X//2, i] = delay
                     pd[:, i, i - X//2] = delay
-                    spd = nin.copy()
+                    spd = ntwk.copy()
                     spd.s = pd
                     out = out ** spd
         else:
@@ -2015,42 +2026,43 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 if i < X//2:
                     pd[:, i + X//2, i] = delay
                     pd[:, i, i + X//2] = delay
-                    spd = nin.copy()
+                    spd = ntwk.copy()
                     spd.s = pd
-                    out = spd ** nin
+                    out = spd ** ntwk
                 else:
                     pd[:, i - X//2, i] = delay
                     pd[:, i, i - X//2] = delay
-                    spd = nin.copy()
+                    spd = ntwk.copy()
                     spd.s = pd
-                    out = nin ** spd
+                    out = ntwk ** spd
             else:
                 for i in range(X):
                     delay = exp(1j * 2. * np.pi * f * TD[i] / 2)
                     if i == 0:
                         pd[:, i + X//2, i] = delay
                         pd[:, i, i + X//2] = delay
-                        spd = nin.copy()
+                        spd = ntwk.copy()
                         spd.s = pd
-                        out = spd ** nin
+                        out = spd ** ntwk
                     elif i < X//2:
                         pd[:, i + X//2, i] = delay
                         pd[:, i, i + X//2] = delay
-                        spd = nin.copy()
+                        spd = ntwk.copy()
                         spd.s = pd
                         out = spd ** out
                     else:
                         pd[:, i - X//2, i] = delay
                         pd[:, i, i - X//2] = delay
-                        spd = nin.copy()
+                        spd = ntwk.copy()
                         spd.s = pd
                         out = out ** spd
         return out, TD
 
-    def shiftOnePort(self, nin, N, port):
-        f = nin.frequency.f
+    @staticmethod
+    def shiftOnePort(ntwk, N, port):
+        f = ntwk.frequency.f
         n = len(f)
-        X = nin.nports
+        X = ntwk.nports
         Omega0 = np.pi/n
         Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
         delay = exp(-N * 1j * Omega/2)
@@ -2058,21 +2070,22 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         if port < X//2:
             pd[:, port, port + X//2] = delay
             pd[:, port + X//2, port] = delay
-            spd = nin.copy()
+            spd = ntwk.copy()
             spd.s = pd
-            out = spd ** nin
+            out = spd ** ntwk
         else:
             pd[:, port, port - X//2] = delay
             pd[:, port - X//2, port] = delay
-            spd = nin.copy()
+            spd = ntwk.copy()
             spd.s = pd
-            out = nin ** spd
+            out = ntwk ** spd
         return out
 
-    def shiftNPoints(self, nin, N):
-        f = nin.frequency.f
+    @staticmethod
+    def shiftNPoints(ntwk, N):
+        f = ntwk.frequency.f
         n = len(f)
-        X = nin.nports
+        X = ntwk.nports
         Omega0 = np.pi/n
         Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
         delay = exp(-N * 1j * Omega/2)
@@ -2081,22 +2094,22 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             if port < X//2:
                 pd[:, port, port + X//2] = delay
                 pd[:, port + X//2, port] = delay
-                spd = nin.copy()
+                spd = ntwk.copy()
                 spd.s = pd
-                p = spd ** nin
+                p = spd ** ntwk
             else:
                 pd[:, port, port - X//2] = delay
                 pd[:, port - X//2, port] = delay
-                spd = nin.copy()
+                spd = ntwk.copy()
                 spd.s = pd
                 out = p ** spd
         return out
 
-    def peelNPointsLossless(self, nin, N):
-        f = nin.frequency.f
+    @staticmethod
+    def peelNPointsLossless(ntwk, N, z0):
+        f = ntwk.frequency.f
         n = len(f)
-        out = nin.copy()
-        z0 = 50
+        out = ntwk.copy()
         Omega0 = np.pi/n
         Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
         betal = 1j * Omega/2
@@ -2106,11 +2119,11 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             zline1 = IEEEP370_SE_ZC_2xThru.getz(p[:, 0, 0], f, z0)[0]
             zline2 = IEEEP370_SE_ZC_2xThru.getz(p[:, 1, 1], f, z0)[0]
             #this is the transmission line to be removed
-            TL1 = self.makeTL(zline1, z0, betal, 1)
-            TL2 = self.makeTL(zline2, z0, betal, 1)
-            sTL1 = nin.copy()
+            TL1 = IEEEP370_SE_ZC_2xThru.makeTL(zline1, z0, betal, 1)
+            TL2 = IEEEP370_SE_ZC_2xThru.makeTL(zline2, z0, betal, 1)
+            sTL1 = ntwk.copy()
             sTL1.s = TL1
-            sTL2 = nin.copy()
+            sTL2 = ntwk.copy()
             sTL2.s = TL2
             #remove the errorboxes
             # no need to flip sTL2 because it is symmetrical
@@ -2291,14 +2304,16 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         # enforce Nyquist rate point
         if self.NRP_enable:
-            sfix_dut_fix, TD = self.NRP(sfix_dut_fix)
-            s2xthru, _ = self.NRP(s2xthru, -TD)
+            sfix_dut_fix, TD = IEEEP370_SE_ZC_2xThru.NRP(sfix_dut_fix)
+            s2xthru, _ = IEEEP370_SE_ZC_2xThru.NRP(s2xthru, -TD)
 
         # remove lead-in points
         if self.leadin > 0:
-            _, temp1, temp2 = self.peelNPointsLossless(self.shiftNPoints(sfix_dut_fix, self.leadin), self.leadin)
-            leadin1 = self.shiftOnePort(temp1, -self.leadin, 0)
-            leadin2 = self.shiftOnePort(temp2, -self.leadin, 1)
+            _, temp1, temp2 = IEEEP370_SE_ZC_2xThru.peelNPointsLossless(
+                IEEEP370_SE_ZC_2xThru.shiftNPoints(sfix_dut_fix, self.leadin), self.leadin,
+                z0 = self.z0)
+            leadin1 = IEEEP370_SE_ZC_2xThru.shiftOnePort(temp1, -self.leadin, 0)
+            leadin2 = IEEEP370_SE_ZC_2xThru.shiftOnePort(temp2, -self.leadin, 1)
 
         # calculate gamma
         #grabbing s21
@@ -2392,8 +2407,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         # if Nyquist Rate Point enforcement is enabled
         if self.NRP_enable:
-            s_side1, _ = self.NRP(s_side1, TD, 0)
-            s_side2, _ = self.NRP(s_side2, TD, 1)
+            s_side1, _ = IEEEP370_SE_ZC_2xThru.NRP(s_side1, TD, 0)
+            s_side2, _ = IEEEP370_SE_ZC_2xThru.NRP(s_side2, TD, 1)
 
         # unflip FIX-2 as per IEEEP370 numbering recommandation
         return (s_side1, s_side2.flipped())
@@ -2629,6 +2644,7 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
             deembedded.renumber(new_order, old_order)
         return deembedded
 
+    @staticmethod
     def extrapolate_to_dc(ntwk):
         """
         Extrapolate the network to DC using IEEE370 NZC algorithm.
@@ -2689,7 +2705,7 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
                                   NRP_enable = self.NRP_enable,
                                   leadin = self.leadin,
                                   verbose = self.verbose)
-        # debug outpus
+        # debug outputs
         self.gamma_dd = dm_dd.gamma
         self.x_end_dd = dm_dd.x_end
         self.z_side1_dd = dm_dd.z_side1
@@ -2705,7 +2721,7 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
                                   NRP_enable = self.NRP_enable,
                                   leadin = self.leadin,
                                   verbose = self.verbose)
-        # debug outpus
+        # debug outputs
         self.gamma_cc = dm_cc.gamma
         self.x_end_cc = dm_cc.x_end
         self.z_side1_cc = dm_cc.z_side1
