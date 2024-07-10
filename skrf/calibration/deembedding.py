@@ -2572,7 +2572,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         return (s_side1, s_side2.flipped())
 
 
-class IEEEP370_MM_ZC_2xThru(Deembedding):
+class IEEEP370_MM_ZC_2xThru(IEEEP370_SE_ZC_2xThru):
     """
     Creates error boxes from a 4-port from 2x-Thru and FIX-DUT-FIX networks.
 
@@ -2725,21 +2725,7 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         :func:`Deembedding.__init__`
 
         """
-        self.s2xthru = dummy_2xthru.copy()
-        self.sfix_dut_fix = dummy_fix_dut_fix.copy()
-        dummies = [self.s2xthru]
-        self.z0 = z0
         self.port_order = port_order
-        self.bandwidth_limit = bandwidth_limit
-        self.pullback1 = pullback1
-        self.pullback2 = pullback2
-        self.side1 = side1
-        self.side2 = side2
-        self.NRP_enable = NRP_enable
-        self.leadin = leadin
-        self.verbose = verbose
-        self.flag_DC = False
-        self.flag_df = False
         # debug outputs
         self.gamma_dd = None
         self.x_end_dd = None
@@ -2750,7 +2736,14 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         self.z_side1_cc = None
         self.z_side2_cc = None
 
-        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+        IEEEP370_SE_ZC_2xThru.__init__(self, dummy_2xthru, dummy_fix_dut_fix,
+                     name = name,
+                     z0 = z0, bandwidth_limit = bandwidth_limit,
+                     pullback1 = pullback1, pullback2 = pullback2,
+                     side1 = side1, side2 = side2,
+                     NRP_enable = NRP_enable, leadin = leadin,
+                     verbose = verbose,
+                     *args, **kwargs)
         self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru,
                                                         self.sfix_dut_fix)
 
@@ -2801,27 +2794,6 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         if self.port_order != 'second':
             deembedded.renumber(new_order, old_order)
         return deembedded
-
-    @staticmethod
-    def extrapolate_to_dc(ntwk):
-        """
-        Extrapolate the network to DC using IEEE370 NZC algorithm.
-        This is usefull to compare the fixtures and deembedded networks
-        to the input data in the same conditions used by NZC algorithm.
-        If the network already have a DC point, it will be replaced.
-
-        Parameters
-        ----------
-        ntwk : :class:`~skrf.network.Network` object
-            Network to be extrapolated to DC
-
-        Returns
-        -------
-        ntwk_dc : :class:`~skrf.network.Network` object
-            Network with DC point
-
-        """
-        return IEEEP370_SE_ZC_2xThru.extrapolate_to_dc(ntwk)
 
     def split2xthru(self, se_2xthru, se_fdf):
         # check if 4-port
