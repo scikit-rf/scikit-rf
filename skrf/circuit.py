@@ -1364,7 +1364,7 @@ class Circuit:
             'label_shift_y': 0
 
         """
-        from .plotting import plt
+        import matplotlib.pyplot as plt
         subplots = plt.subplots
 
         nx = self._get_nx()

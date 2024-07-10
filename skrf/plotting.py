@@ -1190,15 +1190,15 @@ def stylely(rc_dict: dict = None, style_file: str = 'skrf.mplstyle'):
     style_file : str, optional
         style file, by default 'skrf.mplstyle'
     """
-    import matplotlib as mpl
+    import matplotlib.pyplot as plt
 
     from .data import pwd  # delayed to solve circular import
 
     rc_dict = rc_dict if rc_dict else {}
 
 
-    mpl.style.use(os.path.join(pwd, style_file))
-    mpl.rc(rc_dict)
+    plt.style.use(os.path.join(pwd, style_file))
+    plt.rc(rc_dict)
 
 
 # Network Set Plotting Commands
