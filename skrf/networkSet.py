@@ -53,6 +53,7 @@ from typing import Any, Mapping, TextIO
 import numpy as np
 
 from . import mathFunctions as mf
+from .constants import NumberLike
 from .network import COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency, Network
 from .util import copy_doc, now_string_2_dt
 
@@ -208,6 +209,7 @@ class NetworkSet:
             self.__add_a_element_wise_method('plot_'+network_property_name)
             self.__add_a_element_wise_method('plot_s_db')
             self.__add_a_element_wise_method('plot_s_db_time')
+
         for network_method_name in \
                 ['write_touchstone','interpolate','plot_s_smith']:
             self.__add_a_element_wise_method(network_method_name)
@@ -495,8 +497,7 @@ class NetworkSet:
 
         """
         def plot_func(self,*args, **kwargs):
-            kwargs.update({'attribute':network_property_name})
-            self.plot_uncertainty_bounds_component(*args,**kwargs)
+            self.plot_uncertainty_bounds_component(network_property_name, *args,**kwargs)
 
         setattr(self.__class__,'plot_uncertainty_bounds_'+\
                 network_property_name,plot_func)
@@ -520,15 +521,13 @@ class NetworkSet:
 
         """
         def plot_func(self,*args, **kwargs):
-            kwargs.update({'attribute':network_property_name})
-            self.plot_minmax_bounds_component(*args,**kwargs)
+            self.plot_minmax_bounds_component(network_property_name, *args,**kwargs)
 
         setattr(self.__class__,'plot_minmax_bounds_'+\
                 network_property_name,plot_func)
 
         setattr(self.__class__,'plot_mm_'+\
                 network_property_name,plot_func)
-
 
     def to_dict(self) -> dict:
         """
@@ -948,7 +947,10 @@ class NetworkSet:
                    filename: str,
                    values: dict | None = None,
                    data_types: dict | None = None,
-                   comments = None):
+                   comments: str | None = None,
+                   *,
+                   skrf_comment: bool = True,
+                   ads_compatible: bool = True):
         """Convert a scikit-rf NetworkSet object to a Generalized MDIF file.
 
         Parameters
@@ -956,7 +958,7 @@ class NetworkSet:
         filename : string
             Output MDIF file name.
         values : dictionary or None. Default is None.
-            The keys of the dictionnary are MDIF variables and its values are
+            The keys of the dictionary are MDIF variables and its values are
             a list of the parameter values.
             If None, then the values will be set to the NetworkSet names
             and the datatypes will be set to "string".
@@ -966,6 +968,11 @@ class NetworkSet:
         comments: list of strings
             Comments to add to output_file.
             Each list items is a separate comment line
+        skrf_comment : bool, optional
+            write `created by skrf` comment
+        ads_compatible: bool. Default is True.
+            Indicates whether to write the file in a format that
+            ADS will read properly.
 
         See Also
         --------
@@ -978,7 +985,8 @@ class NetworkSet:
         if comments is None:
             comments = []
         Mdif.write(ns=self, filename=filename, values=values,
-                             data_types=data_types, comments=comments)
+                   data_types=data_types, ads_compatible=ads_compatible,
+                   comments=comments, skrf_comment=skrf_comment)
 
     def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):
         """
@@ -1051,14 +1059,54 @@ class NetworkSet:
 
         return ntw
 
+    def interpolate_frequency(self, freq_or_n: Frequency | NumberLike, basis: str = 's',
+                    coords: str = 'cart', f_kwargs: dict = None, **kwargs) -> NetworkSet:
+        """Interpolates each network in the set by frequency by calling :meth:`Network.interpolate`.
+
+        Parameters
+        ----------
+        freq_or_n : :class:`~skrf.frequency.Frequency` or int or list-like
+            The new frequency over which to interpolate. this arg may be
+            one of the following:
+
+            * a new :class:`~skrf.frequency.Frequency` object
+
+            * an int: the current frequency span is resampled linearly.
+
+            * a list-like: create a new frequency using :meth:`~skrf.frequency.Frequency.from_f`
+
+        basis : ['s','z','y','a'], etc
+            The network parameter to interpolate
+        coords : string
+            Coordinate system to use for interpolation: 'cart' or 'polar':
+            'cart' is cartesian is Re/Im. 'polar' is unwrapped phase/mag
+        f_kwargs : dict
+            Key word arguments that are passed to the new :class:`Frequency` object
+        **kwargs : keyword arguments
+            passed to :func:`scipy.interpolate.interp1d` initializer.
+            `kind` controls interpolation type.
+
+            `kind` = `rational` uses interpolation by rational polynomials.
+
+            `d` kwarg controls the degree of rational polynomials
+            when `kind`=`rational`. Defaults to 4.
+
+        Returns
+        -------
+        NetworkSet : :class:`NetworkSet`
+            New NetworkSet with interpolated frequencies
+        """
+
+        return NetworkSet([ntwk.interpolate(freq_or_n, basis, coords, f_kwargs, **kwargs) for ntwk in self.ntwk_set])
+
     def has_params(self) -> bool:
         """
-        Check is all Networks in the NetworkSet have a similar params dictionnary.
+        Check is all Networks in the NetworkSet have a similar params dictionary.
 
         Returns
         -------
         bool
-            True is all Networks have a .params dictionnay (of same size),
+            True is all Networks have a .params dictionary (of same size),
             False otherwise
 
         """
@@ -1101,7 +1149,7 @@ class NetworkSet:
     @property
     def params_values(self) -> dict | None:
         """
-        Return a dictionnary containing all parameters and their values.
+        Return a dictionary containing all parameters and their values.
 
         Returns
         -------
@@ -1123,7 +1171,7 @@ class NetworkSet:
     @property
     def params_types(self) -> dict | None:
         """
-        Return a dictionnary describing the data type of each parameters.
+        Return a dictionary describing the data type of each parameters.
 
         Returns
         -------
@@ -1215,7 +1263,7 @@ class NetworkSet:
             return NetworkSet()
 
         if not isinstance(indexers, dict):
-            raise TypeError('indexers should be a dictionnary.')
+            raise TypeError('indexers should be a dictionary.')
 
         for p in indexers.keys():
             if p not in self.dims:
@@ -1364,6 +1412,12 @@ class NetworkSet:
     def signature(self, *args, **kwargs):
         skrf_plt.signature(self, *args, **kwargs)
 
+    @copy_doc(skrf_plt.plot_violin)
+    def plot_violin(self, attribute, *args, **kwargs):
+        if "time" not in attribute:
+            skrf_plt.plot_violin(self, attribute, *args,**kwargs)
+        else:
+            raise NotImplementedError("Violin plots are not implemented for time based parameters")
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):

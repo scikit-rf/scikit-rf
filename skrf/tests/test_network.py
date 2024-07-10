@@ -62,6 +62,7 @@ class NetworkTestCase(unittest.TestCase):
         l1 = self.cpw.line(0.20, 'm', z0=50)
         l2 = self.cpw.line(0.07, 'm', z0=50)
         l3 = self.cpw.line(0.47, 'm', z0=50)
+        self.l2 = l2
         self.Fix = rf.concat_ports([l1, l1, l1, l1])
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
@@ -70,9 +71,11 @@ class NetworkTestCase(unittest.TestCase):
         self.Meas2 = rf.concat_ports([l3, l3, l3, l3], port_order='first')
         self.fet = rf.Network(os.path.join(self.test_dir, 'fet.s2p'))
         self.rng = np.random.default_rng()
+        self.ntwk_noise = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
 
     def test_network_copy(self):
         n = self.ntwk1
+        n._ext_attrs['_test_attr'] = 'test'
         n2 = n.copy()
         self.assertEqual( n.frequency, n2.frequency)
         self.assertNotEqual( id(n.frequency), id(n2.frequency))
@@ -80,6 +83,8 @@ class NetworkTestCase(unittest.TestCase):
 
         n.frequency.f[0] = 0
         self.assertNotEqual(n2.frequency.f[0], 0)
+
+        self.assertEqual('test', n2._ext_attrs.get('_test_attr', None))
 
     def test_two_port_reflect(self):
         number_of_data_points = 10
@@ -395,7 +400,7 @@ class NetworkTestCase(unittest.TestCase):
             snp = ntwk.write_touchstone(return_string=True)
 
     def test_write_touchstone_noisy(self):
-        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
+        ntwk = self.ntwk_noise
 
         # Read back the written touchstone
         ntwkstr = ntwk.write_touchstone(return_string=True)
@@ -436,6 +441,13 @@ class NetworkTestCase(unittest.TestCase):
     def test_cascade2(self):
         self.assertEqual(self.ntwk1 >> self.ntwk2, self.ntwk3)
         self.assertEqual(self.Fix2 >> self.DUT2 >> self.Fix2.flipped(), self.Meas2)
+
+    def test_concat_ports(self):
+        for idx in range(4):
+            i,j = 2*idx, 2*(idx+1)
+            self.assertTrue(np.allclose(self.DUT2.s[:, i:j, i:j], self.l2.s)) # check s-parameters
+            self.assertTrue(np.allclose(self.DUT2.z0[:, i:j], self.l2.z0)) # check z0
+        self.assertTrue(np.all(self.DUT2.port_modes == np.array(['S']*8))) # check port mode
 
     def test_connect(self):
         self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
@@ -729,6 +741,18 @@ class NetworkTestCase(unittest.TestCase):
         flipped.flip()
         c = rf.connect(gain,1,flipped,0)
         self.assertTrue(np.all(np.abs(c.s - np.array([[0,1],[1,0]])) < 1e-6))
+
+    def test_renumber(self):
+        ntwk = self.ntwk1
+        from_ports_num = [0,1]
+        to_ports_num = [1,0]
+        from_ports_name = ["A", "B"]
+        to_ports_name = ["B", "A"]
+
+        ntwk.port_names = from_ports_name
+        ntwk_renum = ntwk.renumbered(from_ports_num, to_ports_num)
+
+        np.array_equal(to_ports_name, ntwk_renum.port_names)
 
     def test_de_embed_by_inv(self):
         self.assertEqual(self.ntwk1.inv ** self.ntwk3, self.ntwk2)
@@ -1389,7 +1413,7 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_noise(self):
-        a = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
+        a = self.ntwk_noise
 
         nf = 10**(0.05)
         self.assertTrue(a.noisy)
@@ -1439,7 +1463,7 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_noise_dc_extrapolation(self):
-        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
+        ntwk = self.ntwk_noise
         ntwk = ntwk["0-1.5GHz"] # using only the first samples, as ntwk_noise has duplicate x value
         s11 = ntwk.s11
         s11_dc = s11.extrapolate_to_dc(kind='cubic')
@@ -1887,6 +1911,46 @@ class NetworkTestCase(unittest.TestCase):
         # Check whether the specified gain is too large.
         with pytest.raises(RuntimeWarning):
             self.fet['30GHz'].gain_circle(target_port=1, gain=100)
+
+    def test_nf_circle(self):
+        # Check whether the noise figure circle agrees with that calculated with Microwave Office
+        nf_circle_mwo = np.loadtxt(os.path.join(self.test_dir, 'nf_circle_mwo.csv'), encoding='utf-8',
+                                           delimiter=',')
+
+        assert np.allclose(
+            self.ntwk_noise["1GHz"].nf_circle(nf=1.0, npoints=6).flatten().real,
+            nf_circle_mwo[:6,0],
+        )
+        assert np.allclose(
+            self.ntwk_noise["1GHz"].nf_circle(nf=1.0, npoints=6).flatten().imag,
+            nf_circle_mwo[:6,1],
+        )
+
+        assert np.allclose(
+            self.ntwk_noise["2GHz"].nf_circle(nf=2.0, npoints=6).flatten().real,
+            nf_circle_mwo[6:12,0],
+        )
+        assert np.allclose(
+            self.ntwk_noise["2GHz"].nf_circle(nf=2.0, npoints=6).flatten().imag,
+            nf_circle_mwo[6:12,1],
+        )
+
+        # Check whether an error is raised when the network is not 2 port.
+        net = rf.Network(f=[1], s=np.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.nf_circle(nf=1.0)
+
+        # Check whether an error is raised when the number of points is not positive.
+        with pytest.raises(ValueError):
+            net.nf_circle(nf=1.0, npoints=0)
+
+        # Check whether an error is raised when the network is missing noise data.
+        with pytest.raises(ValueError):
+            self.ntwk1.nf_circle(nf=1.0, npoints=0)
+
+        # Check whether the specified noise figure is too small.
+        with pytest.raises(RuntimeWarning):
+            self.ntwk_noise['1GHz'].nf_circle(nf=0.1)
 
     def test_de_embed_by_floordiv(self):
         ntwk_result_1 = self.ntwk1 // self.ntwk2

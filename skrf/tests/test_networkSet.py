@@ -402,6 +402,29 @@ class NetworkSetTestCase(unittest.TestCase):
                                   data_types=self.ns_params.params_types)
         ns_params = rf.NetworkSet.from_mdif(test_file)
         self.assertEqual(ns_params, self.ns_params)
+
+        # with parameters and passing explicitly values but not types and ads_compatible
+        self.ns_params.write_mdif(test_file,
+                                  values=self.ns_params.params_values,
+                                  ads_compatible=True)
+        ns_params = rf.NetworkSet.from_mdif(test_file)
+        self.assertEqual(ns_params, self.ns_params)
+
+        # with parameters and passing explicitly types but not values and ads_compatible
+        self.ns_params.write_mdif(test_file,
+                                  data_types=self.ns_params.params_types,
+                                  ads_compatible=True)
+        ns_params = rf.NetworkSet.from_mdif(test_file)
+        self.assertEqual(ns_params, self.ns_params)
+
+        # with parameters and passing explicitly values and types and ads_compatible
+        self.ns_params.write_mdif(test_file,
+                                  values=self.ns_params.params_values,
+                                  data_types=self.ns_params.params_types,
+                                  ads_compatible=True)
+        ns_params = rf.NetworkSet.from_mdif(test_file)
+        self.assertEqual(ns_params, self.ns_params)
+
         os.remove(test_file)
 
     def test_from_citi(self):

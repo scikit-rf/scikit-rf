@@ -2021,12 +2021,15 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             if port < X//2:
                 pd[:, port, port + X//2] = delay
                 pd[:, port + X//2, port] = delay
+                spd = nin.copy()
+                spd.s = pd
+                p = spd ** nin
             else:
                 pd[:, port, port - X//2] = delay
                 pd[:, port - X//2, port] = delay
                 spd = nin.copy()
                 spd.s = pd
-                out = nin ** spd
+                out = p ** spd
         return out
 
     def peelNPointsLossless(self, nin, N):

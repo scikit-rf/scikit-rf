@@ -131,10 +131,9 @@ class VectorFitting:
         """
 
         omega_eval = np.linspace(np.min(poles.imag) / 3, np.max(poles.imag) * 3, n_freqs)
-        h = residues[:, None, :] / (1j * omega_eval[:, None] - poles) + np.conj(residues[:, None, :]) / (
-            1j * omega_eval[:, None] - np.conj(poles)
-        )
-        norm2 = np.sqrt(np.trapz(h.real**2 + h.imag**2, omega_eval, axis=1))
+        h = (residues[:, None, :] / (1j * omega_eval[:, None] - poles)
+             + np.conj(residues[:, None, :]) / (1j * omega_eval[:, None] - np.conj(poles)))
+        norm2 = np.sqrt(np.trapezoid(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
         spurious = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
         return spurious
 

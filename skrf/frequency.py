@@ -416,7 +416,10 @@ class Frequency:
         --------
         df : for general case
         """
-        return self.span/(self.npoints-1.)
+        if self.span == 0:
+            return 0.
+        else:
+            return self.span / (self.npoints - 1.)
 
     @property
     def step_scaled(self) -> float:
@@ -428,7 +431,10 @@ class Frequency:
         --------
         df : for general case
         """
-        return self.span_scaled/(self.npoints-1.)
+        if self.span_scaled == 0:
+            return 0.
+        else:
+            return self.span_scaled / (self.npoints - 1.)
 
     @property
     def span(self) -> float:
