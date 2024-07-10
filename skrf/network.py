@@ -5482,6 +5482,7 @@ def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
     ntwkC = ntwkA.copy()
     ntwkC.s = C
     ntwkC.z0 = np.hstack([ntwkA.z0, ntwkB.z0])
+    ntwkC.port_modes = np.hstack([ntwkA.port_modes, ntwkB.port_modes])
     if port_order == 'second':
         old_order = list(range(nC))
         new_order = list(range(0, nC, 2)) + list(range(1, nC, 2))

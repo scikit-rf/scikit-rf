@@ -441,6 +441,14 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(self.ntwk1 >> self.ntwk2, self.ntwk3)
         self.assertEqual(self.Fix2 >> self.DUT2 >> self.Fix2.flipped(), self.Meas2)
 
+    def test_concat_ports(self):
+        l2 = self.cpw.line(0.07, 'm', z0=50)
+        for idx in range(4):
+            i,j = 2*idx, 2*(idx+1)
+            self.assertTrue(np.allclose(self.DUT2.s[:, i:j, i:j], l2.s)) # check s-parameters
+            self.assertTrue(np.allclose(self.DUT2.z0[:, i:j], l2.z0)) # check z0
+        self.assertTrue(np.all(self.DUT2.port_modes == np.array(['S']*8))) # check port mode
+
     def test_connect(self):
         self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
             self.ntwk3)
