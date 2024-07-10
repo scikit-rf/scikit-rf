@@ -1934,19 +1934,19 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
     def thru(ntwk):
         """
         Create a perfect thru
-    
+
         Parameters
         ----------
         ntwk : :class:`~skrf.network.Network` object
                Network from which copy frequency, z0 and other parameters.
                The S-parameters will be replaced by zero-length matched lossless
                thru.
-    
+
         Returns
         -------
         out : :class:`~skrf.network.Network` object
               Network of the perfect thru
-    
+
         """
         out = ntwk.copy()
         out.s[:, 0, 0] = 0
@@ -1959,17 +1959,17 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
     def add_dc(ntwk):
         """
         Extrapolate a network to DC using interpolation for all S-parameters.
-    
+
         Parameters
         ----------
         ntwk : :class:`~skrf.network.Network` object
                Network to be extrapolated to DC
-    
+
         Returns
         -------
         out : :class:`~skrf.network.Network` object
               Network with DC point
-    
+
         """
         s = ntwk.s
         f = ntwk.frequency.f
@@ -1990,7 +1990,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         """
         Compute step response to get the time-domain impedance from S-parameters.
         The S-parameters are DC extrapolated first.
-    
+
         Parameters
         ----------
         s : :array-like
@@ -1999,12 +1999,12 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             Frequency array for DC extrapolation
         z0: :array-like
             Reference impedance
-    
+
         Returns
         -------
         z : :array-like
             Time-domain impedance step response
-    
+
         """
         DC11 = IEEEP370_SE_NZC_2xThru.DC(s, f, 1e-10)
         t112x = irfft(concatenate(([DC11], s)))
@@ -2020,7 +2020,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
     def makeTL(zline, z0, gamma, l):
         """
         Compute the S-parameters of a transmission line.
-    
+
         Parameters
         ----------
         zline : :number
@@ -2031,7 +2031,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                 Frequency-dependent propagation constant
         l    : :number
                 Length in the same length unit as gamma  
-    
+
         Returns
         -------
         TL : :array-like
@@ -2056,7 +2056,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         of the wavelength at the highest frequency.
         If required, a proper delay is added to meet this condition.
         The function can also be used to remove the delay.
-    
+
         Parameters
         ----------
         ntwk : :class:`~skrf.network.Network` object
@@ -2066,7 +2066,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
                Else, the delay will be removed (to reset the original length).
         port: :Number
               Specify to apply NRP only on a single port of the network
-              
+
         Returns
         -------
         TL : :array-like
