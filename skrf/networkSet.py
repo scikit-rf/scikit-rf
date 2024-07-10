@@ -51,7 +51,6 @@ from numbers import Number
 from typing import Any, Mapping, TextIO
 
 import numpy as np
-from scipy.interpolate import interp1d
 
 from . import mathFunctions as mf
 from .constants import NumberLike
@@ -1050,6 +1049,8 @@ class NetworkSet:
 
 
         """
+        from scipy.interpolate import interp1d
+
         ntw = self[0].copy()
         # Interpolating the scattering parameters
         s = np.array([self[idx].s for idx in range(len(self))])

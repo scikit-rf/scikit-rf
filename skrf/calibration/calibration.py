@@ -86,6 +86,15 @@ PNA interaction
    convert_pnacoefs_2_skrf
 
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypeVar
+
+if TYPE_CHECKING:
+    try:
+        from matplotlib.pyplot import Axes
+    except ImportError:
+        Axes = TypeVar("Axes")
 
 import json
 import warnings
@@ -99,7 +108,6 @@ from warnings import warn
 import numpy as np
 from numpy import angle, einsum, exp, imag, invert, linalg, ones, poly1d, real, sqrt, zeros
 from numpy.linalg import det
-from scipy.optimize import least_squares
 
 from .. import __version__ as skrf__version__
 from .. import util
@@ -119,6 +127,7 @@ from ..network import (
     zipfile,
 )
 from ..networkSet import NetworkSet
+from ..plotting import axes_kwarg
 
 ComplexArray = np.typing.NDArray[complex]
 
@@ -981,8 +990,8 @@ class Calibration:
 
         write(file,self, *args, **kwargs)
 
-    @util.axes_kwarg
-    def plot_calibration_errors(self, *args, ax: util.Axes = None, **kwargs):
+    @axes_kwarg
+    def plot_calibration_errors(self, *args, ax: Axes = None, **kwargs):
         """
         Plot biased, unbiased and total error in dB scaled.
 
@@ -4367,6 +4376,8 @@ class LRRM(EightTerm):
             **kwargs)
 
     def run(self):
+        from scipy.optimize import least_squares
+
         mList = [k for k in self.measured_unterminated]
         lm = mList[0]
         r1m = mList[1]

@@ -63,52 +63,18 @@ import warnings
 from datetime import datetime
 from functools import wraps
 from subprocess import PIPE, Popen
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, Callable, Iterable
 
 import numpy as np
 
 from .constants import Number
 
-try:
-    import matplotlib.pyplot as plt
-    from matplotlib.axes import Axes
-    from matplotlib.figure import Figure
-except ImportError:
-    Figure = TypeVar("Figure")
-    Axes = TypeVar("Axes")
-    pass
-
-def plotting_available() -> bool:
-    return "matplotlib" in sys.modules
 
 def partial_with_docs(func, *args1, **kwargs1):
     @wraps(func)
     def method(self, *args2, **kwargs2):
         return func(self, *args1, *args2, **kwargs1, **kwargs2)
     return method
-
-def axes_kwarg(func):
-    """
-    This decorator checks if a :class:`matplotlib.axes.Axes` object is passed,
-    if not the current axis will be gathered through :func:`plt.gca`.
-
-    Raises
-    ------
-    RuntimeError
-        When trying to run the decorated function without matplotlib
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        ax = kwargs.pop('ax', None)
-        try:
-            if ax is None:
-                ax = plt.gca()
-        except NameError as err:
-            raise RuntimeError("Plotting is not available") from err
-        func(*args, ax=ax, **kwargs)
-
-    return wrapper
 
 def copy_doc(copy_func: Callable) -> Callable:
     """Use Example: copy_doc(self.copy_func)(self.func) or used as deco"""
@@ -117,21 +83,6 @@ def copy_doc(copy_func: Callable) -> Callable:
         return func
     return wrapper
 
-
-def subplots(*args, **kwargs) -> tuple[Figure, np.ndarray]:
-    """
-    Wraps the matplotlib subplots call and raises if not available.
-
-    Raises
-    ------
-    RuntimeError
-        When trying to get subplots without matplotlib installed.
-    """
-
-    try:
-        return plt.subplots(*args, **kwargs)
-    except NameError as err:
-        raise RuntimeError("Plotting is not available") from err
 
 def now_string() -> str:
     """

@@ -26,6 +26,11 @@ Functions related to reading/writing touchstones.
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..media import DefinedGammaZ0
+
 import os
 import re
 import typing
@@ -37,7 +42,6 @@ from typing import Callable
 import numpy as np
 
 from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT
-from ..media import DefinedGammaZ0
 from ..network import Network
 from ..util import get_fid
 
@@ -811,6 +815,8 @@ def hfss_touchstone_2_media(filename: str) -> list[DefinedGammaZ0]:
     --------
     hfss_touchstone_2_gamma_z0 : returns gamma, and z0
     """
+    from ..media import DefinedGammaZ0
+
     ntwk = Network(filename)
 
     freq = ntwk.frequency
