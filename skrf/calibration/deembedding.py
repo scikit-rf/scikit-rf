@@ -944,7 +944,182 @@ class ImpedanceCancel(Deembedding):
         return caled
 
 
-class IEEEP370_SE_NZC_2xThru(Deembedding):
+class IEEEP370(Deembedding):
+    """
+    Abstract Base Class for all IEEEP370 de-embedding class.
+
+    This class implements the common mechanisms for all IEEEP370 de-embedding
+    algorithms. Specific algorithms should inherit this
+    class and override the methods:
+    * :func:`IEEEP370.deembed`
+    * :func:`IEEEP370.split2xthru`
+    
+    Based on [ElSA20]_, [I3E3701]_, [I3E3702]_, [I3E3703]_, and [I3E3704]_.
+
+    References
+    ----------
+    .. [ElSA20] Ellison J, Smith SB, Agili S., "Using a 2x-thru standard to achieve
+        accurate de-embedding of measurements", Microwave Optical Technology
+        Letter, 2020, https://doi.org/10.1002/mop.32098
+    .. [I3E3701] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP3702xThru.m,
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    .. [I3E3702] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    .. [I3E3703] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370Zc2xThru.m
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    .. [I3E3704] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    """
+    def __init__(self, dummies, name=None, *args, **kwargs):
+        r"""
+        IEEEP370 de-embedding Initializer.
+
+        Parameters
+        ----------
+        dummies : list of :class:`~skrf.network.Network` objects
+            Network info of all the dummy structures used in a
+            given de-embedding algorithm.
+
+        name : string
+            Name of this de-embedding instance, like 'open-short-set1'
+            This is for convenience of identification.
+
+        \*args, \*\*kwargs : keyword arguments
+            stored in self.args and self.kwargs, which may be used
+            by sub-classes if needed.
+        """
+        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+
+    @abstractmethod
+    def deembed(self, ntwk):
+        """
+        Apply de-embedding correction to a Network
+        """
+        pass
+
+    @abstractmethod
+    def split2xthru(self):
+        """
+        Determine fixtures models
+        """
+        pass
+
+    @staticmethod
+    def extrapolate_to_dc(ntwk):
+        """
+        Extrapolate the network to DC using IEEE370 NZC algorithm.
+        This is usefull to compare the fixtures and deembedded networks
+        to the input data in the same conditions used by NZC algorithm.
+        If the network already have a DC point, it will be replaced.
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+            Network to be extrapolated to DC
+
+        Returns
+        -------
+        ntwk_dc : :class:`~skrf.network.Network` object
+            Network with DC point
+
+        """
+        name = ntwk.name
+        s = ntwk.s
+        f = ntwk.frequency.f
+        # check for already existing DC point
+        if(f[0] == 0):
+            warnings.warn(
+                "Existing DC point is replaced by extrapolated value.",
+                RuntimeWarning, stacklevel=2
+                )
+            f = f[1:]
+            s = s[1:]
+        # check for bad frequency vector
+        df = f[1] - f[0]
+        tol = 0.1 # allow a tolerance of 0.1 from delta-f to starting f (prevent non-issues from precision)
+        if(np.abs(f[0] - df) > tol):
+            warnings.warn(
+               """Non-uniform frequency vector detected. Consider interpolation.""",
+               RuntimeWarning, stacklevel=2
+               )
+        n_ports = ntwk.number_of_ports
+        z0 = ntwk.z0[0]
+        n = len(f)
+        snew = zeros((n + 1, n_ports, n_ports), dtype = complex)
+        snew[1:,:,:] = s
+        for i in range(n_ports):
+            for j in range(n_ports):
+                if i == j:
+                    snew[0, i, j] = IEEEP370.DC(s[:, i, j], f)
+                else:
+                    snew[0, i, j] = IEEEP370.dc_interp(s[:, i, j], f)
+
+        f = concatenate(([0], f))
+        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew,
+                       z0 = z0, name = name)
+
+    @staticmethod
+    def dc_interp(s, f):
+        """
+        enforces symmetric upon the first 10 points and interpolates the DC
+        point.
+        """
+        sp = s[0:9]
+        fp = f[0:9]
+
+        snp = concatenate((conj(flip(sp)), sp))
+        fnp = concatenate((-1*flip(fp), fp))
+        # mhuser : used cubic instead spline (not implemented)
+        snew = interp1d(fnp, snp, axis=0, kind = 'cubic')
+        return real(snew(0))
+
+    @staticmethod
+    def COM_receiver_noise_filter(f,fr):
+        """
+        receiver filter in COM defined by eq 93A-20
+        As defined in 802.3-2022 - IEEE Standard for Ethernet annex 93A
+        """
+        fdfr = f / fr
+        # eq 93A-20
+        return 1 / (1 - 3.414214 * fdfr**2 + fdfr**4 + 1j*2.613126*(fdfr - fdfr**3))
+
+    @staticmethod
+    def makeStep(impulse):
+        """
+        Make a time-domain step response from an impulse response.
+        """
+        #mhuser : no need to call step function here, cumsum will be enough and efficient
+        #step = np.convolve(np.ones((len(impulse))), impulse)
+        #return step[0:len(impulse)]
+        return np.cumsum(impulse, axis=0)
+
+    @staticmethod
+    def DC(s, f, allowedError = 1e-12):
+        """
+        Advanced reflective DC point extrapolation.
+        """
+        DCpoint = 0.002 # seed for the algorithm
+        err = 1 # error seed
+        cnt = 0
+        df = f[1] - f[0]
+        n = len(f)
+        t = np.linspace(-1/df,1/df,n*2+1)
+        ts = np.argmin(np.abs(t - (-3e-9)))
+        Hr = IEEEP370.COM_receiver_noise_filter(f, f[-1]/2)
+        while(err > allowedError):
+            h1 = IEEEP370.makeStep(
+                fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
+            h2 = IEEEP370.makeStep(
+                fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
+            m = (h2[ts] - h1[ts]) / 0.001
+            b = h1[ts] - m * DCpoint
+            DCpoint = (0 - b) / m
+            err = np.abs(h1[ts] - 0)
+            cnt += 1
+        return DCpoint
+
+
+class IEEEP370_SE_NZC_2xThru(IEEEP370):
     """
     Creates error boxes from a test fixture 2xThru network.
 
@@ -1097,119 +1272,6 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
-    @staticmethod
-    def extrapolate_to_dc(ntwk):
-        """
-        Extrapolate the network to DC using IEEE370 NZC algorithm.
-        This is usefull to compare the fixtures and deembedded networks
-        to the input data in the same conditions used by NZC algorithm.
-        If the network already have a DC point, it will be replaced.
-
-        Parameters
-        ----------
-        ntwk : :class:`~skrf.network.Network` object
-            Network to be extrapolated to DC
-
-        Returns
-        -------
-        ntwk_dc : :class:`~skrf.network.Network` object
-            Network with DC point
-
-        """
-        s = ntwk.s
-        f = ntwk.frequency.f
-        # check for already existing DC point
-        if(f[0] == 0):
-            warnings.warn(
-                "Existing DC point is replaced by extrapolated value.",
-                RuntimeWarning, stacklevel=2
-                )
-            f = f[1:]
-            s = s[1:]
-        # check for bad frequency vector
-        df = f[1] - f[0]
-        tol = 0.1 # allow a tolerance of 0.1 from delta-f to starting f (prevent non-issues from precision)
-        if(np.abs(f[0] - df) > tol):
-            warnings.warn(
-               """Non-uniform frequency vector detected. Consider interpolation.""",
-               RuntimeWarning, stacklevel=2
-               )
-        n_ports = ntwk.number_of_ports
-        z0 = ntwk.z0[0]
-        n = len(f)
-        snew = zeros((n + 1, n_ports, n_ports), dtype = complex)
-        snew[1:,:,:] = s
-        for i in range(n_ports):
-            for j in range(n_ports):
-                if i == j:
-                    snew[0, i, j] = IEEEP370_SE_NZC_2xThru.DC(s[:, i, j], f)
-                else:
-                    snew[0, i, j] = IEEEP370_SE_NZC_2xThru.dc_interp(s[:, i, j], f)
-
-        f = concatenate(([0], f))
-        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
-
-    @staticmethod
-    def dc_interp(s, f):
-        """
-        enforces symmetric upon the first 10 points and interpolates the DC
-        point.
-        """
-        sp = s[0:9]
-        fp = f[0:9]
-
-        snp = concatenate((conj(flip(sp)), sp))
-        fnp = concatenate((-1*flip(fp), fp))
-        # mhuser : used cubic instead spline (not implemented)
-        snew = interp1d(fnp, snp, axis=0, kind = 'cubic')
-        return real(snew(0))
-
-    @staticmethod
-    def COM_receiver_noise_filter(f,fr):
-        """
-        receiver filter in COM defined by eq 93A-20
-        As defined in 802.3-2022 - IEEE Standard for Ethernet annex 93A
-        """
-        fdfr = f / fr
-        # eq 93A-20
-        return 1 / (1 - 3.414214 * fdfr**2 + fdfr**4 + 1j*2.613126*(fdfr - fdfr**3))
-
-    @staticmethod
-    def makeStep(impulse):
-        """
-        Make a time-domain step response from an impulse response.
-        """
-        #mhuser : no need to call step function here, cumsum will be enough and efficient
-        #step = np.convolve(np.ones((len(impulse))), impulse)
-        #return step[0:len(impulse)]
-        return np.cumsum(impulse, axis=0)
-
-    @staticmethod
-    def DC(s, f, allowedError = 1e-12):
-        """
-        Advanced reflective DC point extrapolation.
-        """
-        DCpoint = 0.002 # seed for the algorithm
-        err = 1 # error seed
-        cnt = 0
-        df = f[1] - f[0]
-        n = len(f)
-        t = np.linspace(-1/df,1/df,n*2+1)
-        ts = np.argmin(np.abs(t - (-3e-9)))
-        Hr = IEEEP370_SE_NZC_2xThru.COM_receiver_noise_filter(f, f[-1]/2)
-        while(err > allowedError):
-            h1 = IEEEP370_SE_NZC_2xThru.makeStep(
-                fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
-            h2 = IEEEP370_SE_NZC_2xThru.makeStep(
-                fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
-            m = (h2[ts] - h1[ts]) / 0.001
-            b = h1[ts] - m * DCpoint
-            DCpoint = (0 - b) / m
-            err = np.abs(h1[ts] - 0)
-            cnt += 1
-        return DCpoint
-
-
     def split2xthru(self, s2xthru):
         """
         Perform the fixtures extraction.
@@ -1262,13 +1324,13 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             # get e001 and e002
             # e001
             s21 = s[:, 1, 0]
-            dcs21 = IEEEP370_SE_NZC_2xThru.dc_interp(s21, f)
+            dcs21 = IEEEP370.dc_interp(s21, f)
             t21 = fftshift(irfft(concatenate(([dcs21], s21)), axis=0), axes=0)
             x = np.argmax(t21)
 
-            dcs11 = IEEEP370_SE_NZC_2xThru.DC(s11,f)
+            dcs11 = IEEEP370.DC(s11,f)
             t11 = fftshift(irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
-            step11 = IEEEP370_SE_NZC_2xThru.makeStep(t11)
+            step11 = IEEEP370.makeStep(t11)
             z11 = -self.z0 * (step11 + 1) / (step11 - 1)
 
             if self.forced_z0_line:
@@ -1302,14 +1364,14 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             s12r = sr[:, 0, 1]
             s22r = sr[:, 1, 1]
 
-            dcs11r = IEEEP370_SE_NZC_2xThru.DC(s11r, f)
+            dcs11r = IEEEP370.DC(s11r, f)
             # irfft is equivalent to ifft(makeSymmetric(x))
             t11r = fftshift(irfft(concatenate(([dcs11r], s11r)), axis=0), axes=0)
             t11r[x:] = 0
             e001 = fft(ifftshift(t11r))
             e001 = e001[1:n+1]
 
-            dcs22r = IEEEP370_SE_NZC_2xThru.DC(s22r, f)
+            dcs22r = IEEEP370.DC(s22r, f)
             t22r = fftshift(irfft(concatenate(([dcs22r], s22r)), axis=0), axes=0)
             t22r[x:] = 0
             e002 = fft(ifftshift(t22r))
@@ -1386,12 +1448,12 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
             # dc point was included in the original file
             if flag_DC:
-                e001 = concatenate(([IEEEP370_SE_NZC_2xThru.dc_interp(e001, f)], e001))
-                e01  = concatenate(([IEEEP370_SE_NZC_2xThru.dc_interp(e01, f)], e01))
-                e111 = concatenate(([IEEEP370_SE_NZC_2xThru.dc_interp(e111, f)], e111))
-                e002 = concatenate(([IEEEP370_SE_NZC_2xThru.dc_interp(e002, f)], e002))
-                e10 = concatenate(([IEEEP370_SE_NZC_2xThru.dc_interp(e10, f)], e10))
-                e112 = concatenate(([IEEEP370_SE_NZC_2xThru.dc_interp(e112, f)], e112))
+                e001 = concatenate(([IEEEP370.dc_interp(e001, f)], e001))
+                e01  = concatenate(([IEEEP370.dc_interp(e01, f)], e01))
+                e111 = concatenate(([IEEEP370.dc_interp(e111, f)], e111))
+                e002 = concatenate(([IEEEP370.dc_interp(e002, f)], e002))
+                e10 = concatenate(([IEEEP370.dc_interp(e10, f)], e10))
+                e112 = concatenate(([IEEEP370.dc_interp(e112, f)], e112))
                 f = concatenate(([0], f))
 
             # S-parameters are now setup correctly
@@ -1868,58 +1930,6 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
     @staticmethod
-    def extrapolate_to_dc(ntwk):
-        """
-        Extrapolate the network to DC using IEEE370 NZC algorithm.
-        This is usefull to compare the fixtures and deembedded networks
-        to the input data in the same conditions used by NZC algorithm.
-        If the network already have a DC point, it will be replaced.
-
-        Parameters
-        ----------
-        ntwk : :class:`~skrf.network.Network` object
-            Network to be extrapolated to DC
-
-        Returns
-        -------
-        ntwk_dc : :class:`~skrf.network.Network` object
-            Network with DC point
-
-        """
-        s = ntwk.s
-        f = ntwk.frequency.f
-        # check for already existing DC point
-        if(f[0] == 0):
-            warnings.warn(
-                "Existing DC point is replaced by extrapolated value.",
-                RuntimeWarning, stacklevel=2
-                )
-            f = f[1:]
-            s = s[1:]
-        # check for bad frequency vector
-        df = f[1] - f[0]
-        tol = 0.1 # allow a tolerance of 0.1 from delta-f to starting f (prevent non-issues from precision)
-        if(np.abs(f[0] - df) > tol):
-            warnings.warn(
-               """Non-uniform frequency vector detected. Consider interpolation.""",
-               RuntimeWarning, stacklevel=2
-               )
-        n_ports = ntwk.number_of_ports
-        z0 = ntwk.z0[0]
-        n = len(f)
-        snew = zeros((n + 1, n_ports, n_ports), dtype = complex)
-        snew[1:,:,:] = s
-        for i in range(n_ports):
-            for j in range(n_ports):
-                if i == j:
-                    snew[0, i, j] = IEEEP370_SE_NZC_2xThru.DC(s[:, i, j], f, 1e-10)
-                else:
-                    snew[0, i, j] = IEEEP370_SE_NZC_2xThru.dc_interp(s[:, i, j], f)
-
-        f = concatenate(([0], f))
-        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
-
-    @staticmethod
     def thru(ntwk):
         """
         Create a perfect thru
@@ -1966,10 +1976,10 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         n = len(f)
         snew = zeros((n + 1, 2,2), dtype = complex)
         snew[1:,:,:] = s
-        snew[0, 0, 0] = IEEEP370_SE_NZC_2xThru.dc_interp(s[:, 0, 0], f)
-        snew[0, 0, 1] = IEEEP370_SE_NZC_2xThru.dc_interp(s[:, 0, 1], f)
-        snew[0, 1, 0] = IEEEP370_SE_NZC_2xThru.dc_interp(s[:, 1, 0], f)
-        snew[0, 1, 1] = IEEEP370_SE_NZC_2xThru.dc_interp(s[:, 1, 1], f)
+        snew[0, 0, 0] = IEEEP370.dc_interp(s[:, 0, 0], f)
+        snew[0, 0, 1] = IEEEP370.dc_interp(s[:, 0, 1], f)
+        snew[0, 1, 0] = IEEEP370.dc_interp(s[:, 1, 0], f)
+        snew[0, 1, 1] = IEEEP370.dc_interp(s[:, 1, 1], f)
 
         f = concatenate(([0], f))
         return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
@@ -1995,11 +2005,11 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             Time-domain impedance step response
 
         """
-        DC11 = IEEEP370_SE_NZC_2xThru.DC(s, f, 1e-10)
+        DC11 = IEEEP370.DC(s, f, 1e-10)
         t112x = irfft(concatenate(([DC11], s)))
         #get the step response of t112x. Shift is needed for makeStep to
         #work properly.
-        t112xStep = IEEEP370_SE_NZC_2xThru.makeStep(fftshift(t112x))
+        t112xStep = IEEEP370.makeStep(fftshift(t112x))
         #construct the transmission line
         z = -z0 * (t112xStep + 1) / (t112xStep - 1)
         z = ifftshift(z) #impedance. Shift again to get the first point first.
@@ -2284,7 +2294,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         f = s2x.frequency.f
         n = len(f)
         s212x = s2x.s[:, 1, 0]
-        DC21 = IEEEP370_SE_NZC_2xThru.dc_interp(s212x, f)
+        DC21 = IEEEP370.dc_interp(s212x, f)
         x = np.argmax(irfft(concatenate(([DC21], s212x))))
         self.x_end = x - pullback # index of last TDR point of fixture
         #define relative length
@@ -2359,7 +2369,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         n = len(f)
         s212x = s2x.s[:, 1, 0]
         # extract midpoint of 2x-thru
-        DC21 = IEEEP370_SE_NZC_2xThru.dc_interp(s212x, f)
+        DC21 = IEEEP370.dc_interp(s212x, f)
         x = np.argmax(irfft(concatenate(([DC21], s212x))))
         self.x_end = x - pullback # index of last TDR point of fixture
         #define relative length
