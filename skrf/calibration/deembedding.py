@@ -1118,6 +1118,364 @@ class IEEEP370(Deembedding):
             cnt += 1
         return DCpoint
 
+    @staticmethod
+    def thru(ntwk):
+        """
+        Create a perfect thru
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+               Network from which copy frequency, z0 and other parameters.
+               The S-parameters will be replaced by zero-length matched lossless
+               thru.
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Network of the perfect thru
+
+        """
+        out = ntwk.copy()
+        out.s[:, 0, 0] = 0
+        out.s[:, 1, 0] = 1
+        out.s[:, 0, 1] = 1
+        out.s[:, 1, 1] = 0
+        return out
+
+    @staticmethod
+    def add_dc(ntwk):
+        """
+        Extrapolate a network to DC using interpolation for all S-parameters.
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+               Network to be extrapolated to DC
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Network with DC point
+
+        """
+        s = ntwk.s
+        f = ntwk.frequency.f
+        z0 = ntwk.z0[0]
+        n = len(f)
+        snew = zeros((n + 1, 2,2), dtype = complex)
+        snew[1:,:,:] = s
+        snew[0, 0, 0] = IEEEP370.dc_interp(s[:, 0, 0], f)
+        snew[0, 0, 1] = IEEEP370.dc_interp(s[:, 0, 1], f)
+        snew[0, 1, 0] = IEEEP370.dc_interp(s[:, 1, 0], f)
+        snew[0, 1, 1] = IEEEP370.dc_interp(s[:, 1, 1], f)
+
+        f = concatenate(([0], f))
+        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
+
+    @staticmethod
+    def getz(s, f, z0):
+        """
+        Compute step response to get the time-domain impedance from S-parameters.
+        The S-parameters are DC extrapolated first.
+
+        Parameters
+        ----------
+        s : :array-like
+            1-Port S-parameters array
+        f : :array-like
+            Frequency array for DC extrapolation
+        z0: :array-like
+            Reference impedance
+
+        Returns
+        -------
+        z : :array-like
+            Time-domain impedance step response
+
+        """
+        DC11 = IEEEP370.DC(s, f, 1e-10)
+        t112x = irfft(concatenate(([DC11], s)))
+        #get the step response of t112x. Shift is needed for makeStep to
+        #work properly.
+        t112xStep = IEEEP370.makeStep(fftshift(t112x))
+        #construct the transmission line
+        z = -z0 * (t112xStep + 1) / (t112xStep - 1)
+        z = ifftshift(z) #impedance. Shift again to get the first point first.
+        return z
+
+    @staticmethod
+    def makeTL(zline, z0, gamma, l):
+        """
+        Compute the S-parameters of a transmission line.
+
+        Parameters
+        ----------
+        zline : :number
+                Characteristic impedance
+        z0    : :number
+                Port impedance to renormalize into
+        gamma : :array-like
+                Frequency-dependent propagation constant
+        l    : :number
+                Length in the same length unit as gamma
+
+        Returns
+        -------
+        TL : :array-like
+             S_Parameters of the transmission line
+        """
+        # todo: use DefinedGammaZ0 media instead
+        n = len(gamma)
+        TL = np.zeros((n, 2, 2), dtype = complex)
+        TL[:, 0, 0] = (((zline**2 - z0**2) * np.sinh(gamma * l))
+                       / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l)))
+        TL[:, 1, 0] = (2 * z0 * zline) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
+        TL[:, 0, 1] = (2 * z0 * zline) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
+        TL[:, 1, 1] = (((zline**2 - z0**2) * np.sinh(gamma * l))
+                       / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l)))
+        return TL
+
+    @staticmethod
+    def NRP(ntwk, TD = None, port = None):
+        """
+        Enforce the Nyquist Rate Point.
+        Force the length of the transmissive network to be an integer multiple
+        of half of the wavelength at the highest frequency.
+        If required, a proper delay is added to meet this condition.
+        The function can also be used to remove the delay.
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+               Network to be extrapolated to DC
+        TD   : :array-like
+               If None, the delay will be computed and added.
+               Else, the delay will be removed (to reset the original length).
+        port: :Number
+              Specify to apply NRP only on a single port of the network
+
+        Returns
+        -------
+        TL : :array-like
+             S_Parameters of the transmission line
+        """
+        p = ntwk.s
+        f = ntwk.frequency.f
+        n = len(f)
+        X = ntwk.nports
+        fend = f[-1]
+        if TD is None:
+            TD = np.zeros(X)
+            for i in range(X):
+                theta0 = angle(p[-1, i, i])
+                if theta0 < -np.pi/2:
+                    theta = -np.pi - theta0
+                elif theta0 > np.pi/2:
+                    theta = np.pi - theta0
+                else:
+                    theta = -theta0
+                TD[i] = -theta / (2 * np.pi * fend)
+                pd = np.zeros((n, X, X), dtype = complex)
+                delay = exp(-1j * 2. * np.pi * f * TD[i] / 2.)
+                if i == 0:
+                    pd[:, i + X//2, i] = delay
+                    pd[:, i, i + X//2] = delay
+                    spd = ntwk.copy()
+                    spd.s = pd
+                    out = spd ** ntwk
+                elif i < X//2:
+                    pd[:, i + X//2, i] = delay
+                    pd[:, i, i + X//2] = delay
+                    spd = ntwk.copy()
+                    spd.s = pd
+                    out = spd ** out
+                else:
+                    pd[:, i - X//2, i] = delay
+                    pd[:, i, i - X//2] = delay
+                    spd = ntwk.copy()
+                    spd.s = pd
+                    out = out ** spd
+        else:
+            pd = np.zeros((n, X, X), dtype = complex)
+            if port is not None:
+                i = port
+                delay = exp(1j * 2. * np.pi * f * TD[i] / 2.)
+                if i < X//2:
+                    pd[:, i + X//2, i] = delay
+                    pd[:, i, i + X//2] = delay
+                    spd = ntwk.copy()
+                    spd.s = pd
+                    out = spd ** ntwk
+                else:
+                    pd[:, i - X//2, i] = delay
+                    pd[:, i, i - X//2] = delay
+                    spd = ntwk.copy()
+                    spd.s = pd
+                    out = ntwk ** spd
+            else:
+                for i in range(X):
+                    delay = exp(1j * 2. * np.pi * f * TD[i] / 2)
+                    if i == 0:
+                        pd[:, i + X//2, i] = delay
+                        pd[:, i, i + X//2] = delay
+                        spd = ntwk.copy()
+                        spd.s = pd
+                        out = spd ** ntwk
+                    elif i < X//2:
+                        pd[:, i + X//2, i] = delay
+                        pd[:, i, i + X//2] = delay
+                        spd = ntwk.copy()
+                        spd.s = pd
+                        out = spd ** out
+                    else:
+                        pd[:, i - X//2, i] = delay
+                        pd[:, i, i - X//2] = delay
+                        spd = ntwk.copy()
+                        spd.s = pd
+                        out = out ** spd
+        return out, TD
+
+    @staticmethod
+    def shiftOnePort(ntwk, N, port):
+        """
+        Shift one port of the network of N samples in time-domain.
+        This is achieved by cascading a delay.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be shifted
+        N   : :number
+              Number of point to shift
+        port: :Number
+              Port to be shifted
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Shifted network
+        """
+        f = ntwk.frequency.f
+        n = len(f)
+        X = ntwk.nports
+        Omega0 = np.pi/n
+        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
+        delay = exp(-N * 1j * Omega/2)
+        pd = np.zeros((n, 2, 2), dtype = complex)
+        if port < X//2:
+            pd[:, port, port + X//2] = delay
+            pd[:, port + X//2, port] = delay
+            spd = ntwk.copy()
+            spd.s = pd
+            out = spd ** ntwk
+        else:
+            pd[:, port, port - X//2] = delay
+            pd[:, port - X//2, port] = delay
+            spd = ntwk.copy()
+            spd.s = pd
+            out = ntwk ** spd
+        return out
+
+    @staticmethod
+    def shiftNPoints(ntwk, N):
+        """
+        Shift the whole network of N samples in time-domain.
+        This is achieved by cascading a delay.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be shifted
+        N   : :number
+              Number of point to shift
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Shifted network
+        """
+        f = ntwk.frequency.f
+        n = len(f)
+        X = ntwk.nports
+        Omega0 = np.pi/n
+        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
+        delay = exp(-N * 1j * Omega/2)
+        pd = np.zeros((n, 2, 2), dtype = complex)
+        for port in range(X):
+            if port < X//2:
+                pd[:, port, port + X//2] = delay
+                pd[:, port + X//2, port] = delay
+                spd = ntwk.copy()
+                spd.s = pd
+                p = spd ** ntwk
+            else:
+                pd[:, port, port - X//2] = delay
+                pd[:, port - X//2, port] = delay
+                spd = ntwk.copy()
+                spd.s = pd
+                out = p ** spd
+        return out
+
+    @staticmethod
+    def peelNPointsLossless(ntwk, N, z0):
+        """
+        Peel N points of the network on both side and return the corresponding
+        error boxes.
+        This is done in a lossless way without determination of the propagation
+        constant gamma.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be peeled
+        N     : :number
+                Number of points to peel
+        z0    : :number
+                Reference impedance
+        gamma : :array-like
+                Frequency-dependent propagation constant
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Peeled network
+        out : :class:`~skrf.network.Network` object
+              Error box side port 1
+        out : :class:`~skrf.network.Network` object
+              Error box side port 2
+        """
+        f = ntwk.frequency.f
+        n = len(f)
+        out = ntwk.copy()
+        Omega0 = np.pi/n
+        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
+        betal = 1j * Omega/2
+        for i in range(N):
+            p = out.s
+            #calculate impedance
+            zline1 = IEEEP370.getz(p[:, 0, 0], f, z0)[0]
+            zline2 = IEEEP370.getz(p[:, 1, 1], f, z0)[0]
+            #this is the transmission line to be removed
+            TL1 = IEEEP370.makeTL(zline1, z0, betal, 1)
+            TL2 = IEEEP370.makeTL(zline2, z0, betal, 1)
+            sTL1 = ntwk.copy()
+            sTL1.s = TL1
+            sTL2 = ntwk.copy()
+            sTL2.s = TL2
+            #remove the errorboxes
+            # no need to flip sTL2 because it is symmetrical
+            out = sTL1.inv ** out ** sTL2.inv
+            #capture the errorboxes from side 1 and 2
+            if i == 0:
+                eb1 = sTL1.copy()
+                eb2 = sTL2.copy()
+            else:
+                eb1 = eb1 ** sTL1
+                eb2 = sTL2 ** eb2
+
+        return out, eb1, eb2
+
 
 class IEEEP370_SE_NZC_2xThru(IEEEP370):
     """
@@ -1240,7 +1598,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         self.forced_z0_line = forced_z0_line
         self.verbose = verbose
 
-        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+        IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru)
 
     def deembed(self, ntwk):
@@ -1761,7 +2119,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370_SE_NZC_2xThru):
         return (se_side1, se_side2)
 
 
-class IEEEP370_SE_ZC_2xThru(Deembedding):
+class IEEEP370_SE_ZC_2xThru(IEEEP370):
     """
     Creates error boxes from 2x-Thru and FIX-DUT-FIX networks.
 
@@ -1895,7 +2253,7 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         self.z_side1 = None
         self.z_side2 = None
 
-        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+        IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru.copy(),
                                                       self.sfix_dut_fix)
 
@@ -1929,363 +2287,6 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
-    @staticmethod
-    def thru(ntwk):
-        """
-        Create a perfect thru
-
-        Parameters
-        ----------
-        ntwk : :class:`~skrf.network.Network` object
-               Network from which copy frequency, z0 and other parameters.
-               The S-parameters will be replaced by zero-length matched lossless
-               thru.
-
-        Returns
-        -------
-        out : :class:`~skrf.network.Network` object
-              Network of the perfect thru
-
-        """
-        out = ntwk.copy()
-        out.s[:, 0, 0] = 0
-        out.s[:, 1, 0] = 1
-        out.s[:, 0, 1] = 1
-        out.s[:, 1, 1] = 0
-        return out
-
-    @staticmethod
-    def add_dc(ntwk):
-        """
-        Extrapolate a network to DC using interpolation for all S-parameters.
-
-        Parameters
-        ----------
-        ntwk : :class:`~skrf.network.Network` object
-               Network to be extrapolated to DC
-
-        Returns
-        -------
-        out : :class:`~skrf.network.Network` object
-              Network with DC point
-
-        """
-        s = ntwk.s
-        f = ntwk.frequency.f
-        z0 = ntwk.z0[0]
-        n = len(f)
-        snew = zeros((n + 1, 2,2), dtype = complex)
-        snew[1:,:,:] = s
-        snew[0, 0, 0] = IEEEP370.dc_interp(s[:, 0, 0], f)
-        snew[0, 0, 1] = IEEEP370.dc_interp(s[:, 0, 1], f)
-        snew[0, 1, 0] = IEEEP370.dc_interp(s[:, 1, 0], f)
-        snew[0, 1, 1] = IEEEP370.dc_interp(s[:, 1, 1], f)
-
-        f = concatenate(([0], f))
-        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
-
-    @staticmethod
-    def getz(s, f, z0):
-        """
-        Compute step response to get the time-domain impedance from S-parameters.
-        The S-parameters are DC extrapolated first.
-
-        Parameters
-        ----------
-        s : :array-like
-            1-Port S-parameters array
-        f : :array-like
-            Frequency array for DC extrapolation
-        z0: :array-like
-            Reference impedance
-
-        Returns
-        -------
-        z : :array-like
-            Time-domain impedance step response
-
-        """
-        DC11 = IEEEP370.DC(s, f, 1e-10)
-        t112x = irfft(concatenate(([DC11], s)))
-        #get the step response of t112x. Shift is needed for makeStep to
-        #work properly.
-        t112xStep = IEEEP370.makeStep(fftshift(t112x))
-        #construct the transmission line
-        z = -z0 * (t112xStep + 1) / (t112xStep - 1)
-        z = ifftshift(z) #impedance. Shift again to get the first point first.
-        return z
-
-    @staticmethod
-    def makeTL(zline, z0, gamma, l):
-        """
-        Compute the S-parameters of a transmission line.
-
-        Parameters
-        ----------
-        zline : :number
-                Characteristic impedance
-        z0    : :number
-                Port impedance to renormalize into
-        gamma : :array-like
-                Frequency-dependent propagation constant
-        l    : :number
-                Length in the same length unit as gamma
-
-        Returns
-        -------
-        TL : :array-like
-             S_Parameters of the transmission line
-        """
-        # todo: use DefinedGammaZ0 media instead
-        n = len(gamma)
-        TL = np.zeros((n, 2, 2), dtype = complex)
-        TL[:, 0, 0] = (((zline**2 - z0**2) * np.sinh(gamma * l))
-                       / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l)))
-        TL[:, 1, 0] = (2 * z0 * zline) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
-        TL[:, 0, 1] = (2 * z0 * zline) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
-        TL[:, 1, 1] = (((zline**2 - z0**2) * np.sinh(gamma * l))
-                       / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l)))
-        return TL
-
-    @staticmethod
-    def NRP(ntwk, TD = None, port = None):
-        """
-        Enforce the Nyquist Rate Point.
-        Force the length of the transmissive network to be an integer multiple
-        of half of the wavelength at the highest frequency.
-        If required, a proper delay is added to meet this condition.
-        The function can also be used to remove the delay.
-
-        Parameters
-        ----------
-        ntwk : :class:`~skrf.network.Network` object
-               Network to be extrapolated to DC
-        TD   : :array-like
-               If None, the delay will be computed and added.
-               Else, the delay will be removed (to reset the original length).
-        port: :Number
-              Specify to apply NRP only on a single port of the network
-
-        Returns
-        -------
-        TL : :array-like
-             S_Parameters of the transmission line
-        """
-        p = ntwk.s
-        f = ntwk.frequency.f
-        n = len(f)
-        X = ntwk.nports
-        fend = f[-1]
-        if TD is None:
-            TD = np.zeros(X)
-            for i in range(X):
-                theta0 = angle(p[-1, i, i])
-                if theta0 < -np.pi/2:
-                    theta = -np.pi - theta0
-                elif theta0 > np.pi/2:
-                    theta = np.pi - theta0
-                else:
-                    theta = -theta0
-                TD[i] = -theta / (2 * np.pi * fend)
-                pd = np.zeros((n, X, X), dtype = complex)
-                delay = exp(-1j * 2. * np.pi * f * TD[i] / 2.)
-                if i == 0:
-                    pd[:, i + X//2, i] = delay
-                    pd[:, i, i + X//2] = delay
-                    spd = ntwk.copy()
-                    spd.s = pd
-                    out = spd ** ntwk
-                elif i < X//2:
-                    pd[:, i + X//2, i] = delay
-                    pd[:, i, i + X//2] = delay
-                    spd = ntwk.copy()
-                    spd.s = pd
-                    out = spd ** out
-                else:
-                    pd[:, i - X//2, i] = delay
-                    pd[:, i, i - X//2] = delay
-                    spd = ntwk.copy()
-                    spd.s = pd
-                    out = out ** spd
-        else:
-            pd = np.zeros((n, X, X), dtype = complex)
-            if port is not None:
-                i = port
-                delay = exp(1j * 2. * np.pi * f * TD[i] / 2.)
-                if i < X//2:
-                    pd[:, i + X//2, i] = delay
-                    pd[:, i, i + X//2] = delay
-                    spd = ntwk.copy()
-                    spd.s = pd
-                    out = spd ** ntwk
-                else:
-                    pd[:, i - X//2, i] = delay
-                    pd[:, i, i - X//2] = delay
-                    spd = ntwk.copy()
-                    spd.s = pd
-                    out = ntwk ** spd
-            else:
-                for i in range(X):
-                    delay = exp(1j * 2. * np.pi * f * TD[i] / 2)
-                    if i == 0:
-                        pd[:, i + X//2, i] = delay
-                        pd[:, i, i + X//2] = delay
-                        spd = ntwk.copy()
-                        spd.s = pd
-                        out = spd ** ntwk
-                    elif i < X//2:
-                        pd[:, i + X//2, i] = delay
-                        pd[:, i, i + X//2] = delay
-                        spd = ntwk.copy()
-                        spd.s = pd
-                        out = spd ** out
-                    else:
-                        pd[:, i - X//2, i] = delay
-                        pd[:, i, i - X//2] = delay
-                        spd = ntwk.copy()
-                        spd.s = pd
-                        out = out ** spd
-        return out, TD
-
-    @staticmethod
-    def shiftOnePort(ntwk, N, port):
-        """
-        Shift one port of the network of N samples in time-domain.
-        This is achieved by cascading a delay.
-
-        Parameters
-        ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Network to be shifted
-        N   : :number
-              Number of point to shift
-        port: :Number
-              Port to be shifted
-
-        Returns
-        -------
-        out : :class:`~skrf.network.Network` object
-              Shifted network
-        """
-        f = ntwk.frequency.f
-        n = len(f)
-        X = ntwk.nports
-        Omega0 = np.pi/n
-        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
-        delay = exp(-N * 1j * Omega/2)
-        pd = np.zeros((n, 2, 2), dtype = complex)
-        if port < X//2:
-            pd[:, port, port + X//2] = delay
-            pd[:, port + X//2, port] = delay
-            spd = ntwk.copy()
-            spd.s = pd
-            out = spd ** ntwk
-        else:
-            pd[:, port, port - X//2] = delay
-            pd[:, port - X//2, port] = delay
-            spd = ntwk.copy()
-            spd.s = pd
-            out = ntwk ** spd
-        return out
-
-    @staticmethod
-    def shiftNPoints(ntwk, N):
-        """
-        Shift the whole network of N samples in time-domain.
-        This is achieved by cascading a delay.
-
-        Parameters
-        ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Network to be shifted
-        N   : :number
-              Number of point to shift
-
-        Returns
-        -------
-        out : :class:`~skrf.network.Network` object
-              Shifted network
-        """
-        f = ntwk.frequency.f
-        n = len(f)
-        X = ntwk.nports
-        Omega0 = np.pi/n
-        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
-        delay = exp(-N * 1j * Omega/2)
-        pd = np.zeros((n, 2, 2), dtype = complex)
-        for port in range(X):
-            if port < X//2:
-                pd[:, port, port + X//2] = delay
-                pd[:, port + X//2, port] = delay
-                spd = ntwk.copy()
-                spd.s = pd
-                p = spd ** ntwk
-            else:
-                pd[:, port, port - X//2] = delay
-                pd[:, port - X//2, port] = delay
-                spd = ntwk.copy()
-                spd.s = pd
-                out = p ** spd
-        return out
-
-    @staticmethod
-    def peelNPointsLossless(ntwk, N, z0):
-        """
-        Peel N points of the network on both side and return the corresponding
-        error boxes.
-        This is done in a lossless way without determination of the propagation
-        constant gamma.
-
-        Parameters
-        ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Network to be peeled
-        N     : :number
-                Number of points to peel
-        z0    : :number
-                Reference impedance
-        gamma : :array-like
-                Frequency-dependent propagation constant
-
-        Returns
-        -------
-        out : :class:`~skrf.network.Network` object
-              Peeled network
-        out : :class:`~skrf.network.Network` object
-              Error box side port 1
-        out : :class:`~skrf.network.Network` object
-              Error box side port 2
-        """
-        f = ntwk.frequency.f
-        n = len(f)
-        out = ntwk.copy()
-        Omega0 = np.pi/n
-        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
-        betal = 1j * Omega/2
-        for i in range(N):
-            p = out.s
-            #calculate impedance
-            zline1 = IEEEP370_SE_ZC_2xThru.getz(p[:, 0, 0], f, z0)[0]
-            zline2 = IEEEP370_SE_ZC_2xThru.getz(p[:, 1, 1], f, z0)[0]
-            #this is the transmission line to be removed
-            TL1 = IEEEP370_SE_ZC_2xThru.makeTL(zline1, z0, betal, 1)
-            TL2 = IEEEP370_SE_ZC_2xThru.makeTL(zline2, z0, betal, 1)
-            sTL1 = ntwk.copy()
-            sTL1.s = TL1
-            sTL2 = ntwk.copy()
-            sTL2.s = TL2
-            #remove the errorboxes
-            # no need to flip sTL2 because it is symmetrical
-            out = sTL1.inv ** out ** sTL2.inv
-            #capture the errorboxes from side 1 and 2
-            if i == 0:
-                eb1 = sTL1.copy()
-                eb2 = sTL2.copy()
-            else:
-                eb1 = eb1 ** sTL1
-                eb2 = sTL2 ** eb2
-
-        return out, eb1, eb2
 
     def makeErrorBox_v7(self, s_dut, s2x, gamma, z0, pullback):
         """
