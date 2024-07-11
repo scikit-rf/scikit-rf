@@ -953,7 +953,7 @@ class IEEEP370(Deembedding):
     class and override the methods:
     * :func:`IEEEP370.deembed`
     * :func:`IEEEP370.split2xthru`
-    
+
     Based on [ElSA20]_, [I3E3701]_, [I3E3702]_, [I3E3703]_, and [I3E3704]_.
 
     References
