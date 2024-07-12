@@ -1241,7 +1241,7 @@ class IEEEP370(Deembedding):
         """
         Enforce the Nyquist Rate Point.
         Force the length of the transmissive network to be an integer multiple
-        of half of the wavelength at the highest frequency.
+        of the wavelength at the highest frequency.
         If required, a proper delay is added to meet this condition.
         The function can also be used to remove the delay.
 
@@ -1275,6 +1275,7 @@ class IEEEP370(Deembedding):
                     theta = np.pi - theta0
                 else:
                     theta = -theta0
+            
                 TD[i] = -theta / (2 * np.pi * fend)
                 pd = np.zeros((n, X, X), dtype = complex)
                 delay = exp(-1j * 2. * np.pi * f * TD[i] / 2.)
@@ -1697,7 +1698,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
                 z11x = z11[x]
 
             if self.verbose:
-                fig, (ax1, ax2) = subplots(2,1)
+                fig, (ax1, ax2) = subplots(2,1, sharex = True)
                 fig.suptitle('Midpoint length and impedance determination')
                 ax1.plot(t21, label = 't21')
                 ax1.plot([x], [t21[x]], marker = 'o', linestyle = 'none',
