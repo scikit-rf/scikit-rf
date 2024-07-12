@@ -2820,6 +2820,11 @@ class Network:
         f = self.frequency.f
         f_new = new_frequency.f
 
+        # Pre-cropped the frequency
+        l_idx = max(np.searchsorted(f, f_new[0], side="left") - 1, 0)
+        r_idx = min(np.searchsorted(f, f_new[-1], side="right") + 1, len(f))
+        f_cropped = f[l_idx:r_idx]
+
         # interpolate z0  ( this must happen first, because its needed
         # to compute the basis transform below (like y2s), if basis!='s')
         if np.all(self.z0 == self.z0[0]):
@@ -2828,17 +2833,18 @@ class Network:
             z0_shape[0] = len(f_new)
             result._z0 = np.ones(z0_shape) * self.z0[0]
         else:
-            result._z0 = f_interp(f, self.z0, axis=0, **kwargs)(f_new)
+            result._z0 = f_interp(f_cropped, self.z0[l_idx:r_idx], axis=0, **kwargs)(f_new)
 
-        # interpolate  parameter for a given basis
-        x = getattr(self, basis)
+        # interpolate parameter for a given basis
+        x: np.ndarray = getattr(self, basis)
+        x_cropped = x[l_idx:r_idx]
         if coords == 'cart':
-            x_new = f_interp(f, x, axis=0, **kwargs)(f_new)
+            x_new = f_interp(f_cropped, x_cropped, axis=0, **kwargs)(f_new)
         elif coords == 'polar':
-            rad = np.unwrap(np.angle(x), axis=0)
-            mag = np.abs(x)
-            interp_rad = f_interp(f, rad, axis=0, **kwargs)
-            interp_mag = f_interp(f, mag, axis=0, **kwargs)
+            rad = np.unwrap(np.angle(x_cropped), axis=0)
+            mag = np.abs(x_cropped)
+            interp_rad = f_interp(f_cropped, rad, axis=0, **kwargs)
+            interp_mag = f_interp(f_cropped, mag, axis=0, **kwargs)
             x_new = interp_mag(f_new) * np.exp(1j * interp_rad(f_new))
         else:
             raise ValueError(f'Unknown coords {coords}')
