@@ -1859,7 +1859,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
         return (s_side1, s_side2)
 
-class IEEEP370_MM_NZC_2xThru(IEEEP370_SE_NZC_2xThru):
+class IEEEP370_MM_NZC_2xThru(IEEEP370):
     """
     Creates error boxes from a 4-port test fixture 2xThru.
 
@@ -2016,13 +2016,16 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370_SE_NZC_2xThru):
         :func:`Deembedding.__init__`
 
         """
+        self.s2xthru = dummy_2xthru.copy()
+        self.z0 = z0
         self.port_order = port_order
+        dummies = [self.s2xthru]
+        self.use_z_instead_ifft = use_z_instead_ifft
+        self.verbose = verbose
         self.forced_z0_line_dd = forced_z0_line_dd
         self.forced_z0_line_cc = forced_z0_line_cc
 
-        IEEEP370_SE_NZC_2xThru.__init__(self, dummy_2xthru, name=name,
-                     z0 = z0, use_z_instead_ifft = use_z_instead_ifft,
-                     verbose = verbose)
+        IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru)
 
     def deembed(self, ntwk):
@@ -2305,13 +2308,13 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         s11dut = s_dut.s[:, 0, 0]
         s22dut = s_dut.s[:, 1, 1]
         if self.verbose:
-            z1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
-            z2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
+            z1 = IEEEP370.getz(s11dut, f, z0)
+            z2 = IEEEP370.getz(s22dut, f, z0)
         #peel the fixture away and create the fixture model
         #python range to n-1, thus 1 to be added to have proper iteration number
         for i in range(self.x_end + 1):
-            zline1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)[0]
-            zline2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)[0]
+            zline1 = IEEEP370.getz(s11dut, f, z0)[0]
+            zline2 = IEEEP370.getz(s22dut, f, z0)[0]
             TL1 = self.makeTL(zline1,z0,gamma,l)
             TL2 = self.makeTL(zline2,z0,gamma,l)
             sTL1 = s_dut.copy()
@@ -2340,11 +2343,11 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
             s22dut = s_dut.s[:, 1, 1]
             # store fixture z for debug
             if(i == self.x_end):
-                self.z_side1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
-                self.z_side2 = IEEEP370_SE_ZC_2xThru.getz(errorbox2.s[:, 0, 0], f, z0)
+                self.z_side1 = IEEEP370.getz(errorbox1.s[:, 0, 0], f, z0)
+                self.z_side2 = IEEEP370.getz(errorbox2.s[:, 0, 0], f, z0)
         if self.verbose:
-            zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
-            zdut2 = IEEEP370_SE_ZC_2xThru.getz(s22dut, f, z0)
+            zdut1 = IEEEP370.getz(s11dut, f, z0)
+            zdut2 = IEEEP370.getz(s22dut, f, z0)
             fig, axs = subplots(1, 2, sharex = True, figsize=(2*6.4, 4.8))
             axs[0].plot(ifftshift(zdut1), label = 'DUT')
             axs[0].plot(ifftshift(self.z_side1), label = 'FIX-1')
@@ -2379,11 +2382,11 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         #define the reflections to be mimicked
         s11dut = s_dut.s[:, 0, 0]
         if self.verbose:
-            z1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
+            z1 = IEEEP370.getz(s11dut, f, z0)
         #peel the fixture away and create the fixture model
         #python range to n-1, thus 1 to be added to have proper iteration number
         for i in range(self.x_end + 1):
-            zline1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)[0]
+            zline1 = IEEEP370.getz(s11dut, f, z0)[0]
             TL1 = self.makeTL(zline1,z0,gamma,l)
             sTL1 = s_dut.copy()
             sTL1.s = TL1
@@ -2396,9 +2399,9 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
             s11dut = s_dut.s[:, 0, 0]
             # store fixture z for debug
             if(i == self.x_end):
-                self.z_side1 = IEEEP370_SE_ZC_2xThru.getz(errorbox1.s[:, 0, 0], f, z0)
+                self.z_side1 = IEEEP370.getz(errorbox1.s[:, 0, 0], f, z0)
         if self.verbose:
-            zdut1 = IEEEP370_SE_ZC_2xThru.getz(s11dut, f, z0)
+            zdut1 = IEEEP370.getz(s11dut, f, z0)
             fig, axs = subplots(1, 1, sharex = True, figsize=(6.4, 4.8))
             axs.plot(ifftshift(zdut1), label = 'DUT')
             axs[0].plot(ifftshift(self.z_side), label = 'FIX')
@@ -2462,16 +2465,16 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
         # enforce Nyquist rate point
         if self.NRP_enable:
-            sfix_dut_fix, TD = IEEEP370_SE_ZC_2xThru.NRP(sfix_dut_fix)
-            s2xthru, _ = IEEEP370_SE_ZC_2xThru.NRP(s2xthru, -TD)
+            sfix_dut_fix, TD = IEEEP370.NRP(sfix_dut_fix)
+            s2xthru, _ = IEEEP370.NRP(s2xthru, -TD)
 
         # remove lead-in points
         if self.leadin > 0:
-            _, temp1, temp2 = IEEEP370_SE_ZC_2xThru.peelNPointsLossless(
-                IEEEP370_SE_ZC_2xThru.shiftNPoints(sfix_dut_fix, self.leadin), self.leadin,
+            _, temp1, temp2 = IEEEP370.peelNPointsLossless(
+                IEEEP370.shiftNPoints(sfix_dut_fix, self.leadin), self.leadin,
                 z0 = self.z0)
-            leadin1 = IEEEP370_SE_ZC_2xThru.shiftOnePort(temp1, -self.leadin, 0)
-            leadin2 = IEEEP370_SE_ZC_2xThru.shiftOnePort(temp2, -self.leadin, 1)
+            leadin1 = IEEEP370.shiftOnePort(temp1, -self.leadin, 0)
+            leadin2 = IEEEP370.shiftOnePort(temp2, -self.leadin, 1)
 
         # calculate gamma
         #grabbing s21
@@ -2515,8 +2518,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
         # extract error boxes
         # make the both error box
-        s_side1 = IEEEP370_SE_ZC_2xThru.thru(sfix_dut_fix)
-        s_side2 = IEEEP370_SE_ZC_2xThru.thru(sfix_dut_fix)
+        s_side1 = IEEEP370.thru(sfix_dut_fix)
+        s_side2 = IEEEP370.thru(sfix_dut_fix)
 
         # In the implementation, FIX-2 is flipped.
         # This does not met IEEEP370 numbering recommandation but is left as
@@ -2555,8 +2558,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
         # add DC back in
         if self.flag_DC:
-            s_side1 = IEEEP370_SE_ZC_2xThru.add_dc(s_side1)
-            s_side2 = IEEEP370_SE_ZC_2xThru.add_dc(s_side2)
+            s_side1 = IEEEP370.add_dc(s_side1)
+            s_side2 = IEEEP370.add_dc(s_side2)
 
         # remove lead in
         if self.leadin > 0:
@@ -2565,14 +2568,14 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
         # if Nyquist Rate Point enforcement is enabled
         if self.NRP_enable:
-            s_side1, _ = IEEEP370_SE_ZC_2xThru.NRP(s_side1, TD, 0)
-            s_side2, _ = IEEEP370_SE_ZC_2xThru.NRP(s_side2, TD, 1)
+            s_side1, _ = IEEEP370.NRP(s_side1, TD, 0)
+            s_side2, _ = IEEEP370.NRP(s_side2, TD, 1)
 
         # unflip FIX-2 as per IEEEP370 numbering recommandation
         return (s_side1, s_side2.flipped())
 
 
-class IEEEP370_MM_ZC_2xThru(IEEEP370_SE_ZC_2xThru):
+class IEEEP370_MM_ZC_2xThru(IEEEP370):
     """
     Creates error boxes from a 4-port from 2x-Thru and FIX-DUT-FIX networks.
 
@@ -2725,7 +2728,22 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370_SE_ZC_2xThru):
         :func:`Deembedding.__init__`
 
         """
+        self.s2xthru = dummy_2xthru.copy()
+        self.sfix_dut_fix = dummy_fix_dut_fix.copy()
+        dummies = [self.s2xthru]
+        self.z0 = z0
         self.port_order = port_order
+        self.bandwidth_limit = bandwidth_limit
+        self.pullback1 = pullback1
+        self.pullback2 = pullback2
+        self.side1 = side1
+        self.side2 = side2
+        self.NRP_enable = NRP_enable
+        self.leadin = leadin
+        self.verbose = verbose
+        self.flag_DC = False
+        self.flag_df = False
+
         # debug outputs
         self.gamma_dd = None
         self.x_end_dd = None
@@ -2736,13 +2754,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370_SE_ZC_2xThru):
         self.z_side1_cc = None
         self.z_side2_cc = None
 
-        IEEEP370_SE_ZC_2xThru.__init__(self, dummy_2xthru, dummy_fix_dut_fix,
-                     name = name,
-                     z0 = z0, bandwidth_limit = bandwidth_limit,
-                     pullback1 = pullback1, pullback2 = pullback2,
-                     side1 = side1, side2 = side2,
-                     NRP_enable = NRP_enable, leadin = leadin,
-                     verbose = verbose)
+        IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru,
                                                         self.sfix_dut_fix)
 
