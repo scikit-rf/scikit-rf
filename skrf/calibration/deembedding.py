@@ -1275,7 +1275,7 @@ class IEEEP370(Deembedding):
                     theta = np.pi - theta0
                 else:
                     theta = -theta0
-            
+
                 TD[i] = -theta / (2 * np.pi * fend)
                 pd = np.zeros((n, X, X), dtype = complex)
                 delay = exp(-1j * 2. * np.pi * f * TD[i] / 2.)
