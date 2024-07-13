@@ -931,6 +931,7 @@ class Circuit:
         ntw.frequency = self.frequency
         ntw.z0 = self.port_z0
         ntw.s = self.s_external
+        ntw.port_modes = np.array(["S"] * ntw.nports)
         ntw.name = self.name
         return ntw
 
