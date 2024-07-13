@@ -4735,13 +4735,6 @@ class Network:
                     kwargs['label'] = rfplt._get_label_str(self, attribute[0].upper(), m, n)
 
                 if conversion in ["time_impulse", "time_step"]:
-                    if hasattr(self, 'port_modes'):
-                        if(self.port_modes[m] != 'S' or self.port_modes[n] != 'S'):
-                            prefix = attribute[0].upper() \
-                                + self.port_modes[m].lower() \
-                                + self.port_modes[n].lower()
-                            kwargs['label'] = rfplt._get_label_str(self, prefix, m, n)
-
                     rfplt.plot_rectangular(x=x * 1e9,
                                         y=y[:, m, n],
                                         x_label=xlabel,
@@ -4824,8 +4817,12 @@ class Network:
 
     def _fmt_trace_name(self, m: int, n: int) -> str:
         port_sep = "_" if self.nports > 9 else ""
+        prefix = ""
+        if hasattr(self, 'port_modes'):
+            if(self.port_modes[m] != 'S' or self.port_modes[n] != 'S'):
+                prefix = f"{self.port_modes[m].lower()}{self.port_modes[n].lower()}"
 
-        return f"{m + 1}{port_sep}{n + 1}"
+        return f"{prefix}{m + 1}{port_sep}{n + 1}"
 
 
 for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
