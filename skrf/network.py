@@ -2409,7 +2409,8 @@ class Network:
             # exactly this format, to work
             # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
             if write_z0:
-                output.write('!Data is not renormalized\n')
+                output.write('! Data is not renormalized\n')
+                output.write(f'! S-parameter uses the {self.s_def} definition\n')
                 output.write(f'# {ntwk.frequency.unit} S {form} R\n')
             else:
                 # Write "r_ref.real" instead of "r_ref", so we get a real number "a" instead
