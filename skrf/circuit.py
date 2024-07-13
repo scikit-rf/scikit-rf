@@ -927,13 +927,8 @@ class Circuit:
         ntw : :class:`~skrf.network.Network`
             Network associated to external ports
         """
-        ntw = Network()
-        ntw.frequency = self.frequency
-        ntw.z0 = self.port_z0
-        ntw.s = self.s_external
-        ntw.name = self.name
-        return ntw
-
+        return Network(frequency = self.frequency, z0 = self.port_z0,
+                      s = self.s_external, name = self.name)
 
     def s_active(self, a: NumberLike) -> np.ndarray:
         r"""
