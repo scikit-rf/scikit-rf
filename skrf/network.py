@@ -4708,6 +4708,24 @@ class Network:
         else:
             gen_label = False
 
+        if conversion in ["time_impulse", "time_step"]:
+            xlabel = "Time (ns)"
+            
+            t_func_kwargs = {"squeeze": False}
+            for key in {"window", "n", "pad", "bandpass"} & kwargs.keys():
+                t_func_kwargs[key] = kwargs.pop(key)
+
+            if conversion == "time_impulse":
+                x, y = self.impulse_response(**t_func_kwargs)
+            else:
+                x, y = self.step_response(**t_func_kwargs)
+
+            if attribute[0].lower() == "z":
+                y_label = "Z (Ohm)"
+                y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
+                y[x == -1.] = -1. + 1e-12  # solve numerical singularity
+                y = self.z0[0].real * (1+y) / (1-y)
+
         for m in M:
             for n in N:
                 # set the legend label for this trace to the networks
@@ -4717,22 +4735,12 @@ class Network:
                     kwargs['label'] = rfplt._get_label_str(self, attribute[0].upper(), m, n)
 
                 if conversion in ["time_impulse", "time_step"]:
-                    xlabel = "Time (ns)"
-
-                    t_func_kwargs = {"squeeze": False}
-                    for key in {"window", "n", "pad", "bandpass"} & kwargs.keys():
-                        t_func_kwargs[key] = kwargs.pop(key)
-
-                    if conversion == "time_impulse":
-                        x, y = self.impulse_response(**t_func_kwargs)
-                    else:
-                        x, y = self.step_response(**t_func_kwargs)
-
-                    if attribute[0].lower() == "z":
-                        y_label = "Z (Ohm)"
-                        y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
-                        y[x == -1.] = -1. + 1e-12  # solve numerical singularity
-                        y = self.z0[0].real * (1+y) / (1-y)
+                    if hasattr(self, 'port_modes'):
+                        if(self.port_modes[m] != 'S' or self.port_modes[n] != 'S'):
+                            prefix = attribute[0].upper() \
+                                + self.port_modes[m].lower() \
+                                + self.port_modes[n].lower()
+                            kwargs['label'] = rfplt._get_label_str(self, prefix, m, n)
 
                     rfplt.plot_rectangular(x=x * 1e9,
                                         y=y[:, m, n],
