@@ -4819,7 +4819,7 @@ class Network:
         port_sep = "_" if self.nports > 9 else ""
         prefix = ""
         if hasattr(self, 'port_modes'):
-            if(len(self.port_modes) >= m and len(self.port_modes) >= n):
+            if len(self.port_modes) == self.nports:
                 if(self.port_modes[m] != 'S' or self.port_modes[n] != 'S'):
                     prefix = f"{self.port_modes[m].lower()}{self.port_modes[n].lower()}"
 
