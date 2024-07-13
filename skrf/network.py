@@ -4732,7 +4732,7 @@ class Network:
                         y_label = "Z (Ohm)"
                         y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
                         y[x == -1.] = -1. + 1e-12  # solve numerical singularity
-                        y = self.z0[0,0].real * (1+y) / (1-y)
+                        y = self.z0[0].real * (1+y) / (1-y)
 
                     rfplt.plot_rectangular(x=x * 1e9,
                                         y=y[:, m, n],
