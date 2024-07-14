@@ -416,6 +416,7 @@ class Network:
         self.noise = None
         self.noise_freq = None
         self._z0 = np.array(50, dtype=complex)
+        self.port_modes = np.array([])
         self._ext_attrs = {}
 
         if s_def not in S_DEFINITIONS and s_def is not None:
