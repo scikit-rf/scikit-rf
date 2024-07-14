@@ -4820,11 +4820,9 @@ class Network:
 
     def _fmt_trace_name(self, m: int, n: int) -> str:
         port_sep = "_" if self.nports > 9 else ""
-        subscript = ""
-        if hasattr(self, 'port_modes'):
-            subscript = f"{self.port_modes[m].lower()}{self.port_modes[n].lower()}"
-            # do not add subscript for single-ended to single-ended
-            subscript = "" if subscript == "ss" else subscript
+        subscript = f"{self.port_modes[m].lower()}{self.port_modes[n].lower()}"
+        # do not add subscript for single-ended to single-ended
+        subscript = "" if subscript == "ss" else subscript
 
         return f"{subscript}{m + 1}{port_sep}{n + 1}"
 
@@ -5762,8 +5760,7 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
     # keep requested rows and columns of the s-matrix. ports can be not contiguous
     subntwk.s = ntwk.s[np.ix_(np.arange(ntwk.s.shape[0]), ports, ports)]
     # keep port_modes
-    if hasattr(ntwk, 'port_modes'):
-        subntwk.port_modes = [ntwk.port_modes[idx] for idx in ports]
+    subntwk.port_modes = [ntwk.port_modes[idx] for idx in ports]
     # keep port_names
     if ntwk.port_names:
         subntwk.port_names = [ntwk.port_names[idx] for idx in ports]
