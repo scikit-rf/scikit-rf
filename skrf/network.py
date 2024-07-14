@@ -999,6 +999,9 @@ class Network:
         if self.z0.ndim == 0:
             self.z0 = self.z0
 
+        if len(self.port_modes) != self.nports:
+            self.ports_modes = np.array(["S"] * self.nports)
+
     @property
     def s_traveling(self) -> np.ndarray:
         """
@@ -4817,13 +4820,13 @@ class Network:
 
     def _fmt_trace_name(self, m: int, n: int) -> str:
         port_sep = "_" if self.nports > 9 else ""
-        prefix = ""
+        subscript = ""
         if hasattr(self, 'port_modes'):
-            if len(self.port_modes) == self.nports:
-                if(self.port_modes[m] != 'S' or self.port_modes[n] != 'S'):
-                    prefix = f"{self.port_modes[m].lower()}{self.port_modes[n].lower()}"
+            subscript = f"{self.port_modes[m].lower()}{self.port_modes[n].lower()}"
+            # do not add subscript for single-ended to single-ended
+            subscript = "" if subscript == "ss" else subscript
 
-        return f"{prefix}{m + 1}{port_sep}{n + 1}"
+        return f"{subscript}{m + 1}{port_sep}{n + 1}"
 
 
 for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
