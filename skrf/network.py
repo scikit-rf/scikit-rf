@@ -1000,7 +1000,7 @@ class Network:
             self.z0 = self.z0
 
         if len(self.port_modes) != self.nports:
-            self.ports_modes = np.array(["S"] * self.nports)
+            self.port_modes = np.array(["S"] * self.nports)
 
     @property
     def s_traveling(self) -> np.ndarray:
