@@ -416,7 +416,7 @@ class Network:
         self.noise = None
         self.noise_freq = None
         self._z0 = np.array(50, dtype=complex)
-        self.port_modes = np.array([])
+        self._port_modes = np.array([])
         self._ext_attrs = {}
 
         if s_def not in S_DEFINITIONS and s_def is not None:
@@ -1582,6 +1582,30 @@ class Network:
 
         """
         return self.number_of_ports
+
+    @property
+    def port_modes(self) -> np.ndarray:
+        """
+        Array of size nports with the mode of each port.
+
+        This information is used to store mixed-modes networks in touchstone
+        V2 format or to plot trace name with subscript like 'Sdd11'.
+
+        * 'C': common
+        * 'D': differential
+        * 'S': single-ended
+
+        Returns
+        -------
+        port_modes : :class:`numpy.ndarray`
+                port modes
+
+        """
+        return self._port_modes
+
+    @port_modes.setter
+    def port_modes(self, port_modes: np.ndarray) -> None:
+        self._port_modes = port_modes
 
     @property
     def port_tuples(self) -> list[tuple[int, int]]:
