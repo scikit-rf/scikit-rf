@@ -5,6 +5,7 @@ try:
 except ImportError:
     pass
 
+import numpy as np
 import pytest
 
 import skrf as rf
@@ -51,6 +52,25 @@ def test_plot_s_db_time():
 
 def test_plot_s_smith():
     ntwk1.plot_s_smith()
+
+def test_z_time_impulse_step_z0():
+    se_diff = rf.concat_ports([ntwk1, ntwk1], port_order = 'second')
+    mm_diff = se_diff.copy()
+    mm_diff.se2gmm(p = 2)
+    fig, ax = mpl.pyplot.subplots(1, 1)
+    mm_diff.plot_z_time_step(0, 0, ax = ax)
+    mm_diff.plot_z_time_impulse(0, 1, ax = ax)
+    mm_diff.plot_z_time_step(2, 2, ax = ax)
+    mm_diff.plot_z_time_impulse(2, 3, ax = ax)
+    # test that start impedance is almost port z0 to 0.1%
+    z0_start = [
+        ax.lines[0].get_ydata()[0],
+        ax.lines[1].get_ydata()[0],
+        ax.lines[2].get_ydata()[0],
+        ax.lines[3].get_ydata()[0]]
+    np.testing.assert_allclose(z0_start, mm_diff.z0[0],
+        rtol = 1e-3,
+        err_msg = "plot_z_time_xxx start impedance does not match port impedance")
 
 @pytest.mark.parametrize("usetex", [True, False])
 def test_plot_it_all(usetex):
