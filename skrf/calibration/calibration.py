@@ -5232,7 +5232,7 @@ class LMR16(SixteenTerm):
         if switch_terms is None:
             warn('No switch terms provided', stacklevel=2)
 
-        if type(ideals) == Network:
+        if type(ideals) is Network:
             ideals = [ideals]
         if len(ideals) != 1:
             raise ValueError("One ideal must be given: Through or reflect definition.")
