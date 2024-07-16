@@ -4720,7 +4720,9 @@ class Network:
                             y_label=None,
                             logx=False, **kwargs):
 
-
+        # create y_label if not provided
+        if y_label is None:
+            y_label = Network.Y_LABEL_DICT[conversion]
         # create index lists, if not provided by user
         if m is None:
             M = range(self.number_of_ports)
