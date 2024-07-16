@@ -72,6 +72,19 @@ def test_z_time_impulse_step_z0():
         rtol = 1e-3,
         err_msg = "plot_z_time_xxx start impedance does not match port impedance")
 
+def test_x_y_labels():
+    fig, ax = mpl.pyplot.subplots(1, 1)
+    ntwk1.plot_s_db(ax = ax)
+    # check that there are 4 traces
+    np.testing.assert_equal(len(ax.lines), ntwk1.nports**2,
+                                    err_msg = "missing trace")
+    # check x label
+    np.testing.assert_string_equal(ax.get_xlabel(), f"Frequency ({ntwk1.frequency.unit})")
+    # check y label
+    np.testing.assert_string_equal(ax.get_ylabel(), rf.Network.Y_LABEL_DICT['db'])
+
+
+
 @pytest.mark.parametrize("usetex", [True, False])
 def test_plot_it_all(usetex):
     with mpl.rc_context({'text.usetex': usetex}):
