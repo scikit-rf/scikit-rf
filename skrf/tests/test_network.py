@@ -1263,6 +1263,14 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(b.z0[1] == 0.5*(a.z0[0] + a.z0[1]))
         self.assertTrue(b.z0[-1] == a.z0[-1])
 
+    def test_interpolate_freq_cropped(self):
+        a = rf.N(f=np.arange(20), s=np.arange(20)*(1+1j),z0=1, f_unit="ghz")
+        freq = rf.F.from_f(np.linspace(1,2,3,endpoint=True), unit='GHz')
+        for method in ('linear', 'cubic', 'quadratic', 'rational'):
+            b = a.interpolate(freq, freq_cropped=False, kind=method)
+            c = a.interpolate(freq, kind=method)
+            self.assertTrue(np.allclose(b.s, c.s))
+
     def test_interpolate_self(self):
         """Test resample."""
         a = rf.N(f=[1,2], s=[1+2j, 3+4j], z0=1)

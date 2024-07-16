@@ -2800,6 +2800,7 @@ class Network:
         result = self.copy()
 
         is_rational = False
+        freq_cropped = kwargs.pop('freq_cropped', True)
         if kwargs.get('kind', None) == 'rational':
             f_interp = mf.rational_interp
             #Not supported by rational_interp
@@ -2835,7 +2836,7 @@ class Network:
         r_idx = min(np.searchsorted(f, f_new[-1], side="right") + 8, len(f))
 
         # rational method or prohibit frequency clipping
-        if is_rational or not kwargs.get('freq_cropped', True):
+        if is_rational or not freq_cropped:
             l_idx, r_idx = 0, len(f)
         f_cropped = f[l_idx:r_idx]
 
