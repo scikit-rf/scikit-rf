@@ -2735,6 +2735,10 @@ class Network:
             return the interpolated array instead of re-assigning it to
             a given attribute
         **kwargs : keyword arguments
+            passed to interpolate method.
+            `freq_cropped` kwarg controls whether to use pre-cropped frequency
+            points for interpolation. Defaults to True.
+
             passed to :func:`scipy.interpolate.interp1d` initializer.
             `kind` controls interpolation type.
 
@@ -2750,7 +2754,11 @@ class Network:
 
         Note
         ----
-        The interpolation coordinate system (`coords`)  makes  a big
+        Frequency cropping is only supported with methods from
+        `scipy.interpolate.interpolate.interp1d`. The 'rational' method does
+        not support frequency cropping.
+
+        The interpolation coordinate system (`coords`)  makes a big
         difference for large amounts of interpolation. polar works well
         for duts with slowly changing magnitude. try them all.
 
@@ -2825,7 +2833,9 @@ class Network:
         # Pre-cropped the frequency
         l_idx = max(np.searchsorted(f, f_new[0], side="left") - 8, 0)
         r_idx = min(np.searchsorted(f, f_new[-1], side="right") + 8, len(f))
-        if is_rational:
+
+        # rational method or prohibit frequency clipping
+        if is_rational or not kwargs.get('freq_cropped', True):
             l_idx, r_idx = 0, len(f)
         f_cropped = f[l_idx:r_idx]
 
