@@ -57,9 +57,11 @@ import warnings
 from abc import ABC, abstractmethod
 
 import numpy as np
-from numpy import angle, concatenate, conj, exp, flip, real, unwrap, zeros
+from numpy import angle, concatenate, conj, exp, flip, ndarray, real, unwrap, \
+    zeros
 from numpy.fft import fft, fftshift, ifftshift, irfft
 from scipy.interpolate import interp1d
+from typing import Sequence
 
 from ..frequency import Frequency
 from ..network import Network, concat_ports, overlap_multi, subnetwork
@@ -970,7 +972,8 @@ class IEEEP370(Deembedding):
     .. [I3E3704] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
-    def __init__(self, dummies, name=None, *args, **kwargs):
+    def __init__(self, dummies: Sequence[Network], name: str = None,
+                 *args, **kwargs) -> None:
         r"""
         IEEEP370 de-embedding Initializer.
 
@@ -991,7 +994,7 @@ class IEEEP370(Deembedding):
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
 
     @abstractmethod
-    def deembed(self, ntwk):
+    def deembed(self, ntwk: Network) -> Network:
         """
         Apply de-embedding correction to a Network
         """
@@ -1005,7 +1008,7 @@ class IEEEP370(Deembedding):
         pass
 
     @staticmethod
-    def extrapolate_to_dc(ntwk):
+    def extrapolate_to_dc(ntwk: Network) -> Network:
         """
         Extrapolate the network to DC using IEEE370 NZC algorithm.
         This is usefull to compare the fixtures and deembedded networks
@@ -1059,7 +1062,7 @@ class IEEEP370(Deembedding):
                        z0 = z0, name = name)
 
     @staticmethod
-    def dc_interp(s, f):
+    def dc_interp(s: ndarray, f: ndarray) -> float:
         """
         enforces symmetric upon the first 10 points and interpolates the DC
         point.
@@ -1074,7 +1077,7 @@ class IEEEP370(Deembedding):
         return real(snew(0))
 
     @staticmethod
-    def COM_receiver_noise_filter(f,fr):
+    def COM_receiver_noise_filter(f: ndarray, fr: float) -> ndarray:
         """
         receiver filter in COM defined by eq 93A-20
         As defined in 802.3-2022 - IEEE Standard for Ethernet annex 93A
@@ -1084,7 +1087,7 @@ class IEEEP370(Deembedding):
         return 1 / (1 - 3.414214 * fdfr**2 + fdfr**4 + 1j*2.613126*(fdfr - fdfr**3))
 
     @staticmethod
-    def makeStep(impulse):
+    def makeStep(impulse: ndarray) -> ndarray:
         """
         Make a time-domain step response from an impulse response.
         """
@@ -1094,7 +1097,7 @@ class IEEEP370(Deembedding):
         return np.cumsum(impulse, axis=0)
 
     @staticmethod
-    def DC(s, f, allowedError = 1e-12):
+    def DC(s: ndarray, f: ndarray, allowedError: float = 1e-12) -> float:
         """
         Advanced reflective DC point extrapolation.
         """
@@ -1119,7 +1122,7 @@ class IEEEP370(Deembedding):
         return DCpoint
 
     @staticmethod
-    def thru(ntwk):
+    def thru(ntwk: Network) -> Network:
         """
         Create a perfect thru
 
@@ -1144,7 +1147,7 @@ class IEEEP370(Deembedding):
         return out
 
     @staticmethod
-    def add_dc(ntwk):
+    def add_dc(ntwk: Network) -> Network:
         """
         Extrapolate a network to DC using interpolation for all S-parameters.
 
@@ -1174,7 +1177,7 @@ class IEEEP370(Deembedding):
         return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
 
     @staticmethod
-    def getz(s, f, z0):
+    def getz(s: ndarray, f: ndarray, z0: float) -> ndarray:
         """
         Compute step response to get the time-domain impedance from S-parameters.
         The S-parameters are DC extrapolated first.
@@ -1205,7 +1208,7 @@ class IEEEP370(Deembedding):
         return z
 
     @staticmethod
-    def makeTL(zline, z0, gamma, l):
+    def makeTL(zline: float, z0: float, gamma: ndarray, l: float) -> ndarray:
         """
         Compute the S-parameters of a transmission line.
 
@@ -1237,7 +1240,7 @@ class IEEEP370(Deembedding):
         return TL
 
     @staticmethod
-    def NRP(ntwk, TD = None, port = None):
+    def NRP(ntwk: Network, TD: ndarray = None, port: int = None) -> (Network, ndarray):
         """
         Enforce the Nyquist Rate Point.
         Force the length of the transmissive network to be an integer multiple
@@ -1252,8 +1255,9 @@ class IEEEP370(Deembedding):
         TD   : :array-like
                If None, the delay will be computed and added.
                Else, the delay will be removed (to reset the original length).
+               (default: None)
         port: :Number
-              Specify to apply NRP only on a single port of the network
+              Specify to apply NRP only on a single port of the network (default: None)
 
         Returns
         -------
@@ -1338,7 +1342,7 @@ class IEEEP370(Deembedding):
         return out, TD
 
     @staticmethod
-    def shiftOnePort(ntwk, N, port):
+    def shiftOnePort(ntwk: Network, N: int, port: int) -> Network:
         """
         Shift one port of the network of N samples in time-domain.
         This is achieved by cascading a delay.
@@ -1379,7 +1383,7 @@ class IEEEP370(Deembedding):
         return out
 
     @staticmethod
-    def shiftNPoints(ntwk, N):
+    def shiftNPoints(ntwk: Network, N: int) -> Network:
         """
         Shift the whole network of N samples in time-domain.
         This is achieved by cascading a delay.
@@ -1419,7 +1423,7 @@ class IEEEP370(Deembedding):
         return out
 
     @staticmethod
-    def peelNPointsLossless(ntwk, N, z0):
+    def peelNPointsLossless(ntwk: Network, N: int, z0: float) -> Network:
         """
         Peel N points of the network on both side and return the corresponding
         error boxes.
@@ -1537,9 +1541,9 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
     .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP3702xThru.m,
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
-    def __init__(self, dummy_2xthru, name=None,
-                 z0 = 50, use_z_instead_ifft = False, verbose = False,
-                 forced_z0_line = None, *args, **kwargs):
+    def __init__(self, dummy_2xthru: Network, name: str = None,
+                 z0: float = 50, use_z_instead_ifft: bool = False, verbose: bool = False,
+                 forced_z0_line: float = None, *args, **kwargs) -> None:
         """
         IEEEP370_SE_NZC_2xThru De-embedding Initializer
 
@@ -1602,7 +1606,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru)
 
-    def deembed(self, ntwk):
+    def deembed(self, ntwk: Network) -> Network:
         """
         Perform the de-embedding calculation
 
@@ -1631,7 +1635,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
-    def split2xthru(self, s2xthru):
+    def split2xthru(self, s2xthru: Network) -> (Network, Network):
         """
         Perform the fixtures extraction.
         """
@@ -1953,10 +1957,11 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
     .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
-    def __init__(self, dummy_2xthru, name=None,
-                 z0 = 50, port_order: str = 'second',
-                 use_z_instead_ifft = False, verbose = False,
-                 forced_z0_line_dd = None, forced_z0_line_cc = None, *args, **kwargs):
+    def __init__(self, dummy_2xthru: Network, name: str = None,
+                 z0: float = 50, port_order: str = 'second',
+                 use_z_instead_ifft: bool = False, verbose: bool = False,
+                 forced_z0_line_dd: float = None, forced_z0_line_cc: float = None,
+                 *args, **kwargs) -> None:
         """
         IEEEP370_MM_NZC_2xThru De-embedding Initializer
 
@@ -2029,7 +2034,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru)
 
-    def deembed(self, ntwk):
+    def deembed(self, ntwk: Network) -> Network:
         """
         Perform the de-embedding calculation
 
@@ -2077,7 +2082,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
             deembedded.renumber(new_order, old_order)
         return deembedded
 
-    def split2xthru(self, se_2xthru):
+    def split2xthru(self, se_2xthru: Network) -> (Network, Network):
         """
         Perform the fixtures extraction.
         """
@@ -2185,13 +2190,14 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
     .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370Zc2xThru.m
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
-    def __init__(self, dummy_2xthru, dummy_fix_dut_fix, name=None,
-                 z0 = 50, bandwidth_limit = 0,
-                 pullback1 = 0, pullback2 = 0,
-                 side1 = True, side2 = True,
-                 NRP_enable = True, leadin = 1,
-                 verbose = False,
-                 *args, **kwargs):
+    def __init__(self, dummy_2xthru: Network, dummy_fix_dut_fix: Network,
+                 name: str = None,
+                 z0: float = 50, bandwidth_limit: float = 0,
+                 pullback1: int = 0, pullback2: int = 0,
+                 side1: bool = True, side2: bool = True,
+                 NRP_enable: bool = True, leadin: int = 1,
+                 verbose: bool = False,
+                 *args, **kwargs) -> None:
         """
         IEEEP370_SE_ZC_2xThru De-embedding Initializer
 
@@ -2261,7 +2267,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru.copy(),
                                                       self.sfix_dut_fix)
 
-    def deembed(self, ntwk):
+    def deembed(self, ntwk: Network) -> Network:
         """
         Perform the de-embedding calculation
 
@@ -2292,7 +2298,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
 
-    def makeErrorBox_v7(self, s_dut, s2x, gamma, z0, pullback):
+    def makeErrorBox_v7(self, s_dut: Network, s2x: Network, gamma: ndarray,
+                        z0: float, pullback:int) -> (Network, Network):
         """
         Extract the fixtures on both sides.
         """
@@ -2366,7 +2373,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
             axs[1].set_ylabel('Z (ohm)')
         return errorbox1, errorbox2.flipped()
 
-    def makeErrorBox_v8(self, s_dut, s2x, gamma, z0, pullback):
+    def makeErrorBox_v8(self, s_dut: Network, s2x: Network, gamma: ndarray,
+                        z0: float, pullback: int) -> Network:
         """
         Extract the fixture only on a single side.
         """
@@ -2413,7 +2421,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         return errorbox1
 
 
-    def split2xthru(self, s2xthru, sfix_dut_fix):
+    def split2xthru(self, s2xthru: Network, sfix_dut_fix: Network) -> (Network, Network):
         """
         Perform the fixtures extraction.
         """
@@ -2673,14 +2681,15 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
 
     """
-    def __init__(self, dummy_2xthru, dummy_fix_dut_fix, name=None,
-                 z0 = 50, port_order: str = 'second',
-                 bandwidth_limit = 0,
-                 pullback1 = 0, pullback2 = 0,
-                 side1 = True, side2 = True,
-                 NRP_enable = True, leadin = 1,
-                 verbose = False,
-                 *args, **kwargs):
+    def __init__(self, dummy_2xthru: Network, dummy_fix_dut_fix: Network,
+                 name: str = None,
+                 z0: float = 50, port_order: str = 'second',
+                 bandwidth_limit: float = 0,
+                 pullback1: int = 0, pullback2: int = 0,
+                 side1: bool = True, side2: bool = True,
+                 NRP_enable: bool = True, leadin: int = 1,
+                 verbose: bool = False,
+                 *args, **kwargs) -> None:
         """
         IEEEP370_MM_ZC_2xThru De-embedding Initializer
 
@@ -2759,7 +2768,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru,
                                                         self.sfix_dut_fix)
 
-    def deembed(self, ntwk):
+    def deembed(self, ntwk: Network) -> Network:
         """
         Perform the de-embedding calculation
 
@@ -2807,7 +2816,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
             deembedded.renumber(new_order, old_order)
         return deembedded
 
-    def split2xthru(self, se_2xthru, se_fdf):
+    def split2xthru(self, se_2xthru: Network, se_fdf: Network) -> (Network, Network):
         """
         Perform the fixtures extraction.
         """
