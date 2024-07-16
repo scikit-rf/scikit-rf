@@ -2791,10 +2791,12 @@ class Network:
             f_kwargs = {}
         result = self.copy()
 
+        is_rational = False
         if kwargs.get('kind', None) == 'rational':
             f_interp = mf.rational_interp
             #Not supported by rational_interp
             del kwargs['kind']
+            is_rational = True
         else:
             f_interp = interp1d
 
@@ -2821,8 +2823,10 @@ class Network:
         f_new = new_frequency.f
 
         # Pre-cropped the frequency
-        l_idx = max(np.searchsorted(f, f_new[0], side="left") - 1, 0)
-        r_idx = min(np.searchsorted(f, f_new[-1], side="right") + 1, len(f))
+        l_idx = max(np.searchsorted(f, f_new[0], side="left") - 8, 0)
+        r_idx = min(np.searchsorted(f, f_new[-1], side="right") + 8, len(f))
+        if is_rational:
+            l_idx, r_idx = 0, len(f)
         f_cropped = f[l_idx:r_idx]
 
         # interpolate z0  ( this must happen first, because its needed
