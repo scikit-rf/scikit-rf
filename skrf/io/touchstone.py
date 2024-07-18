@@ -36,7 +36,7 @@ from typing import Callable
 
 import numpy as np
 
-from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT
+from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT, S_DEFINITIONS
 from ..media import DefinedGammaZ0
 from ..network import Network
 from ..util import get_fid
@@ -498,6 +498,10 @@ class Touchstone:
 
             self.s_def = S_DEF_HFSS_DEFAULT
             self.has_hfss_port_impedances = True
+            # Load the reference impedance convention from the comments
+            for s_def in S_DEFINITIONS:
+                if f'S-parameter uses the {s_def} definition' in self.comments:
+                    self.s_def = s_def
         elif self.reference is None:
             self.z0 = np.broadcast_to(self.resistance, (len(state.f), state.rank)).copy()
         else:
