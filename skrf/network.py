@@ -416,6 +416,7 @@ class Network:
         self.noise = None
         self.noise_freq = None
         self._z0 = np.array(50, dtype=complex)
+        self._port_modes = np.array([])
         self._ext_attrs = {}
 
         if s_def not in S_DEFINITIONS and s_def is not None:
@@ -999,6 +1000,9 @@ class Network:
         if self.z0.ndim == 0:
             self.z0 = self.z0
 
+        if len(self.port_modes) != self.nports:
+            self.port_modes = np.array(["S"] * self.nports)
+
     @property
     def s_traveling(self) -> np.ndarray:
         """
@@ -1578,6 +1582,30 @@ class Network:
 
         """
         return self.number_of_ports
+
+    @property
+    def port_modes(self) -> np.ndarray:
+        """
+        Array of size nports with the mode of each port.
+
+        This information is used to store mixed-modes networks in touchstone
+        V2 format or to plot trace name with subscript like 'Sdd11'.
+
+        * 'C': common
+        * 'D': differential
+        * 'S': single-ended
+
+        Returns
+        -------
+        port_modes : :class:`numpy.ndarray`
+                port modes
+
+        """
+        return self._port_modes
+
+    @port_modes.setter
+    def port_modes(self, port_modes: np.ndarray) -> None:
+        self._port_modes = port_modes
 
     @property
     def port_tuples(self) -> list[tuple[int, int]]:
@@ -2409,7 +2437,8 @@ class Network:
             # exactly this format, to work
             # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
             if write_z0:
-                output.write('!Data is not renormalized\n')
+                output.write('! Data is not renormalized\n')
+                output.write(f'! S-parameter uses the {self.s_def} definition\n')
                 output.write(f'# {ntwk.frequency.unit} S {form} R\n')
             else:
                 # Write "r_ref.real" instead of "r_ref", so we get a real number "a" instead
@@ -4055,7 +4084,7 @@ class Network:
         Xi_tilde = np.einsum('...ij,...jk->...ik', np.einsum('...ij,...jk->...ik', P, Xi), QT)
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
-    def impulse_response(self, window: str = 'hamming', n: int = None, pad: int = 1000,
+    def impulse_response(self, window: str = 'hamming', n: int = None, pad: int = 0,
                         bandpass: bool = None, squeeze: bool = True) -> tuple[np.ndarray, np.ndarray]:
         """Calculate time-domain impulse response of one-port.
 
@@ -4072,24 +4101,24 @@ class Network:
         Parameters
         ----------
         window : string
-                FFT windowing function.
+                FFT windowing function. (Default is 'hamming')
         n : int
                 Length of impulse response output.
                 If n is not specified, 2 * (m - 1) points are used,
-                where m = len(self) + pad
+                where m = len(self) + pad. (Default is None)
         pad : int
                 Number of zeros to add as padding for FFT.
-                Adding more zeros improves accuracy of peaks.
+                Adding more zeros improves accuracy of peaks. (Default is 0)
         bandpass : bool or None
                 If False window function is center on 0 Hz.
                 If True full window is used and low frequencies are attenuated.
                 If None value is determined automatically based on if the
-                frequency vector begins from 0.
+                frequency vector begins from 0. (Default is None)
         squeeze: bool
                 Squeeze impulse response to one dimension,
                 if a oneport gets transformed.
                 Has no effect when transforming a multiport.
-                Default = True
+                (Default is True)
 
         Returns
         -------
@@ -4128,7 +4157,7 @@ class Network:
         return t, ir
 
     def step_response(
-            self, window: str = 'hamming', n: int = None, pad: int = 1000, squeeze: bool = True
+            self, window: str = 'hamming', n: int = None, pad: int = 0, squeeze: bool = True
             ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate time-domain step response of one-port.
 
@@ -4143,19 +4172,19 @@ class Network:
         Parameters
         ----------
         window : string
-                FFT windowing function.
+                FFT windowing function. (Default is 'hamming')
         n : int
                 Length of step response output.
                 If n is not specified, 2 * (m - 1) points are used,
-                where m = len(self) + pad
+                where m = len(self) + pad. (Default is None)
         pad : int
                 Number of zeros to add as padding for FFT.
-                Adding more zeros improves accuracy of peaks.
+                Adding more zeros improves accuracy of peaks. (Default is 0)
         squeeze: bool
                 Squeeze step response to one dimension,
                 if a oneport gets transformed.
                 Has no effect when transforming a multiport.
-                Default = True
+                (Default is True)
 
         Returns
         -------
@@ -4692,7 +4721,9 @@ class Network:
                             y_label=None,
                             logx=False, **kwargs):
 
-
+        # create y_label if not provided
+        if y_label is None:
+            y_label = Network.Y_LABEL_DICT[conversion]
         # create index lists, if not provided by user
         if m is None:
             M = range(self.number_of_ports)
@@ -4708,6 +4739,24 @@ class Network:
         else:
             gen_label = False
 
+        if conversion in ["time_impulse", "time_step"]:
+            xlabel = "Time (ns)"
+
+            t_func_kwargs = {"squeeze": False}
+            for key in {"window", "n", "pad", "bandpass"} & kwargs.keys():
+                t_func_kwargs[key] = kwargs.pop(key)
+
+            if conversion == "time_impulse":
+                x, y = self.impulse_response(**t_func_kwargs)
+            else:
+                x, y = self.step_response(**t_func_kwargs)
+
+            if attribute[0].lower() == "z":
+                y_label = "Z (Ohm)"
+                y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
+                y[x == -1.] = -1. + 1e-12  # solve numerical singularity
+                y = self.z0[0].real * (1+y) / (1-y)
+
         for m in M:
             for n in N:
                 # set the legend label for this trace to the networks
@@ -4717,23 +4766,6 @@ class Network:
                     kwargs['label'] = rfplt._get_label_str(self, attribute[0].upper(), m, n)
 
                 if conversion in ["time_impulse", "time_step"]:
-                    xlabel = "Time (ns)"
-
-                    t_func_kwargs = {"squeeze": False}
-                    for key in {"window", "n", "pad", "bandpass"} & kwargs.keys():
-                        t_func_kwargs[key] = kwargs.pop(key)
-
-                    if conversion == "time_impulse":
-                        x, y = self.impulse_response(**t_func_kwargs)
-                    else:
-                        x, y = self.step_response(**t_func_kwargs)
-
-                    if attribute[0].lower() == "z":
-                        y_label = "Z (Ohm)"
-                        y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
-                        y[x == -1.] = -1. + 1e-12  # solve numerical singularity
-                        y = self.z0[0,0].real * (1+y) / (1-y)
-
                     rfplt.plot_rectangular(x=x * 1e9,
                                         y=y[:, m, n],
                                         x_label=xlabel,
@@ -4816,8 +4848,11 @@ class Network:
 
     def _fmt_trace_name(self, m: int, n: int) -> str:
         port_sep = "_" if self.nports > 9 else ""
+        subscript = f"{self.port_modes[m].lower()}{self.port_modes[n].lower()}"
+        # do not add subscript for single-ended to single-ended
+        subscript = "" if subscript == "ss" else subscript
 
-        return f"{m + 1}{port_sep}{n + 1}"
+        return f"{subscript}{m + 1}{port_sep}{n + 1}"
 
 
 for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
@@ -4990,7 +5025,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         ntwkC = innerconnect(ntwkC, k, ntwkA.nports - 1 + l, num - 1)
 
     # if ntwkB is a 2port, then keep port indices where you expect.
-    if ntwkB.nports == 2 and ntwkA.nports > 2 and num == 1:
+    if ntwkB.nports == 2 and ntwkA.nports >= 2 and num == 1:
         from_ports = list(range(ntwkC.nports))
         to_ports = list(range(ntwkC.nports))
         to_ports.pop(k)
@@ -5753,8 +5788,7 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
     # keep requested rows and columns of the s-matrix. ports can be not contiguous
     subntwk.s = ntwk.s[np.ix_(np.arange(ntwk.s.shape[0]), ports, ports)]
     # keep port_modes
-    if hasattr(ntwk, 'port_modes'):
-        subntwk.port_modes = [ntwk.port_modes[idx] for idx in ports]
+    subntwk.port_modes = [ntwk.port_modes[idx] for idx in ports]
     # keep port_names
     if ntwk.port_names:
         subntwk.port_names = [ntwk.port_names[idx] for idx in ports]

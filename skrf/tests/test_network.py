@@ -468,7 +468,7 @@ class NetworkTestCase(unittest.TestCase):
         line = med.line(1, unit='m')
         line.z0 = [10, 20]
 
-        for nport_portnum in [3,4,5,6,7,8]:
+        for nport_portnum in [1,2,3,4,5,6,7,8]:
 
             # create a Nport network with port impedance i at port i
             nport = rf.Network()
@@ -1074,6 +1074,8 @@ class NetworkTestCase(unittest.TestCase):
         ntwk_orig.write_touchstone(os.path.join(self.test_dir, pwfile_skrf), write_z0=True, form='RI')
         ntwk_skrf = rf.Network(os.path.join(self.test_dir, pwfile_skrf))
 
+        # check if the s_def could be correctly recovered from scikit-rf's Touchstone file
+        self.assertTrue(ntwk_orig.s_def == ntwk_skrf.s_def)
         self.assertTrue(ntwk_orig == ntwk_skrf)
 
     def test_network_from_z_or_y(self):
@@ -1967,6 +1969,28 @@ class NetworkTestCase(unittest.TestCase):
         # Check weather an error is raised when more than two networks are specified
         with pytest.raises(ValueError):
             ntwk_result_3 = self.ntwk1 // (self.ntwk1, self.ntwk2, self.ntwk3)
+
+    def test_fmt_trace_name(self):
+        # Test trace name of differential thru
+        s = np.zeros((1,4,4), dtype=complex)
+        s[:,2,0] = 1
+        s[:,0,2] = 1
+        s[:,3,1] = 1
+        s[:,1,3] = 1
+        # single-ended
+        se_thru = rf.Network(s=s, f=[1], z0=50)
+        self.assertTrue(np.all(se_thru.port_modes == "S"))
+        self.assertTrue(se_thru._fmt_trace_name(0, 0) == "11")
+        self.assertTrue(se_thru._fmt_trace_name(1, 0) == "21")
+        mm_thru = se_thru.copy()
+        mm_thru.se2gmm(p=2)
+        self.assertTrue(np.all(mm_thru.port_modes == ["D", "D", "C", "C"]))
+        self.assertTrue(mm_thru._fmt_trace_name(0, 0) == "dd11")
+        self.assertTrue(mm_thru._fmt_trace_name(1, 0) == "dd21")
+        self.assertTrue(mm_thru._fmt_trace_name(2, 2) == "cc33")
+        self.assertTrue(mm_thru._fmt_trace_name(3, 2) == "cc43")
+        self.assertTrue(mm_thru._fmt_trace_name(2, 0) == "cd31")
+        self.assertTrue(mm_thru._fmt_trace_name(1, 3) == "dc24")
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
