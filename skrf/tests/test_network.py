@@ -468,7 +468,7 @@ class NetworkTestCase(unittest.TestCase):
         line = med.line(1, unit='m')
         line.z0 = [10, 20]
 
-        for nport_portnum in [3,4,5,6,7,8]:
+        for nport_portnum in [1,2,3,4,5,6,7,8]:
 
             # create a Nport network with port impedance i at port i
             nport = rf.Network()
