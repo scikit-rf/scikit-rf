@@ -57,15 +57,14 @@ import warnings
 from abc import ABC, abstractmethod
 
 import numpy as np
-from numpy import angle, concatenate, conj, exp, flip, ndarray, real, unwrap, \
-    zeros
+from numpy import angle, concatenate, conj, exp, flip, ndarray, real, unwrap, zeros
 from numpy.fft import fft, fftshift, ifftshift, irfft
 from scipy.interpolate import interp1d
 from typing import Sequence
 
 from ..frequency import Frequency
 from ..network import Network, concat_ports, overlap_multi, subnetwork
-from ..util import subplots
+from ..util import Axes, Figure, plt, subplots
 
 
 class Deembedding(ABC):
@@ -1029,6 +1028,7 @@ class IEEEP370(Deembedding):
         name = ntwk.name
         s = ntwk.s
         f = ntwk.frequency.f
+        port_modes = ntwk.port_modes
         # check for already existing DC point
         if(f[0] == 0):
             warnings.warn(
@@ -1058,8 +1058,10 @@ class IEEEP370(Deembedding):
                     snew[0, i, j] = IEEEP370.dc_interp(s[:, i, j], f)
 
         f = concatenate(([0], f))
-        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew,
+        ntwk_dc = Network(frequency = Frequency.from_f(f, 'Hz'), s = snew,
                        z0 = z0, name = name)
+        ntwk_dc.port_modes = port_modes
+        return ntwk_dc
 
     @staticmethod
     def dc_interp(s: ndarray, f: ndarray) -> float:
@@ -1481,6 +1483,66 @@ class IEEEP370(Deembedding):
 
         return out, eb1, eb2
 
+    @staticmethod
+    def plot_check_se_fer(s2xthru: Network, ax: Axes = None) -> (Figure, Axes):
+        if ax is None:
+            fig, ax = subplots(2, 2, figsize=(2*6.4, 2*4.8))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Fixture electrical requirements (FER)')
+        f_lim = np.array([s2xthru.frequency.f[0], s2xthru.frequency.f[-1]])
+        f = s2xthru.frequency.f_scaled
+        s2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
+
+        ax[0, 0].set_title('FER1 Insertion loss of 2x-Thru')
+        s2xthru.plot_s_db(1, 0, ax = ax[0, 0], color = '0.5')
+        s2xthru.plot_s_db(0, 1, ax = ax[0, 0], color = 'k')
+        ax[0, 0].plot(f_lim, [-10, -10], color = 'r', linestyle = 'dashed', label = 'Minimum A')
+        ax[0, 0].plot(f_lim, [-15, -15], color = 'g', linestyle = 'dashed', label = 'Minimum B, C')
+        ax[0, 0].legend(loc = 'lower left')
+
+        ax[0, 1].set_title('FER2 Return loss of 2x-Thru')
+        s2xthru.plot_s_db(0, 0, ax = ax[0, 1], color = '0.5')
+        s2xthru.plot_s_db(1, 1, ax = ax[0, 1], color = 'k')
+
+        ax[0, 1].plot(f_lim, [-20, -20], color = 'r', linestyle = 'dashed', label = 'Maximum A')
+        ax[0, 1].plot(f_lim, [-10, -10], color = 'g', linestyle = 'dashed', label = 'Maximum B')
+        ax[0, 1].plot(f_lim, [-6, -6], color = 'b', linestyle = 'dashed', label = 'Maximum C')
+        ax[0, 1].legend(loc = 'lower left')
+
+        ax[1, 0].set_title('FER3 Insertion loss and return loss separation')
+        s1 = s2xthru.s_db[:, 1, 0] - s2xthru.s_db[:, 0, 0]
+        s2 = s2xthru.s_db[:, 0, 1] - s2xthru.s_db[:, 1, 1]
+
+        ax[1, 0].plot(f, s1, color = '0.5', label = 'S21 - S11')
+        ax[1, 0].plot(f, s2, color = 'k', label = 'S21 - S22')
+        ax[1, 0].plot([f[0], f[-1]], [5, 5], color = 'r', linestyle = 'dashed', label = 'Minimum A')
+        ax[1, 0].plot([f[0], f[-1]], [0, 0], color = 'g', linestyle = 'dashed', label = 'Minimum B, C')
+        ax[1, 0].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
+        ax[1, 0].set_ylabel('Magnitude (dB)')
+        ax[1, 0].legend(loc = 'upper right')
+
+        ax[1, 1].set_title('FER8 Minimum length of 2x-Thru')
+        n = s2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * s2xthru.frequency.step) # ns
+        s21 = s2xthru.s[:, 1, 0]
+        t21 = fftshift(irfft(s21, n = n))
+        x = (np.argmax(t21) - n//2 - 1) * dt
+        s2xthru_dc.plot_z_time_step(0, 0, color = '0.5', ax = ax[1, 1])
+        s2xthru_dc.plot_z_time_step(1, 1, color = 'k', ax = ax[1, 1])
+        y = ax[1, 1].lines[-1].get_ydata()
+        y_lim = [np.min(y) - 2, np.max(y) + 2]
+        t_lim = [3. / f[-1], 3. / f[-1]]
+        ax[1, 1].plot([0, 0], y_lim, color = 'g', linestyle = 'dashed', label = 'Start')
+        ax[1, 1].plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
+        ax[1, 1].plot([2 * x, 2 * x], y_lim, color = '0.5', linestyle = 'dashed', label = 'Measured')
+        ax[1, 1].legend(loc = 'upper right')
+        ax[1, 1].set_xlim((-1, 2 * x + 1))
+
+        fig.tight_layout()
+        return (fig, ax)
+
 
 class IEEEP370_SE_NZC_2xThru(IEEEP370):
     """
@@ -1602,6 +1664,9 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         self.use_z_instead_ifft = use_z_instead_ifft
         self.forced_z0_line = forced_z0_line
         self.verbose = verbose
+        # debug outputs
+        self.x_end = None
+        self.z_x = None
 
         IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru)
@@ -1690,6 +1755,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
             dcs21 = IEEEP370.dc_interp(s21, f)
             t21 = fftshift(irfft(concatenate(([dcs21], s21)), axis=0), axes=0)
             x = np.argmax(t21)
+            self.x_end = x
 
             dcs11 = IEEEP370.DC(s11,f)
             t11 = fftshift(irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
@@ -1700,6 +1766,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
                 z11x = self.forced_z0_line
             else:
                 z11x = z11[x]
+            self.z_x = z11x
 
             if self.verbose:
                 fig, (ax1, ax2) = subplots(2,1, sharex = True)
@@ -1863,6 +1930,104 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
             s_side2.flip() # FIX-2 is flipped in skrf
 
         return (s_side1, s_side2)
+
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
+        res = self.deembed(self.s2xthru)
+        res.name = 'Residuals'
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0], color = '0.5')
+        res.plot_s_db(0,1, ax = ax[0], color = 'k')
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
+
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1], color = '0.5')
+        res.plot_s_deg(0,1, ax = ax[1], color = 'k')
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
+
+        return (fig, ax)
+
+    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None, window: str = 'hamming') -> (Figure, Axes):
+        # if dc point already exists, it will be replaced
+        s2xthru = IEEEP370.extrapolate_to_dc(self.s2xthru)
+        fix1 = IEEEP370.extrapolate_to_dc(self.s_side1)
+        fix2 = IEEEP370.extrapolate_to_dc(self.s_side2)
+        if fix_dut_fix is not None:
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(fix_dut_fix)
+        n = s2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * s2xthru.frequency.step) # ns
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'm')
+        x = ax[0].lines[-1].get_xdata()[:self.x_end]
+        y = ax[0].lines[-1].get_ydata()[:self.x_end]
+        ax[0].plot(x, y * 1.025, linestyle = 'dashed', color = 'r', label = 'Limit A ±2.5%')
+        ax[0].plot(x, y * 0.975, linestyle = 'dashed', color = 'r')
+        ax[0].plot(x, y * 1.05, linestyle = 'dashed', color = 'g', label = 'Limit B ±5%')
+        ax[0].plot(x, y * 0.95, linestyle = 'dashed', color = 'g')
+        ax[0].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
+        ax[0].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
+
+        ax[0].plot([(self.x_end - (n / 2)) * dt], [self.z_x], marker = 'o', color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
+        ax[0].plot([0], [self.z0], marker = 's', color = 'k', label = 'start')
+        ax[0].legend(loc = 'lower left')
+
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'm')
+        x = ax[1].lines[-1].get_xdata()[:self.x_end]
+        y = ax[1].lines[-1].get_ydata()[:self.x_end]
+        ax[1].plot(x, y * 1.025, linestyle = 'dashed', color = 'r', label = 'Limit A ±2.5%')
+        ax[1].plot(x, y * 0.975, linestyle = 'dashed', color = 'r')
+        ax[1].plot(x, y * 1.05, linestyle = 'dashed', color = 'g', label = 'Limit B ±5%')
+        ax[1].plot(x, y * 0.95, linestyle = 'dashed', color = 'g')
+        ax[1].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
+        ax[1].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
+        ax[1].plot([(self.x_end - (n / 2)) * dt], [self.z_x], marker = 'o', color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
+        ax[1].plot([0], [self.z0], marker = 's', color = 'k', label = 'start')
+        ax[1].set_xlim((-1, 2 * (self.x_end - (n / 2)) * dt + 1))
+        ax[1].legend(loc = 'lower left')
+
+        fig.tight_layout()
+
+        return (fig, ax)
 
 class IEEEP370_MM_NZC_2xThru(IEEEP370):
     """
@@ -2582,6 +2747,102 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
         # unflip FIX-2 as per IEEEP370 numbering recommandation
         return (s_side1, s_side2.flipped())
+
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
+        res = self.deembed(self.s2xthru)
+        res.name = 'Residuals'
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0], color = '0.5')
+        res.plot_s_db(0,1, ax = ax[0], color = 'k')
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
+
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1], color = '0.5')
+        res.plot_s_deg(0,1, ax = ax[1], color = 'k')
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
+
+        return (fig, ax)
+
+    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None, window: str = 'hamming') -> (Figure, Axes):
+        # if dc point already exists, it will be replaced
+        s2xthru = IEEEP370.extrapolate_to_dc(self.s2xthru)
+        fix1 = IEEEP370.extrapolate_to_dc(self.s_side1)
+        fix2 = IEEEP370.extrapolate_to_dc(self.s_side2)
+        if fix_dut_fix is not None:
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(fix_dut_fix)
+        else:
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(self.sfix_dut_fix)
+        n = s2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * s2xthru.frequency.step) # ns
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], linestyle = 'dashed', color = 'm')
+        x = ax[0].lines[-1].get_xdata()[:(self.x_end + n// 2)]
+        y = ax[0].lines[-1].get_ydata()[:(self.x_end + n// 2)]
+        ax[0].plot(x, y * 1.025, linestyle = 'dashed', color = 'r', label = 'Limit A ±2.5%')
+        ax[0].plot(x, y * 0.975, linestyle = 'dashed', color = 'r')
+        ax[0].plot(x, y * 1.05, linestyle = 'dashed', color = 'g', label = 'Limit B ±5%')
+        ax[0].plot(x, y * 0.95, linestyle = 'dashed', color = 'g')
+        ax[0].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
+        ax[0].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
+
+        ax[0].plot([self.x_end * dt], [y[-1]], marker = 'o', color = 'k',
+                   label = f'end (pullback1 = {self.pullback1})')
+        ax[0].plot([-self.leadin * dt], [self.z0], marker = 's', color = 'k', label = f'start (eadin = {self.leadin})')
+        ax[0].legend(loc = 'lower left')
+
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                              ax = ax[1], linestyle = 'dashed', color = 'm')
+        x = ax[1].lines[-1].get_xdata()[:(self.x_end + n// 2)]
+        y = ax[1].lines[-1].get_ydata()[:(self.x_end + n// 2)]
+        ax[1].plot(x, y * 1.025, linestyle = 'dashed', color = 'r', label = 'Limit A ±2.5%')
+        ax[1].plot(x, y * 0.975, linestyle = 'dashed', color = 'r')
+        ax[1].plot(x, y * 1.05, linestyle = 'dashed', color = 'g', label = 'Limit B ±5%')
+        ax[1].plot(x, y * 0.95, linestyle = 'dashed', color = 'g')
+        ax[1].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
+        ax[1].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
+        ax[1].plot([self.x_end * dt], [y[-1]], marker = 'o', color = 'k',
+                   label = f'end (pullback2 = {self.pullback2})')
+        ax[1].plot([-self.leadin * dt], [self.z0], marker = 's', color = 'k', label = f'start (leadin = {self.leadin})')
+        ax[1].set_xlim((-1, 2 * self.x_end * dt + 1))
+        ax[1].legend(loc = 'lower left')
+
+        fig.tight_layout()
+
+        return (fig, ax)
 
 
 class IEEEP370_MM_ZC_2xThru(IEEEP370):
