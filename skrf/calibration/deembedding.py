@@ -52,9 +52,10 @@ De-embedding Methods
    IEEEP370_MM_ZC_2xThru
 
 """
+
+import warnings
 from abc import ABC, abstractmethod
 from typing import Sequence
-import warnings
 
 import numpy as np
 from numpy import angle, concatenate, conj, exp, flip, ndarray, real, unwrap, zeros
