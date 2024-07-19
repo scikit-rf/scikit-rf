@@ -52,7 +52,6 @@ De-embedding Methods
    IEEEP370_MM_ZC_2xThru
 
 """
-
 import warnings
 from abc import ABC, abstractmethod
 
@@ -64,7 +63,7 @@ from typing import Sequence
 
 from ..frequency import Frequency
 from ..network import Network, concat_ports, overlap_multi, subnetwork
-from ..util import Axes, Figure, plt, subplots
+from ..util import Axes, Figure, subplots
 
 
 class Deembedding(ABC):
@@ -1967,7 +1966,8 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
         return (fig, ax)
 
-    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None, window: str = 'hamming') -> (Figure, Axes):
+    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
+                             window: str = 'hamming') -> (Figure, Axes):
         # if dc point already exists, it will be replaced
         s2xthru = IEEEP370.extrapolate_to_dc(self.s2xthru)
         fix1 = IEEEP370.extrapolate_to_dc(self.s_side1)
@@ -2000,7 +2000,8 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         ax[0].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
         ax[0].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
 
-        ax[0].plot([(self.x_end - (n / 2)) * dt], [self.z_x], marker = 'o', color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
+        ax[0].plot([(self.x_end - (n / 2)) * dt], [self.z_x], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
         ax[0].plot([0], [self.z0], marker = 's', color = 'k', label = 'start')
         ax[0].legend(loc = 'lower left')
 
@@ -2020,7 +2021,8 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         ax[1].plot(x, y * 0.95, linestyle = 'dashed', color = 'g')
         ax[1].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
         ax[1].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
-        ax[1].plot([(self.x_end - (n / 2)) * dt], [self.z_x], marker = 'o', color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
+        ax[1].plot([(self.x_end - (n / 2)) * dt], [self.z_x], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
         ax[1].plot([0], [self.z0], marker = 's', color = 'k', label = 'start')
         ax[1].set_xlim((-1, 2 * (self.x_end - (n / 2)) * dt + 1))
         ax[1].legend(loc = 'lower left')
@@ -2784,7 +2786,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
         return (fig, ax)
 
-    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None, window: str = 'hamming') -> (Figure, Axes):
+    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
+                             window: str = 'hamming') -> (Figure, Axes):
         # if dc point already exists, it will be replaced
         s2xthru = IEEEP370.extrapolate_to_dc(self.s2xthru)
         fix1 = IEEEP370.extrapolate_to_dc(self.s_side1)
@@ -2818,7 +2821,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
         ax[0].plot([self.x_end * dt], [y[-1]], marker = 'o', color = 'k',
                    label = f'end (pullback1 = {self.pullback1})')
-        ax[0].plot([-self.leadin * dt], [self.z0], marker = 's', color = 'k', label = f'start (eadin = {self.leadin})')
+        ax[0].plot([-self.leadin * dt], [self.z0], marker = 's', color = 'k',
+                   label = f'start (eadin = {self.leadin})')
         ax[0].legend(loc = 'lower left')
 
         ax[1].set_title('Side 2')
@@ -2836,7 +2840,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         ax[1].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
         ax[1].plot([self.x_end * dt], [y[-1]], marker = 'o', color = 'k',
                    label = f'end (pullback2 = {self.pullback2})')
-        ax[1].plot([-self.leadin * dt], [self.z0], marker = 's', color = 'k', label = f'start (leadin = {self.leadin})')
+        ax[1].plot([-self.leadin * dt], [self.z0], marker = 's', color = 'k',
+                   label = f'start (leadin = {self.leadin})')
         ax[1].set_xlim((-1, 2 * self.x_end * dt + 1))
         ax[1].legend(loc = 'lower left')
 
