@@ -1484,61 +1484,146 @@ class IEEEP370(Deembedding):
         return out, eb1, eb2
 
     @staticmethod
-    def plot_check_se_fer(s2xthru: Network, ax: Axes = None) -> (Figure, Axes):
+    def plot_constant_limit(frequency: Frequency, value: float, ax: Axes, **kwargs) -> None:
+        """
+        Plot a constant limit line.
+        """
+        ax.plot([frequency.f[0], frequency.f[-1]], [value, value], **kwargs)
+
+    @staticmethod
+    def plot_limit_fer1(frequency: Frequency, ax: Axes) -> None:
+        """
+        Plot fer 1 limit lines.
+        """
+        IEEEP370.plot_constant_limit(frequency, -10, ax, color = 'g',
+                            linestyle = 'dashed', label = 'Minimum A')
+        IEEEP370.plot_constant_limit(frequency, -15, ax, color = 'r',
+                            linestyle = 'dashed', label = 'Minimum B, C')
+
+    @staticmethod
+    def plot_limit_fer2(frequency: Frequency, ax: Axes) -> None:
+        """
+        Plot fer 2 limit lines.
+        """
+        IEEEP370.plot_constant_limit(frequency, -20, ax, color = 'g',
+                            linestyle = 'dashed', label = 'Maximum A')
+        IEEEP370.plot_constant_limit(frequency, -10, ax, color = 'b',
+                            linestyle = 'dashed', label = 'Maximum B')
+        IEEEP370.plot_constant_limit(frequency, -6, ax, color = 'r',
+                            linestyle = 'dashed', label = 'Maximum C')
+
+    @staticmethod
+    def plot_limit_fer3(frequency: Frequency, ax: Axes) -> None:
+        """
+        Plot fer 3 limit lines.
+        """
+        IEEEP370.plot_constant_limit(frequency, 5, ax, color = 'g',
+                            linestyle = 'dashed', label = 'Minimum A')
+        IEEEP370.plot_constant_limit(frequency, 0, ax, color = 'r',
+                            linestyle = 'dashed', label = 'Minimum B, C')
+
+
+    @staticmethod
+    def plot_check_se_fer_s(s2xthru: Network, ax: Axes = None) -> (Figure, Axes):
+        """
+        Plot fixture electrical requirements (FER) for s values
+        """
         if ax is None:
-            fig, ax = subplots(2, 2, figsize=(2*6.4, 2*4.8))
+            fig, ax = subplots(2, 2, sharex = True, figsize=(10, 10))
         else:
             fig = ax.get_figure()
 
         fig.suptitle('Fixture electrical requirements (FER)')
-        f_lim = np.array([s2xthru.frequency.f[0], s2xthru.frequency.f[-1]])
-        f = s2xthru.frequency.f_scaled
-        s2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
 
-        ax[0, 0].set_title('FER1 Insertion loss of 2x-Thru')
+        ax[0, 0].set_title('FER1 2x-Thru IL')
         s2xthru.plot_s_db(1, 0, ax = ax[0, 0], color = '0.5')
         s2xthru.plot_s_db(0, 1, ax = ax[0, 0], color = 'k')
-        ax[0, 0].plot(f_lim, [-10, -10], color = 'r', linestyle = 'dashed', label = 'Minimum A')
-        ax[0, 0].plot(f_lim, [-15, -15], color = 'g', linestyle = 'dashed', label = 'Minimum B, C')
+        IEEEP370.plot_limit_fer1(s2xthru.frequency, ax[0, 0])
         ax[0, 0].legend(loc = 'lower left')
 
-        ax[0, 1].set_title('FER2 Return loss of 2x-Thru')
+        ax[0, 1].set_title('FER2 2x-Thru RL')
         s2xthru.plot_s_db(0, 0, ax = ax[0, 1], color = '0.5')
         s2xthru.plot_s_db(1, 1, ax = ax[0, 1], color = 'k')
-
-        ax[0, 1].plot(f_lim, [-20, -20], color = 'r', linestyle = 'dashed', label = 'Maximum A')
-        ax[0, 1].plot(f_lim, [-10, -10], color = 'g', linestyle = 'dashed', label = 'Maximum B')
-        ax[0, 1].plot(f_lim, [-6, -6], color = 'b', linestyle = 'dashed', label = 'Maximum C')
+        IEEEP370.plot_limit_fer2(s2xthru.frequency, ax[0, 1])
         ax[0, 1].legend(loc = 'lower left')
 
-        ax[1, 0].set_title('FER3 Insertion loss and return loss separation')
+        ax[1, 0].set_title('FER3 2x-Thru IL - RL')
         s1 = s2xthru.s_db[:, 1, 0] - s2xthru.s_db[:, 0, 0]
         s2 = s2xthru.s_db[:, 0, 1] - s2xthru.s_db[:, 1, 1]
-
-        ax[1, 0].plot(f, s1, color = '0.5', label = 'S21 - S11')
-        ax[1, 0].plot(f, s2, color = 'k', label = 'S21 - S22')
-        ax[1, 0].plot([f[0], f[-1]], [5, 5], color = 'r', linestyle = 'dashed', label = 'Minimum A')
-        ax[1, 0].plot([f[0], f[-1]], [0, 0], color = 'g', linestyle = 'dashed', label = 'Minimum B, C')
+        ax[1, 0].plot(s2xthru.frequency.f, s1, color = '0.5', label = 'S21 - S11')
+        ax[1, 0].plot(s2xthru.frequency.f, s2, color = 'k', label = 'S21 - S22')
+        IEEEP370.plot_limit_fer3(s2xthru.frequency, ax[1, 0])
         ax[1, 0].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
         ax[1, 0].set_ylabel('Magnitude (dB)')
         ax[1, 0].legend(loc = 'upper right')
 
-        ax[1, 1].set_title('FER8 Minimum length of 2x-Thru')
+        fig.delaxes(ax[1, 1])
+
+        fig.tight_layout()
+        return (fig, ax)
+
+    @staticmethod
+    def plot_check_se_fer_z(s2xthru: Network, sfix_dut_fix: Network,
+                            ax: Axes = None) -> (Figure, Axes):
+        """
+        Plot fixture electrical requirements (FER) for z values
+        """
+        if ax is None:
+            fig, ax = subplots(2, 2, sharex = True, figsize=(10, 10))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Fixture electrical requirements (FER)')
+        f = s2xthru.frequency.f_scaled
+        s2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
+        sfix_dut_fix_dc = IEEEP370.extrapolate_to_dc(sfix_dut_fix)
         n = s2xthru.frequency.npoints * 2 - 1
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
         s21 = s2xthru.s[:, 1, 0]
         t21 = fftshift(irfft(s21, n = n))
-        x = (np.argmax(t21) - n//2 - 1) * dt
-        s2xthru_dc.plot_z_time_step(0, 0, color = '0.5', ax = ax[1, 1])
-        s2xthru_dc.plot_z_time_step(1, 1, color = 'k', ax = ax[1, 1])
-        y = ax[1, 1].lines[-1].get_ydata()
+        x_end = np.argmax(t21) - n//2
+        x_t = (x_end - 0.5) * dt
+
+        ax[0, 0].set_title('FER5 Impedance variation side 1')
+        sfix_dut_fix_dc.plot_z_time_step(0, 0, color = 'k', ax = ax[0, 0])
+        s2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax[0, 0])
+        x = ax[0, 0].lines[-1].get_xdata()[:(x_end + n//2 + 1)]
+        y = ax[0, 0].lines[-1].get_ydata()[:(x_end + n//2 + 1)]
+        ax[0, 0].plot(x, y * 1.025, linestyle = 'dashed', color = 'r', label = 'Limit A ±2.5%')
+        ax[0, 0].plot(x, y * 0.975, linestyle = 'dashed', color = 'r')
+        ax[0, 0].plot(x, y * 1.05, linestyle = 'dashed', color = 'g', label = 'Limit B ±5%')
+        ax[0, 0].plot(x, y * 0.95, linestyle = 'dashed', color = 'g')
+        ax[0, 0].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
+        ax[0, 0].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
+        ax[0, 0].legend(loc = 'upper right')
+
+        ax[0, 1].set_title('FER5 Impedance variation side 2')
+        sfix_dut_fix_dc.plot_z_time_step(1, 1, color = 'k', ax = ax[0, 1])
+        s2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax[0, 1])
+        x = ax[0, 1].lines[-1].get_xdata()[:(x_end + n//2 + 1)]
+        y = ax[0, 1].lines[-1].get_ydata()[:(x_end + n//2 + 1)]
+        ax[0, 1].plot(x, y * 1.025, linestyle = 'dashed', color = 'r', label = 'Limit A ±2.5%')
+        ax[0, 1].plot(x, y * 0.975, linestyle = 'dashed', color = 'r')
+        ax[0, 1].plot(x, y * 1.05, linestyle = 'dashed', color = 'g', label = 'Limit B ±5%')
+        ax[0, 1].plot(x, y * 0.95, linestyle = 'dashed', color = 'g')
+        ax[0, 1].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
+        ax[0, 1].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
+        ax[0, 1].legend(loc = 'upper right')
+
+        ax[1, 0].set_title('FER8 Minimum length of 2x-Thru')
+
+        s2xthru_dc.plot_z_time_step(0, 0, color = '0.5', ax = ax[1, 0])
+        s2xthru_dc.plot_z_time_step(1, 1, color = 'k', ax = ax[1, 0])
+        y = ax[1, 0].lines[-1].get_ydata()
         y_lim = [np.min(y) - 2, np.max(y) + 2]
-        t_lim = [3. / f[-1], 3. / f[-1]]
-        ax[1, 1].plot([0, 0], y_lim, color = 'g', linestyle = 'dashed', label = 'Start')
-        ax[1, 1].plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
-        ax[1, 1].plot([2 * x, 2 * x], y_lim, color = '0.5', linestyle = 'dashed', label = 'Measured')
-        ax[1, 1].legend(loc = 'upper right')
-        ax[1, 1].set_xlim((-1, 2 * x + 1))
+        t_lim = [2 * 3. / f[-1] - dt, 2 * 3. / f[-1] - dt] # z11 is twice the length
+        ax[1, 0].plot([2 * x_t, 2 * x_t], y_lim, color = 'b', label = 'Measured')
+        ax[1, 0].plot([0, 0], y_lim, color = 'g', linestyle = 'dashed', label = 'Start')
+        ax[1, 0].plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
+        ax[1, 0].legend(loc = 'upper right')
+        ax[1, 0].set_xlim((-1, 2 * x_t + 1))
+
+        fig.delaxes(ax[1, 1])
 
         fig.tight_layout()
         return (fig, ax)
