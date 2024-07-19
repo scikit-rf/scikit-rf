@@ -6680,8 +6680,6 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
 
     if len (coefs.keys()) == 3:
         # ASSERT: we have one port data
-        ntwk = Network(**kwargs)
-
         if is_reciprocal:
             #TODO: make this better and maybe have phase continuity
             # functionality
@@ -6697,9 +6695,10 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
 
         s11 = coefs['directivity']
         s22 = coefs['source match']
-        ntwk.s = np.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
-        ntwk.frequency = frequency
-        return ntwk
+        return Network(
+            frequency = frequency,
+            s = np.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2),
+            **kwargs)
 
     else:
         p1,p2 = {},{}
