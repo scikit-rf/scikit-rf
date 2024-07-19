@@ -52,14 +52,14 @@ De-embedding Methods
    IEEEP370_MM_ZC_2xThru
 
 """
-import numpy as np
+from abc import ABC, abstractmethod
+from typing import Sequence
 import warnings
 
-from abc import ABC, abstractmethod
+import numpy as np
 from numpy import angle, concatenate, conj, exp, flip, ndarray, real, unwrap, zeros
 from numpy.fft import fft, fftshift, ifftshift, irfft
 from scipy.interpolate import interp1d
-from typing import Sequence
 
 from ..frequency import Frequency
 from ..network import Network, concat_ports, overlap_multi, subnetwork
