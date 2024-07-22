@@ -1515,10 +1515,10 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
         connections = tmp_cnxs
 
-    # cache the connections that have been processed to avoid loop
+    # Cache the connections that have been processed to avoid loop
     processed_network_names: set[str] = set()
 
-    # get the total number of network ports in the specified connection
+    # Calculate the total number of Network ports in the specified connection
     def calculate_ports(cnx: list[tuple[Network, int]]) -> int:
         if invalide_to_reduce(cnx):
             return -1
@@ -1532,6 +1532,9 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
         # Return the number of ports if the connections performed
         ports = total_ports if unique_networks == 2 else total_ports // 2 - 1
 
+        # If tuples of Networks in 'connections' have the same Networks, they form a loop.
+        # Prioritize processing loops in the circuit by reducing the number of ports by 1.
+        # This reduces the computational load during the circuit reduction process.
         if ntwks_str in processed_network_names:
             ports -= 1
         else:
