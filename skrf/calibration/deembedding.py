@@ -1687,7 +1687,7 @@ class IEEEP370(Deembedding):
         s2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
         y = ax.lines[-1].get_ydata()
         y_lim = [np.min(y), np.max(y)]
-        t_lim = [3. / f[-1], 3. / f[-1]]
+        t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
         ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
         ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
         ax.legend(loc = 'upper right')
@@ -1747,7 +1747,7 @@ class IEEEP370(Deembedding):
         mm_2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
         y = ax.lines[-1].get_ydata()
         y_lim = [np.min(y), np.max(y)]
-        t_lim = [3. / f[-1], 3. / f[-1]]
+        t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
         ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
         ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
         ax.legend(loc = 'upper right')
@@ -1978,7 +1978,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
             if self.forced_z0_line:
                 z11x = self.forced_z0_line
             else:
-                z11x = z11[x]
+                z11x = 0.5 * (z11[x-1] + z11[x])
             self.z_x = z11x
 
             if self.verbose:
@@ -2202,21 +2202,13 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
                               ax = ax[0], color = 'k')
         s2xthru.plot_z_time_step(0, 0, window = window,
                                  ax = ax[0], linestyle = 'dotted', color = '0.2')
+        y = ax[0].lines[-1].get_ydata()
         if fix_dut_fix is not None:
             fix_dut_fix.plot_z_time_step(0, 0, window = window,
                                      ax = ax[0], linestyle = 'dashed', color = 'm')
-        x = ax[0].lines[-1].get_xdata()[:self.x_end]
-        y = ax[0].lines[-1].get_ydata()[:self.x_end]
-        ax[0].plot(x, y * 1.025, linestyle = 'dashed', color = 'r', label = 'Limit A ±2.5%')
-        ax[0].plot(x, y * 0.975, linestyle = 'dashed', color = 'r')
-        ax[0].plot(x, y * 1.05, linestyle = 'dashed', color = 'g', label = 'Limit B ±5%')
-        ax[0].plot(x, y * 0.95, linestyle = 'dashed', color = 'g')
-        ax[0].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
-        ax[0].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
-
-        ax[0].plot([(self.x_end - (n / 2)) * dt], [self.z_x], marker = 'o',
+        ax[0].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[0].plot([(self.x_end - (n // 2) - 1) * dt], [self.z_x], marker = 'o',
                    color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
-        ax[0].plot([0], [self.z0], marker = 's', color = 'k', label = 'start')
         ax[0].legend(loc = 'lower left')
 
         ax[1].set_title('Side 2')
@@ -2224,20 +2216,13 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
                               ax = ax[1], color = 'k')
         s2xthru.plot_z_time_step(1, 1, window = window,
                                  ax = ax[1], linestyle = 'dotted', color = '0.2')
+        y = ax[1].lines[-1].get_ydata()
         if fix_dut_fix is not None:
             fix_dut_fix.plot_z_time_step(1, 1, window = window,
                                      ax = ax[1], linestyle = 'dashed', color = 'm')
-        x = ax[1].lines[-1].get_xdata()[:self.x_end]
-        y = ax[1].lines[-1].get_ydata()[:self.x_end]
-        ax[1].plot(x, y * 1.025, linestyle = 'dashed', color = 'r', label = 'Limit A ±2.5%')
-        ax[1].plot(x, y * 0.975, linestyle = 'dashed', color = 'r')
-        ax[1].plot(x, y * 1.05, linestyle = 'dashed', color = 'g', label = 'Limit B ±5%')
-        ax[1].plot(x, y * 0.95, linestyle = 'dashed', color = 'g')
-        ax[1].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
-        ax[1].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
-        ax[1].plot([(self.x_end - (n / 2)) * dt], [self.z_x], marker = 'o',
+        ax[1].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[1].plot([(self.x_end - (n // 2) - 1) * dt], [self.z_x], marker = 'o',
                    color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
-        ax[1].plot([0], [self.z0], marker = 's', color = 'k', label = 'start')
         ax[1].set_xlim((-1, 2 * (self.x_end - (n / 2)) * dt + 1))
         ax[1].legend(loc = 'lower left')
 
@@ -3022,40 +3007,29 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         ax[0].set_title('Side 1')
         fix1.plot_z_time_step(0, 0, window = window,
                               ax = ax[0], color = 'k')
+        y = ax[0].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
         fix_dut_fix.plot_z_time_step(0, 0, window = window,
                               ax = ax[0], linestyle = 'dashed', color = 'm')
-        x = ax[0].lines[-1].get_xdata()[:(self.x_end + n// 2)]
-        y = ax[0].lines[-1].get_ydata()[:(self.x_end + n// 2)]
-        ax[0].plot(x, y * 1.025, linestyle = 'dashed', color = 'r', label = 'Limit A ±2.5%')
-        ax[0].plot(x, y * 0.975, linestyle = 'dashed', color = 'r')
-        ax[0].plot(x, y * 1.05, linestyle = 'dashed', color = 'g', label = 'Limit B ±5%')
-        ax[0].plot(x, y * 0.95, linestyle = 'dashed', color = 'g')
-        ax[0].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
-        ax[0].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
-
-        ax[0].plot([self.x_end * dt], [y[-1]], marker = 'o', color = 'k',
-                   label = f'end (pullback1 = {self.pullback1})')
-        ax[0].plot([-self.leadin * dt], [self.z0], marker = 's', color = 'k',
+        ax[0].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
                    label = f'start (leadin = {self.leadin})')
+        ax[0].plot([self.x_end * dt], [y[self.x_end + n // 2]], marker = 'o', color = 'k',
+                   label = f'end (pullback1 = {self.pullback1})')
         ax[0].legend(loc = 'lower left')
 
         ax[1].set_title('Side 2')
         fix2.plot_z_time_step(0, 0, window = window,
                               ax = ax[1], color = 'k')
+        y = ax[1].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
         fix_dut_fix.plot_z_time_step(1, 1, window = window,
                               ax = ax[1], linestyle = 'dashed', color = 'm')
-        x = ax[1].lines[-1].get_xdata()[:(self.x_end + n// 2)]
-        y = ax[1].lines[-1].get_ydata()[:(self.x_end + n// 2)]
-        ax[1].plot(x, y * 1.025, linestyle = 'dashed', color = 'r', label = 'Limit A ±2.5%')
-        ax[1].plot(x, y * 0.975, linestyle = 'dashed', color = 'r')
-        ax[1].plot(x, y * 1.05, linestyle = 'dashed', color = 'g', label = 'Limit B ±5%')
-        ax[1].plot(x, y * 0.95, linestyle = 'dashed', color = 'g')
-        ax[1].plot(x, y * 1.1, linestyle = 'dashed', color = 'b', label = 'Limit C ±10%')
-        ax[1].plot(x, y * 0.9, linestyle = 'dashed', color = 'b')
-        ax[1].plot([self.x_end * dt], [y[-1]], marker = 'o', color = 'k',
+        ax[1].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
+                  label = f'start (leadin = {self.leadin})')
+        ax[1].plot([self.x_end * dt], [y[self.x_end + n // 2]], marker = 'o', color = 'k',
                    label = f'end (pullback2 = {self.pullback2})')
-        ax[1].plot([-self.leadin * dt], [self.z0], marker = 's', color = 'k',
-                   label = f'start (leadin = {self.leadin})')
         ax[1].set_xlim((-1, 2 * self.x_end * dt + 1))
         ax[1].legend(loc = 'lower left')
 
