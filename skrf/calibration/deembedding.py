@@ -1682,7 +1682,7 @@ class IEEEP370(Deembedding):
         ax.legend(loc = 'lower right')
 
         ax = fig.add_subplot(2, 1, 2)
-        ax.set_title('FER8 TDT Minimum length')
+        ax.set_title('FER8 TDT minimum length')
         s2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax)
         s2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
         y = ax.lines[-1].get_ydata()
@@ -1712,6 +1712,7 @@ class IEEEP370(Deembedding):
 
         fig.suptitle('Fixture electrical requirements (FER)')
         f = mm_2xthru.frequency.f
+        se_2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
         mm_2xthru_dc = IEEEP370.extrapolate_to_dc(mm_2xthru)
         mm_fix_dut_fix_dc = IEEEP370.extrapolate_to_dc(mm_fix_dut_fix)
         n = mm_2xthru.frequency.npoints * 2 - 1
@@ -1741,8 +1742,15 @@ class IEEEP370(Deembedding):
         ax.set_xlim((-1, 2 * x_t + 1))
         ax.legend(loc = 'lower right')
 
-        ax = fig.add_subplot(2, 1, 2)
-        ax.set_title('FER8 TDT Minimum length')
+        ax = fig.add_subplot(2, 2, 3)
+        ax.set_title('FER7 TDT skew')
+        se_2xthru_dc.plot_z_time_impulse(2, 0, color = '0.5', ax = ax)
+        se_2xthru_dc.plot_z_time_impulse(3, 1, color = 'k', ax = ax)
+        ax.legend(loc = 'upper right')
+        ax.set_xlim((-1, x_t + 1))
+
+        ax = fig.add_subplot(2, 2, 4)
+        ax.set_title('FER8 TDT minimum length')
         mm_2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax)
         mm_2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
         y = ax.lines[-1].get_ydata()
@@ -2396,6 +2404,11 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         self.verbose = verbose
         self.forced_z0_line_dd = forced_z0_line_dd
         self.forced_z0_line_cc = forced_z0_line_cc
+        # debug outputs
+        self.x_end_dd = None
+        self.z_x_dd = None
+        self.x_end_cc = None
+        self.z_x_cc = None
 
         IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru)
@@ -2478,10 +2491,15 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
                                 use_z_instead_ifft = self.use_z_instead_ifft,
                                 verbose = self.verbose,
                                 forced_z0_line = self.forced_z0_line_dd)
+        self.x_end_dd = dm_dd.x_end
+        self.z_x_dd = dm_dd.z_x
+
         dm_cc  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = scc, z0 = self.z0 / 2,
                                 use_z_instead_ifft = self.use_z_instead_ifft,
                                 verbose = self.verbose,
                                 forced_z0_line = self.forced_z0_line_cc)
+        self.x_end_cc = dm_cc.x_end
+        self.z_x_cc = dm_cc.z_x
 
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
@@ -2492,6 +2510,119 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         se_side2.gmm2se(p = 2)
 
         return (se_side1, se_side2)
+
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
+        res = self.deembed(self.s2xthru)
+        res.name = 'Residuals'
+        res.se2gmm(p=2)
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0])
+        res.plot_s_db(0,1, ax = ax[0])
+        res.plot_s_db(3,2, ax = ax[0])
+        res.plot_s_db(2,3, ax = ax[0])
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
+
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1])
+        res.plot_s_deg(0,1, ax = ax[1])
+        res.plot_s_deg(3,2, ax = ax[1])
+        res.plot_s_deg(2,3, ax = ax[1])
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
+
+        return (fig, ax)
+
+    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
+                             window: str = 'hamming') -> (Figure, Axes):
+        # if dc point already exists, it will be replaced
+        s2xthru = self.s2xthru.copy()
+        s2xthru.se2gmm(p=2)
+        s2xthru = IEEEP370.extrapolate_to_dc(s2xthru)
+        fix1 = self.se_side1.copy()
+        fix1.se2gmm(p=2)
+        fix1 = IEEEP370.extrapolate_to_dc(fix1)
+        fix2 = self.se_side2.copy()
+        fix2.se2gmm(p=2)
+        fix2 = IEEEP370.extrapolate_to_dc(fix2)
+        if fix_dut_fix is not None:
+            fix_dut_fix = fix_dut_fix.copy()
+            fix_dut_fix.se2gmm(p=2)
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(fix_dut_fix)
+        n = s2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * s2xthru.frequency.step) # ns
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        y = ax[0].lines[-1].get_ydata()
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'm')
+        ax[0].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[0].plot([(self.x_end_dd - (n // 2) - 1) * dt], [self.z_x_dd], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x_dd:0.1f} ohm')
+        fix1.plot_z_time_step(2, 2, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(2, 2, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(2, 2, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'b')
+        ax[0].legend(loc = 'center left')
+
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        y = ax[1].lines[-1].get_ydata()
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'm')
+        ax[1].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[1].plot([(self.x_end_dd - (n // 2) - 1) * dt], [self.z_x_dd], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x_dd:0.1f} ohm')
+        fix2.plot_z_time_step(2, 2, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(3, 3, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(3, 3, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'b')
+        ax[1].set_xlim((-1, 2 * (self.x_end_dd - (n / 2)) * dt + 1))
+        ax[1].legend(loc = 'center left')
+
+        fig.tight_layout()
+
+        return (fig, ax)
 
 
 class IEEEP370_SE_ZC_2xThru(IEEEP370):
@@ -3343,3 +3474,118 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         se_side2.gmm2se(p = 2)
 
         return (se_side1, se_side2)
+
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
+        res = self.deembed(self.s2xthru)
+        res.name = 'Residuals'
+        res.se2gmm(p=2)
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0])
+        res.plot_s_db(0,1, ax = ax[0])
+        res.plot_s_db(3,2, ax = ax[0])
+        res.plot_s_db(2,3, ax = ax[0])
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
+
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1])
+        res.plot_s_deg(0,1, ax = ax[1])
+        res.plot_s_deg(3,2, ax = ax[1])
+        res.plot_s_deg(2,3, ax = ax[1])
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
+
+        return (fig, ax)
+
+    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
+                             window: str = 'hamming') -> (Figure, Axes):
+        # if dc point already exists, it will be replaced
+        s2xthru = self.s2xthru.copy()
+        s2xthru.se2gmm(p=2)
+        s2xthru = IEEEP370.extrapolate_to_dc(s2xthru)
+        fix1 = self.se_side1.copy()
+        fix1.se2gmm(p=2)
+        fix1 = IEEEP370.extrapolate_to_dc(fix1)
+        fix2 = self.se_side2.copy()
+        fix2.se2gmm(p=2)
+        fix2 = IEEEP370.extrapolate_to_dc(fix2)
+        if fix_dut_fix is not None:
+            fix_dut_fix = fix_dut_fix.copy()
+            fix_dut_fix.se2gmm(p=2)
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(fix_dut_fix)
+        else:
+            fix_dut_fix = self.sfix_dut_fix.copy()
+            fix_dut_fix.se2gmm(p=2)
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(fix_dut_fix)
+        n = s2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * s2xthru.frequency.step) # ns
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        y = ax[0].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], linestyle = 'dashed', color = 'm')
+        ax[0].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
+                   label = f'start (leadin = {self.leadin})')
+        ax[0].plot([self.x_end_dd * dt], [y[self.x_end_dd + n // 2]], marker = 'o', color = 'k',
+                   label = f'end (pullback1 = {self.pullback1})')
+        fix1.plot_z_time_step(2, 2, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(2, 2, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(2, 2, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'b')
+        ax[0].legend(loc = 'center left')
+
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        y = ax[1].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                              ax = ax[1], linestyle = 'dashed', color = 'm')
+        ax[1].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
+                  label = f'start (leadin = {self.leadin})')
+        ax[1].plot([self.x_end_dd * dt], [y[self.x_end_dd + n // 2]], marker = 'o', color = 'k',
+                   label = f'end (pullback2 = {self.pullback2})')
+        fix2.plot_z_time_step(2, 2, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(3, 3, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(3, 3, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'b')
+        ax[1].set_xlim((-1, 2 * self.x_end_dd * dt + 1))
+        ax[1].legend(loc = 'center left')
+
+        fig.tight_layout()
+
+        return (fig, ax)
