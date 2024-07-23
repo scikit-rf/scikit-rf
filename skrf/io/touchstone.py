@@ -98,6 +98,8 @@ class ParserState:
     @rank.setter
     def rank(self, x: int) -> None:
         self._rank = x
+
+        # If the rank changes, 'numbers_per_line' needs to be recalculated.
         if "numbers_per_line" in self.__dict__:
             self.__dict__.pop("numbers_per_line")
 
@@ -440,17 +442,19 @@ class Touchstone:
 
             line_l = line.lower()
 
-            is_s_line = True
+            is_data_line = True
+            # Avoid traversing the self._parse_dict for each line by checking the first letter
+            # {"!", "#", "["} covers all the first letters of the key of the current self._parse_dict
             if line_l[0] in {"!", "#", "["}:
                 for k, v in self._parse_dict.items():
                     if line_l.startswith(k):
                         v(line)
-                        is_s_line = False
+                        is_data_line = False
                         break
-            if is_s_line:
+            if is_data_line:
                 if "!" in line:
                     line = line.partition("!")[0]
-                values = [float(v) for v in line.split()]
+                values = list(map(float, line.split()))
                 if not values:
                     continue
 
