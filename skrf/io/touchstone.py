@@ -32,6 +32,7 @@ import typing
 import warnings
 import zipfile
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import Callable
 
 import numpy as np
@@ -52,7 +53,7 @@ def remove_prefix(text: str, prefix: str) -> str:
 class ParserState:
     """Class to hold dynamic variables while parsing the touchstone file.
     """
-    rank: int | None = None
+    _rank: int | None = None
     option_line_parsed: bool = False
     hfss_gamma: list[list[float]] = field(default_factory=list)
     hfss_impedance: list[list[float]] = field(default_factory=list)
@@ -91,6 +92,17 @@ class ParserState:
         return self.rank * 2
 
     @property
+    def rank(self) -> int:
+        return self._rank
+
+    @rank.setter
+    def rank(self, x: int) -> None:
+        self._rank = x
+        if "numbers_per_line" in self.__dict__:
+            self.__dict__.pop("numbers_per_line")
+
+
+    @cached_property
     def numbers_per_line(self) -> int:
         """Returns data points per frequency point.
 
