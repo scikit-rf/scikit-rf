@@ -2910,11 +2910,11 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
             zdut1 = IEEEP370.getz(s11dut, f, z0)
             fig, axs = subplots(1, 1, sharex = True, figsize=(6.4, 4.8))
             axs.plot(ifftshift(zdut1), label = 'DUT')
-            axs[0].plot(ifftshift(self.z_side), label = 'FIX')
-            axs[0].plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
-            axs[0].set_xlim((n-50, n+x*2+50))
-            axs[0].legend()
-            axs[0].set_ylabel('Z (ohm)')
+            axs.plot(ifftshift(self.z_side1), label = 'FIX')
+            axs.plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
+            axs.set_xlim((n-50, n+x*2+50))
+            axs.legend()
+            axs.set_ylabel('Z (ohm)')
         return errorbox1
 
 
