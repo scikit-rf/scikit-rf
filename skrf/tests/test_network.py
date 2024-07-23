@@ -159,10 +159,8 @@ class NetworkTestCase(unittest.TestCase):
             ref = np.loadtxt(path / f"{fname}_low_pass_impulse.csv", skiprows=1, delimiter=";")
             t, y = netw.impulse_response(window="boxcar", pad=0, squeeze=True)
 
-            tdr = 50  * (1+y)/(1-y)
-
             np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
-            np.testing.assert_allclose(ref[:,1], tdr, rtol=5e-5)
+            np.testing.assert_allclose(ref[:,1], y, rtol=5e-5)
 
     def test_bpi(self):
         path = Path(self.test_dir) / "metas_tdr"
