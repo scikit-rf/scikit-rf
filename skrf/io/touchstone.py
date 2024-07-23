@@ -440,12 +440,17 @@ class Touchstone:
 
             line_l = line.lower()
 
-            for k, v in self._parse_dict.items():
-                if line_l.startswith(k):
-                    v(line)
-                    break
-            else:
-                values = [float(v) for v in line.partition("!")[0].split()]
+            is_s_line = True
+            if line_l[0] in {"!", "#", "["}:
+                for k, v in self._parse_dict.items():
+                    if line_l.startswith(k):
+                        v(line)
+                        is_s_line = False
+                        break
+            if is_s_line:
+                if "!" in line:
+                    line = line.partition("!")[0]
+                values = [float(v) for v in line.split()]
                 if not values:
                     continue
 
