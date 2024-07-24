@@ -1779,7 +1779,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
     FIX-2 are deembedded from the FIX_DUT_FIX network.
 
     This method is applicable only when there is a 2x-Thru network.
-    
+
     The S-parameters bisection is done by time gating S11 and S22, taking the
     proper square root of the S21 corrected by return loss, and remixing the
     parameters according to the fixture signal flow graph. This method gives
@@ -2257,7 +2257,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
     FIX-2 are deembedded from the FIX_DUT_FIX network.
 
     This method is applicable only when there is a 2x-Thru measurement.
-    
+
     The S-parameters bisection is done by time gating S11 and S22, taking the
     proper square root of the S21 corrected by return loss, and remixing the
     parameters according to the fixture signal flow graph. This method gives
@@ -2653,7 +2653,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
     The possible difference of impedance between 2x-Thru and FIX-DUT-FIX
     is corrected.
-    
+
     The algorithm computes the length of the fixtures by halving the length of
     2x-Thru. It then peels iteratively FIX-DUT-FIX by determining start
     impedance in time-domain, deembedding a one time sample long transmission
@@ -3204,7 +3204,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
 
     The possible difference of impedance between 2x-Thru and FIX-DUT-FIX
     is corrected.
-    
+
     The algorithm computes the length of the fixtures by halving the length of
     2x-Thru. It then peels iteratively FIX-DUT-FIX by determining start
     impedance in time-domain, deembedding a one time sample long transmission
