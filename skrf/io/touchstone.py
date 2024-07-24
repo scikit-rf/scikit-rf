@@ -53,7 +53,7 @@ def remove_prefix(text: str, prefix: str) -> str:
 class ParserState:
     """Class to hold dynamic variables while parsing the touchstone file.
     """
-    _rank: int | None = None
+    rank: int | None = None
     option_line_parsed: bool = False
     hfss_gamma: list[list[float]] = field(default_factory=list)
     hfss_impedance: list[list[float]] = field(default_factory=list)
@@ -90,19 +90,6 @@ class ParserState:
         #    return self.rank**2 * 2
 
         return self.rank * 2
-
-    @property
-    def rank(self) -> int:
-        return self._rank
-
-    @rank.setter
-    def rank(self, x: int) -> None:
-        self._rank = x
-
-        # If the rank changes, 'numbers_per_line' needs to be recalculated.
-        if "numbers_per_line" in self.__dict__:
-            self.__dict__.pop("numbers_per_line")
-
 
     @cached_property
     def numbers_per_line(self) -> int:
