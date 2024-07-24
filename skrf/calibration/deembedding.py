@@ -1670,7 +1670,14 @@ class IEEEP370(Deembedding):
         y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
         IEEEP370.plot_limit_fer5(x, y, ax)
         ax.legend(loc = 'lower right')
-        ax.set_xlim((-1, 2 * x_t + 1))
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
 
         ax = fig.add_subplot(2, 2, 2)
         ax.set_title('FER5 TDR Z variation side 2')
@@ -1679,8 +1686,15 @@ class IEEEP370(Deembedding):
         x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
         y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
         IEEEP370.plot_limit_fer5(x, y, ax)
-        ax.set_xlim((-1, 2 * x_t + 1))
         ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
 
         ax = fig.add_subplot(2, 1, 2)
         ax.set_title('FER8 TDT minimum length')
@@ -1731,7 +1745,14 @@ class IEEEP370(Deembedding):
         y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
         IEEEP370.plot_limit_fer5(x, y, ax)
         ax.legend(loc = 'lower right')
-        ax.set_xlim((-1, 2 * x_t + 1))
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
 
         ax = fig.add_subplot(2, 2, 2)
         ax.set_title('FER5 TDR Z variation side 2')
@@ -1740,8 +1761,15 @@ class IEEEP370(Deembedding):
         x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
         y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
         IEEEP370.plot_limit_fer5(x, y, ax)
-        ax.set_xlim((-1, 2 * x_t + 1))
         ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
 
         ax = fig.add_subplot(2, 2, 3)
         ax.set_title('FER7 TDT skew')
@@ -2223,6 +2251,12 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         ax[0].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
         ax[0].plot([(self.x_end - (n // 2) - 1) * dt], [self.z_x], marker = 'o',
                    color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[0].set_ylim((ymin - 5, ymax + 5))
         ax[0].legend(loc = 'lower left')
 
         ax[1].set_title('Side 2')
@@ -2237,7 +2271,14 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         ax[1].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
         ax[1].plot([(self.x_end - (n // 2) - 1) * dt], [self.z_x], marker = 'o',
                    color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
-        ax[1].set_xlim((-1, 2 * (self.x_end - (n / 2)) * dt + 1))
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[1].set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * (self.x_end - (n // 2)) * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
         ax[1].legend(loc = 'lower left')
 
         fig.tight_layout()
@@ -2628,7 +2669,8 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         if fix_dut_fix is not None:
             fix_dut_fix.plot_z_time_step(3, 3, window = window,
                                      ax = ax[1], linestyle = 'dashed', color = 'b')
-        ax[1].set_xlim((-1, 2 * (self.x_end_dd - (n / 2)) * dt + 1))
+        delay = 2 * (self.x_end_dd - (n // 2)) * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
         ax[1].legend(loc = 'center left')
 
         fig.tight_layout()
@@ -3164,6 +3206,12 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
                    label = f'start (leadin = {self.leadin})')
         ax[0].plot([self.x_end * dt], [y[self.x_end + n // 2]], marker = 'o', color = 'k',
                    label = f'end (pullback1 = {self.pullback1})')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[0].set_ylim((ymin - 5, ymax + 5))
         ax[0].legend(loc = 'lower left')
 
         ax[1].set_title('Side 2')
@@ -3178,7 +3226,14 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
                   label = f'start (leadin = {self.leadin})')
         ax[1].plot([self.x_end * dt], [y[self.x_end + n // 2]], marker = 'o', color = 'k',
                    label = f'end (pullback2 = {self.pullback2})')
-        ax[1].set_xlim((-1, 2 * self.x_end * dt + 1))
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[1].set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * self.x_end * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
         ax[1].legend(loc = 'lower left')
 
         fig.tight_layout()
@@ -3606,7 +3661,8 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
                                  ax = ax[1], linestyle = 'dotted', color = '0.2')
         fix_dut_fix.plot_z_time_step(3, 3, window = window,
                                      ax = ax[1], linestyle = 'dashed', color = 'b')
-        ax[1].set_xlim((-1, 2 * self.x_end_dd * dt + 1))
+        delay = 2 * self.x_end_dd * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
         ax[1].legend(loc = 'center left')
 
         fig.tight_layout()
