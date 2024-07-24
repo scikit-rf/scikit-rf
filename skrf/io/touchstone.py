@@ -32,6 +32,7 @@ import typing
 import warnings
 import zipfile
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import Callable
 
 import numpy as np
@@ -90,7 +91,7 @@ class ParserState:
 
         return self.rank * 2
 
-    @property
+    @cached_property
     def numbers_per_line(self) -> int:
         """Returns data points per frequency point.
 
@@ -428,12 +429,19 @@ class Touchstone:
 
             line_l = line.lower()
 
-            for k, v in self._parse_dict.items():
-                if line_l.startswith(k):
-                    v(line)
-                    break
-            else:
-                values = [float(v) for v in line.partition("!")[0].split()]
+            is_data_line = True
+            # Avoid traversing the self._parse_dict for each line by checking the first letter
+            # {"!", "#", "["} covers all the first letters of the key of the current self._parse_dict
+            if line_l[0] in {"!", "#", "["}:
+                for k, v in self._parse_dict.items():
+                    if line_l.startswith(k):
+                        v(line)
+                        is_data_line = False
+                        break
+            if is_data_line:
+                if "!" in line:
+                    line = line.partition("!")[0]
+                values = list(map(float, line.split()))
                 if not values:
                     continue
 
