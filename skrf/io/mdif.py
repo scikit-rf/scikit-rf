@@ -365,7 +365,10 @@ class Mdif:
               filename : str,
               values: dict | None = None,
               data_types: dict | None = None,
-              comments = None):
+              comments: str | None = None,
+              *,
+              skrf_comment: bool = True,
+              ads_compatible: bool = True):
         """
         Write a MDIF file from a NetworkSet.
 
@@ -386,6 +389,11 @@ class Mdif:
         comments: list of strings
             Comments to add to output_file.
             Each list items is a separate comment line
+        skrf_comment : bool, optional
+            write `created by skrf` comment
+        ads_compatible: bool. Default is True.
+            Indicates whether to write the file in a format that
+            ADS will read properly.
 
         See Also
         --------
@@ -437,16 +445,17 @@ class Mdif:
                     if p not in data_types:
                         data_types[p] = "double"
 
+                    var_type = "" if ads_compatible else f"({dict_types[data_types[p]]})"
                     if data_types[p] == "string":
-                        var_def_str = f'VAR {p}({dict_types[data_types[p]]}) = "{values[p][filenumber]}"'
+                        var_def_str = f'VAR {p}{var_type} = "{values[p][filenumber]}"'
                     else:
-                        var_def_str = f"VAR {p}({dict_types[data_types[p]]}) = {values[p][filenumber]}"
+                        var_def_str = f"VAR {p}{var_type} = {values[p][filenumber]}"
                     mdif.write(var_def_str + "\n")
 
                 mdif.write("\nBEGIN ACDATA\n")
                 mdif.write(optionstring + "\n")
                 mdif.write("! network name: " + ntwk.name + "\n")
-                data = ntwk.write_touchstone(return_string=True)
+                data = ntwk.write_touchstone(return_string=True, skrf_comment=skrf_comment)
                 mdif.write(data)
                 mdif.write("END\n\n")
 

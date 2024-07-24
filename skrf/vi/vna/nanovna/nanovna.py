@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    pass
+    from typing import Sequence
 
 import functools
 from enum import Enum
@@ -43,15 +43,73 @@ class REG_ADDR(bytes, Enum):
     FIRMWARE_MINOR = b"\xf4"
 
 
-class NanoVNA(vna.VNA):
-    '''NanoVNA.'''
+class NanoVNAv2(vna.VNA):
+    """NanoVNAv2.
+
+    This class connects to the NanoVNA V2 using a binary protocol over USB.
+    It should also be compatible with other devices, if they use the same `protocol <https://nanorfe.com/nanovna-v2-user-manual.html#__RefHeading___Toc2537_2953165397>`_.
+    Some variants of the NanoVNA use a text protocol and are not supported.
+
+    .. warning::
+
+        The NanoVNA V2 only returns uncalibrated networks, regardless of the calibration on the device itself.
+        See section `Examples`_.
+
+    Notes
+    -----
+
+    Tested devices:
+
+    * `NanoVNA V2 <https://nanorfe.com/de/nanovna-v2.html>`_
+    * `LiteVNA <https://www.zeenko.tech/litevna>`_
+
+    .. _Examples:
+    Examples
+    --------
+
+    Basic S11 and S21 measurement:
+
+    .. code-block:: python
+
+        import skrf
+        from skrf.vi.vna.nanovna import NanoVNAv2
+
+        vna = NanoVNAv2("ASRL/dev/ttyACM0::INSTR")  # Linux
+        # vna = NanoVNAv2("ASRL1::INSTR")  # Windows
+        freq = skrf.Frequency(start=1, stop=2, unit='GHz', npoints=101)
+        s11, s21 = vna.get_s11_s21()
+
+    1-port calibration assuming ideal reference standards:
+
+    .. code-block:: python
+
+        import skrf
+
+        # load uncalibrated measurement
+        raw_s1p = skrf.Network("measurement.s1p")
+
+        # load s1p networks of measured standards
+        cal_measured = [skrf.Network("short.s1p"), skrf.Network("open.s1p"), skrf.Network("load.s1p"]
+
+        # get ideal standards
+        line = skrf.DefinedGammaZ0(frequency=cal_measured[0].frequency, z0=50)
+        cal_ideals = [line.short(nports=1), line.open(nports=1), line.match(nports=1)]
+
+        # run calibration
+        cal = skrf.OnePort(ideals=cal_ideals, measured=cal_measured)
+        cal.run()
+
+        # apply calibration
+        calibrated_s1p = cal.apply_cal(raw_s1p)
+    """
+
     _scpi = False
 
     def __init__(self, address, backend: str = "@py"):
         super().__init__(address, backend)
         if not isinstance(self._resource, pyvisa.resources.SerialInstrument):
             raise RuntimeError(
-                "NanoVNA can only be a serial instrument. "
+                "NanoVNAv2 can only be a serial instrument. "
                 f"{address} yields a {self._resource.__class__.__name__}"
             )
 
@@ -99,7 +157,7 @@ class NanoVNA(vna.VNA):
         fw_minor = int.from_bytes(fw_minor, 'little')
 
         return (
-            f"NanoVNA\n"
+            f"NanoVNAv2\n"
             f"\tVariant:{variant}\n"
             f"\tProtocol Version:{protocol}\n"
             f"\tHardware Version: {hardware}\n"
@@ -187,7 +245,6 @@ class NanoVNA(vna.VNA):
 
         return s11, s21
 
-
     def get_s11_s21(self) -> tuple[skrf.Network, skrf.Network]:
         n = self._freq.npoints
         self.clear_fifo()
@@ -205,6 +262,59 @@ class NanoVNA(vna.VNA):
         s11.frequency = self._freq.copy()
         s21.frequency = self._freq.copy()
 
-        s11.s, s21.s = NanoVNA._convert_bytes_to_sparams(n, raw)
+        s11.s, s21.s = NanoVNAv2._convert_bytes_to_sparams(n, raw)
 
         return s11, s21
+
+    def get_sdata(self, a: int = 1, b: int = 1) -> skrf.Network:
+        """
+        Get S-parameter as 1-port :class:`skrf.Network`.
+
+        Parameters
+        ----------
+        a:
+            Input port of VNA. Can be 1 or 2, default is 1.
+        b:
+            Output port of VNA. Can only be 1, default is 1.
+
+        Returns
+        -------
+        :class:`skrf.Network`
+            Measured S-parameter
+        """
+        if a not in (1, 2) or b != 1:
+            raise RuntimeError(
+                "NanoVNA V2 can only measure S11 and S21"
+            )
+
+        return self.get_s11_s21()[a-1]
+
+    def get_snp_network(self, ports: Sequence[int | None]) -> skrf.Network:
+        """
+        Get custom n-port :class:`skrf.Network`.
+
+        Parameters
+        ----------
+        ports:
+            Port mapping. Can be any sequence of 1, 2 and None
+
+        Returns
+        -------
+        :class:`skrf.Network`
+            Measured S-parameters in custom network
+        """
+        nwk_s11, nwk_s21 = self.get_s11_s21()
+        frequency = self._freq.copy()
+
+        s_parameters = np.zeros((len(frequency), len(ports), len(ports)), dtype=complex)
+        snp_network = skrf.Network(frequency=frequency, s=s_parameters)
+
+        for i, i_port in enumerate(ports):
+            if i_port is not None:
+                for j, j_port in enumerate(ports):
+                    if i_port == 1 and j_port == 1:
+                        snp_network.s[:, i, j] = nwk_s11.s[:, 0, 0]
+                    elif i_port == 2 and j_port == 1:
+                        snp_network.s[:, i, j] = nwk_s21.s[:, 0, 0]
+
+        return snp_network

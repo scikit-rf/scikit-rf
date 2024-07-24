@@ -1227,7 +1227,7 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
 @axes_kwarg
 def plot_uncertainty_bounds_component(
         self: NetworkSet, attribute: str,
-        m: int | None = None, n: int | None = None,
+        m: int | None = None, n: int | None = None, *,
         type: str = 'shade', n_deviations: int = 3,
         alpha: float = .3, color_error: str | None = None,
         markevery_error: int = 20, ax: plt.Axes = None,
@@ -1266,7 +1266,7 @@ def plot_uncertainty_bounds_component(
         tbd
     type : str
         if type=='bar', this controls frequency of error bars
-    ax : matplotlib axe object
+    ax : matplotlib axes object
         Axes to plot on. Default is None.
     ppf : function
         post processing function. a function applied to the
@@ -1347,20 +1347,24 @@ def plot_uncertainty_bounds_component(
 
 @axes_kwarg
 def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
-                                 type: str = 'shade', n_deviations: int = 3,
+                                 *, type: str = 'shade',
                                  alpha: float = .3, color_error: str | None = None,
                                  markevery_error: int = 20, ax: plt.Axes = None,
                                  ppf: bool = None, kwargs_error: dict = None,
                                  **kwargs):
     r"""
-    Plots mean value of the NetworkSet with +/- uncertainty bounds in an Network's attribute.
+    Plots mean value of the NetworkSet with minimum and maximum bounds in an Network's attribute.
 
-    This is designed to represent uncertainty in a scalar component of the s-parameter. For example
-    plotting the uncertainty in the magnitude would be expressed by
+    This is designed to represent min/max in a scalar component of the s-parameter. For example
+    plotting the min/max in the magnitude would be expressed by
 
     .. math::
 
-        mean(|s|) \pm std(|s|)
+        min(|s|)
+
+        mean(|s|)
+
+        max(|s|)
 
     The order of mean and abs is important.
 
@@ -1374,17 +1378,15 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
         second index of attribute matrix
     type : str
         ['shade' | 'bar'], type of plot to draw
-    n_deviations : int
-        number of std deviations to plot as bounds
     alpha : float
         passed to matplotlib.fill_between() command. [number, 0-1]
     color_error : str
-        color of the +- std dev fill shading. Default is None.
+        color of the min/max fill shading. Default is None.
     markevery_error : float
         tbd
     type : str
         if type=='bar', this controls frequency of error bars
-    ax : matplotlib axe object
+    ax : matplotlib axes object
         Axes to plot on. Default is None.
     ppf : function
         post processing function. a function applied to the
@@ -1448,6 +1450,71 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
     scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
     ax.axis('tight')
 
+@axes_kwarg
+def plot_violin(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
+                         *, widths: float = None, showmeans: bool = True,
+                         showextrema: bool = True, showmedians: bool = False,
+                         quantiles = None, points: int = 100, bw_method = None,
+                         ax: plt.Axes = None, **kwargs
+    ):
+    r"""Plots the violin plot of the network set for the desired attribute.
+
+    A violin plot provides the distribution of the attribute at each frequency point, and optionally the
+    extrema, mean, and median. The plot becomes cluttered quickly with many frequencies, so reducing the number
+    with :meth:`NetworkSet.interpolate_frequency` is recommended.
+
+    Parameters
+    ----------
+    attribute : str
+        attribute of Network type to analyze
+    m : int
+        first index of attribute matrix
+    n : int
+        second index of attribute matrix
+    widths : float
+        The maximum width of each violin in units of the positions axis.
+        The default is 0.75 of the distance between the first two frequencies.
+    showmeans : bool
+        Whether to show the mean with a line.
+    showextrema : bool
+        Whether to show the extrema with a line.
+    showmedians : bool
+        Whether to show the median with a line.
+    quantiles : ArrayLike
+        If not None, set a list of floats in interval [0, 1] for each violin,
+        which stands for the quantiles that will be rendered for that violin.
+    points : int
+        The number of points to evaluate each of the gaussian kernel density estimations at.
+    bw_method : {'scott', 'silverman'} or float or callable, default: 'scott'
+        _description_. Defaults to None.
+    ax : matplotlib axes object
+        Axes to plot on. Default is None.
+    \*\*kwargs :
+        passed to :meth:`matplotlib.pyplot.violinplot`
+
+    Note
+    ----
+    For phase plots you probably want s_deg_unwrap, or
+    similar.  Uncertainty for wrapped phase blows up at +-pi.
+    """
+
+    freq = self.ntwk_set[0].f
+
+    # default widths to 3/4 distance between frequencies
+    if not widths and len(freq) > 1:
+        widths = (freq[1]-freq[0])*0.75
+    elif not widths:
+        widths = 0.5
+
+    data = np.array([getattr(p, attribute)[:,m,n] for p in self.ntwk_set])
+
+    ax.violinplot(data, freq, widths=widths, showmeans=showmeans, showextrema=showextrema,
+                  showmedians=showmedians, quantiles=quantiles, points=points, bw_method=bw_method, **kwargs)
+
+    ax.set_xlabel(f'Frequency ({self.ntwk_set[0].frequency.unit})')
+    ax.set_ylabel(self[0].Y_LABEL_DICT.get(attribute[2:], ''))  # use only the function of the attribute
+    scale_frequency_ticks(ax, self.ntwk_set[0].frequency.unit)
+    ax.axis('tight')
 
 def plot_uncertainty_bounds_s_db(self: NetworkSet, *args, **kwargs):
     """
@@ -1456,8 +1523,8 @@ def plot_uncertainty_bounds_s_db(self: NetworkSet, *args, **kwargs):
     See plot_uncertainty_bounds for help.
 
     """
-    kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
-    self.plot_uncertainty_bounds_component(*args,**kwargs)
+    kwargs.update({'ppf':mf.magnitude_2_db})
+    self.plot_uncertainty_bounds_component("s_mag", *args,**kwargs)
 
 def plot_minmax_bounds_s_db(self: NetworkSet, *args, **kwargs):
     """
@@ -1466,8 +1533,8 @@ def plot_minmax_bounds_s_db(self: NetworkSet, *args, **kwargs):
     See plot_uncertainty_bounds for help.
 
     """
-    kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
-    self.plot_minmax_bounds_component(*args,**kwargs)
+    kwargs.update({'ppf':mf.magnitude_2_db})
+    self.plot_minmax_bounds_component("s_mag", *args,**kwargs)
 
 def plot_minmax_bounds_s_db10(self: NetworkSet, *args, **kwargs):
     """
@@ -1476,8 +1543,8 @@ def plot_minmax_bounds_s_db10(self: NetworkSet, *args, **kwargs):
     see plot_uncertainty_bounds for help
 
     """
-    kwargs.update({'attribute':'s_mag','ppf':mf.mag_2_db10})
-    self.plot_minmax_bounds_component(*args,**kwargs)
+    kwargs.update({'ppf':mf.mag_2_db10})
+    self.plot_minmax_bounds_component("s_mag", *args,**kwargs)
 
 def plot_uncertainty_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
     """
@@ -1486,18 +1553,18 @@ def plot_uncertainty_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
     See plot_uncertainty_bounds for help.
 
     """
-    kwargs.update({'attribute':'s_time_mag','ppf':mf.magnitude_2_db})
-    self.plot_uncertainty_bounds_component(*args,**kwargs)
+    kwargs.update({'ppf':mf.magnitude_2_db})
+    self.plot_uncertainty_bounds_component("s_time_mag", *args,**kwargs)
 
-def plot_minmax_bounds_s_time_db(self, *args, **kwargs):
+def plot_minmax_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
     """
     Call ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``.
 
     See plot_uncertainty_bounds for help.
 
     """
-    kwargs.update({'attribute':'s_time_mag','ppf':mf.magnitude_2_db})
-    self.plot_minmax_bounds_component(*args, **kwargs)
+    kwargs.update({'ppf':mf.magnitude_2_db})
+    self.plot_minmax_bounds_component("s_time_mag", *args, **kwargs)
 
 def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0):
     """

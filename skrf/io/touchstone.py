@@ -32,11 +32,12 @@ import typing
 import warnings
 import zipfile
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import Callable
 
 import numpy as np
 
-from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT
+from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT, S_DEFINITIONS
 from ..media import DefinedGammaZ0
 from ..network import Network
 from ..util import get_fid
@@ -90,7 +91,7 @@ class ParserState:
 
         return self.rank * 2
 
-    @property
+    @cached_property
     def numbers_per_line(self) -> int:
         """Returns data points per frequency point.
 
@@ -428,12 +429,19 @@ class Touchstone:
 
             line_l = line.lower()
 
-            for k, v in self._parse_dict.items():
-                if line_l.startswith(k):
-                    v(line)
-                    break
-            else:
-                values = [float(v) for v in line.partition("!")[0].split()]
+            is_data_line = True
+            # Avoid traversing the self._parse_dict for each line by checking the first letter
+            # {"!", "#", "["} covers all the first letters of the key of the current self._parse_dict
+            if line_l[0] in {"!", "#", "["}:
+                for k, v in self._parse_dict.items():
+                    if line_l.startswith(k):
+                        v(line)
+                        is_data_line = False
+                        break
+            if is_data_line:
+                if "!" in line:
+                    line = line.partition("!")[0]
+                values = list(map(float, line.split()))
                 if not values:
                     continue
 
@@ -498,6 +506,10 @@ class Touchstone:
 
             self.s_def = S_DEF_HFSS_DEFAULT
             self.has_hfss_port_impedances = True
+            # Load the reference impedance convention from the comments
+            for s_def in S_DEFINITIONS:
+                if f'S-parameter uses the {s_def} definition' in self.comments:
+                    self.s_def = s_def
         elif self.reference is None:
             self.z0 = np.broadcast_to(self.resistance, (len(state.f), state.rank)).copy()
         else:
@@ -871,7 +883,7 @@ def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> dict[
     networks = dict()
     for fname in ziparchive.namelist():  # type: str
         directory = os.path.split(fname)[0]
-        if dir == directory and  re.match(r"s\d+p", fname.lower()):
+        if dir == directory and  re.search(r"s\d+p$", fname.lower()):
             network = Network.zipped_touchstone(fname, ziparchive)
             networks[network.name] = network
     return networks
