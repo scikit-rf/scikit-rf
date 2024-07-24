@@ -2654,12 +2654,11 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
     The possible difference of impedance between 2x-Thru and FIX-DUT-FIX
     is corrected.
 
-    The algorithm computes the length of the fixtures by halving the length of
-    2x-Thru. It then peels iteratively FIX-DUT-FIX by determining start
-    impedance in time-domain, deembedding a one time sample long transmission
-    line of this impedance and loop again until the fixtures mimic FIX-DUT-FIX
-    sides impedance profile. This is different of IEEEP370_MM_NZC_2xThru that
-    only does a bissection of 2x-Tru S-parameters.
+    The algorithm computes the length of the fixtures by halving the delay of
+    2x-Thru in time domain transmission. The propagation constant gamma is also
+    determined from the 2xThru. It then peels the FIX-DUT-FIX time domain
+    impedance profile iteratively in cycles of determining start impedance and
+    deembedding a single time sample long transmission line.
 
     Example
     --------
@@ -3205,12 +3204,11 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
     The possible difference of impedance between 2x-Thru and FIX-DUT-FIX
     is corrected.
 
-    The algorithm computes the length of the fixtures by halving the length of
-    2x-Thru. It then peels iteratively FIX-DUT-FIX by determining start
-    impedance in time-domain, deembedding a one time sample long transmission
-    line of this impedance and loop again until the fixtures mimic FIX-DUT-FIX
-    sides impedance profile. This is different of IEEEP370_MM_NZC_2xThru that
-    only does a bissection of 2x-Tru S-parameters.
+    The algorithm computes the length of the fixtures by halving the delay of
+    2x-Thru in time domain transmission. The propagation constant gamma is also
+    determined from the 2xThru. It then peels the FIX-DUT-FIX time domain
+    impedance profile iteratively in cycles of determining start impedance and
+    deembedding a single time sample long transmission line.
 
     Note
     ----
