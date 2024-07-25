@@ -170,6 +170,7 @@ import numpy as np
 from numpy import gradient, ndarray, shape
 from numpy.linalg import inv as npy_inv
 from scipy import stats  # for Network.add_noise_*, and Network.windowed
+from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d  # for Network.interpolate()
 
 from . import mathFunctions as mf
@@ -4193,7 +4194,7 @@ class Network:
             )
 
         t, y = self.impulse_response(window=window, n=n, pad=pad, bandpass=False, squeeze=squeeze)
-        return t, np.cumsum(y, axis=0)
+        return t, cumulative_trapezoid(y, initial=0, axis=0)
 
     # Network Active s/z/y/vswr parameters
     def s_active(self, a: np.ndarray) -> np.ndarray:

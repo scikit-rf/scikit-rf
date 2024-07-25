@@ -162,6 +162,17 @@ class NetworkTestCase(unittest.TestCase):
             np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
             np.testing.assert_allclose(ref[:,1], y, rtol=5e-5)
 
+    def test_lps(self):
+        path = Path(self.test_dir) / "metas_tdr"
+
+        for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g"]:
+            netw = rf.Network(path / f"{fname}.s1p")
+            ref = np.loadtxt(path / f"{fname}_low_pass_step.csv", skiprows=1, delimiter=";")
+            t, y = netw.step_response(window="boxcar", pad=0, squeeze=True)
+
+            np.testing.assert_allclose(ref[:, 0], t * 1e12, rtol=2e-5)
+            np.testing.assert_allclose(ref[:, 1], y, rtol=5e-5)
+
     def test_bpi(self):
         path = Path(self.test_dir) / "metas_tdr"
 
