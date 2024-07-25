@@ -1,0 +1,25 @@
+<Qucs Schematic 0.0.19>
+<Properties>
+  <View=0,0,800,800,1,0,0>
+  <Grid=10,10,0>
+  <DataSet=diff_2xthru.dat>
+  <DataDisplay=diff_2xthru.sch>
+  <OpenDisplay=1>
+  <Script=diff_2xthru.m>
+  <RunScript=0>
+  <showFrame=0>
+  <FrameText0=Titre>
+  <FrameText1=Auteur :>
+  <FrameText2=Date :>
+  <FrameText3=Version :>
+</Properties>
+<Symbol>
+</Symbol>
+<Components>
+</Components>
+<Wires>
+</Wires>
+<Diagrams>
+</Diagrams>
+<Paintings>
+</Paintings>
