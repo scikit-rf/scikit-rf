@@ -46,6 +46,7 @@ De-embedding Methods
    SplitTee
    AdmittanceCancel
    ImpedanceCancel
+   IEEEP370
    IEEEP370_SE_NZC_2xThru
    IEEEP370_MM_NZC_2xThru
    IEEEP370_SE_ZC_2xThru
@@ -55,15 +56,16 @@ De-embedding Methods
 
 import warnings
 from abc import ABC, abstractmethod
+from typing import Sequence
 
 import numpy as np
-from numpy import angle, concatenate, conj, exp, flip, real, zeros
+from numpy import angle, concatenate, conj, exp, flip, ndarray, real, unwrap, zeros
 from numpy.fft import fft, fftshift, ifftshift, irfft
 from scipy.interpolate import interp1d
 
 from ..frequency import Frequency
 from ..network import Network, concat_ports, overlap_multi, subnetwork
-from ..util import subplots
+from ..util import Axes, Figure, figure, subplots
 
 
 class Deembedding(ABC):
@@ -944,7 +946,855 @@ class ImpedanceCancel(Deembedding):
         return caled
 
 
-class IEEEP370_SE_NZC_2xThru(Deembedding):
+class IEEEP370(Deembedding):
+    """
+    Abstract Base Class for all IEEEP370 de-embedding class.
+
+    This class implements the common mechanisms for all IEEEP370 de-embedding
+    algorithms. Specific algorithms should inherit this
+    class and override the methods:
+    * :func:`IEEEP370.deembed`
+    * :func:`IEEEP370.split2xthru`
+
+    Based on [ElSA20]_, [I3E3701]_, [I3E3702]_, [I3E3703]_, and [I3E3704]_.
+
+    References
+    ----------
+    .. [ElSA20] Ellison J, Smith SB, Agili S., "Using a 2x-thru standard to achieve
+        accurate de-embedding of measurements", Microwave Optical Technology
+        Letter, 2020, https://doi.org/10.1002/mop.32098
+    .. [I3E3701] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP3702xThru.m,
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    .. [I3E3702] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    .. [I3E3703] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370Zc2xThru.m
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    .. [I3E3704] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    """
+    def __init__(self, dummies: Sequence[Network], name: str = None,
+                 *args, **kwargs) -> None:
+        r"""
+        IEEEP370 de-embedding Initializer.
+
+        Parameters
+        ----------
+        dummies : list of :class:`~skrf.network.Network` objects
+            Network info of all the dummy structures used in a
+            given de-embedding algorithm.
+
+        name : string
+            Name of this de-embedding instance, like 'open-short-set1'
+            This is for convenience of identification.
+
+        \*args, \*\*kwargs : keyword arguments
+            stored in self.args and self.kwargs, which may be used
+            by sub-classes if needed.
+        """
+        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+
+    @abstractmethod
+    def deembed(self, ntwk: Network) -> Network:
+        """
+        Apply de-embedding correction to a Network
+        """
+        pass
+
+    @abstractmethod
+    def split2xthru(self):
+        """
+        Determine fixtures models
+        """
+        pass
+
+    @staticmethod
+    def extrapolate_to_dc(ntwk: Network) -> Network:
+        """
+        Extrapolate the network to DC using IEEE370 NZC algorithm.
+        This is usefull to compare the fixtures and deembedded networks
+        to the input data in the same conditions used by NZC algorithm.
+        If the network already have a DC point, it will be replaced.
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+            Network to be extrapolated to DC
+
+        Returns
+        -------
+        ntwk_dc : :class:`~skrf.network.Network` object
+            Network with DC point
+
+        """
+        name = ntwk.name
+        s = ntwk.s
+        f = ntwk.frequency.f
+        port_modes = ntwk.port_modes
+        # check for already existing DC point
+        if(f[0] == 0):
+            warnings.warn(
+                "Existing DC point is replaced by extrapolated value.",
+                RuntimeWarning, stacklevel=2
+                )
+            f = f[1:]
+            s = s[1:]
+        # check for bad frequency vector
+        df = f[1] - f[0]
+        tol = 0.1 # allow a tolerance of 0.1 from delta-f to starting f (prevent non-issues from precision)
+        if(np.abs(f[0] - df) > tol):
+            warnings.warn(
+               """Non-uniform frequency vector detected. Consider interpolation.""",
+               RuntimeWarning, stacklevel=2
+               )
+        n_ports = ntwk.number_of_ports
+        z0 = ntwk.z0[0]
+        n = len(f)
+        snew = zeros((n + 1, n_ports, n_ports), dtype = complex)
+        snew[1:,:,:] = s
+        for i in range(n_ports):
+            for j in range(n_ports):
+                if i == j:
+                    snew[0, i, j] = IEEEP370.DC(s[:, i, j], f)
+                else:
+                    snew[0, i, j] = IEEEP370.dc_interp(s[:, i, j], f)
+
+        f = concatenate(([0], f))
+        ntwk_dc = Network(frequency = Frequency.from_f(f, 'Hz'), s = snew,
+                       z0 = z0, name = name)
+        ntwk_dc.port_modes = port_modes
+        return ntwk_dc
+
+    @staticmethod
+    def dc_interp(s: ndarray, f: ndarray) -> float:
+        """
+        enforces symmetric upon the first 10 points and interpolates the DC
+        point.
+        """
+        sp = s[0:9]
+        fp = f[0:9]
+
+        snp = concatenate((conj(flip(sp)), sp))
+        fnp = concatenate((-1*flip(fp), fp))
+        # mhuser : used cubic instead spline (not implemented)
+        snew = interp1d(fnp, snp, axis=0, kind = 'cubic')
+        return real(snew(0))
+
+    @staticmethod
+    def COM_receiver_noise_filter(f: ndarray, fr: float) -> ndarray:
+        """
+        receiver filter in COM defined by eq 93A-20
+        As defined in 802.3-2022 - IEEE Standard for Ethernet annex 93A
+        """
+        fdfr = f / fr
+        # eq 93A-20
+        return 1 / (1 - 3.414214 * fdfr**2 + fdfr**4 + 1j*2.613126*(fdfr - fdfr**3))
+
+    @staticmethod
+    def makeStep(impulse: ndarray) -> ndarray:
+        """
+        Make a time-domain step response from an impulse response.
+        """
+        #mhuser : no need to call step function here, cumsum will be enough and efficient
+        #step = np.convolve(np.ones((len(impulse))), impulse)
+        #return step[0:len(impulse)]
+        return np.cumsum(impulse, axis=0)
+
+    @staticmethod
+    def DC(s: ndarray, f: ndarray, allowedError: float = 1e-12) -> float:
+        """
+        Advanced reflective DC point extrapolation.
+        """
+        DCpoint = 0.002 # seed for the algorithm
+        err = 1 # error seed
+        cnt = 0
+        df = f[1] - f[0]
+        n = len(f)
+        t = np.linspace(-1/df,1/df,n*2+1)
+        ts = np.argmin(np.abs(t - (-3e-9)))
+        Hr = IEEEP370.COM_receiver_noise_filter(f, f[-1]/2)
+        while(err > allowedError):
+            h1 = IEEEP370.makeStep(
+                fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
+            h2 = IEEEP370.makeStep(
+                fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
+            m = (h2[ts] - h1[ts]) / 0.001
+            b = h1[ts] - m * DCpoint
+            DCpoint = (0 - b) / m
+            err = np.abs(h1[ts] - 0)
+            cnt += 1
+        return DCpoint
+
+    @staticmethod
+    def thru(ntwk: Network) -> Network:
+        """
+        Create a perfect thru
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+               Network from which copy frequency, z0 and other parameters.
+               The S-parameters will be replaced by zero-length matched lossless
+               thru.
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Network of the perfect thru
+
+        """
+        out = ntwk.copy()
+        out.s[:, 0, 0] = 0
+        out.s[:, 1, 0] = 1
+        out.s[:, 0, 1] = 1
+        out.s[:, 1, 1] = 0
+        return out
+
+    @staticmethod
+    def add_dc(ntwk: Network) -> Network:
+        """
+        Extrapolate a network to DC using interpolation for all S-parameters.
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+               Network to be extrapolated to DC
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Network with DC point
+
+        """
+        s = ntwk.s
+        f = ntwk.frequency.f
+        z0 = ntwk.z0[0]
+        n = len(f)
+        snew = zeros((n + 1, 2,2), dtype = complex)
+        snew[1:,:,:] = s
+        snew[0, 0, 0] = IEEEP370.dc_interp(s[:, 0, 0], f)
+        snew[0, 0, 1] = IEEEP370.dc_interp(s[:, 0, 1], f)
+        snew[0, 1, 0] = IEEEP370.dc_interp(s[:, 1, 0], f)
+        snew[0, 1, 1] = IEEEP370.dc_interp(s[:, 1, 1], f)
+
+        f = concatenate(([0], f))
+        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew, z0 = z0)
+
+    @staticmethod
+    def getz(s: ndarray, f: ndarray, z0: float) -> ndarray:
+        """
+        Compute step response to get the time-domain impedance from S-parameters.
+        The S-parameters are DC extrapolated first.
+
+        Parameters
+        ----------
+        s : :array-like
+            1-Port S-parameters array
+        f : :array-like
+            Frequency array for DC extrapolation
+        z0: :array-like
+            Reference impedance
+
+        Returns
+        -------
+        z : :array-like
+            Time-domain impedance step response
+
+        """
+        DC11 = IEEEP370.DC(s, f, 1e-10)
+        t112x = irfft(concatenate(([DC11], s)))
+        #get the step response of t112x. Shift is needed for makeStep to
+        #work properly.
+        t112xStep = IEEEP370.makeStep(fftshift(t112x))
+        #construct the transmission line
+        z = -z0 * (t112xStep + 1) / (t112xStep - 1)
+        z = ifftshift(z) #impedance. Shift again to get the first point first.
+        return z
+
+    @staticmethod
+    def makeTL(zline: float, z0: float, gamma: ndarray, l: float) -> ndarray:
+        """
+        Compute the S-parameters of a transmission line.
+
+        Parameters
+        ----------
+        zline : :number
+                Characteristic impedance
+        z0    : :number
+                Port impedance to renormalize into
+        gamma : :array-like
+                Frequency-dependent propagation constant
+        l    : :number
+                Length in the same length unit as gamma
+
+        Returns
+        -------
+        TL : :array-like
+             S_Parameters of the transmission line
+        """
+        # todo: use DefinedGammaZ0 media instead
+        n = len(gamma)
+        TL = np.zeros((n, 2, 2), dtype = complex)
+        TL[:, 0, 0] = (((zline**2 - z0**2) * np.sinh(gamma * l))
+                       / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l)))
+        TL[:, 1, 0] = (2 * z0 * zline) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
+        TL[:, 0, 1] = (2 * z0 * zline) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
+        TL[:, 1, 1] = (((zline**2 - z0**2) * np.sinh(gamma * l))
+                       / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l)))
+        return TL
+
+    @staticmethod
+    def NRP(ntwk: Network, TD: ndarray = None, port: int = None) -> (Network, ndarray):
+        """
+        Enforce the Nyquist Rate Point.
+        Force the length of the transmissive network to be an integer multiple
+        of the wavelength at the highest frequency.
+        If required, a proper delay is added to meet this condition.
+        The function can also be used to remove the delay.
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+               Network to be extrapolated to DC
+        TD   : :array-like
+               If None, the delay will be computed and added.
+               Else, the delay will be removed (to reset the original length).
+               (default: None)
+        port: :Number
+              Specify to apply NRP only on a single port of the network (default: None)
+
+        Returns
+        -------
+        TL : :array-like
+             S_Parameters of the transmission line
+        """
+        p = ntwk.s
+        f = ntwk.frequency.f
+        n = len(f)
+        X = ntwk.nports
+        fend = f[-1]
+        if TD is None:
+            TD = np.zeros(X)
+            for i in range(X):
+                theta0 = angle(p[-1, i, i])
+                if theta0 < -np.pi/2:
+                    theta = -np.pi - theta0
+                elif theta0 > np.pi/2:
+                    theta = np.pi - theta0
+                else:
+                    theta = -theta0
+
+                TD[i] = -theta / (2 * np.pi * fend)
+                pd = np.zeros((n, X, X), dtype = complex)
+                delay = exp(-1j * 2. * np.pi * f * TD[i] / 2.)
+                if i == 0:
+                    pd[:, i + X//2, i] = delay
+                    pd[:, i, i + X//2] = delay
+                    spd = ntwk.copy()
+                    spd.s = pd
+                    out = spd ** ntwk
+                elif i < X//2:
+                    pd[:, i + X//2, i] = delay
+                    pd[:, i, i + X//2] = delay
+                    spd = ntwk.copy()
+                    spd.s = pd
+                    out = spd ** out
+                else:
+                    pd[:, i - X//2, i] = delay
+                    pd[:, i, i - X//2] = delay
+                    spd = ntwk.copy()
+                    spd.s = pd
+                    out = out ** spd
+        else:
+            pd = np.zeros((n, X, X), dtype = complex)
+            if port is not None:
+                i = port
+                delay = exp(1j * 2. * np.pi * f * TD[i] / 2.)
+                if i < X//2:
+                    pd[:, i + X//2, i] = delay
+                    pd[:, i, i + X//2] = delay
+                    spd = ntwk.copy()
+                    spd.s = pd
+                    out = spd ** ntwk
+                else:
+                    pd[:, i - X//2, i] = delay
+                    pd[:, i, i - X//2] = delay
+                    spd = ntwk.copy()
+                    spd.s = pd
+                    out = ntwk ** spd
+            else:
+                for i in range(X):
+                    delay = exp(1j * 2. * np.pi * f * TD[i] / 2)
+                    if i == 0:
+                        pd[:, i + X//2, i] = delay
+                        pd[:, i, i + X//2] = delay
+                        spd = ntwk.copy()
+                        spd.s = pd
+                        out = spd ** ntwk
+                    elif i < X//2:
+                        pd[:, i + X//2, i] = delay
+                        pd[:, i, i + X//2] = delay
+                        spd = ntwk.copy()
+                        spd.s = pd
+                        out = spd ** out
+                    else:
+                        pd[:, i - X//2, i] = delay
+                        pd[:, i, i - X//2] = delay
+                        spd = ntwk.copy()
+                        spd.s = pd
+                        out = out ** spd
+        return out, TD
+
+    @staticmethod
+    def shiftOnePort(ntwk: Network, N: int, port: int) -> Network:
+        """
+        Shift one port of the network of N samples in time-domain.
+        This is achieved by cascading a delay.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be shifted
+        N   : :number
+              Number of point to shift
+        port: :Number
+              Port to be shifted
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Shifted network
+        """
+        f = ntwk.frequency.f
+        n = len(f)
+        X = ntwk.nports
+        Omega0 = np.pi/n
+        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
+        delay = exp(-N * 1j * Omega/2)
+        pd = np.zeros((n, 2, 2), dtype = complex)
+        if port < X//2:
+            pd[:, port, port + X//2] = delay
+            pd[:, port + X//2, port] = delay
+            spd = ntwk.copy()
+            spd.s = pd
+            out = spd ** ntwk
+        else:
+            pd[:, port, port - X//2] = delay
+            pd[:, port - X//2, port] = delay
+            spd = ntwk.copy()
+            spd.s = pd
+            out = ntwk ** spd
+        return out
+
+    @staticmethod
+    def shiftNPoints(ntwk: Network, N: int) -> Network:
+        """
+        Shift the whole network of N samples in time-domain.
+        This is achieved by cascading a delay.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be shifted
+        N   : :number
+              Number of point to shift
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Shifted network
+        """
+        f = ntwk.frequency.f
+        n = len(f)
+        X = ntwk.nports
+        Omega0 = np.pi/n
+        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
+        delay = exp(-N * 1j * Omega/2)
+        pd = np.zeros((n, 2, 2), dtype = complex)
+        for port in range(X):
+            if port < X//2:
+                pd[:, port, port + X//2] = delay
+                pd[:, port + X//2, port] = delay
+                spd = ntwk.copy()
+                spd.s = pd
+                p = spd ** ntwk
+            else:
+                pd[:, port, port - X//2] = delay
+                pd[:, port - X//2, port] = delay
+                spd = ntwk.copy()
+                spd.s = pd
+                out = p ** spd
+        return out
+
+    @staticmethod
+    def peelNPointsLossless(ntwk: Network, N: int, z0: float) -> Network:
+        """
+        Peel N points of the network on both side and return the corresponding
+        error boxes.
+        This is done in a lossless way without determination of the propagation
+        constant gamma.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be peeled
+        N     : :number
+                Number of points to peel
+        z0    : :number
+                Reference impedance
+        gamma : :array-like
+                Frequency-dependent propagation constant
+
+        Returns
+        -------
+        out : :class:`~skrf.network.Network` object
+              Peeled network
+        out : :class:`~skrf.network.Network` object
+              Error box side port 1
+        out : :class:`~skrf.network.Network` object
+              Error box side port 2
+        """
+        f = ntwk.frequency.f
+        n = len(f)
+        out = ntwk.copy()
+        Omega0 = np.pi/n
+        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
+        betal = 1j * Omega/2
+        for i in range(N):
+            p = out.s
+            #calculate impedance
+            zline1 = IEEEP370.getz(p[:, 0, 0], f, z0)[0]
+            zline2 = IEEEP370.getz(p[:, 1, 1], f, z0)[0]
+            #this is the transmission line to be removed
+            TL1 = IEEEP370.makeTL(zline1, z0, betal, 1)
+            TL2 = IEEEP370.makeTL(zline2, z0, betal, 1)
+            sTL1 = ntwk.copy()
+            sTL1.s = TL1
+            sTL2 = ntwk.copy()
+            sTL2.s = TL2
+            #remove the errorboxes
+            # no need to flip sTL2 because it is symmetrical
+            out = sTL1.inv ** out ** sTL2.inv
+            #capture the errorboxes from side 1 and 2
+            if i == 0:
+                eb1 = sTL1.copy()
+                eb2 = sTL2.copy()
+            else:
+                eb1 = eb1 ** sTL1
+                eb2 = sTL2 ** eb2
+
+        return out, eb1, eb2
+
+    @staticmethod
+    def plot_constant_limit(frequency: Frequency, value: float, ax: Axes, **kwargs) -> None:
+        """
+        Plot a constant limit line.
+        """
+        ax.plot([frequency.f[0], frequency.f[-1]], [value, value], **kwargs)
+
+    @staticmethod
+    def plot_relative_limit(x: ndarray, y: ndarray, value: float, ax: Axes, **kwargs) -> None:
+        """
+        Plot positive and negative relative limit line around a reference trace.
+        """
+        ax.plot(x, y * (1.0 + value), **kwargs)
+        kwargs.pop('label', None)
+        ax.plot(x, y * (1.0 - value), label = '_nolabel_', **kwargs)
+
+    @staticmethod
+    def plot_limit_fer1(frequency: Frequency, ax: Axes) -> None:
+        """
+        Plot fer 1 limit lines.
+        """
+        IEEEP370.plot_constant_limit(frequency, -10, ax, color = 'g',
+                            linestyle = 'dashed', label = 'Minimum A')
+        IEEEP370.plot_constant_limit(frequency, -15, ax, color = 'r',
+                            linestyle = 'dashed', label = 'Minimum B, C')
+
+    @staticmethod
+    def plot_limit_fer2(frequency: Frequency, ax: Axes) -> None:
+        """
+        Plot fer 2 limit lines.
+        """
+        IEEEP370.plot_constant_limit(frequency, -20, ax, color = 'g',
+                            linestyle = 'dashed', label = 'Maximum A')
+        IEEEP370.plot_constant_limit(frequency, -10, ax, color = 'b',
+                            linestyle = 'dashed', label = 'Maximum B')
+        IEEEP370.plot_constant_limit(frequency, -6, ax, color = 'r',
+                            linestyle = 'dashed', label = 'Maximum C')
+
+    @staticmethod
+    def plot_limit_fer3(frequency: Frequency, ax: Axes) -> None:
+        """
+        Plot fer 3 limit lines.
+        """
+        IEEEP370.plot_constant_limit(frequency, 5, ax, color = 'g',
+                            linestyle = 'dashed', label = 'Minimum A')
+        IEEEP370.plot_constant_limit(frequency, 0, ax, color = 'r',
+                            linestyle = 'dashed', label = 'Minimum B, C')
+
+    @staticmethod
+    def plot_limit_fer5(x: ndarray, y: ndarray, ax: Axes) -> None:
+        """
+        Plot fer 5 limit lines.
+        """
+        IEEEP370.plot_relative_limit(x, y, 0.025, ax, linestyle = 'dashed', color = 'g',
+                                     label = 'Limit A ±2.5%')
+        IEEEP370.plot_relative_limit(x, y, 0.05, ax, linestyle = 'dashed', color = 'b',
+                                     label = 'Limit B ±5%')
+        IEEEP370.plot_relative_limit(x, y, 0.1, ax, linestyle = 'dashed', color = 'r',
+                                     label = 'Limit C ±10%')
+
+    @staticmethod
+    def plot_limit_fer6(frequency: Frequency, ax: Axes) -> None:
+        """
+        Plot fer 6 limit lines.
+        """
+        IEEEP370.plot_constant_limit(frequency, -15, ax, color = 'r',
+                            linestyle = 'dashed', label = 'Maximum A, B, C')
+
+
+
+    @staticmethod
+    def plot_check_se_fer_s(s2xthru: Network, fig: Figure = None) -> Figure:
+        """
+        Plot fixture electrical requirements (FER) for s values
+        """
+        if fig is None:
+            fig = figure(figsize=(8, 8))
+
+        fig.suptitle('Fixture electrical requirements (FER)')
+
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER1 2x-Thru IL')
+        s2xthru.plot_s_db(1, 0, ax = ax, color = '0.5')
+        s2xthru.plot_s_db(0, 1, ax = ax, color = 'k')
+        IEEEP370.plot_limit_fer1(s2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
+
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER2 2x-Thru RL')
+        s2xthru.plot_s_db(0, 0, ax = ax, color = '0.5')
+        s2xthru.plot_s_db(1, 1, ax = ax, color = 'k')
+        IEEEP370.plot_limit_fer2(s2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
+
+        ax = fig.add_subplot(2, 1, 2)
+        ax.set_title('FER3 2x-Thru IL - RL')
+        s1 = s2xthru.s_db[:, 1, 0] - s2xthru.s_db[:, 0, 0]
+        s2 = s2xthru.s_db[:, 0, 1] - s2xthru.s_db[:, 1, 1]
+        ax.plot(s2xthru.frequency.f, s1, color = '0.5', label = 'S21 - S11')
+        ax.plot(s2xthru.frequency.f, s2, color = 'k', label = 'S21 - S22')
+        IEEEP370.plot_limit_fer3(s2xthru.frequency, ax)
+        ax.set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
+        ax.set_ylabel('Magnitude (dB)')
+        ax.legend(loc = 'upper right')
+
+        fig.tight_layout()
+        return fig
+
+    @staticmethod
+    def plot_check_mm_fer_s(s2xthru: Network, fig: Figure = None) -> Figure:
+        """
+        Plot fixture electrical requirements (FER) for s values
+        """
+        if fig is None:
+            fig = figure(figsize=(8, 8))
+
+        fig.suptitle('Fixture electrical requirements (FER)')
+
+        mm_2xthru = s2xthru.copy()
+        mm_2xthru.se2gmm(p=2)
+
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER1 2x-Thru IL')
+        mm_2xthru.plot_s_db(1, 0, ax = ax, color = '0.5')
+        mm_2xthru.plot_s_db(0, 1, ax = ax, color = 'k')
+        IEEEP370.plot_limit_fer1(mm_2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
+
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER2 2x-Thru RL')
+        mm_2xthru.plot_s_db(0, 0, ax = ax, color = '0.5')
+        mm_2xthru.plot_s_db(1, 1, ax = ax, color = 'k')
+        IEEEP370.plot_limit_fer2(mm_2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
+
+        ax = fig.add_subplot(2, 2, 3)
+        ax.set_title('FER3 2x-Thru IL - RL')
+        s1 = mm_2xthru.s_db[:, 1, 0] - mm_2xthru.s_db[:, 0, 0]
+        s2 = mm_2xthru.s_db[:, 0, 1] - mm_2xthru.s_db[:, 1, 1]
+        ax.plot(mm_2xthru.frequency.f, s1, color = '0.5', label = 'S21 - S11')
+        ax.plot(mm_2xthru.frequency.f, s2, color = 'k', label = 'S21 - S22')
+        IEEEP370.plot_limit_fer3(mm_2xthru.frequency, ax)
+        ax.set_xlabel(f'Frequency ({mm_2xthru.frequency.unit})')
+        ax.set_ylabel('Magnitude (dB)')
+        ax.legend(loc = 'upper right')
+
+        ax = fig.add_subplot(2, 2, 4)
+        ax.set_title('FER6 Differential to common CDL - IL')
+        s1 = mm_2xthru.s_db[:, 2, 0] - mm_2xthru.s_db[:, 1, 0]
+        s2 = mm_2xthru.s_db[:, 3, 1] - mm_2xthru.s_db[:, 0, 1]
+        ax.plot(mm_2xthru.frequency.f, s1, color = '0.5', label = 'SCD21 - S21')
+        ax.plot(mm_2xthru.frequency.f, s2, color = 'k', label = 'SCD42 - S12')
+        IEEEP370.plot_limit_fer6(mm_2xthru.frequency, ax)
+        ax.legend(loc = 'upper right')
+
+        fig.tight_layout()
+        return fig
+
+    @staticmethod
+    def plot_check_se_fer_z(s2xthru: Network, sfix_dut_fix: Network,
+                            fig: Figure = None) -> Figure:
+        """
+        Plot fixture electrical requirements (FER) for z values
+        """
+        if fig is None:
+            fig = figure(figsize=(8, 8))
+
+        fig.suptitle('Fixture electrical requirements (FER)')
+        f = s2xthru.frequency.f
+        s2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
+        sfix_dut_fix_dc = IEEEP370.extrapolate_to_dc(sfix_dut_fix)
+        n = s2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * s2xthru.frequency.step) # ns
+        s21 = s2xthru.s[:, 1, 0]
+        t21 = fftshift(irfft(s21, n = n))
+        x_k = np.argmax(t21) - n//2
+        x_t = x_k * dt
+
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER5 TDR Z variation side 1')
+        sfix_dut_fix_dc.plot_z_time_step(0, 0, color = 'k', ax = ax)
+        s2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        IEEEP370.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
+
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER5 TDR Z variation side 2')
+        sfix_dut_fix_dc.plot_z_time_step(1, 1, color = 'k', ax = ax)
+        s2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        IEEEP370.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
+
+        ax = fig.add_subplot(2, 1, 2)
+        ax.set_title('FER8 TDT minimum length')
+        s2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax)
+        s2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
+        y = ax.lines[-1].get_ydata()
+        y_lim = [np.min(y), np.max(y)]
+        t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
+        ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
+        ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
+        ax.legend(loc = 'upper right')
+        ax.set_xlim((-1, x_t + 1))
+
+        fig.tight_layout()
+        return fig
+
+    @staticmethod
+    def plot_check_mm_fer_z(s2xthru: Network, sfix_dut_fix: Network,
+                            fig: Figure = None) -> Figure:
+        """
+        Plot fixture electrical requirements (FER) for z values
+        """
+        if fig is None:
+            fig = figure(figsize=(8, 8))
+
+        mm_2xthru = s2xthru.copy()
+        mm_2xthru.se2gmm(p=2)
+        mm_fix_dut_fix = sfix_dut_fix.copy()
+        mm_fix_dut_fix.se2gmm(p=2)
+
+        fig.suptitle('Fixture electrical requirements (FER)')
+        f = mm_2xthru.frequency.f
+        se_2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
+        mm_2xthru_dc = IEEEP370.extrapolate_to_dc(mm_2xthru)
+        mm_fix_dut_fix_dc = IEEEP370.extrapolate_to_dc(mm_fix_dut_fix)
+        n = mm_2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * mm_2xthru.frequency.step) # ns
+        s21 = mm_2xthru.s[:, 1, 0]
+        t21 = fftshift(irfft(s21, n = n))
+        x_k = np.argmax(t21) - n//2
+        x_t = x_k * dt
+
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER5 TDR Z variation side 1')
+        mm_fix_dut_fix_dc.plot_z_time_step(0, 0, color = 'k', ax = ax)
+        mm_2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        IEEEP370.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
+
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER5 TDR Z variation side 2')
+        mm_fix_dut_fix_dc.plot_z_time_step(1, 1, color = 'k', ax = ax)
+        mm_2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        IEEEP370.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
+
+        ax = fig.add_subplot(2, 2, 3)
+        ax.set_title('FER7 TDT skew')
+        se_2xthru_dc.plot_z_time_impulse(2, 0, color = '0.5', ax = ax)
+        se_2xthru_dc.plot_z_time_impulse(3, 1, color = 'k', ax = ax)
+        ax.legend(loc = 'upper right')
+        ax.set_xlim((-1, x_t + 1))
+
+        ax = fig.add_subplot(2, 2, 4)
+        ax.set_title('FER8 TDT minimum length')
+        mm_2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax)
+        mm_2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
+        y = ax.lines[-1].get_ydata()
+        y_lim = [np.min(y), np.max(y)]
+        t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
+        ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
+        ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
+        ax.legend(loc = 'upper right')
+        ax.set_xlim((-1, x_t + 1))
+
+        fig.tight_layout()
+        return fig
+
+
+class IEEEP370_SE_NZC_2xThru(IEEEP370):
     """
     Creates error boxes from a test fixture 2xThru network.
 
@@ -958,6 +1808,11 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
     FIX-2 are deembedded from the FIX_DUT_FIX network.
 
     This method is applicable only when there is a 2x-Thru network.
+
+    The S-parameters bisection is done by time gating S11 and S22, taking the
+    proper square root of the S21 corrected by return loss, and remixing the
+    parameters according to the fixture signal flow graph. This method gives
+    crude results but is robust.
 
     Example
     --------
@@ -1003,9 +1858,9 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
     .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP3702xThru.m,
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
-    def __init__(self, dummy_2xthru, name=None,
-                 z0 = 50, use_z_instead_ifft = False, verbose = False,
-                 forced_z0_line = None, *args, **kwargs):
+    def __init__(self, dummy_2xthru: Network, name: str = None,
+                 z0: float = 50, use_z_instead_ifft: bool = False, verbose: bool = False,
+                 forced_z0_line: float = None, *args, **kwargs) -> None:
         """
         IEEEP370_SE_NZC_2xThru De-embedding Initializer
 
@@ -1064,11 +1919,14 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
         self.use_z_instead_ifft = use_z_instead_ifft
         self.forced_z0_line = forced_z0_line
         self.verbose = verbose
+        # debug outputs
+        self.x_end = None
+        self.z_x = None
 
-        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+        IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru)
 
-    def deembed(self, ntwk):
+    def deembed(self, ntwk: Network) -> Network:
         """
         Perform the de-embedding calculation
 
@@ -1097,68 +1955,10 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
-    def dc_interp(self, s, f):
+    def split2xthru(self, s2xthru: Network) -> (Network, Network):
         """
-        enforces symmetric upon the first 10 points and interpolates the DC
-        point.
+        Perform the fixtures extraction.
         """
-        sp = s[0:9]
-        fp = f[0:9]
-
-        snp = concatenate((conj(flip(sp)), sp))
-        fnp = concatenate((-1*flip(fp), fp))
-        # mhuser : used cubic instead spline (not implemented)
-        snew = interp1d(fnp, snp, axis=0, kind = 'cubic')
-        return real(snew(0))
-
-    def COM_receiver_noise_filter(self, f,fr):
-        """
-        receiver filter in COM defined by eq 93A-20
-        """
-        fdfr = f / fr
-        # eq 93A-20
-        return 1 / (1 - 3.414214 * fdfr**2 + fdfr**4 + 1j*2.613126*(fdfr - fdfr**3))
-
-
-    def makeStep(self, impulse):
-        #mhuser : no need to call step function here, cumsum will be enough and efficient
-        #step = np.convolve(np.ones((len(impulse))), impulse)
-        #return step[0:len(impulse)]
-        return np.cumsum(impulse, axis=0)
-
-
-    def makeSymmetric(self, nonsymmetric):
-        """
-        this takes the nonsymmetric frequency domain input and makes it
-        symmetric.
-        The function assumes the DC point is in the nonsymmetric data
-        """
-        symmetric_abs = concatenate((np.abs(nonsymmetric), flip(np.abs(nonsymmetric[1:]))))
-        symmetric_ang = concatenate((angle(nonsymmetric), -flip(angle(nonsymmetric[1:]))))
-        return symmetric_abs * exp(1j * symmetric_ang)
-
-    def DC(self, s, f):
-        DCpoint = 0.002 # seed for the algorithm
-        err = 1 # error seed
-        allowedError = 1e-12 # allowable error
-        cnt = 0
-        df = f[1] - f[0]
-        n = len(f)
-        t = np.linspace(-1/df,1/df,n*2+1)
-        ts = np.argmin(np.abs(t - (-3e-9)))
-        Hr = self.COM_receiver_noise_filter(f, f[-1]/2)
-        while(err > allowedError):
-            h1 = self.makeStep(fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
-            h2 = self.makeStep(fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
-            m = (h2[ts] - h1[ts]) / 0.001
-            b = h1[ts] - m * DCpoint
-            DCpoint = (0 - b) / m
-            err = np.abs(h1[ts] - 0)
-            cnt += 1
-        return DCpoint
-
-
-    def split2xthru(self, s2xthru):
         f = s2xthru.frequency.f
         s = s2xthru.s
 
@@ -1207,22 +2007,24 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             # get e001 and e002
             # e001
             s21 = s[:, 1, 0]
-            dcs21 = self.dc_interp(s21, f)
+            dcs21 = IEEEP370.dc_interp(s21, f)
             t21 = fftshift(irfft(concatenate(([dcs21], s21)), axis=0), axes=0)
             x = np.argmax(t21)
+            self.x_end = x
 
-            dcs11 = self.DC(s11,f)
+            dcs11 = IEEEP370.DC(s11,f)
             t11 = fftshift(irfft(concatenate(([dcs11], s11)), axis=0), axes=0)
-            step11 = self.makeStep(t11)
+            step11 = IEEEP370.makeStep(t11)
             z11 = -self.z0 * (step11 + 1) / (step11 - 1)
 
             if self.forced_z0_line:
                 z11x = self.forced_z0_line
             else:
-                z11x = z11[x]
+                z11x = 0.5 * (z11[x-1] + z11[x])
+            self.z_x = z11x
 
             if self.verbose:
-                fig, (ax1, ax2) = subplots(2,1)
+                fig, (ax1, ax2) = subplots(2,1, sharex = True)
                 fig.suptitle('Midpoint length and impedance determination')
                 ax1.plot(t21, label = 't21')
                 ax1.plot([x], [t21[x]], marker = 'o', linestyle = 'none',
@@ -1247,14 +2049,14 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
             s12r = sr[:, 0, 1]
             s22r = sr[:, 1, 1]
 
-            dcs11r = self.DC(s11r, f)
+            dcs11r = IEEEP370.DC(s11r, f)
             # irfft is equivalent to ifft(makeSymmetric(x))
             t11r = fftshift(irfft(concatenate(([dcs11r], s11r)), axis=0), axes=0)
             t11r[x:] = 0
             e001 = fft(ifftshift(t11r))
             e001 = e001[1:n+1]
 
-            dcs22r = self.DC(s22r, f)
+            dcs22r = IEEEP370.DC(s22r, f)
             t22r = fftshift(irfft(concatenate(([dcs22r], s22r)), axis=0), axes=0)
             t22r[x:] = 0
             e002 = fft(ifftshift(t22r))
@@ -1331,12 +2133,12 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
             # dc point was included in the original file
             if flag_DC:
-                e001 = concatenate(([self.dc_interp(e001, f)], e001))
-                e01  = concatenate(([self.dc_interp(e01, f)], e01))
-                e111 = concatenate(([self.dc_interp(e111, f)], e111))
-                e002 = concatenate(([self.dc_interp(e002, f)], e002))
-                e10 = concatenate(([self.dc_interp(e10, f)], e10))
-                e112 = concatenate(([self.dc_interp(e112, f)], e112))
+                e001 = concatenate(([IEEEP370.dc_interp(e001, f)], e001))
+                e01  = concatenate(([IEEEP370.dc_interp(e01, f)], e01))
+                e111 = concatenate(([IEEEP370.dc_interp(e111, f)], e111))
+                e002 = concatenate(([IEEEP370.dc_interp(e002, f)], e002))
+                e10 = concatenate(([IEEEP370.dc_interp(e10, f)], e10))
+                e112 = concatenate(([IEEEP370.dc_interp(e112, f)], e112))
                 f = concatenate(([0], f))
 
             # S-parameters are now setup correctly
@@ -1384,7 +2186,106 @@ class IEEEP370_SE_NZC_2xThru(Deembedding):
 
         return (s_side1, s_side2)
 
-class IEEEP370_MM_NZC_2xThru(Deembedding):
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
+        res = self.deembed(self.s2xthru)
+        res.name = 'Residuals'
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0], color = '0.5')
+        res.plot_s_db(0,1, ax = ax[0], color = 'k')
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
+
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1], color = '0.5')
+        res.plot_s_deg(0,1, ax = ax[1], color = 'k')
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
+
+        return (fig, ax)
+
+    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
+                             window: str = 'hamming') -> (Figure, Axes):
+        # if dc point already exists, it will be replaced
+        s2xthru = IEEEP370.extrapolate_to_dc(self.s2xthru)
+        fix1 = IEEEP370.extrapolate_to_dc(self.s_side1)
+        fix2 = IEEEP370.extrapolate_to_dc(self.s_side2)
+        if fix_dut_fix is not None:
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(fix_dut_fix)
+        n = s2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * s2xthru.frequency.step) # ns
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        y = ax[0].lines[-1].get_ydata()
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'm')
+        ax[0].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[0].plot([(self.x_end - (n // 2) - 1) * dt], [self.z_x], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[0].set_ylim((ymin - 5, ymax + 5))
+        ax[0].legend(loc = 'lower left')
+
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        y = ax[1].lines[-1].get_ydata()
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'm')
+        ax[1].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[1].plot([(self.x_end - (n // 2) - 1) * dt], [self.z_x], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[1].set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * (self.x_end - (n // 2)) * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
+        ax[1].legend(loc = 'lower left')
+
+        fig.tight_layout()
+
+        return (fig, ax)
+
+class IEEEP370_MM_NZC_2xThru(IEEEP370):
     """
     Creates error boxes from a 4-port test fixture 2xThru.
 
@@ -1398,6 +2299,11 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
     FIX-2 are deembedded from the FIX_DUT_FIX network.
 
     This method is applicable only when there is a 2x-Thru measurement.
+
+    The S-parameters bisection is done by time gating S11 and S22, taking the
+    proper square root of the S21 corrected by return loss, and remixing the
+    parameters according to the fixture signal flow graph. This method gives
+    crude results but is robust.
 
     Note
     ----
@@ -1477,10 +2383,11 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
     .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
-    def __init__(self, dummy_2xthru, name=None,
-                 z0 = 50, port_order: str = 'second',
-                 use_z_instead_ifft = False, verbose = False,
-                 forced_z0_line_dd = None, forced_z0_line_cc = None, *args, **kwargs):
+    def __init__(self, dummy_2xthru: Network, name: str = None,
+                 z0: float = 50, port_order: str = 'second',
+                 use_z_instead_ifft: bool = False, verbose: bool = False,
+                 forced_z0_line_dd: float = None, forced_z0_line_cc: float = None,
+                 *args, **kwargs) -> None:
         """
         IEEEP370_MM_NZC_2xThru De-embedding Initializer
 
@@ -1546,14 +2453,19 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
         self.port_order = port_order
         dummies = [self.s2xthru]
         self.use_z_instead_ifft = use_z_instead_ifft
+        self.verbose = verbose
         self.forced_z0_line_dd = forced_z0_line_dd
         self.forced_z0_line_cc = forced_z0_line_cc
-        self.verbose = verbose
+        # debug outputs
+        self.x_end_dd = None
+        self.z_x_dd = None
+        self.x_end_cc = None
+        self.z_x_cc = None
 
-        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+        IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru)
 
-    def deembed(self, ntwk):
+    def deembed(self, ntwk: Network) -> Network:
         """
         Perform the de-embedding calculation
 
@@ -1601,7 +2513,10 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
             deembedded.renumber(new_order, old_order)
         return deembedded
 
-    def split2xthru(self, se_2xthru):
+    def split2xthru(self, se_2xthru: Network) -> (Network, Network):
+        """
+        Perform the fixtures extraction.
+        """
         # check if 4-port
         if se_2xthru.nports != 4:
             raise(ValueError('2xthru has to be a 4-port network.'))
@@ -1628,10 +2543,15 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
                                 use_z_instead_ifft = self.use_z_instead_ifft,
                                 verbose = self.verbose,
                                 forced_z0_line = self.forced_z0_line_dd)
+        self.x_end_dd = dm_dd.x_end
+        self.z_x_dd = dm_dd.z_x
+
         dm_cc  = IEEEP370_SE_NZC_2xThru(dummy_2xthru = scc, z0 = self.z0 / 2,
                                 use_z_instead_ifft = self.use_z_instead_ifft,
                                 verbose = self.verbose,
                                 forced_z0_line = self.forced_z0_line_cc)
+        self.x_end_cc = dm_cc.x_end
+        self.z_x_cc = dm_cc.z_x
 
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
@@ -1643,8 +2563,122 @@ class IEEEP370_MM_NZC_2xThru(Deembedding):
 
         return (se_side1, se_side2)
 
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
+        res = self.deembed(self.s2xthru)
+        res.name = 'Residuals'
+        res.se2gmm(p=2)
 
-class IEEEP370_SE_ZC_2xThru(Deembedding):
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0])
+        res.plot_s_db(0,1, ax = ax[0])
+        res.plot_s_db(3,2, ax = ax[0])
+        res.plot_s_db(2,3, ax = ax[0])
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
+
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1])
+        res.plot_s_deg(0,1, ax = ax[1])
+        res.plot_s_deg(3,2, ax = ax[1])
+        res.plot_s_deg(2,3, ax = ax[1])
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
+
+        return (fig, ax)
+
+    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
+                             window: str = 'hamming') -> (Figure, Axes):
+        # if dc point already exists, it will be replaced
+        s2xthru = self.s2xthru.copy()
+        s2xthru.se2gmm(p=2)
+        s2xthru = IEEEP370.extrapolate_to_dc(s2xthru)
+        fix1 = self.se_side1.copy()
+        fix1.se2gmm(p=2)
+        fix1 = IEEEP370.extrapolate_to_dc(fix1)
+        fix2 = self.se_side2.copy()
+        fix2.se2gmm(p=2)
+        fix2 = IEEEP370.extrapolate_to_dc(fix2)
+        if fix_dut_fix is not None:
+            fix_dut_fix = fix_dut_fix.copy()
+            fix_dut_fix.se2gmm(p=2)
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(fix_dut_fix)
+        n = s2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * s2xthru.frequency.step) # ns
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        y = ax[0].lines[-1].get_ydata()
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'm')
+        ax[0].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[0].plot([(self.x_end_dd - (n // 2) - 1) * dt], [self.z_x_dd], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x_dd:0.1f} ohm')
+        fix1.plot_z_time_step(2, 2, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(2, 2, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(2, 2, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'b')
+        ax[0].legend(loc = 'center left')
+
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        y = ax[1].lines[-1].get_ydata()
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'm')
+        ax[1].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[1].plot([(self.x_end_dd - (n // 2) - 1) * dt], [self.z_x_dd], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x_dd:0.1f} ohm')
+        fix2.plot_z_time_step(2, 2, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(3, 3, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(3, 3, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'b')
+        delay = 2 * (self.x_end_dd - (n // 2)) * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
+        ax[1].legend(loc = 'center left')
+
+        fig.tight_layout()
+
+        return (fig, ax)
+
+
+class IEEEP370_SE_ZC_2xThru(IEEEP370):
     """
     Creates error boxes from 2x-Thru and FIX-DUT-FIX networks.
 
@@ -1662,6 +2696,12 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
     The possible difference of impedance between 2x-Thru and FIX-DUT-FIX
     is corrected.
+
+    The algorithm computes the length of the fixtures by halving the delay of
+    2x-Thru in time domain transmission. The propagation constant gamma is also
+    determined from the 2xThru. It then peels the FIX-DUT-FIX time domain
+    impedance profile iteratively in cycles of determining start impedance and
+    deembedding a single time sample long transmission line.
 
     Example
     --------
@@ -1706,13 +2746,14 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
     .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370Zc2xThru.m
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
-    def __init__(self, dummy_2xthru, dummy_fix_dut_fix, name=None,
-                 z0 = 50, bandwidth_limit = 0,
-                 pullback1 = 0, pullback2 = 0,
-                 side1 = True, side2 = True,
-                 NRP_enable = True, leadin = 1,
-                 verbose = False,
-                 *args, **kwargs):
+    def __init__(self, dummy_2xthru: Network, dummy_fix_dut_fix: Network,
+                 name: str = None,
+                 z0: float = 50, bandwidth_limit: float = 0,
+                 pullback1: int = 0, pullback2: int = 0,
+                 side1: bool = True, side2: bool = True,
+                 NRP_enable: bool = True, leadin: int = 1,
+                 verbose: bool = False,
+                 *args, **kwargs) -> None:
         """
         IEEEP370_SE_ZC_2xThru De-embedding Initializer
 
@@ -1772,12 +2813,17 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
         self.verbose = verbose
         self.flag_DC = False
         self.flag_df = False
+        # debug outputs
+        self.gamma = None
+        self.x_end = None
+        self.z_side1 = None
+        self.z_side2 = None
 
-        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+        IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.s_side1, self.s_side2 = self.split2xthru(self.s2xthru.copy(),
                                                       self.sfix_dut_fix)
 
-    def deembed(self, ntwk):
+    def deembed(self, ntwk: Network) -> Network:
         """
         Perform the de-embedding calculation
 
@@ -1807,274 +2853,32 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         return s_side1.inv ** ntwk ** s_side2.flipped().inv
 
-    def thru(self, n):
-        out = n.copy()
-        out.s[:, 0, 0] = 0
-        out.s[:, 1, 0] = 1
-        out.s[:, 0, 1] = 1
-        out.s[:, 1, 1] = 0
-        return out
 
-    def add_dc(self, sin):
-        s = sin.s
-        f = sin.frequency.f
-
-        n = len(f)
-        snew = zeros((n + 1, 2,2), dtype = complex)
-        snew[1:,:,:] = s
-        snew[0, 0, 0] = self.dc_interp(s[:, 0, 0], f)
-        snew[0, 0, 1] = self.dc_interp(s[:, 0, 1], f)
-        snew[0, 1, 0] = self.dc_interp(s[:, 1, 0], f)
-        snew[0, 1, 1] = self.dc_interp(s[:, 1, 1], f)
-
-        f = concatenate(([0], f))
-        return Network(frequency = Frequency.from_f(f, 'Hz'), s = snew)
-
-    def dc_interp(self, s, f):
+    def makeErrorBox_v7(self, s_dut: Network, s2x: Network, gamma: ndarray,
+                        z0: float, pullback:int) -> (Network, Network):
         """
-        enforces symmetric upon the first 10 points and interpolates the DC
-        point.
+        Extract the fixtures on both sides.
         """
-        sp = s[0:9]
-        fp = f[0:9]
-
-        snp = concatenate((conj(flip(sp)), sp))
-        fnp = concatenate((-1*flip(fp), fp))
-        # mhuser : used cubic instead spline (not implemented)
-        snew = interp1d(fnp, snp, axis=0, kind = 'cubic')
-        return real(snew(0))
-
-    def COM_receiver_noise_filter(self, f,fr):
-        """
-        receiver filter in COM defined by eq 93A-20
-        """
-        f = f / 1e9
-        fdfr = f / fr
-        # eq 93A-20
-        return 1 / (1 - 3.414214 * fdfr**2 + fdfr**4 + 1j*2.613126*(fdfr - fdfr**3))
-
-
-    def makeStep(self, impulse):
-        #mhuser : no need to call step function here, cumsum will be enough and efficient
-        #step = np.convolve(np.ones((len(impulse))), impulse)
-        #return step[0:len(impulse)]
-        return np.cumsum(impulse, axis=0)
-
-    def DC2(self, s, f):
-        DCpoint = 0.002 # seed for the algorithm
-        err = 1 # error seed
-        allowedError = 1e-10 # allowable error
-        cnt = 0
-        df = f[1] - f[0]
-        n = len(f)
-        t = np.linspace(-1/df,1/df,n*2+1)
-        ts = np.argmin(np.abs(t - (-3e-9)))
-        Hr = self.COM_receiver_noise_filter(f, f[-1]/2)
-        while(err > allowedError):
-            h1 = self.makeStep(fftshift(irfft(concatenate(([DCpoint], Hr * s)), axis=0), axes=0))
-            h2 = self.makeStep(fftshift(irfft(concatenate(([DCpoint + 0.001], Hr * s)), axis=0), axes=0))
-            m = (h2[ts] - h1[ts]) / 0.001
-            b = h1[ts] - m * DCpoint
-            DCpoint = (0 - b) / m
-            err = np.abs(h1[ts] - 0)
-            cnt += 1
-        return DCpoint
-
-    def getz(self, s, f, z0):
-        DC11 = self.DC2(s, f)
-        t112x = irfft(concatenate(([DC11], s)))
-        #get the step response of t112x. Shift is needed for makeStep to
-        #work properly.
-        t112xStep = self.makeStep(fftshift(t112x))
-        #construct the transmission line
-        z = -z0 * (t112xStep + 1) / (t112xStep - 1)
-        z = ifftshift(z) #impedance. Shift again to get the first point
-        return z[0], z
-
-    def makeTL(self, zline, z0, gamma, l):
-        # todo: use DefinedGammaZ0 media instead
-        n = len(gamma)
-        TL = np.zeros((n, 2, 2), dtype = complex)
-        TL[:, 0, 0] = (((zline**2 - z0**2) * np.sinh(gamma * l))
-                       / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l)))
-        TL[:, 1, 0] = (2 * z0 * zline) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
-        TL[:, 0, 1] = (2 * z0 * zline) / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l))
-        TL[:, 1, 1] = (((zline**2 - z0**2) * np.sinh(gamma * l))
-                       / ((zline**2 + z0**2) * np.sinh(gamma * l) + 2 * z0 * zline * np.cosh(gamma * l)))
-        return TL
-
-    def NRP(self, nin, TD = None, port = None):
-        p = nin.s
-        f = nin.frequency.f
-        n = len(f)
-        X = nin.nports
-        fend = f[-1]
-        if TD is None:
-            TD = np.zeros(X)
-            for i in range(X):
-                theta0 = np.angle(p[-1, i, i])
-                if theta0 < -np.pi/2:
-                    theta = -np.pi - theta0
-                elif theta0 > np.pi/2:
-                    theta = np.pi - theta0
-                else:
-                    theta = -theta0
-                TD[i] = -theta / (2 * np.pi * fend)
-                pd = np.zeros((n, X, X), dtype = complex)
-                delay = np.exp(-1j * 2. * np.pi * f * TD[i] / 2.)
-                if i == 0:
-                    pd[:, i + X//2, i] = delay
-                    pd[:, i, i + X//2] = delay
-                    spd = nin.copy()
-                    spd.s = pd
-                    out = spd ** nin
-                elif i < X//2:
-                    pd[:, i + X//2, i] = delay
-                    pd[:, i, i + X//2] = delay
-                    spd = nin.copy()
-                    spd.s = pd
-                    out = spd ** out
-                else:
-                    pd[:, i - X//2, i] = delay
-                    pd[:, i, i - X//2] = delay
-                    spd = nin.copy()
-                    spd.s = pd
-                    out = out ** spd
-        else:
-            pd = np.zeros((n, X, X), dtype = complex)
-            if port is not None:
-                i = port
-                delay = np.exp(1j * 2. * np.pi * f * TD[i] / 2.)
-                if i < X//2:
-                    pd[:, i + X//2, i] = delay
-                    pd[:, i, i + X//2] = delay
-                    spd = nin.copy()
-                    spd.s = pd
-                    out = spd ** nin
-                else:
-                    pd[:, i - X//2, i] = delay
-                    pd[:, i, i - X//2] = delay
-                    spd = nin.copy()
-                    spd.s = pd
-                    out = nin ** spd
-            else:
-                for i in range(X):
-                    delay = np.exp(1j * 2. * np.pi * f * TD[i] / 2)
-                    if i == 0:
-                        pd[:, i + X//2, i] = delay
-                        pd[:, i, i + X//2] = delay
-                        spd = nin.copy()
-                        spd.s = pd
-                        out = spd ** nin
-                    elif i < X//2:
-                        pd[:, i + X//2, i] = delay
-                        pd[:, i, i + X//2] = delay
-                        spd = nin.copy()
-                        spd.s = pd
-                        out = spd ** out
-                    else:
-                        pd[:, i - X//2, i] = delay
-                        pd[:, i, i - X//2] = delay
-                        spd = nin.copy()
-                        spd.s = pd
-                        out = out ** spd
-        return out, TD
-
-    def shiftOnePort(self, nin, N, port):
-        f = nin.frequency.f
-        n = len(f)
-        X = nin.nports
-        Omega0 = np.pi/n
-        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
-        delay = np.exp(-N * 1j * Omega/2)
-        pd = np.zeros((n, 2, 2), dtype = complex)
-        if port < X//2:
-            pd[:, port, port + X//2] = delay
-            pd[:, port + X//2, port] = delay
-            spd = nin.copy()
-            spd.s = pd
-            out = spd ** nin
-        else:
-            pd[:, port, port - X//2] = delay
-            pd[:, port - X//2, port] = delay
-            spd = nin.copy()
-            spd.s = pd
-            out = nin ** spd
-        return out
-
-    def shiftNPoints(self, nin, N):
-        f = nin.frequency.f
-        n = len(f)
-        X = nin.nports
-        Omega0 = np.pi/n
-        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
-        delay = np.exp(-N * 1j * Omega/2)
-        pd = np.zeros((n, 2, 2), dtype = complex)
-        for port in range(X):
-            if port < X//2:
-                pd[:, port, port + X//2] = delay
-                pd[:, port + X//2, port] = delay
-                spd = nin.copy()
-                spd.s = pd
-                p = spd ** nin
-            else:
-                pd[:, port, port - X//2] = delay
-                pd[:, port - X//2, port] = delay
-                spd = nin.copy()
-                spd.s = pd
-                out = p ** spd
-        return out
-
-    def peelNPointsLossless(self, nin, N):
-        f = nin.frequency.f
-        n = len(f)
-        out = nin.copy()
-        z0 = 50
-        Omega0 = np.pi/n
-        Omega = np.arange(Omega0, np.pi + Omega0, Omega0)
-        betal = 1j * Omega/2
-        for i in range(N):
-            p = out.s
-            #calculate impedance
-            zline1 = self.getz(p[:, 0, 0], f, z0)[0]
-            zline2 = self.getz(p[:, 1, 1], f, z0)[0]
-            #this is the transmission line to be removed
-            TL1 = self.makeTL(zline1, z0, betal, 1)
-            TL2 = self.makeTL(zline2, z0, betal, 1)
-            sTL1 = nin.copy()
-            sTL1.s = TL1
-            sTL2 = nin.copy()
-            sTL2.s = TL2
-            #remove the errorboxes
-            # no need to flip sTL2 because it is symmetrical
-            out = sTL1.inv ** out ** sTL2.inv
-            #capture the errorboxes from side 1 and 2
-            if i == 0:
-                eb1 = sTL1.copy()
-                eb2 = sTL2.copy()
-            else:
-                eb1 = eb1 ** sTL1
-                eb2 = sTL2 ** eb2
-
-        return out, eb1, eb2
-
-    def makeErrorBox_v7(self, s_dut, s2x, gamma, z0, pullback):
         f = s2x.frequency.f
         n = len(f)
         s212x = s2x.s[:, 1, 0]
-        DC21 = self.dc_interp(s212x, f)
+        DC21 = IEEEP370.dc_interp(s212x, f)
         x = np.argmax(irfft(concatenate(([DC21], s212x))))
+        self.x_end = x - pullback # index of last TDR point of fixture
         #define relative length
         #python first index is 0, thus 1 should be added to get the length
         l = 1. / (2 * (x + 1))
         #define the reflections to be mimicked
         s11dut = s_dut.s[:, 0, 0]
         s22dut = s_dut.s[:, 1, 1]
+        if self.verbose:
+            z1 = IEEEP370.getz(s11dut, f, z0)
+            z2 = IEEEP370.getz(s22dut, f, z0)
         #peel the fixture away and create the fixture model
         #python range to n-1, thus 1 to be added to have proper iteration number
-        for i in range(x + 1 - pullback):
-            zline1 = self.getz(s11dut, f, z0)[0]
-            zline2 = self.getz(s22dut, f, z0)[0]
+        for i in range(self.x_end + 1):
+            zline1 = IEEEP370.getz(s11dut, f, z0)[0]
+            zline2 = IEEEP370.getz(s22dut, f, z0)[0]
             TL1 = self.makeTL(zline1,z0,gamma,l)
             TL2 = self.makeTL(zline2,z0,gamma,l)
             sTL1 = s_dut.copy()
@@ -2084,8 +2888,6 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             if i == 0:
                 errorbox1 = sTL1
                 errorbox2 = sTL2
-                _, z1 = self.getz(s11dut, f, z0)
-                _, z2 = self.getz(s22dut, f, z0)
             else:
                 errorbox1 = errorbox1 ** sTL1
                 errorbox2 = errorbox2 ** sTL2
@@ -2103,67 +2905,82 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             # s_dut.a = abcd_in
             s11dut = s_dut.s[:, 0, 0]
             s22dut = s_dut.s[:, 1, 1]
-            if self.verbose:
-                if i == 0:
-                    fig, axs = subplots(2, 2)
-                    axs[0, 0].plot(z1, color = 'k')
-                    axs[0, 0].set_xlim((0, x))
-                    axs[0, 1].plot(z2, color = 'k')
-                    axs[0, 1].set_xlim((0, x))
-                    axs[1, 0].set_xlim((n-100, n+x*2+10))
-                    axs[1, 1].set_xlim((n-100, n+x*2+10))
-                _, zeb1 = self.getz(errorbox1.s[:, 0, 0], f, z0)
-                _, zeb2 = self.getz(errorbox2.s[:, 0, 0], f, z0)
-                _, zdut1 = self.getz(s11dut, f, z0)
-                _, zdut2 = self.getz(s22dut, f, z0)
-                axs[0, 0].plot(zeb1)
-                axs[0, 1].plot(zeb2)
-                axs[1, 0].plot(ifftshift(zdut1))
-                axs[1, 1].plot(ifftshift(zdut2))
+            # store fixture z for debug
+            if(i == self.x_end):
+                self.z_side1 = IEEEP370.getz(errorbox1.s[:, 0, 0], f, z0)
+                self.z_side2 = IEEEP370.getz(errorbox2.s[:, 0, 0], f, z0)
+        if self.verbose:
+            zdut1 = IEEEP370.getz(s11dut, f, z0)
+            zdut2 = IEEEP370.getz(s22dut, f, z0)
+            fig, axs = subplots(1, 2, sharex = True, figsize=(2*6.4, 4.8))
+            axs[0].plot(ifftshift(zdut1), label = 'DUT')
+            axs[0].plot(ifftshift(self.z_side1), label = 'FIX-1')
+            axs[0].plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
+            axs[0].set_xlim((n-50, n+x*2+50))
+            axs[0].legend()
+            axs[0].set_title('Left')
+            axs[0].set_ylabel('Z (ohm)')
+            axs[1].plot(ifftshift(zdut2), label = 'DUT')
+            axs[1].plot(ifftshift(self.z_side2), label = 'FIX-2')
+            axs[1].plot(ifftshift(z2), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
+            axs[1].set_xlim((n-50, n+x*2+50))
+            axs[1].legend()
+            axs[1].set_title('Right')
+            axs[1].set_ylabel('Z (ohm)')
         return errorbox1, errorbox2.flipped()
 
-    def makeErrorBox_v8(self, s_dut, s2x, gamma, z0, pullback):
+    def makeErrorBox_v8(self, s_dut: Network, s2x: Network, gamma: ndarray,
+                        z0: float, pullback: int) -> Network:
+        """
+        Extract the fixture only on a single side.
+        """
         f = s2x.frequency.f
         n = len(f)
         s212x = s2x.s[:, 1, 0]
         # extract midpoint of 2x-thru
-        DC21 = self.dc_interp(s212x, f)
+        DC21 = IEEEP370.dc_interp(s212x, f)
         x = np.argmax(irfft(concatenate(([DC21], s212x))))
+        self.x_end = x - pullback # index of last TDR point of fixture
         #define relative length
         #python first index is 0, thus 1 should be added to get the length
         l = 1. / (2 * (x + 1))
         #define the reflections to be mimicked
         s11dut = s_dut.s[:, 0, 0]
+        if self.verbose:
+            z1 = IEEEP370.getz(s11dut, f, z0)
         #peel the fixture away and create the fixture model
         #python range to n-1, thus 1 to be added to have proper iteration number
-        for i in range(x + 1 - pullback):
-            zline1 = self.getz(s11dut, f, z0)[0]
+        for i in range(self.x_end + 1):
+            zline1 = IEEEP370.getz(s11dut, f, z0)[0]
             TL1 = self.makeTL(zline1,z0,gamma,l)
             sTL1 = s_dut.copy()
             sTL1.s = TL1
             if i == 0:
                 errorbox1 = sTL1
-                _, z1 = self.getz(s11dut, f, z0)
             else:
                 errorbox1 = errorbox1 ** sTL1
             # equivalent to function removeTL_side1(in,TL,z0)
             s_dut = sTL1.inv ** s_dut
             s11dut = s_dut.s[:, 0, 0]
-            if self.verbose:
-                if i == 0:
-                    fig, axs = subplots(1, 2)
-                    axs[0].plot(z1, color = 'k')
-                    axs[0].set_xlim((0, x))
-                    axs[1].set_xlim((n-100, n+x*2+10))
-                _, zeb1 = self.getz(errorbox1.s[:, 0, 0], f, z0)
-                _, zdut1 = self.getz(s11dut, f, z0)
-                axs[0].plot(zeb1)
-                axs[1].plot(ifftshift(zdut1))
+            # store fixture z for debug
+            if(i == self.x_end):
+                self.z_side1 = IEEEP370.getz(errorbox1.s[:, 0, 0], f, z0)
+        if self.verbose:
+            zdut1 = IEEEP370.getz(s11dut, f, z0)
+            fig, axs = subplots(1, 1, sharex = True, figsize=(6.4, 4.8))
+            axs.plot(ifftshift(zdut1), label = 'DUT')
+            axs.plot(ifftshift(self.z_side1), label = 'FIX')
+            axs.plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
+            axs.set_xlim((n-50, n+x*2+50))
+            axs.legend()
+            axs.set_ylabel('Z (ohm)')
         return errorbox1
 
 
-    def split2xthru(self, s2xthru, sfix_dut_fix):
-
+    def split2xthru(self, s2xthru: Network, sfix_dut_fix: Network) -> (Network, Network):
+        """
+        Perform the fixtures extraction.
+        """
         f = sfix_dut_fix.frequency.f
         s = sfix_dut_fix.s
 
@@ -2213,25 +3030,28 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         # enforce Nyquist rate point
         if self.NRP_enable:
-            sfix_dut_fix, TD = self.NRP(sfix_dut_fix)
-            s2xthru, _ = self.NRP(s2xthru, -TD)
+            sfix_dut_fix, TD = IEEEP370.NRP(sfix_dut_fix)
+            s2xthru, _ = IEEEP370.NRP(s2xthru, -TD)
 
         # remove lead-in points
         if self.leadin > 0:
-            _, temp1, temp2 = self.peelNPointsLossless(self.shiftNPoints(sfix_dut_fix, self.leadin), self.leadin)
-            leadin1 = self.shiftOnePort(temp1, -self.leadin, 0)
-            leadin2 = self.shiftOnePort(temp2, -self.leadin, 1)
+            _, temp1, temp2 = IEEEP370.peelNPointsLossless(
+                IEEEP370.shiftNPoints(sfix_dut_fix, self.leadin), self.leadin,
+                z0 = self.z0)
+            leadin1 = IEEEP370.shiftOnePort(temp1, -self.leadin, 0)
+            leadin2 = IEEEP370.shiftOnePort(temp2, -self.leadin, 1)
 
         # calculate gamma
         #grabbing s21
         s212x = s2xthru.s[:, 1, 0]
         #get the attenuation and phase constant per length
-        beta_per_length = -np.unwrap(np.angle(s212x))
+        beta_per_length = -unwrap(angle(s212x))
+        # because lossless would be abs(S11)**2 + abs(S21)**2 = 1
         attenuation = np.abs(s2xthru.s[:,1,0])**2 / (1. - np.abs(s2xthru.s[:,0,0])**2)
-        alpha_per_length = (10.0 * np.log10(attenuation)) / -8.686
+        alpha_per_length = (10.0 * np.log10(attenuation)) / -8.686 # not 20 * log10() because of **2 above
         if self.bandwidth_limit == 0:
             #divide by 2*n + 1 to get prop constant per discrete unit length
-            gamma = alpha_per_length + 1j * beta_per_length # gamma without DC
+            self.gamma = alpha_per_length + 1j * beta_per_length # gamma without DC
         else:
             #fit the attenuation up to the limited bandwidth
             bwl_x = np.argmin(np.abs(f - self.bandwidth_limit))
@@ -2239,31 +3059,51 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
             b = np.linalg.lstsq(X.conj().T, alpha_per_length[0:bwl_x+1], rcond=None)[0]
             alpha_per_length_fit = b[0] * np.sqrt(f) + b[1] * f + b[2] * f**2
             #divide by 2*n + 1 to get prop constant per discrete unit length
-            gamma = alpha_per_length_fit + 1j * beta_per_length # gamma without DC
+            self.gamma = alpha_per_length_fit + 1j * beta_per_length # gamma without DC
+        if self.verbose:
+            fig, axs = subplots(1, 2, figsize=(2*6.4, 4.8))
+            fig.suptitle('Gamma determination')
+            axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length, label = 'alpha per length')
+            if self.bandwidth_limit != 0:
+                f_bw_hz = self.bandwidth_limit
+                f_bw = f_bw_hz / s2xthru.frequency.multiplier
+                unit = s2xthru.frequency.unit
+                alpha_bw = b[0] * np.sqrt(f_bw_hz) + b[1] * f_bw_hz + b[2] * f_bw_hz**2
+                axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length_fit,
+                            label = 'alpha per length fit')
+                axs[0].plot([f_bw], [alpha_bw], color = 'k', marker = 'o', linestyle = None,
+                            label = f'bandwidth_limit = {f_bw} {unit}')
+            axs[0].legend()
+            axs[0].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
+            axs[0].set_ylabel('Alpha (Neper/length)')
+            axs[1].plot(s2xthru.frequency.f_scaled, beta_per_length, label = 'beta per length')
+            axs[1].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
+            axs[1].set_ylabel('Beta (rad/length)')
+            axs[1].legend()
 
         # extract error boxes
         # make the both error box
-        s_side1 = self.thru(sfix_dut_fix)
-        s_side2 = self.thru(sfix_dut_fix)
+        s_side1 = IEEEP370.thru(sfix_dut_fix)
+        s_side2 = IEEEP370.thru(sfix_dut_fix)
 
         # In the implementation, FIX-2 is flipped.
         # This does not met IEEEP370 numbering recommandation but is left as
         # is for comparison ease.
         if self.pullback1 == self.pullback2 and self.side1 and self.side2:
             (s_side1, s_side2) = self.makeErrorBox_v7(sfix_dut_fix, s2xthru,
-                                              gamma, self.z0, self.pullback1)
+                                  self.gamma, self.z0, self.pullback1)
         elif self.side1 and self.side2:
             s_side1 = self.makeErrorBox_v8(sfix_dut_fix, s2xthru,
-                                              gamma, self.z0, self.pullback1)
+                                   self.gamma, self.z0, self.pullback1)
             s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru,
-                                              gamma, self.z0, self.pullback2)
+                                   self.gamma, self.z0, self.pullback2)
             s_side2 = s_side2.flipped()
         elif self.side1:
             s_side1 = self.makeErrorBox_v8(sfix_dut_fix, s2xthru,
-                                              gamma, self.z0, self.pullback1)
+                                   self.gamma, self.z0, self.pullback1)
         elif self.side2:
             s_side2 = self.makeErrorBox_v8(sfix_dut_fix.flipped(),s2xthru,
-                                              gamma, self.z0, self.pullback2)
+                                   self.gamma, self.z0, self.pullback2)
             s_side2 = s_side2.flipped()
         else:
             warnings.warn(
@@ -2283,8 +3123,8 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         # add DC back in
         if self.flag_DC:
-            s_side1 = self.add_dc(s_side1)
-            s_side2 = self.add_dc(s_side2)
+            s_side1 = IEEEP370.add_dc(s_side1)
+            s_side2 = IEEEP370.add_dc(s_side2)
 
         # remove lead in
         if self.leadin > 0:
@@ -2293,14 +3133,115 @@ class IEEEP370_SE_ZC_2xThru(Deembedding):
 
         # if Nyquist Rate Point enforcement is enabled
         if self.NRP_enable:
-            s_side1, _ = self.NRP(s_side1, TD, 0)
-            s_side2, _ = self.NRP(s_side2, TD, 1)
+            s_side1, _ = IEEEP370.NRP(s_side1, TD, 0)
+            s_side2, _ = IEEEP370.NRP(s_side2, TD, 1)
 
         # unflip FIX-2 as per IEEEP370 numbering recommandation
         return (s_side1, s_side2.flipped())
 
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
+        res = self.deembed(self.s2xthru)
+        res.name = 'Residuals'
 
-class IEEEP370_MM_ZC_2xThru(Deembedding):
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0], color = '0.5')
+        res.plot_s_db(0,1, ax = ax[0], color = 'k')
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
+
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1], color = '0.5')
+        res.plot_s_deg(0,1, ax = ax[1], color = 'k')
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
+
+        return (fig, ax)
+
+    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
+                             window: str = 'hamming') -> (Figure, Axes):
+        # if dc point already exists, it will be replaced
+        s2xthru = IEEEP370.extrapolate_to_dc(self.s2xthru)
+        fix1 = IEEEP370.extrapolate_to_dc(self.s_side1)
+        fix2 = IEEEP370.extrapolate_to_dc(self.s_side2)
+        if fix_dut_fix is not None:
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(fix_dut_fix)
+        else:
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(self.sfix_dut_fix)
+        n = s2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * s2xthru.frequency.step) # ns
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        y = ax[0].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], linestyle = 'dashed', color = 'm')
+        ax[0].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
+                   label = f'start (leadin = {self.leadin})')
+        ax[0].plot([self.x_end * dt], [y[self.x_end + n // 2]], marker = 'o', color = 'k',
+                   label = f'end (pullback1 = {self.pullback1})')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[0].set_ylim((ymin - 5, ymax + 5))
+        ax[0].legend(loc = 'lower left')
+
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        y = ax[1].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                              ax = ax[1], linestyle = 'dashed', color = 'm')
+        ax[1].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
+                  label = f'start (leadin = {self.leadin})')
+        ax[1].plot([self.x_end * dt], [y[self.x_end + n // 2]], marker = 'o', color = 'k',
+                   label = f'end (pullback2 = {self.pullback2})')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[1].set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * self.x_end * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
+        ax[1].legend(loc = 'lower left')
+
+        fig.tight_layout()
+
+        return (fig, ax)
+
+
+class IEEEP370_MM_ZC_2xThru(IEEEP370):
     """
     Creates error boxes from a 4-port from 2x-Thru and FIX-DUT-FIX networks.
 
@@ -2318,6 +3259,12 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
 
     The possible difference of impedance between 2x-Thru and FIX-DUT-FIX
     is corrected.
+
+    The algorithm computes the length of the fixtures by halving the delay of
+    2x-Thru in time domain transmission. The propagation constant gamma is also
+    determined from the 2xThru. It then peels the FIX-DUT-FIX time domain
+    impedance profile iteratively in cycles of determining start impedance and
+    deembedding a single time sample long transmission line.
 
     Note
     ----
@@ -2397,14 +3344,15 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
 
     """
-    def __init__(self, dummy_2xthru, dummy_fix_dut_fix, name=None,
-                 z0 = 50, port_order: str = 'second',
-                 bandwidth_limit = 0,
-                 pullback1 = 0, pullback2 = 0,
-                 side1 = True, side2 = True,
-                 NRP_enable = True, leadin = 1,
-                 verbose = False,
-                 *args, **kwargs):
+    def __init__(self, dummy_2xthru: Network, dummy_fix_dut_fix: Network,
+                 name: str = None,
+                 z0: float = 50, port_order: str = 'second',
+                 bandwidth_limit: float = 0,
+                 pullback1: int = 0, pullback2: int = 0,
+                 side1: bool = True, side2: bool = True,
+                 NRP_enable: bool = True, leadin: int = 1,
+                 verbose: bool = False,
+                 *args, **kwargs) -> None:
         """
         IEEEP370_MM_ZC_2xThru De-embedding Initializer
 
@@ -2469,11 +3417,21 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         self.flag_DC = False
         self.flag_df = False
 
-        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+        # debug outputs
+        self.gamma_dd = None
+        self.x_end_dd = None
+        self.z_side1_dd = None
+        self.z_side2_dd = None
+        self.gamma_cc = None
+        self.x_end_cc = None
+        self.z_side1_cc = None
+        self.z_side2_cc = None
+
+        IEEEP370.__init__(self, dummies, name, *args, **kwargs)
         self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru,
                                                         self.sfix_dut_fix)
 
-    def deembed(self, ntwk):
+    def deembed(self, ntwk: Network) -> Network:
         """
         Perform the de-embedding calculation
 
@@ -2521,7 +3479,10 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
             deembedded.renumber(new_order, old_order)
         return deembedded
 
-    def split2xthru(self, se_2xthru, se_fdf):
+    def split2xthru(self, se_2xthru: Network, se_fdf: Network) -> (Network, Network):
+        """
+        Perform the fixtures extraction.
+        """
         # check if 4-port
         if se_2xthru.nports != 4 or se_fdf.nports != 4:
             raise(ValueError('2xthru has to be a 4-port network.'))
@@ -2561,6 +3522,11 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
                                   NRP_enable = self.NRP_enable,
                                   leadin = self.leadin,
                                   verbose = self.verbose)
+        # debug outputs
+        self.gamma_dd = dm_dd.gamma
+        self.x_end_dd = dm_dd.x_end
+        self.z_side1_dd = dm_dd.z_side1
+        self.z_side2_dd = dm_dd.z_side2
         dm_cc  = IEEEP370_SE_ZC_2xThru(dummy_2xthru = scc,
                                   dummy_fix_dut_fix = scc_fdf,
                                   z0 = self.z0 / 2,
@@ -2572,7 +3538,11 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
                                   NRP_enable = self.NRP_enable,
                                   leadin = self.leadin,
                                   verbose = self.verbose)
-
+        # debug outputs
+        self.gamma_cc = dm_cc.gamma
+        self.x_end_cc = dm_cc.x_end
+        self.z_side1_cc = dm_cc.z_side1
+        self.z_side2_cc = dm_cc.z_side2
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
         se_side1 = mm_side1.copy()
@@ -2582,3 +3552,119 @@ class IEEEP370_MM_ZC_2xThru(Deembedding):
         se_side2.gmm2se(p = 2)
 
         return (se_side1, se_side2)
+
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
+        res = self.deembed(self.s2xthru)
+        res.name = 'Residuals'
+        res.se2gmm(p=2)
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0])
+        res.plot_s_db(0,1, ax = ax[0])
+        res.plot_s_db(3,2, ax = ax[0])
+        res.plot_s_db(2,3, ax = ax[0])
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
+
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1])
+        res.plot_s_deg(0,1, ax = ax[1])
+        res.plot_s_deg(3,2, ax = ax[1])
+        res.plot_s_deg(2,3, ax = ax[1])
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
+
+        return (fig, ax)
+
+    def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
+                             window: str = 'hamming') -> (Figure, Axes):
+        # if dc point already exists, it will be replaced
+        s2xthru = self.s2xthru.copy()
+        s2xthru.se2gmm(p=2)
+        s2xthru = IEEEP370.extrapolate_to_dc(s2xthru)
+        fix1 = self.se_side1.copy()
+        fix1.se2gmm(p=2)
+        fix1 = IEEEP370.extrapolate_to_dc(fix1)
+        fix2 = self.se_side2.copy()
+        fix2.se2gmm(p=2)
+        fix2 = IEEEP370.extrapolate_to_dc(fix2)
+        if fix_dut_fix is not None:
+            fix_dut_fix = fix_dut_fix.copy()
+            fix_dut_fix.se2gmm(p=2)
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(fix_dut_fix)
+        else:
+            fix_dut_fix = self.sfix_dut_fix.copy()
+            fix_dut_fix.se2gmm(p=2)
+            fix_dut_fix = IEEEP370.extrapolate_to_dc(fix_dut_fix)
+        n = s2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * s2xthru.frequency.step) # ns
+
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+        else:
+            fig = ax.get_figure()
+
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        y = ax[0].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], linestyle = 'dashed', color = 'm')
+        ax[0].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
+                   label = f'start (leadin = {self.leadin})')
+        ax[0].plot([self.x_end_dd * dt], [y[self.x_end_dd + n // 2]], marker = 'o', color = 'k',
+                   label = f'end (pullback1 = {self.pullback1})')
+        fix1.plot_z_time_step(2, 2, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(2, 2, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(2, 2, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'b')
+        ax[0].legend(loc = 'center left')
+
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        y = ax[1].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                              ax = ax[1], linestyle = 'dashed', color = 'm')
+        ax[1].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
+                  label = f'start (leadin = {self.leadin})')
+        ax[1].plot([self.x_end_dd * dt], [y[self.x_end_dd + n // 2]], marker = 'o', color = 'k',
+                   label = f'end (pullback2 = {self.pullback2})')
+        fix2.plot_z_time_step(2, 2, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(3, 3, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(3, 3, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'b')
+        delay = 2 * self.x_end_dd * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
+        ax[1].legend(loc = 'center left')
+
+        fig.tight_layout()
+
+        return (fig, ax)
