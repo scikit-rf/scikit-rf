@@ -176,15 +176,16 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_bpi(self):
         path = Path(self.test_dir) / "metas_tdr"
+        for window in ["boxcar", None]:
+            # Check if window=None equals to window="boxcar"
+            for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g", "short_10ps_10g_50g", "short_10ps_10g_40g"]:
 
-        for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g", "short_10ps_10g_50g", "short_10ps_10g_40g"]:
+                netw = rf.Network(path / f"{fname}.s1p")
+                ref = np.loadtxt(path / f"{fname}_band_pass_impulse.csv", skiprows=1, delimiter=";")
+                t, y = netw.impulse_response(window=window, pad=0, squeeze=True, bandpass=True)
 
-            netw = rf.Network(path / f"{fname}.s1p")
-            ref = np.loadtxt(path / f"{fname}_band_pass_impulse.csv", skiprows=1, delimiter=";")
-            t, y = netw.impulse_response(window="boxcar", pad=0, squeeze=True, bandpass=True)
-
-            np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
-            np.testing.assert_allclose(ref[:,1], np.abs(y), atol=1e-5)
+                np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
+                np.testing.assert_allclose(ref[:,1], np.abs(y), atol=1e-5)
 
     def test_auto_use_bandpass(self):
         path = Path(self.test_dir) / "metas_tdr"
