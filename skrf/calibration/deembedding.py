@@ -957,7 +957,8 @@ class IEEEP370(Deembedding):
     * :func:`IEEEP370.deembed`
     * :func:`IEEEP370.split2xthru`
 
-    Based on [ElSA20]_, [I3E3701]_, [I3E3702]_, [I3E3703]_, and [I3E3704]_.
+    Based on [ElSA20]_, [I3E3701]_, [I3E3702]_, [I3E3703]_, [I3E3704]_,
+    and [I3E3705]_.
 
     References
     ----------
@@ -972,6 +973,8 @@ class IEEEP370(Deembedding):
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     .. [I3E3704] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    .. [I3E3705] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG3/qualityCheckFrequencyDomain.m
+       commit 8b8f3a3b5e41aeb4ab16110bbfb683ec52e70206
     """
     def __init__(self, dummies: Sequence[Network], name: str = None,
                  *args, **kwargs) -> None:
