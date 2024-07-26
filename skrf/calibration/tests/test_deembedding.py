@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 import pytest
-from scipy.constants import  c, pi
+from scipy.constants import c, pi
 
 import skrf as rf
 
