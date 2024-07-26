@@ -152,6 +152,8 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(len(gated)== len(ntwk))
 
     def test_lpi(self):
+        """Test low pass impulse response against data generated with METAS VNA Tools."""
+
         path = Path(self.test_dir) / "metas_tdr"
 
         for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g"]:
@@ -164,6 +166,7 @@ class NetworkTestCase(unittest.TestCase):
             np.testing.assert_allclose(ref[:,1], y, rtol=5e-5)
 
     def test_lps(self):
+        """Test low pass step response against data generated with METAS VNA Tools."""
         path = Path(self.test_dir) / "metas_tdr"
 
         for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g"]:
@@ -175,6 +178,7 @@ class NetworkTestCase(unittest.TestCase):
             np.testing.assert_allclose(ref[:, 1], y, rtol=5e-5)
 
     def test_bpi(self):
+        """Test band pass impulse response against data generated with METAS VNA Tools."""
         path = Path(self.test_dir) / "metas_tdr"
         for window in ["boxcar", None]:
             # Check if window=None equals to window="boxcar"
