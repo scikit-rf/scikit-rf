@@ -1008,11 +1008,11 @@ def rational_interp(
     hd = (x[n//2] - x[n//2-1])**d
     for k in range(n):
         for i in range(max(0,k-d), min(k+1, n-d)):
-            p = hd
+            p, xk = hd, x[k]
             for j in range(i,min(n,i+d+1)):
                 if j == k:
                     continue
-                p *= 1/(x[k] - x[j])
+                p /= (xk - x[j])
             if i % 2 == 1:
                 w[k] -= p
             else:
@@ -1035,8 +1035,8 @@ def rational_interp(
         xi = xi.reshape(*w_shape)
         with np.errstate(divide='ignore', invalid='ignore'):
             assert axis == 0
-            v = sum(y[i]*w[i]/(xi - x[i]) for i in range(n))\
-                /sum(w[i]/(xi - x[i]) for i in range(n))
+            tmp = [w[i] / (xi - x[i]) for i in range(n)]
+            v = sum(y[i] * tmp[i] for i in range(n)) / sum(tmp)
 
         # Fix divide by zero errors
         for e, i in enumerate(nearest_idx):

@@ -62,6 +62,7 @@ class NetworkTestCase(unittest.TestCase):
         l1 = self.cpw.line(0.20, 'm', z0=50)
         l2 = self.cpw.line(0.07, 'm', z0=50)
         l3 = self.cpw.line(0.47, 'm', z0=50)
+        self.l2 = l2
         self.Fix = rf.concat_ports([l1, l1, l1, l1])
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
@@ -486,6 +487,13 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(self.ntwk1 >> self.ntwk2, self.ntwk3)
         self.assertEqual(self.Fix2 >> self.DUT2 >> self.Fix2.flipped(), self.Meas2)
 
+    def test_concat_ports(self):
+        for idx in range(4):
+            i,j = 2*idx, 2*(idx+1)
+            self.assertTrue(np.allclose(self.DUT2.s[:, i:j, i:j], self.l2.s)) # check s-parameters
+            self.assertTrue(np.allclose(self.DUT2.z0[:, i:j], self.l2.z0)) # check z0
+        self.assertTrue(np.all(self.DUT2.port_modes == np.array(['S']*8))) # check port mode
+
     def test_connect(self):
         self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
             self.ntwk3)
@@ -505,7 +513,7 @@ class NetworkTestCase(unittest.TestCase):
         line = med.line(1, unit='m')
         line.z0 = [10, 20]
 
-        for nport_portnum in [3,4,5,6,7,8]:
+        for nport_portnum in [1,2,3,4,5,6,7,8]:
 
             # create a Nport network with port impedance i at port i
             nport = rf.Network()
@@ -1111,6 +1119,8 @@ class NetworkTestCase(unittest.TestCase):
         ntwk_orig.write_touchstone(os.path.join(self.test_dir, pwfile_skrf), write_z0=True, form='RI')
         ntwk_skrf = rf.Network(os.path.join(self.test_dir, pwfile_skrf))
 
+        # check if the s_def could be correctly recovered from scikit-rf's Touchstone file
+        self.assertTrue(ntwk_orig.s_def == ntwk_skrf.s_def)
         self.assertTrue(ntwk_orig == ntwk_skrf)
 
     def test_network_from_z_or_y(self):
@@ -1299,6 +1309,14 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(b.z0[0] == a.z0[0])
         self.assertTrue(b.z0[1] == 0.5*(a.z0[0] + a.z0[1]))
         self.assertTrue(b.z0[-1] == a.z0[-1])
+
+    def test_interpolate_freq_cropped(self):
+        a = rf.N(f=np.arange(20), s=np.arange(20)*(1+1j),z0=1, f_unit="ghz")
+        freq = rf.F.from_f(np.linspace(1,2,3,endpoint=True), unit='GHz')
+        for method in ('linear', 'cubic', 'quadratic', 'rational'):
+            b = a.interpolate(freq, freq_cropped=False, kind=method)
+            c = a.interpolate(freq, kind=method)
+            self.assertTrue(np.allclose(b.s, c.s))
 
     def test_interpolate_self(self):
         """Test resample."""
@@ -2004,6 +2022,28 @@ class NetworkTestCase(unittest.TestCase):
         # Check weather an error is raised when more than two networks are specified
         with pytest.raises(ValueError):
             ntwk_result_3 = self.ntwk1 // (self.ntwk1, self.ntwk2, self.ntwk3)
+
+    def test_fmt_trace_name(self):
+        # Test trace name of differential thru
+        s = np.zeros((1,4,4), dtype=complex)
+        s[:,2,0] = 1
+        s[:,0,2] = 1
+        s[:,3,1] = 1
+        s[:,1,3] = 1
+        # single-ended
+        se_thru = rf.Network(s=s, f=[1], z0=50)
+        self.assertTrue(np.all(se_thru.port_modes == "S"))
+        self.assertTrue(se_thru._fmt_trace_name(0, 0) == "11")
+        self.assertTrue(se_thru._fmt_trace_name(1, 0) == "21")
+        mm_thru = se_thru.copy()
+        mm_thru.se2gmm(p=2)
+        self.assertTrue(np.all(mm_thru.port_modes == ["D", "D", "C", "C"]))
+        self.assertTrue(mm_thru._fmt_trace_name(0, 0) == "dd11")
+        self.assertTrue(mm_thru._fmt_trace_name(1, 0) == "dd21")
+        self.assertTrue(mm_thru._fmt_trace_name(2, 2) == "cc33")
+        self.assertTrue(mm_thru._fmt_trace_name(3, 2) == "cc43")
+        self.assertTrue(mm_thru._fmt_trace_name(2, 0) == "cd31")
+        self.assertTrue(mm_thru._fmt_trace_name(1, 3) == "dc24")
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

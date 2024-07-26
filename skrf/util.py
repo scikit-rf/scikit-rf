@@ -117,6 +117,20 @@ def copy_doc(copy_func: Callable) -> Callable:
         return func
     return wrapper
 
+def figure(*args, **kwargs) -> Figure:
+    """
+    Wraps the matplotlib figure call and raises if not available.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to get subplots without matplotlib installed.
+    """
+
+    try:
+        return plt.figure(*args, **kwargs)
+    except NameError as err:
+        raise RuntimeError("Plotting is not available") from err
 
 def subplots(*args, **kwargs) -> tuple[Figure, np.ndarray]:
     """

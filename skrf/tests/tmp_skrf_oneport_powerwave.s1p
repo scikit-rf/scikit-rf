@@ -9,7 +9,8 @@
 !Data is not renormalized
 !
 ! Created with skrf (http://scikit-rf.org).
-!Data is not renormalized
+! Data is not renormalized
+! S-parameter uses the power definition
 # GHz S RI R
 ! Port[1] = 1
 !freq ReS11 ImS11

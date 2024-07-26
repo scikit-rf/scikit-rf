@@ -927,13 +927,8 @@ class Circuit:
         ntw : :class:`~skrf.network.Network`
             Network associated to external ports
         """
-        ntw = Network()
-        ntw.frequency = self.frequency
-        ntw.z0 = self.port_z0
-        ntw.s = self.s_external
-        ntw.name = self.name
-        return ntw
-
+        return Network(frequency = self.frequency, z0 = self.port_z0,
+                      s = self.s_external, name = self.name)
 
     def s_active(self, a: NumberLike) -> np.ndarray:
         r"""
@@ -1453,7 +1448,8 @@ class Circuit:
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple[Network, int]]],
                    check_duplication: bool = True,
-                   split_ground: bool = False) -> list[list[tuple[Network, int]]]:
+                   split_ground: bool = False,
+                   max_nports: int = 20) -> list[list[tuple[Network, int]]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
 
@@ -1468,6 +1464,11 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
             If True, check if the connections have duplicate names. Default is True.
     split_ground : bool, optional.
             If True, split the global ground connection to independant ground connections. Default is False.
+    max_nports : int
+            The maximum number of ports of a Network that can be reduced in circuit. If a Network in the
+            circuit has a number of ports (nports), using the Network.connect() method to reduce the circuit's
+            dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
+            This value depends on the performance of the computer and the scale of the circuit. Default is 20.
 
 
     Returns
@@ -1489,8 +1490,9 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     True
     """
 
-    def invalide_to_reduce(cnx):
-        return any(Circuit._is_port(ntwk) for ntwk, _ in cnx) or len(cnx) != 2
+    def invalide_to_reduce(cnx: list[tuple[Network, int]]) -> bool:
+        return any((Circuit._is_port(ntwk) or ntwk.nports > max_nports)
+                   for ntwk, _ in cnx) or len(cnx) != 2
 
     if split_ground:
         tmp_cnxs = []
@@ -1513,16 +1515,32 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
         connections = tmp_cnxs
 
-    # get the total number of network ports in the specified connection
+    # Cache the connections that have been processed to avoid loop
+    processed_network_names: set[str] = set()
+
+    # Calculate the total number of Network ports in the specified connection
     def calculate_ports(cnx: list[tuple[Network, int]]) -> int:
         if invalide_to_reduce(cnx):
             return -1
 
-        unique_networks = len(set(ntwk.name for ntwk, _ in cnx))
+        name_list = sorted(ntwk.name for ntwk, _ in cnx)
+        ntwks_str: str = ''.join(name_list)
+
+        unique_networks = len(set(name_list))
         total_ports = sum(ntwk.nports for ntwk, _ in cnx) - 2
 
         # Return the number of ports if the connections performed
-        return total_ports if unique_networks == 2 else total_ports // 2 - 1
+        ports = total_ports if unique_networks == 2 else total_ports // 2 - 1
+
+        # If tuples of Networks in 'connections' have the same Networks, they form a loop.
+        # Prioritize processing loops in the circuit by reducing the number of ports by 1.
+        # This reduces the computational load during the circuit reduction process.
+        if ntwks_str in processed_network_names:
+            ports -= 1
+        else:
+            processed_network_names.add(ntwks_str)
+
+        return ports
 
     # List of tuples containing connection indices and their calculated ports
     cnx_ports_list = [(idx, calculate_ports(cnx)) for idx, cnx in enumerate(connections)]
