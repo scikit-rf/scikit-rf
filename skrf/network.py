@@ -4195,6 +4195,8 @@ class Network:
         uniform frequency spacing.
 
         Y-axis is the reflection coefficient.
+        `step_resonse` is equal to the cumulative trapezoid integration of the 
+        `impulse_response` function.
 
         Parameters
         ----------
