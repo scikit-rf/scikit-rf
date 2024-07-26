@@ -1627,7 +1627,7 @@ class IEEEP370(Deembedding):
             QM['reciprocity']['evaluation'] = 'Poor'
         elif QM['reciprocity']['value'] <= 99.:
             QM['reciprocity']['evaluation'] = 'Inconclusive'
-        elif QM['reciprocity']['value'] <= 99.9.:
+        elif QM['reciprocity']['value'] <= 99.9:
             QM['reciprocity']['evaluation'] = 'Acceptable'
         else:
             QM['reciprocity']['evaluation'] = 'Good'
