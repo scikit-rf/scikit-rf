@@ -59,8 +59,9 @@ from abc import ABC, abstractmethod
 from typing import Sequence
 
 import numpy as np
-from numpy import angle, concatenate, conj, exp, flip, ndarray, real, unwrap, zeros
+from numpy import angle, concatenate, conj, exp, flip, imag, ndarray, real, unwrap, zeros
 from numpy.fft import fft, fftshift, ifftshift, irfft
+from numpy.linalg import norm
 from scipy.interpolate import interp1d
 
 from ..frequency import Frequency
@@ -1483,6 +1484,191 @@ class IEEEP370(Deembedding):
                 eb2 = sTL2 ** eb2
 
         return out, eb1, eb2
+
+    @staticmethod
+    def check_fd_passivity(ntwk: Network) -> float:
+         """
+         Initial passivity checking of raw data at the given frequency samples.
+
+         This informative check is performed in the frequency domain.
+
+         Parameters
+         ----------
+         ntwk: :class:`~skrf.network.Network` object
+               Network to be checked
+
+         Returns
+         -------
+         PQM : :class:`~skrf.network.Network` object
+               Passivity quality metric in percents
+         """
+         if ntwk.nports == 1:
+             raise (ValueError('Doesn\'t exist for one-ports'))
+
+         Nf = ntwk.frequency.npoints
+         A  = 1.00001
+         B  = 0.1
+         PW = zeros(Nf)
+         for i in range(Nf):
+             PM = norm(ntwk.s[i, :, :], 2)
+             if PM > A:
+                 PW[i] = (PM - A) / B
+
+         return np.max((Nf - np.sum(PW)), 0) / Nf * 100.
+
+    @staticmethod
+    def check_fd_reciprocity(ntwk: Network) -> float:
+        """
+        Initial reciprocity checking of raw data at the given frequency samples.
+
+        This informative check is performed in the frequency domain.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be checked
+
+        Returns
+        -------
+        PQM : :class:`~skrf.network.Network` object
+              Reciprocity quality metric in percents
+        """
+        if ntwk.nports == 1:
+            raise (ValueError('Doesn\'t exist for one-ports'))
+
+        Nf = ntwk.frequency.npoints
+        B = 0.1
+        C = 1e-6
+        RW = zeros(Nf)
+        for i in range(Nf):
+            RM = 0
+            for k in range(ntwk.nports):
+                for m in range(ntwk.nports):
+                    RM = RM + np.abs(ntwk.s[i, m, k] - ntwk.s[i, k, m])
+            RM = RM / (ntwk.nports * (ntwk.nports - 1))
+            if RM > C:
+                RW[i] = (RM - C) / B
+
+            return np.max((Nf - np.sum(RW)), 0) / Nf * 100.
+
+    @staticmethod
+    def check_fd_causality(ntwk: Network) -> float:
+        """
+        Initial causality checking of raw data at the given frequency samples.
+
+        This informative check is performed in the frequency domain.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be checked
+
+        Returns
+        -------
+        PQM : :class:`~skrf.network.Network` object
+              Causality quality metric in percents
+        """
+        if ntwk.nports == 1:
+            raise (ValueError('Doesn\'t exist for one-ports'))
+
+        Nf = ntwk.frequency.npoints
+        CQM = zeros((ntwk.nports, ntwk.nports))
+        for i in range(ntwk.nports):
+            for j in range(ntwk.nports):
+                if len(np.unique(ntwk.s[:, i, j])) == 1:
+                    CQM[i, j] = 100.
+                else:
+                    TotalR = 0
+                    PositiveR = 0
+                    for k in range(Nf - 2):
+                        Vn = ntwk.s[k + 1, i, j] - ntwk.s[k, i, j]
+                        Vn1 = ntwk.s[k + 2, i, j] - ntwk.s[k + 1, i, j]
+                        R = real(Vn1) * imag(Vn) - imag(Vn1) * real(Vn)
+                        if R >  0:
+                            PositiveR = PositiveR + R
+                        TotalR = TotalR + np.abs(R)
+                    CQM[i, j] = np.nanmax((PositiveR / TotalR, 0)) * 100.
+
+        return np.min(CQM)
+
+    @staticmethod
+    def check_fd_se_quality(ntwk: Network) -> dict:
+        """
+        Initial quality checking of raw data at the given frequency samples.
+
+        This informative passivity, reciprocity and causality check is
+        performed in the frequency domain.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be checked
+
+        Returns
+        -------
+        QM : :class:`dict` object
+              Dictionnary with quality metrics
+        """
+        QM = {'passivity': {'value': IEEEP370.check_fd_passivity(ntwk), 'evaluation': ''},
+              'reciprocity': {'value': IEEEP370.check_fd_reciprocity(ntwk), 'evaluation': ''},
+              'causality': {'value': IEEEP370.check_fd_causality(ntwk), 'evaluation': ''},
+              }
+        # evaluation
+        if QM['passivity']['value'] <= 80.:
+            QM['passivity']['evaluation'] = 'Poor'
+        elif QM['passivity']['value'] <= 99.:
+            QM['passivity']['evaluation'] = 'Inconclusive'
+        elif QM['passivity']['value'] <= 99.9:
+            QM['passivity']['evaluation'] = 'Acceptable'
+        else:
+            QM['passivity']['evaluation'] = 'Good'
+
+        if QM['reciprocity']['value'] <= 80.:
+            QM['reciprocity']['evaluation'] = 'Poor'
+        elif QM['reciprocity']['value'] <= 99.:
+            QM['reciprocity']['evaluation'] = 'Inconclusive'
+        elif QM['reciprocity']['value'] <= 99.9.:
+            QM['reciprocity']['evaluation'] = 'Acceptable'
+        else:
+            QM['reciprocity']['evaluation'] = 'Good'
+
+        if QM['causality']['value'] <= 20.:
+            QM['causality']['evaluation'] = 'Poor'
+        elif QM['causality']['value'] <= 50.:
+            QM['causality']['evaluation'] = 'Inconclusive'
+        elif QM['causality']['value'] <= 80:
+            QM['causality']['evaluation'] = 'Acceptable'
+        else:
+            QM['causality']['evaluation'] = 'Good'
+
+        return QM
+
+    @staticmethod
+    def check_fd_mm_quality(ntwk: Network) -> dict:
+        """
+        Initial quality checking of raw data at the given frequency samples.
+
+        This informative passivity, reciprocity and causality check is
+        performed in the frequency domain.
+
+        Only the differential and the common modes are tested.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be checked
+
+        Returns
+        -------
+        QM : :class:`dict` object
+              Dictionnary with quality metrics
+        """
+        mm = ntwk.copy()
+        mm.se2gmm(p = 2)
+        QM = {'dd': IEEEP370.check_fd_se_quality(mm.subnetwork([0, 1])),
+              'cc': IEEEP370.check_fd_se_quality(mm.subnetwork([2, 3]))}
+
+        return QM
 
     @staticmethod
     def plot_constant_limit(frequency: Frequency, value: float, ax: Axes, **kwargs) -> None:
