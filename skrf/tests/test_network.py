@@ -157,6 +157,59 @@ class NetworkTestCase(unittest.TestCase):
         gated = ntwk.s11.time_gate()
         self.assertTrue(len(gated)== len(ntwk))
 
+    def test_lpi(self):
+        """Test low pass impulse response against data generated with METAS VNA Tools."""
+
+        path = Path(self.test_dir) / "metas_tdr"
+
+        for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g"]:
+
+            netw = rf.Network(path / f"{fname}.s1p")
+            ref = np.loadtxt(path / f"{fname}_low_pass_impulse.csv", skiprows=1, delimiter=";")
+            t, y = netw.impulse_response(window="boxcar", pad=0, squeeze=True)
+
+            np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
+            np.testing.assert_allclose(ref[:,1], y, rtol=5e-5)
+
+    def test_lps(self):
+        """Test low pass step response against data generated with METAS VNA Tools."""
+        path = Path(self.test_dir) / "metas_tdr"
+
+        for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g"]:
+            netw = rf.Network(path / f"{fname}.s1p")
+            ref = np.loadtxt(path / f"{fname}_low_pass_step.csv", skiprows=1, delimiter=";")
+            t, y = netw.step_response(window="boxcar", pad=0, squeeze=True)
+
+            np.testing.assert_allclose(ref[:, 0], t * 1e12, rtol=2e-5)
+            np.testing.assert_allclose(ref[:, 1], y, rtol=5e-5)
+
+    def test_bpi(self):
+        """Test band pass impulse response against data generated with METAS VNA Tools."""
+        path = Path(self.test_dir) / "metas_tdr"
+        for window in ["boxcar", None]:
+            # Check if window=None equals to window="boxcar"
+            for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g", "short_10ps_10g_50g", "short_10ps_10g_40g"]:
+
+                netw = rf.Network(path / f"{fname}.s1p")
+                ref = np.loadtxt(path / f"{fname}_band_pass_impulse.csv", skiprows=1, delimiter=";")
+                t, y = netw.impulse_response(window=window, pad=0, squeeze=True, bandpass=True)
+
+                np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
+                np.testing.assert_allclose(ref[:,1], np.abs(y), atol=1e-5)
+
+    def test_auto_use_bandpass(self):
+        path = Path(self.test_dir) / "metas_tdr"
+
+        for fname in ["short_10ps_dc_50g", "short_10ps_10g_50g"]:
+
+            netw = rf.Network(path / f"{fname}.s1p")
+            t, _y = netw.impulse_response(window="boxcar", pad=0, squeeze=True)
+            if netw.frequency.start == 0:
+                assert len(t) == 2 * len(netw) - 1
+            else:
+                assert len(t) == len(netw)
+
+
 
     def test_time_transform_v2(self):
         spb = (4, 5)
@@ -192,14 +245,11 @@ class NetworkTestCase(unittest.TestCase):
         s = np.ones(10)
         netw = rf.Network(frequency=freq, s=s)
 
-        n_lst = np.arange(-1,2) + 2 * (f_points) - 2
-        for n in n_lst:
-            t,y = netw.impulse_response('boxcar', n=n)
+        t, y = netw.impulse_response("boxcar", pad=0)
 
-            y_true = np.zeros_like(y)
-            y_true[t == 0] = 1
-            np.testing.assert_almost_equal(y, y_true)
-
+        y_true = np.zeros_like(y)
+        y_true[t == 0] = 1
+        np.testing.assert_almost_equal(y, y_true)
 
     def test_time_transform_nonlinear_f(self):
         netw_nonlinear_f = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))
