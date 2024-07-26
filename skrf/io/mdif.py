@@ -367,8 +367,8 @@ class Mdif:
               data_types: dict | None = None,
               comments: str | None = None,
               *,
-              skrf_comment: bool = True,
-              ads_compatible: bool = True):
+              ads_compatible: bool = True,
+              **kwargs):
         """
         Write a MDIF file from a NetworkSet.
 
@@ -389,11 +389,11 @@ class Mdif:
         comments: list of strings
             Comments to add to output_file.
             Each list items is a separate comment line
-        skrf_comment : bool, optional
-            write `created by skrf` comment
         ads_compatible: bool. Default is True.
             Indicates whether to write the file in a format that
             ADS will read properly.
+        **kwargs: dictionary with extra arguments to pass through to the
+            underlying write_touchstone() method in the Network class
 
         See Also
         --------
@@ -421,6 +421,9 @@ class Mdif:
             else:
                 # using Network names (->string)
                 data_types = {"name": "string"}
+
+        # Remove the return_string argument, as it's a required argument for this method
+        kwargs.pop('return_string', None)
 
         # VAR datatypes
         dict_types = dict({"int": "0", "double": "1", "string": "2"})
@@ -455,7 +458,7 @@ class Mdif:
                 mdif.write("\nBEGIN ACDATA\n")
                 mdif.write(optionstring + "\n")
                 mdif.write("! network name: " + ntwk.name + "\n")
-                data = ntwk.write_touchstone(return_string=True, skrf_comment=skrf_comment)
+                data = ntwk.write_touchstone(return_string=True, **kwargs)
                 mdif.write(data)
                 mdif.write("END\n\n")
 
