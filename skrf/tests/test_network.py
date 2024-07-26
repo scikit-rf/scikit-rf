@@ -110,6 +110,12 @@ class NetworkTestCase(unittest.TestCase):
         empty_network = n[n.f < 0]
         self.assertIn('1-Port Network', repr(empty_network))
 
+    def test_network_sequence_frequency_with_f_unit(self):
+        n=rf.Network(frequency=self.freq.f, f_unit=self.freq.unit)
+        np.allclose(n.f, self.freq.f)
+        n=rf.Network(f=self.freq.f, f_unit=self.freq.unit)
+        np.allclose(n.f, self.freq.f)
+
     def test_timedomain(self):
         t = self.ntwk1.s11.s_time
         s = self.ntwk1.s11.s

@@ -1383,7 +1383,7 @@ class Network:
             self._frequency = new_frequency.copy()
         else:
             try:
-                self._frequency = Frequency.from_f(new_frequency)
+                self._frequency = Frequency.from_f(new_frequency, unit=self.frequency.unit)
             except TypeError as err:
                 raise TypeError('Could not convert argument to a frequency vector') from err
 
