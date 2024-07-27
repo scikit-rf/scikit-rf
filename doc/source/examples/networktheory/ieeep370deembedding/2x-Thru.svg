@@ -193,11 +193,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="252.75886"
+     inkscape:zoom="1"
+     inkscape:cx="126.5403"
      inkscape:cy="274.57673"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g8818"
      showgrid="true"
      fit-margin-left="5"
      fit-margin-top="5"
@@ -224,7 +224,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -472,14 +472,14 @@
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:2.82222223px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-         x="49.945297"
-         y="157.93799"
+         x="37.50988"
+         y="158.73174"
          id="text1901-6-8"><tspan
            sodipodi:role="line"
            id="tspan1899-6-9"
-           x="49.945297"
-           y="157.93799"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93888903px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';stroke-width:0.26458332">2xThru</tspan></text>
+           x="37.50988"
+           y="158.73174"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93888903px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';stroke-width:0.26458332">2x-Thru</tspan></text>
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:2.82222223px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
