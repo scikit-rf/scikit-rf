@@ -1673,6 +1673,55 @@ class IEEEP370(Deembedding):
 
         return QM
 
+    def createPassive(ntwk: Network) -> Network:
+        """
+        Creat passivity enforced network.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Input network
+
+        Returns
+        -------
+        reciprocal : :class:`~skrf.network.Network` object
+                     Passivity enforced network
+        """
+        passive = ntwk.copy()
+        for i in range(ntwk.frequency.npoints):
+            U, D, Vh = np.linalg.svd(ntwk.s[i, :, :])
+            for k in range(ntwk.nports):
+                if D[k] > 1.:
+                    D[k] = 1.
+            passive.s[i, :, :] = U @ np.diag(D) @ Vh
+
+        return passive
+
+    @staticmethod
+    def createReciprocal(ntwk: Network) -> Network:
+        """
+        Creat reciprocal network.
+
+        The resulting network is the reciprocal of the input networks. The
+        reciprocity is not enforced.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Input network
+
+        Returns
+        -------
+        reciprocal : :class:`~skrf.network.Network` object
+                     Reciprocal network
+        """
+        reciprocal = ntwk.copy()
+        for i in range(ntwk.nports):
+            for j in range(ntwk.nports):
+                reciprocal.s[:, i, j] = ntwk.s[:, j, i]
+
+        return reciprocal
+
     @staticmethod
     def plot_constant_limit(frequency: Frequency, value: float, ax: Axes, **kwargs) -> None:
         """
