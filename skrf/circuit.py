@@ -1497,10 +1497,10 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     if split_ground:
         tmp_cnxs = []
         for cnx in connections:
-            ground_ntwk = next((ntwk for ntwk, _ in cnx if Circuit._is_ground(ntwk)), None)
+            gnd_ntwk, gnd_p = next(((ntwk, p) for (ntwk, p) in cnx if Circuit._is_ground(ntwk)), (None, None))
 
             # If there is no ground network or if the connection has exactly 2 elements, append it as is
-            if not ground_ntwk or len(cnx) == 2:
+            if not gnd_ntwk or len(cnx) == 2:
                 tmp_cnxs.append(cnx)
                 continue
 
@@ -1508,12 +1508,10 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
             for ntwk, port in cnx:
                 if Circuit._is_ground(ntwk):
                     continue
-                tmp_gnd = Circuit.Ground(frequency=ground_ntwk.frequency,
-                                         name=f'G_{ntwk.name}_{port}',
-                                         z0=ground_ntwk.z0)
 
-                # Transfet the ground Network to a short Network
-                tmp_gnd = tmp_gnd.subnetwork(ports=(0,))
+                # Use the 1-port short Network to replace the Ground Network
+                line = media.DefinedGammaZ0(frequency=gnd_ntwk.frequency, z0_port=gnd_ntwk.z0[:, gnd_p])
+                tmp_gnd = line.short(name=f'G_{ntwk.name}_{port}')
 
                 tmp_cnxs.append([(ntwk, port), (tmp_gnd, 0)])
 
