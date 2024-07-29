@@ -1499,8 +1499,8 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
         for cnx in connections:
             gnd_ntwk, gnd_p = next(((ntwk, p) for (ntwk, p) in cnx if Circuit._is_ground(ntwk)), (None, None))
 
-            # If there is no ground network or if the connection has exactly 2 elements, append it as is
-            if not gnd_ntwk or len(cnx) == 2:
+            # If there is no ground network, append it to the list
+            if not gnd_ntwk:
                 tmp_cnxs.append(cnx)
                 continue
 
