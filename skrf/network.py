@@ -170,6 +170,7 @@ import numpy as np
 from numpy import gradient, ndarray, shape
 from numpy.linalg import inv as npy_inv
 from scipy import stats  # for Network.add_noise_*, and Network.windowed
+from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d  # for Network.interpolate()
 
 from . import mathFunctions as mf
@@ -1383,7 +1384,7 @@ class Network:
             self._frequency = new_frequency.copy()
         else:
             try:
-                self._frequency = Frequency.from_f(new_frequency)
+                self._frequency = Frequency.from_f(new_frequency, unit=self.frequency.unit)
             except TypeError as err:
                 raise TypeError('Could not convert argument to a frequency vector') from err
 
@@ -4104,16 +4105,24 @@ class Network:
             Xi[:, 4 * l:4 * l + 4, 4 * l:4 * l + 4] = self._X(l * 2, l * 2 + 1, l, p, z0_se, z0_mm, s_def)
         return Xi
 
-    def _Xi_tilde(self, p: int, z0_se: np.ndarray, z0_mm: np.ndarray, s_def : str) -> np.ndarray:  # (31)
+    def _Xi_tilde(
+        self, p: int, z0_se: np.ndarray, z0_mm: np.ndarray, s_def: str
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:  # (31)
         n = self.nports
         P = np.ones(self.f.shape[0])[:, np.newaxis, np.newaxis] * self._P(p)
         QT = np.ones(self.f.shape[0])[:, np.newaxis, np.newaxis] * self._Q().T
         Xi = self._Xi(p, z0_se, z0_mm, s_def)
-        Xi_tilde = np.einsum('...ij,...jk->...ik', np.einsum('...ij,...jk->...ik', P, Xi), QT)
+        Xi_tilde: np.ndarray = np.einsum("...ij,...jk->...ik", np.einsum("...ij,...jk->...ik", P, Xi), QT)
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
-    def impulse_response(self, window: str = 'hamming', n: int = None, pad: int = 0,
-                        bandpass: bool = None, squeeze: bool = True) -> tuple[np.ndarray, np.ndarray]:
+    def impulse_response(
+        self,
+        window: str = "hamming",
+        n: int | None = None,
+        pad: int = 0,
+        bandpass: bool | None = None,
+        squeeze: bool = True,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate time-domain impulse response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -4160,33 +4169,30 @@ class Network:
             step_response
             extrapolate_to_dc
         """
-        if n is None:
-            # Use zero-padding specification. Note that this does not allow n odd.
-            n = 2 * (self.frequency.npoints + pad - 1)
+        if bandpass is None:
+            bandpass = self.f[0] != 0
 
-        fstep = self.frequency.step
-        if n % 2 == 0:
-            t = np.fft.ifftshift(np.fft.fftfreq(n, fstep))
-        else:
-            t = np.fft.ifftshift(np.fft.fftfreq(n+1, fstep))[1:]
-        if bandpass in (True, False):
-            center_to_dc = not bandpass
-        else:
-            center_to_dc = None
+        t = self.frequency._t_padded(pad=pad, n=n, bandpass=bandpass)
+        n = len(t)
+
         if window is not None:
-            w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
+            w = self.windowed(window=window, normalize=False, center_to_dc=not bandpass)
         else:
             w = self
 
-        ir = mf.irfft(w.s, n=n)
+        if bandpass:
+            ir = np.fft.fftshift(np.fft.ifft(w.s, axis=0, n=n), axes=0)
+        else:
+            ir = np.fft.fftshift(np.fft.irfft(w.s, axis=0, n=n), axes=0)
+
         if squeeze:
             ir = ir.squeeze()
 
         return t, ir
 
     def step_response(
-            self, window: str = 'hamming', n: int = None, pad: int = 0, squeeze: bool = True
-            ) -> tuple[np.ndarray, np.ndarray]:
+        self, window: str = "hamming", n: int | None = None, pad: int = 0, squeeze: bool = True
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate time-domain step response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -4196,6 +4202,8 @@ class Network:
         uniform frequency spacing.
 
         Y-axis is the reflection coefficient.
+        `step_resonse` is equal to the cumulative trapezoid integration of the
+        `impulse_response` function.
 
         Parameters
         ----------
@@ -4245,7 +4253,7 @@ class Network:
             )
 
         t, y = self.impulse_response(window=window, n=n, pad=pad, bandpass=False, squeeze=squeeze)
-        return t, np.cumsum(y, axis=0)
+        return t, cumulative_trapezoid(y, initial=0, axis=0)
 
     # Network Active s/z/y/vswr parameters
     def s_active(self, a: np.ndarray) -> np.ndarray:
