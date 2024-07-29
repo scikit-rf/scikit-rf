@@ -743,13 +743,11 @@ class Circuit:
         There is a numerical bottleneck in this function,
         when creating the block diagonal matrice [X] from the [X]_k matrices.
         """
-        Xks = [self._Xk(cnx) for cnx in self.connections]
-
-        Xf = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex')
-        off = np.array([0, 0])
-        for Xk in Xks:
-            Xf[:, off[0]:off[0] + Xk.shape[1], off[1]:off[1]+Xk.shape[2]] = Xk
-            off += Xk.shape[1:]
+        idx, Xf = 0, np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex')
+        for cnx in self.connections:
+            idx_s, idx_e = idx, idx + len(cnx)
+            Xf[:, idx_s:idx_e, idx_s:idx_e] = self._Xk(cnx)
+            idx = idx_e
 
         return Xf
 
