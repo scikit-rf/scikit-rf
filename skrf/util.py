@@ -283,7 +283,7 @@ def get_fid(file, *args, **kwargs):
     fid : file object
 
     """
-    if isinstance(file, str) or isinstance(file, Path):
+    if isinstance(file, (str, Path)):
         return open(file, *args, **kwargs)
     else:
         return file
