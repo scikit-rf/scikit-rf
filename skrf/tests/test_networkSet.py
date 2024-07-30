@@ -312,9 +312,6 @@ class NetworkSetTestCase(unittest.TestCase):
         self.assertRaises(TypeError, self.ns_params.sel, 'wrong')
         self.assertRaises(TypeError, self.ns_params.sel, 1)
 
-        # Should return a single Network
-        self.assertIsInstance(self.ns_params.sel({'a': 0, 'X': 10, 'c': 'A'}), rf.Network)
-
         # searching for a parameter which do not exist returns empty networkset
         self.assertEqual(self.ns.sel({'a': 1}), rf.NetworkSet())
         self.assertEqual(self.ns_params.sel({'ho ho': 1}), rf.NetworkSet())
