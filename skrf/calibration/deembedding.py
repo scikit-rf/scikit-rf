@@ -1489,6 +1489,103 @@ class IEEEP370(Deembedding):
         return out, eb1, eb2
 
     @staticmethod
+    def createPassive(ntwk: Network) -> Network:
+        """
+        Creat passivity enforced network.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Input network
+
+        Returns
+        -------
+        reciprocal : :class:`~skrf.network.Network` object
+                     Passivity enforced network
+        """
+        passive = ntwk.copy()
+        for i in range(ntwk.frequency.npoints):
+            U, D, Vh = np.linalg.svd(ntwk.s[i, :, :])
+            for k in range(ntwk.nports):
+                if D[k] > 1.:
+                    D[k] = 1.
+            passive.s[i, :, :] = U @ np.diag(D) @ Vh
+
+        return passive
+
+    @staticmethod
+    def createReciprocal(ntwk: Network) -> Network:
+        """
+        Creat reciprocal network.
+
+        The resulting network is the reciprocal of the input networks. The
+        reciprocity is not enforced.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Input network
+
+        Returns
+        -------
+        reciprocal : :class:`~skrf.network.Network` object
+                     Reciprocal network
+        """
+        reciprocal = ntwk.copy()
+        for i in range(ntwk.nports):
+            for j in range(ntwk.nports):
+                reciprocal.s[:, i, j] = ntwk.s[:, j, i]
+
+        return reciprocal
+
+    @staticmethod
+    def extrapolate(ntwk: Network, data_rate: float, sample_per_UI: int,
+                    extrapolation: int)-> ndarray:
+        """
+        Extrapolate network max frequency if required by parameters.
+
+        Parameters
+        ----------
+        ntwk         : :class:`~skrf.network.Network` object
+                       Input network
+        data_rate    : :float
+                       Data rate (bps)
+        sample_per_UI: :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+        extrapolation: :number
+                       1 is constant extrapolation; 2 is zero padding
+
+        Returns
+        -------
+        extrapolated : :class:`~skrf.network.Network` object
+                       Extrapolated network
+        """
+        f_max = 0.5 * data_rate * sample_per_UI
+        df = ntwk.frequency.f[1] - ntwk.frequency.f[0]
+        f_new = ntwk.frequency.f
+        while(f_new[-1] < f_max):
+            f_new = np.append(f_new, f_new[-1] + df)
+        N1 = ntwk.frequency.npoints
+        N = len(f_new)
+        s_new = zeros((N, ntwk.nports, ntwk.nports), dtype = complex)
+        for i in range(ntwk.nports):
+            for j in range(ntwk.nports):
+                s_new[:N1, i, j] = ntwk.s[:, i, j]
+                ph = np.unwrap(np.angle(s_new[:N1, i, j]))
+                dph = (ph[-1] - ph[0]) / (N1 - 1)
+                for k in range(N1, N):
+                    if extrapolation == 1:
+                        s_new[k, i, j] = s_new[k - 1, i, j] * np.exp(1j * dph)
+                    else:
+                        s_new[k, i, j] = 0
+
+        return Network(frequency = f_new, s = s_new, name = ntwk.name,
+                       z0 = ntwk.z0[0])
+
+
+    @staticmethod
     def getGaussianPulse(dt: float, data_rate: float, N: int,
                          rise_time_per: float, verbose = False)-> ndarray:
         """
@@ -1506,7 +1603,7 @@ class IEEEP370(Deembedding):
         rise_time_per: :float
                        Rise time divided by high time ratio
         verbose      : :boolean
-                       Plot referrence and interpolated pulses in the time
+                       Plot referrence and generated pulses in the time
                        domain
 
         Returns
@@ -1585,6 +1682,67 @@ class IEEEP370(Deembedding):
             ax.set_title('Rectangular Pulse')
 
         return fft(v_pulse)
+
+    @staticmethod
+    def check_td_se_quality(ntwk: Network, data_rate: float,
+                            sample_per_UI: int, rise_time_per: float,
+                            pulse_shape: int, extrapolation: int,
+                            verbose = False) -> dict:
+        """
+        Application-based quality checking of in the time domain.
+
+        The data are interpolated to fit the application parameters.
+
+        Parameters
+        ----------
+        ntwk         : :class:`~skrf.network.Network` object
+                       Network to be checked
+        data_rate    : :float
+                       Data rate (bps)
+        sample_per_UI: :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+        pulse_shape  : :number
+                       1 is Gaussian; 2 is rectangular with Butterworth filter;
+                       3 is rectangular with Gaussian filter
+        extrapolation: :number
+                       1 is constant extrapolation; 2 is zero padding;
+                       3 is repeating
+        verbose      : :boolean
+                       Plot referrence and interpolated pulses in the time
+                       domain
+
+        Returns
+        -------
+        QM : :class:`dict` object
+              Dictionnary with quality metrics
+        """
+        if (1.5 * data_rate) > ntwk.frequency.f[-1]:
+            warnings.warn('Maximum frequency is less then recomended frequency.',
+                          RuntimeWarning, stacklevel=2)
+
+        # extrapolate max freq
+        ntwk_interpolated = IEEEP370.extrapolate(ntwk, data_rate, sample_per_UI,
+                                                 extrapolation)
+
+        # extrapolate dc and interpolate with uniform step
+
+        if verbose:
+            fig, ax = subplots(1, 1)
+            ntwk.plot_s_db(1, 0, color = 'r', ax = ax)
+            ntwk_interpolated.plot_s_db(1, 0, color = 'b', linestyle = 'dashed', ax = ax)
+            secax = ax.twinx()
+            ntwk.plot_s_deg(1, 0, color = 'm', ax = secax)
+            ntwk_interpolated.plot_s_deg(1, 0, color = 'c', linestyle = 'dashed', ax = secax)
+
+
+        QM = {'passivity': {'value': 0, 'unit': 'mV'},
+              'reciprocity': {'value': 0, 'unit': 'mV'},
+              'causality': {'value': 0, 'unit': 'mV'},
+              }
+
+        return QM
 
     @staticmethod
     def check_fd_passivity(ntwk: Network) -> float:
@@ -1770,56 +1928,6 @@ class IEEEP370(Deembedding):
               'cc': IEEEP370.check_fd_se_quality(mm.subnetwork([2, 3]))}
 
         return QM
-
-    @staticmethod
-    def createPassive(ntwk: Network) -> Network:
-        """
-        Creat passivity enforced network.
-
-        Parameters
-        ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Input network
-
-        Returns
-        -------
-        reciprocal : :class:`~skrf.network.Network` object
-                     Passivity enforced network
-        """
-        passive = ntwk.copy()
-        for i in range(ntwk.frequency.npoints):
-            U, D, Vh = np.linalg.svd(ntwk.s[i, :, :])
-            for k in range(ntwk.nports):
-                if D[k] > 1.:
-                    D[k] = 1.
-            passive.s[i, :, :] = U @ np.diag(D) @ Vh
-
-        return passive
-
-    @staticmethod
-    def createReciprocal(ntwk: Network) -> Network:
-        """
-        Creat reciprocal network.
-
-        The resulting network is the reciprocal of the input networks. The
-        reciprocity is not enforced.
-
-        Parameters
-        ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Input network
-
-        Returns
-        -------
-        reciprocal : :class:`~skrf.network.Network` object
-                     Reciprocal network
-        """
-        reciprocal = ntwk.copy()
-        for i in range(ntwk.nports):
-            for j in range(ntwk.nports):
-                reciprocal.s[:, i, j] = ntwk.s[:, j, i]
-
-        return reciprocal
 
     @staticmethod
     def plot_constant_limit(frequency: Frequency, value: float, ax: Axes, **kwargs) -> None:
