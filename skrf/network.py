@@ -350,7 +350,7 @@ class Network:
         Parameters
         ----------
 
-        file : str or file-object
+        file : str, Path, or file-object
             file to load information from. supported formats are:
              * touchstone file (.s?p) (or .ts)
              * io.StringIO object (with `.name` property which contains the file extension, such as `myfile.s4p`)
@@ -426,8 +426,6 @@ class Network:
             self.s_def = s_def
 
         if file is not None:
-            if isinstance(file, Path):
-                file = str(file.resolve())
 
             # allows user to pass StringIO, filename or file obj
             if isinstance(file, io.StringIO):
@@ -994,6 +992,8 @@ class Network:
         s : :class:`numpy.ndarray`
             The input s-matrix should be of shape `fxnxn`,
             where f is frequency axis and n is number of ports.
+            Note that to set this requires that the values are
+            given in complex format. DB and MA aren't automatically translated
 
         """
         self._s = fix_param_shape(s)
@@ -2187,7 +2187,7 @@ class Network:
 
 
     # touchstone file IO
-    def read_touchstone(self, filename: str | TextIO,
+    def read_touchstone(self, filename: str | Path | TextIO,
                         encoding: str | None = None) -> None:
         """
         Load values from a touchstone file.
@@ -2197,7 +2197,7 @@ class Network:
 
         Parameters
         ----------
-        filename : str or file-object
+        filename : str, Path, or file-object
             touchstone file name.
         encoding : str, optional
             define the file encoding to use. Default value is None,
@@ -2260,7 +2260,7 @@ class Network:
                 self.name = os.path.basename(os.path.splitext(touchstoneFile.filename)[0])
 
     @classmethod
-    def zipped_touchstone(cls, filename: str, archive: zipfile.ZipFile) -> Network:
+    def zipped_touchstone(cls, filename: str | Path, archive: zipfile.ZipFile) -> Network:
         """
         Read a Network from a Touchstone file in a ziparchive.
 
@@ -2277,6 +2277,10 @@ class Network:
             Network from the Touchstone file
 
         """
+
+        # Convert a path filename to a string
+        filename = str(filename.resolve()) if isinstance(filename, Path) else filename
+
         # Touchstone requires file objects to be seekable (for get_gamma_z0_from_fid)
         # A ZipExtFile object is not seekable prior to Python 3.7, so use StringIO
         # and manually add a name attribute
@@ -2285,7 +2289,7 @@ class Network:
         ntwk = Network(fileobj)
         return ntwk
 
-    def write_touchstone(self, filename: str = None, dir: str = None,
+    def write_touchstone(self, filename: str | Path = None, dir: str | Path = None,
                          write_z0: bool = False, skrf_comment: bool = True,
                          return_string: bool = False, to_archive: bool = None,
                          form: str = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
@@ -2295,10 +2299,10 @@ class Network:
 
         Parameters
         ----------
-        filename : a string, optional
+        filename : a string or Path, optional
             touchstone filename, without extension. if 'None', then
             will use the network's :attr:`name`.
-        dir : string, optional
+        dir : string or Path, optional
             the directory to save the file in.
         write_z0 : boolean
             write impedance information into touchstone as comments,
@@ -2380,6 +2384,9 @@ class Network:
                 raise ValueError('No filename given. Network must have a name, or you must provide a filename')
 
         if get_extn(filename) is None:
+            if isinstance(filename, Path):
+                filename = str(filename.resolve())
+
             filename = filename + '.s%ip' % ntwk.number_of_ports
 
         if dir is not None:
@@ -2579,7 +2586,7 @@ class Network:
             elif return_string is True:
                 return output.getvalue()
 
-    def write(self, file: str = None, *args, **kwargs) -> None:
+    def write(self, file: str | Path = None, *args, **kwargs) -> None:
         r"""
         Write the Network to disk using the :mod:`pickle` module.
 
@@ -2590,7 +2597,7 @@ class Network:
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             filename or a file-object. If left as None then the
             filename will be set to Network.name, if its not None.
             If both are None, ValueError is raised.

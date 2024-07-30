@@ -16,6 +16,7 @@ Mdif class and utilities
 from __future__ import annotations
 
 from itertools import product
+from pathlib import Path
 from typing import TextIO
 
 import numpy as np
@@ -69,13 +70,13 @@ class Mdif:
 
     """
 
-    def __init__(self, file: str | TextIO):
+    def __init__(self, file: str | Path | TextIO):
         """
         Constructor
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             mdif file to load
         """
         with get_fid(file) as fid:
