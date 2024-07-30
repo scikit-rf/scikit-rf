@@ -1489,6 +1489,104 @@ class IEEEP370(Deembedding):
         return out, eb1, eb2
 
     @staticmethod
+    def getGaussianPulse(dt: float, data_rate: float, N: int,
+                         rise_time_per: float, verbose = False)-> ndarray:
+        """
+        Get the FFT of a gaussian pulse. The pulse is shifted in time according
+        to parameters.
+
+        Parameters
+        ----------
+        dt           : :float
+                       Sample time (s)
+        data_rate    : :float
+                       Data rate (bps)
+        N            : :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+        verbose      : :boolean
+                       Plot referrence and interpolated pulses in the time
+                       domain
+
+        Returns
+        -------
+        fft : :ndarray
+              FFT of the pulse signal
+        """
+        n_samples = (N - 1) // 2
+        t = np.arange(-n_samples, n_samples + 1) * dt
+        sigma = rise_time_per / (data_rate * \
+                                 (np.sqrt(-np.log(0.2))-np.sqrt(-np.log(0.8))))
+        G = zeros(t.shape)
+        for i in range(len(t)):
+            G[i] = np.exp(-t[i]**2 / sigma**2)
+        k_middle = n_samples
+        k_start  = np.round(1.5 / data_rate / dt)
+        GG = zeros(t.shape)
+        for i in range(len(t)):
+            GG[i] = G[np.mod(i + k_middle - k_start, len(t)).astype(int)]
+        if verbose:
+            fig, ax = subplots(1, 1)
+            ax.plot(t, G, color = 'r', label = 'Reference')
+            ax.plot(t, GG, linestyle = 'dashed', label = 'Generated')
+            ax.legend(loc = 'upper right')
+            ax.set_ylabel('Amplitude (V)')
+            ax.set_xlabel('Time (s)')
+            ax.set_title('Gaussian Pulse')
+
+        return fft(GG)
+
+    @staticmethod
+    def getPulse(dt: float, data_rate: float, N: int, rise_time_per: float,
+                 verbose = False)-> ndarray:
+        """
+        Get the FFT of a rectangular pulse with defined rise, high, and fall
+        times.
+
+        Rise time and fall time are equals.
+
+        Parameters
+        ----------
+        dt           : :float
+                       Sample time (s)
+        data_rate    : :float
+                       Data rate (bps)
+        N            : :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+        verbose      : :boolean
+                       Plot referrence and interpolated pulses in the time
+                       domain
+
+        Returns
+        -------
+        fft : :ndarray
+              FFT of the pulse signal
+        """
+        t_pulse = np.arange(0, N) * dt
+        k_high = np.round(1. / data_rate / dt)
+        k_rise = np.round(k_high * rise_time_per)
+        k_offset = np.array([0, k_rise, k_rise, k_rise, k_rise, 0])
+        k_ref = np.array([0, 0, k_rise, k_high, k_high + k_rise, N - 1])
+        t_ref = dt * (k_offset + k_ref)
+        v_ref = np.array([0, 0, 1, 1, 0, 0])
+
+        interp = interp1d(t_ref, v_ref)
+        v_pulse = interp(t_pulse)
+        if verbose:
+            fig, ax = subplots(1, 1)
+            ax.plot(t_ref, v_ref, color = 'r', marker = 'o', label = 'Reference')
+            ax.plot(t_pulse, v_pulse, linestyle = 'dashed', label = 'Interpolated')
+            ax.legend(loc = 'upper right')
+            ax.set_ylabel('Amplitude (V)')
+            ax.set_xlabel('Time (s)')
+            ax.set_title('Rectangular Pulse')
+
+        return fft(v_pulse)
+
+    @staticmethod
     def check_fd_passivity(ntwk: Network) -> float:
          """
          Initial passivity checking of raw data at the given frequency samples.
@@ -1673,6 +1771,7 @@ class IEEEP370(Deembedding):
 
         return QM
 
+    @staticmethod
     def createPassive(ntwk: Network) -> Network:
         """
         Creat passivity enforced network.
