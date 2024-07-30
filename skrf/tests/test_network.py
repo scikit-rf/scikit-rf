@@ -814,7 +814,7 @@ class NetworkTestCase(unittest.TestCase):
         ntwk.port_names = from_ports_name
         ntwk_renum = ntwk.renumbered(from_ports_num, to_ports_num)
 
-        np.array_equal(to_ports_name, ntwk_renum.port_names)
+        assert to_ports_name == ntwk_renum.port_names
 
     def test_de_embed_by_inv(self):
         self.assertEqual(self.ntwk1.inv ** self.ntwk3, self.ntwk2)

@@ -3405,8 +3405,9 @@ class Network:
             self.s[:, :, to_ports] = self.s[:, :, from_ports]  # renumber columns
         self.z0[:, to_ports] = self.z0[:, from_ports]
         if self.port_names is not None:
-            self.port_names = np.array(self.port_names)
-            self.port_names[to_ports] = self.port_names[from_ports]
+            _port_names = np.array(self.port_names)
+            _port_names[to_ports] = _port_names[from_ports]
+            self.port_names = _port_names.tolist()
 
     def renumbered(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> Network:
         """
