@@ -1194,7 +1194,7 @@ class NetworkSet:
             return None
 
 
-    def sel(self, indexers: Mapping[Any, Any] = None) -> Network | NetworkSet:
+    def sel(self, indexers: Mapping[Any, Any] = None) -> NetworkSet:
         """
         Select Network(s) in the NetworkSet from a given value of a parameter.
 
@@ -1207,10 +1207,9 @@ class NetworkSet:
 
         Returns
         -------
-        ns : Network or NetworkSet
-            Network if only one network is selected, otherwise,
-            a NetworkSet containing the selected Networks or
-            an empty NetworkSet if no match is found
+        ns : NetworkSet
+             NetworkSet containing the selected Networks or
+             an empty NetworkSet if no match is found
 
         Example
         -------
