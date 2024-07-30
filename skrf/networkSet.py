@@ -1271,7 +1271,7 @@ class NetworkSet:
                 ntwk_list.append(k)
 
         if ntwk_list:
-            return ntwk_list[0] if len(ntwk_list) == 1 else NetworkSet(ntwk_list)
+            return NetworkSet(ntwk_list)
         else:  # no match found
             return NetworkSet()
 
