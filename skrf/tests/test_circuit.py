@@ -178,7 +178,7 @@ class CircuitClassMethods(unittest.TestCase):
                     self.media.shunt(self.media.load(rf.zl_2_Gamma0(z0, 1/Y))).s
                     )
 
-        # Y=INF is a a 2-ports short, aka a ground
+        # Y=INF is a a 2-ports short
         assert_array_almost_equal(
             rf.Circuit.ShuntAdmittance(self.freq, rf.INF, 'imp').s,
             self.media.short(nports=2).s
