@@ -1209,8 +1209,8 @@ class NetworkSet:
         Returns
         -------
         ns : NetworkSet
-            NetworkSet containing the selected Networks or
-            empty NetworkSet if no match found
+             NetworkSet containing the selected Networks or
+             an empty NetworkSet if no match is found
 
         Example
         -------

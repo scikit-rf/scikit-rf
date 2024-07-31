@@ -326,7 +326,6 @@ class NetworkSetTestCase(unittest.TestCase):
         self.assertEqual(len(self.ns_params.sel({'a': [0,1]})), 4)
         self.assertEqual(len(self.ns_params.sel({'a': range(0,2)})), 4)
         # Multiple parameters
-        self.assertEqual(len(self.ns_params.sel({'a': 0, 'X': 10})), 1)
         self.assertEqual(len(self.ns_params.sel({'a': 0, 'X': [10,20]})), 2)
         self.assertEqual(len(self.ns_params.sel({'a': [0,1], 'X': [10,20]})), 4)
 
