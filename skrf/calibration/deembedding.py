@@ -2378,6 +2378,70 @@ class IEEEP370_TD_QM:
 
         return fft(v_pulse)
 
+    def get_time_domain(self, ntwk: Network, data_rate: float,
+                        rise_time_per: float,
+                        pulse_shape: int) -> (ndarray, ndarray):
+        """
+        Get the impulse responses of the S-parameters.
+
+        The pulse is defines as per application parameters.
+
+        Parameters
+        ----------
+        ntwk         : :class:`~skrf.network.Network` object
+                       Input network
+        data_rate    : :float
+                       Data rate (bps)
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+        pulse_shape  : :number
+                       1 is Gaussian; 2 is rectangular with Butterworth filter;
+                       3 is rectangular with Gaussian filter
+
+        Returns
+        -------
+        v : :ndarray
+            impulse response amplitude vector
+        t : :ndarray
+            impulse response time vector
+        """
+        N = ntwk.frequency.npoints
+        freq = ntwk.frequency.f
+        df = freq[1] - freq[0]
+        dt = 1 / (2 * freq[-1] + df)
+        nports = ntwk.nports
+        t = dt * np.arange(0, 2 * N - 1)
+        v = zeros((2 * N - 1, nports, nports))
+        # Gaussian filter
+        f_cut = 3. * data_rate / 2.
+        sigma = 1. / 2. / np.pi / f_cut
+        rise_time = 1. / data_rate * 1000 * rise_time_per;
+        f0 = 320 / rise_time
+        if pulse_shape == 1:
+            filter = np.ones(N, dtype = complex)
+            pulse = self.get_pulse_gaussian(dt, data_rate, 2 * N - 1,
+                                            rise_time_per, verbose = self.verbose)
+        elif pulse_shape == 2:
+            filter = 1. / (1 + 1j * freq / f0)
+            pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1,
+                                        1.4 * rise_time_per, verbose = self.verbose)
+        else:
+            filter = np.exp(-2 * np.pi * np.pi * freq * freq * sigma * sigma)
+            pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1,
+                                        1.4 * rise_time_per, verbose = self.verbose)
+        for i in range(nports):
+            for j in range(nports):
+                s_ij = ntwk.s[:, i, j] * filter
+                s_ij[0] = np.real(s_ij[0])
+                s_ij_conj = zeros(2 * N - 1, dtype = complex)
+                s_ij_conj[:N] = s_ij
+                for k in range(N - 1):
+                    s_ij_conj[i + N] = np.conj(s_ij_conj[N-i-1])
+                pulse_response_freq = pulse * s_ij_conj
+                v[:, i, j] = np.real(np.fft.ifft(pulse_response_freq))
+
+        return (v, t)
+
     def interpolate_ij(self, f: ndarray, f_new: ndarray, s_ij: ndarray):
         """
         Interpolate single S-component.
@@ -2435,6 +2499,38 @@ class IEEEP370_TD_QM:
                                          label = 'Extrapolated, S21')
             ax.legend(loc = 'lower left')
             secax.legend(loc = 'lower right')
+            fig.tight_layout()
+
+        # get Causal Matrix
+        # get Passive Matrix
+        # get Reciprocal Matrix
+
+        # get Time Domain Matrices
+        v_origin, t_origin = self.get_time_domain(ntwk_interpolated,
+                                                  self.data_rate,
+                                                  self.rise_time_per,
+                                                  self.pulse_shape)
+
+        # get Time Domain Difference
+
+        # plot
+        if self.verbose:
+            fig, axs = subplots(2, 2, figsize = (8, 8))
+            ax = axs[0, 0]
+            ax.set_title('TDT11')
+            ax.plot(t_origin * 1e9, v_origin[:, 0, 0])
+            ax = axs[0, 1]
+            ax.set_title('TDT21')
+            ax.plot(t_origin * 1e9, v_origin[:, 1, 0])
+            ax = axs[1, 0]
+            ax.set_title('TDT12')
+            ax.plot(t_origin * 1e9, v_origin[:, 0, 1])
+            ax = axs[1, 1]
+            ax.set_title('TDT22')
+            ax.plot(t_origin * 1e9, v_origin[:, 1, 1])
+            for ax in axs.reshape(-1):
+                ax.set_xlabel('Time (ns)')
+                ax.set_ylabel('Magnitude (V)')
             fig.tight_layout()
 
         QM = {'passivity': {'value': np.array([[0, 0], [0, 0]]), 'unit': 'mV',
