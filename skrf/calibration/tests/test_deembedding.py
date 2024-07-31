@@ -513,7 +513,8 @@ class DeembeddingTestCase(unittest.TestCase):
         m = rf.media.DefinedGammaZ0(frequency = f, z0_port = 50, gamma = 1j * beta)
         thru  = m.line(0.060, 'm', z0 = 52.5)
         # perfect data
-        qm = rf.IEEEP370.check_fd_se_quality(thru)
+        fd_qm = rf.IEEEP370_FD_QM()
+        qm = fd_qm.check_se_quality(thru)
         self.assertTrue(qm['passivity']['value'] > 99.9 and
                         qm['reciprocity']['value'] > 99.9 and
                         qm['causality']['value'] > 99.9,
@@ -522,13 +523,13 @@ class DeembeddingTestCase(unittest.TestCase):
         thru_non_passive = thru.copy()
         thru_non_passive.s[2, 1, 0] = 1.3 * thru_non_passive.s[2, 1, 0]
         thru_non_passive.s[2, 0, 1] = 1.3 * thru_non_passive.s[2, 0, 1]
-        qm = rf.IEEEP370.check_fd_se_quality(thru_non_passive)
+        qm = fd_qm.check_se_quality(thru_non_passive)
         self.assertTrue(qm['passivity']['value'] < 50.,
                         'FD quality passivity violation')
         # reciprocity violation
         thru_non_reciprocal = thru.copy()
         thru_non_reciprocal.s[:, 1, 0] = 0.7 * thru_non_reciprocal.s[:, 0, 1]
-        qm = rf.IEEEP370.check_fd_se_quality(thru_non_reciprocal)
+        qm = fd_qm.check_se_quality(thru_non_reciprocal)
         self.assertTrue(qm['reciprocity']['value'] < 50.,
                         'FD quality reciprocity violation')
         # causality violation
@@ -538,7 +539,7 @@ class DeembeddingTestCase(unittest.TestCase):
         thru  = m.line(0.060, 'm', z0 = 52.5)
         half  = m.line(0.030, 'm', z0 = 50)
         thru_non_causal = half.inv ** thru
-        qm = rf.IEEEP370.check_fd_se_quality(thru_non_causal)
+        qm = fd_qm.check_se_quality(thru_non_causal)
         self.assertTrue(qm['causality']['value'] < 50.,
                         'FD quality causality violation')
 
