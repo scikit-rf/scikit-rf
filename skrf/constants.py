@@ -49,8 +49,9 @@ This module contains constants, numerical approximations, and unit conversions
 
 """
 from __future__ import annotations
+
 from numbers import Number
-from typing import Sequence, Union, Literal, get_args
+from typing import Literal, Sequence, Union, get_args
 
 import numpy as np
 from scipy.constants import c, inch, mil

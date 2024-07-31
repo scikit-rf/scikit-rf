@@ -175,7 +175,18 @@ from scipy.interpolate import interp1d  # for Network.interpolate()
 
 from . import mathFunctions as mf
 from . import plotting as rfplt
-from .constants import K_BOLTZMANN, S_DEF_DEFAULT, S_DEFINITIONS, T0, ZERO, NumberLike, FrequencyUnitT, SdefT, CoordT, InterpolKindT
+from .constants import (
+    K_BOLTZMANN,
+    S_DEF_DEFAULT,
+    S_DEFINITIONS,
+    T0,
+    ZERO,
+    CoordT,
+    FrequencyUnitT,
+    InterpolKindT,
+    NumberLike,
+    SdefT,
+)
 from .frequency import Frequency
 from .time import get_window, time_gate
 from .util import Axes, axes_kwarg, copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs

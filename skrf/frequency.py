@@ -37,7 +37,6 @@ Misc
 """
 
 from __future__ import annotations
-from typing import Literal
 
 import re
 import warnings
@@ -51,7 +50,7 @@ from numpy import (
     pi,
 )
 
-from .constants import FREQ_UNITS, ZERO, NumberLike, FrequencyUnitT, SweepTypeT
+from .constants import FREQ_UNITS, ZERO, FrequencyUnitT, NumberLike, SweepTypeT
 from .util import Axes, axes_kwarg, find_nearest_index, slice_domain
 
 
