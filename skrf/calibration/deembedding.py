@@ -1488,7 +1488,7 @@ class IEEEP370(Deembedding):
 
         return out, eb1, eb2
 
-class IEEEP370_FER():
+class IEEEP370_FER:
     """
     IEEE 370 checking for fixture electrical requirements (FER) in the
     frequency and in the time domains.
@@ -1801,7 +1801,7 @@ class IEEEP370_FER():
         fig.tight_layout()
         return fig
 
-class IEEEP370_FD_QM():
+class IEEEP370_FD_QM:
     """
     IEEE 370 initial quality checking of raw data at the given frequency
     samples.
