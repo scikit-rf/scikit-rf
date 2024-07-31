@@ -49,7 +49,7 @@ This module contains constants, numerical approximations, and unit conversions
 
 """
 from numbers import Number
-from typing import Sequence, Union
+from typing import Sequence, Union, Literal
 
 import numpy as np
 from scipy.constants import c, inch, mil
@@ -107,7 +107,10 @@ S_DEFINITIONS = ['power', 'pseudo', 'traveling']
 S_DEF_DEFAULT = 'power'
 S_DEF_HFSS_DEFAULT = 'traveling'
 
+FrequencyUnitT = Literal["Hz", "kHz", "MHz", "GHz", "THz"]
 FREQ_UNITS = {"Hz": 1.0, "kHz": 1e3, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}
+
+SweepTypeT = Literal["lin", "log"]
 
 NumberLike = Union[Number, Sequence[Number], np.ndarray]
 

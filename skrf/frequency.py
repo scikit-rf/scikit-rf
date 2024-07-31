@@ -37,6 +37,7 @@ Misc
 """
 
 from __future__ import annotations
+from typing import Literal
 
 import re
 import warnings
@@ -50,7 +51,7 @@ from numpy import (
     pi,
 )
 
-from .constants import FREQ_UNITS, ZERO, NumberLike
+from .constants import FREQ_UNITS, ZERO, NumberLike, FrequencyUnitT, SweepTypeT
 from .util import Axes, axes_kwarg, find_nearest_index, slice_domain
 
 
@@ -92,7 +93,7 @@ class Frequency:
 
 
     def __init__(self, start: float = 0, stop: float = 0, npoints: int = 0,
-        unit: str = None, sweep_type: str = 'lin') -> None:
+        unit: FrequencyUnitT | None = None, sweep_type: SweepTypeT = 'lin') -> None:
         """
         Frequency initializer.
 
@@ -109,10 +110,10 @@ class Frequency:
         npoints : int, optional
             number of points in the band. Default is 0.
         unit : string, optional
-            Frequency unit of the band: 'hz', 'khz', 'mhz', 'ghz', 'thz'.
+            Frequency unit of the band: 'Hz', 'kHz', 'MHz', 'GHz', 'THz'.
             This is used to create the attribute :attr:`f_scaled`.
             It is also used by the :class:`~skrf.network.Network` class
-            for plots vs. frequency. Default is 'hz'.
+            for plots vs. frequency. Default is 'Hz'.
         sweep_type : string, optional
             Type of the sweep: 'lin' or 'log'.
             'lin' for linear and 'log' for logarithmic. Default is 'lin'.
@@ -144,7 +145,7 @@ class Frequency:
                           Frequency unit not passed: uses 'Hz' per default.
                           ''',
                           DeprecationWarning, stacklevel=2)
-            unit = 'hz'
+            unit = 'Hz'
         self._unit = unit.lower()
 
         start =  self.multiplier * start
@@ -237,7 +238,7 @@ class Frequency:
 
 
     @classmethod
-    def from_f(cls, f: NumberLike, *args,**kwargs) -> Frequency:
+    def from_f(cls, f: NumberLike, unit: FrequencyUnitT | None = None) -> Frequency:
         """
         Construct Frequency object from a frequency vector.
 
@@ -264,11 +265,11 @@ class Frequency:
         Examples
         --------
         >>> f = np.linspace(75,100,101)
-        >>> rf.Frequency.from_f(f, unit='ghz')
+        >>> rf.Frequency.from_f(f, unit='GHz')
         """
         if np.isscalar(f):
             f = [f]
-        temp_freq =  cls(0,0,0,*args, **kwargs)
+        temp_freq =  cls(0,0,0,unit=unit)
         temp_freq._f = np.asarray(f) * temp_freq.multiplier
         temp_freq.check_monotonic_increasing()
 
@@ -543,7 +544,7 @@ class Frequency:
         return gradient(self.w)
 
     @property
-    def unit(self) -> str:
+    def unit(self) -> FrequencyUnitT:
         """
         Unit of this frequency band.
 
@@ -560,7 +561,7 @@ class Frequency:
         return self.unit_dict[self._unit]
 
     @unit.setter
-    def unit(self, unit: str) -> None:
+    def unit(self, unit: FrequencyUnitT) -> None:
         self._unit = unit.lower()
 
     @property
@@ -582,7 +583,7 @@ class Frequency:
         """
         Returns a new copy of this frequency.
         """
-        freq =  Frequency.from_f(self.f, unit='hz')
+        freq =  Frequency.from_f(self.f, unit='Hz')
         freq.unit = self.unit
         return freq
 
@@ -624,7 +625,7 @@ class Frequency:
         """
         return self.t*1e9
 
-    def round_to(self, val: str | Number = 'hz') -> None:
+    def round_to(self, val: FrequencyUnitT | Number = 'Hz') -> None:
         """
         Round off frequency values to a specified precision.
 
@@ -635,13 +636,13 @@ class Frequency:
         ----------
         val : string or number
             if val is a string it should be a frequency :attr:`unit`
-            (ie 'hz', 'mhz',etc). if its a number, then this returns
+            (ie 'Hz', 'MHz',etc). if its a number, then this returns
             f = f-f%val
 
         Examples
         --------
-        >>> f = skrf.Frequency.from_f([.1,1.2,3.5],unit='hz')
-        >>> f.round_to('hz')
+        >>> f = skrf.Frequency.from_f([.1,1.2,3.5],unit='Hz')
+        >>> f.round_to('Hz')
 
         """
         if isinstance(val, str):
@@ -768,6 +769,6 @@ def overlap_freq(f1: Frequency,f2: Frequency) -> Frequency:
     start = max(f1.start, f2.start)
     stop = min(f1.stop, f2.stop)
     f = f1.f[(f1.f>=start) & (f1.f<=stop)]
-    freq =  Frequency.from_f(f, unit = 'hz')
+    freq =  Frequency.from_f(f, unit = 'Hz')
     freq.unit = f1.unit
     return freq
