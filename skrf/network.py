@@ -2293,7 +2293,10 @@ class Network:
                          write_z0: bool = False, skrf_comment: bool = True,
                          return_string: bool = False, to_archive: bool = None,
                          form: str = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
-                         format_spec_freq : str = '{}', r_ref : float = None) -> str | None:
+                         format_spec_freq: str = '{}', r_ref: float = None,
+                         format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
+                         format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
+                         format_spec_rn: str = '{}') -> str | None:
         """
         Write a contents of the :class:`Network` to a touchstone file.
 
@@ -2337,6 +2340,26 @@ class Network:
             If None network port impedance is used if possible. If None and
             network port impedance is complex and not equal at all ports and
             frequency points raises ValueError.
+        format_spec_nf_freq : string, optional
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the noise data frequency.
+        format_spec_nf_min : string, optional
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the minimum NF.
+        format_spec_g_opt_mag : string, optional
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the GammaOpt magnitude.
+        format_spec_g_opt_phase : string, optional
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the GammaOpt phase.
+        format_spec_rn : string, optional
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the noise resistance.
 
         Note
         ----
@@ -2515,11 +2538,15 @@ class Network:
 
                 # write noise data if it exists
                 if ntwk.noisy:
+                    output.write("! Noise Data\n! freq\tnf_min_db\tmagGOpt\tdegGOpt\tRn_eff\n")
                     new = ntwk.copy()
                     new.resample(ntwk.f_noise) # only write data from original noise freqs
                     for f, nf, g_opt, rn, z0 in zip(new.f_noise.f_scaled, new.nfmin_db, new.g_opt, new.rn, new.z0):
-                        output.write(f"{f} {nf} {mf.complex_2_magnitude(g_opt)} "
-                                     f"{mf.complex_2_degree(g_opt)} {rn/z0[0].real}\n")
+                        output.write(format_spec_nf_freq.format(f) + ' ' \
+                             + format_spec_nf_min.format(nf) + ' ' \
+                             + format_spec_g_opt_mag.format(mf.complex_2_magnitude(g_opt)) + ' ' \
+                             + format_spec_g_opt_phase.format(mf.complex_2_degree(g_opt)) + ' ' \
+                             + format_spec_rn.format(rn/z0[0].real) + ' ' "\n")
 
             elif ntwk.number_of_ports == 3:
                 # 3-port is written over 3 lines / matrix order
