@@ -1784,74 +1784,336 @@ class IEEEP370(Deembedding):
 
         return QM
 
-    @staticmethod
-    def check_fd_passivity(ntwk: Network) -> float:
-         """
-         Initial passivity checking of raw data at the given frequency samples.
+class IEEEP370_FER:
+    """
+    IEEE 370 checking for fixture electrical requirements (FER) in the
+    frequency and in the time domains.
 
-         This informative check is performed in the frequency domain.
+    Based on [IEEE370]_.
 
-         Parameters
-         ----------
-         ntwk: :class:`~skrf.network.Network` object
-               Network to be checked
-
-         Returns
-         -------
-         PQM : :class:`~skrf.network.Network` object
-               Passivity quality metric in percents
-         """
-         if ntwk.nports == 1:
-             raise (ValueError('Doesn\'t exist for one-ports'))
-
-         Nf = ntwk.frequency.npoints
-         A  = 1.00001
-         B  = 0.1
-         PW = zeros(Nf)
-         for i in range(Nf):
-             PM = norm(ntwk.s[i, :, :], 2)
-             if PM > A:
-                 PW[i] = (PM - A) / B
-
-         return np.max((Nf - np.sum(PW)), 0) / Nf * 100.
-
-    @staticmethod
-    def check_fd_reciprocity(ntwk: Network) -> float:
+    References
+    ----------
+    .. [IEEE370] IEEE Standard for Electrical Characterization of Printed
+    Circuit Board and Related Interconnects at Frequencies up to 50 GHz",
+    IEEE 370-2020.
+    """
+    def plot_constant_limit(self, frequency: Frequency, value: float, ax: Axes,
+                            **kwargs) -> None:
         """
-        Initial reciprocity checking of raw data at the given frequency samples.
-
-        This informative check is performed in the frequency domain.
-
-        Parameters
-        ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Network to be checked
-
-        Returns
-        -------
-        PQM : :class:`~skrf.network.Network` object
-              Reciprocity quality metric in percents
+        Plot a constant limit line.
         """
-        if ntwk.nports == 1:
-            raise (ValueError('Doesn\'t exist for one-ports'))
+        ax.plot([frequency.f[0], frequency.f[-1]], [value, value], **kwargs)
 
-        Nf = ntwk.frequency.npoints
-        B = 0.1
-        C = 1e-6
-        RW = zeros(Nf)
-        for i in range(Nf):
-            RM = 0
-            for k in range(ntwk.nports):
-                for m in range(ntwk.nports):
-                    RM = RM + np.abs(ntwk.s[i, m, k] - ntwk.s[i, k, m])
-            RM = RM / (ntwk.nports * (ntwk.nports - 1))
-            if RM > C:
-                RW[i] = (RM - C) / B
+    def plot_relative_limit(self, x: ndarray, y: ndarray, value: float, ax: Axes,
+                            **kwargs) -> None:
+        """
+        Plot positive and negative relative limit line around a reference trace.
+        """
+        ax.plot(x, y * (1.0 + value), **kwargs)
+        kwargs.pop('label', None)
+        ax.plot(x, y * (1.0 - value), label = '_nolabel_', **kwargs)
 
-            return np.max((Nf - np.sum(RW)), 0) / Nf * 100.
+    def plot_limit_fer1(self, frequency: Frequency, ax: Axes) -> None:
+        """
+        Plot fer 1 limit lines.
+        """
+        self.plot_constant_limit(frequency, -10, ax, color = 'g',
+                            linestyle = 'dashed', label = 'Minimum A')
+        self.plot_constant_limit(frequency, -15, ax, color = 'r',
+                            linestyle = 'dashed', label = 'Minimum B, C')
 
-    @staticmethod
-    def check_fd_causality(ntwk: Network) -> float:
+    def plot_limit_fer2(self, frequency: Frequency, ax: Axes) -> None:
+        """
+        Plot fer 2 limit lines.
+        """
+        self.plot_constant_limit(frequency, -20, ax, color = 'g',
+                            linestyle = 'dashed', label = 'Maximum A')
+        self.plot_constant_limit(frequency, -10, ax, color = 'b',
+                            linestyle = 'dashed', label = 'Maximum B')
+        self.plot_constant_limit(frequency, -6, ax, color = 'r',
+                            linestyle = 'dashed', label = 'Maximum C')
+
+    def plot_limit_fer3(self, frequency: Frequency, ax: Axes) -> None:
+        """
+        Plot fer 3 limit lines.
+        """
+        self.plot_constant_limit(frequency, 5, ax, color = 'g',
+                            linestyle = 'dashed', label = 'Minimum A')
+        self.plot_constant_limit(frequency, 0, ax, color = 'r',
+                            linestyle = 'dashed', label = 'Minimum B, C')
+
+    def plot_limit_fer5(self, x: ndarray, y: ndarray, ax: Axes) -> None:
+        """
+        Plot fer 5 limit lines.
+        """
+        self.plot_relative_limit(x, y, 0.025, ax, linestyle = 'dashed', color = 'g',
+                                     label = 'Limit A ±2.5%')
+        self.plot_relative_limit(x, y, 0.05, ax, linestyle = 'dashed', color = 'b',
+                                     label = 'Limit B ±5%')
+        self.plot_relative_limit(x, y, 0.1, ax, linestyle = 'dashed', color = 'r',
+                                     label = 'Limit C ±10%')
+
+    def plot_limit_fer6(self, frequency: Frequency, ax: Axes) -> None:
+        """
+        Plot fer 6 limit lines.
+        """
+        self.plot_constant_limit(frequency, -15, ax, color = 'r',
+                            linestyle = 'dashed', label = 'Maximum A, B, C')
+
+
+
+    def plot_fd_se_fer(self, s2xthru: Network, fig: Figure = None) -> Figure:
+        """
+        Plot fixture electrical requirements (FER) for s values
+        """
+        if fig is None:
+            fig = figure(figsize=(8, 8))
+
+        fig.suptitle('Fixture electrical requirements (FER)')
+
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER1 2x-Thru IL')
+        s2xthru.plot_s_db(1, 0, ax = ax, color = '0.5')
+        s2xthru.plot_s_db(0, 1, ax = ax, color = 'k')
+        self.plot_limit_fer1(s2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
+
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER2 2x-Thru RL')
+        s2xthru.plot_s_db(0, 0, ax = ax, color = '0.5')
+        s2xthru.plot_s_db(1, 1, ax = ax, color = 'k')
+        self.plot_limit_fer2(s2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
+
+        ax = fig.add_subplot(2, 1, 2)
+        ax.set_title('FER3 2x-Thru IL - RL')
+        s1 = s2xthru.s_db[:, 1, 0] - s2xthru.s_db[:, 0, 0]
+        s2 = s2xthru.s_db[:, 0, 1] - s2xthru.s_db[:, 1, 1]
+        ax.plot(s2xthru.frequency.f, s1, color = '0.5', label = 'S21 - S11')
+        ax.plot(s2xthru.frequency.f, s2, color = 'k', label = 'S21 - S22')
+        self.plot_limit_fer3(s2xthru.frequency, ax)
+        ax.set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
+        ax.set_ylabel('Magnitude (dB)')
+        ax.legend(loc = 'upper right')
+
+        fig.tight_layout()
+        return fig
+
+    def plot_fd_mm_fer(self, s2xthru: Network, fig: Figure = None) -> Figure:
+        """
+        Plot fixture electrical requirements (FER) for s values
+        """
+        if fig is None:
+            fig = figure(figsize=(8, 8))
+
+        fig.suptitle('Fixture electrical requirements (FER)')
+
+        mm_2xthru = s2xthru.copy()
+        mm_2xthru.se2gmm(p=2)
+
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER1 2x-Thru IL')
+        mm_2xthru.plot_s_db(1, 0, ax = ax, color = '0.5')
+        mm_2xthru.plot_s_db(0, 1, ax = ax, color = 'k')
+        self.plot_limit_fer1(mm_2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
+
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER2 2x-Thru RL')
+        mm_2xthru.plot_s_db(0, 0, ax = ax, color = '0.5')
+        mm_2xthru.plot_s_db(1, 1, ax = ax, color = 'k')
+        self.plot_limit_fer2(mm_2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
+
+        ax = fig.add_subplot(2, 2, 3)
+        ax.set_title('FER3 2x-Thru IL - RL')
+        s1 = mm_2xthru.s_db[:, 1, 0] - mm_2xthru.s_db[:, 0, 0]
+        s2 = mm_2xthru.s_db[:, 0, 1] - mm_2xthru.s_db[:, 1, 1]
+        ax.plot(mm_2xthru.frequency.f, s1, color = '0.5', label = 'S21 - S11')
+        ax.plot(mm_2xthru.frequency.f, s2, color = 'k', label = 'S21 - S22')
+        self.plot_limit_fer3(mm_2xthru.frequency, ax)
+        ax.set_xlabel(f'Frequency ({mm_2xthru.frequency.unit})')
+        ax.set_ylabel('Magnitude (dB)')
+        ax.legend(loc = 'upper right')
+
+        ax = fig.add_subplot(2, 2, 4)
+        ax.set_title('FER6 Differential to common CDL - IL')
+        s1 = mm_2xthru.s_db[:, 2, 0] - mm_2xthru.s_db[:, 1, 0]
+        s2 = mm_2xthru.s_db[:, 3, 1] - mm_2xthru.s_db[:, 0, 1]
+        ax.plot(mm_2xthru.frequency.f, s1, color = '0.5', label = 'SCD21 - S21')
+        ax.plot(mm_2xthru.frequency.f, s2, color = 'k', label = 'SCD42 - S12')
+        self.plot_limit_fer6(mm_2xthru.frequency, ax)
+        ax.legend(loc = 'upper right')
+
+        fig.tight_layout()
+        return fig
+
+    def plot_td_se_fer(self, s2xthru: Network, sfix_dut_fix: Network,
+                            fig: Figure = None) -> Figure:
+        """
+        Plot fixture electrical requirements (FER) for z values
+        """
+        if fig is None:
+            fig = figure(figsize=(8, 8))
+
+        fig.suptitle('Fixture electrical requirements (FER)')
+        f = s2xthru.frequency.f
+        s2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
+        sfix_dut_fix_dc = IEEEP370.extrapolate_to_dc(sfix_dut_fix)
+        n = s2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * s2xthru.frequency.step) # ns
+        s21 = s2xthru.s[:, 1, 0]
+        t21 = fftshift(irfft(s21, n = n))
+        x_k = np.argmax(t21) - n//2
+        x_t = x_k * dt
+
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER5 TDR Z variation side 1')
+        sfix_dut_fix_dc.plot_z_time_step(0, 0, color = 'k', ax = ax)
+        s2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        self.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
+
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER5 TDR Z variation side 2')
+        sfix_dut_fix_dc.plot_z_time_step(1, 1, color = 'k', ax = ax)
+        s2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        self.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
+
+        ax = fig.add_subplot(2, 1, 2)
+        ax.set_title('FER8 TDT minimum length')
+        s2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax)
+        s2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
+        y = ax.lines[-1].get_ydata()
+        y_lim = [np.min(y), np.max(y)]
+        t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
+        ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
+        ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
+        ax.legend(loc = 'upper right')
+        ax.set_xlim((-1, x_t + 1))
+
+        fig.tight_layout()
+        return fig
+
+    def plot_td_mm_fer(self, s2xthru: Network, sfix_dut_fix: Network,
+                            fig: Figure = None) -> Figure:
+        """
+        Plot fixture electrical requirements (FER) for z values
+        """
+        if fig is None:
+            fig = figure(figsize=(8, 8))
+
+        mm_2xthru = s2xthru.copy()
+        mm_2xthru.se2gmm(p=2)
+        mm_fix_dut_fix = sfix_dut_fix.copy()
+        mm_fix_dut_fix.se2gmm(p=2)
+
+        fig.suptitle('Fixture electrical requirements (FER)')
+        f = mm_2xthru.frequency.f
+        se_2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
+        mm_2xthru_dc = IEEEP370.extrapolate_to_dc(mm_2xthru)
+        mm_fix_dut_fix_dc = IEEEP370.extrapolate_to_dc(mm_fix_dut_fix)
+        n = mm_2xthru.frequency.npoints * 2 - 1
+        dt = 1e9 / (n * mm_2xthru.frequency.step) # ns
+        s21 = mm_2xthru.s[:, 1, 0]
+        t21 = fftshift(irfft(s21, n = n))
+        x_k = np.argmax(t21) - n//2
+        x_t = x_k * dt
+
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER5 TDR Z variation side 1')
+        mm_fix_dut_fix_dc.plot_z_time_step(0, 0, color = 'k', ax = ax)
+        mm_2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        self.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
+
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER5 TDR Z variation side 2')
+        mm_fix_dut_fix_dc.plot_z_time_step(1, 1, color = 'k', ax = ax)
+        mm_2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        self.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
+
+        ax = fig.add_subplot(2, 2, 3)
+        ax.set_title('FER7 TDT skew')
+        se_2xthru_dc.plot_z_time_impulse(2, 0, color = '0.5', ax = ax)
+        se_2xthru_dc.plot_z_time_impulse(3, 1, color = 'k', ax = ax)
+        ax.legend(loc = 'upper right')
+        ax.set_xlim((-1, x_t + 1))
+
+        ax = fig.add_subplot(2, 2, 4)
+        ax.set_title('FER8 TDT minimum length')
+        mm_2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax)
+        mm_2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
+        y = ax.lines[-1].get_ydata()
+        y_lim = [np.min(y), np.max(y)]
+        t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
+        ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
+        ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
+        ax.legend(loc = 'upper right')
+        ax.set_xlim((-1, x_t + 1))
+
+        fig.tight_layout()
+        return fig
+
+class IEEEP370_FD_QM:
+    """
+    IEEE 370 initial quality checking of raw data at the given frequency
+    samples.
+
+    This informative passivity, reciprocity and causality check is
+    performed in the frequency domain.
+
+    Based on [IEEE370]_.
+
+    References
+    ----------
+    .. [IEEE370] IEEE Standard for Electrical Characterization of Printed
+    Circuit Board and Related Interconnects at Frequencies up to 50 GHz",
+    IEEE 370-2020.
+    """
+    def check_causality(self, ntwk: Network) -> float:
         """
         Initial causality checking of raw data at the given frequency samples.
 
@@ -1890,8 +2152,72 @@ class IEEEP370(Deembedding):
 
         return np.min(CQM)
 
-    @staticmethod
-    def check_fd_se_quality(ntwk: Network) -> dict:
+    def check_passivity(self, ntwk: Network) -> float:
+         """
+         Initial passivity checking of raw data at the given frequency samples.
+
+         This informative check is performed in the frequency domain.
+
+         Parameters
+         ----------
+         ntwk: :class:`~skrf.network.Network` object
+               Network to be checked
+
+         Returns
+         -------
+         PQM : :class:`~skrf.network.Network` object
+               Passivity quality metric in percents
+         """
+         if ntwk.nports == 1:
+             raise (ValueError('Doesn\'t exist for one-ports'))
+
+         Nf = ntwk.frequency.npoints
+         A  = 1.00001
+         B  = 0.1
+         PW = zeros(Nf)
+         for i in range(Nf):
+             PM = norm(ntwk.s[i, :, :], 2)
+             if PM > A:
+                 PW[i] = (PM - A) / B
+
+         return np.max((Nf - np.sum(PW)), 0) / Nf * 100.
+
+
+    def check_reciprocity(self, ntwk: Network) -> float:
+        """
+        Initial reciprocity checking of raw data at the given frequency samples.
+
+        This informative check is performed in the frequency domain.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be checked
+
+        Returns
+        -------
+        PQM : :class:`~skrf.network.Network` object
+              Reciprocity quality metric in percents
+        """
+        if ntwk.nports == 1:
+            raise (ValueError('Doesn\'t exist for one-ports'))
+
+        Nf = ntwk.frequency.npoints
+        B = 0.1
+        C = 1e-6
+        RW = zeros(Nf)
+        for i in range(Nf):
+            RM = 0
+            for k in range(ntwk.nports):
+                for m in range(ntwk.nports):
+                    RM = RM + np.abs(ntwk.s[i, m, k] - ntwk.s[i, k, m])
+            RM = RM / (ntwk.nports * (ntwk.nports - 1))
+            if RM > C:
+                RW[i] = (RM - C) / B
+
+            return np.max((Nf - np.sum(RW)), 0) / Nf * 100.
+
+    def check_se_quality(self, ntwk: Network) -> dict:
         """
         Initial quality checking of raw data at the given frequency samples.
 
@@ -1908,11 +2234,21 @@ class IEEEP370(Deembedding):
         QM : :class:`dict` object
               Dictionnary with quality metrics
         """
-        QM = {'passivity': {'value': IEEEP370.check_fd_passivity(ntwk), 'evaluation': ''},
-              'reciprocity': {'value': IEEEP370.check_fd_reciprocity(ntwk), 'evaluation': ''},
-              'causality': {'value': IEEEP370.check_fd_causality(ntwk), 'evaluation': ''},
+        QM = {'causality': {'value': self.check_causality(ntwk), 'evaluation': ''},
+              'passivity': {'value': self.check_passivity(ntwk), 'evaluation': ''},
+              'reciprocity': {'value': self.check_reciprocity(ntwk), 'evaluation': ''},
               }
+
         # evaluation
+        if QM['causality']['value'] <= 20.:
+            QM['causality']['evaluation'] = 'Poor'
+        elif QM['causality']['value'] <= 50.:
+            QM['causality']['evaluation'] = 'Inconclusive'
+        elif QM['causality']['value'] <= 80:
+            QM['causality']['evaluation'] = 'Acceptable'
+        else:
+            QM['causality']['evaluation'] = 'Good'
+
         if QM['passivity']['value'] <= 80.:
             QM['passivity']['evaluation'] = 'Poor'
         elif QM['passivity']['value'] <= 99.:
@@ -1931,19 +2267,9 @@ class IEEEP370(Deembedding):
         else:
             QM['reciprocity']['evaluation'] = 'Good'
 
-        if QM['causality']['value'] <= 20.:
-            QM['causality']['evaluation'] = 'Poor'
-        elif QM['causality']['value'] <= 50.:
-            QM['causality']['evaluation'] = 'Inconclusive'
-        elif QM['causality']['value'] <= 80:
-            QM['causality']['evaluation'] = 'Acceptable'
-        else:
-            QM['causality']['evaluation'] = 'Good'
-
         return QM
 
-    @staticmethod
-    def check_fd_mm_quality(ntwk: Network) -> dict:
+    def check_mm_quality(self, ntwk: Network) -> dict:
         """
         Initial quality checking of raw data at the given frequency samples.
 
@@ -1964,320 +2290,30 @@ class IEEEP370(Deembedding):
         """
         mm = ntwk.copy()
         mm.se2gmm(p = 2)
-        QM = {'dd': IEEEP370.check_fd_se_quality(mm.subnetwork([0, 1])),
-              'cc': IEEEP370.check_fd_se_quality(mm.subnetwork([2, 3]))}
+        QM = {'dd': self.check_se_quality(mm.subnetwork([0, 1])),
+              'cc': self.check_se_quality(mm.subnetwork([2, 3]))}
 
         return QM
 
-    @staticmethod
-    def plot_constant_limit(frequency: Frequency, value: float, ax: Axes, **kwargs) -> None:
+    def print_qm(self, QM: dict) -> dict:
         """
-        Plot a constant limit line.
+        Print the quality metrics dictionnary.
+
+        Parameters
+        ----------
+        QM: :class:`dict` object
+            Dictionnary with quality metrics to print
         """
-        ax.plot([frequency.f[0], frequency.f[-1]], [value, value], **kwargs)
-
-    @staticmethod
-    def plot_relative_limit(x: ndarray, y: ndarray, value: float, ax: Axes, **kwargs) -> None:
-        """
-        Plot positive and negative relative limit line around a reference trace.
-        """
-        ax.plot(x, y * (1.0 + value), **kwargs)
-        kwargs.pop('label', None)
-        ax.plot(x, y * (1.0 - value), label = '_nolabel_', **kwargs)
-
-    @staticmethod
-    def plot_limit_fer1(frequency: Frequency, ax: Axes) -> None:
-        """
-        Plot fer 1 limit lines.
-        """
-        IEEEP370.plot_constant_limit(frequency, -10, ax, color = 'g',
-                            linestyle = 'dashed', label = 'Minimum A')
-        IEEEP370.plot_constant_limit(frequency, -15, ax, color = 'r',
-                            linestyle = 'dashed', label = 'Minimum B, C')
-
-    @staticmethod
-    def plot_limit_fer2(frequency: Frequency, ax: Axes) -> None:
-        """
-        Plot fer 2 limit lines.
-        """
-        IEEEP370.plot_constant_limit(frequency, -20, ax, color = 'g',
-                            linestyle = 'dashed', label = 'Maximum A')
-        IEEEP370.plot_constant_limit(frequency, -10, ax, color = 'b',
-                            linestyle = 'dashed', label = 'Maximum B')
-        IEEEP370.plot_constant_limit(frequency, -6, ax, color = 'r',
-                            linestyle = 'dashed', label = 'Maximum C')
-
-    @staticmethod
-    def plot_limit_fer3(frequency: Frequency, ax: Axes) -> None:
-        """
-        Plot fer 3 limit lines.
-        """
-        IEEEP370.plot_constant_limit(frequency, 5, ax, color = 'g',
-                            linestyle = 'dashed', label = 'Minimum A')
-        IEEEP370.plot_constant_limit(frequency, 0, ax, color = 'r',
-                            linestyle = 'dashed', label = 'Minimum B, C')
-
-    @staticmethod
-    def plot_limit_fer5(x: ndarray, y: ndarray, ax: Axes) -> None:
-        """
-        Plot fer 5 limit lines.
-        """
-        IEEEP370.plot_relative_limit(x, y, 0.025, ax, linestyle = 'dashed', color = 'g',
-                                     label = 'Limit A ±2.5%')
-        IEEEP370.plot_relative_limit(x, y, 0.05, ax, linestyle = 'dashed', color = 'b',
-                                     label = 'Limit B ±5%')
-        IEEEP370.plot_relative_limit(x, y, 0.1, ax, linestyle = 'dashed', color = 'r',
-                                     label = 'Limit C ±10%')
-
-    @staticmethod
-    def plot_limit_fer6(frequency: Frequency, ax: Axes) -> None:
-        """
-        Plot fer 6 limit lines.
-        """
-        IEEEP370.plot_constant_limit(frequency, -15, ax, color = 'r',
-                            linestyle = 'dashed', label = 'Maximum A, B, C')
-
-
-
-    @staticmethod
-    def plot_check_se_fer_s(s2xthru: Network, fig: Figure = None) -> Figure:
-        """
-        Plot fixture electrical requirements (FER) for s values
-        """
-        if fig is None:
-            fig = figure(figsize=(8, 8))
-
-        fig.suptitle('Fixture electrical requirements (FER)')
-
-        ax = fig.add_subplot(2, 2, 1)
-        ax.set_title('FER1 2x-Thru IL')
-        s2xthru.plot_s_db(1, 0, ax = ax, color = '0.5')
-        s2xthru.plot_s_db(0, 1, ax = ax, color = 'k')
-        IEEEP370.plot_limit_fer1(s2xthru.frequency, ax)
-        ax.legend(loc = 'lower left')
-
-        ax = fig.add_subplot(2, 2, 2)
-        ax.set_title('FER2 2x-Thru RL')
-        s2xthru.plot_s_db(0, 0, ax = ax, color = '0.5')
-        s2xthru.plot_s_db(1, 1, ax = ax, color = 'k')
-        IEEEP370.plot_limit_fer2(s2xthru.frequency, ax)
-        ax.legend(loc = 'lower left')
-
-        ax = fig.add_subplot(2, 1, 2)
-        ax.set_title('FER3 2x-Thru IL - RL')
-        s1 = s2xthru.s_db[:, 1, 0] - s2xthru.s_db[:, 0, 0]
-        s2 = s2xthru.s_db[:, 0, 1] - s2xthru.s_db[:, 1, 1]
-        ax.plot(s2xthru.frequency.f, s1, color = '0.5', label = 'S21 - S11')
-        ax.plot(s2xthru.frequency.f, s2, color = 'k', label = 'S21 - S22')
-        IEEEP370.plot_limit_fer3(s2xthru.frequency, ax)
-        ax.set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
-        ax.set_ylabel('Magnitude (dB)')
-        ax.legend(loc = 'upper right')
-
-        fig.tight_layout()
-        return fig
-
-    @staticmethod
-    def plot_check_mm_fer_s(s2xthru: Network, fig: Figure = None) -> Figure:
-        """
-        Plot fixture electrical requirements (FER) for s values
-        """
-        if fig is None:
-            fig = figure(figsize=(8, 8))
-
-        fig.suptitle('Fixture electrical requirements (FER)')
-
-        mm_2xthru = s2xthru.copy()
-        mm_2xthru.se2gmm(p=2)
-
-        ax = fig.add_subplot(2, 2, 1)
-        ax.set_title('FER1 2x-Thru IL')
-        mm_2xthru.plot_s_db(1, 0, ax = ax, color = '0.5')
-        mm_2xthru.plot_s_db(0, 1, ax = ax, color = 'k')
-        IEEEP370.plot_limit_fer1(mm_2xthru.frequency, ax)
-        ax.legend(loc = 'lower left')
-
-        ax = fig.add_subplot(2, 2, 2)
-        ax.set_title('FER2 2x-Thru RL')
-        mm_2xthru.plot_s_db(0, 0, ax = ax, color = '0.5')
-        mm_2xthru.plot_s_db(1, 1, ax = ax, color = 'k')
-        IEEEP370.plot_limit_fer2(mm_2xthru.frequency, ax)
-        ax.legend(loc = 'lower left')
-
-        ax = fig.add_subplot(2, 2, 3)
-        ax.set_title('FER3 2x-Thru IL - RL')
-        s1 = mm_2xthru.s_db[:, 1, 0] - mm_2xthru.s_db[:, 0, 0]
-        s2 = mm_2xthru.s_db[:, 0, 1] - mm_2xthru.s_db[:, 1, 1]
-        ax.plot(mm_2xthru.frequency.f, s1, color = '0.5', label = 'S21 - S11')
-        ax.plot(mm_2xthru.frequency.f, s2, color = 'k', label = 'S21 - S22')
-        IEEEP370.plot_limit_fer3(mm_2xthru.frequency, ax)
-        ax.set_xlabel(f'Frequency ({mm_2xthru.frequency.unit})')
-        ax.set_ylabel('Magnitude (dB)')
-        ax.legend(loc = 'upper right')
-
-        ax = fig.add_subplot(2, 2, 4)
-        ax.set_title('FER6 Differential to common CDL - IL')
-        s1 = mm_2xthru.s_db[:, 2, 0] - mm_2xthru.s_db[:, 1, 0]
-        s2 = mm_2xthru.s_db[:, 3, 1] - mm_2xthru.s_db[:, 0, 1]
-        ax.plot(mm_2xthru.frequency.f, s1, color = '0.5', label = 'SCD21 - S21')
-        ax.plot(mm_2xthru.frequency.f, s2, color = 'k', label = 'SCD42 - S12')
-        IEEEP370.plot_limit_fer6(mm_2xthru.frequency, ax)
-        ax.legend(loc = 'upper right')
-
-        fig.tight_layout()
-        return fig
-
-    @staticmethod
-    def plot_check_se_fer_z(s2xthru: Network, sfix_dut_fix: Network,
-                            fig: Figure = None) -> Figure:
-        """
-        Plot fixture electrical requirements (FER) for z values
-        """
-        if fig is None:
-            fig = figure(figsize=(8, 8))
-
-        fig.suptitle('Fixture electrical requirements (FER)')
-        f = s2xthru.frequency.f
-        s2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
-        sfix_dut_fix_dc = IEEEP370.extrapolate_to_dc(sfix_dut_fix)
-        n = s2xthru.frequency.npoints * 2 - 1
-        dt = 1e9 / (n * s2xthru.frequency.step) # ns
-        s21 = s2xthru.s[:, 1, 0]
-        t21 = fftshift(irfft(s21, n = n))
-        x_k = np.argmax(t21) - n//2
-        x_t = x_k * dt
-
-        ax = fig.add_subplot(2, 2, 1)
-        ax.set_title('FER5 TDR Z variation side 1')
-        sfix_dut_fix_dc.plot_z_time_step(0, 0, color = 'k', ax = ax)
-        s2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax)
-        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
-        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-        IEEEP370.plot_limit_fer5(x, y, ax)
-        ax.legend(loc = 'lower right')
-        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-        ax.set_ylim((ymin - 5, ymax + 5))
-        delay = 2 * x_t
-        ax.set_xlim((-0.5 * delay, 1.5 * delay))
-
-        ax = fig.add_subplot(2, 2, 2)
-        ax.set_title('FER5 TDR Z variation side 2')
-        sfix_dut_fix_dc.plot_z_time_step(1, 1, color = 'k', ax = ax)
-        s2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax)
-        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
-        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-        IEEEP370.plot_limit_fer5(x, y, ax)
-        ax.legend(loc = 'lower right')
-        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-        ax.set_ylim((ymin - 5, ymax + 5))
-        delay = 2 * x_t
-        ax.set_xlim((-0.5 * delay, 1.5 * delay))
-
-        ax = fig.add_subplot(2, 1, 2)
-        ax.set_title('FER8 TDT minimum length')
-        s2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax)
-        s2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
-        y = ax.lines[-1].get_ydata()
-        y_lim = [np.min(y), np.max(y)]
-        t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
-        ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
-        ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
-        ax.legend(loc = 'upper right')
-        ax.set_xlim((-1, x_t + 1))
-
-        fig.tight_layout()
-        return fig
-
-    @staticmethod
-    def plot_check_mm_fer_z(s2xthru: Network, sfix_dut_fix: Network,
-                            fig: Figure = None) -> Figure:
-        """
-        Plot fixture electrical requirements (FER) for z values
-        """
-        if fig is None:
-            fig = figure(figsize=(8, 8))
-
-        mm_2xthru = s2xthru.copy()
-        mm_2xthru.se2gmm(p=2)
-        mm_fix_dut_fix = sfix_dut_fix.copy()
-        mm_fix_dut_fix.se2gmm(p=2)
-
-        fig.suptitle('Fixture electrical requirements (FER)')
-        f = mm_2xthru.frequency.f
-        se_2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
-        mm_2xthru_dc = IEEEP370.extrapolate_to_dc(mm_2xthru)
-        mm_fix_dut_fix_dc = IEEEP370.extrapolate_to_dc(mm_fix_dut_fix)
-        n = mm_2xthru.frequency.npoints * 2 - 1
-        dt = 1e9 / (n * mm_2xthru.frequency.step) # ns
-        s21 = mm_2xthru.s[:, 1, 0]
-        t21 = fftshift(irfft(s21, n = n))
-        x_k = np.argmax(t21) - n//2
-        x_t = x_k * dt
-
-        ax = fig.add_subplot(2, 2, 1)
-        ax.set_title('FER5 TDR Z variation side 1')
-        mm_fix_dut_fix_dc.plot_z_time_step(0, 0, color = 'k', ax = ax)
-        mm_2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax)
-        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
-        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-        IEEEP370.plot_limit_fer5(x, y, ax)
-        ax.legend(loc = 'lower right')
-        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-        ax.set_ylim((ymin - 5, ymax + 5))
-        delay = 2 * x_t
-        ax.set_xlim((-0.5 * delay, 1.5 * delay))
-
-        ax = fig.add_subplot(2, 2, 2)
-        ax.set_title('FER5 TDR Z variation side 2')
-        mm_fix_dut_fix_dc.plot_z_time_step(1, 1, color = 'k', ax = ax)
-        mm_2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax)
-        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
-        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-        IEEEP370.plot_limit_fer5(x, y, ax)
-        ax.legend(loc = 'lower right')
-        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-        ax.set_ylim((ymin - 5, ymax + 5))
-        delay = 2 * x_t
-        ax.set_xlim((-0.5 * delay, 1.5 * delay))
-
-        ax = fig.add_subplot(2, 2, 3)
-        ax.set_title('FER7 TDT skew')
-        se_2xthru_dc.plot_z_time_impulse(2, 0, color = '0.5', ax = ax)
-        se_2xthru_dc.plot_z_time_impulse(3, 1, color = 'k', ax = ax)
-        ax.legend(loc = 'upper right')
-        ax.set_xlim((-1, x_t + 1))
-
-        ax = fig.add_subplot(2, 2, 4)
-        ax.set_title('FER8 TDT minimum length')
-        mm_2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax)
-        mm_2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
-        y = ax.lines[-1].get_ydata()
-        y_lim = [np.min(y), np.max(y)]
-        t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
-        ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
-        ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
-        ax.legend(loc = 'upper right')
-        ax.set_xlim((-1, x_t + 1))
-
-        fig.tight_layout()
-        return fig
-
+        if 'dd' in QM:
+            print('Differential mode')
+            for k in QM['dd'].keys():
+                print(f"{k} is {QM['dd'][k]['evaluation']} ({QM['dd'][k]['value']:.2f}%)")
+            print('Common mode')
+            for k in QM['cc'].keys():
+                print(f"{k} is {QM['cc'][k]['evaluation']} ({QM['cc'][k]['value']:.2f}%)")
+        else:
+            for k in QM.keys():
+                print(f"{k} is {QM[k]['evaluation']} ({QM[k]['value']:.2f}%)")
 
 class IEEEP370_SE_NZC_2xThru(IEEEP370):
     """

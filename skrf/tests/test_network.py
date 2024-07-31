@@ -400,6 +400,12 @@ class NetworkTestCase(unittest.TestCase):
         self.ntwk1.write_touchstone('ntwk1Saved',dir=self.test_dir)
         ntwk1Saved = rf.Network(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
         self.assertEqual(self.ntwk1, ntwk1Saved)
+
+        # Test that it still works with Pathlib objects
+        self.ntwk1.write_touchstone(Path('ntwk1Saved'),dir=Path(self.test_dir))
+        ntwk1Saved = rf.Network(Path(os.path.join(self.test_dir, 'ntwk1Saved.s2p')))
+        self.assertEqual(self.ntwk1, ntwk1Saved)
+
         os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
 
     def test_write_touchstone(self):
@@ -808,7 +814,7 @@ class NetworkTestCase(unittest.TestCase):
         ntwk.port_names = from_ports_name
         ntwk_renum = ntwk.renumbered(from_ports_num, to_ports_num)
 
-        np.array_equal(to_ports_name, ntwk_renum.port_names)
+        assert to_ports_name == ntwk_renum.port_names
 
     def test_de_embed_by_inv(self):
         self.assertEqual(self.ntwk1.inv ** self.ntwk3, self.ntwk2)
