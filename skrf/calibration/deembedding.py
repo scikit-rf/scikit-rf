@@ -2121,8 +2121,97 @@ class IEEEP370_TD_QM:
 
         return reciprocal
 
+    def extrapolate_to_dc(self, ntwk: Network) -> Network:
+        """
+        Extrapolate to DC and interpolate to the harmonic frequency sweep.
+
+        Passivity is enforced on the DC extrapolated points.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Input network
+
+        Returns
+        -------
+        extrapolated : :class:`~skrf.network.Network` object
+                     Extrapolated network
+        """
+        f = ntwk.frequency.f
+        df = f[1] - f[0]
+        nports = ntwk.nports
+        f_0 = f[0]
+        norm_0 = np.linalg.norm(ntwk.s[0, :, :])
+        if f[0] == 0:
+            f_extra = f
+        else:
+            f_new = df * np.arange(0, np.ceil(f[0] / df))
+            f_extra = np.append(f_new, f)
+        N_interp = np.floor(f_extra[-1]/df)
+        f_interp = df * np.arange(0, N_interp)
+        s = zeros((len(f_extra), nports, nports), dtype = complex)
+        s_interp = zeros((len(f_interp), nports, nports), dtype = complex)
+        for i in range(nports):
+            for j in range(nports):
+                # dc extrapolation
+                if f[0] == 0:
+                    s[:, i, j] = ntwk.s[:, i, j]
+                    s[0] = np.real(s[0, i, j])
+                else:
+                    s[:, i, j] = self.extrapolate_to_dc_ij(f, f_new,
+                                              ntwk.s[:, i, j])
+                    # interpolate to the harmonic sweep
+                    s_interp[:, i, j] = self.interpolate_ij(f_extra, f_interp,
+                                                   s[:, i, j])
+        # enforce passivity of extrapolated points
+        i = 0
+        D_max = np.max(np.array([1., norm_0]))
+        while f_interp[i] < f_0:
+            U, D, Vh = np.linalg.svd(s_interp[i, :, :])
+            for k in range(nports):
+                if D[k] > D_max:
+                    D[k] = D_max
+            s[i, :, :] = U @ np.diag(D) @ Vh
+            i += 1
+
+        return Network(frequency = f_interp, s = s_interp, name = ntwk.name,
+                       z0 = ntwk.z0[0])
+
+    def extrapolate_to_dc_ij(self, f: ndarray, f_new: ndarray, s_ij: ndarray):
+        """
+        Extrapolate single S-component to dc.
+        """
+        # calculate delay
+        ph = -np.unwrap(np.angle(s_ij))
+        delay = self.get_delay(f, ph)
+        # extract delay to smooth original function
+        s_ij = s_ij * np.exp(1j * 2 * np.pi * f * delay)
+        # extract real and imaginary parts from the original function
+        re = np.real(s_ij)
+        im = np.imag(s_ij)
+        # create a*x^2+b parabola using (f(1),re(1)) and (f(2),re(2)) points
+        a = (re[1] - re[0]) / (f[1]**2 - f[0]**2)
+        b = re[0] - a * f[0]**2
+        # extend real part to DC
+        re_new = a * f_new**2 + b
+        re = np.append(re_new, re)
+        # create a*x^3+b*x cubic parabola using (f(1),im(1)) and (f(2),im(2)) points
+        a = (im[1]/f[1] - im[0]/f[0])/(f[1]**2 - f[0]**2)
+        b = im[0]/f[0] - a*f[0]**2
+        # extend imaginary part to DC
+        im_new = a * f_new**3 + b * f_new
+        im = np.append(im_new, im)
+        f_extra = np.append(f_new, f)
+        # create complex function from real and imaginary parts
+        s_ij_extra = re + 1j * im
+        # return delay
+        s_ij_extra = s_ij_extra * \
+            np.exp(-1j * 2 * np.pi * f_extra * delay)
+
+        return s_ij_extra
+
     def extrapolate_to_fmax(self, ntwk: Network, data_rate: float,
-                            sample_per_UI: int, extrapolation: int)-> ndarray:
+                            sample_per_UI: int, extrapolation: int)-> Network:
         """
         Extrapolate network max frequency if required by parameters.
 
@@ -2167,8 +2256,34 @@ class IEEEP370_TD_QM:
                        z0 = ntwk.z0[0])
 
 
+    def get_delay(self, freq: ndarray, phase: ndarray) -> float:
+        """
+        Get delay from phase and frequency vectors.
+
+        Parameters
+        ----------
+        freq: :ndarray
+              Frequency (Hz)
+        phase: :ndarray
+               Phase (rad)
+
+        Returns
+        -------
+        delay: :float
+               Delay
+
+        """
+        N = len(freq)
+        delay = 1.
+        for i in range(N):
+            if freq[i] > 0:
+                delay_i = phase[i] / freq[i] / 2. / np.pi
+                if delay > delay_i:
+                    delay = delay_i
+        return delay
+
     def get_pulse_gaussian(self, dt: float, data_rate: float, N: int,
-                         rise_time_per: float, verbose = False)-> ndarray:
+                         rise_time_per: float, verbose = False) -> ndarray:
         """
         Get the FFT of a gaussian pulse. The pulse is shifted in time according
         to parameters.
@@ -2263,6 +2378,23 @@ class IEEEP370_TD_QM:
 
         return fft(v_pulse)
 
+    def interpolate_ij(self, f: ndarray, f_new: ndarray, s_ij: ndarray):
+        """
+        Interpolate single S-component.
+        """
+        # calculate delay
+        delay = np.max([0, self.get_delay(f, -np.unwrap(np.angle(s_ij)))])
+        # extract delay to smooth original function
+        s_ij = s_ij * np.exp(1j * 2 * np.pi * f * delay)
+        # interpolate
+        interp = interp1d(f, s_ij)
+        s_ij_interp = interp(f_new)
+        # return delay
+        s_ij_interp = s_ij_interp * \
+            np.exp(-1j * 2 * np.pi * f_new * delay)
+
+        return s_ij_interp
+
     def check_se_quality(self, ntwk: Network) -> dict:
         """
         Application-based quality checking of in the time domain.
@@ -2289,40 +2421,11 @@ class IEEEP370_TD_QM:
                                                      self.extrapolation)
 
         # extrapolate dc and interpolate with uniform step
-        # dc
-        # if ntwk_interpolated.frequency.f[0] == 0:
-        #     ntwk_interpolated.s[0] = np.real(ntwk_interpolated.s[0])
-        # else:
-        #     f = ntwk_interpolated.frequency.f
-        #     for i in range(ntwk_interpolated.nports):
-        #         for j in range(ntwk_interpolated.nports):
-        #             # calculate delay
-        #             s = ntwk_interpolated.frequency.s[:, i, j]
-        #             ph = -np.unwrap(np.angle(s))
-        #             delay = 1
-        #             for i in range(len(f)):
-        #                 if f[i] > 0:
-        #                     if delay > (ph[i] / f[i] / 2 / np.pi):
-        #                         delay = ph[i] / f[i] / 2 / np.pi
-        #             # extract delay to smooth origianl function
-        #             s = s * np.exp(1j * 2 * np.pi * f * delay)
-        #             # extract real and imaginary parts from the original function
-        #             re = np.real(s)
-        #             im = np.imag(s)
-        #             # create a*x^2+b parabola using (f(1),re(1)) and (f(2),re(2)) points
-        #             a = (re[1] - re[0]) / (f[1]**2 - f[0]**2)
-        #             b = re[0] - a * f[0]**2
-        #             # extend real part to DC
-        #             df = f[1] - f[0]
-
-        #             # create complex function from real and imaginary parts
-        #             extrapolated_component = re + 1j * im
-        #             # return delay
-        #             extrapolated_component = extrapolated_component * \
-        #                 np.exp(-1j * 2 * np.pi * extrapolated_frequency * delay)
+        ntwk_interpolated = self.extrapolate_to_dc(ntwk_interpolated)
 
         if self.verbose:
             fig, ax = subplots(1, 1)
+            fig.suptitle('Extrapolation and interpolation')
             ntwk.plot_s_db(1, 0, color = 'r', ax = ax, label = 'Original, S21')
             ntwk_interpolated.plot_s_db(1, 0, color = 'b', linestyle = 'dashed', ax = ax,
                                         label = 'Extrapolated, S21')
@@ -2412,18 +2515,18 @@ class IEEEP370_TD_QM:
         if 'dd' in QM:
             print('Differential mode')
             for k in QM['dd'].keys():
-                print((f"{k} ({QM['dd'][k]['unit']}) differences in the time"
-                       f"domain are {QM['dd'][k]['evaluation']}"))
+                print(f"{k} ({QM['dd'][k]['unit']}) differences in the time"
+                       f"domain are {QM['dd'][k]['evaluation']}")
                 print(f"{QM['dd'][k]['value']}")
             print('Common mode')
             for k in QM['cc'].keys():
-                print((f"{k} ({QM['cc'][k]['unit']}) differences in the time"
-                       f"domain are {QM['cc'][k]['evaluation']}"))
+                print(f"{k} ({QM['cc'][k]['unit']}) differences in the time"
+                       f"domain are {QM['cc'][k]['evaluation']}")
                 print(f"{QM['cc'][k]['value']}")
         else:
             for k in QM.keys():
-                print((f"{k} ({QM[k]['unit']}) differences in the time domain"
-                       f"are {QM[k]['evaluation']}"))
+                print(f"{k} ({QM[k]['unit']}) differences in the time domain"
+                       f"are {QM[k]['evaluation']}")
                 print(f"{QM[k]['value']}")
 
 class IEEEP370_SE_NZC_2xThru(IEEEP370):
