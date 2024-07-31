@@ -1945,31 +1945,31 @@ class IEEEP370_FD_QM:
 
         # evaluation
         if QM['causality']['value'] <= 20.:
-            QM['causality']['evaluation'] = 'Poor'
+            QM['causality']['evaluation'] = 'poor'
         elif QM['causality']['value'] <= 50.:
-            QM['causality']['evaluation'] = 'Inconclusive'
+            QM['causality']['evaluation'] = 'inconclusive'
         elif QM['causality']['value'] <= 80:
-            QM['causality']['evaluation'] = 'Acceptable'
+            QM['causality']['evaluation'] = 'acceptable'
         else:
-            QM['causality']['evaluation'] = 'Good'
+            QM['causality']['evaluation'] = 'good'
 
         if QM['passivity']['value'] <= 80.:
-            QM['passivity']['evaluation'] = 'Poor'
+            QM['passivity']['evaluation'] = 'poor'
         elif QM['passivity']['value'] <= 99.:
-            QM['passivity']['evaluation'] = 'Inconclusive'
+            QM['passivity']['evaluation'] = 'inconclusive'
         elif QM['passivity']['value'] <= 99.9:
-            QM['passivity']['evaluation'] = 'Acceptable'
+            QM['passivity']['evaluation'] = 'acceptable'
         else:
-            QM['passivity']['evaluation'] = 'Good'
+            QM['passivity']['evaluation'] = 'good'
 
         if QM['reciprocity']['value'] <= 80.:
-            QM['reciprocity']['evaluation'] = 'Poor'
+            QM['reciprocity']['evaluation'] = 'poor'
         elif QM['reciprocity']['value'] <= 99.:
-            QM['reciprocity']['evaluation'] = 'Inconclusive'
+            QM['reciprocity']['evaluation'] = 'inconclusive'
         elif QM['reciprocity']['value'] <= 99.9:
-            QM['reciprocity']['evaluation'] = 'Acceptable'
+            QM['reciprocity']['evaluation'] = 'acceptable'
         else:
-            QM['reciprocity']['evaluation'] = 'Good'
+            QM['reciprocity']['evaluation'] = 'good'
 
         return QM
 
@@ -2334,12 +2334,97 @@ class IEEEP370_TD_QM:
             secax.legend(loc = 'lower right')
             fig.tight_layout()
 
-        QM = {'passivity': {'value': 0, 'unit': 'mV'},
-              'reciprocity': {'value': 0, 'unit': 'mV'},
-              'causality': {'value': 0, 'unit': 'mV'},
+        QM = {'passivity': {'value': np.array([[0, 0], [0, 0]]), 'unit': 'mV',
+                            'evaluation': ''},
+              'reciprocity': {'value': np.array([[0, 0], [0, 0]]), 'unit': 'mV',
+                              'evaluation': ''},
+              'causality': {'value': np.array([[0, 0], [0, 0]]), 'unit': 'mV',
+                            'evaluation': ''},
               }
 
+        # evaluation
+        CQM = np.max(QM['causality']['value'])
+        if CQM >= 15.:
+            QM['causality']['evaluation'] = 'poor'
+        elif CQM >= 10.:
+            QM['causality']['evaluation'] = 'inconclusive'
+        elif CQM >= 5.:
+            QM['causality']['evaluation'] = 'acceptable'
+        else:
+            QM['causality']['evaluation'] = 'good'
+
+        PQM = np.max(QM['causality']['value'])
+        if PQM >= 15.:
+            QM['passivity']['evaluation'] = 'poor'
+        elif PQM >= 10.:
+            QM['passivity']['evaluation'] = 'inconclusive'
+        elif PQM >= 5.:
+            QM['passivity']['evaluation'] = 'acceptable'
+        else:
+            QM['passivity']['evaluation'] = 'good'
+
+        RQM = np.max(QM['causality']['value'])
+        if RQM >= 15.:
+            QM['reciprocity']['evaluation'] = 'poor'
+        elif RQM >= 10.:
+            QM['reciprocity']['evaluation'] = 'inconclusive'
+        elif RQM >= 5.:
+            QM['reciprocity']['evaluation'] = 'acceptable'
+        else:
+            QM['reciprocity']['evaluation'] = 'good'
+
         return QM
+
+    def check_mm_quality(self, ntwk: Network) -> dict:
+        """
+        Application-based quality checking of in the time domain.
+
+        The data are interpolated to fit the application parameters.
+
+        Only the differential and the common modes are tested.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Network to be checked
+
+        Returns
+        -------
+        QM : :class:`dict` object
+              Dictionnary with quality metrics
+        """
+        mm = ntwk.copy()
+        mm.se2gmm(p = 2)
+        QM = {'dd': self.check_se_quality(mm.subnetwork([0, 1])),
+              'cc': self.check_se_quality(mm.subnetwork([2, 3]))}
+
+        return QM
+
+    def print_qm(self, QM: dict) -> dict:
+        """
+        Print the quality metrics dictionnary.
+
+        Parameters
+        ----------
+        QM: :class:`dict` object
+            Dictionnary with quality metrics to print
+        """
+        if 'dd' in QM:
+            print('Differential mode')
+            for k in QM['dd'].keys():
+                print((f"{k} ({QM['dd'][k]['unit']}) differences in the time"
+                       f"domain are {QM['dd'][k]['evaluation']}"))
+                print(f"{QM['dd'][k]['value']}")
+            print('Common mode')
+            for k in QM['cc'].keys():
+                print((f"{k} ({QM['cc'][k]['unit']}) differences in the time"
+                       f"domain are {QM['cc'][k]['evaluation']}"))
+                print(f"{QM['cc'][k]['value']}")
+        else:
+            for k in QM.keys():
+                print((f"{k} ({QM[k]['unit']}) differences in the time domain"
+                       f"are {QM[k]['evaluation']}"))
+                print(f"{QM[k]['value']}")
 
 class IEEEP370_SE_NZC_2xThru(IEEEP370):
     """
