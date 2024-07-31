@@ -2020,6 +2020,38 @@ class IEEEP370_FD_QM:
                 print(f"{k} is {QM[k]['evaluation']} ({QM[k]['value']:.2f}%)")
 
 class IEEEP370_TD_QM:
+    def __init__(self, data_rate: float, sample_per_UI: int,
+                 rise_time_per: float, pulse_shape: int = 1,
+                 extrapolation: int = 2, verbose: bool = False) -> None:
+        """
+        IEEEP370_TD_QM Application-based quality checking of in the time domain
+        Initializer.
+
+        Parameters
+        -----------
+        data_rate    : :float
+                       Data rate (bps)
+        sample_per_UI: :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+        pulse_shape  : :number
+                       1 is Gaussian; 2 is rectangular with Butterworth filter;
+                       3 is rectangular with Gaussian filter
+        extrapolation: :number
+                       1 is constant extrapolation; 2 is zero padding;
+                       3 is repeating
+        verbose      : :boolean
+                       Plot referrence and interpolated pulses in the time
+                       domain
+        """
+        self.data_rate = data_rate
+        self.sample_per_UI = sample_per_UI
+        self.rise_time_per = rise_time_per
+        self.pulse_shape = pulse_shape
+        self.extrapolation = extrapolation
+        self.verbose = verbose
+
     def create_causal(self, ntwk: Network) -> (Network, ndarray):
         """
         Creat causality enforced network.
@@ -2231,10 +2263,7 @@ class IEEEP370_TD_QM:
 
         return fft(v_pulse)
 
-    def check_se_quality(self, ntwk: Network, data_rate: float,
-                            sample_per_UI: int, rise_time_per: float,
-                            pulse_shape: int, extrapolation: int,
-                            verbose = False) -> dict:
+    def check_se_quality(self, ntwk: Network) -> dict:
         """
         Application-based quality checking of in the time domain.
 
@@ -2244,34 +2273,20 @@ class IEEEP370_TD_QM:
         ----------
         ntwk         : :class:`~skrf.network.Network` object
                        Network to be checked
-        data_rate    : :float
-                       Data rate (bps)
-        sample_per_UI: :number
-                       Number of points of generated pulse signal
-        rise_time_per: :float
-                       Rise time divided by high time ratio
-        pulse_shape  : :number
-                       1 is Gaussian; 2 is rectangular with Butterworth filter;
-                       3 is rectangular with Gaussian filter
-        extrapolation: :number
-                       1 is constant extrapolation; 2 is zero padding;
-                       3 is repeating
-        verbose      : :boolean
-                       Plot referrence and interpolated pulses in the time
-                       domain
 
         Returns
         -------
         QM : :class:`dict` object
               Dictionnary with quality metrics
         """
-        if (1.5 * data_rate) > ntwk.frequency.f[-1]:
+        if (1.5 * self.data_rate) > ntwk.frequency.f[-1]:
             warnings.warn('Maximum frequency is less then recomended frequency.',
                           RuntimeWarning, stacklevel=2)
 
         # extrapolate max freq
-        ntwk_interpolated = self.extrapolate_to_fmax(ntwk, data_rate,
-                                                     sample_per_UI, extrapolation)
+        ntwk_interpolated = self.extrapolate_to_fmax(ntwk, self.data_rate,
+                                                     self.sample_per_UI,
+                                                     self.extrapolation)
 
         # extrapolate dc and interpolate with uniform step
         # dc
@@ -2306,7 +2321,7 @@ class IEEEP370_TD_QM:
         #             extrapolated_component = extrapolated_component * \
         #                 np.exp(-1j * 2 * np.pi * extrapolated_frequency * delay)
 
-        if verbose:
+        if self.verbose:
             fig, ax = subplots(1, 1)
             ntwk.plot_s_db(1, 0, color = 'r', ax = ax, label = 'Original, S21')
             ntwk_interpolated.plot_s_db(1, 0, color = 'b', linestyle = 'dashed', ax = ax,
@@ -2315,6 +2330,8 @@ class IEEEP370_TD_QM:
             ntwk.plot_s_deg(1, 0, color = 'm', ax = secax, label = 'Original, S21')
             ntwk_interpolated.plot_s_deg(1, 0, color = 'c', linestyle = 'dashed', ax = secax,
                                          label = 'Extrapolated, S21')
+            ax.legend(loc = 'lower left')
+            secax.legend(loc = 'lower right')
             fig.tight_layout()
 
         QM = {'passivity': {'value': 0, 'unit': 'mV'},
