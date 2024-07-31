@@ -1488,302 +1488,6 @@ class IEEEP370(Deembedding):
 
         return out, eb1, eb2
 
-    @staticmethod
-    def createPassive(ntwk: Network) -> Network:
-        """
-        Creat passivity enforced network.
-
-        Parameters
-        ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Input network
-
-        Returns
-        -------
-        reciprocal : :class:`~skrf.network.Network` object
-                     Passivity enforced network
-        """
-        passive = ntwk.copy()
-        for i in range(ntwk.frequency.npoints):
-            U, D, Vh = np.linalg.svd(ntwk.s[i, :, :])
-            for k in range(ntwk.nports):
-                if D[k] > 1.:
-                    D[k] = 1.
-            passive.s[i, :, :] = U @ np.diag(D) @ Vh
-
-        return passive
-
-    @staticmethod
-    def createReciprocal(ntwk: Network) -> Network:
-        """
-        Creat reciprocal network.
-
-        The resulting network is the reciprocal of the input networks. The
-        reciprocity is not enforced.
-
-        Parameters
-        ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Input network
-
-        Returns
-        -------
-        reciprocal : :class:`~skrf.network.Network` object
-                     Reciprocal network
-        """
-        reciprocal = ntwk.copy()
-        for i in range(ntwk.nports):
-            for j in range(ntwk.nports):
-                reciprocal.s[:, i, j] = ntwk.s[:, j, i]
-
-        return reciprocal
-
-    @staticmethod
-    def extrapolate(ntwk: Network, data_rate: float, sample_per_UI: int,
-                    extrapolation: int)-> ndarray:
-        """
-        Extrapolate network max frequency if required by parameters.
-
-        Parameters
-        ----------
-        ntwk         : :class:`~skrf.network.Network` object
-                       Input network
-        data_rate    : :float
-                       Data rate (bps)
-        sample_per_UI: :number
-                       Number of points of generated pulse signal
-        rise_time_per: :float
-                       Rise time divided by high time ratio
-        extrapolation: :number
-                       1 is constant extrapolation; 2 is zero padding
-
-        Returns
-        -------
-        extrapolated : :class:`~skrf.network.Network` object
-                       Extrapolated network
-        """
-        f_max = 0.5 * data_rate * sample_per_UI
-        df = ntwk.frequency.f[1] - ntwk.frequency.f[0]
-        f_new = ntwk.frequency.f
-        while(f_new[-1] < f_max):
-            f_new = np.append(f_new, f_new[-1] + df)
-        N1 = ntwk.frequency.npoints
-        N = len(f_new)
-        s_new = zeros((N, ntwk.nports, ntwk.nports), dtype = complex)
-        for i in range(ntwk.nports):
-            for j in range(ntwk.nports):
-                s_new[:N1, i, j] = ntwk.s[:, i, j]
-                ph = np.unwrap(np.angle(s_new[:N1, i, j]))
-                dph = (ph[-1] - ph[0]) / (N1 - 1)
-                for k in range(N1, N):
-                    if extrapolation == 1:
-                        s_new[k, i, j] = s_new[k - 1, i, j] * np.exp(1j * dph)
-                    else:
-                        s_new[k, i, j] = 0
-
-        return Network(frequency = f_new, s = s_new, name = ntwk.name,
-                       z0 = ntwk.z0[0])
-
-
-    @staticmethod
-    def getGaussianPulse(dt: float, data_rate: float, N: int,
-                         rise_time_per: float, verbose = False)-> ndarray:
-        """
-        Get the FFT of a gaussian pulse. The pulse is shifted in time according
-        to parameters.
-
-        Parameters
-        ----------
-        dt           : :float
-                       Sample time (s)
-        data_rate    : :float
-                       Data rate (bps)
-        N            : :number
-                       Number of points of generated pulse signal
-        rise_time_per: :float
-                       Rise time divided by high time ratio
-        verbose      : :boolean
-                       Plot referrence and generated pulses in the time
-                       domain
-
-        Returns
-        -------
-        fft : :ndarray
-              FFT of the pulse signal
-        """
-        n_samples = (N - 1) // 2
-        t = np.arange(-n_samples, n_samples + 1) * dt
-        sigma = rise_time_per / (data_rate * \
-                                 (np.sqrt(-np.log(0.2))-np.sqrt(-np.log(0.8))))
-        G = zeros(t.shape)
-        for i in range(len(t)):
-            G[i] = np.exp(-t[i]**2 / sigma**2)
-        k_middle = n_samples
-        k_start  = np.round(1.5 / data_rate / dt)
-        GG = zeros(t.shape)
-        for i in range(len(t)):
-            GG[i] = G[np.mod(i + k_middle - k_start, len(t)).astype(int)]
-        if verbose:
-            fig, ax = subplots(1, 1)
-            ax.plot(t, G, color = 'r', label = 'Reference')
-            ax.plot(t, GG, linestyle = 'dashed', label = 'Generated')
-            ax.legend(loc = 'upper right')
-            ax.set_ylabel('Amplitude (V)')
-            ax.set_xlabel('Time (s)')
-            ax.set_title('Gaussian Pulse')
-
-        return fft(GG)
-
-    @staticmethod
-    def getPulse(dt: float, data_rate: float, N: int, rise_time_per: float,
-                 verbose = False)-> ndarray:
-        """
-        Get the FFT of a rectangular pulse with defined rise, high, and fall
-        times.
-
-        Rise time and fall time are equals.
-
-        Parameters
-        ----------
-        dt           : :float
-                       Sample time (s)
-        data_rate    : :float
-                       Data rate (bps)
-        N            : :number
-                       Number of points of generated pulse signal
-        rise_time_per: :float
-                       Rise time divided by high time ratio
-        verbose      : :boolean
-                       Plot referrence and interpolated pulses in the time
-                       domain
-
-        Returns
-        -------
-        fft : :ndarray
-              FFT of the pulse signal
-        """
-        t_pulse = np.arange(0, N) * dt
-        k_high = np.round(1. / data_rate / dt)
-        k_rise = np.round(k_high * rise_time_per)
-        k_offset = np.array([0, k_rise, k_rise, k_rise, k_rise, 0])
-        k_ref = np.array([0, 0, k_rise, k_high, k_high + k_rise, N - 1])
-        t_ref = dt * (k_offset + k_ref)
-        v_ref = np.array([0, 0, 1, 1, 0, 0])
-
-        interp = interp1d(t_ref, v_ref)
-        v_pulse = interp(t_pulse)
-        if verbose:
-            fig, ax = subplots(1, 1)
-            ax.plot(t_ref, v_ref, color = 'r', marker = 'o', label = 'Reference')
-            ax.plot(t_pulse, v_pulse, linestyle = 'dashed', label = 'Interpolated')
-            ax.legend(loc = 'upper right')
-            ax.set_ylabel('Amplitude (V)')
-            ax.set_xlabel('Time (s)')
-            ax.set_title('Rectangular Pulse')
-
-        return fft(v_pulse)
-
-    @staticmethod
-    def check_td_se_quality(ntwk: Network, data_rate: float,
-                            sample_per_UI: int, rise_time_per: float,
-                            pulse_shape: int, extrapolation: int,
-                            verbose = False) -> dict:
-        """
-        Application-based quality checking of in the time domain.
-
-        The data are interpolated to fit the application parameters.
-
-        Parameters
-        ----------
-        ntwk         : :class:`~skrf.network.Network` object
-                       Network to be checked
-        data_rate    : :float
-                       Data rate (bps)
-        sample_per_UI: :number
-                       Number of points of generated pulse signal
-        rise_time_per: :float
-                       Rise time divided by high time ratio
-        pulse_shape  : :number
-                       1 is Gaussian; 2 is rectangular with Butterworth filter;
-                       3 is rectangular with Gaussian filter
-        extrapolation: :number
-                       1 is constant extrapolation; 2 is zero padding;
-                       3 is repeating
-        verbose      : :boolean
-                       Plot referrence and interpolated pulses in the time
-                       domain
-
-        Returns
-        -------
-        QM : :class:`dict` object
-              Dictionnary with quality metrics
-        """
-        if (1.5 * data_rate) > ntwk.frequency.f[-1]:
-            warnings.warn('Maximum frequency is less then recomended frequency.',
-                          RuntimeWarning, stacklevel=2)
-
-        # extrapolate max freq
-        ntwk_interpolated = IEEEP370.extrapolate(ntwk, data_rate, sample_per_UI,
-                                                 extrapolation)
-
-        # extrapolate dc and interpolate with uniform step
-        # dc
-        if ntwk_interpolated.frequency.f[0] == 0:
-            ntwk_interpolated.s[0] = np.real(ntwk_interpolated.s[0])
-        else:
-            f = ntwk_interpolated.frequency.f
-            for i in range(ntwk_interpolated.nports):
-                for j in range(ntwk_interpolated.nports):
-                    # calculate delay
-                    s = ntwk_interpolated.frequency.s[:, i, j]
-                    ph = -np.unwrap(np.angle(s))
-                    delay = 1
-                    for i in range(len(f)):
-                        if f[i] > 0:
-                            if delay > (ph[i] / f[i] / 2 / np.pi):
-                                delay = ph[i] / f[i] / 2 / np.pi
-                    # extract delay to smooth origianl function
-                    s = s * np.exp(1j * 2 * np.pi * f * delay)
-                    # extract real and imaginary parts from the original function
-                    re = np.real(s)
-                    im = np.imag(s)
-                    # create a*x^2+b parabola using (f(1),re(1)) and (f(2),re(2)) points
-                    a = (re[1] - re[0]) / (f[1]**2 - f[0]**2)
-                    b = re[0] - a * f[0]**2
-                    # extend real part to DC
-                    df = f[1] - f[0]
-
-                    # create complex function from real and imaginary parts
-                    extrapolated_component = re + 1j * im
-                    # return delay
-                    extrapolated_component = extrapolated_component * \
-                        np.exp(-1j * 2 * np.pi * extrapolated_frequency * delay)
-
-
-
-
-
-
-
-
-
-
-        if verbose:
-            fig, ax = subplots(1, 1)
-            ntwk.plot_s_db(1, 0, color = 'r', ax = ax)
-            ntwk_interpolated.plot_s_db(1, 0, color = 'b', linestyle = 'dashed', ax = ax)
-            secax = ax.twinx()
-            ntwk.plot_s_deg(1, 0, color = 'm', ax = secax)
-            ntwk_interpolated.plot_s_deg(1, 0, color = 'c', linestyle = 'dashed', ax = secax)
-
-
-        QM = {'passivity': {'value': 0, 'unit': 'mV'},
-              'reciprocity': {'value': 0, 'unit': 'mV'},
-              'causality': {'value': 0, 'unit': 'mV'},
-              }
-
-        return QM
-
 class IEEEP370_FER:
     """
     IEEE 370 checking for fixture electrical requirements (FER) in the
@@ -2314,6 +2018,311 @@ class IEEEP370_FD_QM:
         else:
             for k in QM.keys():
                 print(f"{k} is {QM[k]['evaluation']} ({QM[k]['value']:.2f}%)")
+
+class IEEEP370_TD_QM:
+    def create_causal(self, ntwk: Network) -> (Network, ndarray):
+        """
+        Creat causality enforced network.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Input network
+
+        Returns
+        -------
+        causal: :class:`~skrf.network.Network` object
+                Causality enforced network
+        delay : :class:`~skrf.network.Network` object
+                Alignment delay with original network for comparison sake
+        """
+        causal = ntwk.copy()
+        delay = zeros(ntwk.nports)
+
+        return (causal, delay)
+
+    def create_passive(self, ntwk: Network) -> Network:
+        """
+        Creat passivity enforced network.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Input network
+
+        Returns
+        -------
+        reciprocal : :class:`~skrf.network.Network` object
+                     Passivity enforced network
+        """
+        passive = ntwk.copy()
+        for i in range(ntwk.frequency.npoints):
+            U, D, Vh = np.linalg.svd(ntwk.s[i, :, :])
+            for k in range(ntwk.nports):
+                if D[k] > 1.:
+                    D[k] = 1.
+            passive.s[i, :, :] = U @ np.diag(D) @ Vh
+
+        return passive
+
+    def create_reciprocal(self, ntwk: Network) -> Network:
+        """
+        Creat reciprocal network.
+
+        The resulting network is the reciprocal of the input networks. The
+        reciprocity is not enforced.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Input network
+
+        Returns
+        -------
+        reciprocal : :class:`~skrf.network.Network` object
+                     Reciprocal network
+        """
+        reciprocal = ntwk.copy()
+        for i in range(ntwk.nports):
+            for j in range(ntwk.nports):
+                reciprocal.s[:, i, j] = ntwk.s[:, j, i]
+
+        return reciprocal
+
+    def extrapolate_to_fmax(self, ntwk: Network, data_rate: float,
+                            sample_per_UI: int, extrapolation: int)-> ndarray:
+        """
+        Extrapolate network max frequency if required by parameters.
+
+        Parameters
+        ----------
+        ntwk         : :class:`~skrf.network.Network` object
+                       Input network
+        data_rate    : :float
+                       Data rate (bps)
+        sample_per_UI: :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+        extrapolation: :number
+                       1 is constant extrapolation; 2 is zero padding
+
+        Returns
+        -------
+        extrapolated : :class:`~skrf.network.Network` object
+                       Extrapolated network
+        """
+        f_max = 0.5 * data_rate * sample_per_UI
+        df = ntwk.frequency.f[1] - ntwk.frequency.f[0]
+        f_new = ntwk.frequency.f
+        while(f_new[-1] < f_max):
+            f_new = np.append(f_new, f_new[-1] + df)
+        N1 = ntwk.frequency.npoints
+        N = len(f_new)
+        s_new = zeros((N, ntwk.nports, ntwk.nports), dtype = complex)
+        for i in range(ntwk.nports):
+            for j in range(ntwk.nports):
+                s_new[:N1, i, j] = ntwk.s[:, i, j]
+                ph = np.unwrap(np.angle(s_new[:N1, i, j]))
+                dph = (ph[-1] - ph[0]) / (N1 - 1)
+                for k in range(N1, N):
+                    if extrapolation == 1:
+                        s_new[k, i, j] = s_new[k - 1, i, j] * np.exp(1j * dph)
+                    else:
+                        s_new[k, i, j] = 0
+
+        return Network(frequency = f_new, s = s_new, name = ntwk.name,
+                       z0 = ntwk.z0[0])
+
+
+    def get_pulse_gaussian(self, dt: float, data_rate: float, N: int,
+                         rise_time_per: float, verbose = False)-> ndarray:
+        """
+        Get the FFT of a gaussian pulse. The pulse is shifted in time according
+        to parameters.
+
+        Parameters
+        ----------
+        dt           : :float
+                       Sample time (s)
+        data_rate    : :float
+                       Data rate (bps)
+        N            : :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+        verbose      : :boolean
+                       Plot referrence and generated pulses in the time
+                       domain
+
+        Returns
+        -------
+        fft : :ndarray
+              FFT of the pulse signal
+        """
+        n_samples = (N - 1) // 2
+        t = np.arange(-n_samples, n_samples + 1) * dt
+        sigma = rise_time_per / (data_rate * \
+                                 (np.sqrt(-np.log(0.2))-np.sqrt(-np.log(0.8))))
+        G = zeros(t.shape)
+        for i in range(len(t)):
+            G[i] = np.exp(-t[i]**2 / sigma**2)
+        k_middle = n_samples
+        k_start  = np.round(1.5 / data_rate / dt)
+        GG = zeros(t.shape)
+        for i in range(len(t)):
+            GG[i] = G[np.mod(i + k_middle - k_start, len(t)).astype(int)]
+        if verbose:
+            fig, ax = subplots(1, 1)
+            ax.plot(t, G, color = 'r', label = 'Reference')
+            ax.plot(t, GG, linestyle = 'dashed', label = 'Generated')
+            ax.legend(loc = 'upper right')
+            ax.set_ylabel('Amplitude (V)')
+            ax.set_xlabel('Time (s)')
+            ax.set_title('Gaussian Pulse')
+
+        return fft(GG)
+
+    def get_pulse_rect(self, dt: float, data_rate: float, N: int,
+                       rise_time_per: float, verbose = False)-> ndarray:
+        """
+        Get the FFT of a rectangular pulse with defined rise, high, and fall
+        times.
+
+        Rise time and fall time are equals.
+
+        Parameters
+        ----------
+        dt           : :float
+                       Sample time (s)
+        data_rate    : :float
+                       Data rate (bps)
+        N            : :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+        verbose      : :boolean
+                       Plot referrence and interpolated pulses in the time
+                       domain
+
+        Returns
+        -------
+        fft : :ndarray
+              FFT of the pulse signal
+        """
+        t_pulse = np.arange(0, N) * dt
+        k_high = np.round(1. / data_rate / dt)
+        k_rise = np.round(k_high * rise_time_per)
+        k_offset = np.array([0, k_rise, k_rise, k_rise, k_rise, 0])
+        k_ref = np.array([0, 0, k_rise, k_high, k_high + k_rise, N - 1])
+        t_ref = dt * (k_offset + k_ref)
+        v_ref = np.array([0, 0, 1, 1, 0, 0])
+
+        interp = interp1d(t_ref, v_ref)
+        v_pulse = interp(t_pulse)
+        if verbose:
+            fig, ax = subplots(1, 1)
+            ax.plot(t_ref, v_ref, color = 'r', marker = 'o', label = 'Reference')
+            ax.plot(t_pulse, v_pulse, linestyle = 'dashed', label = 'Interpolated')
+            ax.legend(loc = 'upper right')
+            ax.set_ylabel('Amplitude (V)')
+            ax.set_xlabel('Time (s)')
+            ax.set_title('Rectangular Pulse')
+
+        return fft(v_pulse)
+
+    def check_se_quality(self, ntwk: Network, data_rate: float,
+                            sample_per_UI: int, rise_time_per: float,
+                            pulse_shape: int, extrapolation: int,
+                            verbose = False) -> dict:
+        """
+        Application-based quality checking of in the time domain.
+
+        The data are interpolated to fit the application parameters.
+
+        Parameters
+        ----------
+        ntwk         : :class:`~skrf.network.Network` object
+                       Network to be checked
+        data_rate    : :float
+                       Data rate (bps)
+        sample_per_UI: :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+        pulse_shape  : :number
+                       1 is Gaussian; 2 is rectangular with Butterworth filter;
+                       3 is rectangular with Gaussian filter
+        extrapolation: :number
+                       1 is constant extrapolation; 2 is zero padding;
+                       3 is repeating
+        verbose      : :boolean
+                       Plot referrence and interpolated pulses in the time
+                       domain
+
+        Returns
+        -------
+        QM : :class:`dict` object
+              Dictionnary with quality metrics
+        """
+        if (1.5 * data_rate) > ntwk.frequency.f[-1]:
+            warnings.warn('Maximum frequency is less then recomended frequency.',
+                          RuntimeWarning, stacklevel=2)
+
+        # extrapolate max freq
+        ntwk_interpolated = self.extrapolate_to_fmax(ntwk, data_rate,
+                                                     sample_per_UI, extrapolation)
+
+        # extrapolate dc and interpolate with uniform step
+        # dc
+        # if ntwk_interpolated.frequency.f[0] == 0:
+        #     ntwk_interpolated.s[0] = np.real(ntwk_interpolated.s[0])
+        # else:
+        #     f = ntwk_interpolated.frequency.f
+        #     for i in range(ntwk_interpolated.nports):
+        #         for j in range(ntwk_interpolated.nports):
+        #             # calculate delay
+        #             s = ntwk_interpolated.frequency.s[:, i, j]
+        #             ph = -np.unwrap(np.angle(s))
+        #             delay = 1
+        #             for i in range(len(f)):
+        #                 if f[i] > 0:
+        #                     if delay > (ph[i] / f[i] / 2 / np.pi):
+        #                         delay = ph[i] / f[i] / 2 / np.pi
+        #             # extract delay to smooth origianl function
+        #             s = s * np.exp(1j * 2 * np.pi * f * delay)
+        #             # extract real and imaginary parts from the original function
+        #             re = np.real(s)
+        #             im = np.imag(s)
+        #             # create a*x^2+b parabola using (f(1),re(1)) and (f(2),re(2)) points
+        #             a = (re[1] - re[0]) / (f[1]**2 - f[0]**2)
+        #             b = re[0] - a * f[0]**2
+        #             # extend real part to DC
+        #             df = f[1] - f[0]
+
+        #             # create complex function from real and imaginary parts
+        #             extrapolated_component = re + 1j * im
+        #             # return delay
+        #             extrapolated_component = extrapolated_component * \
+        #                 np.exp(-1j * 2 * np.pi * extrapolated_frequency * delay)
+
+        if verbose:
+            fig, ax = subplots(1, 1)
+            ntwk.plot_s_db(1, 0, color = 'r', ax = ax, label = 'Original, S21')
+            ntwk_interpolated.plot_s_db(1, 0, color = 'b', linestyle = 'dashed', ax = ax,
+                                        label = 'Extrapolated, S21')
+            secax = ax.twinx()
+            ntwk.plot_s_deg(1, 0, color = 'm', ax = secax, label = 'Original, S21')
+            ntwk_interpolated.plot_s_deg(1, 0, color = 'c', linestyle = 'dashed', ax = secax,
+                                         label = 'Extrapolated, S21')
+            fig.tight_layout()
+
+        QM = {'passivity': {'value': 0, 'unit': 'mV'},
+              'reciprocity': {'value': 0, 'unit': 'mV'},
+              'causality': {'value': 0, 'unit': 'mV'},
+              }
+
+        return QM
 
 class IEEEP370_SE_NZC_2xThru(IEEEP370):
     """
