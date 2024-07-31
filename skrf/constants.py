@@ -48,8 +48,9 @@ This module contains constants, numerical approximations, and unit conversions
    to_meters
 
 """
+from __future__ import annotations
 from numbers import Number
-from typing import Sequence, Union, Literal
+from typing import Sequence, Union, Literal, get_args
 
 import numpy as np
 from scipy.constants import c, inch, mil
@@ -103,7 +104,8 @@ Minimum eigenvalue used in :meth:`~skrf.mathFunctions.nudge_eig`
 """
 
 # S-parameter definition labels and default definition
-S_DEFINITIONS = ['power', 'pseudo', 'traveling']
+SdefT = Literal["power", "pseudo", "traveling"]
+S_DEFINITIONS: list[SdefT] = list(get_args(SdefT))
 S_DEF_DEFAULT = 'power'
 S_DEF_HFSS_DEFAULT = 'traveling'
 
@@ -111,6 +113,8 @@ FrequencyUnitT = Literal["Hz", "kHz", "MHz", "GHz", "THz"]
 FREQ_UNITS = {"Hz": 1.0, "kHz": 1e3, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}
 
 SweepTypeT = Literal["lin", "log"]
+CoordT = Literal["cart", "polar"]
+InterpolKindT = Literal["linear", "cubic", "nearest", "zero", "slinear", "quadratic", "rational"]
 
 NumberLike = Union[Number, Sequence[Number], np.ndarray]
 
