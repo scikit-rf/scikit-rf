@@ -1727,6 +1727,46 @@ class IEEEP370(Deembedding):
                                                  extrapolation)
 
         # extrapolate dc and interpolate with uniform step
+        # dc
+        if ntwk_interpolated.frequency.f[0] == 0:
+            ntwk_interpolated.s[0] = np.real(ntwk_interpolated.s[0])
+        else:
+            f = ntwk_interpolated.frequency.f
+            for i in range(ntwk_interpolated.nports):
+                for j in range(ntwk_interpolated.nports):
+                    # calculate delay
+                    s = ntwk_interpolated.frequency.s[:, i, j]
+                    ph = -np.unwrap(np.angle(s))
+                    delay = 1
+                    for i in range(len(f)):
+                        if f[i] > 0:
+                            if delay > (ph[i] / f[i] / 2 / np.pi):
+                                delay = ph[i] / f[i] / 2 / np.pi
+                    # extract delay to smooth origianl function
+                    s = s * np.exp(1j * 2 * np.pi * f * delay)
+                    # extract real and imaginary parts from the original function
+                    re = np.real(s)
+                    im = np.imag(s)
+                    # create a*x^2+b parabola using (f(1),re(1)) and (f(2),re(2)) points
+                    a = (re[1] - re[0]) / (f[1]**2 - f[0]**2)
+                    b = re[0] - a * f[0]**2
+                    # extend real part to DC
+                    df = f[1] - f[0]
+
+                    # create complex function from real and imaginary parts
+                    extrapolated_component = re + 1j * im
+                    # return delay
+                    extrapolated_component = extrapolated_component * \
+                        np.exp(-1j * 2 * np.pi * extrapolated_frequency * delay)
+
+
+
+
+
+
+
+
+
 
         if verbose:
             fig, ax = subplots(1, 1)
