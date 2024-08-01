@@ -1282,17 +1282,24 @@ class Circuit:
         b = self._b(a)
         z0s = self.z0
         i, Vs = 0, np.zeros_like(z0s)
+
         for cnx in self.connections:
             cnx_len = len(cnx)
-            tot_shunt_z0 = (1 / z0s[:, i : i + cnx_len]).sum(axis=1)
+            z0_segment = z0s[:, i : i + cnx_len]
+            tot_shunt_z0 = (1 / z0_segment).sum(axis=1)
             Vk = np.zeros(shape=z0s.shape[0], dtype="complex128")
+
+            # Node voltage is the summation of each ports' outwave voltage
+            # The voltage of each port in the same node is consistent
             for j in range(cnx_len):
-                in_z0 = z0s[:, i + j]
+                in_z0 = z0_segment[:, j]
                 out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
-                gamma = (out_z0 - in_z0) / (out_z0 + in_z0)
-                Vk += (1 + gamma) * (b[:, i + j] * np.sqrt(in_z0))
+                tau = (2 * out_z0) / (out_z0 + in_z0)
+                Vk += (b[:, i + j] * np.sqrt(in_z0)) * tau
+
             Vs[:, i : i + cnx_len] = Vk[:, None]
             i += cnx_len
+
         return Vs
 
     def currents_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
