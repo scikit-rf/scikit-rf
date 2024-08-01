@@ -1224,13 +1224,13 @@ class Circuit:
         # multiple (>2) ports at the same time in the connection setup, like :
         # cnx = [
         #       [(ntw1, portA), (ntw2, portB), (ntw3, portC)], ...
-        #]
+        # ]
         # Such a case is not supported with the present calculation method
         # which only works with pair connections between ports, ie like:
         # cnx = [
         #       [(ntw1, portA), (ntw2, portB)],
         #       [(ntw2, portD), (ntw3, portC)], ...
-        #]
+        # ]
         # It should not be a huge limitation (?), since it should be always possible
         # to add the proper splitting Network (such a "T" or hybrid or more)
         # and connect this splitting Network ports to other Network ports.
@@ -1278,19 +1278,21 @@ class Circuit:
 
         """
         # cf currents() for more details
-        for inter in self.intersections_dict.values():
-            if len(inter) > 2:
-                raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
-
         a = self._a(self._a_external(power, phase))
         b = self._b(a)
         z0s = self.z0
-        directions = self._currents_directions
-        i_l, i_r = directions[:, 0], directions[:, 1]
-
-        z0_sqrt = np.sqrt(z0s)
-        Vs = (b[:,i_l] * z0_sqrt[:,i_r] + b[:,i_r] * z0_sqrt[:,i_l]) \
-            * (2*z0_sqrt[:,i_l] * z0_sqrt[:,i_r]) / (z0s[:,i_l] + z0s[:,i_r])
+        i, Vs = 0, np.zeros_like(z0s)
+        for cnx in self.connections:
+            cnx_len = len(cnx)
+            tot_shunt_z0 = (1 / z0s[:, i : i + cnx_len]).sum(axis=1)
+            Vk = np.zeros(shape=z0s.shape[0], dtype="complex128")
+            for j in range(cnx_len):
+                in_z0 = z0s[:, i + j]
+                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                gamma = (out_z0 - in_z0) / (out_z0 + in_z0)
+                Vk += (1 + gamma) * (b[:, i + j] * np.sqrt(in_z0))
+            Vs[:, i : i + cnx_len] = Vk[:, None]
+            i += cnx_len
         return Vs
 
     def currents_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
