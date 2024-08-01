@@ -2420,15 +2420,15 @@ class IEEEP370_TD_QM:
         if pulse_shape == 1:
             filter = np.ones(N, dtype = complex)
             pulse = self.get_pulse_gaussian(dt, data_rate, 2 * N - 1,
-                                            rise_time_per, verbose = self.verbose)
+                                            rise_time_per)
         elif pulse_shape == 2:
             filter = 1. / (1 + 1j * freq / f0)
             pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1,
-                                        1.4 * rise_time_per, verbose = self.verbose)
+                                        1.4 * rise_time_per)
         else:
             filter = np.exp(-2 * np.pi * np.pi * freq * freq * sigma * sigma)
             pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1,
-                                        1.4 * rise_time_per, verbose = self.verbose)
+                                        1.4 * rise_time_per)
         for i in range(nports):
             for j in range(nports):
                 s_ij = ntwk.s[:, i, j] * filter
@@ -2441,6 +2441,16 @@ class IEEEP370_TD_QM:
                 v[:, i, j] = np.real(np.fft.ifft(pulse_response_freq))
 
         return (v, t)
+
+    def get_time_domain_difference_mv(self, v1: ndarray, v2: ndarray, t: ndarray,
+                                      nports: int,
+                                      data_rate: float) -> (ndarray, ndarray):
+        time_domain_difference_mv = zeros((nports, nports))
+        for i in range(nports):
+            for j in range(nports):
+                time_domain_difference_mv[i, j] = np.max(np.abs(v1[:,i,j] - v2[:,i,j]))
+
+        return time_domain_difference_mv
 
     def interpolate_ij(self, f: ndarray, f_new: ndarray, s_ij: ndarray):
         """
@@ -2502,16 +2512,34 @@ class IEEEP370_TD_QM:
             fig.tight_layout()
 
         # get Causal Matrix
+        causal, _ = self.create_causal(ntwk_interpolated)
         # get Passive Matrix
+        passive = self.create_passive(ntwk_interpolated)
         # get Reciprocal Matrix
+        reciprocal = self.create_reciprocal(ntwk_interpolated)
 
         # get Time Domain Matrices
+        v_causal, t_causal = self.get_time_domain(causal,
+                                                  self.data_rate,
+                                                  self.rise_time_per,
+                                                  self.pulse_shape)
+        v_passive, t_passive = self.get_time_domain(passive,
+                                                  self.data_rate,
+                                                  self.rise_time_per,
+                                                  self.pulse_shape)
+        v_reciprocal, t_reciprocal = self.get_time_domain(reciprocal,
+                                                  self.data_rate,
+                                                  self.rise_time_per,
+                                                  self.pulse_shape)
         v_origin, t_origin = self.get_time_domain(ntwk_interpolated,
                                                   self.data_rate,
                                                   self.rise_time_per,
                                                   self.pulse_shape)
 
         # get Time Domain Difference
+        causality_difference_mv = self.get_time_domain_difference_mv(v_causal, v_origin, t_origin, 2, self.data_rate)
+        passivity_difference_mv = self.get_time_domain_difference_mv(v_passive, v_origin, t_origin, 2, self.data_rate)
+        reciprocity_difference_mv = self.get_time_domain_difference_mv(v_reciprocal, v_origin, t_origin, 2, self.data_rate)
 
         # plot
         if self.verbose:
@@ -2521,9 +2549,16 @@ class IEEEP370_TD_QM:
             ax.plot(t_origin * 1e9, v_origin[:, 0, 0])
             ax = axs[0, 1]
             ax.set_title('TDT21')
-            ax.plot(t_origin * 1e9, v_origin[:, 1, 0])
+            ax.plot(t_causal * 1e9, v_causal[:, 1, 0], label = 'causal')
+            ax.plot(t_passive * 1e9, v_passive[:, 1, 0], label = 'passive')
+            ax.plot(t_reciprocal * 1e9, v_reciprocal[:, 1, 0], label = 'reciprocal')
+            ax.plot(t_origin * 1e9, v_origin[:, 1, 0], label = 'original')
+            ax.legend(loc = 'upper right')
             ax = axs[1, 0]
             ax.set_title('TDT12')
+            ax.plot(t_causal * 1e9, v_causal[:, 0, 1])
+            ax.plot(t_passive * 1e9, v_passive[:, 0, 1])
+            ax.plot(t_reciprocal * 1e9, v_reciprocal[:, 0, 1])
             ax.plot(t_origin * 1e9, v_origin[:, 0, 1])
             ax = axs[1, 1]
             ax.set_title('TDT22')
@@ -2533,12 +2568,12 @@ class IEEEP370_TD_QM:
                 ax.set_ylabel('Magnitude (V)')
             fig.tight_layout()
 
-        QM = {'passivity': {'value': np.array([[0, 0], [0, 0]]), 'unit': 'mV',
+        QM = {'causality': {'value': causality_difference_mv, 'unit': 'mV',
                             'evaluation': ''},
-              'reciprocity': {'value': np.array([[0, 0], [0, 0]]), 'unit': 'mV',
+             'passivity': {'value': passivity_difference_mv, 'unit': 'mV',
+                           'evaluation': ''},
+              'reciprocity': {'value': reciprocity_difference_mv, 'unit': 'mV',
                               'evaluation': ''},
-              'causality': {'value': np.array([[0, 0], [0, 0]]), 'unit': 'mV',
-                            'evaluation': ''},
               }
 
         # evaluation
@@ -2611,17 +2646,17 @@ class IEEEP370_TD_QM:
         if 'dd' in QM:
             print('Differential mode')
             for k in QM['dd'].keys():
-                print(f"{k} ({QM['dd'][k]['unit']}) differences in the time"
+                print(f"{k} ({QM['dd'][k]['unit']}) differences in the time "
                        f"domain are {QM['dd'][k]['evaluation']}")
                 print(f"{QM['dd'][k]['value']}")
             print('Common mode')
             for k in QM['cc'].keys():
-                print(f"{k} ({QM['cc'][k]['unit']}) differences in the time"
+                print(f"{k} ({QM['cc'][k]['unit']}) differences in the time "
                        f"domain are {QM['cc'][k]['evaluation']}")
                 print(f"{QM['cc'][k]['value']}")
         else:
             for k in QM.keys():
-                print(f"{k} ({QM[k]['unit']}) differences in the time domain"
+                print(f"{k} ({QM[k]['unit']}) differences in the time domain "
                        f"are {QM[k]['evaluation']}")
                 print(f"{QM[k]['value']}")
 
