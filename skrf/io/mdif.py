@@ -16,6 +16,7 @@ Mdif class and utilities
 from __future__ import annotations
 
 from itertools import product
+from pathlib import Path
 from typing import TextIO
 
 import numpy as np
@@ -69,13 +70,13 @@ class Mdif:
 
     """
 
-    def __init__(self, file: str | TextIO):
+    def __init__(self, file: str | Path | TextIO):
         """
         Constructor
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             mdif file to load
         """
         with get_fid(file) as fid:
@@ -142,7 +143,13 @@ class Mdif:
             if line.strip().startswith('!'):
                 comments.append(line[1:].strip())
 
-        return ' '.join(comments)
+            # Break out after the first network starts, thereby only
+            # pulling out the comments for the entire NetworkSet, not
+            # everything for each network. That's pulled out later.
+            if line.strip().lower().startswith('begin'):
+                break
+
+        return comments
 
 
     def _parse_data(self, block_data: list) -> Network:
@@ -167,6 +174,7 @@ class Mdif:
         """
         kinds = []
         data_lines = []
+        comments = []
 
         # Assumes default unit and format if not found during parsing
         frequency_unit = 'hz'
@@ -194,10 +202,12 @@ class Mdif:
                 if formt not in ['ma', 'db', 'ri']:
                     raise NotImplementedError(f'ERROR: illegal format value {formt}')
 
-            elif line.startswith('!'):
+            elif line.strip().startswith('!'):
                 if line[1:].startswith(' network name:'):
                     ntwk_name = line.split(':')[-1].strip()
 
+                # Append the comments to the list of comments for that data block
+                comments.append(line.strip()[1:])
 
             # Parameter kinds (s11, z21, ...) are described as
             #
@@ -277,7 +287,7 @@ class Mdif:
 
         # building the Network
         freq = Frequency.from_f(f, unit=frequency_unit)
-        ntwk = Network(frequency=freq, s=s, z0=z0, name=ntwk_name)
+        ntwk = Network(frequency=freq, s=s, z0=z0, name=ntwk_name, comments="\n".join(comments))
 
         return ntwk
 
@@ -367,8 +377,8 @@ class Mdif:
               data_types: dict | None = None,
               comments: str | None = None,
               *,
-              skrf_comment: bool = True,
-              ads_compatible: bool = True):
+              ads_compatible: bool = True,
+              **kwargs):
         """
         Write a MDIF file from a NetworkSet.
 
@@ -389,11 +399,11 @@ class Mdif:
         comments: list of strings
             Comments to add to output_file.
             Each list items is a separate comment line
-        skrf_comment : bool, optional
-            write `created by skrf` comment
         ads_compatible: bool. Default is True.
             Indicates whether to write the file in a format that
             ADS will read properly.
+        **kwargs: dictionary with extra arguments to pass through to the
+            underlying write_touchstone() method in the Network class
 
         See Also
         --------
@@ -421,6 +431,9 @@ class Mdif:
             else:
                 # using Network names (->string)
                 data_types = {"name": "string"}
+
+        # Remove the return_string argument, as it's a required argument for this method
+        kwargs.pop('return_string', None)
 
         # VAR datatypes
         dict_types = dict({"int": "0", "double": "1", "string": "2"})
@@ -455,7 +468,7 @@ class Mdif:
                 mdif.write("\nBEGIN ACDATA\n")
                 mdif.write(optionstring + "\n")
                 mdif.write("! network name: " + ntwk.name + "\n")
-                data = ntwk.write_touchstone(return_string=True, skrf_comment=skrf_comment)
+                data = ntwk.write_touchstone(return_string=True, **kwargs)
                 mdif.write(data)
                 mdif.write("END\n\n")
 

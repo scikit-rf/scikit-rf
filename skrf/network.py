@@ -170,6 +170,7 @@ import numpy as np
 from numpy import gradient, ndarray, shape
 from numpy.linalg import inv as npy_inv
 from scipy import stats  # for Network.add_noise_*, and Network.windowed
+from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d  # for Network.interpolate()
 
 from . import mathFunctions as mf
@@ -349,7 +350,7 @@ class Network:
         Parameters
         ----------
 
-        file : str or file-object
+        file : str, Path, or file-object
             file to load information from. supported formats are:
              * touchstone file (.s?p) (or .ts)
              * io.StringIO object (with `.name` property which contains the file extension, such as `myfile.s4p`)
@@ -425,8 +426,6 @@ class Network:
             self.s_def = s_def
 
         if file is not None:
-            if isinstance(file, Path):
-                file = str(file.resolve())
 
             # allows user to pass StringIO, filename or file obj
             if isinstance(file, io.StringIO):
@@ -993,6 +992,8 @@ class Network:
         s : :class:`numpy.ndarray`
             The input s-matrix should be of shape `fxnxn`,
             where f is frequency axis and n is number of ports.
+            Note that to set this requires that the values are
+            given in complex format. DB and MA aren't automatically translated
 
         """
         self._s = fix_param_shape(s)
@@ -1383,7 +1384,7 @@ class Network:
             self._frequency = new_frequency.copy()
         else:
             try:
-                self._frequency = Frequency.from_f(new_frequency)
+                self._frequency = Frequency.from_f(new_frequency, unit=self.frequency.unit)
             except TypeError as err:
                 raise TypeError('Could not convert argument to a frequency vector') from err
 
@@ -2186,7 +2187,7 @@ class Network:
 
 
     # touchstone file IO
-    def read_touchstone(self, filename: str | TextIO,
+    def read_touchstone(self, filename: str | Path | TextIO,
                         encoding: str | None = None) -> None:
         """
         Load values from a touchstone file.
@@ -2196,7 +2197,7 @@ class Network:
 
         Parameters
         ----------
-        filename : str or file-object
+        filename : str, Path, or file-object
             touchstone file name.
         encoding : str, optional
             define the file encoding to use. Default value is None,
@@ -2259,7 +2260,7 @@ class Network:
                 self.name = os.path.basename(os.path.splitext(touchstoneFile.filename)[0])
 
     @classmethod
-    def zipped_touchstone(cls, filename: str, archive: zipfile.ZipFile) -> Network:
+    def zipped_touchstone(cls, filename: str | Path, archive: zipfile.ZipFile) -> Network:
         """
         Read a Network from a Touchstone file in a ziparchive.
 
@@ -2276,6 +2277,10 @@ class Network:
             Network from the Touchstone file
 
         """
+
+        # Convert a path filename to a string
+        filename = str(filename.resolve()) if isinstance(filename, Path) else filename
+
         # Touchstone requires file objects to be seekable (for get_gamma_z0_from_fid)
         # A ZipExtFile object is not seekable prior to Python 3.7, so use StringIO
         # and manually add a name attribute
@@ -2284,7 +2289,7 @@ class Network:
         ntwk = Network(fileobj)
         return ntwk
 
-    def write_touchstone(self, filename: str = None, dir: str = None,
+    def write_touchstone(self, filename: str | Path = None, dir: str | Path = None,
                          write_z0: bool = False, skrf_comment: bool = True,
                          return_string: bool = False, to_archive: bool = None,
                          form: str = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
@@ -2294,10 +2299,10 @@ class Network:
 
         Parameters
         ----------
-        filename : a string, optional
+        filename : a string or Path, optional
             touchstone filename, without extension. if 'None', then
             will use the network's :attr:`name`.
-        dir : string, optional
+        dir : string or Path, optional
             the directory to save the file in.
         write_z0 : boolean
             write impedance information into touchstone as comments,
@@ -2379,6 +2384,9 @@ class Network:
                 raise ValueError('No filename given. Network must have a name, or you must provide a filename')
 
         if get_extn(filename) is None:
+            if isinstance(filename, Path):
+                filename = str(filename.resolve())
+
             filename = filename + '.s%ip' % ntwk.number_of_ports
 
         if dir is not None:
@@ -2578,7 +2586,7 @@ class Network:
             elif return_string is True:
                 return output.getvalue()
 
-    def write(self, file: str = None, *args, **kwargs) -> None:
+    def write(self, file: str | Path = None, *args, **kwargs) -> None:
         r"""
         Write the Network to disk using the :mod:`pickle` module.
 
@@ -2589,7 +2597,7 @@ class Network:
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             filename or a file-object. If left as None then the
             filename will be set to Network.name, if its not None.
             If both are None, ValueError is raised.
@@ -3397,8 +3405,9 @@ class Network:
             self.s[:, :, to_ports] = self.s[:, :, from_ports]  # renumber columns
         self.z0[:, to_ports] = self.z0[:, from_ports]
         if self.port_names is not None:
-            self.port_names = np.array(self.port_names)
-            self.port_names[to_ports] = self.port_names[from_ports]
+            _port_names = np.array(self.port_names)
+            _port_names[to_ports] = _port_names[from_ports]
+            self.port_names = _port_names.tolist()
 
     def renumbered(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> Network:
         """
@@ -4097,16 +4106,24 @@ class Network:
             Xi[:, 4 * l:4 * l + 4, 4 * l:4 * l + 4] = self._X(l * 2, l * 2 + 1, l, p, z0_se, z0_mm, s_def)
         return Xi
 
-    def _Xi_tilde(self, p: int, z0_se: np.ndarray, z0_mm: np.ndarray, s_def : str) -> np.ndarray:  # (31)
+    def _Xi_tilde(
+        self, p: int, z0_se: np.ndarray, z0_mm: np.ndarray, s_def: str
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:  # (31)
         n = self.nports
         P = np.ones(self.f.shape[0])[:, np.newaxis, np.newaxis] * self._P(p)
         QT = np.ones(self.f.shape[0])[:, np.newaxis, np.newaxis] * self._Q().T
         Xi = self._Xi(p, z0_se, z0_mm, s_def)
-        Xi_tilde = np.einsum('...ij,...jk->...ik', np.einsum('...ij,...jk->...ik', P, Xi), QT)
+        Xi_tilde: np.ndarray = np.einsum("...ij,...jk->...ik", np.einsum("...ij,...jk->...ik", P, Xi), QT)
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
-    def impulse_response(self, window: str = 'hamming', n: int = None, pad: int = 0,
-                        bandpass: bool = None, squeeze: bool = True) -> tuple[np.ndarray, np.ndarray]:
+    def impulse_response(
+        self,
+        window: str = "hamming",
+        n: int | None = None,
+        pad: int = 0,
+        bandpass: bool | None = None,
+        squeeze: bool = True,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate time-domain impulse response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -4153,33 +4170,30 @@ class Network:
             step_response
             extrapolate_to_dc
         """
-        if n is None:
-            # Use zero-padding specification. Note that this does not allow n odd.
-            n = 2 * (self.frequency.npoints + pad - 1)
+        if bandpass is None:
+            bandpass = self.f[0] != 0
 
-        fstep = self.frequency.step
-        if n % 2 == 0:
-            t = np.fft.ifftshift(np.fft.fftfreq(n, fstep))
-        else:
-            t = np.fft.ifftshift(np.fft.fftfreq(n+1, fstep))[1:]
-        if bandpass in (True, False):
-            center_to_dc = not bandpass
-        else:
-            center_to_dc = None
+        t = self.frequency._t_padded(pad=pad, n=n, bandpass=bandpass)
+        n = len(t)
+
         if window is not None:
-            w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
+            w = self.windowed(window=window, normalize=False, center_to_dc=not bandpass)
         else:
             w = self
 
-        ir = mf.irfft(w.s, n=n)
+        if bandpass:
+            ir = np.fft.fftshift(np.fft.ifft(w.s, axis=0, n=n), axes=0)
+        else:
+            ir = np.fft.fftshift(np.fft.irfft(w.s, axis=0, n=n), axes=0)
+
         if squeeze:
             ir = ir.squeeze()
 
         return t, ir
 
     def step_response(
-            self, window: str = 'hamming', n: int = None, pad: int = 0, squeeze: bool = True
-            ) -> tuple[np.ndarray, np.ndarray]:
+        self, window: str = "hamming", n: int | None = None, pad: int = 0, squeeze: bool = True
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate time-domain step response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -4189,6 +4203,8 @@ class Network:
         uniform frequency spacing.
 
         Y-axis is the reflection coefficient.
+        `step_resonse` is equal to the cumulative trapezoid integration of the
+        `impulse_response` function.
 
         Parameters
         ----------
@@ -4238,7 +4254,7 @@ class Network:
             )
 
         t, y = self.impulse_response(window=window, n=n, pad=pad, bandpass=False, squeeze=squeeze)
-        return t, np.cumsum(y, axis=0)
+        return t, cumulative_trapezoid(y, initial=0, axis=0)
 
     # Network Active s/z/y/vswr parameters
     def s_active(self, a: np.ndarray) -> np.ndarray:

@@ -16,6 +16,7 @@ Citi class and utilities
 from __future__ import annotations
 
 import typing
+from pathlib import Path
 
 import numpy as np
 
@@ -57,13 +58,13 @@ class Citi:
     >>> file = open('network.cti')
     >>> m = rf.Citi(file)
     """
-    def __init__(self, file: str | typing.TextIO):
+    def __init__(self, file: str | Path | typing.TextIO):
         """
         Constructor
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             mdif file to load
         """
         self._comments = []

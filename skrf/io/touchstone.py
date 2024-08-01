@@ -33,6 +33,7 @@ import warnings
 import zipfile
 from dataclasses import dataclass, field
 from functools import cached_property
+from pathlib import Path
 from typing import Callable
 
 import numpy as np
@@ -189,13 +190,13 @@ class Touchstone:
     .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
 
-    def __init__(self, file: str | typing.TextIO, encoding: str | None = None):
+    def __init__(self, file: str | Path | typing.TextIO, encoding: str | None = None):
         """
         constructor
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             touchstone file to load
         encoding : str, optional
             define the file encoding to use. Default value is None,
