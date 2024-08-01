@@ -336,6 +336,11 @@ class Network:
     Default interpolation method.
     """
 
+    noise_fill_value = np.nan
+    """
+    Default noise fill value when out of the s-parameter frequency bounds.
+    """
+
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
                  comments: str = None, f_unit: str = None,
@@ -1456,17 +1461,28 @@ class Network:
         if not self.noisy:
             raise ValueError('network does not have noise')
 
-        if self.noise_freq.f.size > 1 :
-            noise_real = interp1d(self.noise_freq.f, self.noise.real, axis=0, kind=Network.noise_interp_kind)
-            noise_imag = interp1d(self.noise_freq.f, self.noise.imag, axis=0, kind=Network.noise_interp_kind)
+        if self.noise_freq.f.size > 1:
+            noise_real = interp1d(
+                self.noise_freq.f,
+                self.noise.real,
+                axis=0,
+                kind=self.noise_interp_kind,
+                bounds_error=False,
+                fill_value=self.noise_fill_value
+            )
+            noise_imag = interp1d(
+                self.noise_freq.f,
+                self.noise.imag,
+                axis=0,
+                kind=self.noise_interp_kind,
+                bounds_error=False,
+                fill_value=self.noise_fill_value
+            )
             return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
-        else :
-            noise_real =  self.noise.real
+        else:
+            noise_real = self.noise.real
             noise_imag = self.noise.imag
             return noise_real + 1.0j * noise_imag
-
-
-
 
     @property
     def f_noise(self) -> Frequency:
