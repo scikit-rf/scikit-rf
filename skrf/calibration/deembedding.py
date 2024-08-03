@@ -1849,7 +1849,7 @@ class IEEEP370_FD_QM:
                         Vn = ntwk.s[k + 1, i, j] - ntwk.s[k, i, j]
                         Vn1 = ntwk.s[k + 2, i, j] - ntwk.s[k + 1, i, j]
                         R = real(Vn1) * imag(Vn) - imag(Vn1) * real(Vn)
-                        if R >  0:
+                        if R > 0:
                             PositiveR = PositiveR + R
                         TotalR = TotalR + np.abs(R)
                     CQM[i, j] = np.nanmax((PositiveR / TotalR, 0)) * 100.
@@ -2415,7 +2415,7 @@ class IEEEP370_TD_QM:
         # Gaussian filter
         f_cut = 3. * data_rate / 2.
         sigma = 1. / 2. / np.pi / f_cut
-        rise_time = 1. / data_rate * 1000 * rise_time_per;
+        rise_time = 1. / data_rate * 1000 * rise_time_per
         f0 = 320 / rise_time
         if pulse_shape == 1:
             filter = np.ones(N, dtype = complex)
@@ -2436,7 +2436,7 @@ class IEEEP370_TD_QM:
                 s_ij_conj = zeros(2 * N - 1, dtype = complex)
                 s_ij_conj[:N] = s_ij
                 for k in range(N - 1):
-                    s_ij_conj[i + N] = np.conj(s_ij_conj[N-i-1])
+                    s_ij_conj[k + N] = np.conj(s_ij_conj[N-k-1])
                 pulse_response_freq = pulse * s_ij_conj
                 v[:, i, j] = np.real(np.fft.ifft(pulse_response_freq))
 
@@ -2445,10 +2445,29 @@ class IEEEP370_TD_QM:
     def get_time_domain_difference_mv(self, v1: ndarray, v2: ndarray, t: ndarray,
                                       nports: int,
                                       data_rate: float) -> (ndarray, ndarray):
+        N = len(t)
+        dt = t[1] - t[0]
+        UI = 1. / data_rate / dt
+        max_bits = 31
         time_domain_difference_mv = zeros((nports, nports))
+        N_UI = np.round(UI).astype(int)
+        delta = zeros(N_UI)
         for i in range(nports):
             for j in range(nports):
-                time_domain_difference_mv[i, j] = np.max(np.abs(v1[:,i,j] - v2[:,i,j]))
+                max_index = np.argmax(v1[:, i, j])
+                last_index = max_index + max_bits * UI
+                lower_index = max_index - max_bits * UI
+                for k in range(N_UI):
+                    delta[k] = 0
+                    for m in range(np.floor(N / UI).astype(int) - 3):
+                        ind = k + np.floor(m * UI).astype(int)
+                        if lower_index > 0:
+                            condition = (ind < last_index) and (ind > lower_index)
+                        else:
+                            condition = (ind < last_index) or (ind > N - lower_index)
+                        if condition:
+                            delta[k] = delta[k] + np.abs(v1[ind, i, j] - v2[ind, i, j])
+                time_domain_difference_mv[i, j] = np.max(delta)
 
         return time_domain_difference_mv
 
@@ -2537,9 +2556,19 @@ class IEEEP370_TD_QM:
                                                   self.pulse_shape)
 
         # get Time Domain Difference
-        causality_difference_mv = self.get_time_domain_difference_mv(v_causal, v_origin, t_origin, 2, self.data_rate)
-        passivity_difference_mv = self.get_time_domain_difference_mv(v_passive, v_origin, t_origin, 2, self.data_rate)
-        reciprocity_difference_mv = self.get_time_domain_difference_mv(v_reciprocal, v_origin, t_origin, 2, self.data_rate)
+        causality_difference_mv = self.get_time_domain_difference_mv(v_causal, v_origin,
+                                                                     t_origin, 2,
+                                                                     self.data_rate)
+        passivity_difference_mv = self.get_time_domain_difference_mv(v_passive, v_origin,
+                                                                     t_origin, 2,
+                                                                     self.data_rate)
+        reciprocity_difference_mv = self.get_time_domain_difference_mv(v_reciprocal, v_origin,
+                                                                       t_origin, 2,
+                                                                       self.data_rate)
+
+        causality_metric = np.round(1000 * np.linalg.norm(causality_difference_mv), 1)
+        passivity_metric = np.round(1000 * np.linalg.norm(passivity_difference_mv), 1)
+        reciprocity_metric = np.round(1000 * np.linalg.norm(reciprocity_difference_mv), 1)
 
         # plot
         if self.verbose:
@@ -2568,16 +2597,16 @@ class IEEEP370_TD_QM:
                 ax.set_ylabel('Magnitude (V)')
             fig.tight_layout()
 
-        QM = {'causality': {'value': causality_difference_mv, 'unit': 'mV',
+        QM = {'causality': {'value': causality_metric, 'unit': 'mV',
                             'evaluation': ''},
-             'passivity': {'value': passivity_difference_mv, 'unit': 'mV',
+             'passivity': {'value': passivity_metric, 'unit': 'mV',
                            'evaluation': ''},
-              'reciprocity': {'value': reciprocity_difference_mv, 'unit': 'mV',
+              'reciprocity': {'value': reciprocity_metric, 'unit': 'mV',
                               'evaluation': ''},
               }
 
         # evaluation
-        CQM = np.max(QM['causality']['value'])
+        CQM = QM['causality']['value']
         if CQM >= 15.:
             QM['causality']['evaluation'] = 'poor'
         elif CQM >= 10.:
@@ -2587,7 +2616,7 @@ class IEEEP370_TD_QM:
         else:
             QM['causality']['evaluation'] = 'good'
 
-        PQM = np.max(QM['causality']['value'])
+        PQM = QM['passivity']['value']
         if PQM >= 15.:
             QM['passivity']['evaluation'] = 'poor'
         elif PQM >= 10.:
@@ -2597,7 +2626,7 @@ class IEEEP370_TD_QM:
         else:
             QM['passivity']['evaluation'] = 'good'
 
-        RQM = np.max(QM['causality']['value'])
+        RQM = QM['reciprocity']['value']
         if RQM >= 15.:
             QM['reciprocity']['evaluation'] = 'poor'
         elif RQM >= 10.:
@@ -2646,19 +2675,16 @@ class IEEEP370_TD_QM:
         if 'dd' in QM:
             print('Differential mode')
             for k in QM['dd'].keys():
-                print(f"{k} ({QM['dd'][k]['unit']}) differences in the time "
-                       f"domain are {QM['dd'][k]['evaluation']}")
-                print(f"{QM['dd'][k]['value']}")
+                print(f"{k} in the time domain is {QM['dd'][k]['evaluation']} "
+                       f"({QM['dd'][k]['value']} {QM['dd'][k]['unit']})")
             print('Common mode')
             for k in QM['cc'].keys():
-                print(f"{k} ({QM['cc'][k]['unit']}) differences in the time "
-                       f"domain are {QM['cc'][k]['evaluation']}")
-                print(f"{QM['cc'][k]['value']}")
+                print(f"{k} in the time domain is {QM['cc'][k]['evaluation']} "
+                       f"({QM['cc'][k]['value']} {QM['cc'][k]['unit']})")
         else:
             for k in QM.keys():
-                print(f"{k} ({QM[k]['unit']}) differences in the time domain "
-                       f"are {QM[k]['evaluation']}")
-                print(f"{QM[k]['value']}")
+                print(f"{k} in the time domain is {QM[k]['evaluation']} "
+                       f"({QM[k]['value']} {QM[k]['unit']})")
 
 class IEEEP370_SE_NZC_2xThru(IEEEP370):
     """
