@@ -1914,12 +1914,12 @@ class IEEEP370_FD_QM:
             RM = 0
             for k in range(ntwk.nports):
                 for m in range(ntwk.nports):
-                    RM = RM + np.abs(ntwk.s[i, m, k] - ntwk.s[i, k, m])
+                    RM = RM + np.abs(ntwk.s[i, k, m] - ntwk.s[i, m, k])
             RM = RM / (ntwk.nports * (ntwk.nports - 1))
             if RM > C:
                 RW[i] = (RM - C) / B
 
-            return np.max((Nf - np.sum(RW)), 0) / Nf * 100.
+        return np.max([Nf - np.sum(RW), 0]) / Nf * 100.
 
     def check_se_quality(self, ntwk: Network) -> dict:
         """
