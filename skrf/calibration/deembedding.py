@@ -2308,27 +2308,28 @@ class IEEEP370_TD_QM:
               FFT of the pulse signal
         """
         n_samples = (N - 1) // 2
-        t = np.arange(-n_samples, n_samples + 1) * dt
+        self.t_pulse = np.arange(-n_samples, n_samples + 1) * dt
+        N = len(self.t_pulse)
         sigma = rise_time_per / (data_rate * \
                                  (np.sqrt(-np.log(0.2))-np.sqrt(-np.log(0.8))))
-        G = zeros(t.shape)
-        for i in range(len(t)):
-            G[i] = np.exp(-t[i]**2 / sigma**2)
+        self.v_ref = zeros(self.t_pulse.shape)
+        for i in range(N):
+            self.v_ref[i] = np.exp(-self.t_pulse[i]**2 / sigma**2)
         k_middle = n_samples
         k_start  = np.round(1.5 / data_rate / dt)
-        GG = zeros(t.shape)
-        for i in range(len(t)):
-            GG[i] = G[np.mod(i + k_middle - k_start, len(t)).astype(int)]
+        self.v_pulse = zeros(self.t_pulse.shape)
+        for i in range(N):
+            self.v_pulse[i] = self.v_ref[np.mod(i + k_middle - k_start, N).astype(int)]
         if verbose:
             fig, ax = subplots(1, 1)
-            ax.plot(t, G, color = 'r', label = 'Reference')
-            ax.plot(t, GG, linestyle = 'dashed', label = 'Generated')
+            ax.plot(self.t_pulse, self.v_ref, color = 'r', label = 'Reference')
+            ax.plot(self.t_pulse, self.v_pulse, linestyle = 'dashed', label = 'Generated')
             ax.legend(loc = 'upper right')
             ax.set_ylabel('Amplitude (V)')
             ax.set_xlabel('Time (s)')
             ax.set_title('Gaussian Pulse')
 
-        return fft(GG)
+        return fft(self.v_pulse)
 
     def get_pulse_rect(self, dt: float, data_rate: float, N: int,
                        rise_time_per: float, verbose = False)-> ndarray:
@@ -2585,12 +2586,22 @@ class IEEEP370_TD_QM:
             pulse_response = self.pulse * filter
             v_filtered = np.real(np.fft.ifft(pulse_response))
             fig, ax = subplots(1, 1)
-            ax.plot(self.t_ref, self.v_ref, color = 'r', marker = 'o',
-                    label = 'Reference')
-            ax.plot(self.t_pulse, self.v_pulse, color = 'k', linestyle = 'dashed',
-                    label = 'Interpolated')
-            ax.plot(self.t_pulse, v_filtered, color = 'b', linestyle = 'dotted',
-                    label = 'Filtered')
+            if self.pulse_shape == 1:
+                ax.plot(self.t_pulse, self.v_ref, color = 'r',
+                        label = 'Reference')
+                ax.plot(self.t_pulse, self.v_pulse, color = 'k', linestyle = 'dashed',
+                        label = 'Generated')
+                ax.legend(loc = 'upper right')
+                ax.set_ylabel('Amplitude (V)')
+                ax.set_xlabel('Time (s)')
+                ax.set_title('Gaussian Pulse')
+            else:
+                ax.plot(self.t_ref, self.v_ref, color = 'r', marker = 'o',
+                        label = 'Reference')
+                ax.plot(self.t_pulse, self.v_pulse, color = 'k', linestyle = 'dashed',
+                        label = 'Interpolated')
+                ax.plot(self.t_pulse, v_filtered, color = 'b', linestyle = 'dotted',
+                        label = 'Filtered')
             ax.legend(loc = 'upper right')
             ax.set_ylabel('Amplitude (V)')
             ax.set_xlabel('Time (s)')
