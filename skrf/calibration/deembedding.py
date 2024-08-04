@@ -2052,14 +2052,19 @@ class IEEEP370_TD_QM:
         self.extrapolation = extrapolation
         self.verbose = verbose
 
-    def create_causal(self, ntwk: Network) -> (Network, ndarray):
+    def create_causal(self, ntwk: Network, data_rate: float,
+                      rise_time_per: float) -> (Network, ndarray):
         """
         Creat causality enforced network.
 
         Parameters
         ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Input network
+        ntwk         : :class:`~skrf.network.Network` object
+                       Input network
+        data_rate    : :float
+                       Data rate (bps)
+        rise_time_per: :float
+                       Rise time divided by high time ratio
 
         Returns
         -------
@@ -2069,9 +2074,22 @@ class IEEEP370_TD_QM:
                 Alignment delay with original network for comparison sake
         """
         causal = ntwk.copy()
-        delay = zeros(ntwk.nports)
+        nports = causal.nports
+        N = causal.frequency.npoints
+        f = causal.frequency.f
+        delay_matrix = zeros((nports, nports), dtype = int)
+        for i in range(nports):
+            for j in range(nports):
+                for k in range(N):
+                    if np.abs(causal.s[k, i, j]) == 0:
+                        causal.s[k, i, j] = 0.00001
+                causal_ij, f, delay_ij = self.get_causal_model(f, causal.s[:, i, j],
+                                                               data_rate,
+                                                               rise_time_per)
+                causal.s[:, i, j] = causal_ij
+                delay_matrix[i, j] = delay_ij
 
-        return (causal, delay)
+        return (causal, delay_matrix)
 
     def create_passive(self, ntwk: Network) -> Network:
         """
@@ -2254,6 +2272,44 @@ class IEEEP370_TD_QM:
 
         return Network(frequency = f_new, s = s_new, name = ntwk.name,
                        z0 = ntwk.z0[0])
+
+
+    def get_causal_model(self, f: ndarray, s_ij: ndarray, data_rate,
+                         rise_time_per) -> ndarray:
+        """
+        """
+        df = f[1] - f[0]
+        dt = 1. / (2 * f[-1] + df)
+        # DC extrapolation
+        # Already done.
+        # Interpolate data
+        # Already done.
+        # extend to negative frequencies
+        N = len(s_ij)
+        s_ij_conj = zeros(2 * N - 1, dtype = complex)
+        s_ij_conj[:N] = s_ij
+        for k in range(N - 1):
+            s_ij_conj[k + N] = np.conj(s_ij_conj[N - k - 1])
+        # Extract magnitude
+        s_ij_magn_conj = np.real(np.log(np.abs(s_ij_conj)))
+        # Convert magnitude into time domain
+        s_ij_magn_time = np.fft.ifft(s_ij_magn_conj)
+        # Multiply by sign(t)
+        for i in range(N, 2 * N - 1):
+            s_ij_magn_time[i] = (-1.) * s_ij_magn_time[i]
+        s_ij_magn_time = 1j * s_ij_magn_time
+        # Calculate Phase
+        s_ij_phase_enforced = np.real(fft(s_ij_magn_time))
+        # Calculate Delay
+        # todo get_delay_time
+        delay = dt
+        causal_ij = zeros(N, dtype = complex)
+        for i in range(N):
+            w = 2 * np.pi * f[i]
+            causal_ij[i] = np.exp(s_ij_magn_conj[i]) * \
+                np.exp(-1j * s_ij_phase_enforced[i]) * np.exp(-1j * delay * w)
+        delay = np.round(delay / dt).astype(int)
+        return (causal_ij, f, delay)
 
 
     def get_delay(self, freq: ndarray, phase: ndarray) -> float:
@@ -2566,9 +2622,9 @@ class IEEEP370_TD_QM:
             fig.tight_layout()
 
         # get Causal Matrix
-        causal, _ = self.create_causal(ntwk_interpolated)
-        delay_matrix = np.array([[0, 0],
-                                 [0, 0]])
+        causal, delay_matrix = self.create_causal(ntwk_interpolated,
+                                                  self.data_rate, self.rise_time_per)
+
         # get Passive Matrix
         passive = self.create_passive(ntwk_interpolated)
         # get Reciprocal Matrix
@@ -2641,23 +2697,20 @@ class IEEEP370_TD_QM:
             fig, axs = subplots(2, 2, figsize = (8, 8))
             ax = axs[0, 0]
             ax.set_title('TDT11')
-            ax.plot(t_origin * 1e9, v_origin[:, 0, 0])
+            ax.plot(t_origin * 1e9, v_origin[:, 0, 0], color = 'k', linestyle = 'dashed')
             ax = axs[0, 1]
             ax.set_title('TDT21')
-            ax.plot(t_causal * 1e9, v_causal[:, 1, 0], label = 'causal')
-            ax.plot(t_passive * 1e9, v_passive[:, 1, 0], label = 'passive')
-            ax.plot(t_reciprocal * 1e9, v_reciprocal[:, 1, 0], label = 'reciprocal')
-            ax.plot(t_origin * 1e9, v_origin[:, 1, 0], label = 'original')
+            ax.plot(t_causal * 1e9, v_causal[:, 1, 0], label = 'causal', color = 'r')
+            ax.plot(t_origin * 1e9, v_origin[:, 1, 0], label = 'original',
+                    color = 'k', linestyle = 'dashed')
             ax.legend(loc = 'upper right')
             ax = axs[1, 0]
             ax.set_title('TDT12')
-            ax.plot(t_causal * 1e9, v_causal[:, 0, 1])
-            ax.plot(t_passive * 1e9, v_passive[:, 0, 1])
-            ax.plot(t_reciprocal * 1e9, v_reciprocal[:, 0, 1])
-            ax.plot(t_origin * 1e9, v_origin[:, 0, 1])
+            ax.plot(t_causal * 1e9, v_causal[:, 0, 1], color = 'r')
+            ax.plot(t_origin * 1e9, v_origin[:, 0, 1], color = 'k', linestyle = 'dashed')
             ax = axs[1, 1]
             ax.set_title('TDT22')
-            ax.plot(t_origin * 1e9, v_origin[:, 1, 1])
+            ax.plot(t_origin * 1e9, v_origin[:, 1, 1], color = 'k', linestyle = 'dashed')
             for ax in axs.reshape(-1):
                 ax.set_xlabel('Time (ns)')
                 ax.set_ylabel('Magnitude (V)')
