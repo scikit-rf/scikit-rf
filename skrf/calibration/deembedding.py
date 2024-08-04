@@ -2446,9 +2446,11 @@ class IEEEP370_TD_QM:
 
         return (v, t)
 
-    def get_time_domain_difference_mv(self, v1: ndarray, v2: ndarray, t: ndarray,
+    def get_td_difference_mv(self, v1: ndarray, v2: ndarray, t: ndarray,
                                       nports: int,
                                       data_rate: float) -> (ndarray, ndarray):
+        """
+        """
         N = len(t)
         dt = t[1] - t[0]
         UI = 1. / data_rate / dt
@@ -2470,7 +2472,36 @@ class IEEEP370_TD_QM:
                         else:
                             condition = (ind < last_index) or (ind > N - lower_index)
                         if condition:
-                            delta[k] = delta[k] + np.abs(v1[ind, i, j] - v2[ind, i, j])
+                            delta[k] = delta[k] + np.abs(v2[ind, i, j] - v1[ind, i, j])
+                time_domain_difference_mv[i, j] = np.max(delta)
+
+        return time_domain_difference_mv
+
+    def get_td_causality_difference_mv(self, v1: ndarray, v2: ndarray, t: ndarray,
+                                      nports: int, data_rate: float,
+                                      delay_matrix: ndarray) -> (ndarray, ndarray):
+        """
+        """
+        N = len(t)
+        dt = t[1] - t[0]
+        UI = 1. / data_rate / dt
+        max_bits = 31
+        time_domain_difference_mv = zeros((nports, nports))
+        N_UI = np.round(UI).astype(int)
+        delta = zeros(N_UI)
+        for i in range(nports):
+            for j in range(nports):
+                if i == j:
+                    delay_num = 0
+                else:
+                    delay_num = delay_matrix[i, j]
+                for k in range(N_UI):
+                    delta[k] = 0
+                    for m in range(max_bits):
+                        ind = delay_num - k - np.floor(m * UI).astype(int)
+                        if ind < 0:
+                            ind = N + ind - 1
+                        delta[k] = delta[k] + np.abs(v2[ind, i, j] - v1[ind, i, j])
                 time_domain_difference_mv[i, j] = np.max(delta)
 
         return time_domain_difference_mv
@@ -2536,6 +2567,8 @@ class IEEEP370_TD_QM:
 
         # get Causal Matrix
         causal, _ = self.create_causal(ntwk_interpolated)
+        delay_matrix = np.array([[0, 0],
+                                 [0, 0]])
         # get Passive Matrix
         passive = self.create_passive(ntwk_interpolated)
         # get Reciprocal Matrix
@@ -2560,15 +2593,12 @@ class IEEEP370_TD_QM:
                                                   self.pulse_shape)
 
         # get Time Domain Difference
-        causality_difference_mv = self.get_time_domain_difference_mv(v_causal, v_origin,
-                                                                     t_origin, 2,
-                                                                     self.data_rate)
-        passivity_difference_mv = self.get_time_domain_difference_mv(v_passive, v_origin,
-                                                                     t_origin, 2,
-                                                                     self.data_rate)
-        reciprocity_difference_mv = self.get_time_domain_difference_mv(v_reciprocal, v_origin,
-                                                                       t_origin, 2,
-                                                                       self.data_rate)
+        causality_difference_mv = self.get_td_causality_difference_mv(
+            v_causal, v_origin, t_origin, 2, self.data_rate, delay_matrix)
+        passivity_difference_mv = self.get_td_difference_mv(v_passive, v_origin,
+                                                 t_origin, 2, self.data_rate)
+        reciprocity_difference_mv = self.get_td_difference_mv(v_reciprocal, v_origin,
+                                                   t_origin, 2, self.data_rate)
 
         causality_metric = np.round(1000 * np.linalg.norm(causality_difference_mv), 1)
         passivity_metric = np.round(1000 * np.linalg.norm(passivity_difference_mv), 1)
@@ -2633,11 +2663,11 @@ class IEEEP370_TD_QM:
                 ax.set_ylabel('Magnitude (V)')
             fig.tight_layout()
 
-        QM = {'causality': {'value': causality_metric, 'unit': 'mV',
+        QM = {'causality': {'value': causality_metric / 2., 'unit': 'mV',
                             'evaluation': ''},
-             'passivity': {'value': passivity_metric, 'unit': 'mV',
+             'passivity': {'value': passivity_metric / 2., 'unit': 'mV',
                            'evaluation': ''},
-              'reciprocity': {'value': reciprocity_metric, 'unit': 'mV',
+              'reciprocity': {'value': reciprocity_metric / 2., 'unit': 'mV',
                               'evaluation': ''},
               }
 
