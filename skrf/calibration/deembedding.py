@@ -2052,6 +2052,51 @@ class IEEEP370_TD_QM:
         self.extrapolation = extrapolation
         self.verbose = verbose
 
+    def add_conj(self, s_ij: ndarray):
+        """
+        Add complex conjugates for ifft.
+        Consider using irfft instead.
+        """
+        N = len(s_ij)
+        s_ij_conj = zeros(2 * N - 1, dtype = complex)
+        s_ij_conj[:N] = s_ij
+        for k in range(N - 1):
+            s_ij_conj[k + N] = np.conj(s_ij_conj[N - k - 1])
+
+        return s_ij_conj
+
+    def align_signals(self, x: ndarray, y: ndarray) -> ndarray:
+        """
+        Compute the index shift between two identical shifted signals.
+
+        """
+        y = y.T
+        x = x.T
+        n = len(x)
+        m = np.round(n * 0.1).astype(int)
+        mm = np.round(n * 0.01).astype(int)
+        xx = np.append(x[0:m], x[n - mm:n])
+        yy = np.append(y[0:m], y[n - mm:n])
+        x = xx
+        y = yy
+        yy = y[0:m]
+        Ix = np.argmax(x)
+        Iy = np.argmax(y)
+        index = Ix - Iy
+        yy = np.roll(y, index)
+        n = np.min([1000, m]).astype(int)
+        error = len(x)
+        error_ind = 0
+        for k in range(-n + index, n + index):
+            yy = np.roll(y, k)
+            cur_error = np.linalg.norm(yy - x)
+            if error > cur_error:
+                error_ind = k
+                error = cur_error
+        y = np.roll(y, error_ind)
+
+        return error_ind
+
     def create_causal(self, ntwk: Network, data_rate: float,
                       rise_time_per: float) -> (Network, ndarray):
         """
@@ -2286,10 +2331,7 @@ class IEEEP370_TD_QM:
         # Already done.
         # extend to negative frequencies
         N = len(s_ij)
-        s_ij_conj = zeros(2 * N - 1, dtype = complex)
-        s_ij_conj[:N] = s_ij
-        for k in range(N - 1):
-            s_ij_conj[k + N] = np.conj(s_ij_conj[N - k - 1])
+        s_ij_conj = self.add_conj(s_ij)
         # Extract magnitude
         s_ij_magn_conj = np.real(np.log(np.abs(s_ij_conj)))
         # Convert magnitude into time domain
@@ -2301,8 +2343,9 @@ class IEEEP370_TD_QM:
         # Calculate Phase
         s_ij_phase_enforced = np.real(fft(s_ij_magn_time))
         # Calculate Delay
-        # todo get_delay_time
-        delay = dt
+        delay = self.get_delay_time(f, s_ij, s_ij_phase_enforced[0:N],
+                                    data_rate, rise_time_per)
+        delay = np.round(delay / dt) * dt
         causal_ij = zeros(N, dtype = complex)
         for i in range(N):
             w = 2 * np.pi * f[i]
@@ -2337,6 +2380,50 @@ class IEEEP370_TD_QM:
                 if delay > delay_i:
                     delay = delay_i
         return delay
+
+    def get_delay_time(self, freq: ndarray, s_ij: ndarray, phase_causal: ndarray,
+                                data_rate: float, rise_time_per: float) -> float:
+        """
+        Get delay between original and causality enforced data.
+
+        Parameters
+        ----------
+        freq         : :ndarray
+                       Frequency (Hz)
+        s_ij         : :ndarray
+                       Original single S-component.
+        phase_causal : :ndarray
+                       Causality enforced phase (rad)
+        data_rate    : :float
+                       Data rate (bps)
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+
+        Returns
+        -------
+        delay: :float
+               Delay
+        """
+        N = len(freq)
+        df = freq[1] - freq[0]
+        dt = 1. / (2 * freq[-1] + df)
+        # Gaussian filter
+        f_cut = 3. * data_rate / 2.
+        sigma = 1. / 2. / np.pi / f_cut
+        gaussian = np.exp(-2 * np.pi * np.pi * freq * freq * sigma * sigma)
+        original = zeros(N, dtype = complex)
+        causal = zeros(N, dtype = complex)
+        original = s_ij * gaussian
+        causal = original * np.exp(-1j * phase_causal)
+        original_conj = self.add_conj(original)
+        causal_conj = self.add_conj(causal)
+        pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1, rise_time_per)
+        pulse_original = original_conj * pulse
+        pulse_causal = causal_conj * pulse
+        v_origin = np.fft.ifft(pulse_original) / 2.
+        v_causal = np.fft.ifft(pulse_causal) / 2.
+        shift_ind = -1 * self.align_signals(v_causal, v_origin)
+        return shift_ind * dt
 
     def get_pulse_gaussian(self, dt: float, data_rate: float, N: int,
                          rise_time_per: float, verbose = False) -> ndarray:
@@ -2493,10 +2580,7 @@ class IEEEP370_TD_QM:
             for j in range(nports):
                 s_ij = ntwk.s[:, i, j] * self.filter
                 s_ij[0] = np.real(s_ij[0])
-                s_ij_conj = zeros(2 * N - 1, dtype = complex)
-                s_ij_conj[:N] = s_ij
-                for k in range(N - 1):
-                    s_ij_conj[k + N] = np.conj(s_ij_conj[N - k - 1])
+                s_ij_conj = self.add_conj(s_ij)
                 pulse_response_freq = self.pulse * s_ij_conj
                 v[:, i, j] = np.real(np.fft.ifft(pulse_response_freq))
 
@@ -2664,11 +2748,7 @@ class IEEEP370_TD_QM:
         if self.verbose:
             # pulse
             # filter
-            N = len(self.filter)
-            filter = zeros(2 * N - 1, dtype = complex)
-            filter[:N] = self.filter
-            for k in range(N - 1):
-                filter[k + N] = np.conj(filter[N - k - 1])
+            filter = self.add_conj(self.filter)
             pulse_response = self.pulse * filter
             v_filtered = np.real(np.fft.ifft(pulse_response))
             fig, ax = subplots(1, 1)
@@ -2697,23 +2777,28 @@ class IEEEP370_TD_QM:
             fig, axs = subplots(2, 2, figsize = (8, 8))
             ax = axs[0, 0]
             ax.set_title('TDT11')
-            ax.plot(t_origin * 1e9, v_origin[:, 0, 0], color = 'k', linestyle = 'dashed')
+            ax.plot(t_causal * 1e9, v_causal[:, 0, 0], label = 'causal', color = 'r')
+            ax.plot(t_origin * 1e9, v_origin[:, 0, 0], label = 'original',
+                    color = 'k', linestyle = 'dashed')
             ax = axs[0, 1]
             ax.set_title('TDT21')
             ax.plot(t_causal * 1e9, v_causal[:, 1, 0], label = 'causal', color = 'r')
             ax.plot(t_origin * 1e9, v_origin[:, 1, 0], label = 'original',
                     color = 'k', linestyle = 'dashed')
-            ax.legend(loc = 'upper right')
             ax = axs[1, 0]
             ax.set_title('TDT12')
-            ax.plot(t_causal * 1e9, v_causal[:, 0, 1], color = 'r')
-            ax.plot(t_origin * 1e9, v_origin[:, 0, 1], color = 'k', linestyle = 'dashed')
+            ax.plot(t_causal * 1e9, v_causal[:, 0, 1], label = 'causal', color = 'r')
+            ax.plot(t_origin * 1e9, v_origin[:, 0, 1], label = 'original',
+                    color = 'k', linestyle = 'dashed')
             ax = axs[1, 1]
             ax.set_title('TDT22')
-            ax.plot(t_origin * 1e9, v_origin[:, 1, 1], color = 'k', linestyle = 'dashed')
+            ax.plot(t_causal * 1e9, v_causal[:, 1, 1], label = 'causal', color = 'r')
+            ax.plot(t_origin * 1e9, v_origin[:, 1, 1], label = 'original',
+                    color = 'k', linestyle = 'dashed')
             for ax in axs.reshape(-1):
                 ax.set_xlabel('Time (ns)')
-                ax.set_ylabel('Magnitude (V)')
+                ax.set_ylabel('Amplitude (V)')
+                ax.legend(loc = 'upper right')
             fig.tight_layout()
 
         QM = {'causality': {'value': causality_metric / 2., 'unit': 'mV',
