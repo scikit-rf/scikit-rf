@@ -2357,26 +2357,29 @@ class IEEEP370_TD_QM:
         fft : :ndarray
               FFT of the pulse signal
         """
-        t_pulse = np.arange(0, N) * dt
+        self.t_pulse = np.arange(0, N) * dt
         k_high = np.round(1. / data_rate / dt)
         k_rise = np.round(k_high * rise_time_per)
         k_offset = np.array([0, k_rise, k_rise, k_rise, k_rise, 0])
         k_ref = np.array([0, 0, k_rise, k_high, k_high + k_rise, N - 1])
-        t_ref = dt * (k_offset + k_ref)
-        v_ref = np.array([0, 0, 1, 1, 0, 0])
+        self.t_ref = dt * (k_offset + k_ref)
+        self.v_ref = np.array([0, 0, 1, 1, 0, 0])
 
-        interp = interp1d(t_ref, v_ref)
-        v_pulse = interp(t_pulse)
+        interp = interp1d(self.t_ref, self.v_ref)
+        self.v_pulse = interp(self.t_pulse)
+
         if verbose:
             fig, ax = subplots(1, 1)
-            ax.plot(t_ref, v_ref, color = 'r', marker = 'o', label = 'Reference')
-            ax.plot(t_pulse, v_pulse, linestyle = 'dashed', label = 'Interpolated')
+            ax.plot(self.t_ref, self.v_ref, color = 'r', marker = 'o',
+                    label = 'Reference')
+            ax.plot(self.t_pulse, self.v_pulse, linestyle = 'dashed',
+                    label = 'Interpolated')
             ax.legend(loc = 'upper right')
             ax.set_ylabel('Amplitude (V)')
             ax.set_xlabel('Time (s)')
             ax.set_title('Rectangular Pulse')
 
-        return fft(v_pulse)
+        return fft(self.v_pulse)
 
     def get_time_domain(self, ntwk: Network, data_rate: float,
                         rise_time_per: float,
@@ -2418,26 +2421,26 @@ class IEEEP370_TD_QM:
         rise_time = 1. / data_rate * 1000 * rise_time_per
         f0 = 320 / rise_time
         if pulse_shape == 1:
-            filter = np.ones(N, dtype = complex)
-            pulse = self.get_pulse_gaussian(dt, data_rate, 2 * N - 1,
+            self.filter = np.ones(N, dtype = complex)
+            self.pulse = self.get_pulse_gaussian(dt, data_rate, 2 * N - 1,
                                             rise_time_per)
         elif pulse_shape == 2:
-            filter = 1. / (1 + 1j * freq / f0)
-            pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1,
+            self.filter = 1. / (1 + 1j * freq / f0)
+            self.pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1,
                                         1.4 * rise_time_per)
         else:
-            filter = np.exp(-2 * np.pi * np.pi * freq * freq * sigma * sigma)
-            pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1,
+            self.filter = np.exp(-2 * np.pi * np.pi * freq * freq * sigma * sigma)
+            self.pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1,
                                         1.4 * rise_time_per)
         for i in range(nports):
             for j in range(nports):
-                s_ij = ntwk.s[:, i, j] * filter
+                s_ij = ntwk.s[:, i, j] * self.filter
                 s_ij[0] = np.real(s_ij[0])
                 s_ij_conj = zeros(2 * N - 1, dtype = complex)
                 s_ij_conj[:N] = s_ij
                 for k in range(N - 1):
-                    s_ij_conj[k + N] = np.conj(s_ij_conj[N-k-1])
-                pulse_response_freq = pulse * s_ij_conj
+                    s_ij_conj[k + N] = np.conj(s_ij_conj[N - k - 1])
+                pulse_response_freq = self.pulse * s_ij_conj
                 v[:, i, j] = np.real(np.fft.ifft(pulse_response_freq))
 
         return (v, t)
@@ -2572,6 +2575,28 @@ class IEEEP370_TD_QM:
 
         # plot
         if self.verbose:
+            # pulse
+            # filter
+            N = len(self.filter)
+            filter = zeros(2 * N - 1, dtype = complex)
+            filter[:N] = self.filter
+            for k in range(N - 1):
+                filter[k + N] = np.conj(filter[N - k - 1])
+            pulse_response = self.pulse * filter
+            v_filtered = np.real(np.fft.ifft(pulse_response))
+            fig, ax = subplots(1, 1)
+            ax.plot(self.t_ref, self.v_ref, color = 'r', marker = 'o',
+                    label = 'Reference')
+            ax.plot(self.t_pulse, self.v_pulse, color = 'k', linestyle = 'dashed',
+                    label = 'Interpolated')
+            ax.plot(self.t_pulse, v_filtered, color = 'b', linestyle = 'dotted',
+                    label = 'Filtered')
+            ax.legend(loc = 'upper right')
+            ax.set_ylabel('Amplitude (V)')
+            ax.set_xlabel('Time (s)')
+            ax.set_title('Rectangular Pulse')
+
+            # time domain transmission
             fig, axs = subplots(2, 2, figsize = (8, 8))
             ax = axs[0, 0]
             ax.set_title('TDT11')
