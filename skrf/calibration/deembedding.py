@@ -2607,9 +2607,9 @@ class IEEEP370_TD_QM:
                 lower_index = max_index - max_bits * UI - 1
                 for k in range(N_UI):
                     delta[k] = 0
-                    for m in range(np.floor(N / UI).astype(int) - 3):
-                        ind = k + np.floor(m * UI).astype(int)
-                        if lower_index > 0:
+                    for m in range(np.floor(N / UI).astype(int) - 1):
+                        ind = k + np.floor(m * UI).astype(int) - 1
+                        if lower_index >= 0:
                             condition = (ind < last_index) and (ind > lower_index)
                         else:
                             condition = (ind < last_index) or (ind > N - lower_index)

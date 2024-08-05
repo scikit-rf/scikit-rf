@@ -558,7 +558,7 @@ class DeembeddingTestCase(unittest.TestCase):
         qm = fd_qm.check_se_quality(thru_non_reciprocal)
         self.assertTrue(np.round(qm['reciprocity']['value'], 4) == 49.6120,
                         'FD quality reciprocity violation')
-        qm = td_qm.check_se_quality(thru_non_passive)
+        qm = td_qm.check_se_quality(thru_non_reciprocal)
         self.assertTrue(np.floor(qm['reciprocity']['value']) == 28, # 28.4500
                         'TD quality reciprocity violation')
         # causality violation (reference value from Matlab R2024a)
@@ -571,7 +571,7 @@ class DeembeddingTestCase(unittest.TestCase):
         half  = m50.line(0.18, 'm', z0 = 52)
         thru_non_causal = half.inv ** thru ** half.inv
         thru_non_causal.name = 'thru'
-        qm = td_qm.check_se_quality(thru_non_passive)
+        qm = td_qm.check_se_quality(thru_non_causal)
         self.assertTrue(np.round(qm['causality']['value'], 4) == 10.0500,
                         'TD quality causality violation')
 
