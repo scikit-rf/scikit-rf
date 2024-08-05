@@ -521,7 +521,7 @@ class DeembeddingTestCase(unittest.TestCase):
         m50 = rf.media.DefinedGammaZ0(frequency = freq, z0_port = 50, gamma = 1j * beta)
 
         # microstrip segments
-        m = rf.media.MLine(frequency=freq, z0_port=50, w=W, h=H, t=T,
+        m = MLine(frequency=freq, z0_port=50, w=W, h=H, t=T,
                 ep_r=ep_r, mu_r=1, rho=1.712e-8, tand=tanD, rough=0.15e-6,
                 f_low=1e3, f_high=1e12, f_epr_tand=f_epr_tand,
                 diel='djordjevicsvensson', disp='kirschningjansen')

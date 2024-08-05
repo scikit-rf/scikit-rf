@@ -2603,8 +2603,8 @@ class IEEEP370_TD_QM:
         for i in range(nports):
             for j in range(nports):
                 max_index = np.argmax(v1[:, i, j])
-                last_index = max_index + max_bits * UI
-                lower_index = max_index - max_bits * UI
+                last_index = max_index + max_bits * UI - 1
+                lower_index = max_index - max_bits * UI - 1
                 for k in range(N_UI):
                     delta[k] = 0
                     for m in range(np.floor(N / UI).astype(int) - 3):
@@ -2639,7 +2639,7 @@ class IEEEP370_TD_QM:
                     delay_num = delay_matrix[i, j]
                 for k in range(N_UI):
                     delta[k] = 0
-                    for m in range(max_bits - 1):
+                    for m in range(max_bits - 2):
                         ind = delay_num - k - np.floor(m * UI).astype(int)
                         if ind < 0:
                             ind = N + ind - 1
