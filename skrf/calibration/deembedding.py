@@ -2710,7 +2710,6 @@ class IEEEP370_TD_QM:
         # get Causal Matrix
         causal, delay_matrix = self.create_causal(ntwk_interpolated,
                                                   self.data_rate, self.rise_time_per)
-
         # get Passive Matrix
         passive = self.create_passive(ntwk_interpolated)
         # get Reciprocal Matrix
@@ -2735,16 +2734,20 @@ class IEEEP370_TD_QM:
                                                   self.pulse_shape)
 
         # get Time Domain Difference
-        causality_difference_mv = self.get_td_causality_difference_mv(
+        self.causality_difference_mv = self.get_td_causality_difference_mv(
             v_causal, v_origin, t_origin, 2, self.data_rate, delay_matrix)
-        passivity_difference_mv = self.get_td_difference_mv(v_passive, v_origin,
+        self.passivity_difference_mv = self.get_td_difference_mv(v_passive, v_origin,
                                                  t_origin, 2, self.data_rate)
-        reciprocity_difference_mv = self.get_td_difference_mv(v_reciprocal, v_origin,
-                                                   t_origin, 2, self.data_rate)
+        self.reciprocity_difference_mv = self.get_td_difference_mv(v_reciprocal,
+                                                   v_origin, t_origin,
+                                                   2, self.data_rate)
 
-        causality_metric = np.round(1000 * np.linalg.norm(causality_difference_mv), 1)
-        passivity_metric = np.round(1000 * np.linalg.norm(passivity_difference_mv), 1)
-        reciprocity_metric = np.round(1000 * np.linalg.norm(reciprocity_difference_mv), 1)
+        causality_metric = np.round(
+            1000 * np.linalg.norm(self.causality_difference_mv), 1)
+        passivity_metric = np.round(
+            1000 * np.linalg.norm(self.passivity_difference_mv), 1)
+        reciprocity_metric = np.round(
+            1000 * np.linalg.norm(self.reciprocity_difference_mv), 1)
 
         # plot
         if self.verbose:
@@ -2779,23 +2782,23 @@ class IEEEP370_TD_QM:
             fig, axs = subplots(2, 2, figsize = (8, 8))
             ax = axs[0, 0]
             ax.set_title('TDT11')
-            ax.plot(t_causal * 1e9, v_causal[:, 0, 0], label = 'causal', color = 'r')
-            ax.plot(t_origin * 1e9, v_origin[:, 0, 0], label = 'original',
+            ax.plot(t_causal * 1e9, v_causal[:, 0, 0] / 2., label = 'causal', color = 'r')
+            ax.plot(t_origin * 1e9, v_origin[:, 0, 0] / 2., label = 'original',
                     color = 'k', linestyle = 'dashed')
             ax = axs[0, 1]
             ax.set_title('TDT21')
-            ax.plot(t_causal * 1e9, v_causal[:, 1, 0], label = 'causal', color = 'r')
-            ax.plot(t_origin * 1e9, v_origin[:, 1, 0], label = 'original',
+            ax.plot(t_causal * 1e9, v_causal[:, 1, 0] / 2., label = 'causal', color = 'r')
+            ax.plot(t_origin * 1e9, v_origin[:, 1, 0] / 2., label = 'original',
                     color = 'k', linestyle = 'dashed')
             ax = axs[1, 0]
             ax.set_title('TDT12')
-            ax.plot(t_causal * 1e9, v_causal[:, 0, 1], label = 'causal', color = 'r')
-            ax.plot(t_origin * 1e9, v_origin[:, 0, 1], label = 'original',
+            ax.plot(t_causal * 1e9, v_causal[:, 0, 1] / 2., label = 'causal', color = 'r')
+            ax.plot(t_origin * 1e9, v_origin[:, 0, 1] / 2., label = 'original',
                     color = 'k', linestyle = 'dashed')
             ax = axs[1, 1]
             ax.set_title('TDT22')
-            ax.plot(t_causal * 1e9, v_causal[:, 1, 1], label = 'causal', color = 'r')
-            ax.plot(t_origin * 1e9, v_origin[:, 1, 1], label = 'original',
+            ax.plot(t_causal * 1e9, v_causal[:, 1, 1] / 2., label = 'causal', color = 'r')
+            ax.plot(t_origin * 1e9, v_origin[:, 1, 1] / 2., label = 'original',
                     color = 'k', linestyle = 'dashed')
             for ax in axs.reshape(-1):
                 ax.set_xlabel('Time (ns)')

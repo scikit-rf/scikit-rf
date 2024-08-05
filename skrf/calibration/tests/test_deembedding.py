@@ -6,6 +6,7 @@ import pytest
 from scipy.constants import c, pi
 
 import skrf as rf
+from skrf.media import MLine
 
 
 class DeembeddingTestCase(unittest.TestCase):
