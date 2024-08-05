@@ -1880,6 +1880,7 @@ class IEEEP370_FD_QM:
          B  = 0.1
          PW = zeros(Nf)
          for i in range(Nf):
+             # numpy linalg norm is frobenius, use 2-norm like Matlab instead
              PM = norm(ntwk.s[i, :, :], 2)
              if PM > A:
                  PW[i] = (PM - A) / B
@@ -2089,7 +2090,8 @@ class IEEEP370_TD_QM:
         error_ind = 0
         for k in range(-n + index, n + index):
             yy = np.roll(y, k)
-            cur_error = np.linalg.norm(yy - x)
+            # numpy linalg norm is frobenius, use 2-norm like Matlab instead
+            cur_error = np.linalg.norm(yy - x, 2)
             if error > cur_error:
                 error_ind = k
                 error = cur_error
@@ -2204,7 +2206,8 @@ class IEEEP370_TD_QM:
         df = f[1] - f[0]
         nports = ntwk.nports
         f_0 = f[0]
-        norm_0 = np.linalg.norm(ntwk.s[0, :, :])
+        # numpy linalg norm is frobenius, use 2-norm like Matlab instead
+        norm_0 = np.linalg.norm(ntwk.s[0, :, :], 2)
         if f[0] == 0:
             f_extra = f
         else:
@@ -2739,12 +2742,13 @@ class IEEEP370_TD_QM:
                                                    v_origin, t_origin,
                                                    2, self.data_rate)
 
+        # numpy linalg norm is frobenius, use 2-norm like Matlab instead
         causality_metric = np.round(
-            1000 * np.linalg.norm(self.causality_difference_mv), 1)
+            1000 * np.linalg.norm(self.causality_difference_mv, 2), 1)
         passivity_metric = np.round(
-            1000 * np.linalg.norm(self.passivity_difference_mv), 1)
+            1000 * np.linalg.norm(self.passivity_difference_mv, 2), 1)
         reciprocity_metric = np.round(
-            1000 * np.linalg.norm(self.reciprocity_difference_mv), 1)
+            1000 * np.linalg.norm(self.reciprocity_difference_mv, 2), 1)
 
         # plot
         if self.verbose:
