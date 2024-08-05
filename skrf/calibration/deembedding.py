@@ -1884,7 +1884,7 @@ class IEEEP370_FD_QM:
              if PM > A:
                  PW[i] = (PM - A) / B
 
-         return np.max((Nf - np.sum(PW)), 0) / Nf * 100.
+         return np.max([Nf - np.sum(PW), 0]) / Nf * 100.
 
 
     def check_reciprocity(self, ntwk: Network) -> float:
@@ -2331,6 +2331,7 @@ class IEEEP370_TD_QM:
         # Already done.
         # extend to negative frequencies
         N = len(s_ij)
+        s_ij[0] = np.real(s_ij[0])
         s_ij_conj = self.add_conj(s_ij)
         # Extract magnitude
         s_ij_magn_conj = np.real(np.log(np.abs(s_ij_conj)))
@@ -2413,6 +2414,7 @@ class IEEEP370_TD_QM:
         gaussian = np.exp(-2 * np.pi * np.pi * freq * freq * sigma * sigma)
         original = zeros(N, dtype = complex)
         causal = zeros(N, dtype = complex)
+        s_ij[0] = np.real(s_ij[0])
         original = s_ij * gaussian
         causal = original * np.exp(-1j * phase_causal)
         original_conj = self.add_conj(original)
@@ -2637,7 +2639,7 @@ class IEEEP370_TD_QM:
                     delay_num = delay_matrix[i, j]
                 for k in range(N_UI):
                     delta[k] = 0
-                    for m in range(max_bits):
+                    for m in range(max_bits - 1):
                         ind = delay_num - k - np.floor(m * UI).astype(int)
                         if ind < 0:
                             ind = N + ind - 1
