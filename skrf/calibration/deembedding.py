@@ -2412,11 +2412,8 @@ class IEEEP370_TD_QM:
         f_cut = 3. * data_rate / 2.
         sigma = 1. / 2. / np.pi / f_cut
         gaussian = np.exp(-2 * np.pi * np.pi * freq * freq * sigma * sigma)
-        original = zeros(N, dtype = complex)
-        causal = zeros(N, dtype = complex)
-        s_ij[0] = np.real(s_ij[0])
         original = s_ij * gaussian
-        causal = original * np.exp(-1j * phase_causal)
+        causal = np.abs(original) * np.exp(-1j * phase_causal)
         original_conj = self.add_conj(original)
         causal_conj = self.add_conj(causal)
         pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1, rise_time_per)
