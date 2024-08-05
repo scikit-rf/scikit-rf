@@ -531,6 +531,12 @@ class DeembeddingTestCase(unittest.TestCase):
         thru.name = "thru"
         # perfect data
         fd_qm = rf.IEEEP370_FD_QM()
+        td_qm = rf.IEEEP370_TD_QM(1e9, # bps
+                                  32,  # samples per UI
+                                  0.4, # rise time per UI
+                                  1,   # gaussian pulse
+                                  2,   # zero extrapolation
+                                  verbose = False)
         qm = fd_qm.check_se_quality(thru)
         self.assertTrue(qm['passivity']['value'] > 99.9 and
                         qm['reciprocity']['value'] > 99.9 and
@@ -543,17 +549,29 @@ class DeembeddingTestCase(unittest.TestCase):
         qm = fd_qm.check_se_quality(thru_non_passive)
         self.assertTrue(np.round(qm['passivity']['value'], 4) == 49.7701,
                         'FD quality passivity violation')
+        qm = td_qm.check_se_quality(thru_non_passive)
+        self.assertTrue(np.floor(qm['passivity']['value']) == 71, # 71.3500
+                        'TD quality passivity violation')
         # reciprocity violation (reference value from Matlab R2024a)
         thru_non_reciprocal = thru.copy()
         thru_non_reciprocal.s[:, 1, 0] = 0.945 * thru_non_reciprocal.s[:, 0, 1]
         qm = fd_qm.check_se_quality(thru_non_reciprocal)
         self.assertTrue(np.round(qm['reciprocity']['value'], 4) == 49.6120,
                         'FD quality reciprocity violation')
+        qm = td_qm.check_se_quality(thru_non_passive)
+        self.assertTrue(np.floor(qm['reciprocity']['value']) == 28, # 28.4500
+                        'TD quality reciprocity violation')
         # causality violation (reference value from Matlab R2024a)
         half_fd  = m50.line(0.0445, 'm', z0 = 52)
         thru_non_causal_fd = half_fd.inv ** thru ** half_fd.inv
-        thru_non_causal_fd.name = 'Thru'
+        thru_non_causal_fd.name = 'thru'
         qm = fd_qm.check_se_quality(thru_non_causal_fd)
         self.assertTrue(np.round(qm['causality']['value'], 4) == 48.2637,
                         'FD quality causality violation')
+        half  = m50.line(0.18, 'm', z0 = 52)
+        thru_non_causal = half.inv ** thru ** half.inv
+        thru_non_causal.name = 'thru'
+        qm = td_qm.check_se_quality(thru_non_passive)
+        self.assertTrue(np.round(qm['causality']['value'], 4) == 10.0500,
+                        'TD quality causality violation')
 
