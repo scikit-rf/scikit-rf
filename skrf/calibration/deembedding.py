@@ -2419,7 +2419,7 @@ class IEEEP370_TD_QM:
 
     def get_delay(self, freq: ndarray, phase: ndarray) -> float:
         """
-        Get delay from phase and frequency vectors.
+        Get the front delay from phase and frequency vectors.
 
         Parameters
         ----------
@@ -2761,14 +2761,22 @@ class IEEEP370_TD_QM:
             fig.suptitle('Application-based checking in the time domain')
             ax = axs[0, 0]
             ax.set_title('Extrapolation')
+            ntwk_interpolated.frequency.unit = ntwk.frequency.unit
+            # avoid log(0) issues with zero padding
             ntwk.plot_s_db(1, 0, color = 'r', ax = ax, label = 'Original, S21')
-            ntwk_interpolated.plot_s_db(1, 0, color = 'b', linestyle = 'dashed', ax = ax,
-                                        label = 'Extrapolated, S21')
+            if self.extrapolation == 2:
+                nz_k = np.nonzero(ntwk_interpolated.s[:, 1, 0])[0]
+                ntwk_interpolated[:nz_k[-1]].plot_s_db(1, 0, color = 'b',
+                                            linestyle = 'dashed', ax = ax,
+                                            label = 'Extrapolated, S21')
+            else:
+                ntwk_interpolated.plot_s_db(1, 0, color = 'b', linestyle = 'dashed', ax = ax,
+                                            label = 'Extrapolated, S21')
             secax = ax.twinx()
             ntwk.plot_s_deg(1, 0, color = 'm', ax = secax, label = 'Original, S21')
             ntwk_interpolated.plot_s_deg(1, 0, color = 'c', linestyle = 'dashed', ax = secax,
                                          label = 'Extrapolated, S21')
-            ax.legend(loc = 'lower left')
+            ax.legend(loc = 'upper left')
             secax.legend(loc = 'lower right')
             fig.tight_layout()
 
