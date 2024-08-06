@@ -1802,21 +1802,32 @@ class IEEEP370_FER:
         return fig
 
 class IEEEP370_FD_QM:
-    """
-    IEEE 370 initial quality checking of raw data at the given frequency
-    samples.
+    def __init__(self, verbose: bool = False) -> None:
+        """
+        IEEE 370 initial quality checking of raw data at the given frequency
+        samples.
 
-    This informative passivity, reciprocity and causality check is
-    performed in the frequency domain.
+        Initializer.
 
-    Based on [IEEE370]_.
+        This informative passivity, reciprocity and causality check is
+        performed in the frequency domain.
 
-    References
-    ----------
-    .. [IEEE370] IEEE Standard for Electrical Characterization of Printed
-    Circuit Board and Related Interconnects at Frequencies up to 50 GHz",
-    IEEE 370-2020.
-    """
+        Based on [IEEE370]_.
+
+        Parameters
+        ----------
+        verbose      : :boolean
+                       Plot internal causality, passivity, and reciprocity
+                       figures (default False)
+
+        References
+        ----------
+        .. [IEEE370] IEEE Standard for Electrical Characterization of Printed
+        Circuit Board and Related Interconnects at Frequencies up to 50 GHz",
+        IEEE 370-2020.
+        """
+        self.verbose = verbose
+
     def check_causality(self, ntwk: Network) -> float:
         """
         Initial causality checking of raw data at the given frequency samples.
@@ -1878,12 +1889,13 @@ class IEEEP370_FD_QM:
          Nf = ntwk.frequency.npoints
          A  = 1.00001
          B  = 0.1
+         self.PM = zeros(Nf)
          PW = zeros(Nf)
          for i in range(Nf):
              # numpy linalg norm is frobenius, use 2-norm like Matlab instead
-             PM = norm(ntwk.s[i, :, :], 2)
-             if PM > A:
-                 PW[i] = (PM - A) / B
+             self.PM[i] = norm(ntwk.s[i, :, :], 2)
+             if self.PM[i] > A:
+                 PW[i] = (self.PM[i] - A) / B
 
          return np.max([Nf - np.sum(PW), 0]) / Nf * 100.
 
@@ -1910,19 +1922,20 @@ class IEEEP370_FD_QM:
         Nf = ntwk.frequency.npoints
         B = 0.1
         C = 1e-6
+        self.RM = zeros(Nf)
         RW = zeros(Nf)
         for i in range(Nf):
-            RM = 0
+            self.RM[i] = 0
             for k in range(ntwk.nports):
                 for m in range(ntwk.nports):
-                    RM = RM + np.abs(ntwk.s[i, k, m] - ntwk.s[i, m, k])
-            RM = RM / (ntwk.nports * (ntwk.nports - 1))
-            if RM > C:
-                RW[i] = (RM - C) / B
+                    self.RM[i] = self.RM[i] + np.abs(ntwk.s[i, k, m] - ntwk.s[i, m, k])
+            self.RM[i] = self.RM[i] / (ntwk.nports * (ntwk.nports - 1))
+            if self.RM[i] > C:
+                RW[i] = (self.RM[i] - C) / B
 
         return np.max([Nf - np.sum(RW), 0]) / Nf * 100.
 
-    def check_se_quality(self, ntwk: Network) -> dict:
+    def check_se_quality(self, ntwk: Network, verbose: bool = False) -> dict:
         """
         Initial quality checking of raw data at the given frequency samples.
 
@@ -1931,14 +1944,19 @@ class IEEEP370_FD_QM:
 
         Parameters
         ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Network to be checked
+        ntwk   : :class:`~skrf.network.Network` object
+                 Network to be checked
+        verbose: :boolean
+                 Plot internal causality, passivity, and reciprocity
+                 figures. When True, override class verbose parameter.
+                 (default False).
 
         Returns
         -------
         QM : :class:`dict` object
               Dictionnary with quality metrics
         """
+        verbose = self.verbose or verbose
         QM = {'causality': {'value': self.check_causality(ntwk), 'evaluation': ''},
               'passivity': {'value': self.check_passivity(ntwk), 'evaluation': ''},
               'reciprocity': {'value': self.check_reciprocity(ntwk), 'evaluation': ''},
@@ -1972,9 +1990,34 @@ class IEEEP370_FD_QM:
         else:
             QM['reciprocity']['evaluation'] = 'good'
 
+        # verbose
+        if verbose:
+            name = ntwk.name if ntwk.name else 'Network'
+            fig = figure(figsize = (12, 4.4))
+            fig.suptitle('Initial checking in the frequency domain')
+            ax = fig.add_subplot(1, 3, 1, projection = 'polar')
+            ax.set_title('Causality')
+            ntwk.plot_s_polar(ax = ax)
+            ax.legend(loc = 'upper right')
+            ax = fig.add_subplot(1, 3, 2)
+            ax.set_title('Passivity')
+            ax.plot(ntwk.frequency.f_scaled, self.PM, color = 'k', label = name)
+            ax.plot([ntwk.frequency.f_scaled[0], ntwk.frequency.f_scaled[-1]],
+                    [1., 1.], color = 'r', linestyle = 'dashed', label = 'Maximum')
+            ax.set_xlabel(f'Frequency ({ntwk.frequency.unit})')
+            ax.set_ylabel('2-Norm(S)')
+            ax.legend(loc = 'upper right')
+            ax = fig.add_subplot(1, 3, 3)
+            ax.set_title('Reciprocity')
+            ax.plot(ntwk.frequency.f_scaled, self.RM, color = 'k', label = name)
+            ax.set_xlabel(f'Frequency ({ntwk.frequency.unit})')
+            ax.set_ylabel('Sum of S-pairs differences')
+            ax.legend(loc = 'upper right')
+            fig.tight_layout()
+
         return QM
 
-    def check_mm_quality(self, ntwk: Network) -> dict:
+    def check_mm_quality(self, ntwk: Network, verbose: bool = False) -> dict:
         """
         Initial quality checking of raw data at the given frequency samples.
 
@@ -1985,8 +2028,12 @@ class IEEEP370_FD_QM:
 
         Parameters
         ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Network to be checked
+        ntwk:    :class:`~skrf.network.Network` object
+                 Network to be checked
+        verbose: :bool
+                 Plot internal causality, passivity, and reciprocity
+                 figures. When True, override class verbose parameter.
+                 (default False).
 
         Returns
         -------
@@ -1995,8 +2042,8 @@ class IEEEP370_FD_QM:
         """
         mm = ntwk.copy()
         mm.se2gmm(p = 2)
-        QM = {'dd': self.check_se_quality(mm.subnetwork([0, 1])),
-              'cc': self.check_se_quality(mm.subnetwork([2, 3]))}
+        QM = {'dd': self.check_se_quality(mm.subnetwork([0, 1]), verbose),
+              'cc': self.check_se_quality(mm.subnetwork([2, 3]), verbose)}
 
         return QM
 
@@ -2025,8 +2072,12 @@ class IEEEP370_TD_QM:
                  rise_time_per: float, pulse_shape: int = 1,
                  extrapolation: int = 2, verbose: bool = False) -> None:
         """
-        IEEEP370_TD_QM Application-based quality checking of in the time domain
+        IEEEP370_TD_QM Application-based quality checking of in the time
+        domain.
+
         Initializer.
+
+        Based on [IEEE370]_.
 
         Parameters
         -----------
@@ -2043,8 +2094,15 @@ class IEEEP370_TD_QM:
                        1 is constant extrapolation; 2 is zero padding;
                        3 is repeating
         verbose      : :boolean
-                       Plot referrence and interpolated pulses in the time
-                       domain
+                       Plot extrapolated frequency data, generated pulse and
+                       the time domain comparison between the original and the
+                       causality enforced responses
+
+        References
+        ----------
+        .. [IEEE370] IEEE Standard for Electrical Characterization of Printed
+        Circuit Board and Related Interconnects at Frequencies up to 50 GHz",
+        IEEE 370-2020.
         """
         self.data_rate = data_rate
         self.sample_per_UI = sample_per_UI
@@ -2612,7 +2670,7 @@ class IEEEP370_TD_QM:
                         if lower_index >= 0:
                             condition = (ind < last_index) and (ind > lower_index)
                         else:
-                            condition = (ind < last_index) or (ind > N - lower_index)
+                            condition = (ind < last_index) or (ind > N - lower_index - 1)
                         if condition:
                             delta[k] = delta[k] + np.abs(v2[ind, i, j] - v1[ind, i, j])
                 time_domain_difference_mv[i, j] = np.max(delta)
@@ -2665,7 +2723,7 @@ class IEEEP370_TD_QM:
 
         return s_ij_interp
 
-    def check_se_quality(self, ntwk: Network) -> dict:
+    def check_se_quality(self, ntwk: Network, verbose: bool = False) -> dict:
         """
         Application-based quality checking of in the time domain.
 
@@ -2673,14 +2731,19 @@ class IEEEP370_TD_QM:
 
         Parameters
         ----------
-        ntwk         : :class:`~skrf.network.Network` object
-                       Network to be checked
+        ntwk   : :class:`~skrf.network.Network` object
+                 Network to be checked
+        verbose: :bool
+                 Plot internal causality, passivity, and reciprocity
+                 figures. When True, override class verbose parameter.
+                 (default False).
 
         Returns
         -------
         QM : :class:`dict` object
               Dictionnary with quality metrics
         """
+        verbose = self.verbose or verbose
         if (1.5 * self.data_rate) > ntwk.frequency.f[-1]:
             warnings.warn('Maximum frequency is less then recomended frequency.',
                           RuntimeWarning, stacklevel=2)
@@ -2693,9 +2756,11 @@ class IEEEP370_TD_QM:
         # extrapolate dc and interpolate with uniform step
         ntwk_interpolated = self.extrapolate_to_dc(ntwk_interpolated)
 
-        if self.verbose:
-            fig, ax = subplots(1, 1)
-            fig.suptitle('Extrapolation and interpolation')
+        if verbose:
+            fig, axs = subplots(2, 3, figsize = (12, 7))
+            fig.suptitle('Application-based checking in the time domain')
+            ax = axs[0, 0]
+            ax.set_title('Extrapolation')
             ntwk.plot_s_db(1, 0, color = 'r', ax = ax, label = 'Original, S21')
             ntwk_interpolated.plot_s_db(1, 0, color = 'b', linestyle = 'dashed', ax = ax,
                                         label = 'Extrapolated, S21')
@@ -2751,21 +2816,19 @@ class IEEEP370_TD_QM:
             1000 * np.linalg.norm(self.reciprocity_difference_mv, 2), 1)
 
         # plot
-        if self.verbose:
+        if verbose:
             # pulse
             # filter
             filter = self.add_conj(self.filter)
             pulse_response = self.pulse * filter
             v_filtered = np.real(np.fft.ifft(pulse_response))
-            fig, ax = subplots(1, 1)
+            ax = axs[1, 0]
             if self.pulse_shape == 1:
                 ax.plot(self.t_pulse, self.v_ref, color = 'r',
                         label = 'Reference')
                 ax.plot(self.t_pulse, self.v_pulse, color = 'k', linestyle = 'dashed',
                         label = 'Generated')
                 ax.legend(loc = 'upper right')
-                ax.set_ylabel('Amplitude (V)')
-                ax.set_xlabel('Time (s)')
                 ax.set_title('Gaussian Pulse')
             else:
                 ax.plot(self.t_ref, self.v_ref, color = 'r', marker = 'o',
@@ -2774,34 +2837,34 @@ class IEEEP370_TD_QM:
                         label = 'Interpolated')
                 ax.plot(self.t_pulse, v_filtered, color = 'b', linestyle = 'dotted',
                         label = 'Filtered')
+                ax.set_title('Filtered Rectangular Pulse')
             ax.legend(loc = 'upper right')
             ax.set_ylabel('Amplitude (V)')
             ax.set_xlabel('Time (s)')
-            ax.set_title('Rectangular Pulse')
+
 
             # time domain transmission
-            fig, axs = subplots(2, 2, figsize = (8, 8))
-            ax = axs[0, 0]
-            ax.set_title('TDT11')
+            ax = axs[0, 1]
+            ax.set_title('TDR11')
             ax.plot(t_causal * 1e9, v_causal[:, 0, 0] / 2., label = 'causal', color = 'r')
             ax.plot(t_origin * 1e9, v_origin[:, 0, 0] / 2., label = 'original',
                     color = 'k', linestyle = 'dashed')
-            ax = axs[0, 1]
+            ax = axs[0, 2]
             ax.set_title('TDT21')
             ax.plot(t_causal * 1e9, v_causal[:, 1, 0] / 2., label = 'causal', color = 'r')
             ax.plot(t_origin * 1e9, v_origin[:, 1, 0] / 2., label = 'original',
                     color = 'k', linestyle = 'dashed')
-            ax = axs[1, 0]
+            ax = axs[1, 1]
             ax.set_title('TDT12')
             ax.plot(t_causal * 1e9, v_causal[:, 0, 1] / 2., label = 'causal', color = 'r')
             ax.plot(t_origin * 1e9, v_origin[:, 0, 1] / 2., label = 'original',
                     color = 'k', linestyle = 'dashed')
-            ax = axs[1, 1]
-            ax.set_title('TDT22')
+            ax = axs[1, 2]
+            ax.set_title('TDR22')
             ax.plot(t_causal * 1e9, v_causal[:, 1, 1] / 2., label = 'causal', color = 'r')
             ax.plot(t_origin * 1e9, v_origin[:, 1, 1] / 2., label = 'original',
                     color = 'k', linestyle = 'dashed')
-            for ax in axs.reshape(-1):
+            for ax in axs[:, 1:].reshape(-1):
                 ax.set_xlabel('Time (ns)')
                 ax.set_ylabel('Amplitude (V)')
                 ax.legend(loc = 'upper right')
@@ -2848,7 +2911,7 @@ class IEEEP370_TD_QM:
 
         return QM
 
-    def check_mm_quality(self, ntwk: Network) -> dict:
+    def check_mm_quality(self, ntwk: Network, verbose: bool = False) -> dict:
         """
         Application-based quality checking of in the time domain.
 
@@ -2858,8 +2921,12 @@ class IEEEP370_TD_QM:
 
         Parameters
         ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Network to be checked
+        ntwk:    :class:`~skrf.network.Network` object
+                 Network to be checked
+        verbose: :bool
+                 Plot internal causality, passivity, and reciprocity
+                 figures. When True, override class verbose parameter.
+                 (default False).
 
         Returns
         -------
@@ -2868,8 +2935,8 @@ class IEEEP370_TD_QM:
         """
         mm = ntwk.copy()
         mm.se2gmm(p = 2)
-        QM = {'dd': self.check_se_quality(mm.subnetwork([0, 1])),
-              'cc': self.check_se_quality(mm.subnetwork([2, 3]))}
+        QM = {'dd': self.check_se_quality(mm.subnetwork([0, 1]), verbose),
+              'cc': self.check_se_quality(mm.subnetwork([2, 3]), verbose)}
 
         return QM
 
