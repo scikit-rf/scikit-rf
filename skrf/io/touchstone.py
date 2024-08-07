@@ -101,7 +101,7 @@ class ParserState:
         """
         if self.matrix_format == "full":
             return self.rank**2 * 2
-        return self.rank**2 * self.rank
+        return self.rank*(self.rank+1)
 
     @property
     def parse_noise(self) -> bool:
