@@ -476,7 +476,8 @@ class Network:
             self.s = np.zeros(s_shape, dtype=complex)
 
         self.z0 = kwargs.get('z0', self._z0)
-        self.port_modes = np.array(["S"] * self.nports)
+        if not len(self.port_modes):
+            self.port_modes = np.array(["S"] * self.nports)
 
 
         if "f" in kwargs.keys():
