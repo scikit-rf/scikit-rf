@@ -259,7 +259,7 @@ class Touchstone:
         self.gamma = None
         self.z0 = None
         self.s_def = None
-        self.port_modes = None
+        self.port_modes = np.array([])
 
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
