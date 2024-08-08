@@ -2272,7 +2272,7 @@ class IEEEP370_TD_QM:
             f_new = df * np.arange(0, np.ceil(f[0] / df))
             f_extra = np.append(f_new, f)
         N_interp = np.floor(f_extra[-1]/df)
-        f_interp = df * np.arange(0, N_interp)
+        f_interp = df * np.arange(0, N_interp + 1)
         s = zeros((len(f_extra), nports, nports), dtype = complex)
         s_interp = zeros((len(f_interp), nports, nports), dtype = complex)
         for i in range(nports):
@@ -2295,7 +2295,7 @@ class IEEEP370_TD_QM:
             for k in range(nports):
                 if D[k] > D_max:
                     D[k] = D_max
-            s[i, :, :] = U @ np.diag(D) @ Vh
+            s_interp[i, :, :] = U @ np.diag(D) @ Vh
             i += 1
 
         return Network(frequency = f_interp, s = s_interp, name = ntwk.name,
@@ -2321,7 +2321,7 @@ class IEEEP370_TD_QM:
         re = np.append(re_new, re)
         # create a*x^3+b*x cubic parabola using (f(1),im(1)) and (f(2),im(2)) points
         a = (im[1]/f[1] - im[0]/f[0])/(f[1]**2 - f[0]**2)
-        b = im[0]/f[0] - a*f[0]**2
+        b = im[0]/f[0] - a * f[0]**2
         # extend imaginary part to DC
         im_new = a * f_new**3 + b * f_new
         im = np.append(im_new, im)
@@ -2515,11 +2515,9 @@ class IEEEP370_TD_QM:
         N = len(self.t_pulse)
         sigma = rise_time_per / (data_rate * \
                                  (np.sqrt(-np.log(0.2))-np.sqrt(-np.log(0.8))))
-        self.v_ref = zeros(self.t_pulse.shape)
-        for i in range(N):
-            self.v_ref[i] = np.exp(-self.t_pulse[i]**2 / sigma**2)
+        self.v_ref = np.exp(-self.t_pulse**2 / sigma**2)
         k_middle = n_samples
-        k_start  = np.round(1.5 / data_rate / dt)
+        k_start  = np.round(1.5 / data_rate / dt) - 1
         self.v_pulse = zeros(self.t_pulse.shape)
         for i in range(N):
             self.v_pulse[i] = self.v_ref[np.mod(i + k_middle - k_start, N).astype(int)]
@@ -2661,12 +2659,12 @@ class IEEEP370_TD_QM:
         for i in range(nports):
             for j in range(nports):
                 max_index = np.argmax(v1[:, i, j])
-                last_index = max_index + max_bits * UI - 1
-                lower_index = max_index - max_bits * UI - 1
+                last_index = max_index + max_bits * UI
+                lower_index = max_index - max_bits * UI
                 for k in range(N_UI):
                     delta[k] = 0
                     for m in range(np.floor(N / UI).astype(int) - 1):
-                        ind = k + np.floor(m * UI).astype(int) - 1
+                        ind = k + np.floor(m * UI).astype(int)
                         if lower_index >= 0:
                             condition = (ind < last_index) and (ind > lower_index)
                         else:
@@ -2697,10 +2695,10 @@ class IEEEP370_TD_QM:
                     delay_num = delay_matrix[i, j]
                 for k in range(N_UI):
                     delta[k] = 0
-                    for m in range(max_bits - 2):
-                        ind = delay_num - k - np.floor(m * UI).astype(int)
+                    for m in range(max_bits):
+                        ind = delay_num - k - np.floor(m * UI).astype(int) - 2
                         if ind < 0:
-                            ind = N + ind - 1
+                            ind = N + ind
                         delta[k] = delta[k] + np.abs(v2[ind, i, j] - v1[ind, i, j])
                 time_domain_difference_mv[i, j] = np.max(delta)
 
@@ -2749,71 +2747,73 @@ class IEEEP370_TD_QM:
                           RuntimeWarning, stacklevel=2)
 
         # extrapolate max freq
-        ntwk_interpolated = self.extrapolate_to_fmax(ntwk, self.data_rate,
+        self.ntwk_interpolated = self.extrapolate_to_fmax(ntwk, self.data_rate,
                                                      self.sample_per_UI,
                                                      self.extrapolation)
 
         # extrapolate dc and interpolate with uniform step
-        ntwk_interpolated = self.extrapolate_to_dc(ntwk_interpolated)
+        self.ntwk_interpolated = self.extrapolate_to_dc(self.ntwk_interpolated)
 
         if verbose:
             fig, axs = subplots(2, 3, figsize = (12, 7))
             fig.suptitle('Application-based checking in the time domain')
             ax = axs[0, 0]
             ax.set_title('Extrapolation')
-            ntwk_interpolated.frequency.unit = ntwk.frequency.unit
+            self.ntwk_interpolated.frequency.unit = ntwk.frequency.unit
             # avoid log(0) issues with zero padding
             ntwk.plot_s_db(1, 0, color = 'r', ax = ax, label = 'Original, S21')
             if self.extrapolation == 2:
-                nz_k = np.nonzero(ntwk_interpolated.s[:, 1, 0])[0]
-                ntwk_interpolated[:nz_k[-1]].plot_s_db(1, 0, color = 'b',
+                nz_k = np.nonzero(self.ntwk_interpolated.s[:, 1, 0])[0]
+                self.ntwk_interpolated[:nz_k[-1]].plot_s_db(1, 0, color = 'b',
                                             linestyle = 'dashed', ax = ax,
                                             label = 'Extrapolated, S21')
             else:
-                ntwk_interpolated.plot_s_db(1, 0, color = 'b', linestyle = 'dashed', ax = ax,
-                                            label = 'Extrapolated, S21')
+                self.ntwk_interpolated.plot_s_db(1, 0, color = 'b',
+                                                 linestyle = 'dashed', ax = ax,
+                                                 label = 'Extrapolated, S21')
             secax = ax.twinx()
             ntwk.plot_s_deg(1, 0, color = 'm', ax = secax, label = 'Original, S21')
-            ntwk_interpolated.plot_s_deg(1, 0, color = 'c', linestyle = 'dashed', ax = secax,
-                                         label = 'Extrapolated, S21')
+            self.ntwk_interpolated.plot_s_deg(1, 0, color = 'c',
+                                              linestyle = 'dashed', ax = secax,
+                                              label = 'Extrapolated, S21')
             ax.legend(loc = 'upper left')
             secax.legend(loc = 'lower right')
             fig.tight_layout()
 
         # get Causal Matrix
-        causal, delay_matrix = self.create_causal(ntwk_interpolated,
+        self.causal, self.delay_matrix = self.create_causal(self.ntwk_interpolated,
                                                   self.data_rate, self.rise_time_per)
         # get Passive Matrix
-        passive = self.create_passive(ntwk_interpolated)
+        self.passive = self.create_passive(self.ntwk_interpolated)
         # get Reciprocal Matrix
-        reciprocal = self.create_reciprocal(ntwk_interpolated)
+        self.reciprocal = self.create_reciprocal(self.ntwk_interpolated)
 
         # get Time Domain Matrices
-        v_causal, t_causal = self.get_time_domain(causal,
+        self.v_causal, self.t_causal = self.get_time_domain(self.causal,
                                                   self.data_rate,
                                                   self.rise_time_per,
                                                   self.pulse_shape)
-        v_passive, t_passive = self.get_time_domain(passive,
+        self.v_passive, self.t_passive = self.get_time_domain(self.passive,
                                                   self.data_rate,
                                                   self.rise_time_per,
                                                   self.pulse_shape)
-        v_reciprocal, t_reciprocal = self.get_time_domain(reciprocal,
+        self.v_reciprocal, self.t_reciprocal = self.get_time_domain(self.reciprocal,
                                                   self.data_rate,
                                                   self.rise_time_per,
                                                   self.pulse_shape)
-        v_origin, t_origin = self.get_time_domain(ntwk_interpolated,
+        self.v_origin, self.t_origin = self.get_time_domain(self.ntwk_interpolated,
                                                   self.data_rate,
                                                   self.rise_time_per,
                                                   self.pulse_shape)
 
         # get Time Domain Difference
         self.causality_difference_mv = self.get_td_causality_difference_mv(
-            v_causal, v_origin, t_origin, 2, self.data_rate, delay_matrix)
-        self.passivity_difference_mv = self.get_td_difference_mv(v_passive, v_origin,
-                                                 t_origin, 2, self.data_rate)
-        self.reciprocity_difference_mv = self.get_td_difference_mv(v_reciprocal,
-                                                   v_origin, t_origin,
-                                                   2, self.data_rate)
+            self.v_causal, self.v_origin, self.t_origin,
+            2, self.data_rate, self.delay_matrix)
+        self.passivity_difference_mv = self.get_td_difference_mv(
+            self.v_passive, self.v_origin, self.t_origin, 2, self.data_rate)
+        self.reciprocity_difference_mv = self.get_td_difference_mv(
+            self.v_reciprocal, self.v_origin, self.t_origin, 2, self.data_rate)
 
         # numpy linalg norm is frobenius, use 2-norm like Matlab instead
         causality_metric = np.round(
@@ -2854,24 +2854,28 @@ class IEEEP370_TD_QM:
             # time domain transmission
             ax = axs[0, 1]
             ax.set_title('TDR11')
-            ax.plot(t_causal * 1e9, v_causal[:, 0, 0] / 2., label = 'causal', color = 'r')
-            ax.plot(t_origin * 1e9, v_origin[:, 0, 0] / 2., label = 'original',
-                    color = 'k', linestyle = 'dashed')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 0, 0] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 0, 0] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
             ax = axs[0, 2]
             ax.set_title('TDT21')
-            ax.plot(t_causal * 1e9, v_causal[:, 1, 0] / 2., label = 'causal', color = 'r')
-            ax.plot(t_origin * 1e9, v_origin[:, 1, 0] / 2., label = 'original',
-                    color = 'k', linestyle = 'dashed')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 1, 0] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 1, 0] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
             ax = axs[1, 1]
             ax.set_title('TDT12')
-            ax.plot(t_causal * 1e9, v_causal[:, 0, 1] / 2., label = 'causal', color = 'r')
-            ax.plot(t_origin * 1e9, v_origin[:, 0, 1] / 2., label = 'original',
-                    color = 'k', linestyle = 'dashed')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 0, 1] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 0, 1] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
             ax = axs[1, 2]
             ax.set_title('TDR22')
-            ax.plot(t_causal * 1e9, v_causal[:, 1, 1] / 2., label = 'causal', color = 'r')
-            ax.plot(t_origin * 1e9, v_origin[:, 1, 1] / 2., label = 'original',
-                    color = 'k', linestyle = 'dashed')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 1, 1] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 1, 1] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
             for ax in axs[:, 1:].reshape(-1):
                 ax.set_xlabel('Time (ns)')
                 ax.set_ylabel('Amplitude (V)')

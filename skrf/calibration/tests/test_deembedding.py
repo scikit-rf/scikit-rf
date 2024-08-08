@@ -550,7 +550,7 @@ class DeembeddingTestCase(unittest.TestCase):
         self.assertTrue(np.round(qm['passivity']['value'], 4) == 49.7701,
                         'FD quality passivity violation')
         qm = td_qm.check_se_quality(thru_non_passive)
-        self.assertTrue(np.floor(qm['passivity']['value']) == 71, # 71.3500
+        self.assertTrue(np.round(qm['passivity']['value'], 4) == 71.3500,
                         'TD quality passivity violation')
         # reciprocity violation (reference value from Matlab R2024a)
         thru_non_reciprocal = thru.copy()
@@ -559,7 +559,7 @@ class DeembeddingTestCase(unittest.TestCase):
         self.assertTrue(np.round(qm['reciprocity']['value'], 4) == 49.6120,
                         'FD quality reciprocity violation')
         qm = td_qm.check_se_quality(thru_non_reciprocal)
-        self.assertTrue(np.floor(qm['reciprocity']['value']) == 28, # 28.4500
+        self.assertTrue(np.round(qm['reciprocity']['value'], 4) == 28.4500,
                         'TD quality reciprocity violation')
         # causality violation (reference value from Matlab R2024a)
         half_fd  = m50.line(0.0445, 'm', z0 = 52)
