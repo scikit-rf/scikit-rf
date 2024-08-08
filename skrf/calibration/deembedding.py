@@ -1807,10 +1807,8 @@ class IEEEP370_FD_QM:
         IEEE 370 initial quality checking of raw data at the given frequency
         samples.
 
-        Initializer.
-
-        This informative passivity, reciprocity and causality check is
-        performed in the frequency domain.
+        Passivity, reciprocity, and causality checks are
+        performed on the original S-parameters data in the frequency domain.
 
         Based on [IEEE370]_.
 
@@ -1830,9 +1828,11 @@ class IEEEP370_FD_QM:
 
     def check_causality(self, ntwk: Network) -> float:
         """
-        Initial causality checking of raw data at the given frequency samples.
+        Causality quality metrics verify that the complex S-parameters
+        rotate clockwise in the real and complex plane.
 
-        This informative check is performed in the frequency domain.
+        This is done by computing the normalized vector product on pairs of
+        consecutive vectors between two frequency points.
 
         Parameters
         ----------
@@ -1869,9 +1869,12 @@ class IEEEP370_FD_QM:
 
     def check_passivity(self, ntwk: Network) -> float:
          """
-         Initial passivity checking of raw data at the given frequency samples.
+         Passivity quality metrics verify that the 2-Norm of S-parameters is
+         smaller or equal to 1 at each frequency.
 
-         This informative check is performed in the frequency domain.
+         This is equivalent to checking the eigenvalues of the unity matrix
+         subtracted by complex conjugate transposed S time S is greater or
+         equal to zero.
 
          Parameters
          ----------
@@ -1902,9 +1905,8 @@ class IEEEP370_FD_QM:
 
     def check_reciprocity(self, ntwk: Network) -> float:
         """
-        Initial reciprocity checking of raw data at the given frequency samples.
-
-        This informative check is performed in the frequency domain.
+        Integrate the absolute difference between Sij and Sji at
+        each frequency point. Ideally, Sij should be equal to Sji.
 
         Parameters
         ----------
@@ -1937,10 +1939,8 @@ class IEEEP370_FD_QM:
 
     def check_se_quality(self, ntwk: Network, verbose: bool = False) -> dict:
         """
-        Initial quality checking of raw data at the given frequency samples.
-
-        This informative passivity, reciprocity and causality check is
-        performed in the frequency domain.
+        Single-ended passivity, reciprocity, and causality checks are
+        performed on the original S-parameters data in the frequency domain.
 
         Parameters
         ----------
@@ -2019,12 +2019,12 @@ class IEEEP370_FD_QM:
 
     def check_mm_quality(self, ntwk: Network, verbose: bool = False) -> dict:
         """
-        Initial quality checking of raw data at the given frequency samples.
+        Mixed-mode passivity, reciprocity, and causality checks are
+        performed on the original S-parameters data in the frequency domain.
 
-        This informative passivity, reciprocity and causality check is
-        performed in the frequency domain.
-
-        Only the differential and the common modes are tested.
+        The input networks should be 4-port single-ended and will be
+        transformed to mixed-mode representation. Only the differential and
+        the common modes are tested.
 
         Parameters
         ----------
@@ -2075,7 +2075,11 @@ class IEEEP370_TD_QM:
         IEEEP370_TD_QM Application-based quality checking of in the time
         domain.
 
-        Initializer.
+        If necessary, the original S-parameters are extrapolated to a frequency
+        of three times the desired data rate. Causal, passive, and reciprocal
+        models are reconstructed and stimulated by a pulse. The difference
+        between the original extrapolated signal and the ideal responses
+        in the time domain are integrated to give metrics in millivolts.
 
         Based on [IEEE370]_.
 
@@ -2084,15 +2088,14 @@ class IEEEP370_TD_QM:
         data_rate    : :float
                        Data rate (bps)
         sample_per_UI: :number
-                       Number of points of generated pulse signal
+                       Number of points of unit interval
         rise_time_per: :float
-                       Rise time divided by high time ratio
+                       Rise time from 20% to 80% divided by width
         pulse_shape  : :number
                        1 is Gaussian; 2 is rectangular with Butterworth filter;
                        3 is rectangular with Gaussian filter
         extrapolation: :number
-                       1 is constant extrapolation; 2 is zero padding;
-                       3 is repeating
+                       1 is constant extrapolation; 2 is zero padding
         verbose      : :boolean
                        Plot extrapolated frequency data, generated pulse and
                        the time domain comparison between the original and the
@@ -2114,7 +2117,8 @@ class IEEEP370_TD_QM:
     def add_conj(self, s_ij: ndarray):
         """
         Add complex conjugates for ifft.
-        Consider using irfft instead.
+
+        Todo: Consider using irfft instead.
         """
         N = len(s_ij)
         s_ij_conj = zeros(2 * N - 1, dtype = complex)
@@ -2126,8 +2130,8 @@ class IEEEP370_TD_QM:
 
     def align_signals(self, x: ndarray, y: ndarray) -> ndarray:
         """
-        Compute the index shift between two identical shifted signals.
-
+        Compute the index shift between two identical shifted signals in the
+        time domain.
         """
         y = y.T
         x = x.T
@@ -2160,7 +2164,7 @@ class IEEEP370_TD_QM:
     def create_causal(self, ntwk: Network, data_rate: float,
                       rise_time_per: float) -> (Network, ndarray):
         """
-        Creat causality enforced network.
+        Create a causality-enforced network.
 
         Parameters
         ----------
@@ -2169,12 +2173,12 @@ class IEEEP370_TD_QM:
         data_rate    : :float
                        Data rate (bps)
         rise_time_per: :float
-                       Rise time divided by high time ratio
+                       Rise time from 20% to 80% divided by width
 
         Returns
         -------
         causal: :class:`~skrf.network.Network` object
-                Causality enforced network
+                Causality-enforced network
         delay : :class:`~skrf.network.Network` object
                 Alignment delay with original network for comparison sake
         """
@@ -2198,7 +2202,7 @@ class IEEEP370_TD_QM:
 
     def create_passive(self, ntwk: Network) -> Network:
         """
-        Creat passivity enforced network.
+        Creat a passivity-enforced network.
 
         Parameters
         ----------
@@ -2208,7 +2212,7 @@ class IEEEP370_TD_QM:
         Returns
         -------
         reciprocal : :class:`~skrf.network.Network` object
-                     Passivity enforced network
+                     Passivity-enforced network
         """
         passive = ntwk.copy()
         for i in range(ntwk.frequency.npoints):
@@ -2222,10 +2226,11 @@ class IEEEP370_TD_QM:
 
     def create_reciprocal(self, ntwk: Network) -> Network:
         """
-        Creat reciprocal network.
+        Creat a reciprocal network.
 
         The resulting network is the reciprocal of the input networks. The
-        reciprocity is not enforced.
+        reciprocity is not enforced, but the time domain response will still
+        gives metrics that is high if reciprocity is low.
 
         Parameters
         ----------
@@ -2248,7 +2253,9 @@ class IEEEP370_TD_QM:
         """
         Extrapolate to DC and interpolate to the harmonic frequency sweep.
 
-        Passivity is enforced on the DC extrapolated points.
+        Passivity is enforced on the DC extrapolated points. The missing part
+        from dc to the first frequency sample should not exceed a phase change
+        of π/2.
 
         Parameters
         ----------
@@ -2258,7 +2265,7 @@ class IEEEP370_TD_QM:
         Returns
         -------
         extrapolated : :class:`~skrf.network.Network` object
-                     Extrapolated network
+                       Extrapolated network
         """
         f = ntwk.frequency.f
         df = f[1] - f[0]
@@ -2303,7 +2310,10 @@ class IEEEP370_TD_QM:
 
     def extrapolate_to_dc_ij(self, f: ndarray, f_new: ndarray, s_ij: ndarray):
         """
-        Extrapolate single S-component to dc.
+        Extrapolate single S-component to DC.
+
+        The missing part from dc to the first frequency sample should not
+        exceed a phase change of π/2.
         """
         # calculate delay
         ph = -np.unwrap(np.angle(s_ij))
@@ -2338,6 +2348,8 @@ class IEEEP370_TD_QM:
                             sample_per_UI: int, extrapolation: int)-> Network:
         """
         Extrapolate network max frequency if required by parameters.
+
+        This is usually three times the data rate.
 
         Parameters
         ----------
@@ -2383,6 +2395,7 @@ class IEEEP370_TD_QM:
     def get_causal_model(self, f: ndarray, s_ij: ndarray, data_rate,
                          rise_time_per) -> ndarray:
         """
+        Get causality-enforced model for a single S-parameter component Sij.
         """
         df = f[1] - f[0]
         dt = 1. / (2 * f[-1] + df)
@@ -2446,7 +2459,8 @@ class IEEEP370_TD_QM:
     def get_delay_time(self, freq: ndarray, s_ij: ndarray, phase_causal: ndarray,
                                 data_rate: float, rise_time_per: float) -> float:
         """
-        Get delay between original and causality enforced data.
+        Get delay between original and causality enforced data in number of
+        time samples.
 
         Parameters
         ----------
@@ -2459,7 +2473,7 @@ class IEEEP370_TD_QM:
         data_rate    : :float
                        Data rate (bps)
         rise_time_per: :float
-                       Rise time divided by high time ratio
+                       Rise time from 20% to 80% divided by width
 
         Returns
         -------
@@ -2500,7 +2514,7 @@ class IEEEP370_TD_QM:
         N            : :number
                        Number of points of generated pulse signal
         rise_time_per: :float
-                       Rise time divided by high time ratio
+                       Rise time from 20% to 80% divided by width
         verbose      : :boolean
                        Plot referrence and generated pulses in the time
                        domain
@@ -2535,8 +2549,7 @@ class IEEEP370_TD_QM:
     def get_pulse_rect(self, dt: float, data_rate: float, N: int,
                        rise_time_per: float, verbose = False)-> ndarray:
         """
-        Get the FFT of a rectangular pulse with defined rise, high, and fall
-        times.
+        Get the FFT of a rectangular pulse with defined rise time.
 
         Rise time and fall time are equals.
 
@@ -2549,9 +2562,9 @@ class IEEEP370_TD_QM:
         N            : :number
                        Number of points of generated pulse signal
         rise_time_per: :float
-                       Rise time divided by high time ratio
+                       Rise time from 20% to 80% divided by width
         verbose      : :boolean
-                       Plot referrence and interpolated pulses in the time
+                       Plot reference and interpolated pulses in the time
                        domain
 
         Returns
@@ -2589,7 +2602,7 @@ class IEEEP370_TD_QM:
         """
         Get the impulse responses of the S-parameters.
 
-        The pulse is defines as per application parameters.
+        The pulse is defined as per application parameters.
 
         Parameters
         ----------
@@ -2598,7 +2611,7 @@ class IEEEP370_TD_QM:
         data_rate    : :float
                        Data rate (bps)
         rise_time_per: :float
-                       Rise time divided by high time ratio
+                       Rise time from 20% to 80% divided by width
         pulse_shape  : :number
                        1 is Gaussian; 2 is rectangular with Butterworth filter;
                        3 is rectangular with Gaussian filter
@@ -2606,9 +2619,9 @@ class IEEEP370_TD_QM:
         Returns
         -------
         v : :ndarray
-            impulse response amplitude vector
+            Impulse response amplitude vector
         t : :ndarray
-            impulse response time vector
+            Impulse response time vector
         """
         N = ntwk.frequency.npoints
         freq = ntwk.frequency.f
@@ -2648,6 +2661,9 @@ class IEEEP370_TD_QM:
                                       nports: int,
                                       data_rate: float) -> (ndarray, ndarray):
         """
+        Integrate the difference between two signals on units intervals in the
+        time domain. The result has a physical estimation in millivolts of
+        the worst-case bit sequence based on peak distortion analysis.
         """
         N = len(t)
         dt = t[1] - t[0]
@@ -2679,6 +2695,11 @@ class IEEEP370_TD_QM:
                                       nports: int, data_rate: float,
                                       delay_matrix: ndarray) -> (ndarray, ndarray):
         """
+        Integrate the difference between two signals on units intervals in the
+        time domain. The result has a physical estimation in millivolts of
+        the worst-case bit sequence based on peak distortion analysis.
+
+        Also accounts for the causality minimum delay.
         """
         N = len(t)
         dt = t[1] - t[0]
@@ -2706,7 +2727,7 @@ class IEEEP370_TD_QM:
 
     def interpolate_ij(self, f: ndarray, f_new: ndarray, s_ij: ndarray):
         """
-        Interpolate single S-component.
+        Interpolate single S-parameter component Sij.
         """
         # calculate delay
         delay = np.max([0, self.get_delay(f, -np.unwrap(np.angle(s_ij)))])
@@ -2723,9 +2744,13 @@ class IEEEP370_TD_QM:
 
     def check_se_quality(self, ntwk: Network, verbose: bool = False) -> dict:
         """
-        Application-based quality checking of in the time domain.
+        Single-ended application-based quality checking of in the time domain.
 
-        The data are interpolated to fit the application parameters.
+        If necessary, the original S-parameters are extrapolated to a frequency
+        of three times the desired data rate. Causal, passive, and reciprocal
+        models are reconstructed and stimulated by a pulse. The difference
+        between the original extrapolated signal and the ideal responses
+        in the time domain are integrated to give metrics in millivolts.
 
         Parameters
         ----------
@@ -2925,11 +2950,17 @@ class IEEEP370_TD_QM:
 
     def check_mm_quality(self, ntwk: Network, verbose: bool = False) -> dict:
         """
-        Application-based quality checking of in the time domain.
+        Mixed-mode application-based quality checking of in the time domain.
 
-        The data are interpolated to fit the application parameters.
+        If necessary, the original S-parameters are extrapolated to a frequency
+        of three times the desired data rate. Causal, passive, and reciprocal
+        models are reconstructed and stimulated by a pulse. The difference
+        between the original extrapolated signal and the ideal responses
+        in the time domain are integrated to give metrics in millivolts.
 
-        Only the differential and the common modes are tested.
+        The input networks should be 4-port single-ended and will be
+        transformed to mixed-mode representation. Only the differential and
+        the common modes are tested.
 
         Parameters
         ----------
