@@ -464,23 +464,38 @@ class NetworkTestCase(unittest.TestCase):
     def test_write_touchstone_noisy(self):
         ntwk = self.ntwk_noise
 
-        # Read back the written touchstone
-        ntwkstr = ntwk.write_touchstone(return_string=True)
-        strio = io.StringIO(ntwkstr)
-        strio.name = 'StringIO.s2p'
-        new_ntwk = rf.Network(strio)
+        # Test with and without noise data formatting
+        for use_formatting in (False, True):
+            # Read back the written touchstone
+            if use_formatting:
+                ntwkstr = ntwk.write_touchstone(
+                    return_string=True,
+                    format_spec_freq='{:<6.4f}',
+                    format_spec_A='\t{:>6.4f}',
+                    format_spec_B='\t{:>6.4f}',
+                    format_spec_nf_freq='{:<6.4f}',
+                    format_spec_nf_min='\t{:<6.4f}',
+                    format_spec_g_opt_mag='\t{:<6.4f}',
+                    format_spec_g_opt_phase='\t{:<6.4f}',
+                    format_spec_rn='\t{:<6.4f}',
+                )
+            else:
+                ntwkstr = ntwk.write_touchstone(return_string=True)
+            strio = io.StringIO(ntwkstr)
+            strio.name = 'StringIO.s2p'
+            new_ntwk = rf.Network(strio)
 
-        # Only compare to original noise data, not interpolated
-        ntwk.resample(ntwk.f_noise)
-        new_ntwk.resample(new_ntwk.f_noise)
+            # Only compare to original noise data, not interpolated
+            ntwk.resample(ntwk.f_noise)
+            new_ntwk.resample(new_ntwk.f_noise)
 
-        # Newly written noise properties should match the original
-        np.testing.assert_allclose(ntwk.f_noise.f_scaled, new_ntwk.f_noise.f_scaled)
-        np.testing.assert_allclose(ntwk.nfmin, new_ntwk.nfmin)
-        np.testing.assert_allclose(ntwk.nfmin_db, new_ntwk.nfmin_db)
-        np.testing.assert_allclose(ntwk.g_opt, new_ntwk.g_opt)
-        np.testing.assert_allclose(ntwk.rn, new_ntwk.rn)
-        np.testing.assert_allclose(ntwk.z0, new_ntwk.z0)
+            # Newly written noise properties should match the original
+            np.testing.assert_allclose(ntwk.f_noise.f_scaled, new_ntwk.f_noise.f_scaled)
+            np.testing.assert_allclose(ntwk.nfmin, new_ntwk.nfmin)
+            np.testing.assert_allclose(ntwk.nfmin_db, new_ntwk.nfmin_db)
+            np.testing.assert_allclose(ntwk.g_opt, new_ntwk.g_opt)
+            np.testing.assert_allclose(ntwk.rn, new_ntwk.rn)
+            np.testing.assert_allclose(ntwk.z0, new_ntwk.z0)
 
     def test_pickling(self):
         original_ntwk = self.ntwk1
