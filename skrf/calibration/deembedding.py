@@ -1802,26 +1802,37 @@ class IEEEP370_FER:
         return fig
 
 class IEEEP370_FD_QM:
-    """
-    IEEE 370 initial quality checking of raw data at the given frequency
-    samples.
+    def __init__(self, verbose: bool = False) -> None:
+        """
+        IEEE 370 initial quality checking of raw data at the given frequency
+        samples.
 
-    This informative passivity, reciprocity and causality check is
-    performed in the frequency domain.
+        Passivity, reciprocity, and causality checks are
+        performed on the original S-parameters data in the frequency domain.
 
-    Based on [IEEE370]_.
+        Based on [IEEE370]_.
 
-    References
-    ----------
-    .. [IEEE370] IEEE Standard for Electrical Characterization of Printed
-    Circuit Board and Related Interconnects at Frequencies up to 50 GHz",
-    IEEE 370-2020.
-    """
+        Parameters
+        ----------
+        verbose      : :boolean
+                       Plot internal causality, passivity, and reciprocity
+                       figures (default False)
+
+        References
+        ----------
+        .. [IEEE370] IEEE Standard for Electrical Characterization of Printed
+        Circuit Board and Related Interconnects at Frequencies up to 50 GHz",
+        IEEE 370-2020.
+        """
+        self.verbose = verbose
+
     def check_causality(self, ntwk: Network) -> float:
         """
-        Initial causality checking of raw data at the given frequency samples.
+        Causality quality metrics verify that the complex S-parameters
+        rotate clockwise in the complex plane.
 
-        This informative check is performed in the frequency domain.
+        This is done by computing the normalized vector product on pairs of
+        consecutive vectors between two frequency points.
 
         Parameters
         ----------
@@ -1849,7 +1860,7 @@ class IEEEP370_FD_QM:
                         Vn = ntwk.s[k + 1, i, j] - ntwk.s[k, i, j]
                         Vn1 = ntwk.s[k + 2, i, j] - ntwk.s[k + 1, i, j]
                         R = real(Vn1) * imag(Vn) - imag(Vn1) * real(Vn)
-                        if R >  0:
+                        if R > 0:
                             PositiveR = PositiveR + R
                         TotalR = TotalR + np.abs(R)
                     CQM[i, j] = np.nanmax((PositiveR / TotalR, 0)) * 100.
@@ -1858,9 +1869,12 @@ class IEEEP370_FD_QM:
 
     def check_passivity(self, ntwk: Network) -> float:
          """
-         Initial passivity checking of raw data at the given frequency samples.
+         Passivity quality metrics verify that the 2-Norm of S-parameters is
+         smaller or equal to 1 at each frequency.
 
-         This informative check is performed in the frequency domain.
+         This is equivalent to checking the eigenvalues of the unity matrix
+         subtracted by complex conjugate transposed S time S is greater or
+         equal to zero.
 
          Parameters
          ----------
@@ -1878,20 +1892,21 @@ class IEEEP370_FD_QM:
          Nf = ntwk.frequency.npoints
          A  = 1.00001
          B  = 0.1
+         self.PM = zeros(Nf)
          PW = zeros(Nf)
          for i in range(Nf):
-             PM = norm(ntwk.s[i, :, :], 2)
-             if PM > A:
-                 PW[i] = (PM - A) / B
+             # numpy linalg norm is frobenius, use 2-norm like Matlab instead
+             self.PM[i] = norm(ntwk.s[i, :, :], 2)
+             if self.PM[i] > A:
+                 PW[i] = (self.PM[i] - A) / B
 
-         return np.max((Nf - np.sum(PW)), 0) / Nf * 100.
+         return np.max([Nf - np.sum(PW), 0]) / Nf * 100.
 
 
     def check_reciprocity(self, ntwk: Network) -> float:
         """
-        Initial reciprocity checking of raw data at the given frequency samples.
-
-        This informative check is performed in the frequency domain.
+        Integrates the absolute difference between Sij and Sji at
+        each frequency point. Ideally, Sij should be equal to Sji.
 
         Parameters
         ----------
@@ -1909,35 +1924,39 @@ class IEEEP370_FD_QM:
         Nf = ntwk.frequency.npoints
         B = 0.1
         C = 1e-6
+        self.RM = zeros(Nf)
         RW = zeros(Nf)
         for i in range(Nf):
-            RM = 0
+            self.RM[i] = 0
             for k in range(ntwk.nports):
                 for m in range(ntwk.nports):
-                    RM = RM + np.abs(ntwk.s[i, m, k] - ntwk.s[i, k, m])
-            RM = RM / (ntwk.nports * (ntwk.nports - 1))
-            if RM > C:
-                RW[i] = (RM - C) / B
+                    self.RM[i] = self.RM[i] + np.abs(ntwk.s[i, k, m] - ntwk.s[i, m, k])
+            self.RM[i] = self.RM[i] / (ntwk.nports * (ntwk.nports - 1))
+            if self.RM[i] > C:
+                RW[i] = (self.RM[i] - C) / B
 
-            return np.max((Nf - np.sum(RW)), 0) / Nf * 100.
+        return np.max([Nf - np.sum(RW), 0]) / Nf * 100.
 
-    def check_se_quality(self, ntwk: Network) -> dict:
+    def check_se_quality(self, ntwk: Network, verbose: bool = False) -> dict:
         """
-        Initial quality checking of raw data at the given frequency samples.
-
-        This informative passivity, reciprocity and causality check is
-        performed in the frequency domain.
+        Single-ended passivity, reciprocity, and causality checks are
+        performed on the original S-parameters data in the frequency domain.
 
         Parameters
         ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Network to be checked
+        ntwk   : :class:`~skrf.network.Network` object
+                 Network to be checked
+        verbose: :boolean
+                 Plot internal causality, passivity, and reciprocity
+                 figures. When True, override class verbose parameter.
+                 (default False).
 
         Returns
         -------
         QM : :class:`dict` object
               Dictionnary with quality metrics
         """
+        verbose = self.verbose or verbose
         QM = {'causality': {'value': self.check_causality(ntwk), 'evaluation': ''},
               'passivity': {'value': self.check_passivity(ntwk), 'evaluation': ''},
               'reciprocity': {'value': self.check_reciprocity(ntwk), 'evaluation': ''},
@@ -1945,47 +1964,76 @@ class IEEEP370_FD_QM:
 
         # evaluation
         if QM['causality']['value'] <= 20.:
-            QM['causality']['evaluation'] = 'Poor'
+            QM['causality']['evaluation'] = 'poor'
         elif QM['causality']['value'] <= 50.:
-            QM['causality']['evaluation'] = 'Inconclusive'
+            QM['causality']['evaluation'] = 'inconclusive'
         elif QM['causality']['value'] <= 80:
-            QM['causality']['evaluation'] = 'Acceptable'
+            QM['causality']['evaluation'] = 'acceptable'
         else:
-            QM['causality']['evaluation'] = 'Good'
+            QM['causality']['evaluation'] = 'good'
 
         if QM['passivity']['value'] <= 80.:
-            QM['passivity']['evaluation'] = 'Poor'
+            QM['passivity']['evaluation'] = 'poor'
         elif QM['passivity']['value'] <= 99.:
-            QM['passivity']['evaluation'] = 'Inconclusive'
+            QM['passivity']['evaluation'] = 'inconclusive'
         elif QM['passivity']['value'] <= 99.9:
-            QM['passivity']['evaluation'] = 'Acceptable'
+            QM['passivity']['evaluation'] = 'acceptable'
         else:
-            QM['passivity']['evaluation'] = 'Good'
+            QM['passivity']['evaluation'] = 'good'
 
         if QM['reciprocity']['value'] <= 80.:
-            QM['reciprocity']['evaluation'] = 'Poor'
+            QM['reciprocity']['evaluation'] = 'poor'
         elif QM['reciprocity']['value'] <= 99.:
-            QM['reciprocity']['evaluation'] = 'Inconclusive'
+            QM['reciprocity']['evaluation'] = 'inconclusive'
         elif QM['reciprocity']['value'] <= 99.9:
-            QM['reciprocity']['evaluation'] = 'Acceptable'
+            QM['reciprocity']['evaluation'] = 'acceptable'
         else:
-            QM['reciprocity']['evaluation'] = 'Good'
+            QM['reciprocity']['evaluation'] = 'good'
+
+        # verbose
+        if verbose:
+            name = ntwk.name if ntwk.name else 'Network'
+            fig = figure(figsize = (12, 4.4))
+            fig.suptitle('Initial checking in the frequency domain')
+            ax = fig.add_subplot(1, 3, 1, projection = 'polar')
+            ax.set_title('Causality')
+            ntwk.plot_s_polar(ax = ax)
+            ax.legend(loc = 'upper right')
+            ax = fig.add_subplot(1, 3, 2)
+            ax.set_title('Passivity')
+            ax.plot(ntwk.frequency.f_scaled, self.PM, color = 'k', label = name)
+            ax.plot([ntwk.frequency.f_scaled[0], ntwk.frequency.f_scaled[-1]],
+                    [1., 1.], color = 'r', linestyle = 'dashed', label = 'Maximum')
+            ax.set_xlabel(f'Frequency ({ntwk.frequency.unit})')
+            ax.set_ylabel('2-Norm(S)')
+            ax.legend(loc = 'upper right')
+            ax = fig.add_subplot(1, 3, 3)
+            ax.set_title('Reciprocity')
+            ax.plot(ntwk.frequency.f_scaled, self.RM, color = 'k', label = name)
+            ax.set_xlabel(f'Frequency ({ntwk.frequency.unit})')
+            ax.set_ylabel('Sum of S-pairs differences')
+            ax.legend(loc = 'upper right')
+            fig.tight_layout()
 
         return QM
 
-    def check_mm_quality(self, ntwk: Network) -> dict:
+    def check_mm_quality(self, ntwk: Network, verbose: bool = False) -> dict:
         """
-        Initial quality checking of raw data at the given frequency samples.
+        Mixed-mode passivity, reciprocity, and causality checks are
+        performed on the original S-parameters data in the frequency domain.
 
-        This informative passivity, reciprocity and causality check is
-        performed in the frequency domain.
-
-        Only the differential and the common modes are tested.
+        The input networks should be 4-port single-ended and will be
+        transformed to mixed-mode representation. Only the differential and
+        the common modes are tested.
 
         Parameters
         ----------
-        ntwk: :class:`~skrf.network.Network` object
-              Network to be checked
+        ntwk:    :class:`~skrf.network.Network` object
+                 Network to be checked
+        verbose: :bool
+                 Plot internal causality, passivity, and reciprocity
+                 figures. When True, override class verbose parameter.
+                 (default False).
 
         Returns
         -------
@@ -1994,8 +2042,8 @@ class IEEEP370_FD_QM:
         """
         mm = ntwk.copy()
         mm.se2gmm(p = 2)
-        QM = {'dd': self.check_se_quality(mm.subnetwork([0, 1])),
-              'cc': self.check_se_quality(mm.subnetwork([2, 3]))}
+        QM = {'dd': self.check_se_quality(mm.subnetwork([0, 1]), verbose),
+              'cc': self.check_se_quality(mm.subnetwork([2, 3]), verbose)}
 
         return QM
 
@@ -2018,6 +2066,945 @@ class IEEEP370_FD_QM:
         else:
             for k in QM.keys():
                 print(f"{k} is {QM[k]['evaluation']} ({QM[k]['value']:.2f}%)")
+
+class IEEEP370_TD_QM:
+    def __init__(self, data_rate: float, sample_per_UI: int,
+                 rise_time_per: float, pulse_shape: int = 1,
+                 extrapolation: int = 2, verbose: bool = False) -> None:
+        """
+        IEEEP370_TD_QM Application-based quality checking of in the time
+        domain.
+
+        If necessary, the original S-parameters are extrapolated to a frequency
+        of three times the desired data rate. Causal, passive, and reciprocal
+        models are reconstructed and stimulated by a pulse. The difference
+        between the original extrapolated signal and the ideal responses
+        in the time domain are integrated to give metrics in millivolts.
+
+        Based on [IEEE370]_.
+
+        Parameters
+        -----------
+        data_rate    : :float
+                       Data rate (bps)
+        sample_per_UI: :number
+                       Number of points of unit interval
+        rise_time_per: :float
+                       Rise time from 20% to 80% divided by width
+        pulse_shape  : :number
+                       1 is Gaussian; 2 is rectangular with Butterworth filter;
+                       3 is rectangular with Gaussian filter
+        extrapolation: :number
+                       1 is constant extrapolation; 2 is zero padding
+        verbose      : :boolean
+                       Plot extrapolated frequency data, generated pulse and
+                       the time domain comparison between the original and the
+                       causality enforced responses
+
+        References
+        ----------
+        .. [IEEE370] IEEE Standard for Electrical Characterization of Printed
+        Circuit Board and Related Interconnects at Frequencies up to 50 GHz",
+        IEEE 370-2020.
+        """
+        self.data_rate = data_rate
+        self.sample_per_UI = sample_per_UI
+        self.rise_time_per = rise_time_per
+        self.pulse_shape = pulse_shape
+        self.extrapolation = extrapolation
+        self.verbose = verbose
+
+    def add_conj(self, s_ij: ndarray):
+        """
+        Add complex conjugates for ifft.
+
+        Todo: Consider using irfft instead.
+        """
+        N = len(s_ij)
+        s_ij_conj = zeros(2 * N - 1, dtype = complex)
+        s_ij_conj[:N] = s_ij
+        for k in range(N - 1):
+            s_ij_conj[k + N] = np.conj(s_ij_conj[N - k - 1])
+
+        return s_ij_conj
+
+    def align_signals(self, x: ndarray, y: ndarray) -> ndarray:
+        """
+        Compute the index shift between two identical shifted signals in the
+        time domain.
+        """
+        y = y.T
+        x = x.T
+        n = len(x)
+        m = np.round(n * 0.1).astype(int)
+        mm = np.round(n * 0.01).astype(int)
+        xx = np.append(x[0:m], x[n - mm:n])
+        yy = np.append(y[0:m], y[n - mm:n])
+        x = xx
+        y = yy
+        yy = y[0:m]
+        Ix = np.argmax(x)
+        Iy = np.argmax(y)
+        index = Ix - Iy
+        yy = np.roll(y, index)
+        n = np.min([1000, m]).astype(int)
+        error = len(x)
+        error_ind = 0
+        for k in range(-n + index, n + index):
+            yy = np.roll(y, k)
+            # numpy linalg norm is frobenius, use 2-norm like Matlab instead
+            cur_error = np.linalg.norm(yy - x, 2)
+            if error > cur_error:
+                error_ind = k
+                error = cur_error
+        y = np.roll(y, error_ind)
+
+        return error_ind
+
+    def create_causal(self, ntwk: Network, data_rate: float,
+                      rise_time_per: float) -> (Network, ndarray):
+        """
+        Create a causality-enforced network.
+
+        Parameters
+        ----------
+        ntwk         : :class:`~skrf.network.Network` object
+                       Input network
+        data_rate    : :float
+                       Data rate (bps)
+        rise_time_per: :float
+                       Rise time from 20% to 80% divided by width
+
+        Returns
+        -------
+        causal: :class:`~skrf.network.Network` object
+                Causality-enforced network
+        delay : :class:`~skrf.network.Network` object
+                Alignment delay with original network for comparison sake
+        """
+        causal = ntwk.copy()
+        nports = causal.nports
+        N = causal.frequency.npoints
+        f = causal.frequency.f
+        delay_matrix = zeros((nports, nports), dtype = int)
+        for i in range(nports):
+            for j in range(nports):
+                for k in range(N):
+                    if np.abs(causal.s[k, i, j]) == 0:
+                        causal.s[k, i, j] = 0.00001
+                causal_ij, f, delay_ij = self.get_causal_model(f, causal.s[:, i, j],
+                                                               data_rate,
+                                                               rise_time_per)
+                causal.s[:, i, j] = causal_ij
+                delay_matrix[i, j] = delay_ij
+
+        return (causal, delay_matrix)
+
+    def create_passive(self, ntwk: Network) -> Network:
+        """
+        Creat a passivity-enforced network.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Input network
+
+        Returns
+        -------
+        reciprocal : :class:`~skrf.network.Network` object
+                     Passivity-enforced network
+        """
+        passive = ntwk.copy()
+        for i in range(ntwk.frequency.npoints):
+            U, D, Vh = np.linalg.svd(ntwk.s[i, :, :])
+            for k in range(ntwk.nports):
+                if D[k] > 1.:
+                    D[k] = 1.
+            passive.s[i, :, :] = U @ np.diag(D) @ Vh
+
+        return passive
+
+    def create_reciprocal(self, ntwk: Network) -> Network:
+        """
+        Creat a reciprocal network.
+
+        The resulting network is the reciprocal of the input networks. The
+        reciprocity is not enforced, but the time domain response will still
+        gives metrics that is high if reciprocity is low.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Input network
+
+        Returns
+        -------
+        reciprocal : :class:`~skrf.network.Network` object
+                     Reciprocal network
+        """
+        reciprocal = ntwk.copy()
+        for i in range(ntwk.nports):
+            for j in range(ntwk.nports):
+                reciprocal.s[:, i, j] = ntwk.s[:, j, i]
+
+        return reciprocal
+
+    def extrapolate_to_dc(self, ntwk: Network) -> Network:
+        """
+        Extrapolate to DC and interpolate to the harmonic frequency sweep.
+
+        Passivity is enforced on the DC extrapolated points. The missing part
+        from dc to the first frequency sample should not exceed a phase change
+        of π/2.
+
+        Parameters
+        ----------
+        ntwk: :class:`~skrf.network.Network` object
+              Input network
+
+        Returns
+        -------
+        extrapolated : :class:`~skrf.network.Network` object
+                       Extrapolated network
+        """
+        f = ntwk.frequency.f
+        df = f[1] - f[0]
+        nports = ntwk.nports
+        f_0 = f[0]
+        # numpy linalg norm is frobenius, use 2-norm like Matlab instead
+        norm_0 = np.linalg.norm(ntwk.s[0, :, :], 2)
+        if f[0] == 0:
+            f_extra = f
+        else:
+            f_new = df * np.arange(0, np.ceil(f[0] / df))
+            f_extra = np.append(f_new, f)
+        N_interp = np.floor(f_extra[-1]/df)
+        f_interp = df * np.arange(0, N_interp + 1)
+        s = zeros((len(f_extra), nports, nports), dtype = complex)
+        s_interp = zeros((len(f_interp), nports, nports), dtype = complex)
+        for i in range(nports):
+            for j in range(nports):
+                # dc extrapolation
+                if f[0] == 0:
+                    s[:, i, j] = ntwk.s[:, i, j]
+                    s[0] = np.real(s[0, i, j])
+                else:
+                    s[:, i, j] = self.extrapolate_to_dc_ij(f, f_new,
+                                              ntwk.s[:, i, j])
+                    # interpolate to the harmonic sweep
+                    s_interp[:, i, j] = self.interpolate_ij(f_extra, f_interp,
+                                                   s[:, i, j])
+        # enforce passivity of extrapolated points
+        i = 0
+        D_max = np.max(np.array([1., norm_0]))
+        while f_interp[i] < f_0:
+            U, D, Vh = np.linalg.svd(s_interp[i, :, :])
+            for k in range(nports):
+                if D[k] > D_max:
+                    D[k] = D_max
+            s_interp[i, :, :] = U @ np.diag(D) @ Vh
+            i += 1
+
+        return Network(frequency = f_interp, s = s_interp, name = ntwk.name,
+                       z0 = ntwk.z0[0])
+
+    def extrapolate_to_dc_ij(self, f: ndarray, f_new: ndarray, s_ij: ndarray):
+        """
+        Extrapolate single S-component to DC.
+
+        The missing part from dc to the first frequency sample should not
+        exceed a phase change of π/2.
+        """
+        # calculate delay
+        ph = -np.unwrap(np.angle(s_ij))
+        delay = self.get_delay(f, ph)
+        # extract delay to smooth original function
+        s_ij = s_ij * np.exp(1j * 2 * np.pi * f * delay)
+        # extract real and imaginary parts from the original function
+        re = np.real(s_ij)
+        im = np.imag(s_ij)
+        # create a*x^2+b parabola using (f(1),re(1)) and (f(2),re(2)) points
+        a = (re[1] - re[0]) / (f[1]**2 - f[0]**2)
+        b = re[0] - a * f[0]**2
+        # extend real part to DC
+        re_new = a * f_new**2 + b
+        re = np.append(re_new, re)
+        # create a*x^3+b*x cubic parabola using (f(1),im(1)) and (f(2),im(2)) points
+        a = (im[1]/f[1] - im[0]/f[0])/(f[1]**2 - f[0]**2)
+        b = im[0]/f[0] - a * f[0]**2
+        # extend imaginary part to DC
+        im_new = a * f_new**3 + b * f_new
+        im = np.append(im_new, im)
+        f_extra = np.append(f_new, f)
+        # create complex function from real and imaginary parts
+        s_ij_extra = re + 1j * im
+        # return delay
+        s_ij_extra = s_ij_extra * \
+            np.exp(-1j * 2 * np.pi * f_extra * delay)
+
+        return s_ij_extra
+
+    def extrapolate_to_fmax(self, ntwk: Network, data_rate: float,
+                            sample_per_UI: int, extrapolation: int)-> Network:
+        """
+        Extrapolate network max frequency if required by parameters.
+
+        This is usually three times the data rate.
+
+        Parameters
+        ----------
+        ntwk         : :class:`~skrf.network.Network` object
+                       Input network
+        data_rate    : :float
+                       Data rate (bps)
+        sample_per_UI: :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time divided by high time ratio
+        extrapolation: :number
+                       1 is constant extrapolation; 2 is zero padding
+
+        Returns
+        -------
+        extrapolated : :class:`~skrf.network.Network` object
+                       Extrapolated network
+        """
+        f_max = 0.5 * data_rate * sample_per_UI
+        df = ntwk.frequency.f[1] - ntwk.frequency.f[0]
+        f_new = ntwk.frequency.f
+        while(f_new[-1] < f_max):
+            f_new = np.append(f_new, f_new[-1] + df)
+        N1 = ntwk.frequency.npoints
+        N = len(f_new)
+        s_new = zeros((N, ntwk.nports, ntwk.nports), dtype = complex)
+        for i in range(ntwk.nports):
+            for j in range(ntwk.nports):
+                s_new[:N1, i, j] = ntwk.s[:, i, j]
+                ph = np.unwrap(np.angle(s_new[:N1, i, j]))
+                dph = (ph[-1] - ph[0]) / (N1 - 1)
+                for k in range(N1, N):
+                    if extrapolation == 1:
+                        s_new[k, i, j] = s_new[k - 1, i, j] * np.exp(1j * dph)
+                    else:
+                        s_new[k, i, j] = 0
+
+        return Network(frequency = f_new, s = s_new, name = ntwk.name,
+                       z0 = ntwk.z0[0])
+
+
+    def get_causal_model(self, f: ndarray, s_ij: ndarray, data_rate,
+                         rise_time_per) -> ndarray:
+        """
+        Get causality-enforced model for a single S-parameter component Sij.
+        """
+        df = f[1] - f[0]
+        dt = 1. / (2 * f[-1] + df)
+        # DC extrapolation
+        # Already done.
+        # Interpolate data
+        # Already done.
+        # extend to negative frequencies
+        N = len(s_ij)
+        s_ij[0] = np.real(s_ij[0])
+        s_ij_conj = self.add_conj(s_ij)
+        # Extract magnitude
+        s_ij_magn_conj = np.real(np.log(np.abs(s_ij_conj)))
+        # Convert magnitude into time domain
+        s_ij_magn_time = np.fft.ifft(s_ij_magn_conj)
+        # Multiply by sign(t)
+        for i in range(N, 2 * N - 1):
+            s_ij_magn_time[i] = (-1.) * s_ij_magn_time[i]
+        s_ij_magn_time = 1j * s_ij_magn_time
+        # Calculate Phase
+        s_ij_phase_enforced = np.real(fft(s_ij_magn_time))
+        # Calculate Delay
+        delay = self.get_delay_time(f, s_ij, s_ij_phase_enforced[0:N],
+                                    data_rate, rise_time_per)
+        delay = np.round(delay / dt) * dt
+        causal_ij = zeros(N, dtype = complex)
+        for i in range(N):
+            w = 2 * np.pi * f[i]
+            causal_ij[i] = np.exp(s_ij_magn_conj[i]) * \
+                np.exp(-1j * s_ij_phase_enforced[i]) * np.exp(-1j * delay * w)
+        delay = np.round(delay / dt).astype(int)
+        return (causal_ij, f, delay)
+
+
+    def get_delay(self, freq: ndarray, phase: ndarray) -> float:
+        """
+        Get the front delay from phase and frequency vectors.
+
+        Parameters
+        ----------
+        freq: :ndarray
+              Frequency (Hz)
+        phase: :ndarray
+               Phase (rad)
+
+        Returns
+        -------
+        delay: :float
+               Delay
+
+        """
+        N = len(freq)
+        delay = 1.
+        for i in range(N):
+            if freq[i] > 0:
+                delay_i = phase[i] / freq[i] / 2. / np.pi
+                if delay > delay_i:
+                    delay = delay_i
+        return delay
+
+    def get_delay_time(self, freq: ndarray, s_ij: ndarray, phase_causal: ndarray,
+                                data_rate: float, rise_time_per: float) -> float:
+        """
+        Get delay between original and causality enforced data in number of
+        time samples.
+
+        Parameters
+        ----------
+        freq         : :ndarray
+                       Frequency (Hz)
+        s_ij         : :ndarray
+                       Original single S-component.
+        phase_causal : :ndarray
+                       Causality enforced phase (rad)
+        data_rate    : :float
+                       Data rate (bps)
+        rise_time_per: :float
+                       Rise time from 20% to 80% divided by width
+
+        Returns
+        -------
+        delay: :float
+               Delay
+        """
+        N = len(freq)
+        df = freq[1] - freq[0]
+        dt = 1. / (2 * freq[-1] + df)
+        # Gaussian filter
+        f_cut = 3. * data_rate / 2.
+        sigma = 1. / 2. / np.pi / f_cut
+        gaussian = np.exp(-2 * np.pi * np.pi * freq * freq * sigma * sigma)
+        original = s_ij * gaussian
+        causal = np.abs(original) * np.exp(-1j * phase_causal)
+        original_conj = self.add_conj(original)
+        causal_conj = self.add_conj(causal)
+        pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1, rise_time_per)
+        pulse_original = original_conj * pulse
+        pulse_causal = causal_conj * pulse
+        v_origin = np.fft.ifft(pulse_original) / 2.
+        v_causal = np.fft.ifft(pulse_causal) / 2.
+        shift_ind = -1 * self.align_signals(v_causal, v_origin)
+        return shift_ind * dt
+
+    def get_pulse_gaussian(self, dt: float, data_rate: float, N: int,
+                         rise_time_per: float, verbose = False) -> ndarray:
+        """
+        Get the FFT of a gaussian pulse. The pulse is shifted in time according
+        to parameters.
+
+        Parameters
+        ----------
+        dt           : :float
+                       Sample time (s)
+        data_rate    : :float
+                       Data rate (bps)
+        N            : :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time from 20% to 80% divided by width
+        verbose      : :boolean
+                       Plot referrence and generated pulses in the time
+                       domain
+
+        Returns
+        -------
+        fft : :ndarray
+              FFT of the pulse signal
+        """
+        n_samples = (N - 1) // 2
+        self.t_pulse = np.arange(-n_samples, n_samples + 1) * dt
+        N = len(self.t_pulse)
+        sigma = rise_time_per / (data_rate * \
+                                 (np.sqrt(-np.log(0.2))-np.sqrt(-np.log(0.8))))
+        self.v_ref = np.exp(-self.t_pulse**2 / sigma**2)
+        k_middle = n_samples
+        k_start  = np.round(1.5 / data_rate / dt) - 1
+        self.v_pulse = zeros(self.t_pulse.shape)
+        for i in range(N):
+            self.v_pulse[i] = self.v_ref[np.mod(i + k_middle - k_start, N).astype(int)]
+        if verbose:
+            fig, ax = subplots(1, 1)
+            ax.plot(self.t_pulse, self.v_ref, color = 'r', label = 'Reference')
+            ax.plot(self.t_pulse, self.v_pulse, linestyle = 'dashed', label = 'Generated')
+            ax.legend(loc = 'upper right')
+            ax.set_ylabel('Amplitude (V)')
+            ax.set_xlabel('Time (s)')
+            ax.set_title('Gaussian Pulse')
+
+        return fft(self.v_pulse)
+
+    def get_pulse_rect(self, dt: float, data_rate: float, N: int,
+                       rise_time_per: float, verbose = False)-> ndarray:
+        """
+        Get the FFT of a rectangular pulse with defined rise time.
+
+        Rise time and fall time are equals.
+
+        Parameters
+        ----------
+        dt           : :float
+                       Sample time (s)
+        data_rate    : :float
+                       Data rate (bps)
+        N            : :number
+                       Number of points of generated pulse signal
+        rise_time_per: :float
+                       Rise time from 20% to 80% divided by width
+        verbose      : :boolean
+                       Plot reference and interpolated pulses in the time
+                       domain
+
+        Returns
+        -------
+        fft : :ndarray
+              FFT of the pulse signal
+        """
+        self.t_pulse = np.arange(0, N) * dt
+        k_high = np.round(1. / data_rate / dt)
+        k_rise = np.round(k_high * rise_time_per)
+        k_offset = np.array([0, k_rise, k_rise, k_rise, k_rise, 0])
+        k_ref = np.array([0, 0, k_rise, k_high, k_high + k_rise, N - 1])
+        self.t_ref = dt * (k_offset + k_ref)
+        self.v_ref = np.array([0, 0, 1, 1, 0, 0])
+
+        interp = interp1d(self.t_ref, self.v_ref)
+        self.v_pulse = interp(self.t_pulse)
+
+        if verbose:
+            fig, ax = subplots(1, 1)
+            ax.plot(self.t_ref, self.v_ref, color = 'r', marker = 'o',
+                    label = 'Reference')
+            ax.plot(self.t_pulse, self.v_pulse, linestyle = 'dashed',
+                    label = 'Interpolated')
+            ax.legend(loc = 'upper right')
+            ax.set_ylabel('Amplitude (V)')
+            ax.set_xlabel('Time (s)')
+            ax.set_title('Rectangular Pulse')
+
+        return fft(self.v_pulse)
+
+    def get_time_domain(self, ntwk: Network, data_rate: float,
+                        rise_time_per: float,
+                        pulse_shape: int) -> (ndarray, ndarray):
+        """
+        Get the impulse responses of the S-parameters.
+
+        The pulse is defined as per application parameters.
+
+        Parameters
+        ----------
+        ntwk         : :class:`~skrf.network.Network` object
+                       Input network
+        data_rate    : :float
+                       Data rate (bps)
+        rise_time_per: :float
+                       Rise time from 20% to 80% divided by width
+        pulse_shape  : :number
+                       1 is Gaussian; 2 is rectangular with Butterworth filter;
+                       3 is rectangular with Gaussian filter
+
+        Returns
+        -------
+        v : :ndarray
+            Impulse response amplitude vector
+        t : :ndarray
+            Impulse response time vector
+        """
+        N = ntwk.frequency.npoints
+        freq = ntwk.frequency.f
+        df = freq[1] - freq[0]
+        dt = 1 / (2 * freq[-1] + df)
+        nports = ntwk.nports
+        t = dt * np.arange(0, 2 * N - 1)
+        v = zeros((2 * N - 1, nports, nports))
+        # Gaussian filter
+        f_cut = 3. * data_rate / 2.
+        sigma = 1. / 2. / np.pi / f_cut
+        rise_time = 1. / data_rate * 1000 * rise_time_per
+        f0 = 320 / rise_time
+        if pulse_shape == 1:
+            self.filter = np.ones(N, dtype = complex)
+            self.pulse = self.get_pulse_gaussian(dt, data_rate, 2 * N - 1,
+                                            rise_time_per)
+        elif pulse_shape == 2:
+            self.filter = 1. / (1 + 1j * freq / f0)
+            self.pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1,
+                                        1.4 * rise_time_per)
+        else:
+            self.filter = np.exp(-2 * np.pi * np.pi * freq * freq * sigma * sigma)
+            self.pulse = self.get_pulse_rect(dt, data_rate, 2 * N - 1,
+                                        1.4 * rise_time_per)
+        for i in range(nports):
+            for j in range(nports):
+                s_ij = ntwk.s[:, i, j] * self.filter
+                s_ij[0] = np.real(s_ij[0])
+                s_ij_conj = self.add_conj(s_ij)
+                pulse_response_freq = self.pulse * s_ij_conj
+                v[:, i, j] = np.real(np.fft.ifft(pulse_response_freq))
+
+        return (v, t)
+
+    def get_td_difference_mv(self, v1: ndarray, v2: ndarray, t: ndarray,
+                                      nports: int,
+                                      data_rate: float) -> (ndarray, ndarray):
+        """
+        Integrate the difference between two signals on units intervals in the
+        time domain. The result has a physical estimation in millivolts of
+        the worst-case bit sequence based on peak distortion analysis.
+        """
+        N = len(t)
+        dt = t[1] - t[0]
+        UI = 1. / data_rate / dt
+        max_bits = 31
+        time_domain_difference_mv = zeros((nports, nports))
+        N_UI = np.round(UI).astype(int)
+        delta = zeros(N_UI)
+        for i in range(nports):
+            for j in range(nports):
+                max_index = np.argmax(v1[:, i, j])
+                last_index = max_index + max_bits * UI
+                lower_index = max_index - max_bits * UI
+                for k in range(N_UI):
+                    delta[k] = 0
+                    for m in range(np.floor(N / UI).astype(int) - 1):
+                        ind = k + np.floor(m * UI).astype(int)
+                        if lower_index >= 0:
+                            condition = (ind < last_index) and (ind > lower_index)
+                        else:
+                            condition = (ind < last_index) or (ind > N - lower_index - 1)
+                        if condition:
+                            delta[k] = delta[k] + np.abs(v2[ind, i, j] - v1[ind, i, j])
+                time_domain_difference_mv[i, j] = np.max(delta)
+
+        return time_domain_difference_mv
+
+    def get_td_causality_difference_mv(self, v1: ndarray, v2: ndarray, t: ndarray,
+                                      nports: int, data_rate: float,
+                                      delay_matrix: ndarray) -> (ndarray, ndarray):
+        """
+        Integrate the difference between two signals on units intervals in the
+        time domain. The result has a physical estimation in millivolts of
+        the worst-case bit sequence based on peak distortion analysis.
+
+        Also accounts for the causality minimum delay.
+        """
+        N = len(t)
+        dt = t[1] - t[0]
+        UI = 1. / data_rate / dt
+        max_bits = 31
+        time_domain_difference_mv = zeros((nports, nports))
+        N_UI = np.round(UI).astype(int)
+        delta = zeros(N_UI)
+        for i in range(nports):
+            for j in range(nports):
+                if i == j:
+                    delay_num = 0
+                else:
+                    delay_num = delay_matrix[i, j]
+                for k in range(N_UI):
+                    delta[k] = 0
+                    for m in range(max_bits):
+                        ind = delay_num - k - np.floor(m * UI).astype(int) - 2
+                        if ind < 0:
+                            ind = N + ind
+                        delta[k] = delta[k] + np.abs(v2[ind, i, j] - v1[ind, i, j])
+                time_domain_difference_mv[i, j] = np.max(delta)
+
+        return time_domain_difference_mv
+
+    def interpolate_ij(self, f: ndarray, f_new: ndarray, s_ij: ndarray):
+        """
+        Interpolate single S-parameter component Sij.
+        """
+        # calculate delay
+        delay = np.max([0, self.get_delay(f, -np.unwrap(np.angle(s_ij)))])
+        # extract delay to smooth original function
+        s_ij = s_ij * np.exp(1j * 2 * np.pi * f * delay)
+        # interpolate
+        interp = interp1d(f, s_ij)
+        s_ij_interp = interp(f_new)
+        # return delay
+        s_ij_interp = s_ij_interp * \
+            np.exp(-1j * 2 * np.pi * f_new * delay)
+
+        return s_ij_interp
+
+    def check_se_quality(self, ntwk: Network, verbose: bool = False) -> dict:
+        """
+        Single-ended application-based quality checking of in the time domain.
+
+        If necessary, the original S-parameters are extrapolated to a frequency
+        of three times the desired data rate. Causal, passive, and reciprocal
+        models are reconstructed and stimulated by a pulse. The difference
+        between the original extrapolated signal and the ideal responses
+        in the time domain are integrated to give metrics in millivolts.
+
+        Parameters
+        ----------
+        ntwk   : :class:`~skrf.network.Network` object
+                 Network to be checked
+        verbose: :bool
+                 Plot internal causality, passivity, and reciprocity
+                 figures. When True, override class verbose parameter.
+                 (default False).
+
+        Returns
+        -------
+        QM : :class:`dict` object
+              Dictionnary with quality metrics
+        """
+        verbose = self.verbose or verbose
+        if (1.5 * self.data_rate) > ntwk.frequency.f[-1]:
+            warnings.warn('Maximum frequency is less then recomended frequency.',
+                          RuntimeWarning, stacklevel=2)
+
+        # extrapolate max freq
+        self.ntwk_interpolated = self.extrapolate_to_fmax(ntwk, self.data_rate,
+                                                     self.sample_per_UI,
+                                                     self.extrapolation)
+
+        # extrapolate dc and interpolate with uniform step
+        self.ntwk_interpolated = self.extrapolate_to_dc(self.ntwk_interpolated)
+
+        if verbose:
+            fig, axs = subplots(2, 3, figsize = (12, 7))
+            fig.suptitle('Application-based checking in the time domain')
+            ax = axs[0, 0]
+            ax.set_title('Extrapolation')
+            self.ntwk_interpolated.frequency.unit = ntwk.frequency.unit
+            # avoid log(0) issues with zero padding
+            ntwk.plot_s_db(1, 0, color = 'r', ax = ax, label = 'Original, S21')
+            if self.extrapolation == 2:
+                nz_k = np.nonzero(self.ntwk_interpolated.s[:, 1, 0])[0]
+                self.ntwk_interpolated[:nz_k[-1]].plot_s_db(1, 0, color = 'b',
+                                            linestyle = 'dashed', ax = ax,
+                                            label = 'Extrapolated, S21')
+            else:
+                self.ntwk_interpolated.plot_s_db(1, 0, color = 'b',
+                                                 linestyle = 'dashed', ax = ax,
+                                                 label = 'Extrapolated, S21')
+            secax = ax.twinx()
+            ntwk.plot_s_deg(1, 0, color = 'm', ax = secax, label = 'Original, S21')
+            self.ntwk_interpolated.plot_s_deg(1, 0, color = 'c',
+                                              linestyle = 'dashed', ax = secax,
+                                              label = 'Extrapolated, S21')
+            ax.legend(loc = 'upper left')
+            secax.legend(loc = 'lower right')
+            fig.tight_layout()
+
+        # get Causal Matrix
+        self.causal, self.delay_matrix = self.create_causal(self.ntwk_interpolated,
+                                                  self.data_rate, self.rise_time_per)
+        # get Passive Matrix
+        self.passive = self.create_passive(self.ntwk_interpolated)
+        # get Reciprocal Matrix
+        self.reciprocal = self.create_reciprocal(self.ntwk_interpolated)
+
+        # get Time Domain Matrices
+        self.v_causal, self.t_causal = self.get_time_domain(self.causal,
+                                                  self.data_rate,
+                                                  self.rise_time_per,
+                                                  self.pulse_shape)
+        self.v_passive, self.t_passive = self.get_time_domain(self.passive,
+                                                  self.data_rate,
+                                                  self.rise_time_per,
+                                                  self.pulse_shape)
+        self.v_reciprocal, self.t_reciprocal = self.get_time_domain(self.reciprocal,
+                                                  self.data_rate,
+                                                  self.rise_time_per,
+                                                  self.pulse_shape)
+        self.v_origin, self.t_origin = self.get_time_domain(self.ntwk_interpolated,
+                                                  self.data_rate,
+                                                  self.rise_time_per,
+                                                  self.pulse_shape)
+
+        # get Time Domain Difference
+        self.causality_difference_mv = self.get_td_causality_difference_mv(
+            self.v_causal, self.v_origin, self.t_origin,
+            2, self.data_rate, self.delay_matrix)
+        self.passivity_difference_mv = self.get_td_difference_mv(
+            self.v_passive, self.v_origin, self.t_origin, 2, self.data_rate)
+        self.reciprocity_difference_mv = self.get_td_difference_mv(
+            self.v_reciprocal, self.v_origin, self.t_origin, 2, self.data_rate)
+
+        # numpy linalg norm is frobenius, use 2-norm like Matlab instead
+        causality_metric = np.round(
+            1000 * np.linalg.norm(self.causality_difference_mv, 2), 1)
+        passivity_metric = np.round(
+            1000 * np.linalg.norm(self.passivity_difference_mv, 2), 1)
+        reciprocity_metric = np.round(
+            1000 * np.linalg.norm(self.reciprocity_difference_mv, 2), 1)
+
+        # plot
+        if verbose:
+            # pulse
+            # filter
+            filter = self.add_conj(self.filter)
+            pulse_response = self.pulse * filter
+            v_filtered = np.real(np.fft.ifft(pulse_response))
+            ax = axs[1, 0]
+            if self.pulse_shape == 1:
+                ax.plot(self.t_pulse, self.v_ref, color = 'r',
+                        label = 'Reference')
+                ax.plot(self.t_pulse, self.v_pulse, color = 'k', linestyle = 'dashed',
+                        label = 'Generated')
+                ax.legend(loc = 'upper right')
+                ax.set_title('Gaussian Pulse')
+            else:
+                ax.plot(self.t_ref, self.v_ref, color = 'r', marker = 'o',
+                        label = 'Reference')
+                ax.plot(self.t_pulse, self.v_pulse, color = 'k', linestyle = 'dashed',
+                        label = 'Interpolated')
+                ax.plot(self.t_pulse, v_filtered, color = 'b', linestyle = 'dotted',
+                        label = 'Filtered')
+                ax.set_title('Filtered Rectangular Pulse')
+            ax.legend(loc = 'upper right')
+            ax.set_ylabel('Amplitude (V)')
+            ax.set_xlabel('Time (s)')
+
+
+            # time domain transmission
+            ax = axs[0, 1]
+            ax.set_title('TDR11')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 0, 0] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 0, 0] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
+            ax = axs[0, 2]
+            ax.set_title('TDT21')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 1, 0] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 1, 0] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
+            ax = axs[1, 1]
+            ax.set_title('TDT12')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 0, 1] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 0, 1] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
+            ax = axs[1, 2]
+            ax.set_title('TDR22')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 1, 1] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 1, 1] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
+            for ax in axs[:, 1:].reshape(-1):
+                ax.set_xlabel('Time (ns)')
+                ax.set_ylabel('Amplitude (V)')
+                ax.legend(loc = 'upper right')
+            fig.tight_layout()
+
+        QM = {'causality': {'value': causality_metric / 2., 'unit': 'mV',
+                            'evaluation': ''},
+             'passivity': {'value': passivity_metric / 2., 'unit': 'mV',
+                           'evaluation': ''},
+              'reciprocity': {'value': reciprocity_metric / 2., 'unit': 'mV',
+                              'evaluation': ''},
+              }
+
+        # evaluation
+        CQM = QM['causality']['value']
+        if CQM >= 15.:
+            QM['causality']['evaluation'] = 'poor'
+        elif CQM >= 10.:
+            QM['causality']['evaluation'] = 'inconclusive'
+        elif CQM >= 5.:
+            QM['causality']['evaluation'] = 'acceptable'
+        else:
+            QM['causality']['evaluation'] = 'good'
+
+        PQM = QM['passivity']['value']
+        if PQM >= 15.:
+            QM['passivity']['evaluation'] = 'poor'
+        elif PQM >= 10.:
+            QM['passivity']['evaluation'] = 'inconclusive'
+        elif PQM >= 5.:
+            QM['passivity']['evaluation'] = 'acceptable'
+        else:
+            QM['passivity']['evaluation'] = 'good'
+
+        RQM = QM['reciprocity']['value']
+        if RQM >= 15.:
+            QM['reciprocity']['evaluation'] = 'poor'
+        elif RQM >= 10.:
+            QM['reciprocity']['evaluation'] = 'inconclusive'
+        elif RQM >= 5.:
+            QM['reciprocity']['evaluation'] = 'acceptable'
+        else:
+            QM['reciprocity']['evaluation'] = 'good'
+
+        return QM
+
+    def check_mm_quality(self, ntwk: Network, verbose: bool = False) -> dict:
+        """
+        Mixed-mode application-based quality checking of in the time domain.
+
+        If necessary, the original S-parameters are extrapolated to a frequency
+        of three times the desired data rate. Causal, passive, and reciprocal
+        models are reconstructed and stimulated by a pulse. The difference
+        between the original extrapolated signal and the ideal responses
+        in the time domain are integrated to give metrics in millivolts.
+
+        The input networks should be 4-port single-ended and will be
+        transformed to mixed-mode representation. Only the differential and
+        the common modes are tested.
+
+        Parameters
+        ----------
+        ntwk:    :class:`~skrf.network.Network` object
+                 Network to be checked
+        verbose: :bool
+                 Plot internal causality, passivity, and reciprocity
+                 figures. When True, override class verbose parameter.
+                 (default False).
+
+        Returns
+        -------
+        QM : :class:`dict` object
+              Dictionnary with quality metrics
+        """
+        mm = ntwk.copy()
+        mm.se2gmm(p = 2)
+        QM = {'dd': self.check_se_quality(mm.subnetwork([0, 1]), verbose),
+              'cc': self.check_se_quality(mm.subnetwork([2, 3]), verbose)}
+
+        return QM
+
+    def print_qm(self, QM: dict) -> dict:
+        """
+        Print the quality metrics dictionnary.
+
+        Parameters
+        ----------
+        QM: :class:`dict` object
+            Dictionnary with quality metrics to print
+        """
+        if 'dd' in QM:
+            print('Differential mode')
+            for k in QM['dd'].keys():
+                print(f"{k} in the time domain is {QM['dd'][k]['evaluation']} "
+                       f"({QM['dd'][k]['value']} {QM['dd'][k]['unit']})")
+            print('Common mode')
+            for k in QM['cc'].keys():
+                print(f"{k} in the time domain is {QM['cc'][k]['evaluation']} "
+                       f"({QM['cc'][k]['value']} {QM['cc'][k]['unit']})")
+        else:
+            for k in QM.keys():
+                print(f"{k} in the time domain is {QM[k]['evaluation']} "
+                       f"({QM[k]['value']} {QM[k]['unit']})")
 
 class IEEEP370_SE_NZC_2xThru(IEEEP370):
     """
