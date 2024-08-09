@@ -1829,7 +1829,7 @@ class IEEEP370_FD_QM:
     def check_causality(self, ntwk: Network) -> float:
         """
         Causality quality metrics verify that the complex S-parameters
-        rotate clockwise in the real and complex plane.
+        rotate clockwise in the complex plane.
 
         This is done by computing the normalized vector product on pairs of
         consecutive vectors between two frequency points.
@@ -1905,7 +1905,7 @@ class IEEEP370_FD_QM:
 
     def check_reciprocity(self, ntwk: Network) -> float:
         """
-        Integrate the absolute difference between Sij and Sji at
+        Integrates the absolute difference between Sij and Sji at
         each frequency point. Ideally, Sij should be equal to Sji.
 
         Parameters
