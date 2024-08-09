@@ -295,19 +295,44 @@ class Frequency:
         """
         return self.npoints
 
-    def __mul__(self,other: Frequency) -> Frequency:
+    def __add__(self, other: Frequency | NumberLike) -> Frequency:
         out = self.copy()
-        out.f = self.f*other
+        out._f = self.f + (other.f if isinstance(other, Frequency) else other)
         return out
 
-    def __rmul__(self,other: Frequency) -> Frequency:
+    def __sub__(self, other: Frequency | NumberLike) -> Frequency:
         out = self.copy()
-        out.f = self.f*other
+        out._f = self.f - (other.f if isinstance(other, Frequency) else other)
         return out
 
-    def __div__(self,other: Frequency) -> Frequency:
+    def __mul__(self, other: Frequency | NumberLike) -> Frequency:
         out = self.copy()
-        out.f = self.f/other
+        out._f = self.f * (other.f if isinstance(other, Frequency) else other)
+        return out
+
+    def __rmul__(self, other: Frequency | NumberLike) -> Frequency:
+        out = self.copy()
+        out._f = self.f * (other.f if isinstance(other, Frequency) else other)
+        return out
+
+    def __div__(self, other: Frequency | NumberLike) -> Frequency:
+        out = self.copy()
+        out._f = self.f / (other.f if isinstance(other, Frequency) else other)
+        return out
+
+    def __truediv__(self, other: Frequency | NumberLike) -> Frequency:
+        out = self.copy()
+        out._f = self.f / (other.f if isinstance(other, Frequency) else other)
+        return out
+
+    def __floordiv__(self, other: Frequency | NumberLike) -> Frequency:
+        out = self.copy()
+        out._f = self.f // (other.f if isinstance(other, Frequency) else other)
+        return out
+
+    def __mod__(self, other: Frequency | NumberLike) -> Frequency:
+        out = self.copy()
+        out._f = self.f % (other.f if isinstance(other, Frequency) else other)
         return out
 
     def check_monotonic_increasing(self) -> None:
