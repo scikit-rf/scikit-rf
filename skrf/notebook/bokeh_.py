@@ -5,9 +5,9 @@ from .utils import trace_color_cycle
 
 plotting.output_notebook()
 
-Y_LABEL_DICT = network.Y_LABEL_DICT  # type: dict
-PRIMARY_PROPERTIES = network.PRIMARY_PROPERTIES  # type: dict
-COMPONENT_FUNC_DICT = network.COMPONENT_FUNC_DICT  # type: dict
+Y_LABEL_DICT = network.Y_LABEL_DICT
+PRIMARY_PROPERTIES = network.PRIMARY_PROPERTIES
+COMPONENT_FUNC_DICT = network.COMPONENT_FUNC_DICT
 
 default_kwargs = {
     'primary_property': "s",
