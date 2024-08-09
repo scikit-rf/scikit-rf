@@ -5119,16 +5119,24 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         raise (NotImplementedError)
 
       # interpolate abcd into the set of noise frequencies
-
-
-      if ntwkA.deembed :
-          if ntwkA.frequency.f.size > 1 :
-              a_real = interp1d(ntwkA.frequency.f, ntwkA.inv.a.real,
-                      axis=0, kind=Network.noise_interp_kind)
-              a_imag = interp1d(ntwkA.frequency.f, ntwkA.inv.a.imag,
-                      axis=0, kind=Network.noise_interp_kind)
+      if ntwkA.deembed:
+          if ntwkA.frequency.f.size > 1:
+              a_real = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.inv.a.real,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
+              a_imag = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.inv.a.imag,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
               a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
-          else :
+          else:
               a_real = ntwkA.inv.a.real
               a_imag = ntwkA.inv.a.imag
               a = a_real + 1.j * a_imag
@@ -5136,12 +5144,22 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
           a = npy_inv(a)
           a_H = np.conj(a.transpose(0, 2, 1))
           cC = np.matmul(a, np.matmul(cB -cA, a_H))
-      else :
-          if ntwkA.frequency.f.size > 1 :
-              a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real,
-                      axis=0, kind=Network.noise_interp_kind)
-              a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag,
-                      axis=0, kind=Network.noise_interp_kind)
+      else:
+          if ntwkA.frequency.f.size > 1:
+              a_real = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.a.real,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
+              a_imag = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.a.imag,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
               a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
           else :
               a_real = ntwkA.a.real
