@@ -87,6 +87,8 @@ PNA interaction
 
 """
 
+from __future__ import annotations
+
 import json
 import warnings
 from collections import OrderedDict, defaultdict
@@ -94,6 +96,7 @@ from copy import copy
 from itertools import combinations
 from numbers import Number
 from textwrap import dedent
+from typing import Literal
 from warnings import warn
 
 import numpy as np
@@ -5903,7 +5906,17 @@ class MultiportSOLT(MultiportCal):
     """
 
     family = 'Multiport'
-    def __init__(self, method, measured, ideals, isolation=None, switch_terms=None, thru_pos='auto', cal_args=None):
+
+    def __init__(
+        self,
+        method,
+        measured: Network,
+        ideals: list[Network],
+        isolation=None,
+        switch_terms=None,
+        thru_pos: Literal["first", "last", "auto"] = "auto",
+        cal_args: dict | None = None,
+    ):
         self.ideals = ideals
         self.measured = measured
         self.nports = ideals[0].nports

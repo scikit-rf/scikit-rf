@@ -120,6 +120,7 @@ PrimaryPropertiesT = Literal['s', 'z', 'y', 'a', 'h', 't']
 ComponentFuncT = Literal["re", "im", "mag", "db", "db10", "rad", "deg", "arcl", "rad_unwrap", "deg_unwrap",
                          "arcl_unwrap", "vswr", "time", "time_db", "time_mag", "time_impulse", "time_step"]
 SparamFormatT = Literal["db", "ri", "ma"]
+PortOrderT = Literal["first", "second", "third", "last", "auto"]
 
 NumberLike = Union[Number, Sequence[Number], np.ndarray]
 

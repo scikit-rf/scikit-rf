@@ -164,7 +164,7 @@ from itertools import product
 from numbers import Number
 from pathlib import Path
 from pickle import UnpicklingError
-from typing import Any, Callable, NoReturn, Sequence, Sized, TextIO, get_args
+from typing import Any, Literal, Callable, NoReturn, Sequence, Sized, TextIO, get_args
 
 import numpy as np
 from numpy import gradient, ndarray, shape
@@ -5461,7 +5461,7 @@ def overlap_multi(ntwk_list: Sequence[Network]):
 
     return [ntwk.interpolate(new_freq) for ntwk in ntwk_list]
 
-def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
+def concat_ports(ntwk_list: Sequence[Network], port_order: Literal["first", "second"] = "second",
         *args, **kw) -> Network:
     """
     Concatenate networks along the port axis.
