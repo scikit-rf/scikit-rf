@@ -116,6 +116,10 @@ FREQ_UNITS = {"Hz": 1.0, "kHz": 1e3, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}
 SweepTypeT = Literal["lin", "log"]
 CoordT = Literal["cart", "polar"]
 InterpolKindT = Literal["linear", "cubic", "nearest", "zero", "slinear", "quadratic", "rational"]
+PrimaryPropertiesT = Literal['s', 'z', 'y', 'a', 'h', 't']
+ComponentFuncT = Literal["re", "im", "mag", "db", "db10", "rad", "deg", "arcl", "rad_unwrap", "deg_unwrap",
+                         "arcl_unwrap", "vswr", "time", "time_db", "time_mag", "time_impulse", "time_step"]
+SparamFormatT = Literal["db", "ri", "ma"]
 
 NumberLike = Union[Number, Sequence[Number], np.ndarray]
 

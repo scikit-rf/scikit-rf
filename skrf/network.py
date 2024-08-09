@@ -164,7 +164,7 @@ from itertools import product
 from numbers import Number
 from pathlib import Path
 from pickle import UnpicklingError
-from typing import Any, Callable, NoReturn, Sequence, Sized, TextIO
+from typing import Any, Callable, NoReturn, Sequence, Sized, TextIO, get_args
 
 import numpy as np
 from numpy import gradient, ndarray, shape
@@ -181,11 +181,14 @@ from .constants import (
     S_DEFINITIONS,
     T0,
     ZERO,
+    ComponentFuncT,
     CoordT,
     FrequencyUnitT,
     InterpolKindT,
     NumberLike,
+    PrimaryPropertiesT,
     SdefT,
+    SparamFormatT,
 )
 from .frequency import Frequency
 from .time import get_window, time_gate
@@ -276,33 +279,32 @@ class Network:
     ----------
     .. [#TwoPortWiki] http://en.wikipedia.org/wiki/Two-port_network
     """
-
-    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 't']
+    PRIMARY_PROPERTIES: tuple[PrimaryPropertiesT, ...] = get_args(PrimaryPropertiesT)
     """
     Primary Network Properties list like 's', 'z', 'y', etc.
     """
 
-    COMPONENT_FUNC_DICT = {
-        're': np.real,
-        'im': np.imag,
-        'mag': np.abs,
-        'db': mf.complex_2_db,
-        'db10': mf.complex_2_db10,
-        'rad': np.angle,
-        'deg': lambda x: np.angle(x, deg=True),
-        'arcl': lambda x: np.angle(x) * np.abs(x),
-        'rad_unwrap': lambda x: mf.unwrap_rad(np.angle(x)),
-        'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
-            np.angle(x))),
-        'arcl_unwrap': lambda x: mf.unwrap_rad(np.angle(x)) * \
-                                    np.abs(x),
-        'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-        'time': mf.ifft,
-        'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
-        'time_mag': lambda x: mf.complex_2_magnitude(mf.ifft(x)),
-        'time_impulse': None,
-        'time_step': None,
+    _func_lookup: dict[ComponentFuncT, tuple[str, Callable | None]] = {
+        're': ('Real Part', np.real),
+        'im': ('Imag Part', np.imag),
+        'mag': ('Magnitude', np.abs),
+        'db': ('Magnitude (dB)', mf.complex_2_db),
+        'db10': ('Magnitude (dB)', mf.complex_2_db10),
+        'rad': ('Phase (rad)', np.angle),
+        'deg': ('Phase (deg)', lambda x: np.angle(x, deg=True)),
+        'arcl': ('Arc Length',lambda x: np.angle(x) * np.abs(x)),
+        'rad_unwrap': ('Phase (rad)', lambda x: mf.unwrap_rad(np.angle(x))),
+        'deg_unwrap': ('Phase (deg)', lambda x: mf.radian_2_degree(mf.unwrap_rad(np.angle(x)))),
+        'arcl_unwrap': ('Arc Length', lambda x: mf.unwrap_rad(np.angle(x)) * np.abs(x)),
+        'vswr': ('VSWR', lambda x: (1 + abs(x)) / (1 - abs(x))),
+        'time': ('Time (real)', mf.ifft),
+        'time_db': ('Magnitude (dB)',  lambda x: mf.complex_2_db(mf.ifft(x))),
+        'time_mag': ('Magnitude', lambda x: mf.complex_2_magnitude(mf.ifft(x))),
+        'time_impulse': ('Magnitude', None),
+        'time_step': ('Magnitude', None),
     }
+
+    COMPONENT_FUNC_DICT: dict[ComponentFuncT, Callable | None] = {k: v[1] for k,v in _func_lookup.items()}
 
     """
     Component functions like 're', 'im', 'mag', 'db', etc.
@@ -315,29 +317,7 @@ class Network:
             for func_name, func in cls.COMPONENT_FUNC_DICT.items()}
 
     # provides y-axis labels to the plotting functions
-    Y_LABEL_DICT = {
-        're': 'Real Part',
-        'im': 'Imag Part',
-        'mag': 'Magnitude',
-        'abs': 'Magnitude',
-        'db': 'Magnitude (dB)',
-        'db10': 'Magnitude (dB)',
-        'deg': 'Phase (deg)',
-        'deg_unwrap': 'Phase (deg)',
-        'rad': 'Phase (rad)',
-        'rad_unwrap': 'Phase (rad)',
-        'arcl': 'Arc Length',
-        'arcl_unwrap': 'Arc Length',
-        'gd': 'Group Delay (s)',
-        'vswr': 'VSWR',
-        'passivity': 'Passivity',
-        'reciprocity': 'Reciprocity',
-        'time': 'Time (real)',
-        'time_db': 'Magnitude (dB)',
-        'time_mag': 'Magnitude',
-        'time_impulse': 'Magnitude',
-        'time_step': 'Magnitude',
-    }
+    Y_LABEL_DICT: dict[ComponentFuncT, str]  = {k: v[0] for k,v in _func_lookup.items()}
     """
     Y-axis labels to the plotting functions.
     """
@@ -495,7 +475,7 @@ class Network:
                 f_unit = "hz"
             kwargs["frequency"] = Frequency.from_f(kwargs.pop("f"), unit=f_unit)
 
-        for attr in PRIMARY_PROPERTIES + ['frequency', 'noise', 'noise_freq']:
+        for attr in list(PRIMARY_PROPERTIES) + ['frequency', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
@@ -958,7 +938,7 @@ class Network:
 
         return ret + s_properties
 
-    def attribute(self, prop_name: str, conversion: str) -> np.ndarray:
+    def attribute(self, prop_name: PrimaryPropertiesT, conversion: ComponentFuncT) -> np.ndarray:
         prop = getattr(self, prop_name)
         return self.COMPONENT_FUNC_DICT[conversion](prop)
 
@@ -2303,7 +2283,7 @@ class Network:
     def write_touchstone(self, filename: str | Path = None, dir: str | Path = None,
                          write_z0: bool = False, skrf_comment: bool = True,
                          return_string: bool = False, to_archive: bool = None,
-                         form: str = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
+                         form: SparamFormatT = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
                          format_spec_freq : str = '{}', r_ref : float = None) -> str | None:
         """
         Write a contents of the :class:`Network` to a touchstone file.
@@ -2404,16 +2384,16 @@ class Network:
             filename = os.path.join(dir, filename)
 
         # set internal variables according to form
-        form = form.upper()
-        if form == "RI":
+        form = form.lower()
+        if form == "ri":
             formatDic = {"labelA": "Re", "labelB": "Im"}
             funcA = np.real
             funcB = np.imag
-        elif form == "DB":
+        elif form == "db":
             formatDic = {"labelA": "dB", "labelB": "ang"}
             funcA = mf.complex_2_db
             funcB = mf.complex_2_degree
-        elif form == "MA":
+        elif form == "ma":
             formatDic = {"labelA": "mag", "labelB": "ang"}
             funcA = mf.complex_2_magnitude
             funcB = mf.complex_2_degree
@@ -2458,7 +2438,7 @@ class Network:
             if write_z0:
                 output.write('! Data is not renormalized\n')
                 output.write(f'! S-parameter uses the {self.s_def} definition\n')
-                output.write(f'# {ntwk.frequency.unit} S {form} R\n')
+                output.write(f'# {ntwk.frequency.unit} S {form.upper()} R\n')
             else:
                 # Write "r_ref.real" instead of "r_ref", so we get a real number "a" instead
                 # of a complex number "(a+0j)", which is unsupported by the standard Touchstone
@@ -2467,7 +2447,7 @@ class Network:
                 assert r_ref.imag == 0, "Complex reference impedance is encountered when " \
                                         "generating a standard Touchstone (non-HFSS), this " \
                                         "should never happen in scikit-rf."
-                output.write(f'# {ntwk.frequency.unit} S {form} R {r_ref.real} \n')
+                output.write(f'# {ntwk.frequency.unit} S {form.upper()} R {r_ref.real} \n')
 
             # write ports
             try:
@@ -4759,8 +4739,8 @@ class Network:
 
     @axes_kwarg
     def plot_attribute(     self,
-                            attribute: str,
-                            conversion: str,
+                            attribute: PrimaryPropertiesT,
+                            conversion: ComponentFuncT,
                             m=None,
                             n=None,
                             ax: Axes=None,
