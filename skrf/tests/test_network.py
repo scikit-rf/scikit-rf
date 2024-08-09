@@ -1601,6 +1601,41 @@ class NetworkTestCase(unittest.TestCase):
             self.assertTrue(abs(nfmin_set - nfmin_rb) < 1.e-2, 'nf not retrieved by noise deembed')
             self.assertTrue(abs(gamma_opt_rb.s[0,0,0] - gamma_opt_set) < 1.e-1, 'nf not retrieved by noise deembed')
 
+    def test_noise_interpolation(self):
+
+        # Get a handle for the test network. Note that the s-parameter frequency range is beyond that of the NF data
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise_interp.s2p'))
+
+        # Pulling out the noise data should interpolate and fill extrapolated values with the default np.nan
+        self.assertIn(True, np.isnan(ntwk.copy().n))
+
+        # Check that a particular fill value is NOT in the noise data
+        fill_val = 12345 + 1j * 67890
+        new_ntwk = ntwk.copy()
+        self.assertNotIn(fill_val, new_ntwk.n)
+
+        # Change the interpolation fill value and check if it filled in properly
+        new_ntwk = ntwk.copy()
+        new_ntwk.noise_fill_value = fill_val
+        self.assertIn(fill_val, new_ntwk.n)
+
+    def test_spar_interpolation(self):
+
+        # Create new frequency vectors beyond the original limits of ntwk1
+        new_freqs_low = rf.Frequency.from_f(self.ntwk1.f / 2, unit="Hz")
+        new_freqs_high = rf.Frequency.from_f(self.ntwk1.f * 2, unit="Hz")
+
+        # Test that no kwargs results in ValueErrors
+        for new_f in (new_freqs_low, new_freqs_high):
+            new_ntwk = self.ntwk1.copy()
+            with self.assertRaises(ValueError) as context:
+                new_ntwk.resample(new_f)
+
+        # Test that kwargs can let the resampling work
+        for new_f in (new_freqs_low, new_freqs_high):
+            new_ntwk = self.ntwk1.copy()
+            new_ntwk.resample(new_f, bounds_error=False)
+            self.assertIn(True, np.isnan(new_ntwk.s))
 
     def test_se2gmm2se(self):
         # Test that se2gmm followed by gmm2se gives back the original network

@@ -1468,7 +1468,7 @@ class Network:
                 axis=0,
                 kind=self.noise_interp_kind,
                 bounds_error=False,
-                fill_value=self.noise_fill_value
+                fill_value=complex(self.noise_fill_value).real
             )
             noise_imag = interp1d(
                 self.noise_freq.f,
@@ -1476,7 +1476,7 @@ class Network:
                 axis=0,
                 kind=self.noise_interp_kind,
                 bounds_error=False,
-                fill_value=self.noise_fill_value
+                fill_value=complex(self.noise_fill_value).imag
             )
             return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
         else:
