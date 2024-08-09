@@ -131,8 +131,7 @@ class CircuitClassMethods(unittest.TestCase):
 
         gnd = rf.Circuit.Ground(self.freq, 'gnd')
         gnd_ref = rf.Network(frequency=self.freq,
-                             s=np.tile(np.array([[-1, 0],
-                                                 [0, -1]]),
+                             s=np.tile(np.array([[-1,]]),
                                        (len(self.freq),1,1)))
 
         assert_array_almost_equal(gnd.s, gnd_ref.s)
@@ -148,8 +147,7 @@ class CircuitClassMethods(unittest.TestCase):
 
         opn = rf.Circuit.Open(self.freq, 'open')
         opn_ref = rf.Network(frequency=self.freq,
-                             s=np.tile(np.array([[1, 0],
-                                                 [0, 1]]),
+                             s=np.tile(np.array([[1]]),
                                        (len(self.freq),1,1)))
 
         assert_array_almost_equal(opn.s, opn_ref.s)
@@ -180,10 +178,10 @@ class CircuitClassMethods(unittest.TestCase):
                     self.media.shunt(self.media.load(rf.zl_2_Gamma0(z0, 1/Y))).s
                     )
 
-        # Y=INF is a a 2-ports short, aka a ground
+        # Y=INF is a a 2-ports short
         assert_array_almost_equal(
             rf.Circuit.ShuntAdmittance(self.freq, rf.INF, 'imp').s,
-            rf.Circuit.Ground(self.freq, 'ground').s
+            self.media.short(nports=2).s
             )
 
 class CircuitTestWilkinson(unittest.TestCase):
