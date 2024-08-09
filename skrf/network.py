@@ -331,16 +331,6 @@ class Network:
     Y-axis labels to the plotting functions.
     """
 
-    noise_interp_kind = 'linear'
-    """
-    Default interpolation method.
-    """
-
-    noise_fill_value = np.nan
-    """
-    Default noise fill value when out of the s-parameter frequency bounds.
-    """
-
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
                  comments: str = None, f_unit: str = None,
@@ -376,6 +366,10 @@ class Network:
             key word arguments can be used to assign properties of the
             Network, such as `s`, `f` and `z0`.
             keyword `encoding` can be used to define the Touchstone file encoding.
+            keyword `noise_interp_kind` used to change the default interpolation
+                     method for noisy networks
+            keyword `noise_fill_value` used to change the default interpolation
+                     fill value for noisy networks
 
         Examples
         --------
@@ -411,6 +405,12 @@ class Network:
         # allow for old kwarg for backward compatibility
         if 'touchstone_filename' in kwargs:
             file = kwargs['touchstone_filename']
+
+        # Default interpolation method.
+        self.noise_interp_kind = kwargs.get("noise_interp_kind", "linear")
+
+        # Default noise fill value when out of the s-parameter frequency bounds.
+        self.noise_fill_value = kwargs.get("noise_fill_value", np.nan)
 
         self.name = name
         self.params = params
