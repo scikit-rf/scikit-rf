@@ -58,7 +58,7 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Sequence, Literal
+from typing import Literal, Sequence
 
 import numpy as np
 from numpy import angle, concatenate, conj, exp, flip, imag, ndarray, real, unwrap, zeros
@@ -69,7 +69,6 @@ from scipy.interpolate import interp1d
 from ..frequency import Frequency
 from ..network import Network, concat_ports, overlap_multi, subnetwork
 from ..util import Axes, Figure, figure, subplots
-
 
 PortOrderT = Literal["first", "second", "third"]
 
