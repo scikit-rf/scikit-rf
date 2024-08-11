@@ -164,7 +164,7 @@ from itertools import product
 from numbers import Number
 from pathlib import Path
 from pickle import UnpicklingError
-from typing import Any, Callable, NoReturn, Sequence, Sized, TextIO
+from typing import Any, Callable, Literal, NoReturn, Sequence, Sized, TextIO, get_args
 
 import numpy as np
 from numpy import gradient, ndarray, shape
@@ -175,7 +175,21 @@ from scipy.interpolate import interp1d  # for Network.interpolate()
 
 from . import mathFunctions as mf
 from . import plotting as rfplt
-from .constants import K_BOLTZMANN, S_DEF_DEFAULT, S_DEFINITIONS, T0, ZERO, NumberLike
+from .constants import (
+    K_BOLTZMANN,
+    S_DEF_DEFAULT,
+    S_DEFINITIONS,
+    T0,
+    ZERO,
+    ComponentFuncT,
+    CoordT,
+    FrequencyUnitT,
+    InterpolKindT,
+    NumberLike,
+    PrimaryPropertiesT,
+    SdefT,
+    SparamFormatT,
+)
 from .frequency import Frequency
 from .time import get_window, time_gate
 from .util import Axes, axes_kwarg, copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
@@ -265,33 +279,32 @@ class Network:
     ----------
     .. [#TwoPortWiki] http://en.wikipedia.org/wiki/Two-port_network
     """
-
-    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 't']
+    PRIMARY_PROPERTIES: tuple[PrimaryPropertiesT, ...] = get_args(PrimaryPropertiesT)
     """
     Primary Network Properties list like 's', 'z', 'y', etc.
     """
 
-    COMPONENT_FUNC_DICT = {
-        're': np.real,
-        'im': np.imag,
-        'mag': np.abs,
-        'db': mf.complex_2_db,
-        'db10': mf.complex_2_db10,
-        'rad': np.angle,
-        'deg': lambda x: np.angle(x, deg=True),
-        'arcl': lambda x: np.angle(x) * np.abs(x),
-        'rad_unwrap': lambda x: mf.unwrap_rad(np.angle(x)),
-        'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
-            np.angle(x))),
-        'arcl_unwrap': lambda x: mf.unwrap_rad(np.angle(x)) * \
-                                    np.abs(x),
-        'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-        'time': mf.ifft,
-        'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
-        'time_mag': lambda x: mf.complex_2_magnitude(mf.ifft(x)),
-        'time_impulse': None,
-        'time_step': None,
+    _func_lookup: dict[ComponentFuncT, tuple[str, Callable | None]] = {
+        're': ('Real Part', np.real),
+        'im': ('Imag Part', np.imag),
+        'mag': ('Magnitude', np.abs),
+        'db': ('Magnitude (dB)', mf.complex_2_db),
+        'db10': ('Magnitude (dB)', mf.complex_2_db10),
+        'rad': ('Phase (rad)', np.angle),
+        'deg': ('Phase (deg)', lambda x: np.angle(x, deg=True)),
+        'arcl': ('Arc Length',lambda x: np.angle(x) * np.abs(x)),
+        'rad_unwrap': ('Phase (rad)', lambda x: mf.unwrap_rad(np.angle(x))),
+        'deg_unwrap': ('Phase (deg)', lambda x: mf.radian_2_degree(mf.unwrap_rad(np.angle(x)))),
+        'arcl_unwrap': ('Arc Length', lambda x: mf.unwrap_rad(np.angle(x)) * np.abs(x)),
+        'vswr': ('VSWR', lambda x: (1 + abs(x)) / (1 - abs(x))),
+        'time': ('Time (real)', mf.ifft),
+        'time_db': ('Magnitude (dB)',  lambda x: mf.complex_2_db(mf.ifft(x))),
+        'time_mag': ('Magnitude', lambda x: mf.complex_2_magnitude(mf.ifft(x))),
+        'time_impulse': ('Magnitude', None),
+        'time_step': ('Magnitude', None),
     }
+
+    COMPONENT_FUNC_DICT: dict[ComponentFuncT, Callable | None] = {k: v[1] for k,v in _func_lookup.items()}
 
     """
     Component functions like 're', 'im', 'mag', 'db', etc.
@@ -304,29 +317,7 @@ class Network:
             for func_name, func in cls.COMPONENT_FUNC_DICT.items()}
 
     # provides y-axis labels to the plotting functions
-    Y_LABEL_DICT = {
-        're': 'Real Part',
-        'im': 'Imag Part',
-        'mag': 'Magnitude',
-        'abs': 'Magnitude',
-        'db': 'Magnitude (dB)',
-        'db10': 'Magnitude (dB)',
-        'deg': 'Phase (deg)',
-        'deg_unwrap': 'Phase (deg)',
-        'rad': 'Phase (rad)',
-        'rad_unwrap': 'Phase (rad)',
-        'arcl': 'Arc Length',
-        'arcl_unwrap': 'Arc Length',
-        'gd': 'Group Delay (s)',
-        'vswr': 'VSWR',
-        'passivity': 'Passivity',
-        'reciprocity': 'Reciprocity',
-        'time': 'Time (real)',
-        'time_db': 'Magnitude (dB)',
-        'time_mag': 'Magnitude',
-        'time_impulse': 'Magnitude',
-        'time_step': 'Magnitude',
-    }
+    Y_LABEL_DICT: dict[ComponentFuncT, str]  = {k: v[0] for k,v in _func_lookup.items()}
     """
     Y-axis labels to the plotting functions.
     """
@@ -338,8 +329,8 @@ class Network:
 
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
-                 comments: str = None, f_unit: str = None,
-                 s_def: str | None = None, **kwargs) -> None:
+                 comments: str = None, f_unit: FrequencyUnitT | None = None,
+                 s_def: SdefT | None = None, **kwargs) -> None:
         r"""
         Network constructor.
 
@@ -385,7 +376,7 @@ class Network:
         Create a blank network, then fill in values
 
         >>> n = rf.Network()
-        >>> freq = rf.Frequency(1, 3, 3, 'ghz')
+        >>> freq = rf.Frequency(1, 3, 3, 'GHz')
         >>> n.frequency, n.s, n.z0 = freq, [1,2,3], [1,2,3]
 
         Directly from values
@@ -484,7 +475,7 @@ class Network:
                 f_unit = "hz"
             kwargs["frequency"] = Frequency.from_f(kwargs.pop("f"), unit=f_unit)
 
-        for attr in PRIMARY_PROPERTIES + ['frequency', 'noise', 'noise_freq']:
+        for attr in list(PRIMARY_PROPERTIES) + ['frequency', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
@@ -947,7 +938,7 @@ class Network:
 
         return ret + s_properties
 
-    def attribute(self, prop_name: str, conversion: str) -> np.ndarray:
+    def attribute(self, prop_name: PrimaryPropertiesT, conversion: ComponentFuncT) -> np.ndarray:
         prop = getattr(self, prop_name)
         return self.COMPONENT_FUNC_DICT[conversion](prop)
 
@@ -2292,7 +2283,7 @@ class Network:
     def write_touchstone(self, filename: str | Path = None, dir: str | Path = None,
                          write_z0: bool = False, skrf_comment: bool = True,
                          return_string: bool = False, to_archive: bool = None,
-                         form: str = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
+                         form: SparamFormatT = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
                          format_spec_freq : str = '{}', r_ref : float = None) -> str | None:
         """
         Write a contents of the :class:`Network` to a touchstone file.
@@ -2393,16 +2384,16 @@ class Network:
             filename = os.path.join(dir, filename)
 
         # set internal variables according to form
-        form = form.upper()
-        if form == "RI":
+        form = form.lower()
+        if form == "ri":
             formatDic = {"labelA": "Re", "labelB": "Im"}
             funcA = np.real
             funcB = np.imag
-        elif form == "DB":
+        elif form == "db":
             formatDic = {"labelA": "dB", "labelB": "ang"}
             funcA = mf.complex_2_db
             funcB = mf.complex_2_degree
-        elif form == "MA":
+        elif form == "ma":
             formatDic = {"labelA": "mag", "labelB": "ang"}
             funcA = mf.complex_2_magnitude
             funcB = mf.complex_2_degree
@@ -2447,7 +2438,7 @@ class Network:
             if write_z0:
                 output.write('! Data is not renormalized\n')
                 output.write(f'! S-parameter uses the {self.s_def} definition\n')
-                output.write(f'# {ntwk.frequency.unit} S {form} R\n')
+                output.write(f'# {ntwk.frequency.unit} S {form.upper()} R\n')
             else:
                 # Write "r_ref.real" instead of "r_ref", so we get a real number "a" instead
                 # of a complex number "(a+0j)", which is unsupported by the standard Touchstone
@@ -2456,7 +2447,7 @@ class Network:
                 assert r_ref.imag == 0, "Complex reference impedance is encountered when " \
                                         "generating a standard Touchstone (non-HFSS), this " \
                                         "should never happen in scikit-rf."
-                output.write(f'# {ntwk.frequency.unit} S {form} R {r_ref.real} \n')
+                output.write(f'# {ntwk.frequency.unit} S {form.upper()} R {r_ref.real} \n')
 
             # write ports
             try:
@@ -2735,8 +2726,8 @@ class Network:
 
     # interpolation
     def interpolate(self, freq_or_n: Frequency | NumberLike, basis: str = 's',
-                    coords: str = 'cart', f_kwargs: dict = None, return_array: bool = False,
-                    **kwargs) -> Network | np.ndarray:
+                    coords: CoordT = 'cart', f_kwargs: dict = None, return_array: bool = False,
+                    kind: InterpolKindT | None = None, **kwargs) -> Network | np.ndarray:
         r"""
         Interpolate a Network along frequency axis.
 
@@ -2838,10 +2829,9 @@ class Network:
 
         is_rational = False
         freq_cropped = kwargs.pop('freq_cropped', True)
-        if kwargs.get('kind', None) == 'rational':
+        if kind == 'rational':
             f_interp = mf.rational_interp
             #Not supported by rational_interp
-            del kwargs['kind']
             is_rational = True
         else:
             f_interp = interp1d
@@ -2960,8 +2950,8 @@ class Network:
     ##convenience
     resample = interpolate_self
 
-    def extrapolate_to_dc(self, points: int = None, dc_sparam: NumberLike = None,
-                          kind: str = 'cubic', coords: str = 'cart',
+    def extrapolate_to_dc(self, points: int = None, dc_sparam: NumberLike | None = None,
+                          kind: InterpolKindT = 'cubic', coords: CoordT = 'cart',
                           **kwargs) -> Network:
         """
         Extrapolate S-parameters down to 0 Hz and interpolate to uniform spacing.
@@ -3228,7 +3218,7 @@ class Network:
         out.flip()
         return out
 
-    def renormalize(self, z_new: NumberLike, s_def: str = None) -> None:
+    def renormalize(self, z_new: NumberLike, s_def: SdefT | None = None) -> None:
         """
         Renormalize s-parameter matrix given a new port impedances.
 
@@ -4107,7 +4097,7 @@ class Network:
         return Xi
 
     def _Xi_tilde(
-        self, p: int, z0_se: np.ndarray, z0_mm: np.ndarray, s_def: str
+        self, p: int, z0_se: np.ndarray, z0_mm: np.ndarray, s_def: SdefT
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:  # (31)
         n = self.nports
         P = np.ones(self.f.shape[0])[:, np.newaxis, np.newaxis] * self._P(p)
@@ -4749,8 +4739,8 @@ class Network:
 
     @axes_kwarg
     def plot_attribute(     self,
-                            attribute: str,
-                            conversion: str,
+                            attribute: PrimaryPropertiesT,
+                            conversion: ComponentFuncT,
                             m=None,
                             n=None,
                             ax: Axes=None,
@@ -5471,7 +5461,7 @@ def overlap_multi(ntwk_list: Sequence[Network]):
 
     return [ntwk.interpolate(new_freq) for ntwk in ntwk_list]
 
-def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
+def concat_ports(ntwk_list: Sequence[Network], port_order: Literal["first", "second"] = "second",
         *args, **kw) -> Network:
     """
     Concatenate networks along the port axis.
@@ -6131,7 +6121,7 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
 
 
 ## network parameter conversion
-def s2z(s: np.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> np.ndarray:
+def s2z(s: np.ndarray, z0: NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     r"""
     Convert scattering parameters [#]_ to impedance parameters [#]_.
 
@@ -6223,7 +6213,7 @@ def s2z(s: np.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> np.nd
 
     return z
 
-def s2y(s: np.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> np.ndarray:
+def s2y(s: np.ndarray, z0:NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     """
     Convert scattering parameters [#]_ to admittance parameters [#]_.
 
@@ -6392,7 +6382,7 @@ def s2t(s: np.ndarray) -> np.ndarray:
         t[k, yh:y, xh:x] = sinv[k]
     return t
 
-def s2s(s: NumberLike, z0: NumberLike, s_def_new: str, s_def_old: str):
+def s2s(s: NumberLike, z0: NumberLike, s_def_new: SdefT, s_def_old: SdefT):
     r"""
     Convert scattering parameters to scattering parameters with different
     definition.
@@ -6497,7 +6487,7 @@ def s2s(s: NumberLike, z0: NumberLike, s_def_new: str, s_def_old: str):
 
     return s_new
 
-def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> np.ndarray:
+def z2s(z: NumberLike, z0:NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     r"""
     Convert impedance parameters [#]_ to scattering parameters [#]_.
 
@@ -6868,7 +6858,7 @@ def s2a(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
     return a
 
 
-def y2s(y: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Network:
+def y2s(y: NumberLike, z0:NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> Network:
     r"""
     Convert admittance parameters [#]_ to scattering parameters [#]_.
 
@@ -7492,7 +7482,7 @@ def reciprocity(s: np.ndarray) -> np.ndarray:
 ## renormalize
 def renormalize_s(
         s: np.ndarray, z_old: NumberLike, z_new: NumberLike,
-        s_def:str = S_DEF_DEFAULT, s_def_old: str | None = None
+        s_def: SdefT = S_DEF_DEFAULT, s_def_old: SdefT | None = None
         ) -> np.ndarray:
 
     """
@@ -7840,7 +7830,7 @@ def assert_nports_equal(ntwkA: Network, ntwkB: Network) -> bool:
 ## Other
 # don't belong here, but i needed them quickly
 # this is needed for port impedance mismatches
-def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling') -> np.ndarray:
+def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: SdefT = 'traveling') -> np.ndarray:
     """
     Create a two-port s-matrix for a impedance mis-match.
 
@@ -7893,7 +7883,7 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling')
     return result
 
 
-def two_port_reflect(ntwk1: Network, ntwk2: Network = None, name : str | None = None) -> Network:
+def two_port_reflect(ntwk1: Network, ntwk2: Network | None = None, name : str | None = None) -> Network:
     """
     Generate a two-port reflective two-port, from two one-ports.
 
@@ -8112,7 +8102,7 @@ def s2vswr_active(s: np.ndarray, a: np.ndarray) -> np.ndarray:
     vswr_act = np.einsum('fp,fp->fp', (1 + np.abs(s_act)), np.reciprocal(1 - np.abs(s_act)))
     return vswr_act
 
-def twoport_to_nport(ntwk, port1, port2, nports, **kwargs):
+def twoport_to_nport(ntwk: Network, port1: int, port2: int, nports: int, **kwargs):
     r"""
     Add ports to two-port. S-parameters of added ports are all zeros.
 

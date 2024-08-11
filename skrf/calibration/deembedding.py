@@ -54,9 +54,11 @@ De-embedding Methods
 
 """
 
+from __future__ import annotations
+
 import warnings
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import Literal, Sequence
 
 import numpy as np
 from numpy import angle, concatenate, conj, exp, flip, imag, ndarray, real, unwrap, zeros
@@ -68,6 +70,7 @@ from ..frequency import Frequency
 from ..network import Network, concat_ports, overlap_multi, subnetwork
 from ..util import Axes, Figure, figure, subplots
 
+PortOrderT = Literal["first", "second", "third"]
 
 class Deembedding(ABC):
     """
@@ -3596,7 +3599,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
        commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
     """
     def __init__(self, dummy_2xthru: Network, name: str = None,
-                 z0: float = 50, port_order: str = 'second',
+                 z0: float = 50, port_order: PortOrderT = 'second',
                  use_z_instead_ifft: bool = False, verbose: bool = False,
                  forced_z0_line_dd: float = None, forced_z0_line_cc: float = None,
                  *args, **kwargs) -> None:
@@ -4558,7 +4561,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
     """
     def __init__(self, dummy_2xthru: Network, dummy_fix_dut_fix: Network,
                  name: str = None,
-                 z0: float = 50, port_order: str = 'second',
+                 z0: float = 50, port_order: PortOrderT = 'second',
                  bandwidth_limit: float = 0,
                  pullback1: int = 0, pullback2: int = 0,
                  side1: bool = True, side2: bool = True,
