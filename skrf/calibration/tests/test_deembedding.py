@@ -6,6 +6,7 @@ import pytest
 from scipy.constants import c, pi
 
 import skrf as rf
+from skrf.media import MLine
 
 
 class DeembeddingTestCase(unittest.TestCase):
@@ -500,46 +501,77 @@ class DeembeddingTestCase(unittest.TestCase):
         il_phase = np.angle(residuals.s[:, 1, 0]) * 180/np.pi
         self.assertTrue(np.max(np.abs(il_phase)) <= 1.0, 'residual IL Phase')
 
-    def test_IEEEP370_check_fd_se_quality(self):
+    def test_IEEEP370_check_fd_td_se_quality(self):
         """
         Test test_IEEEP370_check_fd_se_quality.
 
         Check for passivity, reciprocity, and causality in the frequency
-        domain.
+        and in the time domains.
         """
-        # thru with reduced frequency points
-        f = rf.Frequency(1, 5, 5, 'GHz')
-        beta  = 2 * pi * f.f / c # propagation in air
-        m = rf.media.DefinedGammaZ0(frequency = f, z0_port = 50, gamma = 1j * beta)
-        thru  = m.line(0.060, 'm', z0 = 52.5)
+        freq = rf.Frequency(10e-3, 10, 1000, 'GHz')
+        W   = 3.00e-3
+        H   = 1.55e-3
+        T   = 50e-6
+        ep_r = 4.459
+        tanD = 0.0183
+        f_epr_tand = 1e9
+
+        beta  = 2 * pi * freq.f / c # propagation in air
+        # 50 ohm air line
+        m50 = rf.media.DefinedGammaZ0(frequency = freq, z0_port = 50, gamma = 1j * beta)
+
+        # microstrip segments
+        with pytest.warns(RuntimeWarning, match = r"^Conductor"):
+            m = MLine(frequency=freq, z0_port=50, w=W, h=H, t=T,
+                    ep_r=ep_r, mu_r=1, rho=1.712e-8, tand=tanD, rough=0.15e-6,
+                    f_low=1e3, f_high=1e12, f_epr_tand=f_epr_tand,
+                    diel='djordjevicsvensson', disp='kirschningjansen')
+
+        thru  = m.line(0.050, 'm', z0 = 52.5)
+        thru.name = "thru"
         # perfect data
         fd_qm = rf.IEEEP370_FD_QM()
+        td_qm = rf.IEEEP370_TD_QM(1e9, # bps
+                                  32,  # samples per UI
+                                  0.4, # rise time per UI
+                                  1,   # gaussian pulse
+                                  2,   # zero extrapolation
+                                  verbose = False)
         qm = fd_qm.check_se_quality(thru)
         self.assertTrue(qm['passivity']['value'] > 99.9 and
                         qm['reciprocity']['value'] > 99.9 and
                         qm['causality']['value'] > 99.9,
                         'FD quality perfect thru')
-        # passivity violation
+        # passivity violation (reference value from Matlab R2024a)
         thru_non_passive = thru.copy()
-        thru_non_passive.s[2, 1, 0] = 1.3 * thru_non_passive.s[2, 1, 0]
-        thru_non_passive.s[2, 0, 1] = 1.3 * thru_non_passive.s[2, 0, 1]
+        thru_non_passive.s[:, 1, 0] = 1.137 * thru_non_passive.s[:, 1, 0]
+        thru_non_passive.s[:, 0, 1] = 1.137 * thru_non_passive.s[:, 0, 1]
         qm = fd_qm.check_se_quality(thru_non_passive)
-        self.assertTrue(qm['passivity']['value'] < 50.,
+        self.assertTrue(np.round(qm['passivity']['value'], 4) == 49.7701,
                         'FD quality passivity violation')
-        # reciprocity violation
+        qm = td_qm.check_se_quality(thru_non_passive)
+        self.assertTrue(np.round(qm['passivity']['value'], 4) == 71.3500,
+                        'TD quality passivity violation')
+        # reciprocity violation (reference value from Matlab R2024a)
         thru_non_reciprocal = thru.copy()
-        thru_non_reciprocal.s[:, 1, 0] = 0.7 * thru_non_reciprocal.s[:, 0, 1]
+        thru_non_reciprocal.s[:, 1, 0] = 0.945 * thru_non_reciprocal.s[:, 0, 1]
         qm = fd_qm.check_se_quality(thru_non_reciprocal)
-        self.assertTrue(qm['reciprocity']['value'] < 50.,
+        self.assertTrue(np.round(qm['reciprocity']['value'], 4) == 49.6120,
                         'FD quality reciprocity violation')
-        # causality violation
-        f = rf.Frequency(0.2, 10, 50, 'GHz')
-        beta  = 2 * pi * f.f / c # propagation in air
-        m = rf.media.DefinedGammaZ0(frequency = f, z0_port = 50, gamma = 1j * beta)
-        thru  = m.line(0.060, 'm', z0 = 52.5)
-        half  = m.line(0.030, 'm', z0 = 50)
-        thru_non_causal = half.inv ** thru
-        qm = fd_qm.check_se_quality(thru_non_causal)
-        self.assertTrue(qm['causality']['value'] < 50.,
+        qm = td_qm.check_se_quality(thru_non_reciprocal)
+        self.assertTrue(np.round(qm['reciprocity']['value'], 4) == 28.4500,
+                        'TD quality reciprocity violation')
+        # causality violation (reference value from Matlab R2024a)
+        half_fd  = m50.line(0.0445, 'm', z0 = 52)
+        thru_non_causal_fd = half_fd.inv ** thru ** half_fd.inv
+        thru_non_causal_fd.name = 'thru'
+        qm = fd_qm.check_se_quality(thru_non_causal_fd)
+        self.assertTrue(np.round(qm['causality']['value'], 4) == 48.2637,
                         'FD quality causality violation')
+        half  = m50.line(0.18, 'm', z0 = 52)
+        thru_non_causal = half.inv ** thru ** half.inv
+        thru_non_causal.name = 'thru'
+        qm = td_qm.check_se_quality(thru_non_causal)
+        self.assertTrue(np.round(qm['causality']['value'], 4) == 10.0500,
+                        'TD quality causality violation')
 
