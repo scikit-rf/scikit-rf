@@ -20,6 +20,11 @@ class CircuitTestConstructor(unittest.TestCase):
         # circuit external ports
         self.port1 = rf.Circuit.Port(self.freq, name='Port1')
         self.port2 = rf.Circuit.Port(self.freq, name='Port2')
+        # circuit connections
+        self.connections = [[(self.port1, 0), (self.ntwk1, 0)],
+                       [(self.ntwk1, 1), (self.ntwk2, 0)],
+                       [(self.ntwk2, 1), (self.port2, 0)]]
+        self.circuit = rf.Circuit(self.connections)
 
     def test_all_networks_have_name(self):
         """
@@ -63,35 +68,32 @@ class CircuitTestConstructor(unittest.TestCase):
         """
         Test the active s-parameter of a 2-ports network
         """
-        connections = [[(self.port1, 0), (self.ntwk1, 0)],
-                       [(self.ntwk1, 1), (self.ntwk2, 0)],
-                       [(self.ntwk2, 1), (self.port2, 0)]]
-        circuit = rf.Circuit(connections)
         # s_act should be equal to s11 if a = [1,0]
-        assert_array_almost_equal(circuit.s_active([1, 0])[:,0], circuit.s_external[:,0,0])
+        assert_array_almost_equal(self.circuit.s_active([1, 0])[:,0], self.circuit.s_external[:,0,0])
         # s_act should be equal to s22 if a = [0,1]
-        assert_array_almost_equal(circuit.s_active([0, 1])[:,1], circuit.s_external[:,1,1])
+        assert_array_almost_equal(self.circuit.s_active([0, 1])[:,1], self.circuit.s_external[:,1,1])
 
     def test_auto_reduce(self):
         """
         Test the auto_reduce parameter of the Circuit constructor
         """
-        connections = [[(self.port1, 0), (self.ntwk1, 0)],
-                       [(self.ntwk1, 1), (self.ntwk2, 0)],
-                       [(self.ntwk2, 1), (self.port2, 0)]]
-        full_circuit = rf.Circuit(connections)
-        reduced_circuit = rf.Circuit(connections, auto_reduce=True)
-        assert_array_almost_equal(full_circuit.s_external, reduced_circuit.s_external)
+        reduced_circuit = rf.Circuit(self.connections, auto_reduce=True)
+        assert_array_almost_equal(self.circuit.s_external, reduced_circuit.s_external)
+
+    def test_auto_reduce_with_passed_arguments(self):
+        """
+        Test the auto_reduce parameter of the Circuit constructor with passed arguments
+        """
+        # Test with max_nports=1, no connections should be reduced
+        circuit = rf.Circuit(self.connections, auto_reduce=True, max_nports=1)
+        assert_array_almost_equal(self.circuit.s_external, circuit.s_external)
+        self.assertEqual(circuit.connections, self.connections)
 
     def test_cache_attributes(self):
         """
         Test the cached attributes of the Circuit
         """
-        connections = [[(self.port1, 0), (self.ntwk1, 0)],
-                       [(self.ntwk1, 1), (self.ntwk2, 0)],
-                       [(self.ntwk2, 1), (self.port2, 0)]]
-
-        init_circuit = rf.Circuit(connections)
+        init_circuit = rf.Circuit(self.connections)
 
         cached_attributes = ('s', 'X', 'C')
 
@@ -109,7 +111,7 @@ class CircuitTestConstructor(unittest.TestCase):
             assert_array_almost_equal(init_circuit.__dict__.get(attr, 0.0), value)
 
         # Modify connections to invalidate the cache
-        init_circuit.connections = connections
+        init_circuit.connections = self.connections
         for attr in cached_attributes:
             self.assertFalse(init_circuit.__dict__.get(attr, False))
 
