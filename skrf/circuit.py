@@ -143,7 +143,7 @@ class Circuit:
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
                  name: str | None = None,
-                 auto_reduce: bool = False) -> None:
+                 auto_reduce: bool = False, **kwargs) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -160,6 +160,17 @@ class Circuit:
             If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
             This will change the circuit connections description, affecting inner current and voltage distributions.
             Suitable for cases where only the S-parameters of the final circuit ports are of interest. Default is False.
+        **kwargs : keyword arguments
+            passed to auto_reduce method.
+            `check_duplication` kwarg controls whether to check the connections have duplicate names. Default is True.
+
+            `split_ground` kwarg controls whether to split the global ground connection to independant.
+            Default is False.
+
+            `max_nports` kwarg controls the maximum number of ports of a Network that can be reduced in circuit. If a
+            Network in the circuit has a number of ports (nports), using the Network.connect() method to reduce the
+            circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
+            This value depends on the performance of the computer and the scale of the circuit. Default is 20.
 
 
         Examples
@@ -230,9 +241,13 @@ class Circuit:
 
         # Reduce the circuit if requested
         if auto_reduce:
+            check_duplication = kwargs.get('check_duplication', False)
+            split_ground = kwargs.get('split_ground', True)
+            max_nports = kwargs.get('max_nports', 20)
             self.connections = reduce_circuit(self.connections,
-                                              check_duplication=False,
-                                              split_ground=True)
+                                              check_duplication=check_duplication,
+                                              split_ground=split_ground,
+                                              max_nports=max_nports)
 
     @property
     def connections(self) -> list[list[tuple[Network, int]]]:
