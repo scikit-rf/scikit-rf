@@ -367,9 +367,12 @@ class Network:
             Network, such as `s`, `f` and `z0`.
             keyword `encoding` can be used to define the Touchstone file encoding.
             keyword `noise_interp_kind` used to change the default interpolation
-                     method for noisy networks
+                     method for noisy networks. Options are 'linear', 'nearest',
+                     'nearest-up', 'zero', 'slinear', 'quadratic', 'cubic',
+                     'previous', or 'next'. Review `scipy.interpolate.interp_1d`
+                     for details on each interpolation style. Defaults to 'linear'.
             keyword `noise_fill_value` used to change the default interpolation
-                     fill value for noisy networks
+                     fill value for noisy networks. Defaults to np.nan.
 
         Examples
         --------
