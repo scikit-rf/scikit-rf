@@ -107,7 +107,7 @@ class FrequencyTestCase(unittest.TestCase):
 
             # Test a Frequency object and a numpy array of the appropriate length
             g = rf.Frequency(1, 10, 10, "GHz")
-            h = np.linspace(10, 100, e.f.size)
+            h = np.linspace(10, 100, g.f.size)
             self.assertTrue(np.array_equal(op(g, h).f, op(g.f, h)))
 
             # Test a Frequency object and a numpy array of an inappropriate length
