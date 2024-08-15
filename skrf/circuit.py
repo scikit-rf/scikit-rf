@@ -93,9 +93,10 @@ from __future__ import annotations
 
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 import numpy as np
+from typing_extensions import NotRequired, Unpack
 
 from .constants import S_DEF_DEFAULT, NumberLike
 from .media import media
@@ -140,11 +141,16 @@ class Circuit:
         except ImportError as err:
             raise ImportError('networkx package as not been installed and is required.') from err
 
+    class _REDUCE_OPTIONS(TypedDict):
+        check_duplication: NotRequired[bool]
+        split_ground: NotRequired[bool]
+        max_nports: NotRequired[int]
+
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
                  name: str | None = None,
                  *,
-                 auto_reduce: bool = False, **kwargs) -> None:
+                 auto_reduce: bool = False, **kwargs: Unpack[_REDUCE_OPTIONS]) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -161,8 +167,8 @@ class Circuit:
             If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
             This will change the circuit connections description, affecting inner current and voltage distributions.
             Suitable for cases where only the S-parameters of the final circuit ports are of interest. Default is False.
-        **kwargs : keyword arguments
-            passed to auto_reduce method.
+        **kwargs :
+            keyword arguments passed to auto_reduce method.
             `check_duplication` kwarg controls whether to check the connections have duplicate names. Default is True.
 
             `split_ground` kwarg controls whether to split the global ground connection to independant.
