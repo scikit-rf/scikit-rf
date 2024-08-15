@@ -143,6 +143,7 @@ class Circuit:
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
                  name: str | None = None,
+                 *,
                  auto_reduce: bool = False, **kwargs) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
