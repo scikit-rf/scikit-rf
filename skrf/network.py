@@ -322,11 +322,6 @@ class Network:
     Y-axis labels to the plotting functions.
     """
 
-    noise_interp_kind = 'linear'
-    """
-    Default interpolation method.
-    """
-
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
                  comments: str = None, f_unit: FrequencyUnitT | None = None,
@@ -362,6 +357,13 @@ class Network:
             key word arguments can be used to assign properties of the
             Network, such as `s`, `f` and `z0`.
             keyword `encoding` can be used to define the Touchstone file encoding.
+            keyword `noise_interp_kind` used to change the default interpolation
+                     method for noisy networks. Options are 'linear', 'nearest',
+                     'nearest-up', 'zero', 'slinear', 'quadratic', 'cubic',
+                     'previous', or 'next'. Review `scipy.interpolate.interp_1d`
+                     for details on each interpolation style. Defaults to 'linear'.
+            keyword `noise_fill_value` used to change the default interpolation
+                     fill value for noisy networks. Defaults to np.nan.
 
         Examples
         --------
@@ -397,6 +399,12 @@ class Network:
         # allow for old kwarg for backward compatibility
         if 'touchstone_filename' in kwargs:
             file = kwargs['touchstone_filename']
+
+        # Default interpolation method.
+        self.noise_interp_kind = kwargs.get("noise_interp_kind", "linear")
+
+        # Default noise fill value when out of the s-parameter frequency bounds.
+        self.noise_fill_value = kwargs.get("noise_fill_value", np.nan)
 
         self.name = name
         self.params = params
@@ -1447,17 +1455,28 @@ class Network:
         if not self.noisy:
             raise ValueError('network does not have noise')
 
-        if self.noise_freq.f.size > 1 :
-            noise_real = interp1d(self.noise_freq.f, self.noise.real, axis=0, kind=Network.noise_interp_kind)
-            noise_imag = interp1d(self.noise_freq.f, self.noise.imag, axis=0, kind=Network.noise_interp_kind)
+        if self.noise_freq.f.size > 1:
+            noise_real = interp1d(
+                self.noise_freq.f,
+                self.noise.real,
+                axis=0,
+                kind=self.noise_interp_kind,
+                bounds_error=False,
+                fill_value=complex(self.noise_fill_value).real
+            )
+            noise_imag = interp1d(
+                self.noise_freq.f,
+                self.noise.imag,
+                axis=0,
+                kind=self.noise_interp_kind,
+                bounds_error=False,
+                fill_value=complex(self.noise_fill_value).imag
+            )
             return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
-        else :
-            noise_real =  self.noise.real
+        else:
+            noise_real = self.noise.real
             noise_imag = self.noise.imag
             return noise_real + 1.0j * noise_imag
-
-
-
 
     @property
     def f_noise(self) -> Frequency:
@@ -5093,16 +5112,24 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         raise (NotImplementedError)
 
       # interpolate abcd into the set of noise frequencies
-
-
-      if ntwkA.deembed :
-          if ntwkA.frequency.f.size > 1 :
-              a_real = interp1d(ntwkA.frequency.f, ntwkA.inv.a.real,
-                      axis=0, kind=Network.noise_interp_kind)
-              a_imag = interp1d(ntwkA.frequency.f, ntwkA.inv.a.imag,
-                      axis=0, kind=Network.noise_interp_kind)
+      if ntwkA.deembed:
+          if ntwkA.frequency.f.size > 1:
+              a_real = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.inv.a.real,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
+              a_imag = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.inv.a.imag,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
               a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
-          else :
+          else:
               a_real = ntwkA.inv.a.real
               a_imag = ntwkA.inv.a.imag
               a = a_real + 1.j * a_imag
@@ -5110,12 +5137,22 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
           a = npy_inv(a)
           a_H = np.conj(a.transpose(0, 2, 1))
           cC = np.matmul(a, np.matmul(cB -cA, a_H))
-      else :
-          if ntwkA.frequency.f.size > 1 :
-              a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real,
-                      axis=0, kind=Network.noise_interp_kind)
-              a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag,
-                      axis=0, kind=Network.noise_interp_kind)
+      else:
+          if ntwkA.frequency.f.size > 1:
+              a_real = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.a.real,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
+              a_imag = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.a.imag,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
               a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
           else :
               a_real = ntwkA.a.real
