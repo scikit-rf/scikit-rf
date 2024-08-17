@@ -189,3 +189,5 @@ def test_ts_example_17():
 
 def test_ts_example_16():
     ts = rf.Network(test_data / "ex_16.ts")
+    assert np.all(ts.port_modes == np.array(["S", "D", "C", "S", "D", "C"]))
+    assert np.allclose(ts.z0, [50, 150, 37.5, 50, 0.02, 0.005])
