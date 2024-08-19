@@ -77,8 +77,14 @@ class CircuitTestConstructor(unittest.TestCase):
         """
         Test the auto_reduce parameter of the Circuit constructor
         """
+        # Explicitly enable the `reduce_circuit` method
         reduced_circuit = rf.Circuit(self.connections, auto_reduce=True)
         assert_array_almost_equal(self.circuit.s_external, reduced_circuit.s_external)
+        self.assertNotEqual(self.circuit.dim, reduced_circuit.dim)
+
+        # Implicitly enable the `reduce_circuit` method
+        implicit_reduced_circuit = rf.Circuit(self.connections, max_nports=10)
+        self.assertEqual(reduced_circuit.dim, implicit_reduced_circuit.dim)
 
     def test_auto_reduce_with_passed_arguments(self):
         """
