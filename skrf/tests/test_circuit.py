@@ -131,8 +131,7 @@ class CircuitClassMethods(unittest.TestCase):
 
         gnd = rf.Circuit.Ground(self.freq, 'gnd')
         gnd_ref = rf.Network(frequency=self.freq,
-                             s=np.tile(np.array([[-1, 0],
-                                                 [0, -1]]),
+                             s=np.tile(np.array([[-1,]]),
                                        (len(self.freq),1,1)))
 
         assert_array_almost_equal(gnd.s, gnd_ref.s)
@@ -148,8 +147,7 @@ class CircuitClassMethods(unittest.TestCase):
 
         opn = rf.Circuit.Open(self.freq, 'open')
         opn_ref = rf.Network(frequency=self.freq,
-                             s=np.tile(np.array([[1, 0],
-                                                 [0, 1]]),
+                             s=np.tile(np.array([[1]]),
                                        (len(self.freq),1,1)))
 
         assert_array_almost_equal(opn.s, opn_ref.s)
@@ -180,10 +178,10 @@ class CircuitClassMethods(unittest.TestCase):
                     self.media.shunt(self.media.load(rf.zl_2_Gamma0(z0, 1/Y))).s
                     )
 
-        # Y=INF is a a 2-ports short, aka a ground
+        # Y=INF is a a 2-ports short
         assert_array_almost_equal(
             rf.Circuit.ShuntAdmittance(self.freq, rf.INF, 'imp').s,
-            rf.Circuit.Ground(self.freq, 'ground').s
+            self.media.short(nports=2).s
             )
 
 class CircuitTestWilkinson(unittest.TestCase):
@@ -1052,9 +1050,15 @@ class CircuitTestVoltagesCurrents(unittest.TestCase):
         self.phase_f = rng.random()  # forward phase in rad
         self.Z = rng.random()  # source internal impedance, line characteristic impedance and load impedance
         self.L = rng.random()  # line length in [m]
+        self.L2 = rng.random()  # line length in [m]
+        self.L3 = rng.random()  # line length in [m]
         self.freq = rf.Frequency(1, 10, 10, unit='GHz')
         self.line_media = rf.media.DefinedGammaZ0(self.freq, z0=self.Z)  # lossless line medium
         self.line = self.line_media.line(d=self.L, unit='m', name='line')  # transmission line Network
+        self.line2 = self.line_media.line(d=self.L2, unit='m', name='line2')  # transmission line Network
+        self.line3 = self.line_media.line(d=self.L3, unit='m', name='line3')  # transmission line Network
+        self.tee = self.line_media.tee(name='tee')
+        self.resistor = self.line_media.resistor(50, name='resistor')
 
         # forward voltages and currents at the input of the test line
         self.V_in = np.sqrt(2*self.Z*self.P_f)*np.exp(1j*self.phase_f)
@@ -1064,11 +1068,11 @@ class CircuitTestVoltagesCurrents(unittest.TestCase):
         self.V_out, self.I_out = rf.tlineFunctions.voltage_current_propagation(self.V_in, self.I_in, self.Z, theta)
 
         # Equivalent model with Circuit
-        port1 = rf.Circuit.Port(frequency=self.freq, name='port1', z0=self.Z)
-        port2 = rf.Circuit.Port(frequency=self.freq, name='port2', z0=self.Z)
+        self.port1 = rf.Circuit.Port(frequency=self.freq, name='port1', z0=self.Z)
+        self.port2 = rf.Circuit.Port(frequency=self.freq, name='port2', z0=self.Z)
         cnx = [
-            [(port1, 0), (self.line, 0)],
-            [(port2, 0), (self.line, 1)]
+            [(self.port1, 0), (self.line, 0)],
+            [(self.port2, 0), (self.line, 1)]
         ]
         self.crt = rf.Circuit(cnx)
         # power and phase arrays for Circuit.voltages() and currents()
@@ -1091,17 +1095,58 @@ class CircuitTestVoltagesCurrents(unittest.TestCase):
         # (toward the Circuit's Port)
         np.testing.assert_allclose(self.I_out, -1*I_ports[:,1])
 
+    def test_multiple_ports(self):
+        ' Test voltages and currents for a connection with multiple ports '
+        # Create a circuit build with tee
+        cnx_with_tee = [
+            [(self.port1, 0), (self.line, 0)],
+            [(self.line, 1), (self.tee, 0)],
+            [(self.line2, 0), (self.tee, 1)],
+            [(self.line3, 0), (self.tee, 2)],
+            [(self.line2, 1), (self.port2, 0)],
+            [(self.line3, 1), (self.resistor, 0)],
+        ]
+
+        # Create a circuit build without tee
+        cnx = [
+            [(self.port1, 0), (self.line, 0)],
+            [(self.line, 1), (self.line2, 0), (self.line3, 0)],
+            [(self.line2, 1), (self.port2, 0)],
+            [(self.line3, 1), (self.resistor, 0)],
+        ]
+
+        # Create the two circuits
+        crt_with_tee = rf.Circuit(cnx_with_tee)
+        crt = rf.Circuit(cnx)
+
+        # Get voltages and currents for both circuits
+        V_with_tee = crt_with_tee.voltages(self.power, self.phase)
+        I_with_tee = crt_with_tee.currents(self.power, self.phase)
+
+        V = crt.voltages(self.power, self.phase)
+        I = crt.currents(self.power, self.phase)
+
+        # Get the reordering of the ports in the two circuits
+        port_order_with_tee = (0, 1, 2, 4, 6, 8, 9, 10, 11)
+        port_order = (0, 1, 2, 3, 4, 5, 6, 7, 8)
+
+        for v, v_with_tee in zip((V, I), (V_with_tee, I_with_tee)):
+            v_with_tee_reordered = np.array(
+                [v_with_tee[:, i] for i in port_order_with_tee]
+            )
+            v_reordered = np.array([v[:, i] for i in port_order])
+
+            np.testing.assert_allclose(v_with_tee_reordered, v_reordered)
+
     def test_tline_with_different_impedance(self):
         ' Test voltages and currents for a simple transmission line with different impedances '
         line = self.line.copy()
         line.renormalize(z_new=1./self.Z)
 
         # Equivalent model with Circuit
-        port1 = rf.Circuit.Port(frequency=self.freq, name='port1', z0=self.Z)
-        port2 = rf.Circuit.Port(frequency=self.freq, name='port2', z0=self.Z)
         cnx = [
-            [(port1, 0), (line, 0)],
-            [(port2, 0), (line, 1)]
+            [(self.port1, 0), (line, 0)],
+            [(self.port2, 0), (line, 1)]
         ]
         crt = rf.Circuit(cnx)
 

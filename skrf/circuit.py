@@ -97,7 +97,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .constants import INF, S_DEF_DEFAULT, NumberLike
+from .constants import S_DEF_DEFAULT, NumberLike
 from .media import media
 from .network import Network, connect, innerconnect, s2s
 from .util import subplots
@@ -303,6 +303,13 @@ class Circuit:
         return ntw._ext_attrs.get("_is_circuit_ground", False)
 
     @classmethod
+    def _is_open(cls, ntw: Network):
+        """
+        Return True is the network is a open, False otherwise
+        """
+        return ntw._ext_attrs.get("_is_circuit_open", False)
+
+    @classmethod
     def Port(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
         Return a 1-port Network to be used as a Circuit port.
@@ -426,11 +433,11 @@ class Circuit:
     @classmethod
     def Ground(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
-        Return a 2-port network of a grounded link.
+        Return a 1-port network of a grounded link.
 
         Passing the frequency and a name is mandatory.
 
-        The ground link is modelled as an infinite shunt admittance.
+        The ground link is implemented by media.short object.
 
         Parameters
         ----------
@@ -444,7 +451,7 @@ class Circuit:
         Returns
         -------
         ground : :class:`~skrf.network.Network` object
-            2-port network
+            1-port network
 
         Examples
         --------
@@ -458,18 +465,19 @@ class Circuit:
             In [18]: ground = rf.Circuit.Ground(freq, name='GND')
 
         """
-        ground = cls.ShuntAdmittance(frequency, Y=INF, name=name)
+        _media = media.DefinedGammaZ0(frequency, z0=z0)
+        ground = _media.short(name=name)
         ground._ext_attrs['_is_circuit_ground'] = True
         return ground
 
     @classmethod
     def Open(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
-        Return a 2-port network of an open link.
+        Return a 1-port network of an open link.
 
         Passing the frequency and name is mandatory.
 
-        The open link is modelled as an infinite series impedance.
+        The open link is implemented by media.open object.
 
         Parameters
         ----------
@@ -483,7 +491,7 @@ class Circuit:
         Returns
         -------
         open : :class:`~skrf.network.Network` object
-            2-port network
+            1-port network
 
         Examples
         --------
@@ -497,7 +505,10 @@ class Circuit:
             In [18]: open = rf.Circuit.Open(freq, name='open')
 
         """
-        return cls.SeriesImpedance(frequency, Z=INF, name=name)
+        _media = media.DefinedGammaZ0(frequency, z0=z0)
+        Open = _media.open(name=name)
+        Open._ext_attrs['_is_circuit_open'] = True
+        return Open
 
     def networks_dict(self,
                       connections: list[list[tuple[Network, int]]] | None = None,
@@ -1209,43 +1220,41 @@ class Circuit:
             Currents in Amperes [A] (peak) at internal ports.
 
         """
-        # It is possible with Circuit to define connections between
-        # multiple (>2) ports at the same time in the connection setup, like :
-        # cnx = [
-        #       [(ntw1, portA), (ntw2, portB), (ntw3, portC)], ...
-        #]
-        # Such a case is not supported with the present calculation method
-        # which only works with pair connections between ports, ie like:
-        # cnx = [
-        #       [(ntw1, portA), (ntw2, portB)],
-        #       [(ntw2, portD), (ntw3, portC)], ...
-        #]
-        # It should not be a huge limitation (?), since it should be always possible
-        # to add the proper splitting Network (such a "T" or hybrid or more)
-        # and connect this splitting Network ports to other Network ports.
-        # ie going from:
-        # [ntwA]  ---- [ntwB]
-        #          |
-        #          |
-        #        [ntwC]
-        # to:
-        # [ntwA] ------ [ntwD] ------ [ntwB]
-        #                 |
-        #                 |
-        #              [ntwC]
-        for inter in self.intersections_dict.values():
-            if len(inter) > 2:
-                raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
-
         a = self._a(self._a_external(power, phase))
         b = self._b(a)
         z0s = self.z0
-        directions = self._currents_directions
-        i_l, i_r = directions[:, 0], directions[:, 1]
+        i, Is = 0, np.zeros_like(z0s)
 
-        z0_sqrt = np.sqrt(z0s)
-        Is = (b[:,i_l] / z0_sqrt[:,i_r] - b[:,i_r] / z0_sqrt[:,i_l]) \
-            * (2*z0_sqrt[:,i_l] * z0_sqrt[:,i_r]) / (z0s[:,i_l] + z0s[:,i_r])
+        for cnx in self.connections:
+            cnx_len = len(cnx)
+            z0_segment = z0s[:, i : i + cnx_len]
+            tot_shunt_z0 = (1 / z0_segment).sum(axis=1)
+            Ij = np.zeros_like(z0_segment)
+
+            # Calculate the ports' output current through the output wave
+            for j in range(cnx_len):
+                in_z0 = z0_segment[:, j]
+                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                tau = (2 * out_z0) / (out_z0 + in_z0)
+                Ij[:, j] = (b[:, i + j] / np.sqrt(in_z0)) * tau
+
+            # The current of each port is different in the same node
+            # The ports' current should take into account the output current of each port in the node
+            for j in range(cnx_len):
+                in_z0 = z0_segment[:, j]
+                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                Itmp = np.zeros_like(Is[:, i + j])
+                for k in range(cnx_len):
+                    tmp_z0 = z0_segment[:, k]
+                    if j == k:
+                        Itmp += Ij[:, k] * (tmp_z0 / out_z0)
+                    else:
+                        Itmp -= Ij[:, k] * (tmp_z0 / in_z0)
+
+                Is[:, i + j] = Itmp
+
+            i += cnx_len
+
         return Is
 
 
@@ -1266,20 +1275,28 @@ class Circuit:
             Voltages in Amperes [A] (peak) at internal ports.
 
         """
-        # cf currents() for more details
-        for inter in self.intersections_dict.values():
-            if len(inter) > 2:
-                raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
-
         a = self._a(self._a_external(power, phase))
         b = self._b(a)
         z0s = self.z0
-        directions = self._currents_directions
-        i_l, i_r = directions[:, 0], directions[:, 1]
+        i, Vs = 0, np.zeros_like(z0s)
 
-        z0_sqrt = np.sqrt(z0s)
-        Vs = (b[:,i_l] * z0_sqrt[:,i_r] + b[:,i_r] * z0_sqrt[:,i_l]) \
-            * (2*z0_sqrt[:,i_l] * z0_sqrt[:,i_r]) / (z0s[:,i_l] + z0s[:,i_r])
+        for cnx in self.connections:
+            cnx_len = len(cnx)
+            z0_segment = z0s[:, i : i + cnx_len]
+            tot_shunt_z0 = (1 / z0_segment).sum(axis=1)
+            Vk = np.zeros(shape=z0s.shape[0], dtype="complex128")
+
+            # Node voltage is the summation of each ports' outwave voltage
+            # The voltage of each port in the same node is consistent
+            for j in range(cnx_len):
+                in_z0 = z0_segment[:, j]
+                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                tau = (2 * out_z0) / (out_z0 + in_z0)
+                Vk += (b[:, i + j] * np.sqrt(in_z0)) * tau
+
+            Vs[:, i : i + cnx_len] = Vk[:, None]
+            i += cnx_len
+
         return Vs
 
     def currents_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
@@ -1509,8 +1526,8 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
                 if Circuit._is_ground(ntwk):
                     continue
                 tmp_gnd = Circuit.Ground(frequency=ground_ntwk.frequency,
-                                         name=f'G_{ntwk.name}_{port}',
-                                         z0=ground_ntwk.z0)
+                                         name=f'G_{ntwk.name}_{port}')
+                tmp_gnd.z0 = ground_ntwk.z0
                 tmp_cnxs.append([(ntwk, port), (tmp_gnd, 0)])
 
         connections = tmp_cnxs

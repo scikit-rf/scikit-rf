@@ -55,7 +55,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from . import mathFunctions as mf
-from .constants import NumberLike
+from .constants import NumberLike, PrimaryPropertiesT
 from .network import COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency, Network
 from .util import copy_doc, now_string_2_dt
 
@@ -829,8 +829,9 @@ class NetworkSet:
         """
         return fon(self.ntwk_set, func, a_property, *args, **kwargs)
 
-
-    def uncertainty_ntwk_triplet(self, attribute: str, n_deviations: int = 3) -> (Network, Network, Network):
+    def uncertainty_ntwk_triplet(self, attribute: PrimaryPropertiesT, n_deviations: int = 3) -> tuple(
+        Network, Network, Network
+    ):
         """
         Return a 3-tuple of Network objects which contain the
         mean, upper_bound, and lower_bound for the given Network
