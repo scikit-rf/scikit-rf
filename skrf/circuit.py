@@ -93,9 +93,10 @@ from __future__ import annotations
 
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 import numpy as np
+from typing_extensions import NotRequired, Unpack
 
 from .constants import S_DEF_DEFAULT, NumberLike
 from .media import media
@@ -140,10 +141,16 @@ class Circuit:
         except ImportError as err:
             raise ImportError('networkx package as not been installed and is required.') from err
 
+    class _REDUCE_OPTIONS(TypedDict):
+        check_duplication: NotRequired[bool]
+        split_ground: NotRequired[bool]
+        max_nports: NotRequired[int]
+
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
                  name: str | None = None,
-                 auto_reduce: bool = False) -> None:
+                 *,
+                 auto_reduce: bool = False, **kwargs: Unpack[_REDUCE_OPTIONS]) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -160,6 +167,20 @@ class Circuit:
             If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
             This will change the circuit connections description, affecting inner current and voltage distributions.
             Suitable for cases where only the S-parameters of the final circuit ports are of interest. Default is False.
+            If `check_duplication`, `split_ground` or `max_nports` are provided as kwargs, `auto_reduce` will be
+            automatically set to True, as this indicates an intent to use the `reduce_circuit` method.
+        **kwargs :
+            keyword arguments passed to `reduce_circuit` method.
+
+            `check_duplication` kwarg controls whether to check the connections have duplicate names. Default is True.
+
+            `split_ground` kwarg controls whether to split the global ground connection to independant.
+            Default is False.
+
+            `max_nports` kwarg controls the maximum number of ports of a Network that can be reduced in circuit. If a
+            Network in the circuit has a number of ports (nports), using the Network.connect() method to reduce the
+            circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
+            This value depends on the performance of the computer and the scale of the circuit. Default is 20.
 
 
         Examples
@@ -228,11 +249,20 @@ class Circuit:
         # Check that a (ntwk, port) combination appears only once in the connexion map
         Circuit.check_duplicate_names(self.connections_list)
 
+        # Automatically enable auto_reduce if any relevant kwargs are provided
+        auto_reduce = auto_reduce or any(
+            k in self._REDUCE_OPTIONS.__annotations__.keys() for k in kwargs.keys()
+        )
+
         # Reduce the circuit if requested
         if auto_reduce:
+            check_duplication = kwargs.get('check_duplication', False)
+            split_ground = kwargs.get('split_ground', True)
+            max_nports = kwargs.get('max_nports', 20)
             self.connections = reduce_circuit(self.connections,
-                                              check_duplication=False,
-                                              split_ground=True)
+                                              check_duplication=check_duplication,
+                                              split_ground=split_ground,
+                                              max_nports=max_nports)
 
     @property
     def connections(self) -> list[list[tuple[Network, int]]]:
@@ -1220,43 +1250,41 @@ class Circuit:
             Currents in Amperes [A] (peak) at internal ports.
 
         """
-        # It is possible with Circuit to define connections between
-        # multiple (>2) ports at the same time in the connection setup, like :
-        # cnx = [
-        #       [(ntw1, portA), (ntw2, portB), (ntw3, portC)], ...
-        #]
-        # Such a case is not supported with the present calculation method
-        # which only works with pair connections between ports, ie like:
-        # cnx = [
-        #       [(ntw1, portA), (ntw2, portB)],
-        #       [(ntw2, portD), (ntw3, portC)], ...
-        #]
-        # It should not be a huge limitation (?), since it should be always possible
-        # to add the proper splitting Network (such a "T" or hybrid or more)
-        # and connect this splitting Network ports to other Network ports.
-        # ie going from:
-        # [ntwA]  ---- [ntwB]
-        #          |
-        #          |
-        #        [ntwC]
-        # to:
-        # [ntwA] ------ [ntwD] ------ [ntwB]
-        #                 |
-        #                 |
-        #              [ntwC]
-        for inter in self.intersections_dict.values():
-            if len(inter) > 2:
-                raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
-
         a = self._a(self._a_external(power, phase))
         b = self._b(a)
         z0s = self.z0
-        directions = self._currents_directions
-        i_l, i_r = directions[:, 0], directions[:, 1]
+        i, Is = 0, np.zeros_like(z0s)
 
-        z0_sqrt = np.sqrt(z0s)
-        Is = (b[:,i_l] / z0_sqrt[:,i_r] - b[:,i_r] / z0_sqrt[:,i_l]) \
-            * (2*z0_sqrt[:,i_l] * z0_sqrt[:,i_r]) / (z0s[:,i_l] + z0s[:,i_r])
+        for cnx in self.connections:
+            cnx_len = len(cnx)
+            z0_segment = z0s[:, i : i + cnx_len]
+            tot_shunt_z0 = (1 / z0_segment).sum(axis=1)
+            Ij = np.zeros_like(z0_segment)
+
+            # Calculate the ports' output current through the output wave
+            for j in range(cnx_len):
+                in_z0 = z0_segment[:, j]
+                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                tau = (2 * out_z0) / (out_z0 + in_z0)
+                Ij[:, j] = (b[:, i + j] / np.sqrt(in_z0)) * tau
+
+            # The current of each port is different in the same node
+            # The ports' current should take into account the output current of each port in the node
+            for j in range(cnx_len):
+                in_z0 = z0_segment[:, j]
+                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                Itmp = np.zeros_like(Is[:, i + j])
+                for k in range(cnx_len):
+                    tmp_z0 = z0_segment[:, k]
+                    if j == k:
+                        Itmp += Ij[:, k] * (tmp_z0 / out_z0)
+                    else:
+                        Itmp -= Ij[:, k] * (tmp_z0 / in_z0)
+
+                Is[:, i + j] = Itmp
+
+            i += cnx_len
+
         return Is
 
 
@@ -1277,20 +1305,28 @@ class Circuit:
             Voltages in Amperes [A] (peak) at internal ports.
 
         """
-        # cf currents() for more details
-        for inter in self.intersections_dict.values():
-            if len(inter) > 2:
-                raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
-
         a = self._a(self._a_external(power, phase))
         b = self._b(a)
         z0s = self.z0
-        directions = self._currents_directions
-        i_l, i_r = directions[:, 0], directions[:, 1]
+        i, Vs = 0, np.zeros_like(z0s)
 
-        z0_sqrt = np.sqrt(z0s)
-        Vs = (b[:,i_l] * z0_sqrt[:,i_r] + b[:,i_r] * z0_sqrt[:,i_l]) \
-            * (2*z0_sqrt[:,i_l] * z0_sqrt[:,i_r]) / (z0s[:,i_l] + z0s[:,i_r])
+        for cnx in self.connections:
+            cnx_len = len(cnx)
+            z0_segment = z0s[:, i : i + cnx_len]
+            tot_shunt_z0 = (1 / z0_segment).sum(axis=1)
+            Vk = np.zeros(shape=z0s.shape[0], dtype="complex128")
+
+            # Node voltage is the summation of each ports' outwave voltage
+            # The voltage of each port in the same node is consistent
+            for j in range(cnx_len):
+                in_z0 = z0_segment[:, j]
+                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                tau = (2 * out_z0) / (out_z0 + in_z0)
+                Vk += (b[:, i + j] * np.sqrt(in_z0)) * tau
+
+            Vs[:, i : i + cnx_len] = Vk[:, None]
+            i += cnx_len
+
         return Vs
 
     def currents_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:

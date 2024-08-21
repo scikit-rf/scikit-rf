@@ -184,10 +184,16 @@ class Mdif:
         nb_lines_per_freq = 1
         ntwk_name = ''
 
+        # Flag for adding comments to the network
+        no_more_comments = False
+
         # Extract and group parameter informations and values
         for line in block_data:
             # Parse the option line (as in Touchstone)
             if line.startswith('#'):
+                # Flag that no more comments are coming as we're now after the option line
+                no_more_comments = True
+
                 toks = line[1:].strip().split()
                 # fill the option line with the missing defaults
                 toks.extend(['ghz', 's', 'ma', 'r', '50'][len(toks):])
@@ -207,7 +213,8 @@ class Mdif:
                     ntwk_name = line.split(':')[-1].strip()
 
                 # Append the comments to the list of comments for that data block
-                comments.append(line.strip()[1:])
+                if no_more_comments is not False:
+                    comments.append(line.strip()[1:])
 
             # Parameter kinds (s11, z21, ...) are described as
             #
