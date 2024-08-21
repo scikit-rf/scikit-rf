@@ -1,7 +1,8 @@
 from pathlib import Path
-import pytest
-import skrf as rf
 
+import pytest
+
+import skrf as rf
 
 testdir = Path(__file__).parent
 
