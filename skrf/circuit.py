@@ -1505,13 +1505,13 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
     Parameters
     ----------
-    connections : list.
+    connections : list[list[tuple[Network, int]]].
             The connection list to reduce.
     check_duplication : bool, optional.
             If True, check if the connections have duplicate names. Default is True.
     split_ground : bool, optional.
             If True, split the global ground connection to independant ground connections. Default is False.
-    max_nports : int
+    max_nports : int, optional.
             The maximum number of ports of a Network that can be reduced in circuit. If a Network in the
             circuit has a number of ports (nports), using the Network.connect() method to reduce the circuit's
             dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
