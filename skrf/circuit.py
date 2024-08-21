@@ -253,20 +253,12 @@ class Circuit:
         # Check that a (ntwk, port) combination appears only once in the connexion map
         Circuit.check_duplicate_names(self.connections_list)
 
-        # Automatically enable auto_reduce if any relevant kwargs are provided
-        auto_reduce = auto_reduce or any(
-            k in self._REDUCE_OPTIONS.__annotations__.keys() for k in kwargs.keys()
-        )
+        # Get the keyword arguments for the reduce_circuit method
+        kwargs_reduce = {k: kwargs[k] for k in self._REDUCE_OPTIONS.__annotations__.keys() if k in kwargs}
 
-        # Reduce the circuit if requested
-        if auto_reduce:
-            check_duplication = kwargs.get('check_duplication', False)
-            split_ground = kwargs.get('split_ground', True)
-            max_nports = kwargs.get('max_nports', 20)
-            self.connections = reduce_circuit(self.connections,
-                                              check_duplication=check_duplication,
-                                              split_ground=split_ground,
-                                              max_nports=max_nports)
+        # Reduce the circuit if directly requested or any relevant kwargs are provided
+        if auto_reduce or any(kwargs_reduce):
+            self.connections = reduce_circuit(self.connections, **kwargs_reduce)
 
     @property
     def connections(self) -> list[list[tuple[Network, int]]]:
