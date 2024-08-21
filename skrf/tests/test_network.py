@@ -2056,8 +2056,15 @@ class NetworkTestCase(unittest.TestCase):
             self.ntwk1.nf_circle(nf=1.0, npoints=0)
 
         # Check whether the specified noise figure is too small.
-        with pytest.raises(RuntimeWarning):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
             self.ntwk_noise['1GHz'].nf_circle(nf=0.1)
+
+            # Check that a warning was raised
+            assert len(w) > 0, "Expected a warning to be raised"
+
+            # Check that the warning is a RuntimeWarning
+            assert any(item.category == RuntimeWarning for item in w), "Expected RuntimeWarning was not raised"
 
     def test_de_embed_by_floordiv(self):
         ntwk_result_1 = self.ntwk1 // self.ntwk2
