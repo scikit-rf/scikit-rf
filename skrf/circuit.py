@@ -145,6 +145,7 @@ class Circuit:
         check_duplication: NotRequired[bool]
         split_ground: NotRequired[bool]
         max_nports: NotRequired[int]
+        ignore_networks: NotRequired[tuple[Network]]
 
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
@@ -181,6 +182,9 @@ class Circuit:
             Network in the circuit has a number of ports (nports), using the Network.connect() method to reduce the
             circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
             This value depends on the performance of the computer and the scale of the circuit. Default is 20.
+
+            `ignore_networks` kwarg is a tuple of Networks to be ignored during the reduction process.
+            Default is an empty tuple.
 
 
         Examples
@@ -1496,7 +1500,8 @@ class Circuit:
 def reduce_circuit(connections: list[list[tuple[Network, int]]],
                    check_duplication: bool = True,
                    split_ground: bool = False,
-                   max_nports: int = 20) -> list[list[tuple[Network, int]]]:
+                   max_nports: int = 20,
+                   ignore_networks: tuple[Network] = tuple()) -> list[list[tuple[Network, int]]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
 
@@ -1516,6 +1521,8 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
             circuit has a number of ports (nports), using the Network.connect() method to reduce the circuit's
             dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
             This value depends on the performance of the computer and the scale of the circuit. Default is 20.
+    ignore_networks : tuple[Network], optional.
+            A tuple of Networks to ignore in the reduction process. Default is an empty list.
 
 
     Returns
@@ -1536,10 +1543,21 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     >>> np.allclose(ntwkA.s, ntwkB.s)
     True
     """
+    # Pre-processing the ignore_networks tuple
+    ignore_ntwk_names: set[str] = set(ntw.name for ntw in ignore_networks)
 
     def invalide_to_reduce(cnx: list[tuple[Network, int]]) -> bool:
-        return any((Circuit._is_port(ntwk) or ntwk.nports > max_nports)
-                   for ntwk, _ in cnx) or len(cnx) != 2
+        return (
+            any(
+                (
+                    Circuit._is_port(ntwk)
+                    or ntwk.nports > max_nports
+                    or ntwk.name in ignore_ntwk_names
+                )
+                for ntwk, _ in cnx
+            )
+            or len(cnx) != 2
+        )
 
     if split_ground:
         tmp_cnxs = []
@@ -1673,4 +1691,9 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
         reduced_cnxs.append(tmp_cnx)
 
-    return reduce_circuit(connections=reduced_cnxs, check_duplication=False)
+    return reduce_circuit(
+        connections=reduced_cnxs,
+        check_duplication=False,
+        max_nports=max_nports,
+        ignore_networks=ignore_networks,
+    )
