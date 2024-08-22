@@ -294,6 +294,62 @@ class Circuit:
         for item in ('s', 'X', 'C'):
             self.__dict__.pop(item, None)
 
+    def update_networks(
+        self, networks: tuple[Network], name: str | None = None
+    ) -> Circuit:
+        """
+        Update the circuit connections with a new set of networks.
+
+        Parameters
+        ----------
+        networks : tuple[Network]
+            A tuple of Networks to be updated in the circuit.
+        name : string, optional
+            Name assigned to the circuit (Network). Default is None.
+
+        Returns
+        -------
+        circuit : Circuit
+            The updated `Circuit` with the specified networks.
+
+        """
+        # Get current connection_dict
+        cnx_dict = self.networks_dict()
+
+        # Update the connection dict with the new networks
+        for ntw in networks:
+            if ntw.name in cnx_dict:
+                cnx_dict[ntw.name] = ntw
+            else:
+                raise ValueError(f"Network {ntw.name} not found in circuit.")
+
+        # Update the circuit connections with the new networks
+        connections = [
+            [(cnx_dict[n.name], p) for n, p in cnx] for cnx in self.connections
+        ]
+
+        return Circuit(connections=connections, name=name)
+
+    def update_networks_self(self, networks: tuple[Network]) -> None:
+        """
+        Update the circuit connections with a new set of networks (inplace).
+
+        Parameters
+        ----------
+        connections : tuple[Network]
+            A tuple of Networks to be updated in the circuit.
+
+        Returns
+        -------
+        None
+            The interpolation is performed inplace.
+
+        See Also
+        --------
+        update_networks
+        """
+        self.connections = self.update_networks(networks).connections
+
     @classmethod
     def check_duplicate_names(cls, connections_list: list):
         """
