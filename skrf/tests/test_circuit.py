@@ -99,6 +99,27 @@ class CircuitTestConstructor(unittest.TestCase):
             assert_array_almost_equal(self.circuit.s_external, circuit.s_external)
             self.assertEqual(circuit.connections, self.connections)
 
+    def test_update_networks(self):
+        """
+        Test the update_networks method of the Circuit class
+        """
+        # Create an abnormal circuit with a random network
+        ntwk3 = self.ntwk1.copy()
+        ntwk3.name = 'ntwk3'
+        connections = [[(self.port1, 0), (self.ntwk1, 0)],
+                       [(self.ntwk1, 1), (ntwk3, 0)],
+                       [(ntwk3, 1), (self.port2, 0)]]
+        circuit = rf.Circuit(connections, ignore_networks=(ntwk3,))
+
+        # Update the circuit with the self.ntwk2
+        ntwk3.s = self.ntwk2.s
+        circuit_updated = circuit.update_networks(networks=(ntwk3,))
+        assert_array_almost_equal(self.circuit.s_external, circuit_updated.s_external)
+
+        # Update the circuit inplace
+        circuit.update_networks_self(networks=(ntwk3,))
+        assert_array_almost_equal(self.circuit.s_external, circuit.s_external)
+
     def test_cache_attributes(self):
         """
         Test the cached attributes of the Circuit
