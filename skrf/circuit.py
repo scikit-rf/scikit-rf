@@ -1631,10 +1631,19 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
     # Generate the connected network and the original port index
     ntwk_cnt = Network()
+
+    # Get the Networks' names
+    name_cnt, name_a, name_b = "", str(ntwkA.name), str(ntwkB.name)
+
     if ntwkA.name == ntwkB.name:
         ntwk_cnt = innerconnect(ntwkA=ntwkA, k=k, l=l)
+        name_cnt = f"<{name_a}>"
     else:
         ntwk_cnt = connect(ntwkA=ntwkA, k=k, ntwkB=ntwkB, l=l)
+        name_cnt = f"({name_a}**{name_b})"
+
+    # Update the name of the connected network
+    ntwk_cnt.name = name_cnt
 
     # Generate the port index, the index is the original port index
     # and the value is the new port index, -1 means the port is removed.
