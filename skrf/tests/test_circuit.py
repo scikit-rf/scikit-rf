@@ -90,10 +90,14 @@ class CircuitTestConstructor(unittest.TestCase):
         """
         Test the auto_reduce parameter of the Circuit constructor with passed arguments
         """
-        # Test with max_nports=1, no connections should be reduced
-        circuit = rf.Circuit(self.connections, auto_reduce=True, max_nports=1)
-        assert_array_almost_equal(self.circuit.s_external, circuit.s_external)
-        self.assertEqual(circuit.connections, self.connections)
+        # Test with max_nports=1, ignore_networks=ntwk2
+        kwargs = {'max_nports': 1, 'ignore_networks': (self.ntwk2,)}
+
+        # No connections should be reduced
+        for key, value in kwargs.items():
+            circuit = rf.Circuit(self.connections, **{key: value})
+            assert_array_almost_equal(self.circuit.s_external, circuit.s_external)
+            self.assertEqual(circuit.connections, self.connections)
 
     def test_cache_attributes(self):
         """

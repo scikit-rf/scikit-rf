@@ -1491,7 +1491,7 @@ class Circuit:
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple[Network, int]]],
                    check_duplication: bool = True,
-                   split_ground: bool = False,
+                   split_ground: bool = True,
                    max_nports: int = 20,
                    ignore_networks: tuple[Network] = tuple()) -> list[list[tuple[Network, int]]]:
     """
@@ -1507,7 +1507,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     check_duplication : bool, optional.
             If True, check if the connections have duplicate names. Default is True.
     split_ground : bool, optional.
-            If True, split the global ground connection to independant ground connections. Default is False.
+            If True, split the global ground connection to independant ground connections. Default is True.
     max_nports : int, optional.
             The maximum number of ports of a Network that can be reduced in circuit. If a Network in the
             circuit has a number of ports (nports), using the Network.connect() method to reduce the circuit's
@@ -1686,6 +1686,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     return reduce_circuit(
         connections=reduced_cnxs,
         check_duplication=False,
+        split_ground=False,
         max_nports=max_nports,
         ignore_networks=ignore_networks,
     )
