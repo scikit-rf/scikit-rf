@@ -376,6 +376,18 @@ class CircuitTestWilkinson(unittest.TestCase):
         # s_act should be equal to s33 if a = [0,0,1]
         assert_array_almost_equal(self.C.network.s_active([0, 0, 1])[:,2], self.C.s_external[:,2,2])
 
+    def test_circuit_reduce_with_split_multi(self):
+        """
+        Test the reduce_circuit method with split_multi=True.
+        """
+        ntw_C = self.C.network
+
+        C_reduced = rf.Circuit(self.connections, split_multi=True)
+        ntw_C_reduced = C_reduced.network
+
+        self.assertNotEqual(self.C.dim, C_reduced.dim)
+        assert_array_almost_equal(ntw_C.s, ntw_C_reduced.s)
+
 class CircuitTestCascadeNetworks(unittest.TestCase):
     """
     Build a circuit made of two Networks cascaded and compare the result
