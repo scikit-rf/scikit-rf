@@ -111,6 +111,10 @@ class CircuitTestConstructor(unittest.TestCase):
                        [(ntwk3, 1), (self.port2, 0)]]
         circuit = rf.Circuit(connections, ignore_networks=(ntwk3,))
 
+        # should raise an exception if passing a network not in the circuit
+        with self.assertRaises(ValueError):
+            _ = circuit.update_networks(networks=(self.ntwk2,))
+
         # Update the circuit with the self.ntwk2
         ntwk3.s = self.ntwk2.s
         circuit_updated = circuit.update_networks(networks=(ntwk3,))
