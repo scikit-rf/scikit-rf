@@ -295,8 +295,10 @@ class Circuit:
             self.__dict__.pop(item, None)
 
     def update_networks(
-        self, networks: tuple[Network], name: str | None = None
-    ) -> Circuit:
+        self, networks: tuple[Network],
+        name: str | None = None,
+        *,
+        auto_reduce: bool = False, **kwargs: Unpack[_REDUCE_OPTIONS]) -> Circuit:
         """
         Update the circuit connections with a new set of networks.
 
@@ -306,12 +308,37 @@ class Circuit:
             A tuple of Networks to be updated in the circuit.
         name : string, optional
             Name assigned to the circuit (Network). Default is None.
+                auto_reduce : bool, optional
+            If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
+            This will change the circuit connections description, affecting inner current and voltage distributions.
+            Suitable for cases where only the S-parameters of the final circuit ports are of interest. Default is False.
+            If `check_duplication`, `split_ground` or `max_nports` are provided as kwargs, `auto_reduce` will be
+            automatically set to True, as this indicates an intent to use the `reduce_circuit` method.
+        **kwargs :
+            keyword arguments passed to `reduce_circuit` method.
+
+            `check_duplication` kwarg controls whether to check the connections have duplicate names. Default is True.
+
+            `split_ground` kwarg controls whether to split the global ground connection to independant.
+            Default is False.
+
+            `max_nports` kwarg controls the maximum number of ports of a Network that can be reduced in circuit. If a
+            Network in the circuit has a number of ports (nports), using the Network.connect() method to reduce the
+            circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
+            This value depends on the performance of the computer and the scale of the circuit. Default is 20.
+
+            `ignore_networks` kwarg is a tuple of Networks to be ignored during the reduction process.
+            Default is an empty tuple.
 
         Returns
         -------
         circuit : Circuit
             The updated `Circuit` with the specified networks.
 
+
+        See Also
+        --------
+        Circuit.__init__ : Circuit construtor method.
         """
         # Get current connection_dict
         cnx_dict = self.networks_dict()
@@ -328,11 +355,22 @@ class Circuit:
             [(cnx_dict[n.name], p) for n, p in cnx] for cnx in self.connections
         ]
 
+        # Get the keyword arguments for the reduce_circuit method
+        kwargs_reduce = {k: kwargs[k] for k in self._REDUCE_OPTIONS.__annotations__.keys() if k in kwargs}
+
+        # Reduce the circuit if directly requested or any relevant kwargs are provided
+        if auto_reduce or any(kwargs_reduce):
+            connections = reduce_circuit(connections, **kwargs_reduce)
+
         return Circuit(connections=connections, name=name)
 
     def update_networks_self(self, networks: tuple[Network]) -> None:
         """
         Update the circuit connections with a new set of networks (inplace).
+
+        This method is similar to `update_networks` but it updates the circuit
+        connections inplace, and does not support the `auto_reduce` and `**kwargs`
+        arguments.
 
         Parameters
         ----------
