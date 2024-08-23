@@ -144,6 +144,7 @@ class Circuit:
     class _REDUCE_OPTIONS(TypedDict):
         check_duplication: NotRequired[bool]
         split_ground: NotRequired[bool]
+        split_multi: NotRequired[bool]
         max_nports: NotRequired[int]
         ignore_networks: NotRequired[tuple[Network]]
 
@@ -1586,6 +1587,7 @@ class Circuit:
 def reduce_circuit(connections: list[list[tuple[Network, int]]],
                    check_duplication: bool = True,
                    split_ground: bool = True,
+                   split_multi: bool = False,
                    max_nports: int = 20,
                    ignore_networks: tuple[Network] = tuple()) -> list[list[tuple[Network, int]]]:
     """
@@ -1602,6 +1604,11 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
             If True, check if the connections have duplicate names. Default is True.
     split_ground : bool, optional.
             If True, split the global ground connection to independant ground connections. Default is True.
+    split_multi : bool, optional.
+            If True, use a splitter to handle connections involving more than two components. This approach
+            increases the computational load for individual computations. However, it proves advantageous for
+            batch processing by enabling a more comprehensive reduction of circuits, leading to more efficiency
+            in batch computations. Default is False.
     max_nports : int, optional.
             The maximum number of ports of a Network that can be reduced in circuit. If a Network in the
             circuit has a number of ports (nports), using the Network.connect() method to reduce the circuit's
@@ -1663,6 +1670,27 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
                                          name=f'G_{ntwk.name}_{port}')
                 tmp_gnd.z0 = ground_ntwk.z0
                 tmp_cnxs.append([(ntwk, port), (tmp_gnd, 0)])
+
+        connections = tmp_cnxs
+
+    if split_multi:
+        tmp_cnxs = []
+
+        for cnx in connections:
+            # Check if the connection has more than 2 components
+            if len(cnx) == 2:
+                tmp_cnxs.append(cnx)
+                continue
+
+            # Create a splitter for the connection
+            _media = media.DefinedGammaZ0(cnx[0][0].frequency)
+            splitter = _media.splitter(
+                name=f"Splt_{'&'.join(ntwk.name for ntwk, _ in cnx)}", nports=len(cnx)
+            )
+
+            # Connect the splitter to the connection
+            for (idx, (ntwk, port)) in enumerate(cnx):
+                tmp_cnxs.append([(splitter, idx), (ntwk, port)])
 
         connections = tmp_cnxs
 
@@ -1790,6 +1818,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
         connections=reduced_cnxs,
         check_duplication=False,
         split_ground=False,
+        split_multi=False,
         max_nports=max_nports,
         ignore_networks=ignore_networks,
     )
