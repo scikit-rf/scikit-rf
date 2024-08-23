@@ -1678,7 +1678,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
         for cnx in connections:
             # Check if the connection has more than 2 components
-            if len(cnx) == 2:
+            if len(cnx) <= 2:
                 tmp_cnxs.append(cnx)
                 continue
 
