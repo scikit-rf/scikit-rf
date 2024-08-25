@@ -224,13 +224,13 @@ class Circuit:
             connections = [
                 [(port1, 0), (ntw, 0)],
                 [(open, 0), (ntw, 1)],
-                [(port3, 0), (ntw, 2)]
+                [(port2, 0), (ntw, 2)]
             ]
             # or equivalently
             connections = [
                 [(port1, 0), (ntw, 0)],
                 [(ntw, 1)],
-                [(port3, 0), (ntw, 2)]
+                [(port2, 0), (ntw, 2)]
             ]
 
         Example of a connection between three 1-port networks (port1, port2 and match)
@@ -239,12 +239,12 @@ class Circuit:
             connections = [
                 [(port1, 0), (ntw, 0)],
                 [(match, 0), (ntw, 1)],
-                [(port3, 0), (ntw, 2)]
+                [(port2, 0), (ntw, 2)]
             ]
             # or equivalently
             connections = [
                 [(port1, 0), (ntw, 0)],
-                [(port3, 0), (ntw, 2)]
+                [(port2, 0), (ntw, 2)]
             ]
 
         NB1: Creating 1-port network to be used as a port should be made with :func:`Port`
