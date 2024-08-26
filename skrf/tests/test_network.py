@@ -75,7 +75,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_network_copy(self):
         n = self.ntwk1
-        n._ext_attrs['_test_attr'] = True
+        n._ext_attrs['_is_circuit_port'] = True
         n2 = n.copy()
         self.assertEqual( n.frequency, n2.frequency)
         self.assertNotEqual( id(n.frequency), id(n2.frequency))
@@ -84,7 +84,7 @@ class NetworkTestCase(unittest.TestCase):
         n.frequency.f[0] = 0
         self.assertNotEqual(n2.frequency.f[0], 0)
 
-        self.assertEqual(True, n2._ext_attrs.get('_test_attr', None))
+        self.assertEqual(True, n2._ext_attrs.get('_is_circuit_port', False))
 
     def test_two_port_reflect(self):
         number_of_data_points = 10
@@ -675,11 +675,11 @@ class NetworkTestCase(unittest.TestCase):
 
         # Connect the network to another standard network
         ntwk_connected = rf.connect(ntwk_tmp, 1, self.ntwk2, 0)
-        self.assertFalse(ntwk_connected._ext_attrs.get('_is_circuit_open'))
+        self.assertFalse(ntwk_connected._ext_attrs.get('_is_circuit_open', False))
 
         # Connect the network to another standard network
         ntwk_connected = rf.connect(self.ntwk2, 0, ntwk_tmp, 1)
-        self.assertFalse(ntwk_connected._ext_attrs.get('_is_circuit_open'))
+        self.assertFalse(ntwk_connected._ext_attrs.get('_is_circuit_open', False))
 
     def test_interconnect_complex_ports(self):
         """ Test that connecting two complex ports in a network
