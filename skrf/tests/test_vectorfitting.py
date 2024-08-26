@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from PySpice.Spice.Parser import SpiceParser
 
 import skrf
 
@@ -90,8 +91,13 @@ class VectorFittingTestCase(unittest.TestCase):
 
         # written tmp file should contain 69 lines
         with open(name) as f:
-            n_lines = len(f.readlines())
-        self.assertEqual(n_lines, 69)
+            parser = SpiceParser(name)
+        
+        assert len(parser.subcircuits[0]._statements) == 52
+        assert len(parser.subcircuits[1]._statements) == 2
+        assert len(parser.subcircuits[2]._statements) == 4
+
+
         os.remove(name)
 
     def test_read_write_npz(self):
