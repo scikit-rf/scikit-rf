@@ -92,7 +92,7 @@ class VectorFittingTestCase(unittest.TestCase):
         # written tmp file should contain 69 lines
         with open(name) as f:
             parser = SpiceParser(name)
-        
+
         assert len(parser.subcircuits[0]._statements) == 52
         assert len(parser.subcircuits[1]._statements) == 4
         assert len(parser.subcircuits[2]._statements) == 2
