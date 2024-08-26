@@ -1,13 +1,12 @@
-from contextlib import suppress
 import os
 import sys
 import tempfile
 import unittest
+from contextlib import suppress
 from pathlib import Path
 
 import numpy as np
 import pytest
-
 
 with suppress(ImportError):
     from PySpice.Spice.Parser import SpiceParser
