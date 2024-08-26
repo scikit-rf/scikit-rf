@@ -404,6 +404,9 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
         # circuit external ports
         self.port1 = rf.Circuit.Port(self.freq, name='Port1')
         self.port2 = rf.Circuit.Port(self.freq, name='Port2')
+        self.open = rf.Circuit.Open(self.freq, name='PortO')
+        _media = rf.media.DefinedGammaZ0(frequency=self.freq)
+        self.match = _media.match(name='match')
 
     def test_cascade(self):
         """
@@ -441,6 +444,49 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
         circuit = rf.Circuit(connections)
         ntw = self.ntwk2 ** self.ntwk1
         assert_array_almost_equal(circuit.s_external, ntw.s)
+
+    def test_open_condensation(self):
+        """
+        Test the impact of omitting an open termination in the circuit connections.
+        Compare the result of a conventional circuit setup with an open termination
+        to a condensed setup that assumes an open termination by default.
+        """
+        # Conventional setup including open termination
+        cnx_con = [  [(self.port1, 0), (self.ntwk1, 0)],
+                     [(self.ntwk1, 1), (self.ntwk2, 0), (self.port2, 0)],
+                     [(self.ntwk2, 1), (self.open, 0)] ]
+        ckt_con = rf.Circuit(cnx_con)
+
+        # Condensed setup where open termination is implied
+        cnx_cds = [  [(self.port1, 0), (self.ntwk1, 0)],
+                     [(self.ntwk1, 1), (self.ntwk2, 0), (self.port2, 0)],
+                     [(self.ntwk2, 1)] # Open termination is implied
+                     ]
+
+        ckt_cds = rf.Circuit(cnx_cds)
+
+        assert_array_almost_equal(ckt_con.s_external, ckt_cds.s_external)
+
+    def test_match_condensation(self):
+        """
+        Test the impact of omitting a matching network in the circuit connections.
+        Compare the result of a conventional circuit setup with a matching network
+        to a condensed setup that assumes the matching network by default.
+        """
+        # Conventional setup including matching network
+        cnx_con = [  [(self.port1, 0), (self.ntwk1, 0)],
+                     [(self.ntwk1, 1), (self.ntwk2, 0), (self.port2, 0)],
+                     [(self.ntwk2, 1), (self.match, 0)] ]
+        ckt_con = rf.Circuit(cnx_con)
+
+        # Condensed setup where matching network is implied
+        cnx_cds = [  [(self.port1, 0), (self.ntwk1, 0)],
+                     [(self.ntwk1, 1), (self.ntwk2, 0), (self.port2, 0)]
+                     ]
+
+        ckt_cds = rf.Circuit(cnx_cds)
+
+        assert_array_almost_equal(ckt_con.s_external, ckt_cds.s_external)
 
 class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
     """

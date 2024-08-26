@@ -163,6 +163,8 @@ class Circuit:
             Each connection is a described by a list of tuple.
             Each tuple contains (network, network_port_nb).
             Port number indexing starts from zero.
+            Network's port not explicitly listed will be treated as matched.
+            Network's port listed individually will be treated as open.
         name : string, optional
             Name assigned to the circuit (Network). Default is None.
         auto_reduce : bool, optional
@@ -221,6 +223,35 @@ class Circuit:
                 [(port3, 0), (ntw, 2)]
             ]
 
+        Example of a connection between three 1-port networks (port1, port2 and open)
+        and a 3-ports network (ntw):
+        ::
+            connections = [
+                [(port1, 0), (ntw, 0)],
+                [(open, 0), (ntw, 1)],
+                [(port2, 0), (ntw, 2)]
+            ]
+            # or equivalently
+            connections = [
+                [(port1, 0), (ntw, 0)],
+                [(ntw, 1)],
+                [(port2, 0), (ntw, 2)]
+            ]
+
+        Example of a connection between three 1-port networks (port1, port2 and match)
+        and a 3-ports network (ntw):
+        ::
+            connections = [
+                [(port1, 0), (ntw, 0)],
+                [(match, 0), (ntw, 1)],
+                [(port2, 0), (ntw, 2)]
+            ]
+            # or equivalently
+            connections = [
+                [(port1, 0), (ntw, 0)],
+                [(port2, 0), (ntw, 2)]
+            ]
+
         NB1: Creating 1-port network to be used as a port should be made with :func:`Port`
 
         NB2: The external ports indexing is defined by the order of appearance of
@@ -229,6 +260,10 @@ class Circuit:
         the second network identified as a port will be the second port (index 1),
         etc.
 
+        NB3: When a port of a network is listed individually in the connections, the circuit
+        will treat this port with a reflection coefficient of 1, equivalent to an Open.
+        Conversely, if a port is not explicitly included in the connections,the circuit will
+        treat it as matched.
 
         """
         self._connections = connections
