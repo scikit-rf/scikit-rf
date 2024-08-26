@@ -94,8 +94,8 @@ class VectorFittingTestCase(unittest.TestCase):
             parser = SpiceParser(name)
         
         assert len(parser.subcircuits[0]._statements) == 52
-        assert len(parser.subcircuits[1]._statements) == 2
-        assert len(parser.subcircuits[2]._statements) == 4
+        assert len(parser.subcircuits[1]._statements) == 4
+        assert len(parser.subcircuits[2]._statements) == 2
 
 
         os.remove(name)
