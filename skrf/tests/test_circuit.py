@@ -121,7 +121,7 @@ class CircuitTestConstructor(unittest.TestCase):
         assert_array_almost_equal(self.circuit.s_external, circuit_updated.s_external)
 
         # Update the circuit inplace
-        circuit.update_networks_self(networks=(ntwk3,))
+        circuit.update_networks(networks=(ntwk3,), inplace=True)
         assert_array_almost_equal(self.circuit.s_external, circuit.s_external)
 
     def test_cache_attributes(self):
