@@ -117,11 +117,15 @@ class CircuitTestConstructor(unittest.TestCase):
 
         # Update the circuit with the self.ntwk2
         ntwk3.s = self.ntwk2.s
+
+        # Check the result type and values
         circuit_updated = circuit.update_networks(networks=(ntwk3,))
+        self.assertTrue(isinstance(circuit_updated, rf.Circuit))
         assert_array_almost_equal(self.circuit.s_external, circuit_updated.s_external)
 
-        # Update the circuit inplace
-        circuit.update_networks(networks=(ntwk3,), inplace=True)
+        # Check the result type and values when updating the circuit inplace
+        none_result = circuit.update_networks(networks=(ntwk3,), inplace=True)
+        self.assertIsNone(none_result)
         assert_array_almost_equal(self.circuit.s_external, circuit.s_external)
 
     def test_cache_attributes(self):
