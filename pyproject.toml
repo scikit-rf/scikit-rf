@@ -50,11 +50,11 @@ test = [
     "pytest-cov >=4.0",
     "nbval >=0.9",
     "pyarrow >= 10.0",
-    "pyspice >= 1.5"
 ]
 
 plot = [
-    "matplotlib >=3.5"
+    "matplotlib >=3.5",
+    "pyspice >= 1.5",
 ]
 
 xlsx = [
