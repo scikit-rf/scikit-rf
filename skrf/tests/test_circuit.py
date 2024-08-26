@@ -90,8 +90,8 @@ class CircuitTestConstructor(unittest.TestCase):
         """
         Test the auto_reduce parameter of the Circuit constructor with passed arguments
         """
-        # Test with max_nports=1, ignore_networks=ntwk2
-        kwargs = {'max_nports': 1, 'ignore_networks': (self.ntwk2,)}
+        # Test with max_nports=1, dynamic_networks=ntwk2
+        kwargs = {'max_nports': 1, 'dynamic_networks': (self.ntwk2,)}
 
         # No connections should be reduced
         for key, value in kwargs.items():
@@ -109,7 +109,7 @@ class CircuitTestConstructor(unittest.TestCase):
         connections = [[(self.port1, 0), (self.ntwk1, 0)],
                        [(self.ntwk1, 1), (ntwk3, 0)],
                        [(ntwk3, 1), (self.port2, 0)]]
-        circuit = rf.Circuit(connections, ignore_networks=(ntwk3,))
+        circuit = rf.Circuit(connections, dynamic_networks=(ntwk3,))
 
         # should raise an exception if passing a network not in the circuit
         with self.assertRaises(ValueError):

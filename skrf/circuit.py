@@ -146,7 +146,7 @@ class Circuit:
         split_ground: NotRequired[bool]
         split_multi: NotRequired[bool]
         max_nports: NotRequired[int]
-        ignore_networks: NotRequired[tuple[Network]]
+        dynamic_networks: NotRequired[tuple[Network, ...]]
 
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
@@ -186,7 +186,7 @@ class Circuit:
             circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
             This value depends on the performance of the computer and the scale of the circuit. Default is 20.
 
-            `ignore_networks` kwarg is a tuple of Networks to be ignored during the reduction process.
+            `dynamic_networks` kwarg is a tuple of Networks to be skipped during the reduction process.
             Default is an empty tuple.
 
 
@@ -366,12 +366,12 @@ class Circuit:
             circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
             This value depends on the performance of the computer and the scale of the circuit. Default is 20.
 
-            `ignore_networks` kwarg is a tuple of Networks to be ignored during the reduction process.
+            `dynamic_networks` kwarg is a tuple of Networks to be skipped during the reduction process.
             Default is an empty tuple.
 
         Returns
         -------
-        circuit : Circuit
+        Circuit or None if inplace=True
             The updated `Circuit` with the specified networks.
 
 
@@ -1607,7 +1607,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
                    split_ground: bool = True,
                    split_multi: bool = False,
                    max_nports: int = 20,
-                   ignore_networks: tuple[Network] = tuple()) -> list[list[tuple[Network, int]]]:
+                   dynamic_networks: tuple[Network, ...] = tuple()) -> list[list[tuple[Network, int]]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
 
@@ -1632,7 +1632,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
             circuit has a number of ports (nports), using the Network.connect() method to reduce the circuit's
             dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
             This value depends on the performance of the computer and the scale of the circuit. Default is 20.
-    ignore_networks : tuple[Network], optional.
+    dynamic_networks : tuple[Network, ...], optional.
             A tuple of Networks to ignore in the reduction process. Default is an empty list.
 
 
@@ -1654,8 +1654,8 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     >>> np.allclose(ntwkA.s, ntwkB.s)
     True
     """
-    # Pre-processing the ignore_networks tuple
-    ignore_ntwk_names: set[str] = set(ntw.name for ntw in ignore_networks)
+    # Pre-processing the dynamic_networks tuple
+    ignore_ntwk_names: set[str] = set(ntw.name for ntw in dynamic_networks)
 
     def invalide_to_reduce(cnx: list[tuple[Network, int]]) -> bool:
         return (
@@ -1840,5 +1840,5 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
         split_ground=False,
         split_multi=False,
         max_nports=max_nports,
-        ignore_networks=ignore_networks,
+        dynamic_networks=dynamic_networks,
     )
