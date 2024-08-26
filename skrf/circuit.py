@@ -334,7 +334,8 @@ class Circuit:
         self, networks: tuple[Network],
         name: str | None = None,
         *,
-        auto_reduce: bool = False, **kwargs: Unpack[_REDUCE_OPTIONS]) -> Circuit:
+        inplace: bool = False,
+        auto_reduce: bool = False, **kwargs: Unpack[_REDUCE_OPTIONS]) -> Circuit | None:
         """
         Update the circuit connections with a new set of networks.
 
@@ -344,6 +345,8 @@ class Circuit:
             A tuple of Networks to be updated in the circuit.
         name : string, optional
             Name assigned to the circuit (Network). Default is None.
+        inplace : bool, optional
+            If True, the circuit connections will be updated inplace. Default is False.
         auto_reduce : bool, optional
             If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
             This will change the circuit connections description, affecting inner current and voltage distributions.
@@ -398,31 +401,11 @@ class Circuit:
         if auto_reduce or any(kwargs_reduce):
             connections = reduce_circuit(connections, **kwargs_reduce)
 
+        if inplace:
+            self.connections = connections
+            return None
+
         return Circuit(connections=connections, name=name)
-
-    def update_networks_self(self, networks: tuple[Network]) -> None:
-        """
-        Update the circuit connections with a new set of networks (inplace).
-
-        This method is similar to `update_networks` but it updates the circuit
-        connections inplace, and does not support the `auto_reduce` and `**kwargs`
-        arguments.
-
-        Parameters
-        ----------
-        connections : tuple[Network]
-            A tuple of Networks to be updated in the circuit.
-
-        Returns
-        -------
-        None
-            The interpolation is performed inplace.
-
-        See Also
-        --------
-        update_networks
-        """
-        self.connections = self.update_networks(networks).connections
 
     @classmethod
     def check_duplicate_names(cls, connections_list: list):
