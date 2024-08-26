@@ -6,7 +6,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from PySpice.Spice.Parser import SpiceParser
 
 import skrf
 
@@ -78,6 +77,8 @@ class VectorFittingTestCase(unittest.TestCase):
         "matplotlib" not in sys.modules,
         reason="Spice subcircuit uses Engformatter which is not available without matplotlib.")
     def test_spice_subcircuit(self):
+        from PySpice.Spice.Parser import SpiceParser
+
         # fit ring slot example network
         nw = skrf.data.ring_slot
         vf = skrf.vectorFitting.VectorFitting(nw)
