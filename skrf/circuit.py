@@ -1703,7 +1703,9 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
             # Create a splitter for the connection
             _media = media.DefinedGammaZ0(cnx[0][0].frequency)
             splitter = _media.splitter(
-                name=f"Splt_{'&'.join(ntwk.name for ntwk, _ in cnx)}", nports=len(cnx)
+                name=f"Splt_{'&'.join(ntwk.name for ntwk, _ in cnx)}",
+                nports=len(cnx),
+                z0=np.array([ntwk.z0[:, p] for ntwk, p in cnx]).T
             )
 
             # Connect the splitter to the connection
