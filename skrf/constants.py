@@ -121,6 +121,7 @@ ComponentFuncT = Literal["re", "im", "mag", "db", "db10", "rad", "deg", "arcl", 
                          "arcl_unwrap", "vswr", "time", "time_db", "time_mag", "time_impulse", "time_step"]
 SparamFormatT = Literal["db", "ri", "ma"]
 PortOrderT = Literal["first", "second", "third", "last", "auto"]
+CircuitComponentT = Literal["_is_circuit_port", "_is_circuit_ground", "_is_circuit_open"]
 
 NumberLike = Union[Number, Sequence[Number], np.ndarray]
 
