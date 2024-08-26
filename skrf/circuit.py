@@ -309,7 +309,7 @@ class Circuit:
             A tuple of Networks to be updated in the circuit.
         name : string, optional
             Name assigned to the circuit (Network). Default is None.
-                auto_reduce : bool, optional
+        auto_reduce : bool, optional
             If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
             This will change the circuit connections description, affecting inner current and voltage distributions.
             Suitable for cases where only the S-parameters of the final circuit ports are of interest. Default is False.
