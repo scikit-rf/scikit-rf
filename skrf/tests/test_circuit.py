@@ -90,11 +90,13 @@ class CircuitTestConstructor(unittest.TestCase):
         """
         Test the auto_reduce parameter of the Circuit constructor with passed arguments
         """
-        # Test with max_nports=1, dynamic_networks=ntwk2
-        kwargs = {'max_nports': 1, 'dynamic_networks': (self.ntwk2,)}
+        # Test with max_nports=1 and dynamic_networks in a tuple or a list
+        kwargs = [('max_nports', 1),
+                  ('dynamic_networks', (self.ntwk2,)),
+                  ('dynamic_networks', [self.ntwk2])]
 
         # No connections should be reduced
-        for key, value in kwargs.items():
+        for key, value in kwargs:
             circuit = rf.Circuit(self.connections, **{key: value})
             assert_array_almost_equal(self.circuit.s_external, circuit.s_external)
             self.assertEqual(circuit.connections, self.connections)

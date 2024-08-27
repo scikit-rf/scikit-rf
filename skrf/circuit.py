@@ -93,7 +93,7 @@ from __future__ import annotations
 
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Sequence, TypedDict
 
 import numpy as np
 from typing_extensions import NotRequired, Unpack
@@ -146,7 +146,7 @@ class Circuit:
         split_ground: NotRequired[bool]
         split_multi: NotRequired[bool]
         max_nports: NotRequired[int]
-        dynamic_networks: NotRequired[tuple[Network, ...]]
+        dynamic_networks: NotRequired[Sequence[Network]]
 
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
@@ -186,7 +186,7 @@ class Circuit:
             circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
             This value depends on the performance of the computer and the scale of the circuit. Default is 20.
 
-            `dynamic_networks` kwarg is a tuple of Networks to be skipped during the reduction process.
+            `dynamic_networks` kwarg is a sequence of Networks to be skipped during the reduction process.
             Default is an empty tuple.
 
 
@@ -366,7 +366,7 @@ class Circuit:
             circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
             This value depends on the performance of the computer and the scale of the circuit. Default is 20.
 
-            `dynamic_networks` kwarg is a tuple of Networks to be skipped during the reduction process.
+            `dynamic_networks` kwarg is a sequence of Networks to be skipped during the reduction process.
             Default is an empty tuple.
 
         Returns
@@ -1607,7 +1607,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
                    split_ground: bool = True,
                    split_multi: bool = False,
                    max_nports: int = 20,
-                   dynamic_networks: tuple[Network, ...] = tuple()) -> list[list[tuple[Network, int]]]:
+                   dynamic_networks: Sequence[Network] = tuple()) -> list[list[tuple[Network, int]]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
 
@@ -1632,8 +1632,8 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
             circuit has a number of ports (nports), using the Network.connect() method to reduce the circuit's
             dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
             This value depends on the performance of the computer and the scale of the circuit. Default is 20.
-    dynamic_networks : tuple[Network, ...], optional.
-            A tuple of Networks to ignore in the reduction process. Default is an empty list.
+    dynamic_networks : Sequence[Network], optional.
+            A sequence of Networks to ignore in the reduction process. Default is an empty tuple.
 
 
     Returns
