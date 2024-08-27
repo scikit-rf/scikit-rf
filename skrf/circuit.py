@@ -846,7 +846,7 @@ class Circuit:
         return edge_labels
 
 
-    def _Xk(self, cnx_k: list[tuple]) -> np.ndarray:
+    def _Xk(self, cnx_k: list[tuple[Network, int]]) -> np.ndarray:
         """
         Return the scattering matrices [X]_k of the individual intersections k.
         The results in [#]_ do not agree due to an error in the formula (3)
@@ -1411,7 +1411,7 @@ class Circuit:
         Returns
         -------
         V : complex array of shape (nfreqs, nports)
-            Voltages in Amperes [A] (peak) at internal ports.
+            Voltages in Volt [V] (peak) at internal ports.
 
         """
         a = self._a(self._a_external(power, phase))
