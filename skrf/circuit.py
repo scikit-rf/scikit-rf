@@ -1771,12 +1771,10 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     (ntwkA, k), (ntwkB, l) = cnx_to_reduce
     ntwks_name = (ntwkA.name, ntwkB.name)
 
-    # Generate the connected network and the original port index
-    ntwk_cnt = Network()
-
     # Get the Networks' names
     name_cnt, name_a, name_b = "", str(ntwkA.name), str(ntwkB.name)
 
+    # Generate the connected network and the original port index
     if ntwkA.name == ntwkB.name:
         ntwk_cnt = innerconnect(ntwkA=ntwkA, k=k, l=l)
         name_cnt = f"<{name_a}>"
