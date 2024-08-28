@@ -90,10 +90,45 @@ class CircuitTestConstructor(unittest.TestCase):
         """
         Test the auto_reduce parameter of the Circuit constructor with passed arguments
         """
-        # Test with max_nports=1, no connections should be reduced
-        circuit = rf.Circuit(self.connections, auto_reduce=True, max_nports=1)
+        # Test with max_nports=1 and dynamic_networks in a tuple or a list
+        kwargs = [('max_nports', 1),
+                  ('dynamic_networks', (self.ntwk2,)),
+                  ('dynamic_networks', [self.ntwk2])]
+
+        # No connections should be reduced
+        for key, value in kwargs:
+            circuit = rf.Circuit(self.connections, **{key: value})
+            assert_array_almost_equal(self.circuit.s_external, circuit.s_external)
+            self.assertEqual(circuit.connections, self.connections)
+
+    def test_update_networks(self):
+        """
+        Test the update_networks method of the Circuit class
+        """
+        # Create an abnormal circuit with a random network
+        ntwk3 = self.ntwk1.copy()
+        ntwk3.name = 'ntwk3'
+        connections = [[(self.port1, 0), (self.ntwk1, 0)],
+                       [(self.ntwk1, 1), (ntwk3, 0)],
+                       [(ntwk3, 1), (self.port2, 0)]]
+        circuit = rf.Circuit(connections, dynamic_networks=(ntwk3,))
+
+        # should raise an exception if passing a network not in the circuit
+        with self.assertRaises(ValueError):
+            _ = circuit.update_networks(networks=(self.ntwk2,))
+
+        # Update the circuit with the self.ntwk2
+        ntwk3.s = self.ntwk2.s
+
+        # Check the result type and values
+        circuit_updated = circuit.update_networks(networks=(ntwk3,))
+        self.assertTrue(isinstance(circuit_updated, rf.Circuit))
+        assert_array_almost_equal(self.circuit.s_external, circuit_updated.s_external)
+
+        # Check the result type and values when updating the circuit inplace
+        none_result = circuit.update_networks(networks=(ntwk3,), inplace=True)
+        self.assertIsNone(none_result)
         assert_array_almost_equal(self.circuit.s_external, circuit.s_external)
-        self.assertEqual(circuit.connections, self.connections)
 
     def test_cache_attributes(self):
         """
@@ -346,6 +381,18 @@ class CircuitTestWilkinson(unittest.TestCase):
         assert_array_almost_equal(self.C.network.s_active([0, 1, 0])[:,1], self.C.s_external[:,1,1])
         # s_act should be equal to s33 if a = [0,0,1]
         assert_array_almost_equal(self.C.network.s_active([0, 0, 1])[:,2], self.C.s_external[:,2,2])
+
+    def test_circuit_reduce_with_split_multi(self):
+        """
+        Test the reduce_circuit method with split_multi=True.
+        """
+        ntw_C = self.C.network
+
+        C_reduced = rf.Circuit(self.connections, split_multi=True)
+        ntw_C_reduced = C_reduced.network
+
+        self.assertNotEqual(self.C.dim, C_reduced.dim)
+        assert_array_almost_equal(ntw_C.s, ntw_C_reduced.s)
 
 class CircuitTestCascadeNetworks(unittest.TestCase):
     """

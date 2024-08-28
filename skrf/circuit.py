@@ -93,7 +93,7 @@ from __future__ import annotations
 
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Sequence, TypedDict
 
 import numpy as np
 from typing_extensions import NotRequired, Unpack
@@ -144,7 +144,9 @@ class Circuit:
     class _REDUCE_OPTIONS(TypedDict):
         check_duplication: NotRequired[bool]
         split_ground: NotRequired[bool]
+        split_multi: NotRequired[bool]
         max_nports: NotRequired[int]
+        dynamic_networks: NotRequired[Sequence[Network]]
 
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
@@ -183,6 +185,9 @@ class Circuit:
             Network in the circuit has a number of ports (nports), using the Network.connect() method to reduce the
             circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
             This value depends on the performance of the computer and the scale of the circuit. Default is 20.
+
+            `dynamic_networks` kwarg is a sequence of Networks to be skipped during the reduction process.
+            Default is an empty tuple.
 
 
         Examples
@@ -284,20 +289,12 @@ class Circuit:
         # Check that a (ntwk, port) combination appears only once in the connexion map
         Circuit.check_duplicate_names(self.connections_list)
 
-        # Automatically enable auto_reduce if any relevant kwargs are provided
-        auto_reduce = auto_reduce or any(
-            k in self._REDUCE_OPTIONS.__annotations__.keys() for k in kwargs.keys()
-        )
+        # Get the keyword arguments for the reduce_circuit method
+        kwargs_reduce = {k: kwargs[k] for k in self._REDUCE_OPTIONS.__annotations__.keys() if k in kwargs}
 
-        # Reduce the circuit if requested
-        if auto_reduce:
-            check_duplication = kwargs.get('check_duplication', False)
-            split_ground = kwargs.get('split_ground', True)
-            max_nports = kwargs.get('max_nports', 20)
-            self.connections = reduce_circuit(self.connections,
-                                              check_duplication=check_duplication,
-                                              split_ground=split_ground,
-                                              max_nports=max_nports)
+        # Reduce the circuit if directly requested or any relevant kwargs are provided
+        if auto_reduce or any(kwargs_reduce):
+            self.connections = reduce_circuit(self.connections, **kwargs_reduce)
 
     @property
     def connections(self) -> list[list[tuple[Network, int]]]:
@@ -332,6 +329,83 @@ class Circuit:
         # Invalidate cached properties
         for item in ('s', 'X', 'C'):
             self.__dict__.pop(item, None)
+
+    def update_networks(
+        self, networks: tuple[Network],
+        name: str | None = None,
+        *,
+        inplace: bool = False,
+        auto_reduce: bool = False, **kwargs: Unpack[_REDUCE_OPTIONS]) -> Circuit | None:
+        """
+        Update the circuit connections with a new set of networks.
+
+        Parameters
+        ----------
+        networks : tuple[Network]
+            A tuple of Networks to be updated in the circuit.
+        name : string, optional
+            Name assigned to the circuit (Network). Default is None.
+        inplace : bool, optional
+            If True, the circuit connections will be updated inplace. Default is False.
+        auto_reduce : bool, optional
+            If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
+            This will change the circuit connections description, affecting inner current and voltage distributions.
+            Suitable for cases where only the S-parameters of the final circuit ports are of interest. Default is False.
+            If `check_duplication`, `split_ground` or `max_nports` are provided as kwargs, `auto_reduce` will be
+            automatically set to True, as this indicates an intent to use the `reduce_circuit` method.
+        **kwargs :
+            keyword arguments passed to `reduce_circuit` method.
+
+            `check_duplication` kwarg controls whether to check the connections have duplicate names. Default is True.
+
+            `split_ground` kwarg controls whether to split the global ground connection to independant.
+            Default is False.
+
+            `max_nports` kwarg controls the maximum number of ports of a Network that can be reduced in circuit. If a
+            Network in the circuit has a number of ports (nports), using the Network.connect() method to reduce the
+            circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
+            This value depends on the performance of the computer and the scale of the circuit. Default is 20.
+
+            `dynamic_networks` kwarg is a sequence of Networks to be skipped during the reduction process.
+            Default is an empty tuple.
+
+        Returns
+        -------
+        Circuit or None if inplace=True
+            The updated `Circuit` with the specified networks.
+
+
+        See Also
+        --------
+        Circuit.__init__ : Circuit construtor method.
+        """
+        # Get current connection_dict
+        cnx_dict = self.networks_dict()
+
+        # Update the connection dict with the new networks
+        for ntw in networks:
+            if ntw.name in cnx_dict:
+                cnx_dict[ntw.name] = ntw
+            else:
+                raise ValueError(f"Network {ntw.name} not found in circuit.")
+
+        # Update the circuit connections with the new networks
+        connections = [
+            [(cnx_dict[n.name], p) for n, p in cnx] for cnx in self.connections
+        ]
+
+        # Get the keyword arguments for the reduce_circuit method
+        kwargs_reduce = {k: kwargs[k] for k in self._REDUCE_OPTIONS.__annotations__.keys() if k in kwargs}
+
+        # Reduce the circuit if directly requested or any relevant kwargs are provided
+        if auto_reduce or any(kwargs_reduce):
+            connections = reduce_circuit(connections, **kwargs_reduce)
+
+        if inplace:
+            self.connections = connections
+            return None
+
+        return Circuit(connections=connections, name=name)
 
     @classmethod
     def check_duplicate_names(cls, connections_list: list):
@@ -772,7 +846,7 @@ class Circuit:
         return edge_labels
 
 
-    def _Xk(self, cnx_k: list[tuple]) -> np.ndarray:
+    def _Xk(self, cnx_k: list[tuple[Network, int]]) -> np.ndarray:
         """
         Return the scattering matrices [X]_k of the individual intersections k.
         The results in [#]_ do not agree due to an error in the formula (3)
@@ -1337,7 +1411,7 @@ class Circuit:
         Returns
         -------
         V : complex array of shape (nfreqs, nports)
-            Voltages in Amperes [A] (peak) at internal ports.
+            Voltages in Volt [V] (peak) at internal ports.
 
         """
         a = self._a(self._a_external(power, phase))
@@ -1530,8 +1604,10 @@ class Circuit:
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple[Network, int]]],
                    check_duplication: bool = True,
-                   split_ground: bool = False,
-                   max_nports: int = 20) -> list[list[tuple[Network, int]]]:
+                   split_ground: bool = True,
+                   split_multi: bool = False,
+                   max_nports: int = 20,
+                   dynamic_networks: Sequence[Network] = tuple()) -> list[list[tuple[Network, int]]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
 
@@ -1540,17 +1616,24 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
     Parameters
     ----------
-    connections : list.
+    connections : list[list[tuple[Network, int]]].
             The connection list to reduce.
     check_duplication : bool, optional.
             If True, check if the connections have duplicate names. Default is True.
     split_ground : bool, optional.
-            If True, split the global ground connection to independant ground connections. Default is False.
-    max_nports : int
+            If True, split the global ground connection to independant ground connections. Default is True.
+    split_multi : bool, optional.
+            If True, use a splitter to handle connections involving more than two components. This approach
+            increases the computational load for individual computations. However, it proves advantageous for
+            batch processing by enabling a more comprehensive reduction of circuits, leading to more efficiency
+            in batch computations. Default is False.
+    max_nports : int, optional.
             The maximum number of ports of a Network that can be reduced in circuit. If a Network in the
             circuit has a number of ports (nports), using the Network.connect() method to reduce the circuit's
             dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
             This value depends on the performance of the computer and the scale of the circuit. Default is 20.
+    dynamic_networks : Sequence[Network], optional.
+            A sequence of Networks to ignore in the reduction process. Default is an empty tuple.
 
 
     Returns
@@ -1571,10 +1654,21 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     >>> np.allclose(ntwkA.s, ntwkB.s)
     True
     """
+    # Pre-processing the dynamic_networks tuple
+    ignore_ntwk_names: set[str] = set(ntw.name for ntw in dynamic_networks)
 
     def invalide_to_reduce(cnx: list[tuple[Network, int]]) -> bool:
-        return any((Circuit._is_port(ntwk) or ntwk.nports > max_nports)
-                   for ntwk, _ in cnx) or len(cnx) != 2
+        return (
+            any(
+                (
+                    Circuit._is_port(ntwk)
+                    or ntwk.nports > max_nports
+                    or ntwk.name in ignore_ntwk_names
+                )
+                for ntwk, _ in cnx
+            )
+            or len(cnx) != 2
+        )
 
     if split_ground:
         tmp_cnxs = []
@@ -1594,6 +1688,29 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
                                          name=f'G_{ntwk.name}_{port}')
                 tmp_gnd.z0 = ground_ntwk.z0
                 tmp_cnxs.append([(ntwk, port), (tmp_gnd, 0)])
+
+        connections = tmp_cnxs
+
+    if split_multi:
+        tmp_cnxs = []
+
+        for cnx in connections:
+            # Check if the connection has more than 2 components
+            if len(cnx) <= 2:
+                tmp_cnxs.append(cnx)
+                continue
+
+            # Create a splitter for the connection
+            _media = media.DefinedGammaZ0(cnx[0][0].frequency)
+            splitter = _media.splitter(
+                name=f"Splt_{'&'.join(ntwk.name for ntwk, _ in cnx)}",
+                nports=len(cnx),
+                z0=np.array([ntwk.z0[:, p] for ntwk, p in cnx]).T
+            )
+
+            # Connect the splitter to the connection
+            for (idx, (ntwk, port)) in enumerate(cnx):
+                tmp_cnxs.append([(splitter, idx), (ntwk, port)])
 
         connections = tmp_cnxs
 
@@ -1654,12 +1771,19 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     (ntwkA, k), (ntwkB, l) = cnx_to_reduce
     ntwks_name = (ntwkA.name, ntwkB.name)
 
+    # Get the Networks' names
+    name_cnt, name_a, name_b = "", str(ntwkA.name), str(ntwkB.name)
+
     # Generate the connected network and the original port index
-    ntwk_cnt = Network()
     if ntwkA.name == ntwkB.name:
         ntwk_cnt = innerconnect(ntwkA=ntwkA, k=k, l=l)
+        name_cnt = f"<{name_a}>"
     else:
         ntwk_cnt = connect(ntwkA=ntwkA, k=k, ntwkB=ntwkB, l=l)
+        name_cnt = f"({name_a}**{name_b})"
+
+    # Update the name of the connected network
+    ntwk_cnt.name = name_cnt
 
     # Generate the port index, the index is the original port index
     # and the value is the new port index, -1 means the port is removed.
@@ -1708,4 +1832,11 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
         reduced_cnxs.append(tmp_cnx)
 
-    return reduce_circuit(connections=reduced_cnxs, check_duplication=False)
+    return reduce_circuit(
+        connections=reduced_cnxs,
+        check_duplication=False,
+        split_ground=False,
+        split_multi=False,
+        max_nports=max_nports,
+        dynamic_networks=dynamic_networks,
+    )
