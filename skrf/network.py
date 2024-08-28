@@ -5224,6 +5224,85 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     return connect(ntwkA, k, ntwkB, l)
 
 
+def connect_parallel(ntwks: Sequence[Network], ports: Sequence[int | Sequence[int]]):
+    """
+    Connect a sequence of multi-port networks, with ports specified by a list of indices.
+
+    Args:
+        ntwks (Sequence[Network]): A sequence of multi-port networks.
+        ports (Sequence[int  |  Sequence[int]]): A sequence of port indices, it could be int or a
+        sequence of int. It should have the same length as `ntwks`.
+
+    Returns
+    -------
+    ntwk_out : :class:`Network`
+            new network
+    """
+    if len(ntwks) != len(ports):
+        raise ValueError('ntwks and ports must have the same length')
+
+    if len(set(ntw.name for ntw in ntwks)) != len(ntwks):
+        raise ValueError('ntwks should not be duplicated.')
+
+    # Get the index of each network in the list
+    dim = sum(ntw.nports for ntw in ntwks)
+    off, inter_indices, outer_indices = 0, [], []
+    z0_list = []
+
+    # Assign the global scattering matrix
+    X = np.zeros((ntwks[0].frequency.npoints, dim, dim), dtype='complex')
+
+
+    for ntw, port in zip(ntwks, ports):
+        # Get the nports of Network
+        nports: int = ntw.nports
+
+        # Convert the int port to list
+        if isinstance(port, int):
+            port = [port]
+
+        # Che the port indecies valid or not
+        if len(port) != len(set(port)):
+            raise ValueError(f"{ntw.name}'s port should not be duplicated.")
+        if max(port) >= nports or min(port) < 0:
+            raise ValueError(f"{ntw.name}'s port index should be between 0 and {nports-1}")
+
+        # Check the frequency equal or not
+        check_frequency_equal(ntw, ntwks[0])
+
+        # Append the port index with offset to indices list
+        for p in range(nports):
+            if p in port:
+                inter_indices.append(p + off)
+                z0_list.append(ntw.z0[:, p])
+            else:
+                outer_indices.append(p + off)
+
+        # Assign the scattering matrix of each network to the global scattering matrix
+        X[:, off:off+nports, off:off+nports] = ntw.s_traveling
+
+        off += nports
+
+    # Assign the concatenated intersection matrix
+    C = np.zeros((ntwks[0].frequency.npoints, dim, dim), dtype='complex')
+
+    z0s = np.array(z0_list).T
+    y0s = 1./z0s
+    y_k = y0s.sum(axis=1)
+
+    s = 2 *np.sqrt(np.einsum('ki,kj->kij', y0s, y0s)) / y_k[:, None, None]
+    np.einsum('kii->ki', s)[:] -= 1  # Sii
+
+    a, b = np.meshgrid(inter_indices, inter_indices, indexing='ij')
+    C[:, a, b] = s
+
+    # Get the result
+    s = X @ np.linalg.inv(np.identity(dim) - C @ X)
+
+    a, b = np.meshgrid(outer_indices, outer_indices, indexing='ij')
+    return Network(frequency=ntwks[0].frequency, s=s[:, a, b], z0=z0s)
+
+
 def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     """
     Connect ports of a single n-port network.
