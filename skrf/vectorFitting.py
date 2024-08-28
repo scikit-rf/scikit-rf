@@ -2349,7 +2349,7 @@ class VectorFitting:
                     # add CCCS to generate the scattered current I_nj at port n
                     # control current is measured by the dummy voltage source at the transfer network Y_nj
                     # the scattered current is injected into the port (source positive connected to ground)
-                    f.write(f'F{n + 1}{j + 1} 0 a{n + 1} V{n + 1}{j + 1}'
+                    f.write(f'F{n + 1}{j + 1} 0 a{n + 1} V{n + 1}{j + 1} '
                             f'{formatter(1 / np.real(self.network.z0[0, n]))}\n')
                     f.write(f'F{n + 1}{j + 1}_inv a{n + 1} 0 V{n + 1}{j + 1}_inv '
                             f'{formatter(1 / np.real(self.network.z0[0, n]))}\n')
