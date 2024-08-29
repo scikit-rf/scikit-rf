@@ -703,6 +703,67 @@ class NetworkTestCase(unittest.TestCase):
                 self.assertTrue((net.z0 == net[0].z0).all())
                 self.assertTrue(net.s_def != net[0].s_def)
 
+    def test_parallelconnect(self):
+        # Create 2 network with 2 ports
+        ntwka = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwka')
+        ntwkb = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkb')
+
+        # Connect the 2 networks together by connect
+        ntwk_cnt = rf.connect(ntwka, 1, ntwkb, 0)
+
+        # Connect the 2 networks together by parallelconnect
+        ntwk_par = rf.parallelconnect([ntwka, ntwkb], [1, 0])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_cnt.s, ntwk_par.s))
+
+    def test_parallelconnect_inter(self):
+        # Create a network with 4 ports
+        s = self.rng.random((1, 4, 4)) + 1j*self.rng.random((1, 4, 4))
+        ntwk = rf.Network(s=s, f=1)
+
+        # Connect the first 2 ports together by innerconnect
+        ntwk_inter = rf.innerconnect(ntwk, 0, 1)
+
+        # Connect the first 2 ports together by parallelconnect
+        ntwk_par = rf.parallelconnect([ntwk], [[0, 1]])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_inter.s, ntwk_par.s))
+
+    def test_innerconnect_with_T(self):
+        # Create 3 network with 2 ports
+        ntwka = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwka')
+        ntwkb = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkb')
+        ntwkc = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkc')
+
+        # Connect the 3 networks together by tee
+        media = rf.media.DefinedGammaZ0(frequency=ntwka.frequency)
+        tee_ntwk = media.tee()
+        tee_ntwk = rf.connect(tee_ntwk, 0, ntwka, 1)
+        tee_ntwk = rf.connect(tee_ntwk, 1, ntwkb, 1)
+        tee_ntwk = rf.connect(tee_ntwk, 2, ntwkc, 1)
+
+        # Connect the 3 networks together by circuit
+        port1 = rf.Circuit.Port(frequency=ntwka.frequency, name='port1')
+        port2 = rf.Circuit.Port(frequency=ntwkb.frequency, name='port2')
+        port3 = rf.Circuit.Port(frequency=ntwkc.frequency, name='port3')
+
+        cnxs = [
+            [(port1, 0), (ntwka, 0)],
+            [(port2, 0), (ntwkb, 0)],
+            [(port3, 0), (ntwkc, 0)],
+            [(ntwka, 1), (ntwkb, 1), (ntwkc, 1)]
+        ]
+        ckt_ntwk = rf.Circuit(cnxs, name='ckt_ntwk').network
+
+        # Connect the 3 networks together by parallelconnect
+        ntwk_par = rf.parallelconnect([ntwka, ntwkb, ntwkc], [1, 1, 1])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_par.s, tee_ntwk.s))
+        self.assertTrue(np.allclose(ntwk_par.s, ckt_ntwk.s))
+
     def test_max_stable_gain(self):
         # Check whether the maximum stable gain agrees with that derived from Y-parameters
         y12 = self.fet.y[:, 0, 1]

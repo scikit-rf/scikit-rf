@@ -5229,7 +5229,7 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     return connect(ntwkA, k, ntwkB, l)
 
 
-def connect_parallel(ntwks: Sequence[Network], ports: Sequence[int | Sequence[int]]):
+def parallelconnect(ntwks: Sequence[Network], ports: Sequence[int | Sequence[int]]):
     """
     Connect a sequence of multi-port networks, with ports specified by a list of indices.
 
