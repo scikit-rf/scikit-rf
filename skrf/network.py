@@ -181,6 +181,7 @@ from .constants import (
     S_DEFINITIONS,
     T0,
     ZERO,
+    CircuitComponentT,
     ComponentFuncT,
     CoordT,
     FrequencyUnitT,
@@ -417,7 +418,7 @@ class Network:
         self.noise_freq = None
         self._z0 = np.array(50, dtype=complex)
         self._port_modes = np.array([])
-        self._ext_attrs = {}
+        self._ext_attrs: dict[CircuitComponentT, bool] = {}
 
         if s_def not in S_DEFINITIONS and s_def is not None:
             raise ValueError('s_def parameter should be either:', S_DEFINITIONS)
@@ -5109,6 +5110,10 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         ntwkC.renumber(from_ports=from_ports,
                        to_ports=to_ports,
                        only_z0=True)
+
+    # Clear the ntwkC's ext_attrs, since they may have been inherited from ntwkA
+    # If a open, ground or port terminal is connected, this property should not be inherited
+    ntwkC._ext_attrs = {}
 
     # if ntwkA and ntwkB are both 2port, and either one has noise, calculate ntwkC's noise
     either_are_noisy = False
