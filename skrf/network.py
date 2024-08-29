@@ -5229,7 +5229,9 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     return connect(ntwkA, k, ntwkB, l)
 
 
-def parallelconnect(ntwks: Sequence[Network] | Network, ports: Sequence[int | Sequence[int]]) -> Network:
+def parallelconnect(ntwks: Sequence[Network] | Network,
+                    ports: Sequence[int | Sequence[int]],
+                    name: str | None = None) -> Network:
     """
     Connects a series of multi-port networks in parallel, ensuring that the specified port
     indices share the concatenated intersection.
@@ -5243,6 +5245,9 @@ def parallelconnect(ntwks: Sequence[Network] | Network, ports: Sequence[int | Se
             corresponding to the ports of the respective network. The length of `ports` should
             match the length of `networks`. Each specified port index is connect to the
             concatenated intersection, implying they are electrically common.
+    name : str, optional
+            define the connected network's name. Default is None.
+
 
     Returns
     -------
@@ -5401,9 +5406,10 @@ def parallelconnect(ntwks: Sequence[Network] | Network, ports: Sequence[int | Se
     # Get the global scattering matrix
     s = X @ np.linalg.inv(np.identity(dim) - C @ X)
 
-    return Network(frequency=ntwks[0].frequency,
-                   s=s[:, out_ind[0], out_ind[1]],
-                   z0=np.array(z0_ext).T)
+    return Network(frequency = ntwks[0].frequency,
+                   s = s[:, out_ind[0], out_ind[1]],
+                   z0 = np.array(z0_ext).T,
+                   name = name)
 
 
 def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
