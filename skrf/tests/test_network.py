@@ -762,6 +762,40 @@ class NetworkTestCase(unittest.TestCase):
         # Check that the two networks are the same
         self.assertTrue(np.allclose(ckt_ntwk.s, par_ntwk.s))
 
+    def test_parallelconnect_mismatch(self):
+        # Create 2 network with 2 ports
+        ntwka = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwka', z0=25)
+        ntwkb = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkb', z0=75)
+
+        # Connect the 2 networks together by connect
+        ntwk_cnt = rf.connect(ntwka, 1, ntwkb, 0)
+
+        # Connect the 2 networks together by parallelconnect
+        ntwk_par = rf.parallelconnect([ntwka, ntwkb], [1, 0])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_cnt.s, ntwk_par.s))
+
+        # Create matched network in circuit
+        port1 = rf.Circuit.Port(frequency=ntwka.frequency, name='port1', z0=50)
+        port2 = rf.Circuit.Port(frequency=ntwka.frequency, name='port2', z0=50)
+
+        cnx = [
+            [(port1, 0), (ntwka, 0)],
+            [(ntwka, 1), (ntwkb, 0)],
+            [(ntwkb, 1), (port2, 0)]
+        ]
+        ntwk_ckt = rf.Circuit(cnx, name='ckt_ntwk').network
+
+        # Check that the two networks are not equal
+        self.assertFalse(np.allclose(ntwk_ckt.s, ntwk_par.s))
+
+        # Renormalize matched network to match circuit
+        ntwk_par.renormalize(ntwk_ckt.z0)
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_ckt.s, ntwk_par.s))
+
 
     def test_innerconnect_with_T(self):
         # Create 3 network with 2 ports
