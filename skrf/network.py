@@ -5229,22 +5229,37 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     return connect(ntwkA, k, ntwkB, l)
 
 
-def parallelconnect(ntwks: Sequence[Network], ports: Sequence[int | Sequence[int]]):
+def parallelconnect(ntwks: Sequence[Network] | Network, ports: Sequence[int | Sequence[int]]):
     """
     Connect a sequence of multi-port networks, with ports specified by a list of indices.
 
-    Args:
-        ntwks (Sequence[Network]): A sequence of multi-port networks.
-        ports (Sequence[int  |  Sequence[int]]): A sequence of port indices, it could be int or a
-        sequence of int. It should have the same length as `ntwks`.
+    Parameters
+    ----------
+    ntwks : :Sequence[`Network`]
+            A sequence of multi-port networks.
+    ports : Sequence[int  |  Sequence[int]]
+            A sequence of port indices, it could be int or a sequence of int.
+            It should have the same length as `ntwks`.
 
     Returns
     -------
     ntwk_out : :class:`Network`
-            new network
+            new network of rank (sum(ntw.nports for ntw in ntwks) - sum())
+
+
+    See Also
+    --------
+    connect_s : actual  S-parameter connection algorithm.
+    innerconnect_s : actual S-parameter connection algorithm.
     """
+    # Convert ntwks to Sqeuence if there is only one network
+    if isinstance(ntwks, Network):
+        ntwks = [ntwks]
+        if not isinstance(ports[0], Sequence):
+            ports = [ports]
+
     if len(ntwks) != len(ports):
-        raise ValueError('ntwks and ports must have the same length')
+        raise ValueError(f'ntwks and ports must have the same length ({len(ntwks)} != {len(ports)})')
 
     if len(set(ntw.name for ntw in ntwks)) != len(ntwks):
         raise ValueError('ntwks should not be duplicated.')
@@ -5252,11 +5267,10 @@ def parallelconnect(ntwks: Sequence[Network], ports: Sequence[int | Sequence[int
     # Get the index of each network in the list
     dim = sum(ntw.nports for ntw in ntwks)
     off, inter_indices, outer_indices = 0, [], []
-    z0_list = []
+    z0_in, z0_out = [], []
 
     # Assign the global scattering matrix
     X = np.zeros((ntwks[0].frequency.npoints, dim, dim), dtype='complex')
-
 
     for ntw, port in zip(ntwks, ports):
         # Get the nports of Network
@@ -5279,9 +5293,10 @@ def parallelconnect(ntwks: Sequence[Network], ports: Sequence[int | Sequence[int
         for p in range(nports):
             if p in port:
                 inter_indices.append(p + off)
-                z0_list.append(ntw.z0[:, p])
+                z0_in.append(ntw.z0[:, p])
             else:
                 outer_indices.append(p + off)
+                z0_out.append(ntw.z0[:, p])
 
         # Assign the scattering matrix of each network to the global scattering matrix
         X[:, off:off+nports, off:off+nports] = ntw.s_traveling
@@ -5291,7 +5306,7 @@ def parallelconnect(ntwks: Sequence[Network], ports: Sequence[int | Sequence[int
     # Assign the concatenated intersection matrix
     C = np.zeros((ntwks[0].frequency.npoints, dim, dim), dtype='complex')
 
-    z0s = np.array(z0_list).T
+    z0s = np.array(z0_in).T
     y0s = 1./z0s
     y_k = y0s.sum(axis=1)
 
@@ -5305,7 +5320,8 @@ def parallelconnect(ntwks: Sequence[Network], ports: Sequence[int | Sequence[int
     s = X @ np.linalg.inv(np.identity(dim) - C @ X)
 
     a, b = np.meshgrid(outer_indices, outer_indices, indexing='ij')
-    return Network(frequency=ntwks[0].frequency, s=s[:, a, b], z0=z0s)
+
+    return Network(frequency=ntwks[0].frequency, s=s[:, a, b], z0=np.array(z0_out).T)
 
 
 def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:

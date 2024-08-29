@@ -717,19 +717,38 @@ class NetworkTestCase(unittest.TestCase):
         # Check that the two networks are the same
         self.assertTrue(np.allclose(ntwk_cnt.s, ntwk_par.s))
 
+    def test_parallelconnect_open(self):
+        # Create a network with 4 ports
+        s = self.rng.random((1, 4, 4))
+        ntwk = rf.Network(s=s, f=1)
+        open_port = rf.Network(s=np.ones((1, 1, 1)), f=1)
+
+        # Connect the first 2 ports together by innerconnect
+        ntwk_cnt = rf.connect(ntwk, 3, open_port, 0)
+
+        # Connect the first 2 ports together by parallelconnect
+        par_ntwk = rf.parallelconnect(ntwk, [3])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_cnt.s, par_ntwk.s))
+
     def test_parallelconnect_inter(self):
         # Create a network with 4 ports
-        s = self.rng.random((1, 4, 4)) + 1j*self.rng.random((1, 4, 4))
+        s = self.rng.random((1, 4, 4))
         ntwk = rf.Network(s=s, f=1)
 
         # Connect the first 2 ports together by innerconnect
         ntwk_inter = rf.innerconnect(ntwk, 0, 1)
 
         # Connect the first 2 ports together by parallelconnect
-        ntwk_par = rf.parallelconnect([ntwk], [[0, 1]])
+        par_ntwka = rf.parallelconnect([ntwk], [[0, 1]])
+        par_ntwkb = rf.parallelconnect(ntwk, [[0, 1]])
+        par_ntwkc = rf.parallelconnect(ntwk, [0, 1])
 
         # Check that the two networks are the same
-        self.assertTrue(np.allclose(ntwk_inter.s, ntwk_par.s))
+        self.assertTrue(np.allclose(ntwk_inter.s, par_ntwka.s))
+        self.assertTrue(np.allclose(ntwk_inter.s, par_ntwkb.s))
+        self.assertTrue(np.allclose(ntwk_inter.s, par_ntwkc.s))
 
     def test_innerconnect_with_T(self):
         # Create 3 network with 2 ports
