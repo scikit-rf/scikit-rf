@@ -93,9 +93,10 @@ from __future__ import annotations
 
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING, Sequence, TypedDict
+from typing import TYPE_CHECKING, Callable, Sequence, TypedDict
 
 import numpy as np
+from scipy.optimize import OptimizeResult, minimize
 from typing_extensions import NotRequired, Unpack
 
 from .constants import S_DEF_DEFAULT, NumberLike
@@ -1600,6 +1601,48 @@ class Circuit:
         # remove x and y axis and labels
         ax.axis('off')
         fig.tight_layout()
+
+    def optimize(self, fitness_func: Callable[[Circuit], float],
+                 update_func: Callable[..., tuple[Network, ...]],
+                 x0, args: tuple= (), method=None, **kwargs) -> OptimizeResult:
+        """
+        Optimize the Circuit for minimizing (or maximizing) objective function, possibly subject
+        to constraints.
+
+        `Circuit.optimize` is based on the `scipy.optimize.minimize` function.
+
+        see
+
+        Returns:
+            _type_: _description_
+        """
+        # Get dynamic networks
+        dynamic_networks = update_func(x0)
+
+        # Reduce circuit and create a new Circuit object with reduced connections
+        connections = reduce_circuit(self.connections,
+                                          check_duplication=False,
+                                          split_multi=True,
+                                          max_nports=999,
+                                          dynamic_networks=dynamic_networks)
+
+        ckt_reduced = Circuit(connections)
+
+        def fun(x, *args) -> float:
+            # Update the networks with the new values
+            networks = update_func(x)
+
+            # Update the circuit with the new networks
+            ckt_updated = ckt_reduced.update_networks(networks=networks,
+                                        auto_reduce=True)
+
+            # Check if the circuit is valid
+            if ckt_updated is not None:
+                return fitness_func(ckt_updated, *args)
+
+            raise ValueError("Invalid circuit")
+
+        return minimize(fun=fun, x0=x0, args=args, method=method, **kwargs)
 
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple[Network, int]]],
