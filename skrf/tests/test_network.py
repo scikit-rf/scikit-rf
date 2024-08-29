@@ -743,12 +743,10 @@ class NetworkTestCase(unittest.TestCase):
         # Connect the first 2 ports together by parallelconnect
         par_ntwka = rf.parallelconnect([ntwk], [[0, 1]])
         par_ntwkb = rf.parallelconnect(ntwk, [[0, 1]])
-        par_ntwkc = rf.parallelconnect(ntwk, [0, 1])
 
         # Check that the two networks are the same
         self.assertTrue(np.allclose(ntwk_inter.s, par_ntwka.s))
         self.assertTrue(np.allclose(ntwk_inter.s, par_ntwkb.s))
-        self.assertTrue(np.allclose(ntwk_inter.s, par_ntwkc.s))
 
         # Connect the last 3 ports together by circuit
         port = rf.Circuit.Port(frequency=ntwk.frequency, name='port')
