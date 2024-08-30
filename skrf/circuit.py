@@ -23,6 +23,7 @@ Building a Circuit
    Circuit.ShuntAdmittance
    Circuit.Ground
    Circuit.Open
+   Circuit.update_networks
 
 Representing a Circuit
 ----------------------
@@ -378,6 +379,40 @@ class Circuit:
         See Also
         --------
         Circuit.__init__ : Circuit construtor method.
+
+
+        Examples
+        --------
+        >>> import skrf as rf
+        >>> import numpy as np
+        >>>
+        >>> # Create a series of networks and build a circuit
+        >>> connections = [
+        ...     ...
+        ...     [(ntwk1, 0), (ntwk2, 0)],
+        ...     [(ntwk2, 1), (ntwk3, 0)],
+        ...     ...
+        ... ]
+        >>> circuit = rf.Circuit(connections, dynamic_networks=[ntwk2])
+        >>>
+        >>> # Update the networks' S-parameters
+        >>> ntwk2.s = ntwk2.s @ ntwk2.s
+        >>>
+        >>> # Update the circuit in traditional way (ntwk2 has been updated)
+        >>> connections_updated = [
+        ...     ...
+        ...     [(ntwk1, 0), (ntwk2, 0)],
+        ...     [(ntwk2, 1), (ntwk3, 0)],
+        ...     ...
+        ... ]
+        >>>
+        >>> circuit_updated_a = rf.Circuit(connections_updated)
+        >>>
+        >>> # Update the circuit by dynamic networks
+        >>> circuit_updated_b = circuit.update_networks(networks=[ntwk2])
+        >>>
+        >>> np.allclose(circuit_updated_b.s_external, circuit_updated_b.s_external)
+        True
         """
         # Get current connection_dict
         cnx_dict = self.networks_dict()
