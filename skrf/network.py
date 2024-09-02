@@ -2060,6 +2060,7 @@ class Network:
 
         ntwk._s = self.s.copy()
         ntwk.frequency._f = self.frequency._f.copy()
+        ntwk.frequency.unit = self.frequency.unit
         ntwk.port_modes = self.port_modes.copy()
 
         if self.params is not None:
