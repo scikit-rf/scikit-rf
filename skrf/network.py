@@ -2059,7 +2059,7 @@ class Network:
         ntwk = Network(z0=self.z0, s_def=self.s_def, comments=self.comments)
 
         ntwk._s = self.s.copy()
-        ntwk.frequency = self.frequency
+        ntwk.frequency._f = self.frequency._f.copy()
         ntwk.port_modes = self.port_modes.copy()
 
         if self.params is not None:
