@@ -6073,7 +6073,7 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.
     nC = nA + nB  # num ports on C
 
     # create composite matrix, appending each sub-matrix diagonally
-    C = np.zeros((nf, nC, nC), dtype='complex')
+    C = np.zeros((nf, nC, nC), dtype='complex', order='F')
 
     # if ntwkB is a 2port, then keep port indices where you expect.
     if nB == 2 and nA > 2 and num == 1:
