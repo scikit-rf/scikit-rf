@@ -6178,8 +6178,8 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
     Ael = A[:, ext_i, l].T
 
     # Create an suit-sized s-matrix, to store the result
-    x, y = np.meshgrid(ext_i, ext_i)
-    C = A[:, y, x]
+    i, j = np.meshgrid(ext_i, ext_i, indexing='ij', sparse=True)
+    C = A[:, i, j]
 
     # create temporary matrices for calculation
     det = (Akl * Alk - Akk * All)
