@@ -6083,10 +6083,12 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.
         |     | + |B| = |0  B 0 |, rather than |A3 A4 0|
         |A3 A4|         |A3 0 A4|              |0  0  B|
         """
-        C[:, :k, :k] = A[:, :k, :k]
-        C[:, :k, k + nB :] = A[:, :k, k:]
-        C[:, k + nB :, :k] = A[:, k:, :k]
-        C[:, k + nB :, k + nB :] = A[:, k:, k:]
+        # Create A matrix's buffer
+        Alk, Ark = A[:, :, :k], A[:, :, k:]
+        C[:, :k, :k] = Alk[:, :k, :]
+        C[:, :k, k + nB :] = Ark[:, :k, :]
+        C[:, k + nB :, :k] = Alk[:, k:, :]
+        C[:, k + nB :, k + nB :] = Ark[:, k:, :]
         C[:, k : k + nB, k : k + nB] = B
 
         # call innerconnect_s() on composit matrix C
