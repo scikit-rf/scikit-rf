@@ -1221,7 +1221,7 @@ class Circuit:
         C_idx = (slice(None), idx_c, idx_b.T)
         D_idx = (slice(None), idx_d, idx_d.T)
 
-        # Get the buffer of global matrix X, C and intermediate temporary matrix t
+        # Get the buffer of global matrix in f-order [X_T] and intermediate temporary matrix [T]
         x = self.X_F
         t = np.identity(x.shape[-1]) - self.T
 
