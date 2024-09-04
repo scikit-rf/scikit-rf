@@ -445,17 +445,17 @@ class Circuit:
         return Circuit(connections=connections, name=name)
 
     @classmethod
-    def check_duplicate_names(cls, connections_list: list):
+    def check_duplicate_names(cls, connections_list: list[tuple[int, tuple[Network, int]]]):
         """
         Check that a (ntwk, port) combination appears only once in the connexion map
         """
-        nodes = [(ntwk.name, port) for (con_idx, (ntwk, port)) in [con for con in connections_list]]
+        nodes = [(ntwk.name, port) for (_, (ntwk, port)) in connections_list]
         if len(nodes) > len(set(nodes)):
             duplicate_nodes = [node for node in nodes if nodes.count(node) > 1]
             raise AttributeError(f'Nodes {duplicate_nodes} appears twice in the connection description.')
 
 
-    def _is_named(self, ntw):
+    def _is_named(self, ntw: Network):
         """
         Return True is the network has a name, False otherwise
         """
@@ -757,7 +757,7 @@ class Circuit:
              ...
             ]
         """
-        return [(idx_cnx, cnx) for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections))]
+        return list(enumerate(chain.from_iterable(self.connections)))
 
     @property
     def networks_nb(self) -> int:
@@ -1082,8 +1082,8 @@ class Circuit:
         Returns
         -------
         T : :class:`numpy.ndarray`
-            Multiplication of the global scattering matrix and concatenated intersection matrix
-            of the networks.
+            Multiplication of the global scattering matrix [C] and concatenated intersection matrix
+            [X] of the networks.
             Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
 
         Note
@@ -1136,8 +1136,7 @@ class Circuit:
         port_indexes : list
         """
         port_indexes = []
-        for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections)):
-            ntw, ntw_port = cnx
+        for (idx_cnx, (ntw, _)) in enumerate(chain.from_iterable(self.connections)):
             if Circuit._is_port(ntw):
                 port_indexes.append(idx_cnx)
         return port_indexes
@@ -1921,7 +1920,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
     # check if the connections are valid
     if check_duplication:
-        connections_list = [list(conn) for conn in enumerate(chain.from_iterable(connections))]
+        connections_list = [conn for conn in enumerate(chain.from_iterable(connections))]
         Circuit.check_duplicate_names(connections_list)
 
     # Use list comprehension to find the connection need to be reduced
