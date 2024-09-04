@@ -26,4 +26,4 @@ jobs:
     - name: Test the code, tutorials and examples
       if: ${{ always() }}
       run: |
-        python -m pytest -n=auto {posargs} --junitxml=test-results/junit-{envname}.xml --junit-prefix={envname} --nbval-lax --nbval-current-env --dist loadscope
+        python -m pytest -n=auto {posargs} --junitxml=test-results/junit-${{ matrix.python_version }}.xml --junit-prefix=${{ matrix.python_version }} --nbval-lax --nbval-current-env --dist loadscope

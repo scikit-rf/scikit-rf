@@ -31,7 +31,7 @@ jobs:
       if: ${{ always() }}
       run: |
         pip install -e .[test,visa,netw,xlsx,plot,docs,testspice]
-        python -m pytest -n=auto {posargs} --junitxml=test-results/junit-{envname}.xml --junit-prefix={envname}
+        python -m pytest -n=auto {posargs} --junitxml=test-results/junit-${{ matrix.python_version }}.xml --junit-prefix=${{ matrix.python_version }}
 
     - name: Upload Test Results
       if: always()
