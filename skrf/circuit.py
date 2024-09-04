@@ -328,7 +328,7 @@ class Circuit:
         self._connections = connections
 
         # Invalidate cached properties
-        for item in ('s', 'X', 'X_F' 'C', 'T'):
+        for item in ('s', 'X', 'X_F' 'C', 'C_F' 'T'):
             self.__dict__.pop(item, None)
 
     def update_networks(
@@ -968,20 +968,61 @@ class Circuit:
     def X_F(self) -> np.ndarray:
         """
         Return the concatenated intersection matrix [X] of the circuit in F-order.
-
         It is composed of the individual intersection matrices [X]_k assembled
-        by block diagonal.
+        by block diagonal. The results of this function are the same as :func:`X`
+        but in F-order.
 
         Returns
         -------
         X : :class:`numpy.ndarray`
+
+        Note
+        ----
+        F-order has a numerical bottleneck in matrix operations, but the assignment
+        is more efficient.
         """
         return self._X('F')
 
     @cached_property
     def C(self) -> np.ndarray:
         """
+        Return the global scattering matrix of the networks in C-order.
+
+        Returns
+        -------
+        S : :class:`numpy.ndarray`
+            Global scattering matrix of the networks.
+            Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
+        """
+        return self._C()
+
+    @cached_property
+    def C_F(self) -> np.ndarray:
+        """
+        Return the global scattering matrix of the networks in F-order. The results
+        of this function are the same as :func:`C` but in F-order.
+
+        Returns
+        -------
+        S : :class:`numpy.ndarray`
+            Global scattering matrix of the networks.
+            Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
+
+        Note
+        ----
+        F-order has a numerical bottleneck in matrix operations, but the assignment
+        is more efficient.
+        """
+        return self._C('F')
+
+    def _C(self, order: MemoryLayoutT = 'C') -> np.ndarray:
+        """
         Return the global scattering matrix of the networks.
+
+        Args:
+            order : str, optional
+                'C' or 'F' for row-major or column-major order of the output array.
+                Default is 'C'.
 
         Returns
         -------
@@ -999,7 +1040,7 @@ class Circuit:
                 ntws_ports_reordering[ntw.name].append([ntw_port, idx_cnx])
 
         # re-ordering scattering parameters
-        S = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex', order='F')
+        S = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex', order=order)
 
         for (ntw_name, ntw_ports) in ntws_ports_reordering.items():
             # get the port re-ordering indexes (from -> to)
@@ -1032,7 +1073,7 @@ class Circuit:
         This is an auxiliary matrix used to break the numerical bottleneck of [C] @ [X] using the
         mathematical feature of block diagonal matrice [X].
         """
-        X, C = self.X_F, self.C
+        X, C = self.X_F, self.C_F
         T = np.zeros_like(X, dtype="complex", order='F')
 
         # Precompute the sizes of connections and slices for each intersection
@@ -1064,7 +1105,8 @@ class Circuit:
         S : :class:`numpy.ndarray`
             global scattering parameters of the circuit.
         """
-        return self.X @ np.linalg.inv(np.identity(self.dim) - self.T)
+        X = self.X
+        return X @ np.linalg.inv(np.identity(self.dim) - self.C @ X)
 
     @property
     def port_indexes(self) -> list[int]:
