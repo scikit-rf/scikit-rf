@@ -124,22 +124,25 @@ To run all the tests (except the virtual instruments)
 .. code-block:: sh
 
     cd scikit-rf
+    python -m venv .venv
+    python -e[test,visa,netw,xlsx,plot,docs,testspice]
+
+    # On Linux Systems
+    . .venv/bin/activate
+
+    # On Windows
+    .\.venv\Scripts\activate
+
     pytest
-
-Or, to run tests for every installed Python installation in an isolated environment.
-
-.. code-block:: sh
-
-    tox
 
 To run all tests *and* all tutorials and example notebooks (recommended before making a pull request):
 
 .. code-block:: sh
 
-    tox -- --nbval-lax
+    pytest --nbval-lax
 
 
-If you want to test a single file or directory, you need to override the default pytest configuration (defined in the tox.ini file) and indicate the test path. For example, to run only the tests associated with the Network object (-v to increase the verbosity):
+If you want to test a single file or directory, you need to override the default pytest configuration and indicate the test path. For example, to run only the tests associated with the Network object (-v to increase the verbosity):
 
 .. code-block:: sh
 
