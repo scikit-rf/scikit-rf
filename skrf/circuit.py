@@ -328,7 +328,7 @@ class Circuit:
         self._connections = connections
 
         # Invalidate cached properties
-        for item in ('s', 'X', 'C'):
+        for item in ('s', 'X', 'C', 'T'):
             self.__dict__.pop(item, None)
 
     def update_networks(
@@ -905,7 +905,7 @@ class Circuit:
         y0s = np.array([1/ntw.z0[:,ntw_port] for (ntw, ntw_port) in cnx_k]).T
         y_k = y0s.sum(axis=1)
 
-        Xs = np.zeros((len(self.frequency), len(cnx_k), len(cnx_k)), dtype='complex')
+        Xs = np.zeros((len(self.frequency), len(cnx_k), len(cnx_k)), dtype='complex', order='F')
 
         Xs = 2 *np.sqrt(np.einsum('ij,ik->ijk', y0s, y0s)) / y_k[:, None, None]
         np.einsum('kii->ki', Xs)[:] -= 1  # Sii
@@ -954,8 +954,7 @@ class Circuit:
 
         # generate the port reordering indexes from each connections
         ntws_ports_reordering = {ntw:[] for ntw in ntws}
-        for (idx_cnx, cnx) in self.connections_list:
-            ntw, ntw_port = cnx
+        for (idx_cnx, (ntw, ntw_port)) in self.connections_list:
             if ntw.name in ntws.keys():
                 ntws_ports_reordering[ntw.name].append([ntw_port, idx_cnx])
 
