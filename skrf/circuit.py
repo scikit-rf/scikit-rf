@@ -930,7 +930,7 @@ class Circuit:
         """
         Xks = [self._Xk(cnx) for cnx in self.connections]
 
-        Xf = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex')
+        Xf = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex', order='F')
         off = np.array([0, 0])
         for Xk in Xks:
             Xf[:, off[0]:off[0] + Xk.shape[1], off[1]:off[1]+Xk.shape[2]] = Xk
@@ -960,7 +960,7 @@ class Circuit:
                 ntws_ports_reordering[ntw.name].append([ntw_port, idx_cnx])
 
         # re-ordering scattering parameters
-        S = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex' )
+        S = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex', order='F')
 
         for (ntw_name, ntw_ports) in ntws_ports_reordering.items():
             # get the port re-ordering indexes (from -> to)
@@ -974,6 +974,44 @@ class Circuit:
                 S[:, _to, to_port] = ntws[ntw_name].s_traveling[:, _from, from_port]
 
         return S  # shape (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
+
+    @cached_property
+    def T(self) -> np.ndarray:
+        """
+        Return the matrix of multiplication of the global scattering matrix [C] and concatenated
+        intersection matrix [X] of the networks, that is [_T] = [C] @ [X].
+
+        Returns
+        -------
+        T : :class:`numpy.ndarray`
+            Multiplication of the global scattering matrix and concatenated intersection matrix
+            of the networks.
+            Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
+
+        Note
+        ----
+        This is an auxiliary matrix used to break the numerical bottleneck of [C] @ [X] using the
+        mathematical feature of block diagonal matrice [X].
+        """
+        X, C = self.X, self.C
+        T = np.zeros_like(X, dtype="complex", order='F')
+
+        # Precompute the sizes of connections and slices for each intersection
+        cnx_size = [len(cnx) for cnx in self.connections]
+        slice_ = np.cumsum([0] + cnx_size)
+        slices = [slice(slice_[i], slice_[i+1]) for i in range(len(cnx_size))]
+
+        # Perform the multiplication
+        for j_slice in slices:
+            # Get the Block diagonal part of X and corresponding C matrix buffer
+            X_jj = X[:, j_slice, j_slice]
+            C_j = C[:, :, j_slice]
+
+            # Perform the multiplication
+            for i_slice in slices:
+                T[:, i_slice, j_slice] = C_j[:, i_slice, :] @ X_jj
+
+        return T
 
     @cached_property
     def s(self) -> np.ndarray:
@@ -1086,8 +1124,8 @@ class Circuit:
         D_idx = (slice(None), idx_d, idx_d.T)
 
         # Get the buffer of global matrix X, C and intermediate temporary matrix t
-        x, c = self.X, self.C
-        t = np.identity(x.shape[-1]) - c @ x
+        x = self.X
+        t = np.identity(x.shape[-1]) - self.T
 
         # Get the sub-matrices of inverse of intermediate temporary matrix t
         # The method np.linalg.solve(A, B) is equivalent to np.inv(A) @ B, but more efficient
