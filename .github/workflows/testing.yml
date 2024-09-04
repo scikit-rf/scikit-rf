@@ -23,6 +23,7 @@ jobs:
 
     - name: Install minimal dependencies
       run: |
+        uv venv
         uv pip install -e .
         . .venv/bin/activate
         python -c "import skrf; print(skrf.__version__)"  # Test import with minimal dependencies
