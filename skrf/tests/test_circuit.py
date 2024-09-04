@@ -136,25 +136,45 @@ class CircuitTestConstructor(unittest.TestCase):
         """
         init_circuit = rf.Circuit(self.connections)
 
-        cached_attributes = ('s', 'X', 'C')
+        cached_attributes = rf.Circuit.CACHEDPROPERTIES
 
         # Initial circuit should not have cached attributes
         for attr in cached_attributes:
             self.assertFalse(init_circuit.__dict__.get(attr, False))
 
         # Access the attributes to cache them
-        X = init_circuit.X
-        C = init_circuit.C
-        s = init_circuit.s
+        values = [getattr(init_circuit, attr) for attr in cached_attributes]
 
         # Check that the cached attributes are set correctly
-        for attr, value in zip(cached_attributes, (s, X, C)):
+        for attr, value in zip(cached_attributes, values):
             assert_array_almost_equal(init_circuit.__dict__.get(attr, 0.0), value)
 
         # Modify connections to invalidate the cache
         init_circuit.connections = self.connections
         for attr in cached_attributes:
             self.assertFalse(init_circuit.__dict__.get(attr, False))
+
+    def test_auxiliary_matrix(self):
+        """
+        Test the auxiliary matrix [T] of the Circuit
+        """
+        # Calculate the auxiliary matrix T and C @ X
+        X, C = self.circuit.X, self.circuit.C
+        X_F, C_F = self.circuit.X_F, self.circuit.C_F
+        rst, T = C @ X, self.circuit.T
+
+        # Check that auxiliary_matrices is equal to initial values
+        assert_array_almost_equal(T, rst)
+        assert_array_almost_equal(X, X_F)
+        assert_array_almost_equal(C, C_F)
+
+        # Check the memory layout of the matrices
+        self.assertTrue(rst.flags['C_CONTIGUOUS'])
+        self.assertTrue(T.flags['F_CONTIGUOUS'])
+        self.assertTrue(self.circuit.C.flags['C_CONTIGUOUS'])
+        self.assertTrue(self.circuit.C_F.flags['F_CONTIGUOUS'])
+        self.assertTrue(self.circuit.X.flags['C_CONTIGUOUS'])
+        self.assertTrue(self.circuit.X_F.flags['F_CONTIGUOUS'])
 
 class CircuitClassMethods(unittest.TestCase):
     """

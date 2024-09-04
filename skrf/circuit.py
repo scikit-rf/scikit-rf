@@ -965,7 +965,7 @@ class Circuit:
         when creating the block diagonal matrice [X] from the [X]_k matrices.
         """
         # Check if X_F is alread computed, if so, convert it to C-order
-        if self.__dict__.get('X_F', False):
+        if self.__dict__.get('X_F', None) is not None:
             return np.ascontiguousarray(self.X_F)
 
         return self._X()
@@ -988,7 +988,7 @@ class Circuit:
         is more efficient.
         """
         # Check if X is alread computed, if so, convert it to F-order
-        if self.__dict__.get('X', False):
+        if self.__dict__.get('X', None) is not None:
             return np.asfortranarray(self.X)
 
         return self._X('F')
@@ -1005,7 +1005,7 @@ class Circuit:
             Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
         """
         # Check if C_F is alread computed, if so, convert it to C-order
-        if self.__dict__.get('C_F', False):
+        if self.__dict__.get('C_F', None) is not None:
             return np.ascontiguousarray(self.C_F)
 
         return self._C()
@@ -1028,8 +1028,8 @@ class Circuit:
         is more efficient.
         """
         # Check if C is alread computed, if so, convert it to F-order
-        if self.__dict__.get('C', False):
-            return np.ascontiguousarray(self.C)
+        if self.__dict__.get('C', None) is not None:
+            return np.asfortranarray(self.C)
 
         return self._C('F')
 
