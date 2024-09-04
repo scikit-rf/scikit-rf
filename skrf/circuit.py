@@ -1024,8 +1024,7 @@ class Circuit:
         S : :class:`numpy.ndarray`
             global scattering parameters of the circuit.
         """
-        X = self.X
-        return X @ np.linalg.inv(np.identity(self.dim) - self.C @ X)
+        return np.ascontiguousarray(self.X) @ np.linalg.inv(np.identity(self.dim) - self.T)
 
     @property
     def port_indexes(self) -> list[int]:
