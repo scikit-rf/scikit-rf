@@ -99,7 +99,7 @@ from typing import TYPE_CHECKING, Sequence, TypedDict
 import numpy as np
 from typing_extensions import NotRequired, Unpack
 
-from .constants import S_DEF_DEFAULT, NumberLike
+from .constants import S_DEF_DEFAULT, MemoryLayoutT, NumberLike
 from .media import media
 from .network import Network, connect, innerconnect, s2s
 from .util import subplots
@@ -328,7 +328,7 @@ class Circuit:
         self._connections = connections
 
         # Invalidate cached properties
-        for item in ('s', 'X', 'C', 'T'):
+        for item in ('s', 'X', 'X_F' 'C', 'T'):
             self.__dict__.pop(item, None)
 
     def update_networks(
@@ -881,7 +881,7 @@ class Circuit:
         return edge_labels
 
 
-    def _Xk(self, cnx_k: list[tuple[Network, int]]) -> np.ndarray:
+    def _Xk(self, cnx_k: list[tuple[Network, int]], order: MemoryLayoutT = 'C') -> np.ndarray:
         """
         Return the scattering matrices [X]_k of the individual intersections k.
         The results in [#]_ do not agree due to an error in the formula (3)
@@ -891,6 +891,9 @@ class Circuit:
         ----------
         cnx_k : list of tuples
             each tuple contains (network, port)
+        order: str, optional
+            'C' or 'F' for row-major or column-major order of the output array.
+            Default is 'C'.
 
         Returns
         -------
@@ -905,16 +908,47 @@ class Circuit:
         y0s = np.array([1/ntw.z0[:,ntw_port] for (ntw, ntw_port) in cnx_k]).T
         y_k = y0s.sum(axis=1)
 
-        Xs = np.zeros((len(self.frequency), len(cnx_k), len(cnx_k)), dtype='complex', order='F')
+        Xs = np.zeros((len(self.frequency), len(cnx_k), len(cnx_k)), dtype='complex', order=order)
 
         Xs = 2 *np.sqrt(np.einsum('ij,ik->ijk', y0s, y0s)) / y_k[:, None, None]
         np.einsum('kii->ki', Xs)[:] -= 1  # Sii
         return Xs
 
+    def _X(self, order: MemoryLayoutT = 'C') -> np.ndarray:
+        """
+        Return the concatenated intersection matrix [X] of the circuit.
+
+        It is composed of the individual intersection matrices [X]_k assembled
+        by block diagonal.
+
+        Args:
+            order : str, optional
+                'C' or 'F' for row-major or column-major order of the output array.
+                Default is 'C'.
+
+        Returns
+        -------
+        X : :class:`numpy.ndarray`
+
+        Note
+        ----
+        There is a numerical bottleneck in this function,
+        when creating the block diagonal matrice [X] from the [X]_k matrices.
+        """
+        Xks = [self._Xk(cnx, order) for cnx in self.connections]
+
+        Xf = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex', order=order)
+        off = np.array([0, 0])
+        for Xk in Xks:
+            Xf[:, off[0]:off[0] + Xk.shape[1], off[1]:off[1]+Xk.shape[2]] = Xk
+            off += Xk.shape[1:]
+
+        return Xf
+
     @cached_property
     def X(self) -> np.ndarray:
         """
-        Return the concatenated intersection matrix [X] of the circuit.
+        Return the concatenated intersection matrix [X] of the circuit in C-order.
 
         It is composed of the individual intersection matrices [X]_k assembled
         by block diagonal.
@@ -928,15 +962,21 @@ class Circuit:
         There is a numerical bottleneck in this function,
         when creating the block diagonal matrice [X] from the [X]_k matrices.
         """
-        Xks = [self._Xk(cnx) for cnx in self.connections]
+        return self._X()
 
-        Xf = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex', order='F')
-        off = np.array([0, 0])
-        for Xk in Xks:
-            Xf[:, off[0]:off[0] + Xk.shape[1], off[1]:off[1]+Xk.shape[2]] = Xk
-            off += Xk.shape[1:]
+    @cached_property
+    def X_F(self) -> np.ndarray:
+        """
+        Return the concatenated intersection matrix [X] of the circuit in F-order.
 
-        return Xf
+        It is composed of the individual intersection matrices [X]_k assembled
+        by block diagonal.
+
+        Returns
+        -------
+        X : :class:`numpy.ndarray`
+        """
+        return self._X('F')
 
     @cached_property
     def C(self) -> np.ndarray:
@@ -992,7 +1032,7 @@ class Circuit:
         This is an auxiliary matrix used to break the numerical bottleneck of [C] @ [X] using the
         mathematical feature of block diagonal matrice [X].
         """
-        X, C = self.X, self.C
+        X, C = self.X_F, self.C
         T = np.zeros_like(X, dtype="complex", order='F')
 
         # Precompute the sizes of connections and slices for each intersection
@@ -1024,7 +1064,7 @@ class Circuit:
         S : :class:`numpy.ndarray`
             global scattering parameters of the circuit.
         """
-        return np.ascontiguousarray(self.X) @ np.linalg.inv(np.identity(self.dim) - self.T)
+        return self.X @ np.linalg.inv(np.identity(self.dim) - self.T)
 
     @property
     def port_indexes(self) -> list[int]:
