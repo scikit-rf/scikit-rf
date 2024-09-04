@@ -37,6 +37,7 @@ dependencies = [
     "numpy >=1.21",
     "scipy >=1.7",
     "pandas >=1.1",
+    "typing-extensions"
 ]
 
 [project.optional-dependencies]
@@ -46,9 +47,7 @@ test = [
     "pytest-mock >= 3.10",
     "pytest-xdist >= 3.5.0",
     "coverage >=6.0",
-    "flake8 >=5.0",
     "pytest-cov >=4.0",
-    "pyarrow >= 10.0",
 ]
 
 testspice = [
