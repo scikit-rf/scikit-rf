@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies for Notebooks
       run: |
         uv venv
-        uv pip install -e .[test,visa,netw,xlsx,plot,docs,testspice]
+        uv pip install -e .[test,visa,netw,xlsx,plot,docs,testspice] --compile
 
     # test code *and* notebooks (tutorials and examples)
     - name: Test the code, tutorials and examples
