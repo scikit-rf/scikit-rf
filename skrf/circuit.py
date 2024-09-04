@@ -149,6 +149,8 @@ class Circuit:
         max_nports: NotRequired[int]
         dynamic_networks: NotRequired[Sequence[Network]]
 
+    CACHEDPROPERTIES = ('s', 'X', 'X_F', 'C', 'C_F', 'T')
+
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
                  name: str | None = None,
@@ -328,7 +330,7 @@ class Circuit:
         self._connections = connections
 
         # Invalidate cached properties
-        for item in ('s', 'X', 'X_F' 'C', 'C_F' 'T'):
+        for item in self.CACHEDPROPERTIES:
             self.__dict__.pop(item, None)
 
     def update_networks(
@@ -962,6 +964,10 @@ class Circuit:
         There is a numerical bottleneck in this function,
         when creating the block diagonal matrice [X] from the [X]_k matrices.
         """
+        # Check if X_F is alread computed, if so, convert it to C-order
+        if self.__dict__.get('X_F', False):
+            return np.ascontiguousarray(self.X_F)
+
         return self._X()
 
     @cached_property
@@ -981,6 +987,10 @@ class Circuit:
         F-order has a numerical bottleneck in matrix operations, but the assignment
         is more efficient.
         """
+        # Check if X is alread computed, if so, convert it to F-order
+        if self.__dict__.get('X', False):
+            return np.asfortranarray(self.X)
+
         return self._X('F')
 
     @cached_property
@@ -994,6 +1004,10 @@ class Circuit:
             Global scattering matrix of the networks.
             Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
         """
+        # Check if C_F is alread computed, if so, convert it to C-order
+        if self.__dict__.get('C_F', False):
+            return np.ascontiguousarray(self.C_F)
+
         return self._C()
 
     @cached_property
@@ -1013,6 +1027,10 @@ class Circuit:
         F-order has a numerical bottleneck in matrix operations, but the assignment
         is more efficient.
         """
+        # Check if C is alread computed, if so, convert it to F-order
+        if self.__dict__.get('C', False):
+            return np.ascontiguousarray(self.C)
+
         return self._C('F')
 
     def _C(self, order: MemoryLayoutT = 'C') -> np.ndarray:
