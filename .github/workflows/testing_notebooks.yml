@@ -17,13 +17,15 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+    - uses: yezz123/setup-uv@v4
 
     - name: Install dependencies for Notebooks
       run: |
-        pip install -e .[test,visa,netw,xlsx,plot,docs,testspice]
+        uv pip install -e .[test,visa,netw,xlsx,plot,docs,testspice]
 
     # test code *and* notebooks (tutorials and examples)
     - name: Test the code, tutorials and examples
       if: ${{ always() }}
       run: |
+        . .venv/bin/activate
         python -m pytest -n=auto {posargs} --junitxml=test-results/junit-${{ matrix.python_version }}.xml --junit-prefix=${{ matrix.python_version }} --nbval-lax --nbval-current-env --dist loadscope
