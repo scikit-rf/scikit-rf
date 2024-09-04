@@ -1162,7 +1162,7 @@ class Circuit:
         D_idx = (slice(None), idx_d, idx_d.T)
 
         # Get the buffer of global matrix X, C and intermediate temporary matrix t
-        x = self.X
+        x = self.X_F
         t = np.identity(x.shape[-1]) - self.T
 
         # Get the sub-matrices of inverse of intermediate temporary matrix t
