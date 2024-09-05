@@ -996,7 +996,7 @@ class Circuit:
     @cached_property
     def C(self) -> np.ndarray:
         """
-        Return the global scattering matrix of the networks in C-order.
+        Return the global scattering matrix [C] of the networks in C-order.
 
         Returns
         -------
@@ -1013,7 +1013,7 @@ class Circuit:
     @cached_property
     def C_F(self) -> np.ndarray:
         """
-        Return the global scattering matrix of the networks in F-order. The results
+        Return the global scattering matrix [C] of the networks in F-order. The results
         of this function are the same as :func:`C` but in F-order.
 
         Returns
@@ -1035,7 +1035,7 @@ class Circuit:
 
     def _C(self, order: MemoryLayoutT = 'C') -> np.ndarray:
         """
-        Return the global scattering matrix of the networks.
+        Return the global scattering matrix [C] of the networks.
 
         Args:
             order : str, optional
@@ -1077,18 +1077,18 @@ class Circuit:
     def T(self) -> np.ndarray:
         """
         Return the matrix of multiplication of the global scattering matrix [C] and concatenated
-        intersection matrix [X] of the networks, that is [_T] = [C] @ [X].
+        intersection matrix [X] of the networks, that is [T] = - [C] @ [X].
 
         Returns
         -------
         T : :class:`numpy.ndarray`
             Multiplication of the global scattering matrix [C] and concatenated intersection matrix
-            [X] of the networks.
+            [X] of the networks. In practice, F-contiguous [C_F] and [X_F] are used.
             Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
 
         Note
         ----
-        This is an auxiliary matrix used to break the numerical bottleneck of [C] @ [X] using the
+        This is an auxiliary matrix used to break the numerical bottleneck of [C_F] @ [X_F] using the
         mathematical feature of block diagonal matrice [X].
         """
         X, C = self.X_F, self.C_F
@@ -1102,7 +1102,7 @@ class Circuit:
         # Perform the multiplication
         for j_slice in slices:
             # Get the Block diagonal part of X and corresponding C matrix buffer
-            X_jj = X[:, j_slice, j_slice]
+            X_jj = - X[:, j_slice, j_slice]
             C_j = C[:, :, j_slice]
 
             # Perform the multiplication
@@ -1221,8 +1221,9 @@ class Circuit:
         D_idx = (slice(None), idx_d, idx_d.T)
 
         # Get the buffer of global matrix in f-order [X_T] and intermediate temporary matrix [T]
-        x = self.X_F
-        t = np.identity(x.shape[-1]) - self.T
+        # [T] = - [C] @ [X]
+        x, t = self.X_F, np.array(self.T)
+        np.einsum('...ii->...i', t)[:] += 1
 
         # Get the sub-matrices of inverse of intermediate temporary matrix t
         # The method np.linalg.solve(A, B) is equivalent to np.inv(A) @ B, but more efficient

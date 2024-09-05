@@ -161,7 +161,7 @@ class CircuitTestConstructor(unittest.TestCase):
         # Calculate the auxiliary matrix T and C @ X
         X, C = self.circuit.X, self.circuit.C
         X_F, C_F = self.circuit.X_F, self.circuit.C_F
-        rst, T = C @ X, self.circuit.T
+        rst, T = - C @ X, self.circuit.T
 
         # Check that auxiliary_matrices is equal to initial values
         assert_array_almost_equal(T, rst)
