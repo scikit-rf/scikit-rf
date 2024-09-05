@@ -1092,7 +1092,9 @@ class Circuit:
         mathematical feature of block diagonal matrice [X].
         """
         X, C = self.X_F, self.C_F
-        T = np.zeros_like(X, dtype="complex", order='F')
+
+        # T will be fully updated, so `empty_like` is safe and faster
+        T = np.empty_like(X, dtype="complex", order='F')
 
         # Precompute the sizes of connections and slices for each intersection
         cnx_size = [len(cnx) for cnx in self.connections]
