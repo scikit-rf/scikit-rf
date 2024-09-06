@@ -1605,7 +1605,7 @@ class Circuit:
     def optimize(self, fitness_func: Callable[[Circuit], float],
                  update_func: Callable[..., tuple[Network, ...]],
                  x0: Sequence[float],  bounds: Sequence[tuple] | Bounds,
-                 args: tuple = (), disp: bool = True, **kwargs) -> OptimizeResult:
+                 args: tuple = (), disp: bool = True, **kwargs) -> tuple[OptimizeResult, Circuit]:
         """
         Optimize the Circuit for minimizing (or maximizing) objective function, possibly subject
         to constraints.
@@ -1635,7 +1635,7 @@ class Circuit:
                 Additional options to be passed to `scipy.optimize.differential_evolution`.
 
         Returns:
-            OptimizeResult: The optimization result represented
+            tuple[OptimizeResult, Circuit]: The OptimizeResult object and the updated Circuit object.
         """
         # Get dynamic networks
         dynamic_networks = update_func(x0)
@@ -1654,8 +1654,9 @@ class Circuit:
             networks = update_func(x)
 
             # Update the circuit with the new networks
-            ckt_updated = ckt_reduced.update_networks(networks=networks,
-                                        auto_reduce=True)
+            ckt_updated = ckt_reduced.update_networks(
+                networks=networks, auto_reduce=True, inplace=False
+            )
 
             # Check if the circuit is valid
             if ckt_updated is not None:
@@ -1663,7 +1664,16 @@ class Circuit:
 
             raise ValueError("Invalid circuit")
 
-        return differential_evolution(func=fun, args=args, x0=x0, bounds=bounds, disp=disp, **kwargs)
+        opt_result: OptimizeResult = differential_evolution(
+            func=fun, args=args, x0=x0, bounds=bounds, disp=disp, **kwargs
+        )
+
+        if opt_result.success:
+            opt_circuit = ckt_reduced.update_networks(networks=update_func(opt_result.x))
+            if opt_circuit is not None:
+                return (opt_result, opt_circuit)
+
+        raise ValueError("Optimization failed")
 
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple[Network, int]]],
