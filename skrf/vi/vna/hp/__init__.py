@@ -8,3 +8,4 @@ From the age when HP made expensive test equipment rather than expensive printer
 
 """
 from .hp8510c import HP8510C
+from .hp8720b import HP8720B
