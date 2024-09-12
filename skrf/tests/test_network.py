@@ -336,6 +336,15 @@ class NetworkTestCase(unittest.TestCase):
             sio.name = os.path.basename(filename) # hack a bug to touchstone reader
             rf.Network(sio)
 
+    def test_different_ext(self):
+        filename= os.path.join(self.test_dir, 'ntwk1.s2p')
+        for par in ["g", "h", "s", "y", "z"]:
+            with open(filename) as fid:
+                data = fid.read()
+                sio = io.StringIO(data)
+                sio.name = f"test.{par}2p"
+                rf.Network(sio)
+
     def test_constructor_from_parameters(self):
         """Test creating Network from all supported parameters
         with default z0 and specified z0.
