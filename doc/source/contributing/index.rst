@@ -124,13 +124,15 @@ To run all the tests (except the virtual instruments)
 .. code-block:: sh
 
     cd scikit-rf
+    # Create environment and install dependencies, needed only once.
     python -m venv .venv
     python -e[test,visa,netw,xlsx,plot,docs,testspice]
 
-    # On Linux Systems
+    # Activate Environment, needed for all following steps.
+    # on Linux Systems
     . .venv/bin/activate
 
-    # On Windows
+    # on Windows
     .\.venv\Scripts\activate
 
     pytest
