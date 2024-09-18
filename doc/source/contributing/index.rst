@@ -124,22 +124,27 @@ To run all the tests (except the virtual instruments)
 .. code-block:: sh
 
     cd scikit-rf
+    # Create environment and install dependencies, needed only once.
+    python -m venv .venv
+    python -e[test,visa,netw,xlsx,plot,docs,testspice]
+
+    # Activate Environment, needed for all following steps.
+    # on Linux Systems
+    . .venv/bin/activate
+
+    # on Windows
+    .\.venv\Scripts\activate
+
     pytest
 
-Or, to run tests for every installed Python installation in an isolated environment.
+To run all tests *and* all tutorials and example notebooks in your current environment (recommended before making a pull request):
 
 .. code-block:: sh
 
-    tox
-
-To run all tests *and* all tutorials and example notebooks (recommended before making a pull request):
-
-.. code-block:: sh
-
-    tox -- --nbval-lax
+    pytest --nbval-lax
 
 
-If you want to test a single file or directory, you need to override the default pytest configuration (defined in the tox.ini file) and indicate the test path. For example, to run only the tests associated with the Network object (-v to increase the verbosity):
+If you want to test a single file or directory, you need to override the default pytest configuration and indicate the test path. For example, to run only the tests associated with the Network object (-v to increase the verbosity):
 
 .. code-block:: sh
 
@@ -162,7 +167,7 @@ Contributing to the Documentation
 Examples and Tutorials
 ++++++++++++++++++++++
 
-Usage examples of scikit-rf are welcomed, especially when adding new features. We are using `Jupyter Notebooks <https://jupyter.org/>`_ to write the examples and the tutorials, which are located in the ``scikit-rf/docs/source/examples/`` and ``doc/source/examples`` directories. These notebooks are then converted into webpages with the sphinx extension called `nbsphinx <http://nbsphinx.readthedocs.io/>`_.
+Usage examples of sciki-rf are welcomed, especially when adding new features. We are using `Jupyter Notebooks <https://jupyter.org/>`_ to write the examples and the tutorials, which are located in the ``scikit-rf/docs/source/examples/`` and ``doc/source/examples`` directories. These notebooks are then converted into webpages with the sphinx extension called `nbsphinx <http://nbsphinx.readthedocs.io/>`_.
 
 The docs are automatically built and `served by readthedocs <https://scikit-rf.readthedocs.io/en/latest/>`_ when a Pull Request is accepted. The Python package requirements to build the docs are kept in ``scikit-rf/pyproject.toml``.
 
