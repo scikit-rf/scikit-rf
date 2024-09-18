@@ -167,7 +167,7 @@ Contributing to the Documentation
 Examples and Tutorials
 ++++++++++++++++++++++
 
-Usage examples of sciki-rf are welcomed, especially when adding new features. We are using `Jupyter Notebooks <https://jupyter.org/>`_ to write the examples and the tutorials, which are located in the ``scikit-rf/docs/source/examples/`` and ``doc/source/examples`` directories. These notebooks are then converted into webpages with the sphinx extension called `nbsphinx <http://nbsphinx.readthedocs.io/>`_.
+Usage examples of scikit-rf are welcomed, especially when adding new features. We are using `Jupyter Notebooks <https://jupyter.org/>`_ to write the examples and the tutorials, which are located in the ``scikit-rf/docs/source/examples/`` and ``doc/source/examples`` directories. These notebooks are then converted into webpages with the sphinx extension called `nbsphinx <http://nbsphinx.readthedocs.io/>`_.
 
 The docs are automatically built and `served by readthedocs <https://scikit-rf.readthedocs.io/en/latest/>`_ when a Pull Request is accepted. The Python package requirements to build the docs are kept in ``scikit-rf/pyproject.toml``.
 
