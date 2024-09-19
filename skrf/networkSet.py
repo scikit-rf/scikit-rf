@@ -52,6 +52,7 @@ from pathlib import Path
 from typing import Any, Mapping, TextIO
 
 import numpy as np
+import pandas as pd
 from scipy.interpolate import interp1d
 
 from . import mathFunctions as mf
@@ -1195,6 +1196,63 @@ class NetworkSet:
         else:
             return None
 
+    def to_dataframe(self, attrs: list[str] = None, ports: list[tuple[int, int]] = None, port_sep: str | None = None):
+        """
+        Convert attributes of a NetworkSet to a pandas DataFrame.
+
+        Use the same parameters than :func:`skrf.io.general.network_2_dataframe`
+
+        Parameters
+        ----------
+        attrs : list of string
+            Network attributes to convert, like ['s_db','s_deg']
+        ports : list of tuples
+            list of port pairs to write. defaults to ntwk.port_tuples
+            (like [[0,0]])
+        port_sep : string
+            defaults to None, which means a empty string "" is used for
+            networks with lower than 10 ports. (s_db 11, s_db 21)
+            For more than ten ports a "_" is used to avoid ambiguity.
+            (s_db 1_1, s_db 2_1)
+            For consistent behaviour it's recommended to specify "_" or
+            "," explicitly.
+
+        Returns
+        -------
+        df : `pandas.DataFrame`
+
+        Raises
+        ------
+        ValueError : if the networkset doesn't have parameters
+
+
+        See Also
+        ---------
+        skrf.io.general.network_2_dataframe
+        """
+
+        if not self.params:
+            raise ValueError(
+                "The NetworkSet must have parameters to be combined into a dataframe. "
+                "Try using `ntwk_attr_2_df` instead."
+            )
+
+        dfs = []
+        for ntwk in self.ntwk_set:
+            # Create a dataframe for each network
+            df = ntwk.to_dataframe(attrs=attrs, ports=ports, port_sep=port_sep)
+
+            # Insert the parameters and values for each network
+            [
+                df.insert(i, param_name, [param_val] * len(df))
+                for i, (param_name, param_val) in enumerate(ntwk.params.items())
+            ]
+
+            # Append to the list of dataframes
+            dfs.append(df)
+
+        # Return a concatenated dataframe
+        return pd.concat(dfs)
 
     def sel(self, indexers: Mapping[Any, Any] = None) -> NetworkSet:
         """

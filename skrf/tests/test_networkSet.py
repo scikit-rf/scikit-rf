@@ -237,6 +237,16 @@ class NetworkSetTestCase(unittest.TestCase):
         """
         df = self.ns.ntwk_attr_2_df('s_db', m=1, n=0)
 
+    def test_2_df(self):
+        """
+        Test the `to_dataframe` method.
+        """
+
+        # Raises a ValueError since the networks have no parameters
+        self.assertRaises(ValueError, self.ns.to_dataframe)
+
+        df = self.ns_params.to_dataframe()
+
     def test_interpolate_from_network(self):
         """
         Test the `interpolate_from_network` method.
