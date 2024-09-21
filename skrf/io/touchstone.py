@@ -33,11 +33,12 @@ import warnings
 import zipfile
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Callable
+from pathlib import Path
+from typing import Callable, Literal
 
 import numpy as np
 
-from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT, S_DEFINITIONS
+from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT, S_DEFINITIONS, SparamFormatT
 from ..media import DefinedGammaZ0
 from ..network import Network
 from ..util import get_fid
@@ -100,7 +101,7 @@ class ParserState:
         """
         if self.matrix_format == "full":
             return self.rank**2 * 2
-        return self.rank**2 * self.rank
+        return self.rank*(self.rank+1)
 
     @property
     def parse_noise(self) -> bool:
@@ -166,7 +167,7 @@ class ParserState:
             err_msg = f"ERROR: illegal frequency_unit {self.frequency_unit}\n"
         if self.parameter not in "syzgh":
             err_msg = f"ERROR: illegal parameter value {self.parameter}\n"
-        if self.format not in ["ma", "db", "ri"]:
+        if self.format not in typing.get_args(SparamFormatT):
             err_msg = f"ERROR: illegal format value {self.format}\n"
 
         if err_msg:
@@ -189,13 +190,13 @@ class Touchstone:
     .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
 
-    def __init__(self, file: str | typing.TextIO, encoding: str | None = None):
+    def __init__(self, file: str | Path | typing.TextIO, encoding: str | None = None):
         """
         constructor
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             touchstone file to load
         encoding : str, optional
             define the file encoding to use. Default value is None,
@@ -258,7 +259,7 @@ class Touchstone:
         self.gamma = None
         self.z0 = None
         self.s_def = None
-        self.port_modes = None
+        self.port_modes = np.array([])
 
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
@@ -371,7 +372,7 @@ class Touchstone:
         # Should be .sNp for Touchstone format V1.0, and .ts for V2
         extension = self.filename.split(".")[-1].lower()
 
-        m = re.match(r"s(\d+)p", extension)
+        m = re.match(r"[ghsyz](\d+)p", extension)
         if m:
             state.rank = int(m.group(1))
         elif extension != "ts":
@@ -645,7 +646,7 @@ class Touchstone:
                 pass
         return var_dict
 
-    def get_format(self, format="ri") -> str:
+    def get_format(self, format: Literal[SparamFormatT, Literal["orig"]]="ri") -> str:
         """
         Returns the file format string used for the given format.
 
@@ -661,9 +662,9 @@ class Touchstone:
             format = self.format
         else:
             frequency = "hz"
-        return f"{frequency} {self.parameter} {format} r {self.resistance}"
+        return f"{frequency} {self.parameter} {format.upper()} r {self.resistance}"
 
-    def get_sparameter_names(self, format: str="ri") -> list[str]:
+    def get_sparameter_names(self, format: SparamFormatT = "ri") -> list[str]:
         """
         Generate a list of column names for the s-parameter data.
         The names are different for each format.
@@ -682,7 +683,7 @@ class Touchstone:
         warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
         return self.get_sparameter_data(format).keys()
 
-    def get_sparameter_data(self, format: str="ri") -> dict[str, np.ndarray]:
+    def get_sparameter_data(self, format: SparamFormatT = "ri") -> dict[str, np.ndarray]:
         """
         Get the data of the s-parameter with the given format.
 

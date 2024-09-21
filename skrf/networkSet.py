@@ -48,13 +48,14 @@ from __future__ import annotations
 import zipfile
 from io import BytesIO
 from numbers import Number
+from pathlib import Path
 from typing import Any, Mapping, TextIO
 
 import numpy as np
 from scipy.interpolate import interp1d
 
 from . import mathFunctions as mf
-from .constants import NumberLike
+from .constants import NumberLike, PrimaryPropertiesT
 from .network import COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency, Network
 from .util import copy_doc, now_string_2_dt
 
@@ -220,13 +221,13 @@ class NetworkSet:
             self.__add_a_operator(operator_name)
 
     @classmethod
-    def from_zip(cls, zip_file_name: str, sort_filenames: bool = True, *args, **kwargs):
+    def from_zip(cls, zip_file_name: str | Path, sort_filenames: bool = True, *args, **kwargs):
         r"""
         Create a NetworkSet from a zipfile of touchstones.
 
         Parameters
         ----------
-        zip_file_name : string
+        zip_file_name : string or Path
             name of zipfile
         sort_filenames: Boolean
             sort the filenames in the zip file before constructing the
@@ -268,7 +269,7 @@ class NetworkSet:
         return cls(ntwk_list)
 
     @classmethod
-    def from_dir(cls, dir: str = '.', *args, **kwargs):
+    def from_dir(cls, dir: str | Path = '.', *args, **kwargs):
         r"""
         Create a NetworkSet from a directory containing Networks.
 
@@ -278,7 +279,7 @@ class NetworkSet:
 
         Parameters
         ----------
-        dir : str
+        dir : str or Path
             directory containing Network files.
 
         \*args, \*\*kwargs :
@@ -323,13 +324,13 @@ class NetworkSet:
                             **kwargs)  for k in d])
 
     @classmethod
-    def from_mdif(cls, file: str | TextIO) -> NetworkSet:
+    def from_mdif(cls, file: str | Path | TextIO) -> NetworkSet:
         """
         Create a NetworkSet from a MDIF file.
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, file-object
             MDIF file to load
 
         Returns
@@ -346,13 +347,13 @@ class NetworkSet:
         return Mdif(file).to_networkset()
 
     @classmethod
-    def from_citi(cls, file: str | TextIO) -> NetworkSet:
+    def from_citi(cls, file: str | Path | TextIO) -> NetworkSet:
         """
         Create a NetworkSet from a CITI file.
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             CITI file to load
 
         Returns
@@ -828,8 +829,9 @@ class NetworkSet:
         """
         return fon(self.ntwk_set, func, a_property, *args, **kwargs)
 
-
-    def uncertainty_ntwk_triplet(self, attribute: str, n_deviations: int = 3) -> (Network, Network, Network):
+    def uncertainty_ntwk_triplet(self, attribute: PrimaryPropertiesT, n_deviations: int = 3) -> tuple(
+        Network, Network, Network
+    ):
         """
         Return a 3-tuple of Network objects which contain the
         mean, upper_bound, and lower_bound for the given Network
@@ -948,10 +950,8 @@ class NetworkSet:
                    filename: str,
                    values: dict | None = None,
                    data_types: dict | None = None,
-                   comments: str | None = None,
-                   *,
-                   skrf_comment: bool = True,
-                   ads_compatible: bool = True):
+                   comments: list[str] | None = None,
+                   **kwargs):
         """Convert a scikit-rf NetworkSet object to a Generalized MDIF file.
 
         Parameters
@@ -969,11 +969,8 @@ class NetworkSet:
         comments: list of strings
             Comments to add to output_file.
             Each list items is a separate comment line
-        skrf_comment : bool, optional
-            write `created by skrf` comment
-        ads_compatible: bool. Default is True.
-            Indicates whether to write the file in a format that
-            ADS will read properly.
+        **kwargs: dictionary with extra arguments to pass through to the
+            underlying Mdif.write and Network.write_touchstone methods
 
         See Also
         --------
@@ -986,10 +983,9 @@ class NetworkSet:
         if comments is None:
             comments = []
         Mdif.write(ns=self, filename=filename, values=values,
-                   data_types=data_types, ads_compatible=ads_compatible,
-                   comments=comments, skrf_comment=skrf_comment)
+                   data_types=data_types, comments=comments, **kwargs)
 
-    def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):
+    def ntwk_attr_2_df(self, attr='s_db', m=0, n=0, *args, **kwargs):
         """
         Converts an attributes of the Networks within a NetworkSet to a Pandas DataFrame.
 
@@ -1214,8 +1210,8 @@ class NetworkSet:
         Returns
         -------
         ns : NetworkSet
-            NetworkSet containing the selected Networks or
-            empty NetworkSet if no match found
+             NetworkSet containing the selected Networks or
+             an empty NetworkSet if no match is found
 
         Example
         -------

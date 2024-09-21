@@ -164,17 +164,33 @@ from itertools import product
 from numbers import Number
 from pathlib import Path
 from pickle import UnpicklingError
-from typing import Any, Callable, NoReturn, Sequence, Sized, TextIO
+from typing import Any, Callable, Literal, NoReturn, Sequence, Sized, TextIO, get_args
 
 import numpy as np
 from numpy import gradient, ndarray, shape
 from numpy.linalg import inv as npy_inv
 from scipy import stats  # for Network.add_noise_*, and Network.windowed
+from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d  # for Network.interpolate()
 
 from . import mathFunctions as mf
 from . import plotting as rfplt
-from .constants import K_BOLTZMANN, S_DEF_DEFAULT, S_DEFINITIONS, T0, ZERO, NumberLike
+from .constants import (
+    K_BOLTZMANN,
+    S_DEF_DEFAULT,
+    S_DEFINITIONS,
+    T0,
+    ZERO,
+    CircuitComponentT,
+    ComponentFuncT,
+    CoordT,
+    FrequencyUnitT,
+    InterpolKindT,
+    NumberLike,
+    PrimaryPropertiesT,
+    SdefT,
+    SparamFormatT,
+)
 from .frequency import Frequency
 from .time import get_window, time_gate
 from .util import Axes, axes_kwarg, copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
@@ -264,33 +280,32 @@ class Network:
     ----------
     .. [#TwoPortWiki] http://en.wikipedia.org/wiki/Two-port_network
     """
-
-    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 't']
+    PRIMARY_PROPERTIES: tuple[PrimaryPropertiesT, ...] = get_args(PrimaryPropertiesT)
     """
     Primary Network Properties list like 's', 'z', 'y', etc.
     """
 
-    COMPONENT_FUNC_DICT = {
-        're': np.real,
-        'im': np.imag,
-        'mag': np.abs,
-        'db': mf.complex_2_db,
-        'db10': mf.complex_2_db10,
-        'rad': np.angle,
-        'deg': lambda x: np.angle(x, deg=True),
-        'arcl': lambda x: np.angle(x) * np.abs(x),
-        'rad_unwrap': lambda x: mf.unwrap_rad(np.angle(x)),
-        'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
-            np.angle(x))),
-        'arcl_unwrap': lambda x: mf.unwrap_rad(np.angle(x)) * \
-                                    np.abs(x),
-        'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-        'time': mf.ifft,
-        'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
-        'time_mag': lambda x: mf.complex_2_magnitude(mf.ifft(x)),
-        'time_impulse': None,
-        'time_step': None,
+    _func_lookup: dict[ComponentFuncT, tuple[str, Callable | None]] = {
+        're': ('Real Part', np.real),
+        'im': ('Imag Part', np.imag),
+        'mag': ('Magnitude', np.abs),
+        'db': ('Magnitude (dB)', mf.complex_2_db),
+        'db10': ('Magnitude (dB)', mf.complex_2_db10),
+        'rad': ('Phase (rad)', np.angle),
+        'deg': ('Phase (deg)', lambda x: np.angle(x, deg=True)),
+        'arcl': ('Arc Length',lambda x: np.angle(x) * np.abs(x)),
+        'rad_unwrap': ('Phase (rad)', lambda x: mf.unwrap_rad(np.angle(x))),
+        'deg_unwrap': ('Phase (deg)', lambda x: mf.radian_2_degree(mf.unwrap_rad(np.angle(x)))),
+        'arcl_unwrap': ('Arc Length', lambda x: mf.unwrap_rad(np.angle(x)) * np.abs(x)),
+        'vswr': ('VSWR', lambda x: (1 + abs(x)) / (1 - abs(x))),
+        'time': ('Time (real)', mf.ifft),
+        'time_db': ('Magnitude (dB)',  lambda x: mf.complex_2_db(mf.ifft(x))),
+        'time_mag': ('Magnitude', lambda x: mf.complex_2_magnitude(mf.ifft(x))),
+        'time_impulse': ('Magnitude', None),
+        'time_step': ('Magnitude', None),
     }
+
+    COMPONENT_FUNC_DICT: dict[ComponentFuncT, Callable | None] = {k: v[1] for k,v in _func_lookup.items()}
 
     """
     Component functions like 're', 'im', 'mag', 'db', etc.
@@ -303,42 +318,15 @@ class Network:
             for func_name, func in cls.COMPONENT_FUNC_DICT.items()}
 
     # provides y-axis labels to the plotting functions
-    Y_LABEL_DICT = {
-        're': 'Real Part',
-        'im': 'Imag Part',
-        'mag': 'Magnitude',
-        'abs': 'Magnitude',
-        'db': 'Magnitude (dB)',
-        'db10': 'Magnitude (dB)',
-        'deg': 'Phase (deg)',
-        'deg_unwrap': 'Phase (deg)',
-        'rad': 'Phase (rad)',
-        'rad_unwrap': 'Phase (rad)',
-        'arcl': 'Arc Length',
-        'arcl_unwrap': 'Arc Length',
-        'gd': 'Group Delay (s)',
-        'vswr': 'VSWR',
-        'passivity': 'Passivity',
-        'reciprocity': 'Reciprocity',
-        'time': 'Time (real)',
-        'time_db': 'Magnitude (dB)',
-        'time_mag': 'Magnitude',
-        'time_impulse': 'Magnitude',
-        'time_step': 'Magnitude',
-    }
+    Y_LABEL_DICT: dict[ComponentFuncT, str]  = {k: v[0] for k,v in _func_lookup.items()}
     """
     Y-axis labels to the plotting functions.
     """
 
-    noise_interp_kind = 'linear'
-    """
-    Default interpolation method.
-    """
-
     # CONSTRUCTOR
     def __init__(self, file: str = None, name: str = None, params: dict = None,
-                 comments: str = None, f_unit: str = None,
-                 s_def: str | None = None, **kwargs) -> None:
+                 comments: str = None, f_unit: FrequencyUnitT | None = None,
+                 s_def: SdefT | None = None, **kwargs) -> None:
         r"""
         Network constructor.
 
@@ -349,7 +337,7 @@ class Network:
         Parameters
         ----------
 
-        file : str or file-object
+        file : str, Path, or file-object
             file to load information from. supported formats are:
              * touchstone file (.s?p) (or .ts)
              * io.StringIO object (with `.name` property which contains the file extension, such as `myfile.s4p`)
@@ -370,6 +358,13 @@ class Network:
             key word arguments can be used to assign properties of the
             Network, such as `s`, `f` and `z0`.
             keyword `encoding` can be used to define the Touchstone file encoding.
+            keyword `noise_interp_kind` used to change the default interpolation
+                     method for noisy networks. Options are 'linear', 'nearest',
+                     'nearest-up', 'zero', 'slinear', 'quadratic', 'cubic',
+                     'previous', or 'next'. Review `scipy.interpolate.interp_1d`
+                     for details on each interpolation style. Defaults to 'linear'.
+            keyword `noise_fill_value` used to change the default interpolation
+                     fill value for noisy networks. Defaults to np.nan.
 
         Examples
         --------
@@ -384,7 +379,7 @@ class Network:
         Create a blank network, then fill in values
 
         >>> n = rf.Network()
-        >>> freq = rf.Frequency(1, 3, 3, 'ghz')
+        >>> freq = rf.Frequency(1, 3, 3, 'GHz')
         >>> n.frequency, n.s, n.z0 = freq, [1,2,3], [1,2,3]
 
         Directly from values
@@ -406,6 +401,12 @@ class Network:
         if 'touchstone_filename' in kwargs:
             file = kwargs['touchstone_filename']
 
+        # Default interpolation method.
+        self.noise_interp_kind = kwargs.get("noise_interp_kind", "linear")
+
+        # Default noise fill value when out of the s-parameter frequency bounds.
+        self.noise_fill_value = kwargs.get("noise_fill_value", np.nan)
+
         self.name = name
         self.params = params
         self.comments = comments
@@ -417,7 +418,7 @@ class Network:
         self.noise_freq = None
         self._z0 = np.array(50, dtype=complex)
         self._port_modes = np.array([])
-        self._ext_attrs = {}
+        self._ext_attrs: dict[CircuitComponentT, bool] = {}
 
         if s_def not in S_DEFINITIONS and s_def is not None:
             raise ValueError('s_def parameter should be either:', S_DEFINITIONS)
@@ -425,8 +426,6 @@ class Network:
             self.s_def = s_def
 
         if file is not None:
-            if isinstance(file, Path):
-                file = str(file.resolve())
 
             # allows user to pass StringIO, filename or file obj
             if isinstance(file, io.StringIO):
@@ -477,7 +476,8 @@ class Network:
             self.s = np.zeros(s_shape, dtype=complex)
 
         self.z0 = kwargs.get('z0', self._z0)
-        self.port_modes = np.array(["S"] * self.nports)
+        if not len(self.port_modes):
+            self.port_modes = np.array(["S"] * self.nports)
 
 
         if "f" in kwargs.keys():
@@ -485,7 +485,7 @@ class Network:
                 f_unit = "hz"
             kwargs["frequency"] = Frequency.from_f(kwargs.pop("f"), unit=f_unit)
 
-        for attr in PRIMARY_PROPERTIES + ['frequency', 'noise', 'noise_freq']:
+        for attr in list(PRIMARY_PROPERTIES) + ['frequency', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
@@ -948,7 +948,7 @@ class Network:
 
         return ret + s_properties
 
-    def attribute(self, prop_name: str, conversion: str) -> np.ndarray:
+    def attribute(self, prop_name: PrimaryPropertiesT, conversion: ComponentFuncT) -> np.ndarray:
         prop = getattr(self, prop_name)
         return self.COMPONENT_FUNC_DICT[conversion](prop)
 
@@ -993,6 +993,8 @@ class Network:
         s : :class:`numpy.ndarray`
             The input s-matrix should be of shape `fxnxn`,
             where f is frequency axis and n is number of ports.
+            Note that to set this requires that the values are
+            given in complex format. DB and MA aren't automatically translated
 
         """
         self._s = fix_param_shape(s)
@@ -1383,7 +1385,7 @@ class Network:
             self._frequency = new_frequency.copy()
         else:
             try:
-                self._frequency = Frequency.from_f(new_frequency)
+                self._frequency = Frequency.from_f(new_frequency, unit=self.frequency.unit)
             except TypeError as err:
                 raise TypeError('Could not convert argument to a frequency vector') from err
 
@@ -1455,17 +1457,28 @@ class Network:
         if not self.noisy:
             raise ValueError('network does not have noise')
 
-        if self.noise_freq.f.size > 1 :
-            noise_real = interp1d(self.noise_freq.f, self.noise.real, axis=0, kind=Network.noise_interp_kind)
-            noise_imag = interp1d(self.noise_freq.f, self.noise.imag, axis=0, kind=Network.noise_interp_kind)
+        if self.noise_freq.f.size > 1:
+            noise_real = interp1d(
+                self.noise_freq.f,
+                self.noise.real,
+                axis=0,
+                kind=self.noise_interp_kind,
+                bounds_error=False,
+                fill_value=complex(self.noise_fill_value).real
+            )
+            noise_imag = interp1d(
+                self.noise_freq.f,
+                self.noise.imag,
+                axis=0,
+                kind=self.noise_interp_kind,
+                bounds_error=False,
+                fill_value=complex(self.noise_fill_value).imag
+            )
             return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
-        else :
-            noise_real =  self.noise.real
+        else:
+            noise_real = self.noise.real
             noise_imag = self.noise.imag
             return noise_real + 1.0j * noise_imag
-
-
-
 
     @property
     def f_noise(self) -> Frequency:
@@ -2046,7 +2059,8 @@ class Network:
         ntwk = Network(z0=self.z0, s_def=self.s_def, comments=self.comments)
 
         ntwk._s = self.s.copy()
-        ntwk.frequency = self.frequency
+        ntwk.frequency._f = self.frequency._f.copy()
+        ntwk.frequency.unit = self.frequency.unit
         ntwk.port_modes = self.port_modes.copy()
 
         if self.params is not None:
@@ -2186,7 +2200,7 @@ class Network:
 
 
     # touchstone file IO
-    def read_touchstone(self, filename: str | TextIO,
+    def read_touchstone(self, filename: str | Path | TextIO,
                         encoding: str | None = None) -> None:
         """
         Load values from a touchstone file.
@@ -2196,7 +2210,7 @@ class Network:
 
         Parameters
         ----------
-        filename : str or file-object
+        filename : str, Path, or file-object
             touchstone file name.
         encoding : str, optional
             define the file encoding to use. Default value is None,
@@ -2259,7 +2273,7 @@ class Network:
                 self.name = os.path.basename(os.path.splitext(touchstoneFile.filename)[0])
 
     @classmethod
-    def zipped_touchstone(cls, filename: str, archive: zipfile.ZipFile) -> Network:
+    def zipped_touchstone(cls, filename: str | Path, archive: zipfile.ZipFile) -> Network:
         """
         Read a Network from a Touchstone file in a ziparchive.
 
@@ -2276,6 +2290,10 @@ class Network:
             Network from the Touchstone file
 
         """
+
+        # Convert a path filename to a string
+        filename = str(filename.resolve()) if isinstance(filename, Path) else filename
+
         # Touchstone requires file objects to be seekable (for get_gamma_z0_from_fid)
         # A ZipExtFile object is not seekable prior to Python 3.7, so use StringIO
         # and manually add a name attribute
@@ -2284,20 +2302,24 @@ class Network:
         ntwk = Network(fileobj)
         return ntwk
 
-    def write_touchstone(self, filename: str = None, dir: str = None,
+    def write_touchstone(self, filename: str | Path = None, dir: str | Path = None,
                          write_z0: bool = False, skrf_comment: bool = True,
                          return_string: bool = False, to_archive: bool = None,
-                         form: str = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
-                         format_spec_freq : str = '{}', r_ref : float = None) -> str | None:
+                         form: SparamFormatT = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
+                         format_spec_freq: str = '{}', r_ref: float = None,
+                         format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
+                         format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
+                         format_spec_rn: str = '{}') -> str | None:
+
         """
         Write a contents of the :class:`Network` to a touchstone file.
 
         Parameters
         ----------
-        filename : a string, optional
+        filename : a string or Path, optional
             touchstone filename, without extension. if 'None', then
             will use the network's :attr:`name`.
-        dir : string, optional
+        dir : string or Path, optional
             the directory to save the file in.
         write_z0 : boolean
             write impedance information into touchstone as comments,
@@ -2332,6 +2354,26 @@ class Network:
             If None network port impedance is used if possible. If None and
             network port impedance is complex and not equal at all ports and
             frequency points raises ValueError.
+        format_spec_nf_freq : string, optional
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the noise data frequency.
+        format_spec_nf_min : string, optional
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the minimum NF.
+        format_spec_g_opt_mag : string, optional
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the GammaOpt magnitude.
+        format_spec_g_opt_phase : string, optional
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the GammaOpt phase.
+        format_spec_rn : string, optional
+            Any valid format specifying string as given by
+            https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the noise resistance.
 
         Note
         ----
@@ -2379,22 +2421,25 @@ class Network:
                 raise ValueError('No filename given. Network must have a name, or you must provide a filename')
 
         if get_extn(filename) is None:
+            if isinstance(filename, Path):
+                filename = str(filename.resolve())
+
             filename = filename + '.s%ip' % ntwk.number_of_ports
 
         if dir is not None:
             filename = os.path.join(dir, filename)
 
         # set internal variables according to form
-        form = form.upper()
-        if form == "RI":
+        form = form.lower()
+        if form == "ri":
             formatDic = {"labelA": "Re", "labelB": "Im"}
             funcA = np.real
             funcB = np.imag
-        elif form == "DB":
+        elif form == "db":
             formatDic = {"labelA": "dB", "labelB": "ang"}
             funcA = mf.complex_2_db
             funcB = mf.complex_2_degree
-        elif form == "MA":
+        elif form == "ma":
             formatDic = {"labelA": "mag", "labelB": "ang"}
             funcA = mf.complex_2_magnitude
             funcB = mf.complex_2_degree
@@ -2439,7 +2484,7 @@ class Network:
             if write_z0:
                 output.write('! Data is not renormalized\n')
                 output.write(f'! S-parameter uses the {self.s_def} definition\n')
-                output.write(f'# {ntwk.frequency.unit} S {form} R\n')
+                output.write(f'# {ntwk.frequency.unit} S {form.upper()} R\n')
             else:
                 # Write "r_ref.real" instead of "r_ref", so we get a real number "a" instead
                 # of a complex number "(a+0j)", which is unsupported by the standard Touchstone
@@ -2448,7 +2493,7 @@ class Network:
                 assert r_ref.imag == 0, "Complex reference impedance is encountered when " \
                                         "generating a standard Touchstone (non-HFSS), this " \
                                         "should never happen in scikit-rf."
-                output.write(f'# {ntwk.frequency.unit} S {form} R {r_ref.real} \n')
+                output.write(f'# {ntwk.frequency.unit} S {form.upper()} R {r_ref.real} \n')
 
             # write ports
             try:
@@ -2507,11 +2552,15 @@ class Network:
 
                 # write noise data if it exists
                 if ntwk.noisy:
+                    output.write("! Noise Data\n! freq\tnf_min_db\tmagGOpt\tdegGOpt\tRn_eff\n")
                     new = ntwk.copy()
                     new.resample(ntwk.f_noise) # only write data from original noise freqs
                     for f, nf, g_opt, rn, z0 in zip(new.f_noise.f_scaled, new.nfmin_db, new.g_opt, new.rn, new.z0):
-                        output.write(f"{f} {nf} {mf.complex_2_magnitude(g_opt)} "
-                                     f"{mf.complex_2_degree(g_opt)} {rn/z0[0].real}\n")
+                        output.write(format_spec_nf_freq.format(f) + ' ' \
+                             + format_spec_nf_min.format(nf) + ' ' \
+                             + format_spec_g_opt_mag.format(mf.complex_2_magnitude(g_opt)) + ' ' \
+                             + format_spec_g_opt_phase.format(mf.complex_2_degree(g_opt)) + ' ' \
+                             + format_spec_rn.format(rn/z0[0].real) + ' ' "\n")
 
             elif ntwk.number_of_ports == 3:
                 # 3-port is written over 3 lines / matrix order
@@ -2578,7 +2627,7 @@ class Network:
             elif return_string is True:
                 return output.getvalue()
 
-    def write(self, file: str = None, *args, **kwargs) -> None:
+    def write(self, file: str | Path = None, *args, **kwargs) -> None:
         r"""
         Write the Network to disk using the :mod:`pickle` module.
 
@@ -2589,7 +2638,7 @@ class Network:
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             filename or a file-object. If left as None then the
             filename will be set to Network.name, if its not None.
             If both are None, ValueError is raised.
@@ -2727,8 +2776,8 @@ class Network:
 
     # interpolation
     def interpolate(self, freq_or_n: Frequency | NumberLike, basis: str = 's',
-                    coords: str = 'cart', f_kwargs: dict = None, return_array: bool = False,
-                    **kwargs) -> Network | np.ndarray:
+                    coords: CoordT = 'cart', f_kwargs: dict = None, return_array: bool = False,
+                    kind: InterpolKindT | None = None, **kwargs) -> Network | np.ndarray:
         r"""
         Interpolate a Network along frequency axis.
 
@@ -2830,10 +2879,9 @@ class Network:
 
         is_rational = False
         freq_cropped = kwargs.pop('freq_cropped', True)
-        if kwargs.get('kind', None) == 'rational':
+        if kind == 'rational':
             f_interp = mf.rational_interp
             #Not supported by rational_interp
-            del kwargs['kind']
             is_rational = True
         else:
             f_interp = interp1d
@@ -2952,8 +3000,8 @@ class Network:
     ##convenience
     resample = interpolate_self
 
-    def extrapolate_to_dc(self, points: int = None, dc_sparam: NumberLike = None,
-                          kind: str = 'cubic', coords: str = 'cart',
+    def extrapolate_to_dc(self, points: int = None, dc_sparam: NumberLike | None = None,
+                          kind: InterpolKindT = 'cubic', coords: CoordT = 'cart',
                           **kwargs) -> Network:
         """
         Extrapolate S-parameters down to 0 Hz and interpolate to uniform spacing.
@@ -3220,7 +3268,7 @@ class Network:
         out.flip()
         return out
 
-    def renormalize(self, z_new: NumberLike, s_def: str = None) -> None:
+    def renormalize(self, z_new: NumberLike, s_def: SdefT | None = None) -> None:
         """
         Renormalize s-parameter matrix given a new port impedances.
 
@@ -3397,8 +3445,9 @@ class Network:
             self.s[:, :, to_ports] = self.s[:, :, from_ports]  # renumber columns
         self.z0[:, to_ports] = self.z0[:, from_ports]
         if self.port_names is not None:
-            self.port_names = np.array(self.port_names)
-            self.port_names[to_ports] = self.port_names[from_ports]
+            _port_names = np.array(self.port_names)
+            _port_names[to_ports] = _port_names[from_ports]
+            self.port_names = _port_names.tolist()
 
     def renumbered(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> Network:
         """
@@ -4097,16 +4146,24 @@ class Network:
             Xi[:, 4 * l:4 * l + 4, 4 * l:4 * l + 4] = self._X(l * 2, l * 2 + 1, l, p, z0_se, z0_mm, s_def)
         return Xi
 
-    def _Xi_tilde(self, p: int, z0_se: np.ndarray, z0_mm: np.ndarray, s_def : str) -> np.ndarray:  # (31)
+    def _Xi_tilde(
+        self, p: int, z0_se: np.ndarray, z0_mm: np.ndarray, s_def: SdefT
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:  # (31)
         n = self.nports
         P = np.ones(self.f.shape[0])[:, np.newaxis, np.newaxis] * self._P(p)
         QT = np.ones(self.f.shape[0])[:, np.newaxis, np.newaxis] * self._Q().T
         Xi = self._Xi(p, z0_se, z0_mm, s_def)
-        Xi_tilde = np.einsum('...ij,...jk->...ik', np.einsum('...ij,...jk->...ik', P, Xi), QT)
+        Xi_tilde: np.ndarray = np.einsum("...ij,...jk->...ik", np.einsum("...ij,...jk->...ik", P, Xi), QT)
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
-    def impulse_response(self, window: str = 'hamming', n: int = None, pad: int = 0,
-                        bandpass: bool = None, squeeze: bool = True) -> tuple[np.ndarray, np.ndarray]:
+    def impulse_response(
+        self,
+        window: str = "hamming",
+        n: int | None = None,
+        pad: int = 0,
+        bandpass: bool | None = None,
+        squeeze: bool = True,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate time-domain impulse response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -4153,33 +4210,30 @@ class Network:
             step_response
             extrapolate_to_dc
         """
-        if n is None:
-            # Use zero-padding specification. Note that this does not allow n odd.
-            n = 2 * (self.frequency.npoints + pad - 1)
+        if bandpass is None:
+            bandpass = self.f[0] != 0
 
-        fstep = self.frequency.step
-        if n % 2 == 0:
-            t = np.fft.ifftshift(np.fft.fftfreq(n, fstep))
-        else:
-            t = np.fft.ifftshift(np.fft.fftfreq(n+1, fstep))[1:]
-        if bandpass in (True, False):
-            center_to_dc = not bandpass
-        else:
-            center_to_dc = None
+        t = self.frequency._t_padded(pad=pad, n=n, bandpass=bandpass)
+        n = len(t)
+
         if window is not None:
-            w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
+            w = self.windowed(window=window, normalize=False, center_to_dc=not bandpass)
         else:
             w = self
 
-        ir = mf.irfft(w.s, n=n)
+        if bandpass:
+            ir = np.fft.fftshift(np.fft.ifft(w.s, axis=0, n=n), axes=0)
+        else:
+            ir = np.fft.fftshift(np.fft.irfft(w.s, axis=0, n=n), axes=0)
+
         if squeeze:
             ir = ir.squeeze()
 
         return t, ir
 
     def step_response(
-            self, window: str = 'hamming', n: int = None, pad: int = 0, squeeze: bool = True
-            ) -> tuple[np.ndarray, np.ndarray]:
+        self, window: str = "hamming", n: int | None = None, pad: int = 0, squeeze: bool = True
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate time-domain step response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -4189,6 +4243,8 @@ class Network:
         uniform frequency spacing.
 
         Y-axis is the reflection coefficient.
+        `step_resonse` is equal to the cumulative trapezoid integration of the
+        `impulse_response` function.
 
         Parameters
         ----------
@@ -4238,7 +4294,7 @@ class Network:
             )
 
         t, y = self.impulse_response(window=window, n=n, pad=pad, bandpass=False, squeeze=squeeze)
-        return t, np.cumsum(y, axis=0)
+        return t, cumulative_trapezoid(y, initial=0, axis=0)
 
     # Network Active s/z/y/vswr parameters
     def s_active(self, a: np.ndarray) -> np.ndarray:
@@ -4733,8 +4789,8 @@ class Network:
 
     @axes_kwarg
     def plot_attribute(     self,
-                            attribute: str,
-                            conversion: str,
+                            attribute: PrimaryPropertiesT,
+                            conversion: ComponentFuncT,
                             m=None,
                             n=None,
                             ax: Axes=None,
@@ -5056,6 +5112,10 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
                        to_ports=to_ports,
                        only_z0=True)
 
+    # Clear the ntwkC's ext_attrs, since they may have been inherited from ntwkA
+    # If a open, ground or port terminal is connected, this property should not be inherited
+    ntwkC._ext_attrs = {}
+
     # if ntwkA and ntwkB are both 2port, and either one has noise, calculate ntwkC's noise
     either_are_noisy = False
     either_are_noisy = ntwkA.noisy or ntwkB.noisy
@@ -5087,16 +5147,24 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         raise (NotImplementedError)
 
       # interpolate abcd into the set of noise frequencies
-
-
-      if ntwkA.deembed :
-          if ntwkA.frequency.f.size > 1 :
-              a_real = interp1d(ntwkA.frequency.f, ntwkA.inv.a.real,
-                      axis=0, kind=Network.noise_interp_kind)
-              a_imag = interp1d(ntwkA.frequency.f, ntwkA.inv.a.imag,
-                      axis=0, kind=Network.noise_interp_kind)
+      if ntwkA.deembed:
+          if ntwkA.frequency.f.size > 1:
+              a_real = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.inv.a.real,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
+              a_imag = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.inv.a.imag,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
               a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
-          else :
+          else:
               a_real = ntwkA.inv.a.real
               a_imag = ntwkA.inv.a.imag
               a = a_real + 1.j * a_imag
@@ -5104,12 +5172,22 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
           a = npy_inv(a)
           a_H = np.conj(a.transpose(0, 2, 1))
           cC = np.matmul(a, np.matmul(cB -cA, a_H))
-      else :
-          if ntwkA.frequency.f.size > 1 :
-              a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real,
-                      axis=0, kind=Network.noise_interp_kind)
-              a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag,
-                      axis=0, kind=Network.noise_interp_kind)
+      else:
+          if ntwkA.frequency.f.size > 1:
+              a_real = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.a.real,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
+              a_imag = interp1d(
+                  ntwkA.frequency.f,
+                  ntwkA.a.imag,
+                  axis=0,
+                  bounds_error=False,
+                  kind=ntwkA.noise_interp_kind
+              )
               a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
           else :
               a_real = ntwkA.a.real
@@ -5455,7 +5533,7 @@ def overlap_multi(ntwk_list: Sequence[Network]):
 
     return [ntwk.interpolate(new_freq) for ntwk in ntwk_list]
 
-def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
+def concat_ports(ntwk_list: Sequence[Network], port_order: Literal["first", "second"] = "second",
         *args, **kw) -> Network:
     """
     Concatenate networks along the port axis.
@@ -5996,7 +6074,7 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.
     nC = nA + nB  # num ports on C
 
     # create composite matrix, appending each sub-matrix diagonally
-    C = np.zeros((nf, nC, nC), dtype='complex')
+    C = np.zeros((nf, nC, nC), dtype='complex', order='F')
 
     # if ntwkB is a 2port, then keep port indices where you expect.
     if nB == 2 and nA > 2 and num == 1:
@@ -6099,8 +6177,8 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
     Ael = A[:, ext_i, l].T
 
     # Create an suit-sized s-matrix, to store the result
-    x, y = np.meshgrid(ext_i, ext_i)
-    C = A[:, y, x]
+    i, j = np.meshgrid(ext_i, ext_i, indexing='ij', sparse=True)
+    C = A[:, i, j]
 
     # create temporary matrices for calculation
     det = (Akl * Alk - Akk * All)
@@ -6115,7 +6193,7 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
 
 
 ## network parameter conversion
-def s2z(s: np.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> np.ndarray:
+def s2z(s: np.ndarray, z0: NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     r"""
     Convert scattering parameters [#]_ to impedance parameters [#]_.
 
@@ -6207,7 +6285,7 @@ def s2z(s: np.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> np.nd
 
     return z
 
-def s2y(s: np.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> np.ndarray:
+def s2y(s: np.ndarray, z0:NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     """
     Convert scattering parameters [#]_ to admittance parameters [#]_.
 
@@ -6376,7 +6454,7 @@ def s2t(s: np.ndarray) -> np.ndarray:
         t[k, yh:y, xh:x] = sinv[k]
     return t
 
-def s2s(s: NumberLike, z0: NumberLike, s_def_new: str, s_def_old: str):
+def s2s(s: NumberLike, z0: NumberLike, s_def_new: SdefT, s_def_old: SdefT):
     r"""
     Convert scattering parameters to scattering parameters with different
     definition.
@@ -6481,7 +6559,7 @@ def s2s(s: NumberLike, z0: NumberLike, s_def_new: str, s_def_old: str):
 
     return s_new
 
-def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> np.ndarray:
+def z2s(z: NumberLike, z0:NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     r"""
     Convert impedance parameters [#]_ to scattering parameters [#]_.
 
@@ -6852,7 +6930,7 @@ def s2a(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
     return a
 
 
-def y2s(y: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Network:
+def y2s(y: NumberLike, z0:NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> Network:
     r"""
     Convert admittance parameters [#]_ to scattering parameters [#]_.
 
@@ -7476,7 +7554,7 @@ def reciprocity(s: np.ndarray) -> np.ndarray:
 ## renormalize
 def renormalize_s(
         s: np.ndarray, z_old: NumberLike, z_new: NumberLike,
-        s_def:str = S_DEF_DEFAULT, s_def_old: str | None = None
+        s_def: SdefT = S_DEF_DEFAULT, s_def_old: SdefT | None = None
         ) -> np.ndarray:
 
     """
@@ -7824,7 +7902,7 @@ def assert_nports_equal(ntwkA: Network, ntwkB: Network) -> bool:
 ## Other
 # don't belong here, but i needed them quickly
 # this is needed for port impedance mismatches
-def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling') -> np.ndarray:
+def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: SdefT = 'traveling') -> np.ndarray:
     """
     Create a two-port s-matrix for a impedance mis-match.
 
@@ -7877,7 +7955,7 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: str = 'traveling')
     return result
 
 
-def two_port_reflect(ntwk1: Network, ntwk2: Network = None, name : str | None = None) -> Network:
+def two_port_reflect(ntwk1: Network, ntwk2: Network | None = None, name : str | None = None) -> Network:
     """
     Generate a two-port reflective two-port, from two one-ports.
 
@@ -8096,7 +8174,7 @@ def s2vswr_active(s: np.ndarray, a: np.ndarray) -> np.ndarray:
     vswr_act = np.einsum('fp,fp->fp', (1 + np.abs(s_act)), np.reciprocal(1 - np.abs(s_act)))
     return vswr_act
 
-def twoport_to_nport(ntwk, port1, port2, nports, **kwargs):
+def twoport_to_nport(ntwk: Network, port1: int, port2: int, nports: int, **kwargs):
     r"""
     Add ports to two-port. S-parameters of added ports are all zeros.
 

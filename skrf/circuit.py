@@ -23,6 +23,7 @@ Building a Circuit
    Circuit.ShuntAdmittance
    Circuit.Ground
    Circuit.Open
+   Circuit.update_networks
 
 Representing a Circuit
 ----------------------
@@ -93,11 +94,12 @@ from __future__ import annotations
 
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence, TypedDict
 
 import numpy as np
+from typing_extensions import NotRequired, Unpack
 
-from .constants import INF, S_DEF_DEFAULT, NumberLike
+from .constants import S_DEF_DEFAULT, NumberLike
 from .media import media
 from .network import Network, connect, innerconnect, s2s
 from .util import subplots
@@ -140,10 +142,18 @@ class Circuit:
         except ImportError as err:
             raise ImportError('networkx package as not been installed and is required.') from err
 
+    class _REDUCE_OPTIONS(TypedDict):
+        check_duplication: NotRequired[bool]
+        split_ground: NotRequired[bool]
+        split_multi: NotRequired[bool]
+        max_nports: NotRequired[int]
+        dynamic_networks: NotRequired[Sequence[Network]]
+
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
                  name: str | None = None,
-                 auto_reduce: bool = False) -> None:
+                 *,
+                 auto_reduce: bool = False, **kwargs: Unpack[_REDUCE_OPTIONS]) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -154,12 +164,31 @@ class Circuit:
             Each connection is a described by a list of tuple.
             Each tuple contains (network, network_port_nb).
             Port number indexing starts from zero.
+            Network's port not explicitly listed will be treated as matched.
+            Network's port listed individually will be treated as open.
         name : string, optional
             Name assigned to the circuit (Network). Default is None.
         auto_reduce : bool, optional
             If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
             This will change the circuit connections description, affecting inner current and voltage distributions.
             Suitable for cases where only the S-parameters of the final circuit ports are of interest. Default is False.
+            If `check_duplication`, `split_ground` or `max_nports` are provided as kwargs, `auto_reduce` will be
+            automatically set to True, as this indicates an intent to use the `reduce_circuit` method.
+        **kwargs :
+            keyword arguments passed to `reduce_circuit` method.
+
+            `check_duplication` kwarg controls whether to check the connections have duplicate names. Default is True.
+
+            `split_ground` kwarg controls whether to split the global ground connection to independant.
+            Default is False.
+
+            `max_nports` kwarg controls the maximum number of ports of a Network that can be reduced in circuit. If a
+            Network in the circuit has a number of ports (nports), using the Network.connect() method to reduce the
+            circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
+            This value depends on the performance of the computer and the scale of the circuit. Default is 20.
+
+            `dynamic_networks` kwarg is a sequence of Networks to be skipped during the reduction process.
+            Default is an empty tuple.
 
 
         Examples
@@ -195,6 +224,35 @@ class Circuit:
                 [(port3, 0), (ntw, 2)]
             ]
 
+        Example of a connection between three 1-port networks (port1, port2 and open)
+        and a 3-ports network (ntw):
+        ::
+            connections = [
+                [(port1, 0), (ntw, 0)],
+                [(open, 0), (ntw, 1)],
+                [(port2, 0), (ntw, 2)]
+            ]
+            # or equivalently
+            connections = [
+                [(port1, 0), (ntw, 0)],
+                [(ntw, 1)],
+                [(port2, 0), (ntw, 2)]
+            ]
+
+        Example of a connection between three 1-port networks (port1, port2 and match)
+        and a 3-ports network (ntw):
+        ::
+            connections = [
+                [(port1, 0), (ntw, 0)],
+                [(match, 0), (ntw, 1)],
+                [(port2, 0), (ntw, 2)]
+            ]
+            # or equivalently
+            connections = [
+                [(port1, 0), (ntw, 0)],
+                [(port2, 0), (ntw, 2)]
+            ]
+
         NB1: Creating 1-port network to be used as a port should be made with :func:`Port`
 
         NB2: The external ports indexing is defined by the order of appearance of
@@ -203,6 +261,10 @@ class Circuit:
         the second network identified as a port will be the second port (index 1),
         etc.
 
+        NB3: When a port of a network is listed individually in the connections, the circuit
+        will treat this port with a reflection coefficient of 1, equivalent to an Open.
+        Conversely, if a port is not explicitly included in the connections,the circuit will
+        treat it as matched.
 
         """
         self._connections = connections
@@ -228,11 +290,12 @@ class Circuit:
         # Check that a (ntwk, port) combination appears only once in the connexion map
         Circuit.check_duplicate_names(self.connections_list)
 
-        # Reduce the circuit if requested
-        if auto_reduce:
-            self.connections = reduce_circuit(self.connections,
-                                              check_duplication=False,
-                                              split_ground=True)
+        # Get the keyword arguments for the reduce_circuit method
+        kwargs_reduce = {k: kwargs[k] for k in self._REDUCE_OPTIONS.__annotations__.keys() if k in kwargs}
+
+        # Reduce the circuit if directly requested or any relevant kwargs are provided
+        if auto_reduce or any(kwargs_reduce):
+            self.connections = reduce_circuit(self.connections, **kwargs_reduce)
 
     @property
     def connections(self) -> list[list[tuple[Network, int]]]:
@@ -268,6 +331,117 @@ class Circuit:
         for item in ('s', 'X', 'C'):
             self.__dict__.pop(item, None)
 
+    def update_networks(
+        self, networks: tuple[Network],
+        name: str | None = None,
+        *,
+        inplace: bool = False,
+        auto_reduce: bool = False, **kwargs: Unpack[_REDUCE_OPTIONS]) -> Circuit | None:
+        """
+        Update the circuit connections with a new set of networks.
+
+        Parameters
+        ----------
+        networks : tuple[Network]
+            A tuple of Networks to be updated in the circuit.
+        name : string, optional
+            Name assigned to the circuit (Network). Default is None.
+        inplace : bool, optional
+            If True, the circuit connections will be updated inplace. Default is False.
+        auto_reduce : bool, optional
+            If True, the circuit will be automatically reduced using :func:`reduce_circuit`.
+            This will change the circuit connections description, affecting inner current and voltage distributions.
+            Suitable for cases where only the S-parameters of the final circuit ports are of interest. Default is False.
+            If `check_duplication`, `split_ground` or `max_nports` are provided as kwargs, `auto_reduce` will be
+            automatically set to True, as this indicates an intent to use the `reduce_circuit` method.
+        **kwargs :
+            keyword arguments passed to `reduce_circuit` method.
+
+            `check_duplication` kwarg controls whether to check the connections have duplicate names. Default is True.
+
+            `split_ground` kwarg controls whether to split the global ground connection to independant.
+            Default is False.
+
+            `max_nports` kwarg controls the maximum number of ports of a Network that can be reduced in circuit. If a
+            Network in the circuit has a number of ports (nports), using the Network.connect() method to reduce the
+            circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
+            This value depends on the performance of the computer and the scale of the circuit. Default is 20.
+
+            `dynamic_networks` kwarg is a sequence of Networks to be skipped during the reduction process.
+            Default is an empty tuple.
+
+        Returns
+        -------
+        Circuit or None if inplace=True
+            The updated `Circuit` with the specified networks.
+
+
+        See Also
+        --------
+        Circuit.__init__ : Circuit construtor method.
+
+
+        Examples
+        --------
+        >>> import skrf as rf
+        >>> import numpy as np
+        >>>
+        >>> # Create a series of networks and build a circuit
+        >>> connections = [
+        ...     ...
+        ...     [(ntwk1, 0), (ntwk2, 0)],
+        ...     [(ntwk2, 1), (ntwk3, 0)],
+        ...     ...
+        ... ]
+        >>> circuit = rf.Circuit(connections, dynamic_networks=[ntwk2])
+        >>>
+        >>> # Update the networks' S-parameters
+        >>> ntwk2.s = ntwk2.s @ ntwk2.s
+        >>>
+        >>> # Update the circuit in traditional way (ntwk2 has been updated)
+        >>> connections_updated = [
+        ...     ...
+        ...     [(ntwk1, 0), (ntwk2, 0)],
+        ...     [(ntwk2, 1), (ntwk3, 0)],
+        ...     ...
+        ... ]
+        >>>
+        >>> circuit_updated_a = rf.Circuit(connections_updated)
+        >>>
+        >>> # Update the circuit by dynamic networks
+        >>> circuit_updated_b = circuit.update_networks(networks=[ntwk2])
+        >>>
+        >>> np.allclose(circuit_updated_b.s_external, circuit_updated_b.s_external)
+        True
+        """
+        # Get current connection_dict
+        cnx_dict = self.networks_dict()
+
+        # Update the connection dict with the new networks
+        for ntw in networks:
+            if ntw.name in cnx_dict:
+                cnx_dict[ntw.name] = ntw
+            else:
+                raise ValueError(f"Network {ntw.name} not found in circuit.")
+
+        # Update the circuit connections with the new networks
+        connections = [
+            [(cnx_dict[n.name], p) for n, p in cnx] for cnx in self.connections
+        ]
+
+        # Get the keyword arguments for the reduce_circuit method
+        kwargs_reduce = {k: kwargs[k] for k in self._REDUCE_OPTIONS.__annotations__.keys() if k in kwargs}
+
+        # Reduce the circuit if directly requested or any relevant kwargs are provided
+        if auto_reduce or any(kwargs_reduce):
+            connections = reduce_circuit(connections, **kwargs_reduce)
+
+        if inplace:
+            self.connections = connections
+            return None
+
+        return Circuit(connections=connections, name=name)
+
     @classmethod
     def check_duplicate_names(cls, connections_list: list):
         """
@@ -301,6 +475,13 @@ class Circuit:
         Return True is the network is a ground, False otherwise
         """
         return ntw._ext_attrs.get("_is_circuit_ground", False)
+
+    @classmethod
+    def _is_open(cls, ntw: Network):
+        """
+        Return True is the network is a open, False otherwise
+        """
+        return ntw._ext_attrs.get("_is_circuit_open", False)
 
     @classmethod
     def Port(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
@@ -426,11 +607,11 @@ class Circuit:
     @classmethod
     def Ground(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
-        Return a 2-port network of a grounded link.
+        Return a 1-port network of a grounded link.
 
         Passing the frequency and a name is mandatory.
 
-        The ground link is modelled as an infinite shunt admittance.
+        The ground link is implemented by media.short object.
 
         Parameters
         ----------
@@ -444,7 +625,7 @@ class Circuit:
         Returns
         -------
         ground : :class:`~skrf.network.Network` object
-            2-port network
+            1-port network
 
         Examples
         --------
@@ -458,18 +639,19 @@ class Circuit:
             In [18]: ground = rf.Circuit.Ground(freq, name='GND')
 
         """
-        ground = cls.ShuntAdmittance(frequency, Y=INF, name=name)
+        _media = media.DefinedGammaZ0(frequency, z0=z0)
+        ground = _media.short(name=name)
         ground._ext_attrs['_is_circuit_ground'] = True
         return ground
 
     @classmethod
     def Open(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
-        Return a 2-port network of an open link.
+        Return a 1-port network of an open link.
 
         Passing the frequency and name is mandatory.
 
-        The open link is modelled as an infinite series impedance.
+        The open link is implemented by media.open object.
 
         Parameters
         ----------
@@ -483,7 +665,7 @@ class Circuit:
         Returns
         -------
         open : :class:`~skrf.network.Network` object
-            2-port network
+            1-port network
 
         Examples
         --------
@@ -497,7 +679,10 @@ class Circuit:
             In [18]: open = rf.Circuit.Open(freq, name='open')
 
         """
-        return cls.SeriesImpedance(frequency, Z=INF, name=name)
+        _media = media.DefinedGammaZ0(frequency, z0=z0)
+        Open = _media.open(name=name)
+        Open._ext_attrs['_is_circuit_open'] = True
+        return Open
 
     def networks_dict(self,
                       connections: list[list[tuple[Network, int]]] | None = None,
@@ -696,7 +881,7 @@ class Circuit:
         return edge_labels
 
 
-    def _Xk(self, cnx_k: list[tuple]) -> np.ndarray:
+    def _Xk(self, cnx_k: list[tuple[Network, int]]) -> np.ndarray:
         """
         Return the scattering matrices [X]_k of the individual intersections k.
         The results in [#]_ do not agree due to an error in the formula (3)
@@ -1209,43 +1394,41 @@ class Circuit:
             Currents in Amperes [A] (peak) at internal ports.
 
         """
-        # It is possible with Circuit to define connections between
-        # multiple (>2) ports at the same time in the connection setup, like :
-        # cnx = [
-        #       [(ntw1, portA), (ntw2, portB), (ntw3, portC)], ...
-        #]
-        # Such a case is not supported with the present calculation method
-        # which only works with pair connections between ports, ie like:
-        # cnx = [
-        #       [(ntw1, portA), (ntw2, portB)],
-        #       [(ntw2, portD), (ntw3, portC)], ...
-        #]
-        # It should not be a huge limitation (?), since it should be always possible
-        # to add the proper splitting Network (such a "T" or hybrid or more)
-        # and connect this splitting Network ports to other Network ports.
-        # ie going from:
-        # [ntwA]  ---- [ntwB]
-        #          |
-        #          |
-        #        [ntwC]
-        # to:
-        # [ntwA] ------ [ntwD] ------ [ntwB]
-        #                 |
-        #                 |
-        #              [ntwC]
-        for inter in self.intersections_dict.values():
-            if len(inter) > 2:
-                raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
-
         a = self._a(self._a_external(power, phase))
         b = self._b(a)
         z0s = self.z0
-        directions = self._currents_directions
-        i_l, i_r = directions[:, 0], directions[:, 1]
+        i, Is = 0, np.zeros_like(z0s)
 
-        z0_sqrt = np.sqrt(z0s)
-        Is = (b[:,i_l] / z0_sqrt[:,i_r] - b[:,i_r] / z0_sqrt[:,i_l]) \
-            * (2*z0_sqrt[:,i_l] * z0_sqrt[:,i_r]) / (z0s[:,i_l] + z0s[:,i_r])
+        for cnx in self.connections:
+            cnx_len = len(cnx)
+            z0_segment = z0s[:, i : i + cnx_len]
+            tot_shunt_z0 = (1 / z0_segment).sum(axis=1)
+            Ij = np.zeros_like(z0_segment)
+
+            # Calculate the ports' output current through the output wave
+            for j in range(cnx_len):
+                in_z0 = z0_segment[:, j]
+                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                tau = (2 * out_z0) / (out_z0 + in_z0)
+                Ij[:, j] = (b[:, i + j] / np.sqrt(in_z0)) * tau
+
+            # The current of each port is different in the same node
+            # The ports' current should take into account the output current of each port in the node
+            for j in range(cnx_len):
+                in_z0 = z0_segment[:, j]
+                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                Itmp = np.zeros_like(Is[:, i + j])
+                for k in range(cnx_len):
+                    tmp_z0 = z0_segment[:, k]
+                    if j == k:
+                        Itmp += Ij[:, k] * (tmp_z0 / out_z0)
+                    else:
+                        Itmp -= Ij[:, k] * (tmp_z0 / in_z0)
+
+                Is[:, i + j] = Itmp
+
+            i += cnx_len
+
         return Is
 
 
@@ -1263,23 +1446,31 @@ class Circuit:
         Returns
         -------
         V : complex array of shape (nfreqs, nports)
-            Voltages in Amperes [A] (peak) at internal ports.
+            Voltages in Volt [V] (peak) at internal ports.
 
         """
-        # cf currents() for more details
-        for inter in self.intersections_dict.values():
-            if len(inter) > 2:
-                raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
-
         a = self._a(self._a_external(power, phase))
         b = self._b(a)
         z0s = self.z0
-        directions = self._currents_directions
-        i_l, i_r = directions[:, 0], directions[:, 1]
+        i, Vs = 0, np.zeros_like(z0s)
 
-        z0_sqrt = np.sqrt(z0s)
-        Vs = (b[:,i_l] * z0_sqrt[:,i_r] + b[:,i_r] * z0_sqrt[:,i_l]) \
-            * (2*z0_sqrt[:,i_l] * z0_sqrt[:,i_r]) / (z0s[:,i_l] + z0s[:,i_r])
+        for cnx in self.connections:
+            cnx_len = len(cnx)
+            z0_segment = z0s[:, i : i + cnx_len]
+            tot_shunt_z0 = (1 / z0_segment).sum(axis=1)
+            Vk = np.zeros(shape=z0s.shape[0], dtype="complex128")
+
+            # Node voltage is the summation of each ports' outwave voltage
+            # The voltage of each port in the same node is consistent
+            for j in range(cnx_len):
+                in_z0 = z0_segment[:, j]
+                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                tau = (2 * out_z0) / (out_z0 + in_z0)
+                Vk += (b[:, i + j] * np.sqrt(in_z0)) * tau
+
+            Vs[:, i : i + cnx_len] = Vk[:, None]
+            i += cnx_len
+
         return Vs
 
     def currents_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
@@ -1448,8 +1639,10 @@ class Circuit:
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple[Network, int]]],
                    check_duplication: bool = True,
-                   split_ground: bool = False,
-                   max_nports: int = 20) -> list[list[tuple[Network, int]]]:
+                   split_ground: bool = True,
+                   split_multi: bool = False,
+                   max_nports: int = 20,
+                   dynamic_networks: Sequence[Network] = tuple()) -> list[list[tuple[Network, int]]]:
     """
     Return a reduced equivalent circuit connections with fewer components.
 
@@ -1458,17 +1651,24 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
     Parameters
     ----------
-    connections : list.
+    connections : list[list[tuple[Network, int]]].
             The connection list to reduce.
     check_duplication : bool, optional.
             If True, check if the connections have duplicate names. Default is True.
     split_ground : bool, optional.
-            If True, split the global ground connection to independant ground connections. Default is False.
-    max_nports : int
+            If True, split the global ground connection to independant ground connections. Default is True.
+    split_multi : bool, optional.
+            If True, use a splitter to handle connections involving more than two components. This approach
+            increases the computational load for individual computations. However, it proves advantageous for
+            batch processing by enabling a more comprehensive reduction of circuits, leading to more efficiency
+            in batch computations. Default is False.
+    max_nports : int, optional.
             The maximum number of ports of a Network that can be reduced in circuit. If a Network in the
             circuit has a number of ports (nports), using the Network.connect() method to reduce the circuit's
             dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
             This value depends on the performance of the computer and the scale of the circuit. Default is 20.
+    dynamic_networks : Sequence[Network], optional.
+            A sequence of Networks to ignore in the reduction process. Default is an empty tuple.
 
 
     Returns
@@ -1489,10 +1689,21 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     >>> np.allclose(ntwkA.s, ntwkB.s)
     True
     """
+    # Pre-processing the dynamic_networks tuple
+    ignore_ntwk_names: set[str] = set(ntw.name for ntw in dynamic_networks)
 
     def invalide_to_reduce(cnx: list[tuple[Network, int]]) -> bool:
-        return any((Circuit._is_port(ntwk) or ntwk.nports > max_nports)
-                   for ntwk, _ in cnx) or len(cnx) != 2
+        return (
+            any(
+                (
+                    Circuit._is_port(ntwk)
+                    or ntwk.nports > max_nports
+                    or ntwk.name in ignore_ntwk_names
+                )
+                for ntwk, _ in cnx
+            )
+            or len(cnx) != 2
+        )
 
     if split_ground:
         tmp_cnxs = []
@@ -1509,22 +1720,61 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
                 if Circuit._is_ground(ntwk):
                     continue
                 tmp_gnd = Circuit.Ground(frequency=ground_ntwk.frequency,
-                                         name=f'G_{ntwk.name}_{port}',
-                                         z0=ground_ntwk.z0)
+                                         name=f'G_{ntwk.name}_{port}')
+                tmp_gnd.z0 = ground_ntwk.z0
                 tmp_cnxs.append([(ntwk, port), (tmp_gnd, 0)])
 
         connections = tmp_cnxs
 
-    # get the total number of network ports in the specified connection
+    if split_multi:
+        tmp_cnxs = []
+
+        for cnx in connections:
+            # Check if the connection has more than 2 components
+            if len(cnx) <= 2:
+                tmp_cnxs.append(cnx)
+                continue
+
+            # Create a splitter for the connection
+            _media = media.DefinedGammaZ0(cnx[0][0].frequency)
+            splitter = _media.splitter(
+                name=f"Splt_{'&'.join(ntwk.name for ntwk, _ in cnx)}",
+                nports=len(cnx),
+                z0=np.array([ntwk.z0[:, p] for ntwk, p in cnx]).T
+            )
+
+            # Connect the splitter to the connection
+            for (idx, (ntwk, port)) in enumerate(cnx):
+                tmp_cnxs.append([(splitter, idx), (ntwk, port)])
+
+        connections = tmp_cnxs
+
+    # Cache the connections that have been processed to avoid loop
+    processed_network_names: set[str] = set()
+
+    # Calculate the total number of Network ports in the specified connection
     def calculate_ports(cnx: list[tuple[Network, int]]) -> int:
         if invalide_to_reduce(cnx):
             return -1
 
-        unique_networks = len(set(ntwk.name for ntwk, _ in cnx))
+        name_list = sorted(ntwk.name for ntwk, _ in cnx)
+        ntwks_str: str = ''.join(name_list)
+
+        unique_networks = len(set(name_list))
         total_ports = sum(ntwk.nports for ntwk, _ in cnx) - 2
 
         # Return the number of ports if the connections performed
-        return total_ports if unique_networks == 2 else total_ports // 2 - 1
+        ports = total_ports if unique_networks == 2 else total_ports // 2 - 1
+
+        # If tuples of Networks in 'connections' have the same Networks, they form a loop.
+        # Prioritize processing loops in the circuit by reducing the number of ports by 1.
+        # This reduces the computational load during the circuit reduction process.
+        if ntwks_str in processed_network_names:
+            ports -= 1
+        else:
+            processed_network_names.add(ntwks_str)
+
+        return ports
 
     # List of tuples containing connection indices and their calculated ports
     cnx_ports_list = [(idx, calculate_ports(cnx)) for idx, cnx in enumerate(connections)]
@@ -1556,12 +1806,19 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     (ntwkA, k), (ntwkB, l) = cnx_to_reduce
     ntwks_name = (ntwkA.name, ntwkB.name)
 
+    # Get the Networks' names
+    name_cnt, name_a, name_b = "", str(ntwkA.name), str(ntwkB.name)
+
     # Generate the connected network and the original port index
-    ntwk_cnt = Network()
     if ntwkA.name == ntwkB.name:
         ntwk_cnt = innerconnect(ntwkA=ntwkA, k=k, l=l)
+        name_cnt = f"<{name_a}>"
     else:
         ntwk_cnt = connect(ntwkA=ntwkA, k=k, ntwkB=ntwkB, l=l)
+        name_cnt = f"({name_a}**{name_b})"
+
+    # Update the name of the connected network
+    ntwk_cnt.name = name_cnt
 
     # Generate the port index, the index is the original port index
     # and the value is the new port index, -1 means the port is removed.
@@ -1610,4 +1867,11 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
         reduced_cnxs.append(tmp_cnx)
 
-    return reduce_circuit(connections=reduced_cnxs, check_duplication=False)
+    return reduce_circuit(
+        connections=reduced_cnxs,
+        check_duplication=False,
+        split_ground=False,
+        split_multi=False,
+        max_nports=max_nports,
+        dynamic_networks=dynamic_networks,
+    )

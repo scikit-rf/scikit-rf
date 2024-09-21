@@ -2,10 +2,14 @@ import os
 import sys
 import tempfile
 import unittest
+from contextlib import suppress
 from pathlib import Path
 
 import numpy as np
 import pytest
+
+with suppress(ImportError):
+    from PySpice.Spice.Parser import SpiceParser
 
 import skrf
 
@@ -74,7 +78,7 @@ class VectorFittingTestCase(unittest.TestCase):
         self.assertLess(vf.get_rms_error(), 0.2)
 
     @pytest.mark.skipif(
-        "matplotlib" not in sys.modules,
+        "PySpice" not in sys.modules,
         reason="Spice subcircuit uses Engformatter which is not available without matplotlib.")
     def test_spice_subcircuit(self):
         # fit ring slot example network
@@ -90,8 +94,13 @@ class VectorFittingTestCase(unittest.TestCase):
 
         # written tmp file should contain 69 lines
         with open(name) as f:
-            n_lines = len(f.readlines())
-        self.assertEqual(n_lines, 69)
+            parser = SpiceParser(name)
+
+        assert len(parser.subcircuits[0]._statements) == 52
+        assert len(parser.subcircuits[1]._statements) == 4
+        assert len(parser.subcircuits[2]._statements) == 2
+
+
         os.remove(name)
 
     def test_read_write_npz(self):

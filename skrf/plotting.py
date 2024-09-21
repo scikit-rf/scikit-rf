@@ -72,7 +72,7 @@ except ImportError:
 import numpy as np
 
 from . import mathFunctions as mf
-from .constants import NumberLike
+from .constants import NumberLike, PrimaryPropertiesT
 from .frequency import Frequency
 from .util import axes_kwarg, now_string_2_dt
 
@@ -1226,7 +1226,7 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
 
 @axes_kwarg
 def plot_uncertainty_bounds_component(
-        self: NetworkSet, attribute: str,
+        self: NetworkSet, attribute: PrimaryPropertiesT,
         m: int | None = None, n: int | None = None, *,
         type: str = 'shade', n_deviations: int = 3,
         alpha: float = .3, color_error: str | None = None,
@@ -1346,7 +1346,7 @@ def plot_uncertainty_bounds_component(
             ax.axis('tight')
 
 @axes_kwarg
-def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
+def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: int = 0,
                                  *, type: str = 'shade',
                                  alpha: float = .3, color_error: str | None = None,
                                  markevery_error: int = 20, ax: plt.Axes = None,
@@ -1451,7 +1451,7 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
     ax.axis('tight')
 
 @axes_kwarg
-def plot_violin(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
+def plot_violin(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: int = 0,
                          *, widths: float = None, showmeans: bool = True,
                          showextrema: bool = True, showmedians: bool = False,
                          quantiles = None, points: int = 100, bw_method = None,

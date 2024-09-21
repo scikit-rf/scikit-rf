@@ -59,7 +59,7 @@ s_deg = np.array(
     [-79.34, -66.58, -42.2 , 161.24]]])
 
 s = s_mag * np.exp(1j*s_deg * np.pi / 180)
-ex_5_6 = rf.Network(s=s, z0=[50, 75, 0.01, 0.01], f=5e9, f_unit="Hz")
+ex_5_6 = rf.Network(s=np.tile(s, [2, 1, 1]), z0=[50, 75, 0.01, 0.01], f=[5e9, 6e9], f_unit="Hz")
 
 @pytest.mark.parametrize("fname",
     [
@@ -189,3 +189,5 @@ def test_ts_example_17():
 
 def test_ts_example_16():
     ts = rf.Network(test_data / "ex_16.ts")
+    assert np.all(ts.port_modes == np.array(["S", "D", "C", "S", "D", "C"]))
+    assert np.allclose(ts.z0, [50, 150, 37.5, 50, 0.02, 0.005])
