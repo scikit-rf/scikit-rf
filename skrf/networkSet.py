@@ -1243,13 +1243,14 @@ class NetworkSet:
             df = ntwk.to_dataframe(attrs=attrs, ports=ports, port_sep=port_sep)
 
             # Insert the parameters and values for each network
-            [
-                df.insert(i, param_name, [param_val] * len(df))
-                for i, (param_name, param_val) in enumerate(ntwk.params.items())
-            ]
+            df[list(ntwk.params.keys())] = list(ntwk.params.values())
 
-            # Append to the list of dataframes
-            dfs.append(df)
+            # Get the columns by type
+            data_cols = df.columns[:-1 * len(ntwk.params)].tolist()
+            param_cols = df.columns[-1 * len(ntwk.params):].tolist()
+
+            # Append to the list of dataframes with the parameter columns first
+            dfs.append(df[param_cols + data_cols])
 
         # Return a concatenated dataframe
         return pd.concat(dfs)
