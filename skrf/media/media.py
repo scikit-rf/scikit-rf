@@ -1066,9 +1066,9 @@ class Media(ABC):
         
         result.y = \
                 np.array([[ y11,  y12, -y11, -y12],
-                        [ y21,  y22, -y21, -y22],
-                        [-y11, -y12,  y11,  y12],
-                        [-y21, -y22,  y21,  y22]]).transpose().reshape(-1, 4, 4)
+                          [ y21,  y22, -y21, -y22],
+                          [-y11, -y12,  y11,  y12],
+                          [-y21, -y22,  y21,  y22]]).transpose().reshape(-1, 4, 4)
         
         # renormalize (or embed) into z0_port if required
         if self.z0_port is not None:
