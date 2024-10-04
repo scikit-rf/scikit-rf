@@ -2757,7 +2757,7 @@ class NISTMultilineTRL(EightTerm):
             self.z0_ref = [self.z0_ref] * fpoints
         if np.isscalar(self.z0_line):
             self.z0_line = [self.z0_line] * fpoints
-        if np.isscalar(self.z0_ref):
+        if np.isscalar(self.c0):
             self.c0 = [self.c0] * fpoints
 
         if np.isscalar(self.Grefls):
