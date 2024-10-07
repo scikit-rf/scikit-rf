@@ -1001,9 +1001,9 @@ class Media(ABC):
         result.renormalize(result.z0, s_def=s_def)
 
         return result
-    
+
     def line_floating(self, d: NumberLike, unit: str = 'deg',
-                z0: NumberLike | str | None = None, **kwargs) -> Network:    
+                z0: NumberLike | str | None = None, **kwargs) -> Network:
         r"""
         Floating transmission line of a given length and impedance.
 
@@ -1063,19 +1063,19 @@ class Media(ABC):
         y12 = -1 / (z0 * np.sinh(theta))
         y22 = y11
         y21 = y12
-        
+
         result.y = \
                 np.array([[ y11,  y12, -y11, -y12],
                           [ y21,  y22, -y21, -y22],
                           [-y11, -y12,  y11,  y12],
                           [-y21, -y22,  y21,  y22]]).transpose().reshape(-1, 4, 4)
-        
+
         # renormalize (or embed) into z0_port if required
         if self.z0_port is not None:
             result.renormalize(self.z0_port)
         result.renormalize(result.z0, s_def=s_def)
 
-        return result    
+        return result
 
 
     def delay_load(self, Gamma0: NumberLike, d: Number, unit: str = 'deg', **kwargs) -> Network:
