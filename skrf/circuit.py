@@ -923,7 +923,8 @@ class Circuit:
         It is composed of the individual intersection matrices [X]_k assembled
         by block diagonal.
 
-        Args:
+        Parameters
+        ----------
             order : str, optional
                 'C' or 'F' for row-major or column-major order of the output array.
                 Default is 'C'.
@@ -934,8 +935,15 @@ class Circuit:
 
         Note
         ----
-        There is a numerical bottleneck in this function,
-        when creating the block diagonal matrice [X] from the [X]_k matrices.
+        The block diagonal matrix [X] has a numerical bottleneck that depends on the
+        order specified:
+        - When 'order' is 'C', the creation of the block diagonal matrix [X] in row-major
+          order is a bottleneck. This is because the creation process is port-by-port,
+          which does not align well with the row-major memory layout, leading to
+          suboptimal performance.
+        - When 'order' is 'F', the computation of the block diagonal matrix [X] in column-major
+          order is a bottleneck. Numpy generally optimizes operators for 'C' order, which
+          lead to performance issues when using 'F' order.
         """
         Xks = [self._Xk(cnx, order) for cnx in self.connections]
 
