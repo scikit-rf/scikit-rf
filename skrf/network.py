@@ -2059,7 +2059,8 @@ class Network:
         ntwk = Network(z0=self.z0, s_def=self.s_def, comments=self.comments)
 
         ntwk._s = self.s.copy()
-        ntwk.frequency = self.frequency
+        ntwk.frequency._f = self.frequency._f.copy()
+        ntwk.frequency.unit = self.frequency.unit
         ntwk.port_modes = self.port_modes.copy()
 
         if self.params is not None:
@@ -6256,7 +6257,7 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.
     nC = nA + nB  # num ports on C
 
     # create composite matrix, appending each sub-matrix diagonally
-    C = np.zeros((nf, nC, nC), dtype='complex')
+    C = np.zeros((nf, nC, nC), dtype='complex', order='F')
 
     # if ntwkB is a 2port, then keep port indices where you expect.
     if nB == 2 and nA > 2 and num == 1:
@@ -6359,8 +6360,8 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
     Ael = A[:, ext_i, l].T
 
     # Create an suit-sized s-matrix, to store the result
-    x, y = np.meshgrid(ext_i, ext_i)
-    C = A[:, y, x]
+    i, j = np.meshgrid(ext_i, ext_i, indexing='ij', sparse=True)
+    C = A[:, i, j]
 
     # create temporary matrices for calculation
     det = (Akl * Alk - Akk * All)

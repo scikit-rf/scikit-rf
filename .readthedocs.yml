@@ -10,18 +10,15 @@ build:
   os: ubuntu-20.04
   tools:
     python: "3.10"
+  commands:
+    - asdf plugin add uv
+    - asdf install uv latest
+    - asdf global uv latest
+    - uv venv
+    - uv pip install .[docs,plot,test,netw,visa]
+    - .venv/bin/python -m sphinx -T -b html -d _build/doctrees -D language=en doc/source $READTHEDOCS_OUTPUT/html
+
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
    configuration: doc/source/conf.py
-
-python:
-  install:
-  - method: pip
-    path: .
-    extra_requirements:
-      - docs
-      - plot
-      - test
-      - netw
-      - visa

@@ -9,7 +9,7 @@ try:
     from skrf.vi.vna import ValuesFormat, keysight
     from skrf.vi.vna.keysight.fieldfox import WindowFormat
 except ImportError:
-    pass
+    pytest.skip(allow_module_level=True)
 
 if "matplotlib" not in sys.modules:
     pytest.skip(allow_module_level=True)

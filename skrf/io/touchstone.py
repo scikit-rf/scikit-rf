@@ -372,7 +372,7 @@ class Touchstone:
         # Should be .sNp for Touchstone format V1.0, and .ts for V2
         extension = self.filename.split(".")[-1].lower()
 
-        m = re.match(r"s(\d+)p", extension)
+        m = re.match(r"[ghsyz](\d+)p", extension)
         if m:
             state.rank = int(m.group(1))
         elif extension != "ts":
