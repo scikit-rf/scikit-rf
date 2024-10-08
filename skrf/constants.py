@@ -122,6 +122,7 @@ ComponentFuncT = Literal["re", "im", "mag", "db", "db10", "rad", "deg", "arcl", 
 SparamFormatT = Literal["db", "ri", "ma"]
 PortOrderT = Literal["first", "second", "third", "last", "auto"]
 CircuitComponentT = Literal["_is_circuit_port", "_is_circuit_ground", "_is_circuit_open"]
+MemoryLayoutT = Literal["C", "F"]
 
 NumberLike = Union[Number, Sequence[Number], np.ndarray]
 
