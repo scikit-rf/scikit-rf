@@ -3552,12 +3552,12 @@ class TUGMultilineTRL(EightTerm):
     References
     ----------
     .. [1] Z. Hatab, M. Gadringer and W. Bösch, "Improving The Reliability of The Multiline TRL Calibration Algorithm,"
-        _2022 98th ARFTG Microwave Measurement Conference (ARFTG)_, Las Vegas, NV, USA, 2022, pp. 1-5,
+        2022 98th ARFTG Microwave Measurement Conference (ARFTG), Las Vegas, NV, USA, 2022, pp. 1-5,
         doi: https://doi.org/10.1109/ARFTG52954.2022.9844064
 
-    .. [2] Z. Hatab, M. Gadringer and W. Bösch, "Propagation of Linear Uncertainties through Multiline
-        Thru-Reflect-Line Calibration,"
-            2023, e-print: https://arxiv.org/abs/2301.09126
+    .. [2] Z. Hatab, M. Gadringer and W. Bösch, "Propagation of Linear Uncertainties Through Multiline
+        Thru-Reflect-Line Calibration," in IEEE Transactions on Instrumentation and Measurement,
+        vol. 72, pp. 1-9, 2023, doi: https://doi.org/10.1109/TIM.2023.3296123
 
     .. [3] https://ziadhatab.github.io/posts/multiline-trl-calibration/
 
@@ -3751,13 +3751,13 @@ class TUGMultilineTRL(EightTerm):
                 k2 = -v11*v22*v24/v12 + v11*v14*v22**2/v12**2 + v21*v24 - v14*v21*v22/v12
                 k1 = v11*v24/v12 - 2*v11*v14*v22/v12**2 - v23 + v13*v22/v12 + v14*v21/v12
                 k0 = v11*v14/v12**2 - v13/v12
-                c2 = np.array([(-k1 - np.sqrt(-4*k0*k2 + k1**2))/(2*k2), (-k1 + np.sqrt(-4*k0*k2 + k1**2))/(2*k2)])
+                c2 = np.roots([k2,k1,k0])*np.ones(2)
                 c1 = (1 - c2*v22)/v12
             else:
                 k2 = -v11*v12*v24/v22 + v11*v14 + v12**2*v21*v24/v22**2 - v12*v14*v21/v22
                 k1 = v11*v24/v22 - 2*v12*v21*v24/v22**2 + v12*v23/v22 - v13 + v14*v21/v22
                 k0 = v21*v24/v22**2 - v23/v22
-                c1 = np.array([(-k1 - np.sqrt(-4*k0*k2 + k1**2))/(2*k2), (-k1 + np.sqrt(-4*k0*k2 + k1**2))/(2*k2)])
+                c1 = np.roots([k2,k1,k0])*np.ones(2)
                 c2 = (1 - c1*v12)/v22
             x = np.array( [v1*x + v2*y for x,y in zip(c1,c2)] )  # 2 solutions
             mininx = np.argmin( abs(x - x_est).sum(axis=1) )
