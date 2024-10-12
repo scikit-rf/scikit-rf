@@ -3555,9 +3555,9 @@ class TUGMultilineTRL(EightTerm):
         2022 98th ARFTG Microwave Measurement Conference (ARFTG), Las Vegas, NV, USA, 2022, pp. 1-5,
         doi: https://doi.org/10.1109/ARFTG52954.2022.9844064
 
-    .. [2] Z. Hatab, M. Gadringer and W. Bösch, "Propagation of Linear Uncertainties Through Multiline Thru-Reflect-Line Calibration," 
-        in IEEE Transactions on Instrumentation and Measurement, vol. 72, pp. 1-9, 2023, 
-        doi: https://doi.org/10.1109/TIM.2023.3296123
+    .. [2] Z. Hatab, M. Gadringer and W. Bösch, "Propagation of Linear Uncertainties Through Multiline
+        Thru-Reflect-Line Calibration," in IEEE Transactions on Instrumentation and Measurement,
+        vol. 72, pp. 1-9, 2023, doi: https://doi.org/10.1109/TIM.2023.3296123
 
     .. [3] https://ziadhatab.github.io/posts/multiline-trl-calibration/
 
