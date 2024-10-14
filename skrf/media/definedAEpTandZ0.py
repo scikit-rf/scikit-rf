@@ -170,10 +170,13 @@ class DefinedAEpTandZ0(Media):
         f = self.frequency.f
         if self.model == 'djordjevicsvensson':
             # compute the slope for a log frequency scale, tanD dependent.
-            m = (ep_r*tand) * (pi/(2*log(10)))
+            k = log((f_high + 1j * f_ep) / (f_low + 1j * f_ep))
+            fd = log((f_high + 1j * f) / (f_low + 1j * f))
+            ep_d = -tand * ep_r  / imag(k)
             # value for frequency above f_high
-            ep_inf = (ep_r - 1j*ep_r*tand - m*log((f_high + 1j*f_ep)/(f_low + 1j*f_ep)))
-            return ep_inf + m*log((f_high + 1j*f)/(f_low + 1j*f))
+            ep_inf = ep_r * (1. + tand * real(k) / imag(k))
+            # compute complex permitivity
+            return ep_inf + ep_d * fd
         elif self.model == 'frequencyinvariant':
             return ones(self.frequency.f.shape) * (ep_r - 1j*ep_r*tand)
         else:
