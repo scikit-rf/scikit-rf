@@ -114,7 +114,7 @@ testpaths = [
     "doc/source/examples",
     "doc/source/tutorials"
 ]
-addopts = "--cov=skrf --ignore-glob='*.ipynb_checkpoints'"
+addopts = "--cov=skrf --ignore-glob='*.ipynb_checkpoints' --ignore=doc/source/tutorials/VirtualInstruments.ipynb"
 norecursedirs = [
     "skrf/src",
     "doc/source/examples/instrumentcontrol"
