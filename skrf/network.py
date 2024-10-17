@@ -78,7 +78,6 @@ Combining and Splitting Networks
     one_port_2_two_port
     n_oneports_2_nport
     four_oneports_2_twoport
-    three_twoports_2_threeport
     n_twoports_2_nport
     concat_ports
 
@@ -6016,7 +6015,6 @@ def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Netwo
     See Also
     --------
     n_oneports_2_nport
-    three_twoports_2_threeport
     """
     return n_oneports_2_nport([s11, s12, s21, s22], *args, **kwargs)
 
