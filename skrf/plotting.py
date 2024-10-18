@@ -25,7 +25,6 @@ Plots and Charts
     plot_minmax_bounds_s_time_db
 
     plot_uncertainty_bounds_component
-    plot_uncertainty_bounds_s
     plot_uncertainty_bounds_s_db
     plot_uncertainty_bounds_s_time_db
 
