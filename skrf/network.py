@@ -51,6 +51,7 @@ Connecting Networks
     cascade_list
     de_embed
     flip
+    parallelconnect
 
 
 
