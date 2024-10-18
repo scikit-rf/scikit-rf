@@ -51,6 +51,7 @@ Connecting Networks
     cascade_list
     de_embed
     flip
+    parallelconnect
 
 
 
@@ -5227,6 +5228,189 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     """
     warnings.warn("connect_fast is deprecated. Use connect.", DeprecationWarning, stacklevel=2)
     return connect(ntwkA, k, ntwkB, l)
+
+
+def parallelconnect(ntwks: Sequence[Network] | Network,
+                    ports: Sequence[int | Sequence[int]],
+                    name: str | None = None) -> Network:
+    """
+    Connects a series of multi-port networks in parallel, ensuring that the specified port
+    indices share the concatenated intersection.
+
+    Parameters
+    ----------
+    ntwks : :Sequence[`Network`] | `Network`
+            A sequence of multi-port networks or a single network to be connected in parallel.
+    ports : Sequence[int  |  Sequence[int]]
+            A sequence of port indices, where each entry can be an int or a sequence of ints
+            corresponding to the ports of the respective network. The length of `ports` should
+            match the length of `networks`. Each specified port index is connect to the
+            concatenated intersection, implying they are electrically common.
+    name : str, optional
+            define the connected network's name. Default is None.
+
+
+    Returns
+    -------
+    connected_network : :class:`Network`
+            A new network created from the parallel connection of the input networks.
+            The number of ports in the resulting network equals the sum of ports in `ntwks`,
+            minus the number of ports specified in `ports` that were connected in parallel.
+            The remaining ports follow the original port order of the input networks, after
+            removing those involved in the parallel connection.
+
+
+    Note
+    ----
+    This function calculates the resulting scattering parameters after parallel connecting
+    a set of networks. This algorithm, adapted from the `Circuit.s` method, constructs the
+    concatenated intersection matrix [X] and the global scattering matrix [C] to perform
+    the calculations.
+
+
+    See Also
+    --------
+    connect_s : actual S-parameter connection algorithm.
+    innerconnect_s : actual S-parameter connection algorithm.
+
+
+    Examples
+    --------
+
+    The following examples demonstrate how to use the :func:`parallelconnect` in
+    different ways, such as open a port, connect two networks, innerconnect one
+    network, and parallel multiple networks.
+
+    >>> # Prepare the example Networks
+    >>> ntwkA = rf.Network('ntwkA.s2p')
+    >>> ntwkB = rf.Network('ntwkB.s2p')
+    >>> ntwkC = rf.connect('ntwkC.s4p')
+    >>>
+    >>> # 1) Open port 1 of ntwkA
+    >>> #    +-----+
+    >>> #   [0] A [1]--Open
+    >>> #    +-----+
+    >>> #
+    >>> rf.parallelconnect(ntwkA, [1])
+    >>>
+    >>>
+    >>> # 2) Connect ntwkA's port 1 to ntwkB's port 0
+    >>> #    +-----+     +-----+
+    >>> #   [0] A [1]---[0] B [1]
+    >>> #    +-----+     +-----+
+    >>> #
+    >>> rf.parallelconnect([ntwkA, ntwkB], [1, 0])
+    >>>
+    >>>
+    >>> # 3) Innerconnect the ntwkC's port 1 and 3
+    >>> #  +-----+
+    >>> #  |    [1]--+
+    >>> # [0] C [2]  |
+    >>> #  |    [3]--+
+    >>> #  +-----+
+    >>> #
+    >>> rf.parallelconnect(ntwkC, [[2, 3]])
+    >>>
+    >>>
+    >>> # 4) Parallel connect the ntwkA's port 1, ntwkB's port 1 and ntwkC's port 0
+    >>> #  +-----+
+    >>> # [0] A [1]---+    +-----+
+    >>> #  +-----+    |    |    [1]
+    >>> #             |---[0] C [2]
+    >>> #  +-----+    |    |    [3]
+    >>> # [0] B [1]---+    +-----+
+    >>> #  +-----+
+    >>> #
+    >>> rf.parallelconnect([ntwkA, ntwkB, ntwkC], [1, 1, 0])
+    >>>
+    >>>
+    >>> # 5) The port order of connected ntwk follows the order of ntwks and ports
+    >>> # as shown in example 4:
+    >>> #  +-----+
+    >>> # [0] A [1]---+    +-----+          +---------------+
+    >>> #  +-----+    |    |    [1]        [0]=A[0]   C[3]=[3]
+    >>> #             |---[0] C [2]  ===>  [1]=B[0]         |
+    >>> #  +-----+    |    |    [3]        [2]=C[1]   C[3]=[4]
+    >>> # [0] B [1]---+    +-----+          +---------------+
+    >>> #  +-----+
+
+    References
+    ----------
+    .. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
+    """
+    # Handle single network input
+    if isinstance(ntwks, Network):
+        ntwks = [ntwks]
+
+    if len(ntwks) != len(ports):
+        raise ValueError(f'ntwks and ports must have the same length ({len(ntwks)} != {len(ports)})')
+
+    # Ensure unique networks
+    if len(set(ntw.name for ntw in ntwks)) != len(ntwks):
+        raise ValueError('ntwks should not be duplicated.')
+
+    # Get the index of each network in the list
+    dim, off = sum(ntw.nports for ntw in ntwks), 0
+    inter_indices, exter_indices =  [], []
+    z0_in, z0_ext = [], []
+
+    # Assign the global scattering matrix [X] and concatenated intersection matrix [C]
+    X = np.zeros((ntwks[0].frequency.npoints, dim, dim), dtype='complex')
+    C = np.zeros((ntwks[0].frequency.npoints, dim, dim), dtype='complex')
+
+    for ntw, port in zip(ntwks, ports):
+        # Get the nports of Network
+        nports: int = ntw.nports
+
+        # Convert the int port to list
+        port = [port] if isinstance(port, int) else port
+
+        # Che the port indecies valid or not
+        if len(port) != len(set(port)):
+            raise ValueError(f"{ntw.name}'s port should not be duplicated.")
+        if max(port) >= nports or min(port) < 0:
+            raise ValueError(f"{ntw.name}'s port index should be between 0 and {nports-1}")
+
+        # Check the frequency equal or not
+        check_frequency_equal(ntw, ntwks[0])
+
+        # Append the port index with offset to indices list
+        for p in range(nports):
+            if p in port:
+                inter_indices.append(p + off)
+                z0_in.append(ntw.z0[:, p])
+            else:
+                exter_indices.append(p + off)
+                z0_ext.append(ntw.z0[:, p])
+
+        # Assign the scattering matrix of each network to the global scattering matrix
+        X[:, off:off+nports, off:off+nports] = ntw.s_traveling
+
+        # Update the offset
+        off += nports
+
+    # Compute interaction matrix for internal connections
+    z0s = np.array(z0_in).T
+    y0s = 1./z0s
+    y_tot = y0s.sum(axis=1)
+
+    s = 2 *np.sqrt(np.einsum('ki,kj->kij', y0s, y0s)) / y_tot[:, None, None]
+    np.einsum('kii->ki', s)[:] -= 1  # Sii
+
+    # Get the index of internal port and external port from global matrix
+    in_ind = np.meshgrid(inter_indices, inter_indices, indexing='ij')
+    out_ind = np.meshgrid(exter_indices, exter_indices, indexing='ij')
+
+    # Update the concatenated intersection matrix
+    C[:, in_ind[0], in_ind[1]] = s
+
+    # Get the global scattering matrix
+    s = X @ np.linalg.inv(np.identity(dim) - C @ X)
+
+    return Network(frequency = ntwks[0].frequency,
+                   s = s[:, out_ind[0], out_ind[1]],
+                   z0 = np.array(z0_ext).T,
+                   name = name)
 
 
 def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
