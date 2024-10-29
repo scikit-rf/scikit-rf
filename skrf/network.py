@@ -5510,7 +5510,7 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
                        to_ports=list(range(k, ntwkC.nports)))
 
     # call s-matrix connection function
-    ntwkC.s = innerconnect_s(ntwkC.s if z0_equal else ntwkA.s, k, l)
+    ntwkC.s = innerconnect_s(ntwkC.s if not z0_equal else ntwkA.s, k, l)
 
     # update the characteristic impedance matrix
     ntwkC.z0 = np.delete(ntwkC.z0, list(range(k, k + 1)) + list(range(l, l + 1)), 1)
