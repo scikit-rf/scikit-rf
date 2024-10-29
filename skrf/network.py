@@ -2043,12 +2043,29 @@ class Network:
         return True
 
     ## CLASS METHODS
-    def copy(self) -> Network:
+    def copy(self, shallow_copy: bool = False) -> Network:
         """
         Return a copy of this Network.
 
         Needed to allow pass-by-value for a Network instead of
         pass-by-reference
+
+        Parameters
+        ----------
+        shallow_copy : bool, optional
+            If True, the method creates a new Network object with empty s-parameters that share the same shape
+            as the original Network, but without copying the actual s-parameters data. This is useful when you
+            plan to immediately modify the s-parameters after creating the Network, as a deep copy would be
+            unnecessary and costly. Using `shallow_copy` improves performance by leveraging lazy initialization
+            through `numpy's np.empty()`, which allocates virtual memory without immediate physical memory
+            allocation, deferring actual memory initialization until first access. This approach can significantly
+            enhance `copy()` performance when dealing with large `Network` objects, when you are intended for
+            immediate modification after the Network's creation.
+
+        Note
+        ----
+        If you require a complete copy of the `Network` instance or need to perform operation on the s-parameters
+        of the copied Network, it is essential not to use the `shallow_copy` parameter!
 
         Returns
         -------
@@ -2058,7 +2075,11 @@ class Network:
         """
         ntwk = Network(z0=self.z0, s_def=self.s_def, comments=self.comments)
 
-        ntwk._s = self.s.copy()
+        ntwk._s = (
+            np.empty(shape=self.s.shape, dtype=self.s.dtype)
+            if shallow_copy
+            else self.s.copy()
+        )
         ntwk.frequency._f = self.frequency._f.copy()
         ntwk.frequency.unit = self.frequency.unit
         ntwk.port_modes = self.port_modes.copy()
