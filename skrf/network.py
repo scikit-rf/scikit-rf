@@ -5100,8 +5100,8 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     # mismatch, which takes into account the effect of differing port
     # impedances.
     # import pdb;pdb.set_trace()
-    z0_equal = not assert_z0_at_ports_equal(ntwkA, k, ntwkB, l)
-    if z0_equal:
+    z0_equal = assert_z0_at_ports_equal(ntwkA, k, ntwkB, l)
+    if not z0_equal:
         # connect a impedance mismatch, which will takes into account the
         # effect of differing port impedances
         mismatch = impedance_mismatch(ntwkA.z0[:, k], ntwkB.z0[:, l], s_def)
@@ -5113,7 +5113,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
                        to_ports=list(range(k, ntwkC.nports)))
     # call s-matrix connection function
-    ntwkC.s = connect_s(ntwkC.s if z0_equal else ntwkA.s, k, ntwkB.s, l, num)
+    ntwkC.s = connect_s(ntwkC.s if not z0_equal else ntwkA.s, k, ntwkB.s, l, num)
 
     # combine z0 arrays and remove ports which were `connected`
     ntwkC.z0 = np.hstack(
@@ -5495,9 +5495,9 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
 
     s_def_original = ntwkC.s_def
 
-    z0_equal = not (ntwkC.z0[:, k] == ntwkC.z0[:, l]).all()
+    z0_equal = (ntwkC.z0[:, k] == ntwkC.z0[:, l]).all()
 
-    if z0_equal:
+    if not z0_equal:
         # connect a impedance mismatch, which will takes into account the
         # effect of differing port impedances
         mismatch = impedance_mismatch(ntwkA.z0[:, k], ntwkA.z0[:, l], ntwkA.s_def)
