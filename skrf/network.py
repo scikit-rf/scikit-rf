@@ -2043,7 +2043,7 @@ class Network:
         return True
 
     ## CLASS METHODS
-    def copy(self, shallow_copy: bool = False) -> Network:
+    def copy(self, *, shallow_copy: bool = False) -> Network:
         """
         Return a copy of this Network.
 
