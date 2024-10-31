@@ -1,5 +1,6 @@
 import os
 import unittest
+import warnings
 
 import numpy as np
 import pytest
@@ -19,8 +20,8 @@ class AgilentCSVTestCase(unittest.TestCase):
         name for pna_csv_reim.csv file, then reads it in.
         """
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
-        filename = os.path.join(self.test_dir, 'pna_csv_reim.csv')
-        self.acsv = rf.AgilentCSV(filename)
+        self.filename = os.path.join(self.test_dir, 'pna_csv_reim.csv')
+        self.acsv = rf.AgilentCSV(self.filename)
 
     def test_columns(self):
         """
@@ -64,3 +65,18 @@ class AgilentCSVTestCase(unittest.TestCase):
         This only tests for execution, not accuracy
         """
         a = self.acsv.scalar_networks
+
+    def test_read_pna_csv(self):
+        """
+        This tests reading of a csv file written by an Agilient PNA.
+        """
+        with warnings.catch_warnings(record=True) as w:
+            with self.assertWarns(DeprecationWarning):
+                header, comment, data, f_unit = rf.read_pna_csv(self.filename)
+
+        self.assertEqual(header, 'Freq(Hz),"A,1"(REAL),"A,1"(IMAG),"R1,1"(REAL),"R1,1"(IMAG)')
+        self.assertEqual(comment, 'this is a comment\nline\n')
+        self.assertTrue((data == np.array([[750000000000, 1, 2, 3, 4],
+                                    [1100000000000, 5, 6, 7,8],
+                                ])).all())
+        self.assertEqual(f_unit, 'Hz')
