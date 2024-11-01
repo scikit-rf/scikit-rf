@@ -974,8 +974,8 @@ class Media(ABC):
                 '`embed` will be removed in version 1.0',
               DeprecationWarning, stacklevel = 2)
 
-        if isinstance(z0,str):
-            z0 = parse_z0(z0)* self.z0
+        if isinstance(z0, str):
+            z0 = parse_z0(z0) * self.z0
 
         if z0 is None:
             z0 = self.z0
@@ -1024,7 +1024,7 @@ class Media(ABC):
                 the units of d.  See :func:`to_meters`, for details
         z0 : number, string, or array-like or None
             the characteristic impedance of the line, if different
-            from media.z0. To set z0 in terms of normalized impedance,
+            from `media.z0`. To set z0 in terms of normalized impedance,
             pass a string, like `z0='1+.2j'`
         \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
@@ -1041,8 +1041,8 @@ class Media(ABC):
         >>> my_media.line_floating(90, 'deg', z0='2') # set z0 as normalized impedance
 
         """
-        if isinstance(z0,str):
-            z0 = self.parse_z0(z0)* self.z0
+        if isinstance(z0, str):
+            z0 = self.parse_z0(z0) * self.z0
 
         if z0 is None:
             z0 = self.z0
@@ -1053,22 +1053,29 @@ class Media(ABC):
         # is required here.
         # The definition of the reflection coefficient for power waves has
         # conjugation.
-        result = self.match(nports=4, z0 = z0, s_def='traveling', **kwargs)
+        result = self.match(nports=4, z0=z0, s_def='traveling', **kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
 
-        # From AWR docs on TLINP4. The math below could
-        # be re-worked directly into its S-parameter formulation
-        y11 = 1 / (z0 * np.tanh(theta))
-        y12 = -1 / (z0 * np.sinh(theta))
-        y22 = y11
-        y21 = y12
+        if np.abs(theta) < ZERO:
+            result.s = 1/2* np.array([[1, 1, 1, -1],
+                                      [1, 1, -1, 1],
+                                      [1, -1, 1, 1],
+                                      [-1, 1, 1, 1]]
+                                      ).transpose().reshape(-1,4,4)
+        else:
+            # From AWR docs on TLINP4. The math below could
+            # be re-worked directly into its S-parameter formulation
+            y11 = 1 / (z0 * np.tanh(theta))
+            y12 = -1 / (z0 * np.sinh(theta))
+            y22 = y11
+            y21 = y12
 
-        result.y = \
-                np.array([[ y11,  y12, -y11, -y12],
-                          [ y21,  y22, -y21, -y22],
-                          [-y11, -y12,  y11,  y12],
-                          [-y21, -y22,  y21,  y22]]).transpose().reshape(-1, 4, 4)
+            result.y = \
+                    np.array([[ y11,  y12, -y11, -y12],
+                              [ y21,  y22, -y21, -y22],
+                              [-y11, -y12,  y11,  y12],
+                              [-y21, -y22,  y21,  y22]]).transpose().reshape(-1, 4, 4)
 
         # renormalize (or embed) into z0_port if required
         if self.z0_port is not None:
