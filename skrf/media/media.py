@@ -1057,7 +1057,7 @@ class Media(ABC):
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
 
-        if np.abs(theta) < ZERO:
+        if np.abs(theta).all() < ZERO:
             result.s = 1/2* np.array([[1, 1, 1, -1],
                                       [1, 1, -1, 1],
                                       [1, -1, 1, 1],
