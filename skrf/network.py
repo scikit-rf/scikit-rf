@@ -2043,12 +2043,29 @@ class Network:
         return True
 
     ## CLASS METHODS
-    def copy(self) -> Network:
+    def copy(self, *, shallow_copy: bool = False) -> Network:
         """
         Return a copy of this Network.
 
         Needed to allow pass-by-value for a Network instead of
         pass-by-reference
+
+        Parameters
+        ----------
+        shallow_copy : bool, optional
+            If True, the method creates a new Network object with empty s-parameters that share the same shape
+            as the original Network, but without copying the actual s-parameters data. This is useful when you
+            plan to immediately modify the s-parameters after creating the Network, as a deep copy would be
+            unnecessary and costly. Using `shallow_copy` improves performance by leveraging lazy initialization
+            through `numpy's np.empty()`, which allocates virtual memory without immediate physical memory
+            allocation, deferring actual memory initialization until first access. This approach can significantly
+            enhance `copy()` performance when dealing with large `Network` objects, when you are intended for
+            immediate modification after the Network's creation.
+
+        Note
+        ----
+        If you require a complete copy of the `Network` instance or need to perform operation on the s-parameters
+        of the copied Network, it is essential not to use the `shallow_copy` parameter!
 
         Returns
         -------
@@ -2058,7 +2075,11 @@ class Network:
         """
         ntwk = Network(z0=self.z0, s_def=self.s_def, comments=self.comments)
 
-        ntwk._s = self.s.copy()
+        ntwk._s = (
+            np.empty(shape=self.s.shape, dtype=self.s.dtype)
+            if shallow_copy
+            else self.s.copy()
+        )
         ntwk.frequency._f = self.frequency._f.copy()
         ntwk.frequency.unit = self.frequency.unit
         ntwk.port_modes = self.port_modes.copy()
@@ -5072,13 +5093,15 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         s_def = 'traveling'
 
     # create output Network, from copy of input
-    ntwkC = ntwkA.copy()
+    # Since ntwkC's s-parameters will change later, use shallow_copy for speedup
+    ntwkC = ntwkA.copy(shallow_copy=True)
 
     # if networks' z0's are not identical, then connect a impedance
     # mismatch, which takes into account the effect of differing port
     # impedances.
     # import pdb;pdb.set_trace()
-    if not assert_z0_at_ports_equal(ntwkA, k, ntwkB, l):
+    z0_equal = assert_z0_at_ports_equal(ntwkA, k, ntwkB, l)
+    if not z0_equal:
         # connect a impedance mismatch, which will takes into account the
         # effect of differing port impedances
         mismatch = impedance_mismatch(ntwkA.z0[:, k], ntwkB.z0[:, l], s_def)
@@ -5090,7 +5113,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
                        to_ports=list(range(k, ntwkC.nports)))
     # call s-matrix connection function
-    ntwkC.s = connect_s(ntwkC.s, k, ntwkB.s, l, num)
+    ntwkC.s = connect_s(ntwkC.s if not z0_equal else ntwkA.s, k, ntwkB.s, l, num)
 
     # combine z0 arrays and remove ports which were `connected`
     ntwkC.z0 = np.hstack(
@@ -5461,20 +5484,24 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     if (l + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `l` out of range')
 
+    # 'power' is not supported, convert to supported definition and back afterwards
+    if ntwkA.s_def == 'power':
+        ntwkA = ntwkA.copy()
+        ntwkA.renormalize(ntwkA.z0, 'pseudo')
+
     # create output Network, from copy of input
-    ntwkC = ntwkA.copy()
+    # Since ntwkC's s-parameters will change later, use shallow_copy for speedup
+    ntwkC = ntwkA.copy(shallow_copy=True)
 
     s_def_original = ntwkC.s_def
 
-    # 'power' is not supported, convert to supported definition and back afterwards
-    if ntwkC.s_def == 'power':
-        ntwkC.renormalize(ntwkC.z0, 'pseudo')
+    z0_equal = (ntwkC.z0[:, k] == ntwkC.z0[:, l]).all()
 
-    if not (ntwkC.z0[:, k] == ntwkC.z0[:, l]).all():
+    if not z0_equal:
         # connect a impedance mismatch, which will takes into account the
         # effect of differing port impedances
-        mismatch = impedance_mismatch(ntwkC.z0[:, k], ntwkC.z0[:, l], ntwkC.s_def)
-        ntwkC.s = connect_s(ntwkC.s, k, mismatch, 0, num=-1)
+        mismatch = impedance_mismatch(ntwkA.z0[:, k], ntwkA.z0[:, l], ntwkA.s_def)
+        ntwkC.s = connect_s(ntwkA.s, k, mismatch, 0, num=-1)
         # the connect_s() put the mismatch's output port at the end of
         #   ntwkC's ports.  Fix the new port's impedance, then insert it
         #   at position k where it belongs.
@@ -5483,7 +5510,7 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
                        to_ports=list(range(k, ntwkC.nports)))
 
     # call s-matrix connection function
-    ntwkC.s = innerconnect_s(ntwkC.s, k, l)
+    ntwkC.s = innerconnect_s(ntwkC.s if not z0_equal else ntwkA.s, k, l)
 
     # update the characteristic impedance matrix
     ntwkC.z0 = np.delete(ntwkC.z0, list(range(k, k + 1)) + list(range(l, l + 1)), 1)
