@@ -59,6 +59,9 @@ class MediaTestCase:
     def test_line(self):
         self.media.line(1)
 
+    def test_line_floating(self):
+        self.media.line_floating(1)
+
     def test_delay_load(self):
         self.media.delay_load(1,2)
 
