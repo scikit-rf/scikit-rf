@@ -2905,6 +2905,7 @@ class Network:
             #Not supported by rational_interp
             is_rational = True
         else:
+            kwargs["kind"] = kind if kind is not None else "linear"
             f_interp = interp1d
 
         # interpret input
