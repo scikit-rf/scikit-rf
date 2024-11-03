@@ -31,6 +31,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     ]
 
 dependencies = [
@@ -114,7 +115,7 @@ testpaths = [
     "doc/source/examples",
     "doc/source/tutorials"
 ]
-addopts = "--cov=skrf --ignore-glob='*.ipynb_checkpoints'"
+addopts = "--cov=skrf --ignore-glob='*.ipynb_checkpoints' --ignore=doc/source/tutorials/VirtualInstruments.ipynb"
 norecursedirs = [
     "skrf/src",
     "doc/source/examples/instrumentcontrol"

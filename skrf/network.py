@@ -51,6 +51,7 @@ Connecting Networks
     cascade_list
     de_embed
     flip
+    parallelconnect
 
 
 
@@ -78,7 +79,6 @@ Combining and Splitting Networks
     one_port_2_two_port
     n_oneports_2_nport
     four_oneports_2_twoport
-    three_twoports_2_threeport
     n_twoports_2_nport
     concat_ports
 
@@ -2043,12 +2043,29 @@ class Network:
         return True
 
     ## CLASS METHODS
-    def copy(self) -> Network:
+    def copy(self, *, shallow_copy: bool = False) -> Network:
         """
         Return a copy of this Network.
 
         Needed to allow pass-by-value for a Network instead of
         pass-by-reference
+
+        Parameters
+        ----------
+        shallow_copy : bool, optional
+            If True, the method creates a new Network object with empty s-parameters that share the same shape
+            as the original Network, but without copying the actual s-parameters data. This is useful when you
+            plan to immediately modify the s-parameters after creating the Network, as a deep copy would be
+            unnecessary and costly. Using `shallow_copy` improves performance by leveraging lazy initialization
+            through `numpy's np.empty()`, which allocates virtual memory without immediate physical memory
+            allocation, deferring actual memory initialization until first access. This approach can significantly
+            enhance `copy()` performance when dealing with large `Network` objects, when you are intended for
+            immediate modification after the Network's creation.
+
+        Note
+        ----
+        If you require a complete copy of the `Network` instance or need to perform operation on the s-parameters
+        of the copied Network, it is essential not to use the `shallow_copy` parameter!
 
         Returns
         -------
@@ -2058,7 +2075,11 @@ class Network:
         """
         ntwk = Network(z0=self.z0, s_def=self.s_def, comments=self.comments)
 
-        ntwk._s = self.s.copy()
+        ntwk._s = (
+            np.empty(shape=self.s.shape, dtype=self.s.dtype)
+            if shallow_copy
+            else self.s.copy()
+        )
         ntwk.frequency._f = self.frequency._f.copy()
         ntwk.frequency.unit = self.frequency.unit
         ntwk.port_modes = self.port_modes.copy()
@@ -5072,13 +5093,15 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         s_def = 'traveling'
 
     # create output Network, from copy of input
-    ntwkC = ntwkA.copy()
+    # Since ntwkC's s-parameters will change later, use shallow_copy for speedup
+    ntwkC = ntwkA.copy(shallow_copy=True)
 
     # if networks' z0's are not identical, then connect a impedance
     # mismatch, which takes into account the effect of differing port
     # impedances.
     # import pdb;pdb.set_trace()
-    if not assert_z0_at_ports_equal(ntwkA, k, ntwkB, l):
+    z0_equal = assert_z0_at_ports_equal(ntwkA, k, ntwkB, l)
+    if not z0_equal:
         # connect a impedance mismatch, which will takes into account the
         # effect of differing port impedances
         mismatch = impedance_mismatch(ntwkA.z0[:, k], ntwkB.z0[:, l], s_def)
@@ -5090,7 +5113,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
                        to_ports=list(range(k, ntwkC.nports)))
     # call s-matrix connection function
-    ntwkC.s = connect_s(ntwkC.s, k, ntwkB.s, l, num)
+    ntwkC.s = connect_s(ntwkC.s if not z0_equal else ntwkA.s, k, ntwkB.s, l, num)
 
     # combine z0 arrays and remove ports which were `connected`
     ntwkC.z0 = np.hstack(
@@ -5230,6 +5253,189 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     return connect(ntwkA, k, ntwkB, l)
 
 
+def parallelconnect(ntwks: Sequence[Network] | Network,
+                    ports: Sequence[int | Sequence[int]],
+                    name: str | None = None) -> Network:
+    """
+    Connects a series of multi-port networks in parallel, ensuring that the specified port
+    indices share the concatenated intersection.
+
+    Parameters
+    ----------
+    ntwks : :Sequence[`Network`] | `Network`
+            A sequence of multi-port networks or a single network to be connected in parallel.
+    ports : Sequence[int  |  Sequence[int]]
+            A sequence of port indices, where each entry can be an int or a sequence of ints
+            corresponding to the ports of the respective network. The length of `ports` should
+            match the length of `networks`. Each specified port index is connect to the
+            concatenated intersection, implying they are electrically common.
+    name : str, optional
+            define the connected network's name. Default is None.
+
+
+    Returns
+    -------
+    connected_network : :class:`Network`
+            A new network created from the parallel connection of the input networks.
+            The number of ports in the resulting network equals the sum of ports in `ntwks`,
+            minus the number of ports specified in `ports` that were connected in parallel.
+            The remaining ports follow the original port order of the input networks, after
+            removing those involved in the parallel connection.
+
+
+    Note
+    ----
+    This function calculates the resulting scattering parameters after parallel connecting
+    a set of networks. This algorithm, adapted from the `Circuit.s` method, constructs the
+    concatenated intersection matrix [X] and the global scattering matrix [C] to perform
+    the calculations.
+
+
+    See Also
+    --------
+    connect_s : actual S-parameter connection algorithm.
+    innerconnect_s : actual S-parameter connection algorithm.
+
+
+    Examples
+    --------
+
+    The following examples demonstrate how to use the :func:`parallelconnect` in
+    different ways, such as open a port, connect two networks, innerconnect one
+    network, and parallel multiple networks.
+
+    >>> # Prepare the example Networks
+    >>> ntwkA = rf.Network('ntwkA.s2p')
+    >>> ntwkB = rf.Network('ntwkB.s2p')
+    >>> ntwkC = rf.connect('ntwkC.s4p')
+    >>>
+    >>> # 1) Open port 1 of ntwkA
+    >>> #    +-----+
+    >>> #   [0] A [1]--Open
+    >>> #    +-----+
+    >>> #
+    >>> rf.parallelconnect(ntwkA, [1])
+    >>>
+    >>>
+    >>> # 2) Connect ntwkA's port 1 to ntwkB's port 0
+    >>> #    +-----+     +-----+
+    >>> #   [0] A [1]---[0] B [1]
+    >>> #    +-----+     +-----+
+    >>> #
+    >>> rf.parallelconnect([ntwkA, ntwkB], [1, 0])
+    >>>
+    >>>
+    >>> # 3) Innerconnect the ntwkC's port 1 and 3
+    >>> #  +-----+
+    >>> #  |    [1]--+
+    >>> # [0] C [2]  |
+    >>> #  |    [3]--+
+    >>> #  +-----+
+    >>> #
+    >>> rf.parallelconnect(ntwkC, [[2, 3]])
+    >>>
+    >>>
+    >>> # 4) Parallel connect the ntwkA's port 1, ntwkB's port 1 and ntwkC's port 0
+    >>> #  +-----+
+    >>> # [0] A [1]---+    +-----+
+    >>> #  +-----+    |    |    [1]
+    >>> #             |---[0] C [2]
+    >>> #  +-----+    |    |    [3]
+    >>> # [0] B [1]---+    +-----+
+    >>> #  +-----+
+    >>> #
+    >>> rf.parallelconnect([ntwkA, ntwkB, ntwkC], [1, 1, 0])
+    >>>
+    >>>
+    >>> # 5) The port order of connected ntwk follows the order of ntwks and ports
+    >>> # as shown in example 4:
+    >>> #  +-----+
+    >>> # [0] A [1]---+    +-----+          +---------------+
+    >>> #  +-----+    |    |    [1]        [0]=A[0]   C[3]=[3]
+    >>> #             |---[0] C [2]  ===>  [1]=B[0]         |
+    >>> #  +-----+    |    |    [3]        [2]=C[1]   C[3]=[4]
+    >>> # [0] B [1]---+    +-----+          +---------------+
+    >>> #  +-----+
+
+    References
+    ----------
+    .. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
+    """
+    # Handle single network input
+    if isinstance(ntwks, Network):
+        ntwks = [ntwks]
+
+    if len(ntwks) != len(ports):
+        raise ValueError(f'ntwks and ports must have the same length ({len(ntwks)} != {len(ports)})')
+
+    # Ensure unique networks
+    if len(set(ntw.name for ntw in ntwks)) != len(ntwks):
+        raise ValueError('ntwks should not be duplicated.')
+
+    # Get the index of each network in the list
+    dim, off = sum(ntw.nports for ntw in ntwks), 0
+    inter_indices, exter_indices =  [], []
+    z0_in, z0_ext = [], []
+
+    # Assign the global scattering matrix [X] and concatenated intersection matrix [C]
+    X = np.zeros((ntwks[0].frequency.npoints, dim, dim), dtype='complex')
+    C = np.zeros((ntwks[0].frequency.npoints, dim, dim), dtype='complex')
+
+    for ntw, port in zip(ntwks, ports):
+        # Get the nports of Network
+        nports: int = ntw.nports
+
+        # Convert the int port to list
+        port = [port] if isinstance(port, int) else port
+
+        # Che the port indecies valid or not
+        if len(port) != len(set(port)):
+            raise ValueError(f"{ntw.name}'s port should not be duplicated.")
+        if max(port) >= nports or min(port) < 0:
+            raise ValueError(f"{ntw.name}'s port index should be between 0 and {nports-1}")
+
+        # Check the frequency equal or not
+        check_frequency_equal(ntw, ntwks[0])
+
+        # Append the port index with offset to indices list
+        for p in range(nports):
+            if p in port:
+                inter_indices.append(p + off)
+                z0_in.append(ntw.z0[:, p])
+            else:
+                exter_indices.append(p + off)
+                z0_ext.append(ntw.z0[:, p])
+
+        # Assign the scattering matrix of each network to the global scattering matrix
+        X[:, off:off+nports, off:off+nports] = ntw.s_traveling
+
+        # Update the offset
+        off += nports
+
+    # Compute interaction matrix for internal connections
+    z0s = np.array(z0_in).T
+    y0s = 1./z0s
+    y_tot = y0s.sum(axis=1)
+
+    s = 2 *np.sqrt(np.einsum('ki,kj->kij', y0s, y0s)) / y_tot[:, None, None]
+    np.einsum('kii->ki', s)[:] -= 1  # Sii
+
+    # Get the index of internal port and external port from global matrix
+    in_ind = np.meshgrid(inter_indices, inter_indices, indexing='ij')
+    out_ind = np.meshgrid(exter_indices, exter_indices, indexing='ij')
+
+    # Update the concatenated intersection matrix
+    C[:, in_ind[0], in_ind[1]] = s
+
+    # Get the global scattering matrix
+    s = X @ np.linalg.inv(np.identity(dim) - C @ X)
+
+    return Network(frequency = ntwks[0].frequency,
+                   s = s[:, out_ind[0], out_ind[1]],
+                   z0 = np.array(z0_ext).T,
+                   name = name)
+
+
 def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     """
     Connect ports of a single n-port network.
@@ -5278,20 +5484,24 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     if (l + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `l` out of range')
 
+    # 'power' is not supported, convert to supported definition and back afterwards
+    if ntwkA.s_def == 'power':
+        ntwkA = ntwkA.copy()
+        ntwkA.renormalize(ntwkA.z0, 'pseudo')
+
     # create output Network, from copy of input
-    ntwkC = ntwkA.copy()
+    # Since ntwkC's s-parameters will change later, use shallow_copy for speedup
+    ntwkC = ntwkA.copy(shallow_copy=True)
 
     s_def_original = ntwkC.s_def
 
-    # 'power' is not supported, convert to supported definition and back afterwards
-    if ntwkC.s_def == 'power':
-        ntwkC.renormalize(ntwkC.z0, 'pseudo')
+    z0_equal = (ntwkC.z0[:, k] == ntwkC.z0[:, l]).all()
 
-    if not (ntwkC.z0[:, k] == ntwkC.z0[:, l]).all():
+    if not z0_equal:
         # connect a impedance mismatch, which will takes into account the
         # effect of differing port impedances
-        mismatch = impedance_mismatch(ntwkC.z0[:, k], ntwkC.z0[:, l], ntwkC.s_def)
-        ntwkC.s = connect_s(ntwkC.s, k, mismatch, 0, num=-1)
+        mismatch = impedance_mismatch(ntwkA.z0[:, k], ntwkA.z0[:, l], ntwkA.s_def)
+        ntwkC.s = connect_s(ntwkA.s, k, mismatch, 0, num=-1)
         # the connect_s() put the mismatch's output port at the end of
         #   ntwkC's ports.  Fix the new port's impedance, then insert it
         #   at position k where it belongs.
@@ -5300,7 +5510,7 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
                        to_ports=list(range(k, ntwkC.nports)))
 
     # call s-matrix connection function
-    ntwkC.s = innerconnect_s(ntwkC.s, k, l)
+    ntwkC.s = innerconnect_s(ntwkC.s if not z0_equal else ntwkA.s, k, l)
 
     # update the characteristic impedance matrix
     ntwkC.z0 = np.delete(ntwkC.z0, list(range(k, k + 1)) + list(range(l, l + 1)), 1)
@@ -6016,7 +6226,6 @@ def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Netwo
     See Also
     --------
     n_oneports_2_nport
-    three_twoports_2_threeport
     """
     return n_oneports_2_nport([s11, s12, s21, s22], *args, **kwargs)
 

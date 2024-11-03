@@ -126,7 +126,7 @@ To run all the tests (except the virtual instruments)
     cd scikit-rf
     # Create environment and install dependencies, needed only once.
     python -m venv .venv
-    python -e[test,visa,netw,xlsx,plot,docs,testspice]
+    pip install -e .[test,visa,netw,xlsx,plot,docs,testspice] --compile
 
     # Activate Environment, needed for all following steps.
     # on Linux Systems
