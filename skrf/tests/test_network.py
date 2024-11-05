@@ -1461,11 +1461,17 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue( ((a+[1+1j,2+2j]).s == np.array([[[2+3j]],[[5+6j]]])).all())
 
 
-    def test_interpolate(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1, f_unit="ghz")
-        freq = rf.F.from_f(np.linspace(1,2,4), unit='ghz')
-        b = a.interpolate(freq)
-        # TODO: numerically test for correct interpolation
+    def test_interpolate_linear(self):
+        net = rf.Network(f=[0, 1, 3, 4], s=[0,1,9,16], f_unit="Hz")
+
+        interp = net.interpolate(rf.Frequency(0, 4, 5, unit="Hz"), kind="linear")
+        assert np.allclose(interp.s[2], 5.0)
+
+    def test_interpolate_cubic(self):
+        net = rf.Network(f=[0, 1, 3, 4], s=[0,1,9,16], f_unit="Hz")
+
+        interp = net.interpolate(rf.Frequency(0, 4, 5, unit="Hz"), kind="cubic")
+        assert np.allclose(interp.s[2], 4.0)
 
     def test_interpolate_rational(self):
         a = rf.N(f=np.linspace(1,2,5),s=np.linspace(0,1,5)*(1+1j),z0=1, f_unit="ghz")
@@ -1478,21 +1484,6 @@ class NetworkTestCase(unittest.TestCase):
         # Check that abs(S) is increasing
         self.assertTrue(all(np.diff(np.abs(b.s.flatten())) > 0))
         self.assertTrue(b.z0[0] == a.z0[0])
-
-    def test_interpolate_linear(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=[1,2], f_unit="ghz")
-        freq = rf.F.from_f(np.linspace(1,2,3,endpoint=True), unit='GHz')
-        b = a.interpolate(freq, kind='linear')
-        self.assertFalse(any(np.isnan(b.s)))
-        # Test that the endpoints are the equal
-        # Middle point can also be calculated in this case
-        self.assertTrue(b.s[0] == a.s[0])
-        self.assertTrue(b.s[1] == 0.5*(a.s[0] + a.s[1]))
-        self.assertTrue(b.s[-1] == a.s[-1])
-        # Check Z0 interpolation
-        self.assertTrue(b.z0[0] == a.z0[0])
-        self.assertTrue(b.z0[1] == 0.5*(a.z0[0] + a.z0[1]))
-        self.assertTrue(b.z0[-1] == a.z0[-1])
 
     def test_interpolate_freq_cropped(self):
         a = rf.N(f=np.arange(20), s=np.arange(20)*(1+1j),z0=1, f_unit="ghz")
