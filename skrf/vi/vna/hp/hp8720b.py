@@ -64,22 +64,6 @@ class HP8720B(VNA):
         vna = skrf.vi.vna.hp.HP8720B(address='GPIB0::16::INSTR', backend='C:\\WINDOWS\\system32\\visa32.dll')
         vna.set_frequency_sweep(2e9,3e9,1001)
         vna.get_snp_network(ports=(1,2))
-
-    Currently NOT implemented:
-    Advanced example. The driver is handed a bucket of frequencies containing
-    two separate bands mashed together. Behind the scenes it will construct a
-    sweep plan consisting of one native sweep and one segmented sweep, perform
-    both, and stitch the results together -- but all the user need worry about
-    is constructing the request and interpreting the results.
-
-    .. code-block:: python
-
-        vna = skrf.vi.vna.hp.HP8510C(address='TCPIP::ad007-right.lan::gpib0,16::INSTR', backend='@py')
-        freq_block_1 = np.linspace(1e9,2e9,801)
-        freq_block_2 = [10e9,11e9,12e9]
-        freqs = np.concatenate((freq_block_1, freq_block_2))
-        vna.frequency = skrf.Frequency.from_f(freqs)
-        vna.get_snp_network(ports=(1,2))
     '''
     min_hz = 130E6  #: Minimum frequency supported by instrument
     max_hz = 20E9  #: Maximum frequency supported by instrument
