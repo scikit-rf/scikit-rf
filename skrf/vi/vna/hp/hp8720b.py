@@ -81,11 +81,8 @@ class HP8720B(VNA):
         vna.frequency = skrf.Frequency.from_f(freqs)
         vna.get_snp_network(ports=(1,2))
     '''
-    min_hz = None  #: Minimum frequency supported by instrument
-    max_hz = None  #: Maximum frequency supported by instrument
-    # compound_sweep_plan = None
-    #: If None, get_snp_network()/one_port()/two_port() just ask the VNA for data.
-    # If populated, those methods perform the multiple sweeps in the plan and stitch together the results.
+    min_hz = 130E6  #: Minimum frequency supported by instrument
+    max_hz = 20E9  #: Maximum frequency supported by instrument
 
     def __init__(self, address : str, backend : str = "@py", **kwargs):
         super().__init__(address, backend, **kwargs)
@@ -107,11 +104,6 @@ class HP8720B(VNA):
 
         self.write('DEBUON;') # Debug HPIB mode ON to displace instrument commands on the instrument screen
         # DEBUOFF to turn off (or just remove command)
-
-        # If compound_sweep_plan is None, we rely on the internal state of the analyzer.
-        # If compound_sweep_plan is a SweepPlan object, we must take multiple short sweeps
-        # on the 8510 and stitch them into a single compound sweep ourselves.
-        self.compound_sweep_plan = None
 
         # Compound sweeps can be added in the future using the subsweep menu commands
 
@@ -135,8 +127,7 @@ class HP8720B(VNA):
         ''' MAIN METHOD for obtaining S parameters, like get_snp_network((1,)) or get_snp_network((1,2)). '''
         ports = tuple(ports)
         sweep = kwargs.get("sweep", True)
-        # name = kwargs.get("name", "")
-        # raw_data = kwargs.get("raw_data", True)
+
         if ports==(1,):
             self.write('S11;')
             return self.one_port(fresh_sweep=sweep)
@@ -155,7 +146,6 @@ class HP8720B(VNA):
         These measure how much signal is reflected from the imperfect switched
         termination on the non-stimulated port.
         '''
-        # return self.switch_terms()
         raise(NotImplementedError("Not yet implemented for HP8720B"))
 
     @property
@@ -216,9 +206,7 @@ class HP8720B(VNA):
     @property
     def frequency(self):
         ''' Frequencies of compound sweep '''
-        if self.compound_sweep_plan is None:
-            return self._frequency
-        # return skrf.Frequency.from_f(self.compound_sweep_plan.get_hz(), unit='hz')
+        return self._frequency
 
     @frequency.setter
     def frequency(self, frequency_obj: skrf.Frequency):
@@ -230,7 +218,6 @@ class HP8720B(VNA):
             print("set_frequency called with %i/%i points out of VNA frequency range. Dropping them."
                   %(np.sum(valid),len(valid)))
             hz = hz[valid]
-        # self.compound_sweep_plan = SweepPlan.from_hz(hz)
 
     def set_frequency_sweep(self, f_start, f_stop, f_npoints, **kwargs):
         ''' Interprets units and calls set_frequency_step '''
@@ -245,10 +232,7 @@ class HP8720B(VNA):
     def set_frequency_step(self, hz_start, hz_stop, npoint=801):
         ''' Step (slow, synthesized) sweep + logic to handle lots of npoint. '''
         if (self._instrument_natively_supports_steps(npoint)):
-            self.compound_sweep_plan = None
             self._set_instrument_step_state(hz_start, hz_stop, npoint)
-        # else:
-        #     self.compound_sweep_plan = SweepPlan.from_ssn(hz_start, hz_stop, npoint)
 
     @property
     def freq_start(self):
@@ -280,19 +264,14 @@ class HP8720B(VNA):
     @property
     def npoints(self):
         ''' Number of points in compound sweep (if programmed) or non-compound sweep '''
-        if self.compound_sweep_plan is None:
-            return self._npoints
-        # return len(self.compound_sweep_plan.get_hz())
+        return self._npoints
 
     @npoints.setter
     def npoints(self, npoint):
         ''' Set number of points in sweep'''
         hz_start, hz_stop = self.freq_start, self.freq_stop
         if (self._instrument_natively_supports_steps(npoint)):
-            self.compound_sweep_plan = None
             self._set_instrument_step_state(hz_start, hz_stop, npoint)
-        # else:
-        #     self.compound_sweep_plan = SweepPlan.from_ssn(hz_start, hz_stop, npoint)
 
     def _instrument_natively_supports_steps(self, npoint):
         if npoint in [3,11,21,51,101,201,401,801,1601]:
@@ -364,17 +343,6 @@ class HP8720B(VNA):
         ''' Performs a single sweep OR COMPOUND SWEEP and returns Network data. '''
         if self.compound_sweep_plan is None:
             return self._one_port()
-        # old_start_hz, old_stop_hz = self.freq_start, self.freq_stop
-        # stitched_network = None
-        # for sweep_section in self.compound_sweep_plan.get_sections():
-        #     sweep_section.apply_8510(self)
-        #     chunk_net_nomask = self._one_port(expected_hz=sweep_section.get_raw_hz())
-        #     chunk_net = sweep_section.mask_8510(chunk_net_nomask)
-        #     stitched_network = (chunk_net if stitched_network is None
-        #                         else skrf.network.stitch(stitched_network, chunk_net))
-        # self.freq_start = old_start_hz
-        # self.freq_stop  = old_stop_hz
-        # return stitched_network
 
     def _two_port(self, expected_hz=None, fresh_sweep=True):
         ''' Performs a single sweep and returns Network data. '''
@@ -403,17 +371,6 @@ class HP8720B(VNA):
         ''' Performs a single sweep OR COMPOUND SWEEP and returns Network data. '''
         if self.compound_sweep_plan is None:
             return self._two_port()
-        # old_start_hz, old_stop_hz = self.freq_start, self.freq_stop
-        # stitched_network = None
-        # for sweep_chunk in self.compound_sweep_plan.get_sections():
-        #     sweep_chunk.apply_8510(self)
-        #     chunk_net_nomask = self._two_port(expected_hz=sweep_chunk.get_raw_hz())
-        #     chunk_net = sweep_chunk.mask_8510(chunk_net_nomask)
-        #     stitched_network = (chunk_net if stitched_network is None
-        #                         else skrf.network.stitch(stitched_network,chunk_net))
-        # self.freq_start = old_start_hz
-        # self.freq_stop  = old_stop_hz
-        # return stitched_network
 
     def switch_terms(self):
         '''
