@@ -2260,6 +2260,170 @@ class VectorFitting:
         ax.set_ylabel('Max. singular value')
         return ax
 
+    def write_spice_subcircuit_s_new(self, file: str, fitted_model_name: str = "s_equivalent") -> None:
+        """
+        Creates an equivalent N-port subcircuit based on its vector fitted S parameter responses
+        in spice simulator netlist syntax
+
+        Parameters
+        ----------
+        file : str
+            Path and filename including file extension (usually .sNp) for the subcircuit file.
+        fitted_model_name: str
+            Name of the resulting model, default "s_equivalent"
+
+        Returns
+        -------
+        None
+
+        Notes
+        -------
+        This code passed some manual plausibility tests but more
+        testing might be useful to be confident that the circuits
+        synthesized with it behave exactly the same as the circuits
+        synthesized with the current write_spice_subcircuit_s method.
+
+        More details about this code are available under this link:
+
+        https://github.com/scikit-rf/scikit-rf/discussions/1172
+
+        Examples
+        --------
+        Load and fit the `Network`, then export the equivalent subcircuit:
+
+        >>> nw_3port = skrf.Network('my3port.s3p')
+        >>> vf = skrf.VectorFitting(nw_3port)
+        >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+        >>> vf.write_spectre_subcircuit_new_s('/my3port_model.sp')
+
+        References
+        ----------
+        .. [1] G. Antonini, "SPICE Equivalent Circuits of Frequency-Domain Responses", IEEE Transactions on
+            Electromagnetic Compatibility, vol. 45, no. 3, pp. 502-512, August 2003,
+            doi: https://doi.org/10.1109/TEMC.2003.815528
+
+        .. [2] C. -C. Chou and J. E. Schutt-Ainé, "Equivalent Circuit Synthesis of Multiport S Parameters in
+            Pole–Residue Form," in IEEE Transactions on Components, Packaging and Manufacturing Technology,
+            vol. 11, no. 11, pp. 1971-1979, Nov. 2021, doi: 10.1109/TCPMT.2021.3115113
+
+        .. [3] Romano D, Antonini G, Grossner U, Kovačević-Badstübner I. Circuit synthesis techniques of
+            rational models of electromagnetic systems: A tutorial paper. Int J Numer Model. 2019
+            doi: https://doi.org/10.1002/jnm.2612
+
+        """
+
+        # List of subcircuits for the equivalent admittances
+        subcircuits = []
+
+        # Provides a unique subcircuit identifier (X1, X2, X3, ...)
+        def get_new_subckt_identifier():
+            subcircuits.append(f'X{len(subcircuits) + 1}')
+            return subcircuits[-1]
+
+        with open(file, 'w') as f:
+            # write title line
+            f.write('* EQUIVALENT CIRCUIT FOR VECTOR FITTED S-MATRIX\n')
+            f.write('* Created using scikit-rf vectorFitting.py\n\n')
+
+            # Define the complete equivalent circuit as a subcircuit with one input node per port
+            # those port nodes are labeled p1, p2, p3, ...
+            # all ports share a common node for ground reference (node 0)
+            str_input_nodes = " ".join(map(lambda x: f'p{x + 1}', range(self.network.nports)))
+
+            f.write(f'.SUBCKT {fitted_model_name} {str_input_nodes}\n')
+            for n in range(self.network.nports):
+                f.write(f'\n* Port network for port {n + 1}\n')
+
+                # Port reference impedance Z0
+                f.write(f'R{n + 1} p{n+1} a{n + 1} {np.real(self.network.z0[0, n])}\n')
+
+                # CCVS implementing the reflected wave b.
+                # Also used as current sensor to measure the input current
+                f.write(f'H_b_{n + 1} a{n + 1} 0 V_c_{n + 1} 1\n')
+
+                f.write(f'* Differential incident wave a sources for transfer from port {n + 1}\n')
+
+                # CCVS and VCVS driving the transfer admittances with 2*a*sqrt(Z0) = V + I*Z0
+                f.write(f'H_p_{n + 1} nt_p_{n + 1} nts_p_{n + 1} H_b_{n + 1} {np.real(self.network.z0[0, n])}\n')
+                f.write(f'E_p_{n + 1} nts_p_{n + 1} 0 p{n + 1} 0 1\n')
+
+                # VCVS driving the transfer admittances with -2*a*sqrt(Z0) = -V - I*Z0
+                f.write(f'E_n_{n + 1} 0 nt_n_{n + 1} nt_p_{n + 1} 0 1\n')
+
+                f.write(f'* Current sensor on center node for transfer to port {n + 1}\n')
+
+                # Current sensor for the transfer to current port
+                f.write(f'V_c_{n + 1} nt_c_{n + 1} 0 0\n')
+
+                for j in range(self.network.nports):
+                    f.write(f'* Transfer network from port {j + 1} to port {n + 1}\n')
+
+                    # Stacking order in VectorFitting class variables:
+                    # s11, s12, s13, ..., s21, s22, s23, ...
+                    i_response = n * self.network.nports + j
+
+                    # Start with proportional and constant term of the model
+                    # H(s) = d + s * e  model
+                    # Y(s) = G + s * C  equivalent admittance
+                    g = self.constant_coeff[i_response]
+                    c = self.proportional_coeff[i_response]
+
+                    # R for constant term
+                    if g < 0:
+                        f.write(f'R{n + 1}{j + 1} nt_n_{j + 1} nt_c_{n + 1} {np.abs(1 / g)}\n')
+                    elif g > 0:
+                        f.write(f'R{n + 1}{j + 1} nt_p_{j + 1} nt_c_{n + 1} {1 / g}\n')
+
+                    # C for proportional term
+                    if c < 0:
+                        f.write(f'C{n + 1}{j + 1} nt_n_{j + 1} nt_c_{n + 1} {np.abs(c)}\n')
+                    elif c > 0:
+                        f.write(f'C{n + 1}{j + 1} nt_p_{j + 1} nt_c_{n + 1} {c}\n')
+
+                    # Transfer admittances represented by poles and residues
+                    for i_pole in range(len(self.poles)):
+                        pole = self.poles[i_pole]
+                        residue = self.residues[i_response, i_pole]
+                        node = get_new_subckt_identifier()
+
+                        if np.real(residue) < 0.0:
+                            # Multiplication with -1 required, otherwise the values for RLC would be negative.
+                            # This gets compensated by inverting the transfer current direction for this subcircuit
+                            residue = -1 * residue
+                            node += f' nt_n_{j + 1} nt_c_{n + 1}'
+                        else:
+                            node += f' nt_p_{j + 1} nt_c_{n + 1}'
+
+                        if np.imag(pole) == 0.0:
+                            # Real pole; Add rl_admittance
+                            l = 1 / np.real(residue)
+                            r = -1 * np.real(pole) / np.real(residue)
+                            f.write(node + f' rl_admittance res={r} ind={l}\n')
+                        else:
+                            # Complex pole of a conjugate pair; Add rcl_vccs_admittance
+                            r = -1 * np.real(pole) / np.real(residue)
+                            c = 2 * np.real(residue) / (np.abs(pole) ** 2)
+                            l = 1 / (2 * np.real(residue))
+                            b = -2 * (np.real(residue) * np.real(pole) + np.imag(residue) * np.imag(pole))
+                            gm = b * l * c
+                            f.write(node + f' rcl_vccs_admittance res={r} cap={c} ind={l} gm={gm}\n')
+
+            f.write('.ENDS {fitted_model_name}\n\n')
+
+            # Subcircuit for an RLCG equivalent admittance of a complex-conjugate pole-residue pair
+            f.write('.SUBCKT rcl_vccs_admittance n_pos n_neg res=1e3 cap=1e-9 ind=100e-12 gm=1e-3\n')
+            f.write('L1 n_pos 1 {ind}\n')
+            f.write('C1 1 2 {cap}\n')
+            f.write('R1 2 n_neg {res}\n')
+            f.write('G1 n_pos n_neg 1 2 {gm}\n')
+            f.write('.ENDS rcl_vccs_admittance\n\n')
+
+            # Subcircuit for an RL equivalent admittance of a real pole-residue pair
+            f.write('.SUBCKT rl_admittance n_pos n_neg res=1e3 ind=100e-12\n')
+            f.write('L1 n_pos 1 {ind}\n')
+            f.write('R1 1 n_neg {res}\n')
+            f.write('.ENDS rl_admittance\n\n')
+
     def write_spice_subcircuit_s(self, file: str, fitted_model_name: str = "s_equivalent") -> None:
         """
         Creates an equivalent N-port SPICE subcircuit based on its vector fitted S parameter responses.
