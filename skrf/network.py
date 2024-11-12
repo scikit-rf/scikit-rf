@@ -4925,7 +4925,7 @@ class Network:
 
     @copy_doc(rfplt.plot_s_db_time)
     def plot_s_db_time(self, center_to_dc=None, *args, **kwargs):
-        return rfplt.plot_s_db_time(self, center_to_dc, *args, **kwargs)
+        return rfplt.plot_s_db_time(self, *args, center_to_dc=center_to_dc, **kwargs)
 
     @copy_doc(rfplt.plot_s_smith)
     def plot_s_smith(self, m=None, n=None,r=1, ax=None, show_legend=True,\
