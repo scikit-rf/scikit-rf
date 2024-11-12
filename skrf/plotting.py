@@ -989,8 +989,9 @@ def plot_reciprocity2(netw: Network, db=False, *args, **kwargs):
         plt.draw()
 
 
-def plot_s_db_time(netw: Network, *args, window: str | float | tuple[str, float]=('kaiser', 6),
-        normalize: bool = True, center_to_dc: bool = None, **kwargs):
+def plot_s_db_time(netw: Network, center_to_dc: bool = None, *args,
+                   window: str | float | tuple[str, float]=('kaiser', 6), normalize: bool = True,
+                   **kwargs):
     return netw.windowed(window, normalize, center_to_dc).plot_s_time_db(*args,**kwargs)
 
 
