@@ -368,6 +368,29 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         skrf_ntwk = self.dummy_media.isolator(name = name)
         self.assertEqual(name, skrf_ntwk.name)
 
+    def test_line_floating(self):
+        """
+        Test the naming of the network. When circuit is used to connect a
+        topology of networks, they should have unique names.
+        """
+        name = 'floating_line'
+        self.dummy_media.frequency = Frequency(1, 1, 1, unit='GHz')
+        skrf_ntwk = self.dummy_media.line_floating(90, 'deg', name=name)
+        self.assertEqual(name, skrf_ntwk.name)
+
+        # Expected to be a 4-port network
+        self.assertEqual(skrf_ntwk.nports, 4)
+
+        # zero length case
+        s_zero = 1/2 * np.array([[1, 1, 1, -1],
+                                 [1, 1, -1, 1],
+                                 [1, -1, 1, 1],
+                                 [-1, 1, 1, 1]]
+                                ).transpose().reshape(-1,4,4)
+        for z0 in [50, 1]:
+            zero_length = self.dummy_media.line_floating(d=0, z0=z0)
+            assert_array_almost_equal(zero_length.s, s_zero)
+
 
     def test_scalar_gamma_z0_media(self):
         """

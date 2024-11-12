@@ -974,8 +974,8 @@ class Media(ABC):
                 '`embed` will be removed in version 1.0',
               DeprecationWarning, stacklevel = 2)
 
-        if isinstance(z0,str):
-            z0 = parse_z0(z0)* self.z0
+        if isinstance(z0, str):
+            z0 = parse_z0(z0) * self.z0
 
         if z0 is None:
             z0 = self.z0
@@ -994,6 +994,88 @@ class Media(ABC):
         s21 = np.exp(-1*theta)
         result.s = \
                 np.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
+
+        # renormalize (or embed) into z0_port if required
+        if self.z0_port is not None:
+            result.renormalize(self.z0_port)
+        result.renormalize(result.z0, s_def=s_def)
+
+        return result
+
+    def line_floating(self, d: NumberLike, unit: str = 'deg',
+                z0: NumberLike | str | None = None, **kwargs) -> Network:
+        r"""
+        Floating transmission line of a given length and impedance.
+
+        This method returns a transmission line with floating shields.
+        This is a four-port network, as opposed to the two-port _line_ method.
+        Ports 1 and 3 are one side of the line, and electrically connect to
+        ports 2 and 4 on the other side, respectively.
+
+        The units of `length` are interpreted according to the value
+        of `unit`. If `z0` is not None, then a line specified impedance
+        is produced.
+
+        Parameters
+        ----------
+        d : number
+                the length of transmission line (see unit argument)
+        unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
+                the units of d.  See :func:`to_meters`, for details
+        z0 : number, string, or array-like or None
+            the characteristic impedance of the line, if different
+            from `media.z0`. To set z0 in terms of normalized impedance,
+            pass a string, like `z0='1+.2j'`
+        \*\*kwargs : key word arguments
+            passed to :func:`match`, which is called initially to create a
+            'blank' network.
+
+        Returns
+        -------
+        line_floating : :class:`~skrf.network.Network` object
+            matched, floating transmission line of given length
+
+        Examples
+        --------
+        >>> my_media.line_floating(1, 'mm', z0=100)
+        >>> my_media.line_floating(90, 'deg', z0='2') # set z0 as normalized impedance
+
+        """
+        if isinstance(z0, str):
+            z0 = self.parse_z0(z0) * self.z0
+
+        if z0 is None:
+            z0 = self.z0
+
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+
+        # The use of either traveling or pseudo waves s-parameters definition
+        # is required here.
+        # The definition of the reflection coefficient for power waves has
+        # conjugation.
+        result = self.match(nports=4, z0=z0, s_def='traveling', **kwargs)
+
+        theta = self.electrical_length(self.to_meters(d=d, unit=unit))
+
+        if np.abs(theta).all() < ZERO:
+            result.s = 1/2* np.array([[1, 1, 1, -1],
+                                      [1, 1, -1, 1],
+                                      [1, -1, 1, 1],
+                                      [-1, 1, 1, 1]]
+                                      ).transpose().reshape(-1,4,4)
+        else:
+            # From AWR docs on TLINP4. The math below could
+            # be re-worked directly into its S-parameter formulation
+            y11 = 1 / (z0 * np.tanh(theta))
+            y12 = -1 / (z0 * np.sinh(theta))
+            y22 = y11
+            y21 = y12
+
+            result.y = \
+                    np.array([[ y11,  y12, -y11, -y12],
+                              [ y21,  y22, -y21, -y22],
+                              [-y11, -y12,  y11,  y12],
+                              [-y21, -y22,  y21,  y22]]).transpose().reshape(-1, 4, 4)
 
         # renormalize (or embed) into z0_port if required
         if self.z0_port is not None:

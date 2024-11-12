@@ -153,6 +153,17 @@ class VectorFittingTestCase(unittest.TestCase):
         # check if model is now passive
         self.assertTrue(vf.is_passive())
 
+    def test_autofit(self):
+        vf = skrf.VectorFitting(skrf.data.ring_slot)
+        vf.auto_fit()
+
+        assert vf.get_model_order(vf.poles) == 6
+        assert np.sum(vf.poles.imag == 0.0) == 0
+        assert np.sum(vf.poles.imag > 0.0) == 3
+
+        assert np.allclose(vf.get_rms_error(), 1.2748979815157275e-06)
+
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(VectorFittingTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
