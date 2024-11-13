@@ -51,7 +51,7 @@ class DefinedAEpTandZ0(Media):
         (Default is None)
     A : number, array-like, default 0.0
         Attenuation due to conductor loss in dB/m/sqrt(Hz)
-        The attenuation :math:`A(f)`at frequency :math:`f` is:
+        The attenuation :math:`A(f)` at frequency :math:`f` is:
 
         .. math::
 
