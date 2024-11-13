@@ -107,6 +107,6 @@ class DefinedAEpTandZ0TestCase(unittest.TestCase):
         if self.verbose:
             fig.tight_layout()
             fig2.tight_layout()
-            
+
 if __name__ == '__main__':
     unittest.main()
