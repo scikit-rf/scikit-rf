@@ -653,10 +653,10 @@ class Media(ABC):
         # y[:, 1, 0] = -1.0 / R
         z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
         temp = R + (z0_0 + z0_1)
-        s[:, 0, 0] = (R - z0_0 + z0_1) / temp
-        s[:, 1, 1] = (R + z0_0 - z0_1) / temp
-        s[:, 0, 1] = 2 * (z0_0 * z0_1)**0.5 / temp
-        s[:, 1, 0] = 2 * (z0_0 * z0_1)**0.5 / temp
+        s[:, 0, 0] = (R - z0_0.conj() + z0_1) / temp
+        s[:, 1, 1] = (R + z0_0 - z0_1.conj()) / temp
+        s[:, 0, 1] = 2 * (z0_0.real * z0_1.real)**0.5 / temp
+        s[:, 1, 0] = 2 * (z0_0.real * z0_1.real)**0.5 / temp
         result.s = s
         return result
 
@@ -697,10 +697,10 @@ class Media(ABC):
         # y[:, 1, 0] = -1j * w * C
         z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
         temp = 1.0 + 1j * w * C * (z0_0 + z0_1)
-        s[:, 0, 0] = (1.0 - 1j * w * C * (z0_0 - z0_1) ) / temp
-        s[:, 1, 1] = (1.0 - 1j * w * C * (z0_1 - z0_0) ) / temp
-        s[:, 0, 1] = (2j * w * C * (z0_0 * z0_1)**0.5) / temp
-        s[:, 1, 0] = (2j * w * C * (z0_0 * z0_1)**0.5) / temp
+        s[:, 0, 0] = (1.0 - 1j * w * C * (z0_0.conj() - z0_1) ) / temp
+        s[:, 1, 1] = (1.0 - 1j * w * C * (z0_1.conj() - z0_0) ) / temp
+        s[:, 0, 1] = (2j * w * C * (z0_0.real * z0_1.real)**0.5) / temp
+        s[:, 1, 0] = (2j * w * C * (z0_0.real * z0_1.real)**0.5) / temp
         result.s = s
         return result
 
@@ -741,10 +741,10 @@ class Media(ABC):
         # y[:, 1, 0] = -1.0 / (1j * w * L)
         z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
         temp = (1j * w * L) + (z0_0 + z0_1)
-        s[:, 0, 0] = (1j * w * L - z0_0 + z0_1) / temp
-        s[:, 1, 1] = (1j * w * L + z0_0 - z0_1) / temp
-        s[:, 0, 1] = 2 * (z0_0 * z0_1)**0.5 / temp
-        s[:, 1, 0] = 2 * (z0_0 * z0_1)**0.5 / temp
+        s[:, 0, 0] = (1j * w * L - z0_0.conj() + z0_1) / temp
+        s[:, 1, 1] = (1j * w * L + z0_0 - z0_1.conj()) / temp
+        s[:, 0, 1] = 2 * (z0_0.real * z0_1.real)**0.5 / temp
+        s[:, 1, 0] = 2 * (z0_0.real * z0_1.real)**0.5 / temp
         result.s = s
         return result
 
