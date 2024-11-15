@@ -1055,27 +1055,18 @@ class Media(ABC):
         # conjugation.
         result = self.match(nports=4, z0=z0, s_def='traveling', **kwargs)
 
-        theta = self.electrical_length(self.to_meters(d=d, unit=unit))
+        t = self.electrical_length(self.to_meters(d=d, unit=unit))
 
-        if np.abs(theta).all() < ZERO:
-            result.s = 1/2* np.array([[1, 1, 1, -1],
-                                      [1, 1, -1, 1],
-                                      [1, -1, 1, 1],
-                                      [-1, 1, 1, 1]]
-                                      ).transpose().reshape(-1,4,4)
-        else:
-            # From AWR docs on TLINP4. The math below could
-            # be re-worked directly into its S-parameter formulation
-            y11 = 1 / (z0 * np.tanh(theta))
-            y12 = -1 / (z0 * np.sinh(theta))
-            y22 = y11
-            y21 = y12
+        denom = -1 + 9*np.exp(2*t)
+        s11 = (1 + 3*np.exp(2*t)) / denom
+        s12 = 4*np.exp(t) / denom
+        s13 = (-2 + 6*np.exp(2*t)) / denom
+        s14 = -s12
 
-            result.y = \
-                    np.array([[ y11,  y12, -y11, -y12],
-                              [ y21,  y22, -y21, -y22],
-                              [-y11, -y12,  y11,  y12],
-                              [-y21, -y22,  y21,  y22]]).transpose().reshape(-1, 4, 4)
+        result.s = np.array([[s11, s12, s13, s14],
+                             [s12, s11, s14, s13],
+                             [s13, s14, s11, s12],
+                             [s14, s13, s12, s11]]).transpose(2, 0, 1)
 
         # renormalize (or embed) into z0_port if required
         if self.z0_port is not None:

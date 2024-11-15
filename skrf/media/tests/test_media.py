@@ -4,6 +4,7 @@ import unittest
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
+from skrf.constants import S_DEF_DEFAULT
 from skrf.frequency import Frequency
 from skrf.media import DefinedGammaZ0
 from skrf.network import Network, concat_ports, connect
@@ -391,6 +392,52 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
             zero_length = self.dummy_media.line_floating(d=0, z0=z0)
             assert_array_almost_equal(zero_length.s, s_zero)
 
+    def test_line_floating2(self):
+        """
+        Test against line
+        """
+        d = 100
+        unit = 'mm'
+        z0 = 50
+        line = self.dummy_media.line(d, unit, z0)
+        line_floating = self.dummy_media.line_floating(d, unit, z0)
+        gnd = self.dummy_media.short(n_ports=1)
+        line_floating = connect(line_floating, 3, gnd, 0)
+        line_floating = connect(line_floating, 2, gnd, 0)
+        assert_array_almost_equal(line_floating.s, line.s)
+
+    def test_line_floating3(self):
+        """
+        Test against Y-parameter definition
+        """
+        d = 100
+        unit = 'mm'
+
+        def yparam_ref(media, d, unit, z0, s_def=S_DEF_DEFAULT):
+            result = media.match(nports=4, z0=z0, s_def='traveling')
+
+            theta = media.electrical_length(media.to_meters(d=d, unit=unit))
+
+            # From AWR docs on TLINP4.
+            y11 = 1 / (z0 * np.tanh(theta))
+            y12 = -1 / (z0 * np.sinh(theta))
+            y22 = y11
+            y21 = y12
+
+            result.y = \
+                    np.array([[ y11,  y12, -y11, -y12],
+                              [ y21,  y22, -y21, -y22],
+                              [-y11, -y12,  y11,  y12],
+                              [-y21, -y22,  y21,  y22]]).transpose(2,0,1)
+            if media.z0_port is not None:
+                result.renormalize(media.z0_port)
+            result.renormalize(result.z0, s_def=s_def)
+            return result
+
+        for z0 in [50, 1, 100+10j]:
+            line = self.dummy_media.line_floating(d, unit, z0)
+            ref_line = yparam_ref(self.dummy_media, d, unit, z0)
+            assert_array_almost_equal(ref_line.s, line.s)
 
     def test_scalar_gamma_z0_media(self):
         """
