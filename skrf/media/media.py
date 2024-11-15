@@ -644,13 +644,20 @@ class Media(ABC):
         inductor
         """
         result = self.match(nports=2, **kwargs)
-        y = np.zeros(shape=result.s.shape, dtype=complex)
+        s = np.zeros(shape=result.s.shape, dtype=complex)
         R = np.array(R)
-        y[:, 0, 0] = 1.0 / R
-        y[:, 1, 1] = 1.0 / R
-        y[:, 0, 1] = -1.0 / R
-        y[:, 1, 0] = -1.0 / R
-        result.y = y
+        # Convert Y-parameter resistor to S parameters to accommodate any R value.
+        # y[:, 0, 0] = 1.0 / R
+        # y[:, 1, 1] = 1.0 / R
+        # y[:, 0, 1] = -1.0 / R
+        # y[:, 1, 0] = -1.0 / R
+        z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
+        temp = R + (z0_0 + z0_1)
+        s[:, 0, 0] = (R - z0_0 + z0_1) / temp
+        s[:, 1, 1] = (R + z0_0 - z0_1) / temp
+        s[:, 0, 1] = 2 * (z0_0 * z0_1)**0.5 / temp
+        s[:, 1, 0] = 2 * (z0_0 * z0_1)**0.5 / temp
+        result.s = s
         return result
 
     def capacitor(self, C: NumberLike, **kwargs) -> Network:
@@ -681,13 +688,20 @@ class Media(ABC):
         """
         result = self.match(nports=2, **kwargs)
         w = self.frequency.w
-        y = np.zeros(shape=result.s.shape, dtype=complex)
+        s = np.zeros(shape=result.s.shape, dtype=complex)
         C = np.array(C)
-        y[:, 0, 0] = 1j * w * C
-        y[:, 1, 1] = 1j * w * C
-        y[:, 0, 1] = -1j * w * C
-        y[:, 1, 0] = -1j * w * C
-        result.y = y
+        # Convert Y-parameter capacitor to S parameters to accommodate any C value.
+        # y[:, 0, 0] = 1j * w * C
+        # y[:, 1, 1] = 1j * w * C
+        # y[:, 0, 1] = -1j * w * C
+        # y[:, 1, 0] = -1j * w * C
+        z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
+        temp = 1.0 + 1j * w * C * (z0_0 + z0_1)
+        s[:, 0, 0] = (1.0 - 1j * w * C * (z0_0 - z0_1) ) / temp
+        s[:, 1, 1] = (1.0 - 1j * w * C * (z0_1 - z0_0) ) / temp
+        s[:, 0, 1] = (2j * w * C * (z0_0 * z0_1)**0.5) / temp
+        s[:, 1, 0] = (2j * w * C * (z0_0 * z0_1)**0.5) / temp
+        result.s = s
         return result
 
     def inductor(self, L: NumberLike, **kwargs) -> Network:
@@ -718,13 +732,20 @@ class Media(ABC):
         """
         result = self.match(nports=2, **kwargs)
         w = self.frequency.w
-        y = np.zeros(shape=result.s.shape, dtype=complex)
+        s = np.zeros(shape=result.s.shape, dtype=complex)
         L = np.array(L)
-        y[:, 0, 0] = 1.0 / (1j * w * L)
-        y[:, 1, 1] = 1.0 / (1j * w * L)
-        y[:, 0, 1] = -1.0 / (1j * w * L)
-        y[:, 1, 0] = -1.0 / (1j * w * L)
-        result.y = y
+        # Convert Y-parameter inductor to S parameters to accommodate any L value.
+        # y[:, 0, 0] = 1.0 / (1j * w * L)
+        # y[:, 1, 1] = 1.0 / (1j * w * L)
+        # y[:, 0, 1] = -1.0 / (1j * w * L)
+        # y[:, 1, 0] = -1.0 / (1j * w * L)
+        z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
+        temp = (1j * w * L) + (z0_0 + z0_1)
+        s[:, 0, 0] = (1j * w * L - z0_0 + z0_1) / temp
+        s[:, 1, 1] = (1j * w * L + z0_0 - z0_1) / temp
+        s[:, 0, 1] = 2 * (z0_0 * z0_1)**0.5 / temp
+        s[:, 1, 0] = 2 * (z0_0 * z0_1)**0.5 / temp
+        result.s = s
         return result
 
     def impedance_mismatch(self, z1: NumberLike, z2: NumberLike, **kwargs) -> Network:
