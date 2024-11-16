@@ -191,15 +191,28 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         name = 'resistor,1ohm'
         qucs_ntwk = Network(os.path.join(self.files_dir, name + '.s2p'))
         self.dummy_media.frequency = qucs_ntwk.frequency
-
-        # Test for real and imag port impedance
         mismatch_z0_tuple = ([25, 50], [25-5j, 50+10j], [25, 50-10j])
+
+        # Test against Y-parameter defination
+        def resistor_y_def(media: DefinedGammaZ0, R, **kwargs):
+            result = media.match(nports=2, **kwargs)
+            y = np.zeros(shape=result.s.shape, dtype=complex)
+            R = np.array(R)
+            y[:, 0, 0] = 1.0 / R
+            y[:, 1, 1] = 1.0 / R
+            y[:, 0, 1] = -1.0 / R
+            y[:, 1, 0] = -1.0 / R
+            result.y = y
+            return result
+
+        # Test real and imag port impedance with Y-parameter defination and renormalize()
         for mismatch_z0 in mismatch_z0_tuple:
             qucs_ntwk_copy = qucs_ntwk.copy()
             qucs_ntwk_copy.renormalize(mismatch_z0)
             skrf_ntwk = self.dummy_media.resistor(1, name = name, z0=mismatch_z0)
+            skrf_ntwk_y = resistor_y_def(self.dummy_media, 1, z0=mismatch_z0)
             self.assertEqual(qucs_ntwk_copy, skrf_ntwk)
-            self.assertEqual(qucs_ntwk_copy.s_def, skrf_ntwk.s_def)
+            assert_array_almost_equal(skrf_ntwk.s, skrf_ntwk_y.s)
 
     def test_shunt_resistor(self):
         """
@@ -246,15 +259,29 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         name = 'capacitor,p01pF'
         qucs_ntwk = Network(os.path.join(self.files_dir, name + '.s2p'))
         self.dummy_media.frequency = qucs_ntwk.frequency
-
-        # Test for real and imag port impedance
         mismatch_z0_tuple = ([25, 50], [25-5j, 50+10j], [25, 50-10j])
+
+        # Test against Y-parameter defination
+        def capacitor_y_def(media: DefinedGammaZ0, C, **kwargs):
+            result = media.match(nports=2, **kwargs)
+            w = media.frequency.w
+            y = np.zeros(shape=result.s.shape, dtype=complex)
+            C = np.array(C)
+            y[:, 0, 0] = 1j * w * C
+            y[:, 1, 1] = 1j * w * C
+            y[:, 0, 1] = -1j * w * C
+            y[:, 1, 0] = -1j * w * C
+            result.y = y
+            return result
+
+        # Test real and imag port impedance with Y-parameter defination and renormalize()
         for mismatch_z0 in mismatch_z0_tuple:
             qucs_ntwk_copy = qucs_ntwk.copy()
             qucs_ntwk_copy.renormalize(mismatch_z0)
             skrf_ntwk = self.dummy_media.capacitor(.01e-12, name = name, z0=mismatch_z0)
+            skrf_ntwk_y = capacitor_y_def(self.dummy_media, .01e-12, z0=mismatch_z0)
             self.assertEqual(qucs_ntwk_copy, skrf_ntwk)
-            self.assertEqual(qucs_ntwk_copy.s_def, skrf_ntwk.s_def)
+            assert_array_almost_equal(skrf_ntwk.s, skrf_ntwk_y.s)
 
     def test_shunt_capacitor(self):
         """
@@ -332,15 +359,29 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         name = 'inductor,p1nH'
         qucs_ntwk = Network(os.path.join(self.files_dir, name + '.s2p'))
         self.dummy_media.frequency = qucs_ntwk.frequency
-
-        # Test for real and imag port impedance
         mismatch_z0_tuple = ([25, 50], [25-5j, 50+10j], [25, 50-10j])
+
+        # Test against Y-parameter defination
+        def inductor_y_def(media: DefinedGammaZ0, L, **kwargs):
+            result = media.match(nports=2, **kwargs)
+            w = media.frequency.w
+            y = np.zeros(shape=result.s.shape, dtype=complex)
+            L = np.array(L)
+            y[:, 0, 0] = 1.0 / (1j * w * L)
+            y[:, 1, 1] = 1.0 / (1j * w * L)
+            y[:, 0, 1] = -1.0 / (1j * w * L)
+            y[:, 1, 0] = -1.0 / (1j * w * L)
+            result.y = y
+            return result
+
+        # Test real and imag port impedance with Y-parameter defination and renormalize()
         for mismatch_z0 in mismatch_z0_tuple:
             qucs_ntwk_copy = qucs_ntwk.copy()
             qucs_ntwk_copy.renormalize(mismatch_z0)
             skrf_ntwk = self.dummy_media.inductor(.1e-9, name = name, z0=mismatch_z0)
+            skrf_ntwk_y = inductor_y_def(self.dummy_media, .1e-9, z0=mismatch_z0)
             self.assertEqual(qucs_ntwk_copy, skrf_ntwk)
-            self.assertEqual(qucs_ntwk_copy.s_def, skrf_ntwk.s_def)
+            assert_array_almost_equal(skrf_ntwk.s, skrf_ntwk_y.s)
 
     def test_shunt_inductor(self):
         """
