@@ -59,7 +59,7 @@ s_deg = np.array(
     [-79.34, -66.58, -42.2 , 161.24]]])
 
 s = s_mag * np.exp(1j*s_deg * np.pi / 180)
-ex_5_6 = rf.Network(s=np.tile(s, [2, 1, 1]), z0=[50, 75, 0.01, 0.01], f=[5, 6], f_unit="GHz", name='ex_6')
+ex_5_6 = rf.Network(s=np.tile(s, [2, 1, 1]), z0=[50, 75, 0.01, 0.01], f=[5e9, 6e9], f_unit="Hz")
 
 @pytest.mark.parametrize("fname",
     [
