@@ -778,19 +778,27 @@ class Network:
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, self.__class__):
+            print("No Network")
             return False
         if len(self.f) != len(other.f):
+            print("Different length")
             return False
         for prop in ['f','s','z0']:
+            print(prop)
+            print(getattr(self, prop))
+            print(getattr(other, prop))
             if not np.all(np.abs(getattr(self,prop)-getattr(other,prop))< ZERO):
+                print("False", prop)
                 return False
         # if z0 is imaginary s_def is compared. If real of z0 is equal but s_def differs, networks are still equal
         if ((np.imag(self.z0) != 0).all()) or ((np.imag(other.z0) != 0).all()):
+            print(self.s_def, other.s_def)
             if self.s_def == other.s_def:
                 return True
             else:
                 return np.allclose(self.z0.real, other.z0.real, atol = ZERO)
         else:
+            print("Finally true")
             return True
 
     def __ne__(self, other:object) -> bool:
