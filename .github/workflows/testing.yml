@@ -34,7 +34,7 @@ jobs:
       run: |
         uv pip install -e .[test,visa,netw,xlsx,plot,docs,testspice] --compile
         . .venv/bin/activate
-        python -m pytest -n auto --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }}
+        python -m pytest -n auto --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }} -vvv -s
 
     - name: Upload Test Results
       if: always()
