@@ -643,14 +643,27 @@ class Media(ABC):
         capacitor
         inductor
         """
-        result = self.match(nports=2, **kwargs)
-        y = np.zeros(shape=result.s.shape, dtype=complex)
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+        result = self.match(nports=2, s_def='power', **kwargs)
+        s = np.zeros(shape=result.s.shape, dtype=complex)
         R = np.array(R)
-        y[:, 0, 0] = 1.0 / R
-        y[:, 1, 1] = 1.0 / R
-        y[:, 0, 1] = -1.0 / R
-        y[:, 1, 0] = -1.0 / R
-        result.y = y
+        # Convert Y-parameters resistor to S-parameters in power wave to accommodate any R value.
+        # y[:, 0, 0] = 1.0 / R
+        # y[:, 1, 1] = 1.0 / R
+        # y[:, 0, 1] = -1.0 / R
+        # y[:, 1, 0] = -1.0 / R
+        z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
+        denom = R + (z0_0 + z0_1)
+        s[:, 0, 0] = (R - z0_0.conj() + z0_1) / denom
+        s[:, 1, 1] = (R + z0_0 - z0_1.conj()) / denom
+        s[:, 0, 1] = 2 * (z0_0.real * z0_1.real)**0.5 / denom
+        s[:, 1, 0] = 2 * (z0_0.real * z0_1.real)**0.5 / denom
+        result.s = s
+
+        # Renormalize into s_def if required
+        if s_def != 'power':
+            result.renormalize(z_new=result.z0, s_def=s_def)
+
         return result
 
     def capacitor(self, C: NumberLike, **kwargs) -> Network:
@@ -679,15 +692,28 @@ class Media(ABC):
         resistor
         inductor
         """
-        result = self.match(nports=2, **kwargs)
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+        result = self.match(nports=2, s_def='power', **kwargs)
         w = self.frequency.w
-        y = np.zeros(shape=result.s.shape, dtype=complex)
+        s = np.zeros(shape=result.s.shape, dtype=complex)
         C = np.array(C)
-        y[:, 0, 0] = 1j * w * C
-        y[:, 1, 1] = 1j * w * C
-        y[:, 0, 1] = -1j * w * C
-        y[:, 1, 0] = -1j * w * C
-        result.y = y
+        # Convert Y-parameters capacitor to S-parameters in power wave to accommodate any C value.
+        # y[:, 0, 0] = 1j * w * C
+        # y[:, 1, 1] = 1j * w * C
+        # y[:, 0, 1] = -1j * w * C
+        # y[:, 1, 0] = -1j * w * C
+        z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
+        denom = 1.0 + 1j * w * C * (z0_0 + z0_1)
+        s[:, 0, 0] = (1.0 - 1j * w * C * (z0_0.conj() - z0_1) ) / denom
+        s[:, 1, 1] = (1.0 - 1j * w * C * (z0_1.conj() - z0_0) ) / denom
+        s[:, 0, 1] = (2j * w * C * (z0_0.real * z0_1.real)**0.5) / denom
+        s[:, 1, 0] = (2j * w * C * (z0_0.real * z0_1.real)**0.5) / denom
+        result.s = s
+
+        # Renormalize into s_def if required
+        if s_def != 'power':
+            result.renormalize(z_new=result.z0, s_def=s_def)
+
         return result
 
     def inductor(self, L: NumberLike, **kwargs) -> Network:
@@ -716,15 +742,28 @@ class Media(ABC):
         capacitor
         resistor
         """
-        result = self.match(nports=2, **kwargs)
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+        result = self.match(nports=2, s_def='power', **kwargs)
         w = self.frequency.w
-        y = np.zeros(shape=result.s.shape, dtype=complex)
+        s = np.zeros(shape=result.s.shape, dtype=complex)
         L = np.array(L)
-        y[:, 0, 0] = 1.0 / (1j * w * L)
-        y[:, 1, 1] = 1.0 / (1j * w * L)
-        y[:, 0, 1] = -1.0 / (1j * w * L)
-        y[:, 1, 0] = -1.0 / (1j * w * L)
-        result.y = y
+        # Convert Y-parameters inductor to S-parameters in power wave to accommodate any L value.
+        # y[:, 0, 0] = 1.0 / (1j * w * L)
+        # y[:, 1, 1] = 1.0 / (1j * w * L)
+        # y[:, 0, 1] = -1.0 / (1j * w * L)
+        # y[:, 1, 0] = -1.0 / (1j * w * L)
+        z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
+        denom = (1j * w * L) + (z0_0 + z0_1)
+        s[:, 0, 0] = (1j * w * L - z0_0.conj() + z0_1) / denom
+        s[:, 1, 1] = (1j * w * L + z0_0 - z0_1.conj()) / denom
+        s[:, 0, 1] = 2 * (z0_0.real * z0_1.real)**0.5 / denom
+        s[:, 1, 0] = 2 * (z0_0.real * z0_1.real)**0.5 / denom
+        result.s = s
+
+        # Renormalize into s_def if required
+        if s_def != 'power':
+            result.renormalize(z_new=result.z0, s_def=s_def)
+
         return result
 
     def impedance_mismatch(self, z1: NumberLike, z2: NumberLike, **kwargs) -> Network:
