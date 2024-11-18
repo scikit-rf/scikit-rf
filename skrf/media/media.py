@@ -643,7 +643,7 @@ class Media(ABC):
         capacitor
         inductor
         """
-        s_def = kwargs.pop('s_def', 'power')
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
         result = self.match(nports=2, s_def='power', **kwargs)
         s = np.zeros(shape=result.s.shape, dtype=complex)
         R = np.array(R)
@@ -692,7 +692,7 @@ class Media(ABC):
         resistor
         inductor
         """
-        s_def = kwargs.pop('s_def', 'power')
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
         result = self.match(nports=2, s_def='power', **kwargs)
         w = self.frequency.w
         s = np.zeros(shape=result.s.shape, dtype=complex)
@@ -742,7 +742,7 @@ class Media(ABC):
         capacitor
         resistor
         """
-        s_def = kwargs.pop('s_def', 'power')
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
         result = self.match(nports=2, s_def='power', **kwargs)
         w = self.frequency.w
         s = np.zeros(shape=result.s.shape, dtype=complex)
