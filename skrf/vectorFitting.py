@@ -8,11 +8,6 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-try:
-    from matplotlib.ticker import EngFormatter
-except ImportError:
-    pass
-
 from .util import Axes, axes_kwarg
 
 # imports for type hinting
@@ -2328,7 +2323,7 @@ class VectorFitting:
             f.write('* Created using scikit-rf vectorFitting.py\n\n')
 
             # Create subcircuit pin string and reference nodes
-            if create_reference_pins == True:
+            if create_reference_pins:
                 str_input_nodes = " ".join(map(lambda x: f'p{x + 1} r{x + 1}', range(self.network.nports)))
                 ref_nodes = list(map(lambda x: f'r{x + 1}', range(self.network.nports)))
             else:
