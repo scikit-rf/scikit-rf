@@ -2340,7 +2340,7 @@ class VectorFitting:
                 sqrt_Z0_n=np.sqrt(np.real(self.network.z0[0, n]))
 
                 # Port reference impedance Z0
-                f.write(f'R{n + 1} p{n+1} a{n + 1} {np.real(self.network.z0[0, n])}\n')
+                f.write(f'R_ref_{n + 1} p{n+1} a{n + 1} {np.real(self.network.z0[0, n])}\n')
 
                 # CCVS implementing the reflected wave b.
                 # Also used as current sensor to measure the input current
