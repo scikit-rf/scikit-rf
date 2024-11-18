@@ -643,8 +643,8 @@ class Media(ABC):
         capacitor
         inductor
         """
-        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
-        result = self.match(nports=2, s_def=S_DEF_DEFAULT, **kwargs)
+        s_def = kwargs.pop('s_def', 'power')
+        result = self.match(nports=2, s_def='power', **kwargs)
         s = np.zeros(shape=result.s.shape, dtype=complex)
         R = np.array(R)
         # Convert Y-parameters resistor to S-parameters in power wave to accommodate any R value.
@@ -661,7 +661,7 @@ class Media(ABC):
         result.s = s
 
         # Renormalize into s_def if required
-        if s_def != S_DEF_DEFAULT:
+        if s_def != 'power':
             result.renormalize(z_new=result.z0, s_def=s_def)
 
         return result
@@ -692,8 +692,8 @@ class Media(ABC):
         resistor
         inductor
         """
-        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
-        result = self.match(nports=2, s_def=S_DEF_DEFAULT, **kwargs)
+        s_def = kwargs.pop('s_def', 'power')
+        result = self.match(nports=2, s_def='power', **kwargs)
         w = self.frequency.w
         s = np.zeros(shape=result.s.shape, dtype=complex)
         C = np.array(C)
@@ -711,7 +711,7 @@ class Media(ABC):
         result.s = s
 
         # Renormalize into s_def if required
-        if s_def != S_DEF_DEFAULT:
+        if s_def != 'power':
             result.renormalize(z_new=result.z0, s_def=s_def)
 
         return result
@@ -742,8 +742,8 @@ class Media(ABC):
         capacitor
         resistor
         """
-        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
-        result = self.match(nports=2, s_def=S_DEF_DEFAULT, **kwargs)
+        s_def = kwargs.pop('s_def', 'power')
+        result = self.match(nports=2, s_def='power', **kwargs)
         w = self.frequency.w
         s = np.zeros(shape=result.s.shape, dtype=complex)
         L = np.array(L)
@@ -761,7 +761,7 @@ class Media(ABC):
         result.s = s
 
         # Renormalize into s_def if required
-        if s_def != S_DEF_DEFAULT:
+        if s_def != 'power':
             result.renormalize(z_new=result.z0, s_def=s_def)
 
         return result
