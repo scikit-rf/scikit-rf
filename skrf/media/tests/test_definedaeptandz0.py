@@ -38,6 +38,8 @@ class DefinedAEpTandZ0TestCase(unittest.TestCase):
         self.l    = 74.2415154883262e-3
         self.ep_r = 3.25354286428265
         self.tand = 0.0133936758939493
+        # frequency vector with only 3 points
+        self.freq = rf.Frequency(1, 3, 3, 'GHz')
 
 
     def test_line_awr(self):
@@ -107,6 +109,69 @@ class DefinedAEpTandZ0TestCase(unittest.TestCase):
         if self.verbose:
             fig.tight_layout()
             fig2.tight_layout()
+
+    def test_nominal_impedance_dispersion(self):
+        """
+        Test if passing scalar value to z0 results to this nominal impedance
+        being dispersed to a complex frequency-dependent characteristic
+        impedance.
+        """
+        Zn = 75
+        m = DefinedAEpTandZ0(
+            frequency = self.freq,
+            z0 = Zn,
+            ep_r = self.ep_r,
+            A = self.A,
+            f_A = self.freq.f[0],
+            tanD = self.tand,
+            z0_port = 50
+            )
+        # z0_characteristic complex and frequency dependant
+        self.assertTrue(np.all(np.abs(np.imag(m.z0_characteristic) > 1e-1)))
+        self.assertTrue(m.z0_characteristic[0] != m.z0_characteristic[-1])
+
+    def test_raw_z0_array(self):
+        """
+        Test if passing array-like value to z0 results to this raw value being
+        assigned to characteristic impedance.
+        """
+
+        # Single-element array are kept as raw z0_characteristic
+        z1 = [75]
+        m1 = DefinedAEpTandZ0(
+            frequency = self.freq,
+            z0 = z1,
+            ep_r = self.ep_r,
+            A = self.A,
+            f_A = self.freq.f[0],
+            tanD = self.tand,
+            z0_port = 50
+            )
+        self.assertTrue(np.allclose(z1 * np.ones(3), m1.z0_characteristic))
+        # Sequence are kept as raw z0_characteristic
+        z2 = [45, 50, 55]
+        m2 = DefinedAEpTandZ0(
+            frequency = self.freq,
+            z0 = z2,
+            ep_r = self.ep_r,
+            A = self.A,
+            f_A = self.freq.f[0],
+            tanD = self.tand,
+            z0_port = 50
+            )
+        self.assertTrue(np.allclose(z2, m2.z0_characteristic))
+        # Numpy arrays are kept as raw z0_characteristic
+        z3 = np.array([48, 50, 52])
+        m3 = DefinedAEpTandZ0(
+            frequency = self.freq,
+            z0 = z3,
+            ep_r = self.ep_r,
+            A = self.A,
+            f_A = self.freq.f[0],
+            tanD = self.tand,
+            z0_port = 50
+            )
+        self.assertTrue(np.allclose(z3, m3.z0_characteristic))
 
 if __name__ == '__main__':
     unittest.main()

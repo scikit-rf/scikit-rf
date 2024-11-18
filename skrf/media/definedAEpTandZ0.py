@@ -18,8 +18,9 @@ behaviour is frequency invariant.
 from __future__ import annotations
 
 import warnings
+from typing import Sequence
 
-from numpy import imag, log, ones, pi, real, sqrt
+from numpy import imag, log, ndarray, ones, pi, real, sqrt
 from scipy.constants import c
 
 from ..constants import NumberLike
@@ -87,10 +88,12 @@ class DefinedAEpTandZ0(Media):
         Dielectric relative permittivity loss tangent :math:`\tan\delta`. See `ep_r`.
     z0 : number, array-like, default 50.0
         Quasi-static nominal impedance of the medium.
-        Because of the distortion introduced by the conductor and dielectric
+        Because of the dispersion introduced by the conductor and dielectric
         losses, the characteristic impedance can be frequency-dependent with an
         imaginary part. The characteristic impedance is computed with an RLGC
         model.
+        If the impedance parameter is array-like, the characteristic impedance
+        is assigned to this value without modification.
 
         .. math::
 
@@ -166,19 +169,24 @@ class DefinedAEpTandZ0(Media):
         Media.__init__(self, frequency=frequency, z0_port=z0_port)
         self.A, self.f_A = A, f_A
         self.ep_r, self.tanD = ep_r, tanD
-        self.Zn = z0
+
         self.f_low, self.f_high, self.f_ep = f_low, f_high, f_ep
         self.model = model
 
-        # z0 is the nominal impedance. Compute characteristic impedance with
-        # an RLGC model based on alpha conductor and alpha dielectric.
-        self.R = 2 * self.Zn * self.alpha_conductor
-        self.L = self.Zn * sqrt(self.ep_r) / c
-        self.G = 2 / self.Zn * self.alpha_dielectric
-        self.C = sqrt(ep_r) / c / self.Zn
-        self.z0_characteristic = sqrt(
-            (self.R + 1j * self.frequency.w * self.L) /
-            (self.G + 1j * self.frequency.w * self.C))
+        if isinstance(z0, (Sequence, ndarray)):
+            # keep raw impedance for characteristic impedance
+            self.z0_characteristic = z0
+        else:
+            # z0 is the nominal impedance. Compute characteristic impedance with
+            # an RLGC model based on alpha conductor and alpha dielectric.
+            self.Zn = z0
+            self.R = 2 * self.Zn * self.alpha_conductor
+            self.L = self.Zn * sqrt(self.ep_r) / c
+            self.G = 2 / self.Zn * self.alpha_dielectric
+            self.C = sqrt(ep_r) / c / self.Zn
+            self.z0_characteristic = sqrt(
+                (self.R + 1j * self.frequency.w * self.L) /
+                (self.G + 1j * self.frequency.w * self.C))
 
         if Z0 is not None:
             # warns of deprecation

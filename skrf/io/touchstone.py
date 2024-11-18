@@ -537,7 +537,7 @@ class Touchstone:
         if state.matrix_format == "full":
             self.s[:] = s_flat
         else:
-            index = np.tril_indices(state.rank) if state.matrix_format == "lower" else np.triu_indices(self.rank)
+            index = np.tril_indices(state.rank) if state.matrix_format == "lower" else np.triu_indices(state.rank)
             index_flat = np.ravel_multi_index(index, (state.rank, state.rank))
             self.s[:, index_flat] = s_flat
 
@@ -546,8 +546,12 @@ class Touchstone:
         else:
             self.s = self.s.reshape((-1, state.rank, state.rank))
 
-        if state.matrix_format != "full":
-            self.s = np.nanmax((self.s, self.s.transpose(0, 2, 1)), axis=0)
+        if state.matrix_format == "upper":
+            index_lower = np.tril_indices(state.rank)
+            self.s[(...,*index_lower)] = self.s.transpose(0, 2, 1)[(...,*index_lower)]
+        elif state.matrix_format == "lower":
+            index_upper = np.triu_indices(state.rank)
+            self.s[(...,*index_upper)] = self.s.transpose(0, 2, 1)[(...,*index_upper)]
 
         self.port_modes = np.array(["S"] * state.rank)
         if state.mixed_mode_order:
