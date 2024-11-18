@@ -2390,15 +2390,15 @@ class VectorFitting:
 
                     # R for constant term
                     if g < 0:
-                        f.write(f'R{n + 1}{j + 1} nt_n_{j + 1} nt_c_{n + 1} {np.abs(1 / g)}\n')
+                        f.write(f'R{n + 1}_{j + 1} nt_n_{j + 1} nt_c_{n + 1} {np.abs(1 / g)}\n')
                     elif g > 0:
-                        f.write(f'R{n + 1}{j + 1} nt_p_{j + 1} nt_c_{n + 1} {1 / g}\n')
+                        f.write(f'R{n + 1}_{j + 1} nt_p_{j + 1} nt_c_{n + 1} {1 / g}\n')
 
                     # C for proportional term
                     if c < 0:
-                        f.write(f'C{n + 1}{j + 1} nt_n_{j + 1} nt_c_{n + 1} {np.abs(c)}\n')
+                        f.write(f'C{n + 1}_{j + 1} nt_n_{j + 1} nt_c_{n + 1} {np.abs(c)}\n')
                     elif c > 0:
-                        f.write(f'C{n + 1}{j + 1} nt_p_{j + 1} nt_c_{n + 1} {c}\n')
+                        f.write(f'C{n + 1}_{j + 1} nt_p_{j + 1} nt_c_{n + 1} {c}\n')
 
                     # Transfer admittances represented by poles and residues
                     for i_pole in range(len(self.poles)):
