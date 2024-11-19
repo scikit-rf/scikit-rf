@@ -5,9 +5,10 @@ import os
 import warnings
 from timeit import default_timer as timer
 from typing import TYPE_CHECKING, Any
-import numpy as np
-import jax.numpy as jnp
+
 import jax
+import jax.numpy as jnp
+import numpy as np
 from scipy.integrate import trapezoid
 
 from .util import Axes, axes_kwarg
@@ -705,9 +706,9 @@ class VectorFitting:
 
         else:
             return None
-        
 
-    
+
+
     @staticmethod
     def _qr(arr: np.ndarray) -> np.ndarray:
         #return np.array([jnp.linalg.qr(e, mode='r') for e in arr])
