@@ -5,8 +5,9 @@ import os
 import warnings
 from timeit import default_timer as timer
 from typing import TYPE_CHECKING, Any
-
 import numpy as np
+import jax.numpy as jnp
+import jax
 from scipy.integrate import trapezoid
 
 from .util import Axes, axes_kwarg
@@ -63,6 +64,7 @@ class VectorFitting:
     .. [#vectfit_website] Vector Fitting website: https://www.sintef.no/projectweb/vectorfitting/
     """
 
+    @profile
     def __init__(self, network: Network):
         self.network = network
         """ Instance variable holding the Network to be fitted. This is the Network passed during initialization,
@@ -369,6 +371,7 @@ class VectorFitting:
                               '`passivity_enforce()` to enforce passivity before using this model.',
                               UserWarning, stacklevel=2)
 
+    @profile
     def auto_fit(self, n_poles_init_real: int = 3, n_poles_init_cmplx: int = 3, n_poles_add: int = 3,
                  model_order_max: int = 100, iters_start: int = 3, iters_inter: int = 3, iters_final: int = 5,
                  target_error: float = 1e-2, alpha: float = 0.03, gamma: float = 0.03, nu_samples: float = 1.0,
@@ -702,8 +705,17 @@ class VectorFitting:
 
         else:
             return None
+        
+
+    
+    @staticmethod
+    def _qr(arr: np.ndarray) -> np.ndarray:
+        #return np.array([jnp.linalg.qr(e, mode='r') for e in arr])
+        qr_vmap = jax.vmap(lambda e: jnp.linalg.qr(e, mode='r'), in_axes=0)
+        return qr_vmap(arr)
 
     @staticmethod
+    @profile
     def _pole_relocation(poles, freqs, freq_responses, weights_responses, fit_constant, fit_proportional):
         n_responses, n_freqs = np.shape(freq_responses)
         n_samples = n_responses * n_freqs
@@ -806,10 +818,11 @@ class VectorFitting:
 
         # direct QR of stacked matrices for linalg.qr() only works with numpy>=1.22.0
         # workaround for old numpy:
-        R = np.empty((n_responses, dim_k, n_cols_unused + n_cols_used))
+        #R = np.empty((n_responses, dim_k, n_cols_unused + n_cols_used))
         A_ri = np.hstack((A.real, A.imag))
-        for i in range(n_responses):
-            R[i] = np.linalg.qr(A_ri[i], mode='r')
+        #for i in range(n_responses):
+        #    R[i] = np.linalg.qr(A_ri[i], mode='r')
+        R = VectorFitting._qr(A_ri)
 
         # only R22 is required to solve for c_res and d_res
         # R12 and R22 can have a different number of rows, depending on K
@@ -1041,6 +1054,7 @@ class VectorFitting:
 
         return idx_freqs_start[i_sort], idx_freqs_stop[i_sort], idx_freqs_max[i_sort], delta_mean_bands[i_sort]
 
+    @profile
     def get_rms_error(self, i=-1, j=-1, parameter_type: str = 's'):
         r"""
         Returns the root-mean-square (rms) error magnitude of the fit, i.e.
