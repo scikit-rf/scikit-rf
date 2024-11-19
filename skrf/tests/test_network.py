@@ -329,12 +329,20 @@ class NetworkTestCase(unittest.TestCase):
             sio.name = os.path.basename(filename) # hack a bug to touchstone reader
             rf.Network(sio)
 
+    def test_constructor_from_stringio_hfss(self):
         filename = os.path.join(self.test_dir, 'hfss_oneport.s1p')
         with open(filename) as fid:
             data = fid.read()
             sio = io.StringIO(data)
             sio.name = os.path.basename(filename) # hack a bug to touchstone reader
             rf.Network(sio)
+
+    def test_constructor_from_stringio_name_kwawrg(self):
+        filename = os.path.join(self.test_dir, 'ntwk1.s2p')
+        with open(filename) as fid:
+            data = fid.read()
+            sio = io.StringIO(data)
+            rf.Network(sio, name=filename)
 
     def test_different_ext(self):
         filename= os.path.join(self.test_dir, 'ntwk1.s2p')
