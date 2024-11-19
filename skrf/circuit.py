@@ -23,6 +23,7 @@ Building a Circuit
    Circuit.ShuntAdmittance
    Circuit.Ground
    Circuit.Open
+   Circuit.update_networks
 
 Representing a Circuit
 ----------------------
@@ -99,7 +100,7 @@ import numpy as np
 from scipy.optimize import Bounds, OptimizeResult, differential_evolution
 from typing_extensions import NotRequired, Unpack
 
-from .constants import S_DEF_DEFAULT, NumberLike
+from .constants import S_DEF_DEFAULT, MemoryLayoutT, NumberLike
 from .media import media
 from .network import Network, connect, innerconnect, s2s
 from .util import subplots
@@ -148,6 +149,8 @@ class Circuit:
         split_multi: NotRequired[bool]
         max_nports: NotRequired[int]
         dynamic_networks: NotRequired[Sequence[Network]]
+
+    CACHEDPROPERTIES = ('s', 'X', 'X_F', 'C', 'C_F', 'T')
 
     def __init__(self,
                  connections: list[list[tuple[Network, int]]],
@@ -328,7 +331,7 @@ class Circuit:
         self._connections = connections
 
         # Invalidate cached properties
-        for item in ('s', 'X', 'C'):
+        for item in self.CACHEDPROPERTIES:
             self.__dict__.pop(item, None)
 
     def update_networks(
@@ -379,6 +382,40 @@ class Circuit:
         See Also
         --------
         Circuit.__init__ : Circuit construtor method.
+
+
+        Examples
+        --------
+        >>> import skrf as rf
+        >>> import numpy as np
+        >>>
+        >>> # Create a series of networks and build a circuit
+        >>> connections = [
+        ...     ...
+        ...     [(ntwk1, 0), (ntwk2, 0)],
+        ...     [(ntwk2, 1), (ntwk3, 0)],
+        ...     ...
+        ... ]
+        >>> circuit = rf.Circuit(connections, dynamic_networks=[ntwk2])
+        >>>
+        >>> # Update the networks' S-parameters
+        >>> ntwk2.s = ntwk2.s @ ntwk2.s
+        >>>
+        >>> # Update the circuit in traditional way (ntwk2 has been updated)
+        >>> connections_updated = [
+        ...     ...
+        ...     [(ntwk1, 0), (ntwk2, 0)],
+        ...     [(ntwk2, 1), (ntwk3, 0)],
+        ...     ...
+        ... ]
+        >>>
+        >>> circuit_updated_a = rf.Circuit(connections_updated)
+        >>>
+        >>> # Update the circuit by dynamic networks
+        >>> circuit_updated_b = circuit.update_networks(networks=[ntwk2])
+        >>>
+        >>> np.allclose(circuit_updated_b.s_external, circuit_updated_b.s_external)
+        True
         """
         # Get current connection_dict
         cnx_dict = self.networks_dict()
@@ -409,17 +446,17 @@ class Circuit:
         return Circuit(connections=connections, name=name)
 
     @classmethod
-    def check_duplicate_names(cls, connections_list: list):
+    def check_duplicate_names(cls, connections_list: list[tuple[int, tuple[Network, int]]]):
         """
         Check that a (ntwk, port) combination appears only once in the connexion map
         """
-        nodes = [(ntwk.name, port) for (con_idx, (ntwk, port)) in [con for con in connections_list]]
+        nodes = [(ntwk.name, port) for (_, (ntwk, port)) in connections_list]
         if len(nodes) > len(set(nodes)):
             duplicate_nodes = [node for node in nodes if nodes.count(node) > 1]
             raise AttributeError(f'Nodes {duplicate_nodes} appears twice in the connection description.')
 
 
-    def _is_named(self, ntw):
+    def _is_named(self, ntw: Network):
         """
         Return True is the network has a name, False otherwise
         """
@@ -721,7 +758,7 @@ class Circuit:
              ...
             ]
         """
-        return [(idx_cnx, cnx) for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections))]
+        return list(enumerate(chain.from_iterable(self.connections)))
 
     @property
     def networks_nb(self) -> int:
@@ -847,7 +884,7 @@ class Circuit:
         return edge_labels
 
 
-    def _Xk(self, cnx_k: list[tuple[Network, int]]) -> np.ndarray:
+    def _Xk(self, cnx_k: list[tuple[Network, int]], order: MemoryLayoutT = 'C') -> np.ndarray:
         """
         Return the scattering matrices [X]_k of the individual intersections k.
         The results in [#]_ do not agree due to an error in the formula (3)
@@ -857,6 +894,9 @@ class Circuit:
         ----------
         cnx_k : list of tuples
             each tuple contains (network, port)
+        order: str, optional
+            'C' or 'F' for row-major or column-major order of the output array.
+            Default is 'C'.
 
         Returns
         -------
@@ -871,16 +911,55 @@ class Circuit:
         y0s = np.array([1/ntw.z0[:,ntw_port] for (ntw, ntw_port) in cnx_k]).T
         y_k = y0s.sum(axis=1)
 
-        Xs = np.zeros((len(self.frequency), len(cnx_k), len(cnx_k)), dtype='complex')
+        Xs = np.zeros((len(self.frequency), len(cnx_k), len(cnx_k)), dtype='complex', order=order)
 
         Xs = 2 *np.sqrt(np.einsum('ij,ik->ijk', y0s, y0s)) / y_k[:, None, None]
         np.einsum('kii->ki', Xs)[:] -= 1  # Sii
         return Xs
 
+    def _X(self, order: MemoryLayoutT = 'C') -> np.ndarray:
+        """
+        Return the concatenated intersection matrix [X] of the circuit.
+
+        It is composed of the individual intersection matrices [X]_k assembled
+        by block diagonal.
+
+        Parameters
+        ----------
+            order : str, optional
+                'C' or 'F' for row-major or column-major order of the output array.
+                Default is 'C'.
+
+        Returns
+        -------
+        X : :class:`numpy.ndarray`
+
+        Note
+        ----
+        The block diagonal matrix [X] has a numerical bottleneck that depends on the
+        order specified:
+        - When 'order' is 'C', the creation of the block diagonal matrix [X] in row-major
+          order is a bottleneck. This is because the creation process is port-by-port,
+          which does not align well with the row-major memory layout, leading to
+          suboptimal performance.
+        - When 'order' is 'F', the computation of the block diagonal matrix [X] in column-major
+          order is a bottleneck. Numpy generally optimizes operators for 'C' order, which
+          lead to performance issues when using 'F' order.
+        """
+        Xks = [self._Xk(cnx, order) for cnx in self.connections]
+
+        Xf = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex', order=order)
+        off = np.array([0, 0])
+        for Xk in Xks:
+            Xf[:, off[0]:off[0] + Xk.shape[1], off[1]:off[1]+Xk.shape[2]] = Xk
+            off += Xk.shape[1:]
+
+        return Xf
+
     @cached_property
     def X(self) -> np.ndarray:
         """
-        Return the concatenated intersection matrix [X] of the circuit.
+        Return the concatenated intersection matrix [X] of the circuit in C-order.
 
         It is composed of the individual intersection matrices [X]_k assembled
         by block diagonal.
@@ -894,20 +973,83 @@ class Circuit:
         There is a numerical bottleneck in this function,
         when creating the block diagonal matrice [X] from the [X]_k matrices.
         """
-        Xks = [self._Xk(cnx) for cnx in self.connections]
+        # Check if X_F is alread computed, if so, convert it to C-order
+        if self.__dict__.get('X_F', None) is not None:
+            return np.ascontiguousarray(self.X_F)
 
-        Xf = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex')
-        off = np.array([0, 0])
-        for Xk in Xks:
-            Xf[:, off[0]:off[0] + Xk.shape[1], off[1]:off[1]+Xk.shape[2]] = Xk
-            off += Xk.shape[1:]
+        return self._X()
 
-        return Xf
+    @cached_property
+    def X_F(self) -> np.ndarray:
+        """
+        Return the concatenated intersection matrix [X] of the circuit in F-order.
+        It is composed of the individual intersection matrices [X]_k assembled
+        by block diagonal. The results of this function are the same as :func:`X`
+        but in F-order.
+
+        Returns
+        -------
+        X : :class:`numpy.ndarray`
+
+        Note
+        ----
+        F-order has a numerical bottleneck in matrix operations, but the assignment
+        is more efficient.
+        """
+        # Check if X is alread computed, if so, convert it to F-order
+        if self.__dict__.get('X', None) is not None:
+            return np.asfortranarray(self.X)
+
+        return self._X('F')
 
     @cached_property
     def C(self) -> np.ndarray:
         """
-        Return the global scattering matrix of the networks.
+        Return the global scattering matrix [C] of the networks in C-order.
+
+        Returns
+        -------
+        S : :class:`numpy.ndarray`
+            Global scattering matrix of the networks.
+            Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
+        """
+        # Check if C_F is alread computed, if so, convert it to C-order
+        if self.__dict__.get('C_F', None) is not None:
+            return np.ascontiguousarray(self.C_F)
+
+        return self._C()
+
+    @cached_property
+    def C_F(self) -> np.ndarray:
+        """
+        Return the global scattering matrix [C] of the networks in F-order. The results
+        of this function are the same as :func:`C` but in F-order.
+
+        Returns
+        -------
+        S : :class:`numpy.ndarray`
+            Global scattering matrix of the networks.
+            Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
+
+        Note
+        ----
+        F-order has a numerical bottleneck in matrix operations, but the assignment
+        is more efficient.
+        """
+        # Check if C is alread computed, if so, convert it to F-order
+        if self.__dict__.get('C', None) is not None:
+            return np.asfortranarray(self.C)
+
+        return self._C('F')
+
+    def _C(self, order: MemoryLayoutT = 'C') -> np.ndarray:
+        """
+        Return the global scattering matrix [C] of the networks.
+
+        Args:
+            order : str, optional
+                'C' or 'F' for row-major or column-major order of the output array.
+                Default is 'C'.
 
         Returns
         -------
@@ -920,13 +1062,12 @@ class Circuit:
 
         # generate the port reordering indexes from each connections
         ntws_ports_reordering = {ntw:[] for ntw in ntws}
-        for (idx_cnx, cnx) in self.connections_list:
-            ntw, ntw_port = cnx
+        for (idx_cnx, (ntw, ntw_port)) in self.connections_list:
             if ntw.name in ntws.keys():
                 ntws_ports_reordering[ntw.name].append([ntw_port, idx_cnx])
 
         # re-ordering scattering parameters
-        S = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex' )
+        S = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex', order=order)
 
         for (ntw_name, ntw_ports) in ntws_ports_reordering.items():
             # get the port re-ordering indexes (from -> to)
@@ -940,6 +1081,46 @@ class Circuit:
                 S[:, _to, to_port] = ntws[ntw_name].s_traveling[:, _from, from_port]
 
         return S  # shape (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
+
+    @cached_property
+    def T(self) -> np.ndarray:
+        """
+        Return the matrix of multiplication of the global scattering matrix [C] and concatenated
+        intersection matrix [X] of the networks, that is [T] = - [C] @ [X].
+
+        Returns
+        -------
+        T : :class:`numpy.ndarray`
+            Multiplication of the global scattering matrix [C] and concatenated intersection matrix
+            [X] of the networks. In practice, F-contiguous [C_F] and [X_F] are used.
+            Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
+
+        Note
+        ----
+        This is an auxiliary matrix used to break the numerical bottleneck of [C_F] @ [X_F] using the
+        mathematical feature of block diagonal matrice [X].
+        """
+        X, C = self.X_F, self.C_F
+
+        # T will be fully updated, so `empty_like` is safe and faster
+        T = np.empty_like(X, dtype="complex", order='F')
+
+        # Precompute the sizes of connections and slices for each intersection
+        cnx_size = [len(cnx) for cnx in self.connections]
+        slice_ = np.cumsum([0] + cnx_size)
+        slices = [slice(slice_[i], slice_[i+1]) for i in range(len(cnx_size))]
+
+        # Perform the multiplication
+        for j_slice in slices:
+            # Get the Block diagonal part of X and corresponding C matrix buffer
+            X_jj = - X[:, j_slice, j_slice]
+            C_j = C[:, :, j_slice]
+
+            # Perform the multiplication
+            for i_slice in slices:
+                T[:, i_slice, j_slice] = C_j[:, i_slice, :] @ X_jj
+
+        return T
 
     @cached_property
     def s(self) -> np.ndarray:
@@ -966,8 +1147,7 @@ class Circuit:
         port_indexes : list
         """
         port_indexes = []
-        for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections)):
-            ntw, ntw_port = cnx
+        for (idx_cnx, (ntw, _)) in enumerate(chain.from_iterable(self.connections)):
             if Circuit._is_port(ntw):
                 port_indexes.append(idx_cnx)
         return port_indexes
@@ -1051,9 +1231,10 @@ class Circuit:
         C_idx = (slice(None), idx_c, idx_b.T)
         D_idx = (slice(None), idx_d, idx_d.T)
 
-        # Get the buffer of global matrix X, C and intermediate temporary matrix t
-        x, c = self.X, self.C
-        t = np.identity(x.shape[-1]) - c @ x
+        # Get the buffer of global matrix in f-order [X_T] and intermediate temporary matrix [T]
+        # [T] = - [C] @ [X]
+        x, t = self.X_F, np.array(self.T)
+        np.einsum('...ii->...i', t)[:] += 1
 
         # Get the sub-matrices of inverse of intermediate temporary matrix t
         # The method np.linalg.solve(A, B) is equivalent to np.inv(A) @ B, but more efficient
@@ -1824,7 +2005,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
 
     # check if the connections are valid
     if check_duplication:
-        connections_list = [list(conn) for conn in enumerate(chain.from_iterable(connections))]
+        connections_list = [conn for conn in enumerate(chain.from_iterable(connections))]
         Circuit.check_duplicate_names(connections_list)
 
     # Use list comprehension to find the connection need to be reduced

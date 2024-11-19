@@ -336,6 +336,15 @@ class NetworkTestCase(unittest.TestCase):
             sio.name = os.path.basename(filename) # hack a bug to touchstone reader
             rf.Network(sio)
 
+    def test_different_ext(self):
+        filename= os.path.join(self.test_dir, 'ntwk1.s2p')
+        for par in ["g", "h", "s", "y", "z"]:
+            with open(filename) as fid:
+                data = fid.read()
+                sio = io.StringIO(data)
+                sio.name = f"test.{par}2p"
+                rf.Network(sio)
+
     def test_constructor_from_parameters(self):
         """Test creating Network from all supported parameters
         with default z0 and specified z0.
@@ -702,6 +711,133 @@ class NetworkTestCase(unittest.TestCase):
                 np.testing.assert_almost_equal(net.s, net[0].s)
                 self.assertTrue((net.z0 == net[0].z0).all())
                 self.assertTrue(net.s_def != net[0].s_def)
+
+    def test_parallelconnect(self):
+        # Create 2 network with 2 ports
+        ntwka = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwka')
+        ntwkb = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkb')
+
+        # Connect the 2 networks together by connect
+        ntwk_cnt = rf.connect(ntwka, 1, ntwkb, 0)
+
+        # Connect the 2 networks together by parallelconnect
+        ntwk_par = rf.parallelconnect([ntwka, ntwkb], [1, 0])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_cnt.s, ntwk_par.s))
+
+    def test_parallelconnect_open(self):
+        # Create a network with 4 ports
+        s = self.rng.random((1, 4, 4))
+        ntwk = rf.Network(s=s, f=1)
+        open_port = rf.Network(s=np.ones((1, 1, 1)), f=1)
+
+        # Connect the first 2 ports together by innerconnect
+        ntwk_cnt = rf.connect(ntwk, 3, open_port, 0)
+
+        # Connect the first 2 ports together by parallelconnect
+        par_ntwk = rf.parallelconnect(ntwk, [3])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_cnt.s, par_ntwk.s))
+
+    def test_parallelconnect_inner(self):
+        # Create a network with 4 ports
+        s = self.rng.random((1, 4, 4))
+        ntwk = rf.Network(s=s, f=1, name='ntwk')
+
+        # Connect the first 2 ports together by innerconnect
+        ntwk_inter = rf.innerconnect(ntwk, 0, 1)
+
+        # Connect the first 2 ports together by parallelconnect
+        par_ntwka = rf.parallelconnect([ntwk], [[0, 1]])
+        par_ntwkb = rf.parallelconnect(ntwk, [[0, 1]])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_inter.s, par_ntwka.s))
+        self.assertTrue(np.allclose(ntwk_inter.s, par_ntwkb.s))
+
+        # Connect the last 3 ports together by circuit
+        port = rf.Circuit.Port(frequency=ntwk.frequency, name='port')
+        cnx = [
+            [(port, 0), (ntwk, 0)],
+            [(ntwk, 1), (ntwk, 2), (ntwk, 3)]
+        ]
+        ckt_ntwk = rf.Circuit(cnx, name='ckt_ntwk').network
+
+        # Connect the last 3 ports together by parallelconnect
+        par_ntwk = rf.parallelconnect(ntwk, [[1, 2, 3]])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ckt_ntwk.s, par_ntwk.s))
+
+    def test_parallelconnect_mismatch(self):
+        # Create 2 network with 2 ports
+        ntwka = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwka', z0=25)
+        ntwkb = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkb', z0=75)
+
+        # Connect the 2 networks together by connect
+        ntwk_cnt = rf.connect(ntwka, 1, ntwkb, 0)
+
+        # Connect the 2 networks together by parallelconnect
+        ntwk_par = rf.parallelconnect([ntwka, ntwkb], [1, 0])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_cnt.s, ntwk_par.s))
+
+        # Create matched network in circuit
+        port1 = rf.Circuit.Port(frequency=ntwka.frequency, name='port1', z0=50)
+        port2 = rf.Circuit.Port(frequency=ntwka.frequency, name='port2', z0=50)
+
+        cnx = [
+            [(port1, 0), (ntwka, 0)],
+            [(ntwka, 1), (ntwkb, 0)],
+            [(ntwkb, 1), (port2, 0)]
+        ]
+        ntwk_ckt = rf.Circuit(cnx, name='ckt_ntwk').network
+
+        # Check that the two networks are not equal
+        self.assertFalse(np.allclose(ntwk_ckt.s, ntwk_par.s))
+
+        # Renormalize matched network to match circuit
+        ntwk_par.renormalize(ntwk_ckt.z0)
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_ckt.s, ntwk_par.s))
+
+
+    def test_innerconnect_with_T(self):
+        # Create 3 network with 2 ports
+        ntwka = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwka')
+        ntwkb = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkb')
+        ntwkc = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkc')
+
+        # Connect the 3 networks together by tee
+        media = rf.media.DefinedGammaZ0(frequency=ntwka.frequency)
+        tee_ntwk = media.tee()
+        tee_ntwk = rf.connect(tee_ntwk, 0, ntwka, 1)
+        tee_ntwk = rf.connect(tee_ntwk, 1, ntwkb, 1)
+        tee_ntwk = rf.connect(tee_ntwk, 2, ntwkc, 1)
+
+        # Connect the 3 networks together by circuit
+        port1 = rf.Circuit.Port(frequency=ntwka.frequency, name='port1')
+        port2 = rf.Circuit.Port(frequency=ntwkb.frequency, name='port2')
+        port3 = rf.Circuit.Port(frequency=ntwkc.frequency, name='port3')
+
+        cnxs = [
+            [(port1, 0), (ntwka, 0)],
+            [(port2, 0), (ntwkb, 0)],
+            [(port3, 0), (ntwkc, 0)],
+            [(ntwka, 1), (ntwkb, 1), (ntwkc, 1)]
+        ]
+        ckt_ntwk = rf.Circuit(cnxs, name='ckt_ntwk').network
+
+        # Connect the 3 networks together by parallelconnect
+        ntwk_par = rf.parallelconnect([ntwka, ntwkb, ntwkc], [1, 1, 1])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_par.s, tee_ntwk.s))
+        self.assertTrue(np.allclose(ntwk_par.s, ckt_ntwk.s))
 
     def test_max_stable_gain(self):
         # Check whether the maximum stable gain agrees with that derived from Y-parameters
@@ -1325,11 +1461,17 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue( ((a+[1+1j,2+2j]).s == np.array([[[2+3j]],[[5+6j]]])).all())
 
 
-    def test_interpolate(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1, f_unit="ghz")
-        freq = rf.F.from_f(np.linspace(1,2,4), unit='ghz')
-        b = a.interpolate(freq)
-        # TODO: numerically test for correct interpolation
+    def test_interpolate_linear(self):
+        net = rf.Network(f=[0, 1, 3, 4], s=[0,1,9,16], f_unit="Hz")
+
+        interp = net.interpolate(rf.Frequency(0, 4, 5, unit="Hz"), kind="linear")
+        assert np.allclose(interp.s[2], 5.0)
+
+    def test_interpolate_cubic(self):
+        net = rf.Network(f=[0, 1, 3, 4], s=[0,1,9,16], f_unit="Hz")
+
+        interp = net.interpolate(rf.Frequency(0, 4, 5, unit="Hz"), kind="cubic")
+        assert np.allclose(interp.s[2], 4.0)
 
     def test_interpolate_rational(self):
         a = rf.N(f=np.linspace(1,2,5),s=np.linspace(0,1,5)*(1+1j),z0=1, f_unit="ghz")
@@ -1342,21 +1484,6 @@ class NetworkTestCase(unittest.TestCase):
         # Check that abs(S) is increasing
         self.assertTrue(all(np.diff(np.abs(b.s.flatten())) > 0))
         self.assertTrue(b.z0[0] == a.z0[0])
-
-    def test_interpolate_linear(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=[1,2], f_unit="ghz")
-        freq = rf.F.from_f(np.linspace(1,2,3,endpoint=True), unit='GHz')
-        b = a.interpolate(freq, kind='linear')
-        self.assertFalse(any(np.isnan(b.s)))
-        # Test that the endpoints are the equal
-        # Middle point can also be calculated in this case
-        self.assertTrue(b.s[0] == a.s[0])
-        self.assertTrue(b.s[1] == 0.5*(a.s[0] + a.s[1]))
-        self.assertTrue(b.s[-1] == a.s[-1])
-        # Check Z0 interpolation
-        self.assertTrue(b.z0[0] == a.z0[0])
-        self.assertTrue(b.z0[1] == 0.5*(a.z0[0] + a.z0[1]))
-        self.assertTrue(b.z0[-1] == a.z0[-1])
 
     def test_interpolate_freq_cropped(self):
         a = rf.N(f=np.arange(20), s=np.arange(20)*(1+1j),z0=1, f_unit="ghz")

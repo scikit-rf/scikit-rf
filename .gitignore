@@ -18,8 +18,6 @@ dist/
 *.iml
 
 .vscode/
-.coverage
-.tox/
 .coverage*
 
 poetry.lock

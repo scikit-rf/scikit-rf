@@ -45,6 +45,7 @@ def test_plot_reciprocity2(ntwk1_dc: rf.Network, ):
 
 def test_plot_s_db_time(ntwk1_dc: rf.Network, ):
     ntwk1_dc.plot_s_db_time()
+    ntwk1_dc.plot_s_db_time(m=0, n=0)
 
 def test_plot_s_smith(ntwk1_dc: rf.Network, ):
     ntwk1_dc.plot_s_smith()

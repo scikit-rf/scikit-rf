@@ -150,7 +150,9 @@ class Frequency:
         start =  self.multiplier * start
         stop = self.multiplier * stop
 
-        if sweep_type.lower() == 'lin':
+        if npoints == 0:
+            self._f = np.array([])
+        elif sweep_type.lower() == 'lin':
             self._f = linspace(start, stop, npoints)
         elif sweep_type.lower() == 'log' and start > 0:
             self._f = geomspace(start, stop, npoints)
