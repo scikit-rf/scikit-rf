@@ -63,7 +63,7 @@ from ..network import Network
 # delayed imports
 # from pandas import Series, Index, DataFrame
 
-def read_pna_csv(filename, *args, **kwargs):
+def read_pna_csv(filename, *args, **kwargs) -> tuple[str, str, np.ndarray]:
     r"""
     Reads data from a csv file written by an Agilient PNA.
 
@@ -86,8 +86,6 @@ def read_pna_csv(filename, *args, **kwargs):
     data : :class:`numpy.ndarray`
         An array containing the data. The meaning of which depends on
         the header.
-    f_unit : FrequencyUnitT
-        The frequency unit of the data, could be 'Hz', 'kHz', 'MHz', 'GHz' and 'THz'
 
     See Also
     --------
@@ -95,7 +93,7 @@ def read_pna_csv(filename, *args, **kwargs):
 
     Examples
     --------
-    >>> header, comments, data, f_unit = rf.read_pna_csv('myfile.csv')
+    >>> header, comments, data = rf.read_pna_csv('myfile.csv')
     """
     warn("deprecated", DeprecationWarning, stacklevel=2)
     with open(filename) as fid:
@@ -141,17 +139,16 @@ def read_pna_csv(filename, *args, **kwargs):
 
     units_dict: dict[str, FrequencyUnitT] = {k.lower(): k for k in FREQ_UNITS.keys()}
 
-    # default unit
-    unit: FrequencyUnitT = "Hz"
+    # Get the frequency unit from the header and convert to Hz
+    unit_raw = header.split(',')[0].strip('Freq')[1:-1]
     try:
-        # Parse frequency unit from header, format is like: "Freq(Hz)"
-        unit_tmp = header.split(',')[0].strip('Freq')[1:-1].lower()
+        unit_tmp = unit_raw.lower()
         if unit_tmp in units_dict:
-            unit = units_dict[unit_tmp]
-    except Exception:
-        unit: FrequencyUnitT = "Hz"
+            data[:, 0] *= units_dict[unit_tmp]
+    except Exception as exc:
+        raise ValueError(f"Could not parse frequency unit '{unit_raw}'") from exc
 
-    return header, comments, data, unit
+    return header, comments, data
 
 def pna_csv_2_df(filename):
     """
@@ -169,7 +166,7 @@ def pna_csv_2_df(filename):
     """
     warn("deprecated", DeprecationWarning, stacklevel=2)
     from pandas import DataFrame, Index
-    header, comments, d, f_unit = read_pna_csv(filename)
+    header, comments, d = read_pna_csv(filename)
 
     names = header.split(',')
 
@@ -180,7 +177,7 @@ def pna_csv_2_df(filename):
 def pna_csv_2_ntwks2(filename, *args, **kwargs):
     warn("deprecated", DeprecationWarning, stacklevel=2)
     df = pna_csv_2_df(filename, *args, **kwargs)
-    header, comments, d, f_unit = read_pna_csv(filename)
+    header, comments, d = read_pna_csv(filename)
     ntwk_dict  = {}
     param_set=set([k[:3] for k in df.columns])
     f = df.index.values
@@ -196,7 +193,7 @@ def pna_csv_2_ntwks2(filename, *args, **kwargs):
                 df[f'{param} (IMAG)'].values,
                 )
 
-        ntwk_dict[param] = Network(f=f, s=s, name=param, comments=comments, f_unit=f_unit)
+        ntwk_dict[param] = Network(f=f, s=s, name=param, comments=comments, f_unit='Hz')
 
 
     try:
@@ -228,7 +225,7 @@ def pna_csv_2_ntwks3(filename):
 
 
     """
-    header, comments, d, f_unit = read_pna_csv(filename)
+    header, comments, d = read_pna_csv(filename)
     col_headers = pna_csv_header_split(filename)
 
     # set impedance to 50 Ohm (doesn't matter for now)
@@ -253,7 +250,7 @@ def pna_csv_2_ntwks3(filename):
             elif 's22' in h.lower() and 'db' in h.lower():
                 s[:,1,1] = mf.dbdeg_2_reim(d[:,k+1], d[:,k+2])
 
-        n = Network(f=f,s=s,z0=z0, name = name, f_unit=f_unit)
+        n = Network(f=f,s=s,z0=z0, name = name, f_unit="Hz")
         return n
 
     else:
@@ -579,7 +576,7 @@ def pna_csv_header_split(filename):
         list of column names
     """
     warn("deprecated", DeprecationWarning, stacklevel=2)
-    header, comments, d, f_unit = read_pna_csv(filename)
+    header, comments, d = read_pna_csv(filename)
 
     n_traces =  d.shape[1] - 1 # because theres is one frequency column
 
@@ -626,7 +623,7 @@ def pna_csv_2_ntwks(filename):
     """
     warn("deprecated", DeprecationWarning, stacklevel=2)
     #TODO: check the data's format (Real-imag or db/angle , ..)
-    header, comments, d, f_unit = read_pna_csv(filename)
+    header, comments, d = read_pna_csv(filename)
     #import pdb;pdb.set_trace()
 
     names = pna_csv_header_split(filename)
@@ -642,7 +639,7 @@ def pna_csv_2_ntwks(filename):
         else:
             raise (NotImplementedError)
         name = os.path.splitext(os.path.basename(filename))[0]
-        return Network(f=f, s=s, name=name, comments=comments, f_unit=f_unit)
+        return Network(f=f, s=s, name=name, comments=comments, f_unit='Hz')
     else:
         for k in range(int((d.shape[1]-1)/2)):
             f = d[:,0]
@@ -657,17 +654,17 @@ def pna_csv_2_ntwks(filename):
                 s = d[:,k*2+1]+1j*d[:,k*2+2]
 
             ntwk_list.append(
-                Network(f=f, s=s, name=name, comments=comments, f_unit=f_unit)
+                Network(f=f, s=s, name=name, comments=comments, f_unit='Hz')
                 )
 
     return ntwk_list
 
 def pna_csv_2_freq(filename):
     warn("deprecated", DeprecationWarning, stacklevel=2)
-    header, comments, d, f_unit = read_pna_csv(filename)
+    header, comments, d = read_pna_csv(filename)
 
     f = d[:,0]
-    return Frequency.from_f(f, unit = f_unit)
+    return Frequency.from_f(f, unit = "Hz")
 
 
 def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
@@ -688,14 +685,14 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
 
     """
     warn("deprecated", DeprecationWarning, stacklevel=2)
-    header, comments, d, f_unit = read_pna_csv(filename)
+    header, comments, d = read_pna_csv(filename)
 
     n_traces =  d.shape[1] - 1 # because theres is one frequency column
 
     cols = pna_csv_header_split(filename)
 
     f = d[:,0]
-    freq = Frequency.from_f(f, unit = f_unit)
+    freq = Frequency.from_f(f, unit = 'Hz')
 
     # loop through columns and create a single network for each column
     ntwk_list = []
