@@ -72,11 +72,10 @@ class AgilentCSVTestCase(unittest.TestCase):
         """
         with warnings.catch_warnings(record=True) as w:
             with self.assertWarns(DeprecationWarning):
-                header, comment, data, f_unit = rf.read_pna_csv(self.filename)
+                header, comment, data = rf.read_pna_csv(self.filename)
 
         self.assertEqual(header, 'Freq(Hz),"A,1"(REAL),"A,1"(IMAG),"R1,1"(REAL),"R1,1"(IMAG)')
         self.assertEqual(comment, 'this is a comment\nline\n')
         self.assertTrue((data == np.array([[750000000000, 1, 2, 3, 4],
                                     [1100000000000, 5, 6, 7,8],
                                 ])).all())
-        self.assertEqual(f_unit, 'Hz')

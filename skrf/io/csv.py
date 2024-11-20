@@ -144,7 +144,7 @@ def read_pna_csv(filename, *args, **kwargs) -> tuple[str, str, np.ndarray]:
     try:
         unit_tmp = unit_raw.lower()
         if unit_tmp in units_dict:
-            data[:, 0] *= units_dict[unit_tmp]
+            data[:, 0] *= FREQ_UNITS[units_dict[unit_tmp]]
     except Exception as exc:
         raise ValueError(f"Could not parse frequency unit '{unit_raw}'") from exc
 
