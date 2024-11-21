@@ -429,6 +429,8 @@ class Network:
 
             # allows user to pass StringIO, filename or file obj
             if isinstance(file, io.StringIO):
+                if not hasattr(file, "name") and name is not None:
+                    file.name = name
                 self.read_touchstone(file, self.encoding)
 
             else:
