@@ -111,7 +111,7 @@ S_DEF_DEFAULT = 'power'
 S_DEF_HFSS_DEFAULT = 'traveling'
 
 FrequencyUnitT = Literal["Hz", "kHz", "MHz", "GHz", "THz"]
-FREQ_UNITS = {"Hz": 1.0, "kHz": 1e3, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}
+FREQ_UNITS: dict[FrequencyUnitT, float] = {"Hz": 1.0, "kHz": 1e3, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}
 
 SweepTypeT = Literal["lin", "log"]
 CoordT = Literal["cart", "polar"]
