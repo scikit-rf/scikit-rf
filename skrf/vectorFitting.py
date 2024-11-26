@@ -7,6 +7,8 @@ from timeit import default_timer as timer
 from typing import TYPE_CHECKING, Any
 
 try:
+    import jax
+    jax.config.update("jax_enable_x64", True)
     from jax.numpy.linalg import qr
 except ImportError:
     from numpy.linalg import qr
