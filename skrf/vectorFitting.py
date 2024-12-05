@@ -6,6 +6,13 @@ import warnings
 from timeit import default_timer as timer
 from typing import TYPE_CHECKING, Any
 
+try:
+    import jax
+    jax.config.update("jax_enable_x64", True)
+    from jax.numpy.linalg import qr
+except ImportError:
+    from numpy.linalg import qr
+
 import numpy as np
 from scipy.integrate import trapezoid
 
@@ -17,7 +24,6 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-
 
 class VectorFitting:
     """
@@ -806,10 +812,9 @@ class VectorFitting:
 
         # direct QR of stacked matrices for linalg.qr() only works with numpy>=1.22.0
         # workaround for old numpy:
-        R = np.empty((n_responses, dim_k, n_cols_unused + n_cols_used))
+        #R = np.empty((n_responses, dim_k, n_cols_unused + n_cols_used))
         A_ri = np.hstack((A.real, A.imag))
-        for i in range(n_responses):
-            R[i] = np.linalg.qr(A_ri[i], mode='r')
+        R = np.array([qr(e, mode='r') for e in A_ri])
 
         # only R22 is required to solve for c_res and d_res
         # R12 and R22 can have a different number of rows, depending on K
