@@ -3090,11 +3090,11 @@ class Network:
             interp_rad = interp1d(f, rad, axis=0, fill_value='extrapolate')
             interp_mag = interp1d(f, mag, axis=0, fill_value='extrapolate')
             dc_sparam = interp_mag(0) * np.exp(1j * interp_rad(0))
-            
             # Extrapolate other points and insert
-            fstep = self.frequency.f[1] - self.frequency.f[0]
-            extrapolated_f = Frequency(fstep, result.frequency.f[0]-fstep, int(round(self.frequency.f[0]/fstep)))
-            for freq in extrapolated_f.f:
+            fstep = self.frequency.f[-1]/(points-1);
+            len_interp = points - len(self);
+            extrapolated_f = Frequency(fstep, (len_interp-1) * fstep, len_interp-1)
+            for freq in reversed(extrapolated_f.f):
                 interp_sparam = interp_mag(freq) * np.exp(1j * interp_rad(freq))
                 result.s = np.insert(result.s, 0, interp_sparam, axis=0)
                 result.frequency._f = np.insert(result.frequency.f, 0, freq)
