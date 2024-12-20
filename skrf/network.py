@@ -1413,6 +1413,10 @@ class Network:
             raise (TypeError('One-Port Networks don\'t have inverses'))
         out = self.copy()
         out.s = inv(self.s)
+        # flip the port impedances, nports is even guaranteed by inv() method
+        port_pairs: int = self.nports // 2
+        out.z0[:, :port_pairs] = self.z0[:, port_pairs:]
+        out.z0[:, port_pairs:] = self.z0[:, :port_pairs]
         out.deembed = True
         return out
 

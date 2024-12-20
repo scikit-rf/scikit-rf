@@ -997,6 +997,13 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(self.Fix.inv ** self.Meas ** self.Fix.flipped().inv,
                          self.DUT)
 
+        # Test for mismatched ports
+        ntw = self.ntwk1.copy()
+        ntw.renormalize((25, 75))
+        rst = ntw.inv ** self.ntwk3
+        rst.renormalize(50)
+        self.assertEqual(rst, self.ntwk2)
+
     @pytest.mark.skipif("matplotlib" not in sys.modules, reason="Requires matplotlib in sys.modules.")
     def test_plot_one_port_db(self):
         self.ntwk1.plot_s_db(0,0)
