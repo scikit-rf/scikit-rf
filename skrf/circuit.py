@@ -1245,7 +1245,7 @@ class Circuit:
             # numpy.linalg.lstsq only works for 2D arrays, so we need to loop over frequencies
             tmp_mat = np.zeros((self.frequency.npoints, len(in_idxs), len(ext_idxs)), dtype='complex')
             for i in range(self.frequency.npoints):
-                tmp_mat[i, :, :] = np.linalg.lstsq(t[i, D_idx[1], D_idx[2]], t[i, C_idx[1], C_idx[2]])[0]
+                tmp_mat[i, :, :] = np.linalg.lstsq(t[i, D_idx[1], D_idx[2]], t[i, C_idx[1], C_idx[2]], rcond=None)[0]
 
         # Get the external S-parameters for the external ports
         # Calculated by multiplying the sub-matrices of x and t
