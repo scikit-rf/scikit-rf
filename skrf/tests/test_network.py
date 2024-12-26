@@ -997,10 +997,12 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(self.Fix.inv ** self.Meas ** self.Fix.flipped().inv,
                          self.DUT)
 
-        # Test for mismatched ports
+    def test_de_embed_port_impedance(self):
         ntw = self.ntwk1.copy()
         ntw.renormalize((25, 75))
-        rst = ntw.inv ** self.ntwk3
+        ntw_inv = ntw.inv
+        self.assertTrue(np.allclose(ntw_inv.z0, (75, 25)))
+        rst = ntw_inv ** self.ntwk3
         rst.renormalize(50)
         self.assertEqual(rst, self.ntwk2)
 
