@@ -6397,6 +6397,11 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
 
     # Check if the determinant is almost zero, in which case use lstsq solution
     if np.allclose(det, 0.0):
+        warnings.warn(
+            'Singular matrix detected, using numpy.linalg.lstsq instead.',
+            RuntimeWarning,
+            stacklevel=2
+        )
         return innerconnect_s_lstsq(A, k, l)
 
     # Indexing sub-matrices of other external ports
@@ -6453,11 +6458,6 @@ def innerconnect_s_lstsq(A: np.ndarray, k: int, l: int) -> np.ndarray:
     connect_s : actual  S-parameter connection algorithm.
     innerconnect_s : actual S-parameter connection algorithm.
     """
-    warnings.warn(
-        'Singular matrix detected, using numpy.linalg.lstsq instead.',
-        RuntimeWarning,
-        stacklevel=2
-    )
 
     if k > A.shape[-1] - 1 or l > A.shape[-1] - 1:
         raise (ValueError("port indices are out of range"))
