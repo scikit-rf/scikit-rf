@@ -2447,24 +2447,18 @@ class VectorFitting:
 
             f.write(f'.ENDS {fitted_model_name}\n\n')
 
-            # Subcircuit for an LCRR equivalent admittance of a complex-conjugate pole-residue pair
-            f.write('.SUBCKT lcrr_admittance n_pos n_neg ind=100e-12 cap=1e-9 res1=1e3 res2=1e3\n')
+            # Subcircuit for an LCRR equivalent impedance of a complex-conjugate pole-residue pair
+            f.write('.SUBCKT rcl_active n_pos n_neg cap=1e-9 ind=100e-12 res1=1e3 res2=1e3 gt1=2e-3 gt2=2e-3\n')
             f.write('L1 n_pos 1 {ind}\n')
-            f.write('R1 1 2 {res1}\n')
-            f.write('C1 2 n_neg {cap}\n')
-            f.write('R2 2 n_neg {res2}\n')
-            f.write('.ENDS lcrr_admittance\n\n')
+            f.write('R1 1 n_neg {res1}\n')
+            f.write('G1 n_neg 1 1 n_neg {gt1}\n')
+            f.write('C1 n_pos n_neg {cap}\n')
+            f.write('R2 n_pos n_neg {res2}\n')
+            f.write('G2 n_neg n_pos n_pos n_neg {gt2}\n')
+            f.write('.ENDS rcl_active\n\n')
 
-            # Subcircuit for an RLCG equivalent admittance of a complex-conjugate pole-residue pair
-            f.write('.SUBCKT rcl_vccs_admittance n_pos n_neg res=1e3 cap=1e-9 ind=100e-12 gm=1e-3\n')
-            f.write('L1 n_pos 1 {ind}\n')
-            f.write('C1 1 2 {cap}\n')
-            f.write('R1 2 n_neg {res}\n')
-            f.write('G1 n_pos n_neg 1 2 {gm}\n')
-            f.write('.ENDS rcl_vccs_admittance\n\n')
-
-            # Subcircuit for an RL equivalent admittance of a real pole-residue pair
-            f.write('.SUBCKT rl_admittance n_pos n_neg res=1e3 ind=100e-12\n')
-            f.write('L1 n_pos 1 {ind}\n')
-            f.write('R1 1 n_neg {res}\n')
-            f.write('.ENDS rl_admittance\n\n')
+            # Subcircuit for an RC equivalent impedance of a real pole-residue pair
+            f.write('.SUBCKT rc n_pos n_neg res=1e3 cap=1e-9\n')
+            f.write('C1 n_pos n_neg {cap}\n')
+            f.write('R1 n_pos n_neg {res}\n')
+            f.write('.ENDS rc\n\n')
