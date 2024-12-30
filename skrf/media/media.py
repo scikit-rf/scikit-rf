@@ -894,11 +894,13 @@ class Media(ABC):
         --------
         splitter : splitter generator method.
         """
+        nports = z0.shape[1]
         s = 2 * np.sqrt(np.einsum('ki,kj->kij', z0.real, z0.real)) / np.einsum('ki,kj->kij', z0, z0)
         s /= np.sum(1. / z0, axis=1)[:, None, None]
 
-        z0_load = np.array([get_z0_load(z0=z0, port_idx=i) for i in range(3)]).T
-        s[:, np.arange(3), np.arange(3)] = (z0_load - z0.conj()) / (z0_load + z0)
+        ports_idx = np.arange(nports)
+        z0_load = np.array([get_z0_load(z0=z0, port_idx=i) for i in ports_idx]).T
+        s[:, ports_idx, ports_idx] = (z0_load - z0.conj()) / (z0_load + z0)
 
         return s
 
