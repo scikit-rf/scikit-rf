@@ -98,6 +98,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         ref.renormalize(z_new=z0)
         tee = self.dummy_media.tee(z0=z0)
         assert_array_almost_equal(ref.s, tee.s)
+        assert_array_almost_equal(np.linalg.inv(tee.s), tee.s.conj())
 
     def test_thru(self):
         """
