@@ -2447,7 +2447,7 @@ class VectorFitting:
 
             f.write(f'.ENDS {fitted_model_name}\n\n')
 
-            # Subcircuit for an LCRR equivalent impedance of a complex-conjugate pole-residue pair
+            # Subcircuit for an RCL equivalent impedance of a complex-conjugate pole-residue pair
             f.write('.SUBCKT rcl_active n_pos n_neg cap=1e-9 ind=100e-12 res1=1e3 res2=1e3 gt1=2e-3 gt2=2e-3\n')
             f.write('L1 n_pos 1 {ind}\n')
             f.write('R1 1 n_neg {res1}\n')
@@ -2458,7 +2458,7 @@ class VectorFitting:
             f.write('.ENDS rcl_active\n\n')
 
             # Subcircuit for an RC equivalent impedance of a real pole-residue pair
-            f.write('.SUBCKT rc n_pos n_neg res=1e3 cap=1e-9\n')
+            f.write('.SUBCKT rc_passive n_pos n_neg res=1e3 cap=1e-9\n')
             f.write('C1 n_pos n_neg {cap}\n')
             f.write('R1 n_pos n_neg {res}\n')
-            f.write('.ENDS rc\n\n')
+            f.write('.ENDS rc_passive\n\n')
