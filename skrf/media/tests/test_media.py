@@ -60,6 +60,14 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         skrf_ntwk = self.dummy_media.splitter(3, name = name)
         self.assertEqual(name, skrf_ntwk.name)
 
+        # Check the s-parameters
+        s = np.zeros_like(skrf_ntwk.s, dtype='complex')
+        y0s = np.array(1./skrf_ntwk.z0)
+        y_k = y0s.sum(axis=1)
+        s = 2 *np.sqrt(np.einsum('ki,kj->kij', y0s, y0s)) / y_k[:, None, None]
+        np.einsum('kii->ki', s)[:] -= 1  # Sii
+        assert_array_almost_equal(skrf_ntwk.s, s)
+
     def test_mismatch_splitter(self):
         """
         Test mismatched splitter against 50-ohm splitter connected to
@@ -80,6 +88,16 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
             ref = med.splitter(n)
             ref = connect(ref, 0, thru, 0, n)
             assert_array_almost_equal(split.s, ref.s)
+
+    def test_complex_impedance_mismatch_tee(self):
+        """
+        Test the complex impedance mismatch.
+        """
+        z0 = (25+25j, 50, 75-25j)
+        ref = self.dummy_media.tee()
+        ref.renormalize(z_new=z0)
+        tee = self.dummy_media.tee(z0=z0)
+        assert_array_almost_equal(ref.s, tee.s)
 
     def test_thru(self):
         """
