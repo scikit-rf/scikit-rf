@@ -2272,7 +2272,7 @@ class VectorFitting:
 
         create_reference_pins: bool
             If set to True, the synthesized subcircuit will have N pin-pairs:
-            P0, P0_reference, ..., PN, PN_reference
+            P0, P0_ref, ..., PN, PN_ref
 
             If set to False, the synthesized subcircuit will have N pins
             P0, ..., PN
@@ -2310,98 +2310,110 @@ class VectorFitting:
 
         """
 
-        # List of subcircuits for the equivalent admittances
         subcircuits = []
 
-        # Provides a unique subcircuit identifier (X1, X2, X3, ...)
         def get_new_subckt_identifier():
+            # Provides a unique subcircuit identifier (X1, X2, X3, ...)
             subcircuits.append(f'X{len(subcircuits) + 1}')
             return subcircuits[-1]
 
         with open(file, 'w') as f:
             # write title line
             f.write('* EQUIVALENT CIRCUIT FOR VECTOR FITTED S-MATRIX\n')
-            f.write('* Created using scikit-rf vectorFitting.py\n\n')
+            f.write('* Created using scikit-rf vectorFitting.py\n')
+            f.write('*')
 
             # Create subcircuit pin string and reference nodes
             if create_reference_pins:
-                str_input_nodes = " ".join(map(lambda x: f'p{x + 1} r{x + 1}', range(self.network.nports)))
-                ref_nodes = list(map(lambda x: f'r{x + 1}', range(self.network.nports)))
+                str_input_nodes = " ".join(map(lambda x: f'p{x + 1} p{x + 1}_ref', range(self.network.nports)))
             else:
                 str_input_nodes = " ".join(map(lambda x: f'p{x + 1}', range(self.network.nports)))
-                ref_nodes = list(map(lambda x: '0', range(self.network.nports)))
 
             f.write(f'.SUBCKT {fitted_model_name} {str_input_nodes}\n')
 
-            for n in range(self.network.nports):
-                f.write(f'\n* Port network for port {n + 1}\n')
+            for i in range(self.network.nports):
+                f.write(f'\n* Port network for port {i + 1}\n')
 
-                # Calculate sqrt of Z0 for port current port
-                sqrt_Z0_n=np.sqrt(np.real(self.network.z0[0, n]))
+                if create_reference_pins:
+                    ref_node = f'p{i + 1}_ref'
+                else:
+                    ref_node = '0'
 
-                # Port reference impedance Z0
-                f.write(f'R_ref_{n + 1} p{n+1} a{n + 1} {np.real(self.network.z0[0, n])}\n')
+                z0 = np.real(self.network.z0[0, i])
+                gain_vccs_a = 1 / 2 / np.sqrt(z0)
+                gain_cccs_a = np.sqrt(z0) / 2
+                gain_vccs_b = 2 / np.sqrt(z0)
 
-                # CCVS implementing the reflected wave b.
-                # Also used as current sensor to measure the input current
-                #
-                # The type of the source (voltage source) and its gain 2*sqrt(Z0N) arise from the
-                # definition of the reflected wave b at port N: bN=(VN-Z0N*IN)/(2*sqrt(Z0N))
-                # This equation represents the Kirchhoff voltage law of the port network:
-                # 2*sqrt(Z0N)*bN=VN-Z0N*IN
-                # The left hand side of the equation is realized with a (controlled) voltage
-                # source with a gain of 2*sqrt(Z0N).
-                f.write(f'H_b_{n + 1} a{n + 1} {ref_nodes[n]} V_c_{n + 1} {2.0*sqrt_Z0_n}\n')
+                # dummy voltage source (v = 0) for port current sensing (I_i)
+                f.write(f'V{i + 1} p{i + 1} s{i + 1} 0\n')
 
-                f.write(f'* Differential incident wave a sources for transfer from port {n + 1}\n')
+                # Port reference impedance Z0_i
+                f.write(f'R_{i + 1} s{i + 1} {ref_node} {z0}\n')
 
-                # CCVS and VCVS driving the transfer admittances with incident wave a = V/(2.0*sqrt(Z0)) + I*sqrt(Z0)/2
-                #
-                # These voltage sources in series realize the incident wave a. The types of the sources
-                # and their gains arise from the definition of the incident wave a at port N:
-                # aN=VN/(2*sqrt(Z0N)) + IN*sqrt(Z0N)/2
-                # So we need a VCVS with a gain 1/(2*sqrt(Z0N)) in series with a CCVS with a gain sqrt(Z0N)/2
-                f.write(f'H_p_{n + 1} nt_p_{n + 1} nts_p_{n + 1} H_b_{n + 1} {0.5*sqrt_Z0_n}\n')
-                f.write(f'E_p_{n + 1} nts_p_{n + 1} {ref_nodes[n]} p{n + 1} {ref_nodes[n]} {1.0/(2.0*sqrt_Z0_n)}\n')
-
-                # VCVS driving the transfer admittances with -a
-                #
-                # This source just copies the a wave and multiplies it by -1 to implement the negative side
-                # of the differential a wave. The inversion of the sign is done by the connecting the source
-                # in opposite direction to the reference node. Thus, the gain is 1.
-                f.write(f'E_n_{n + 1} {ref_nodes[n]} nt_n_{n + 1} nt_p_{n + 1} {ref_nodes[n]} 1\n')
-
-                f.write(f'* Current sensor on center node for transfer to port {n + 1}\n')
-
-                # Current sensor for the transfer to current port
-                f.write(f'V_c_{n + 1} nt_c_{n + 1} {ref_nodes[n]} 0\n')
+                # VCCS and CCCS adding their currents to represent the incident wave a_i
+                # I_a_i = U_i / 2 / sqrt(Z0_i) + sqrt(Z0_i) / 2 * I_i
+                f.write(f'Ga{i + 1} 0 n_{i + 1}_0_0 p{i + 1} {ref_node} {gain_vccs_a}\n')
+                f.write(f'Fa{i + 1} 0 n_{i + 1}_0_0 V{i + 1} {gain_cccs_a}\n')
 
                 for j in range(self.network.nports):
-                    f.write(f'* Transfer network from port {j + 1} to port {n + 1}\n')
+                    f.write(f'* Transfer networks from port {j + 1} to port {i + 1}\n')
 
                     # Stacking order in VectorFitting class variables:
                     # s11, s12, s13, ..., s21, s22, s23, ...
-                    i_response = n * self.network.nports + j
+                    i_response = i * self.network.nports + j
 
                     # Start with proportional and constant term of the model
                     # H(s) = d + s * e  model
-                    # Y(s) = G + s * C  equivalent admittance
-                    g = self.constant_coeff[i_response]
-                    c = self.proportional_coeff[i_response]
+                    # Z(s) = R + s * L  equivalent impedance
+                    d = self.constant_coeff[i_response]
+                    e = self.proportional_coeff[i_response]
+
+                    n_current = 0
+                    n_nodes_remaining = len(np.nonzero([d, e])[0]) + len(self.poles)
+                    if n_nodes_remaining == 0:
+                        break
+                    if n_nodes_remaining == 1:
+                        n_next = 0
+                    else:
+                        n_next = n_current + 1
 
                     # R for constant term
-                    if g < 0:
-                        f.write(f'R{n + 1}_{j + 1} nt_n_{j + 1} nt_c_{n + 1} {np.abs(1 / g)}\n')
-                    elif g > 0:
-                        f.write(f'R{n + 1}_{j + 1} nt_p_{j + 1} nt_c_{n + 1} {1 / g}\n')
+                    if d != 0.0:
+                        node_pos = f'n_{i + 1}_{j + 1}_{n_current}'
+                        node_neg = f'n_{i + 1}_{j + 1}_{n_next}'
 
-                    # C for proportional term
-                    if c < 0:
-                        f.write(f'C{n + 1}_{j + 1} nt_n_{j + 1} nt_c_{n + 1} {np.abs(c)}\n')
-                    elif c > 0:
-                        f.write(f'C{n + 1}_{j + 1} nt_p_{j + 1} nt_c_{n + 1} {c}\n')
+                        # R = d
+                        f.write(f'R{i + 1}_{j + 1} {node_pos} {node_neg} {np.abs(d)}\n')
+                        if d < 0:
+                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{i + 1} {node_neg} {node_pos} {gain_vccs_b}\n')
+                        else:
+                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{i + 1} {node_pos} {node_neg} {gain_vccs_b}\n')
 
-                    # Transfer admittances represented by poles and residues
+                        n_nodes_remaining -= 1
+                        if n_nodes_remaining == 1:
+                            n_next = 0
+                        else:
+                            n_next = n_current + 1
+
+                    # L for proportional term
+                    if e != 0.0:
+                        node_pos = f'n_{i + 1}_{j + 1}_{n_current}'
+                        node_neg = f'n_{i + 1}_{j + 1}_{n_next}'
+
+                        # L = e
+                        f.write(f'L{i + 1}_{j + 1} {node_pos} {node_neg} {np.abs(e)}\n')
+                        if e < 0:
+                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{i + 1} {node_neg} {node_pos} {gain_vccs_b}\n')
+                        else:
+                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{i + 1} {node_pos} {node_neg} {gain_vccs_b}\n')
+
+                        n_nodes_remaining -= 1
+                        if n_nodes_remaining == 1:
+                            n_next = 0
+                        else:
+                            n_next = n_current + 1
+
+                    # Transfer impedances represented by poles and residues
                     for i_pole in range(len(self.poles)):
                         pole = self.poles[i_pole]
                         residue = self.residues[i_response, i_pole]
@@ -2421,15 +2433,27 @@ class VectorFitting:
                             r = -1 * np.real(pole) / np.real(residue)
                             f.write(node + f' rl_admittance res={r} ind={l}\n')
                         else:
-                            # Complex pole of a conjugate pair; Add rcl_vccs_admittance
-                            r = -1 * np.real(pole) / np.real(residue)
-                            c = 2 * np.real(residue) / (np.abs(pole) ** 2)
-                            l = 1 / (2 * np.real(residue))
+                            # Complex pole of a conjugate pair; Add lcrr_admittance
+                            a = 2 * np.real(residue)
                             b = -2 * (np.real(residue) * np.real(pole) + np.imag(residue) * np.imag(pole))
-                            gm = b * l * c
-                            f.write(node + f' rcl_vccs_admittance res={r} cap={c} ind={l} gm={gm}\n')
+                            c = -2 * np.real(pole)
+                            d = np.abs(pole) ** 2
+
+                            l = 1 / a
+                            r1 = (c - b / a) / a
+                            c = a / (d - (c - b / a) * b / a)
+                            r2 = d / b - (c - b / a) / a
+                            f.write(node + f' lcrr_admittance ind={l} cap={c} res1={r1} res2={r2}\n')
 
             f.write(f'.ENDS {fitted_model_name}\n\n')
+
+            # Subcircuit for an LCRR equivalent admittance of a complex-conjugate pole-residue pair
+            f.write('.SUBCKT lcrr_admittance n_pos n_neg ind=100e-12 cap=1e-9 res1=1e3 res2=1e3\n')
+            f.write('L1 n_pos 1 {ind}\n')
+            f.write('R1 1 2 {res1}\n')
+            f.write('C1 2 n_neg {cap}\n')
+            f.write('R2 2 n_neg {res2}\n')
+            f.write('.ENDS lcrr_admittance\n\n')
 
             # Subcircuit for an RLCG equivalent admittance of a complex-conjugate pole-residue pair
             f.write('.SUBCKT rcl_vccs_admittance n_pos n_neg res=1e3 cap=1e-9 ind=100e-12 gm=1e-3\n')
