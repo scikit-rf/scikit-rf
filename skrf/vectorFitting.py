@@ -2257,10 +2257,10 @@ class VectorFitting:
         return ax
 
     def write_spice_subcircuit_s(self, file: str, fitted_model_name: str = "s_equivalent",
-                                     create_reference_pins: bool=False) -> None:
+                                     create_reference_pins: bool = False) -> None:
         """
         Creates an equivalent N-port subcircuit based on its vector fitted S parameter responses
-        in spice simulator netlist syntax
+        in spice simulator netlist syntax (compatible with ngspice, Xyce, ...).
 
         Parameters
         ----------
@@ -2268,14 +2268,14 @@ class VectorFitting:
             Path and filename including file extension (usually .sNp) for the subcircuit file.
 
         fitted_model_name: str
-            Name of the resulting model, default "s_equivalent"
+            Name of the resulting subcircuit, default "s_equivalent"
 
         create_reference_pins: bool
             If set to True, the synthesized subcircuit will have N pin-pairs:
-            P0, P0_ref, ..., PN, PN_ref
+            p1 p1_ref p2 p2_ref ... pN pN_ref
 
             If set to False, the synthesized subcircuit will have N pins
-            P0, ..., PN
+            p1 p2 ... pN
             In this case, the reference nodes will be internally connected
             to the global ground net 0.
 
@@ -2291,7 +2291,7 @@ class VectorFitting:
 
         >>> nw_3port = skrf.Network('my3port.s3p')
         >>> vf = skrf.VectorFitting(nw_3port)
-        >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+        >>> vf.auto_fit()
         >>> vf.write_spice_subcircuit_s('/my3port_model.sp')
 
         References
