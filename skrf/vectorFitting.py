@@ -2350,10 +2350,20 @@ class VectorFitting:
                 # Port reference impedance Z0_i
                 f.write(f'R{i + 1} s{i + 1} {ref_node} {z0_i}\n')
 
+                # total node count in the series connections for transfer networks
+                n_nodes_total = self.network.nports * (len(np.nonzero([self.constant_coeff[0], self.proportional_coeff[0]])[0]) + len(self.poles))
+
+                if n_nodes_total == 0:
+                    break
+
+                # prepare first node
+                n_current = 0
+                node_pos = f'n_{i + 1}_{n_current}'
+
                 # VCCS and CCCS adding their currents to represent the incident wave a_i
                 # I_a_i = U_i / 2 / sqrt(Z0_i) + sqrt(Z0_i) / 2 * I_i
-                f.write(f'Ga{i + 1} 0 n_1_{i + 1}_0 p{i + 1} {ref_node} {gain_vccs_a_i}\n')
-                f.write(f'Fa{i + 1} 0 n_1_{i + 1}_0 V{i + 1} {gain_cccs_a_i}\n')
+                f.write(f'Ga{i + 1} 0 {node_pos} p{i + 1} {ref_node} {gain_vccs_a_i}\n')
+                f.write(f'Fa{i + 1} 0 {node_pos} V{i + 1} {gain_cccs_a_i}\n')
 
                 for j in range(self.network.nports):
                     # transfer impedances connected in series to current sources representing a_i
@@ -2379,73 +2389,68 @@ class VectorFitting:
                     d = self.constant_coeff[i_response]
                     e = self.proportional_coeff[i_response]
 
-                    n_current = 0
-                    n_nodes_remaining = len(np.nonzero([d, e])[0]) + len(self.poles)
-                    if n_nodes_remaining == 0:
-                        # should not occur; let's still catch it
-                        # write useless resistor to GND to simulation won't crash
-                        f.write(f'Rfail{j + 1}_{i + 1} n_{j + 1}_{i + 1}_0 0 100\n')
-                        break
+                    # prepare nodes for first impedance
+                    n_nodes_remaining = n_nodes_total - n_current
                     if n_nodes_remaining == 1:
-                        n_next = 0
+                        node_neg = '0'
                     else:
-                        n_next = n_current + 1
+                        node_neg = f'n_{i + 1}_{n_current + 1}'
 
                     # R for constant term
                     if d != 0.0:
-                        node_pos = f'n_{j + 1}_{i + 1}_{n_current}'
-                        node_neg = f'n_{j + 1}_{i + 1}_{n_next}'
-
-                        # R = d
-                        f.write(f'R{j + 1}_{i + 1} {node_pos} {node_neg} {np.abs(d)}\n')
                         # transfer to port j with correct polarity
                         if d < 0:
                             f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} {gain_vccs_b_j}\n')
                         else:
                             f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} {gain_vccs_b_j}\n')
 
-                        n_nodes_remaining -= 1
+                        # R = |d|
+                        f.write(f'R{j + 1}_{i + 1} {node_pos} {node_neg} {np.abs(d)}\n')
+
+                        # prepare nodes for next impedance
                         n_current += 1
+                        node_pos = f'n_{i + 1}_{n_current}'
+                        n_nodes_remaining = n_nodes_total - n_current
                         if n_nodes_remaining == 1:
-                            n_next = 0
+                            node_neg = '0'
                         else:
-                            n_next += 1
+                            node_neg = f'n_{i + 1}_{n_current + 1}'
 
                     # L for proportional term
                     if e != 0.0:
-                        node_pos = f'n_{j + 1}_{i + 1}_{n_current}'
-                        node_neg = f'n_{j + 1}_{i + 1}_{n_next}'
-
-                        # L = e
-                        f.write(f'L{j + 1}_{i + 1} {node_pos} {node_neg} {np.abs(e)}\n')
+                        # transfer to port j with correct polarity
                         if e < 0:
                             f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} {gain_vccs_b_j}\n')
                         else:
                             f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} {gain_vccs_b_j}\n')
 
-                        n_nodes_remaining -= 1
+                        # L = |e|
+                        f.write(f'L{j + 1}_{i + 1} {node_pos} {node_neg} {np.abs(e)}\n')
+
+                        # prepare nodes for next impedance
                         n_current += 1
+                        node_pos = f'n_{i + 1}_{n_current}'
+                        n_nodes_remaining = n_nodes_total - n_current
                         if n_nodes_remaining == 1:
-                            n_next = 0
+                            node_neg = '0'
                         else:
-                            n_next += 1
+                            node_neg = f'n_{i + 1}_{n_current + 1}'
 
                     # Transfer impedances represented by poles and residues
                     for k in range(len(self.poles)):
                         pole = self.poles[k]
                         residue = self.residues[i_response, k]
 
-                        node_pos = f'n_{j + 1}_{i + 1}_{n_current}'
-                        node_neg = f'n_{j + 1}_{i + 1}_{n_next}'
-
-                        # VCCS for transfer of U_j_i_k to port j
+                        # VCCS for transfer of U_j_i_k to port j with correct polarity
                         if np.real(residue) < 0.0:
                             # Multiplication with -1 required, otherwise the values for RLC would be negative.
                             # This gets compensated by inverting the transfer voltage direction for this subcircuit
                             residue = -1 * residue
-                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} {gain_vccs_b_j}\n')
+                            f.write(
+                                f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} {gain_vccs_b_j}\n')
                         else:
-                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} {gain_vccs_b_j}\n')
+                            f.write(
+                                f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} {gain_vccs_b_j}\n')
 
                         # impedance representing S_j_i_k
                         if np.imag(pole) == 0.0:
@@ -2472,12 +2477,14 @@ class VectorFitting:
                             f.write(f'X{j + 1}_{i + 1}_{n_current} {node_pos} {node_neg} rcl_active '
                                     f'cap={c} ind={l} res1={np.abs(r1)} res2={np.abs(r2)} gt1={gt1} gt2={gt2}\n')
 
-                        n_nodes_remaining -= 1
+                        # prepare nodes for next impedance
                         n_current += 1
+                        node_pos = f'n_{i + 1}_{n_current}'
+                        n_nodes_remaining = n_nodes_total - n_current
                         if n_nodes_remaining == 1:
-                            n_next = 0
+                            node_neg = '0'
                         else:
-                            n_next += 1
+                            node_neg = f'n_{i + 1}_{n_current + 1}'
 
             f.write(f'.ENDS {fitted_model_name}\n')
             f.write('*\n')
