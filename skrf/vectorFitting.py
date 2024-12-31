@@ -2339,24 +2339,32 @@ class VectorFitting:
                 else:
                     ref_node = '0'
 
-                z0 = np.real(self.network.z0[0, i])
-                gain_vccs_a = 1 / 2 / np.sqrt(z0)
-                gain_cccs_a = np.sqrt(z0) / 2
-                gain_vccs_b = 2 / np.sqrt(z0)
+                z0_i = np.real(self.network.z0[0, i])
+                gain_vccs_a_i = 1 / 2 / np.sqrt(z0_i)
+                gain_cccs_a_i = np.sqrt(z0_i) / 2
 
                 # dummy voltage source (v = 0) for port current sensing (I_i)
                 f.write(f'V{i + 1} p{i + 1} s{i + 1} 0\n')
 
                 # Port reference impedance Z0_i
-                f.write(f'R_{i + 1} s{i + 1} {ref_node} {z0}\n')
+                f.write(f'R{i + 1} s{i + 1} {ref_node} {z0_i}\n')
 
                 # VCCS and CCCS adding their currents to represent the incident wave a_i
                 # I_a_i = U_i / 2 / sqrt(Z0_i) + sqrt(Z0_i) / 2 * I_i
-                f.write(f'Ga{i + 1} 0 n_{i + 1}_0_0 p{i + 1} {ref_node} {gain_vccs_a}\n')
-                f.write(f'Fa{i + 1} 0 n_{i + 1}_0_0 V{i + 1} {gain_cccs_a}\n')
+                f.write(f'Ga{i + 1} 0 n_0_{i + 1}_0 p{i + 1} {ref_node} {gain_vccs_a_i}\n')
+                f.write(f'Fa{i + 1} 0 n_0_{i + 1}_0 V{i + 1} {gain_cccs_a_i}\n')
 
                 for j in range(self.network.nports):
-                    f.write(f'* Transfer networks from port {j + 1} to port {i + 1}\n')
+                    # transfer impedances connected in series to current sources representing a_i
+                    # the voltages across the individual impedances represents fragments of S_j_i
+                    # k is the index for the pole/residue pairs or the constant and proportional terms
+                    # I_a_i ~ a_i
+                    # Z_j_i_k ~ S_j_i_k
+                    # U_j_i_k ~ b_j_k
+                    f.write(f'* Transfer from port {i + 1} to port {j + 1}\n')
+
+                    z0_j = np.real(self.network.z0[0, j])
+                    gain_vccs_b_j = 2 / np.sqrt(z0_j)
 
                     # Stacking order in VectorFitting class variables:
                     # s11, s12, s13, ..., s21, s22, s23, ...
@@ -2371,6 +2379,9 @@ class VectorFitting:
                     n_current = 0
                     n_nodes_remaining = len(np.nonzero([d, e])[0]) + len(self.poles)
                     if n_nodes_remaining == 0:
+                        # should not occur; let's still catch it
+                        # write useless resistor to GND to simulation won't crash
+                        f.write(f'Rfail{i + 1}_{j + 1} n_{i + 1}_{j + 1}_0 0 100\n')
                         break
                     if n_nodes_remaining == 1:
                         n_next = 0
@@ -2384,10 +2395,11 @@ class VectorFitting:
 
                         # R = d
                         f.write(f'R{i + 1}_{j + 1} {node_pos} {node_neg} {np.abs(d)}\n')
+                        # transfer to port j with correct polarity
                         if d < 0:
-                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{i + 1} {node_neg} {node_pos} {gain_vccs_b}\n')
+                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} {gain_vccs_b_j}\n')
                         else:
-                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{i + 1} {node_pos} {node_neg} {gain_vccs_b}\n')
+                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} {gain_vccs_b_j}\n')
 
                         n_nodes_remaining -= 1
                         if n_nodes_remaining == 1:
@@ -2403,9 +2415,9 @@ class VectorFitting:
                         # L = e
                         f.write(f'L{i + 1}_{j + 1} {node_pos} {node_neg} {np.abs(e)}\n')
                         if e < 0:
-                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{i + 1} {node_neg} {node_pos} {gain_vccs_b}\n')
+                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} {gain_vccs_b_j}\n')
                         else:
-                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{i + 1} {node_pos} {node_neg} {gain_vccs_b}\n')
+                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} {gain_vccs_b_j}\n')
 
                         n_nodes_remaining -= 1
                         if n_nodes_remaining == 1:
@@ -2414,36 +2426,53 @@ class VectorFitting:
                             n_next = n_current + 1
 
                     # Transfer impedances represented by poles and residues
-                    for i_pole in range(len(self.poles)):
-                        pole = self.poles[i_pole]
-                        residue = self.residues[i_response, i_pole]
-                        node = get_new_subckt_identifier()
+                    for k in range(len(self.poles)):
+                        pole = self.poles[k]
+                        residue = self.residues[i_response, k]
 
+                        node_pos = f'n_{i + 1}_{j + 1}_{n_current}'
+                        node_neg = f'n_{i + 1}_{j + 1}_{n_next}'
+
+                        # VCCS for transfer of U_j_i_k to port j
                         if np.real(residue) < 0.0:
                             # Multiplication with -1 required, otherwise the values for RLC would be negative.
-                            # This gets compensated by inverting the transfer current direction for this subcircuit
+                            # This gets compensated by inverting the transfer voltage direction for this subcircuit
                             residue = -1 * residue
-                            node += f' nt_n_{j + 1} nt_c_{n + 1}'
+                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} {gain_vccs_b_j}\n')
                         else:
-                            node += f' nt_p_{j + 1} nt_c_{n + 1}'
+                            f.write(f'Gb{i + 1}_{j + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} {gain_vccs_b_j}\n')
 
+                        # impedance representing S_j_i_k
                         if np.imag(pole) == 0.0:
-                            # Real pole; Add rl_admittance
-                            l = 1 / np.real(residue)
+                            # Real pole; Add parallel RC network via `rc_passive`
+                            c = 1 / np.real(residue)
                             r = -1 * np.real(pole) / np.real(residue)
-                            f.write(node + f' rl_admittance res={r} ind={l}\n')
+                            f.write(f'X{i + 1}_{j + 1} {node_pos} {node_neg} rc_passive res={r} cap={c}\n')
                         else:
-                            # Complex pole of a conjugate pair; Add lcrr_admittance
-                            a = 2 * np.real(residue)
-                            b = -2 * (np.real(residue) * np.real(pole) + np.imag(residue) * np.imag(pole))
-                            c = -2 * np.real(pole)
-                            d = np.abs(pole) ** 2
+                            # Complex pole of a conjugate pair; Add active or passive RCL network via `rcl_active`
+                            x1 = np.real(residue) * np.real(pole)
+                            x2 = np.imag(residue) * np.imag(pole)
+                            x3 = np.real(residue)
+                            c = 1 / 2 / x3
+                            l = 2 * x3 / ((np.imag(pole)) ** 2 + (x2 / x3) ** 2)
+                            r1 = -2 * (x1 + x2) / ((np.imag(pole)) ** 2 + (x2 / x3) ** 2)
+                            r2 = (2 * x3) ** 2 / (-2 * (x1 - x2))
+                            if r1 < 0:
+                                gt1 = 2 / np.abs(r1)
+                            else:
+                                gt1 = 0
+                            if r2 < 0:
+                                gt2 = 2 / np.abs(r2)
+                            else:
+                                gt2 = 0
+                            f.write(f'X{i + 1}_{j + 1} {node_pos} {node_neg} rcl_active '
+                                    f'cap={c} ind={l} res1={np.abs(r1)} res2={np.abs(r2)} gt1={gt1} gt2={gt2}\n')
 
-                            l = 1 / a
-                            r1 = (c - b / a) / a
-                            c = a / (d - (c - b / a) * b / a)
-                            r2 = d / b - (c - b / a) / a
-                            f.write(node + f' lcrr_admittance ind={l} cap={c} res1={r1} res2={r2}\n')
+                        n_nodes_remaining -= 1
+                        if n_nodes_remaining == 1:
+                            n_next = 0
+                        else:
+                            n_next = n_current + 1
 
             f.write(f'.ENDS {fitted_model_name}\n\n')
 
