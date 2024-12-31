@@ -2351,7 +2351,8 @@ class VectorFitting:
                 f.write(f'R{i + 1} s{i + 1} {ref_node} {z0_i}\n')
 
                 # total node count in the series connections for transfer networks
-                n_nodes_total = self.network.nports * (len(np.nonzero([self.constant_coeff[0], self.proportional_coeff[0]])[0]) + len(self.poles))
+                n_nodes_total = self.network.nports * (
+                        len(np.nonzero([self.constant_coeff[0], self.proportional_coeff[0]])[0]) + len(self.poles))
 
                 if n_nodes_total == 0:
                     break
@@ -2400,9 +2401,11 @@ class VectorFitting:
                     if d != 0.0:
                         # transfer to port j with correct polarity
                         if d < 0:
-                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} {gain_vccs_b_j}\n')
+                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} '
+                                    f'{gain_vccs_b_j}\n')
                         else:
-                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} {gain_vccs_b_j}\n')
+                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} '
+                                    f'{gain_vccs_b_j}\n')
 
                         # R = |d|
                         f.write(f'R{j + 1}_{i + 1} {node_pos} {node_neg} {np.abs(d)}\n')
@@ -2420,9 +2423,11 @@ class VectorFitting:
                     if e != 0.0:
                         # transfer to port j with correct polarity
                         if e < 0:
-                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} {gain_vccs_b_j}\n')
+                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} '
+                                    f'{gain_vccs_b_j}\n')
                         else:
-                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} {gain_vccs_b_j}\n')
+                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} '
+                                    f'{gain_vccs_b_j}\n')
 
                         # L = |e|
                         f.write(f'L{j + 1}_{i + 1} {node_pos} {node_neg} {np.abs(e)}\n')
@@ -2447,10 +2452,12 @@ class VectorFitting:
                             # This gets compensated by inverting the transfer voltage direction for this subcircuit
                             residue = -1 * residue
                             f.write(
-                                f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} {gain_vccs_b_j}\n')
+                                f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} '
+                                f'{gain_vccs_b_j}\n')
                         else:
                             f.write(
-                                f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} {gain_vccs_b_j}\n')
+                                f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} '
+                                f'{gain_vccs_b_j}\n')
 
                         # impedance representing S_j_i_k
                         if np.imag(pole) == 0.0:
