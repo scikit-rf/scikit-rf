@@ -2336,9 +2336,9 @@ class VectorFitting:
                 f.write(f'* Port network for port {i + 1}\n')
 
                 if create_reference_pins:
-                    ref_node = f'p{i + 1}_ref'
+                    node_ref_i = f'p{i + 1}_ref'
                 else:
-                    ref_node = '0'
+                    node_ref_i = '0'
 
                 z0_i = np.real(self.network.z0[0, i])
                 gain_vccs_a_i = 1 / 2 / np.sqrt(z0_i)
@@ -2348,7 +2348,7 @@ class VectorFitting:
                 f.write(f'V{i + 1} p{i + 1} s{i + 1} 0\n')
 
                 # Port reference impedance Z0_i
-                f.write(f'R{i + 1} s{i + 1} {ref_node} {z0_i}\n')
+                f.write(f'R{i + 1} s{i + 1} {node_ref_i} {z0_i}\n')
 
                 # total node count in the series connections for transfer networks
                 n_nodes_total = self.network.nports * (
@@ -2363,7 +2363,7 @@ class VectorFitting:
 
                 # VCCS and CCCS adding their currents to represent the incident wave a_i
                 # I_a_i = U_i / 2 / sqrt(Z0_i) + sqrt(Z0_i) / 2 * I_i
-                f.write(f'Ga{i + 1} 0 {node_pos} p{i + 1} {ref_node} {gain_vccs_a_i}\n')
+                f.write(f'Ga{i + 1} 0 {node_pos} p{i + 1} {node_ref_i} {gain_vccs_a_i}\n')
                 f.write(f'Fa{i + 1} 0 {node_pos} V{i + 1} {gain_cccs_a_i}\n')
 
                 for j in range(self.network.nports):
@@ -2379,16 +2379,21 @@ class VectorFitting:
                     z0_j = np.real(self.network.z0[0, j])
                     gain_vccs_b_j = 2 / np.sqrt(z0_j)
 
+                    if create_reference_pins:
+                        node_ref_j = f'p{j + 1}_ref'
+                    else:
+                        node_ref_j = '0'
+
                     # Stacking order in VectorFitting class variables:
                     # s11, s12, s13, ..., s21, s22, s23, ...
-                    # `i_response` is index for S_j_i
-                    i_response = j * self.network.nports + i
+                    # idx_S_i_j = i * self.network.nports + j
+                    idx_S_j_i = j * self.network.nports + i
 
                     # Start with proportional and constant term of the model
                     # H(s) = d + s * e  model
                     # Z(s) = R + s * L  equivalent impedance
-                    d = self.constant_coeff[i_response]
-                    e = self.proportional_coeff[i_response]
+                    d = self.constant_coeff[idx_S_j_i]
+                    e = self.proportional_coeff[idx_S_j_i]
 
                     # prepare nodes for first impedance
                     n_nodes_remaining = n_nodes_total - n_current
@@ -2401,10 +2406,10 @@ class VectorFitting:
                     if d != 0.0:
                         # transfer to port j with correct polarity
                         if d < 0:
-                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} '
+                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {node_ref_j} s{j + 1} {node_neg} {node_pos} '
                                     f'{gain_vccs_b_j}\n')
                         else:
-                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} '
+                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {node_ref_j} s{j + 1} {node_pos} {node_neg} '
                                     f'{gain_vccs_b_j}\n')
 
                         # R = |d|
@@ -2423,10 +2428,10 @@ class VectorFitting:
                     if e != 0.0:
                         # transfer to port j with correct polarity
                         if e < 0:
-                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} '
+                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {node_ref_j} s{j + 1} {node_neg} {node_pos} '
                                     f'{gain_vccs_b_j}\n')
                         else:
-                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} '
+                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {node_ref_j} s{j + 1} {node_pos} {node_neg} '
                                     f'{gain_vccs_b_j}\n')
 
                         # L = |e|
@@ -2444,26 +2449,24 @@ class VectorFitting:
                     # Transfer impedances represented by poles and residues
                     for k in range(len(self.poles)):
                         pole = self.poles[k]
-                        residue = self.residues[i_response, k]
+                        residue = self.residues[idx_S_j_i, k]
 
                         # VCCS for transfer of U_j_i_k to port j with correct polarity
                         if np.real(residue) < 0.0:
                             # Multiplication with -1 required, otherwise the values for RLC would be negative.
                             # This gets compensated by inverting the transfer voltage direction for this subcircuit
                             residue = -1 * residue
-                            f.write(
-                                f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_neg} {node_pos} '
-                                f'{gain_vccs_b_j}\n')
+                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {node_ref_j} s{j + 1} {node_neg} {node_pos} '
+                                    f'{gain_vccs_b_j}\n')
                         else:
-                            f.write(
-                                f'Gb{j + 1}_{i + 1}_{n_current} {ref_node} s{j + 1} {node_pos} {node_neg} '
-                                f'{gain_vccs_b_j}\n')
+                            f.write(f'Gb{j + 1}_{i + 1}_{n_current} {node_ref_j} s{j + 1} {node_pos} {node_neg} '
+                                    f'{gain_vccs_b_j}\n')
 
                         # impedance representing S_j_i_k
                         if np.imag(pole) == 0.0:
                             # Real pole; Add parallel RC network via `rc_passive`
                             c = 1 / np.real(residue)
-                            r = -1 * np.real(pole) / np.real(residue)
+                            r = -1 * np.real(residue) / np.real(pole)
                             f.write(f'X{j + 1}_{i + 1}_{n_current} {node_pos} {node_neg} rc_passive res={r} cap={c}\n')
                         else:
                             # Complex pole of a conjugate pair; Add active or passive RCL network via `rcl_active`
@@ -2497,19 +2500,19 @@ class VectorFitting:
             f.write('*\n')
 
             # Subcircuit for an RCL equivalent impedance of a complex-conjugate pole-residue pair
-            f.write('.SUBCKT rcl_active n_pos n_neg cap=1e-9 ind=100e-12 res1=1e3 res2=1e3 gt1=2e-3 gt2=2e-3\n')
-            f.write('L1 n_pos 1 {ind}\n')
-            f.write('R1 1 n_neg {res1}\n')
-            f.write('G1 n_neg 1 1 n_neg {gt1}\n')
-            f.write('C1 n_pos n_neg {cap}\n')
-            f.write('R2 n_pos n_neg {res2}\n')
-            f.write('G2 n_neg n_pos n_pos n_neg {gt2}\n')
+            f.write('.SUBCKT rcl_active 1 2 cap=1e-9 ind=100e-12 res1=1e3 res2=1e3 gt1=2e-3 gt2=2e-3\n')
+            f.write('L1 1 3 {ind}\n')
+            f.write('R1 3 2 {res1}\n')
+            f.write('G1 2 3 3 2 {gt1}\n')
+            f.write('C1 1 2 {cap}\n')
+            f.write('R2 1 2 {res2}\n')
+            f.write('G2 2 1 1 2 {gt2}\n')
             f.write('.ENDS rcl_active\n')
 
             f.write('*\n')
 
             # Subcircuit for an RC equivalent impedance of a real pole-residue pair
-            f.write('.SUBCKT rc_passive n_pos n_neg res=1e3 cap=1e-9\n')
-            f.write('C1 n_pos n_neg {cap}\n')
-            f.write('R1 n_pos n_neg {res}\n')
+            f.write('.SUBCKT rc_passive 1 2 res=1e3 cap=1e-9\n')
+            f.write('C1 1 2 {cap}\n')
+            f.write('R1 1 2 {res}\n')
             f.write('.ENDS rc_passive\n')
