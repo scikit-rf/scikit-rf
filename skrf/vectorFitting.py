@@ -2333,7 +2333,13 @@ class VectorFitting:
                 else:
                     node_ref_i = '0'
 
+                # reference impedance (real, i.e. resistance) of port i
                 z0_i = np.real(self.network.z0[0, i])
+
+                # transfer gain of the controlled current sources representing the incident power wave a_i at port i
+                #
+                # the gain values result from the definition of the incident power wave:
+                # a_i = 1 / 2 / sqrt(Z0_i) * (V_i + Z0_i * I_i) = 1 / 2 / sqrt(Z0_i) * V_i + sqrt(Z0_i) / 2 * I_i
                 gain_vccs_a_i = 1 / 2 / np.sqrt(z0_i)
                 gain_cccs_a_i = np.sqrt(z0_i) / 2
 
@@ -2369,7 +2375,18 @@ class VectorFitting:
                     f.write('*\n')
                     f.write(f'* Transfer from port {i + 1} to port {j + 1}\n')
 
+                    # reference impedance (real, i.e. resistance) of port i
                     z0_j = np.real(self.network.z0[0, j])
+
+                    # transfer gain of the controlled current source representing the reflected power wave b_i at port i
+                    #
+                    # the gain values result from the definition of the reflected power wave:
+                    # b_i = 1 / 2 / sqrt(Z0_i) * (V_i - Z0_i * I_i)
+                    #
+                    # depending on the circuit topology used for the equivalent port network, this can be implemented
+                    # with either controlled current and/or controlled voltage sources. in case of the Norton current
+                    # source used in this implementation, the reflected power wave relates to the source current as:
+                    # b_i = sqrt(Z0_i) / 2 * I_b_i <==> I_b_i = 2 / sqrt(Z0_i) * b_i
                     gain_vccs_b_j = 2 / np.sqrt(z0_j)
 
                     if create_reference_pins:
@@ -2397,16 +2414,18 @@ class VectorFitting:
 
                     # R for constant term
                     if d != 0.0:
-                        # transfer to port j with correct polarity
+                        # calculated resistence can be negative, but implementation must use positive values
+                        # R = |d|
+                        f.write(f'R{j + 1}_{i + 1} {node_pos} {node_neg} {np.abs(d)}\n')
+
+                        # correction of the sign inversion by flipping the polarity of the control voltage for the VCCS
+                        # transferring the voltage across L to port j
                         if d < 0:
                             f.write(f'Gb{j + 1}_{i + 1}_{n_current} {node_ref_j} s{j + 1} {node_neg} {node_pos} '
                                     f'{gain_vccs_b_j}\n')
                         else:
                             f.write(f'Gb{j + 1}_{i + 1}_{n_current} {node_ref_j} s{j + 1} {node_pos} {node_neg} '
                                     f'{gain_vccs_b_j}\n')
-
-                        # R = |d|
-                        f.write(f'R{j + 1}_{i + 1} {node_pos} {node_neg} {np.abs(d)}\n')
 
                         # prepare nodes for next impedance
                         n_current += 1
@@ -2419,16 +2438,18 @@ class VectorFitting:
 
                     # L for proportional term
                     if e != 0.0:
-                        # transfer to port j with correct polarity
+                        # calculated inductance can be negative, but implementation must use positive values
+                        # L = |e|
+                        f.write(f'L{j + 1}_{i + 1} {node_pos} {node_neg} {np.abs(e)}\n')
+
+                        # correction of the sign inversion by flipping the polarity of the control voltage for the VCCS
+                        # transferring the voltage across L to port j
                         if e < 0:
                             f.write(f'Gb{j + 1}_{i + 1}_{n_current} {node_ref_j} s{j + 1} {node_neg} {node_pos} '
                                     f'{gain_vccs_b_j}\n')
                         else:
                             f.write(f'Gb{j + 1}_{i + 1}_{n_current} {node_ref_j} s{j + 1} {node_pos} {node_neg} '
                                     f'{gain_vccs_b_j}\n')
-
-                        # L = |e|
-                        f.write(f'L{j + 1}_{i + 1} {node_pos} {node_neg} {np.abs(e)}\n')
 
                         # prepare nodes for next impedance
                         n_current += 1
@@ -2444,10 +2465,11 @@ class VectorFitting:
                         pole = self.poles[k]
                         residue = self.residues[idx_S_j_i, k]
 
-                        # VCCS for transfer of U_j_i_k to port j with correct polarity
+                        # calculated component values can be negative, but implementation must use positive values.
+                        # the sign of the residue can be inverted, but then the inversion must be compensated by
+                        # flipping the polarity of the VCCS control voltage for transfer of U_j_i_k to port j.
                         if np.real(residue) < 0.0:
-                            # Multiplication with -1 required, otherwise the values for RLC would be negative.
-                            # This gets compensated by inverting the transfer voltage direction for this subcircuit
+                            # residue multiplication with -1 required
                             residue = -1 * residue
                             f.write(f'Gb{j + 1}_{i + 1}_{n_current} {node_ref_j} s{j + 1} {node_neg} {node_pos} '
                                     f'{gain_vccs_b_j}\n')
@@ -2470,12 +2492,16 @@ class VectorFitting:
                             r1 = -2 * (x1 + x2) / ((np.imag(pole)) ** 2 + (x2 / np.real(residue)) ** 2)
                             r2 = (2 * np.real(residue)) ** 2 / (-2 * (x1 - x2))
                             if r1 < 0:
+                                # calculated r1 is negative; this gets compensated with the transconductance gt1
                                 gt1 = 2 / np.abs(r1)
                             else:
+                                # transconductance gt1 not required
                                 gt1 = 0.0
                             if r2 < 0:
+                                # calculated r2 is negative; this gets compensated with the transconductance gt2
                                 gt2 = 2 / np.abs(r2)
                             else:
+                                # transconductance gt2 not required
                                 gt2 = 0.0
                             f.write(f'X{j + 1}_{i + 1}_{n_current} {node_pos} {node_neg} rcl_active '
                                     f'cap={c} ind={l} res1={np.abs(r1)} res2={np.abs(r2)} gt1={gt1} gt2={gt2}\n')
