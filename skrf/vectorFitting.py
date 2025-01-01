@@ -2310,13 +2310,6 @@ class VectorFitting:
 
         """
 
-        subcircuits = []
-
-        def get_new_subckt_identifier():
-            # Provides a unique subcircuit identifier (X1, X2, X3, ...)
-            subcircuits.append(f'X{len(subcircuits) + 1}')
-            return subcircuits[-1]
-
         with open(file, 'w') as f:
             # write title line
             f.write('* EQUIVALENT CIRCUIT FOR VECTOR FITTED S-MATRIX\n')
