@@ -843,8 +843,8 @@ class Media(ABC):
         one port meet the equivalent impedance of the other ports in parallel.
 
         .. math::
-            s_{ii} = \frac{Z_i-{\frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}}^{*}}
-            {Z_i+\frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}}
+            s_{ii} = \frac{\frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}-Z_i^{*}}
+            {\frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}+Z_i}
 
         The remaining power is split between the other ports depending their
         impedances.
@@ -1967,6 +1967,9 @@ def get_z0_load(z0: np.ndarray,  port_idx: int) -> np.ndarray:
     Calculate the load impedance for a given port index by parallel combining the impedances
     of all other ports.
 
+    .. math::
+        Zload_{i} = \frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}
+
     Parameters
     ----------
     z0 : ndarray
@@ -2001,6 +2004,20 @@ def get_z0_load(z0: np.ndarray,  port_idx: int) -> np.ndarray:
 def splitter_s(z0: np.ndarray) -> np.ndarray:
     """
     Generate ideal, lossless n-way splitter Network's s-parameters.
+
+    For n > 2, the splitter is not matched because the power wave entering
+    one port meet the equivalent impedance of the other ports in parallel.
+
+    .. math::
+        s_{ii} = \frac{\frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}-Z_i^{*}}
+        {\frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}+Z_i}
+
+    The remaining power is split between the other ports depending their
+    impedances.
+
+    .. math::
+        S_{ij} = \frac{ 2 \sqrt{ {\Re}\left (Z_i \right) \cdot {\Re}\left (Z_j \right) } }
+        {Z_i \cdot Z_j \cdot  \sum_{k=1 \dots  n}\frac{1}{Z_j}}
 
     Parameters
     ----------
