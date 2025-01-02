@@ -1963,7 +1963,7 @@ def parse_z0(s: str) -> NumberLike:
     return out
 
 def get_z0_load(z0: np.ndarray,  port_idx: int) -> np.ndarray:
-    """
+    r"""
     Calculate the load impedance for a given port index by parallel combining the impedances
     of all other ports.
 
@@ -2002,7 +2002,7 @@ def get_z0_load(z0: np.ndarray,  port_idx: int) -> np.ndarray:
 
 
 def splitter_s(z0: np.ndarray) -> np.ndarray:
-    """
+    r"""
     Generate ideal, lossless n-way splitter Network's s-parameters.
 
     For n > 2, the splitter is not matched because the power wave entering
