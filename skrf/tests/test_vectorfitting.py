@@ -46,7 +46,7 @@ class VectorFittingTestCase(unittest.TestCase):
         nw = skrf.data.ring_slot
         vf = skrf.vectorFitting.VectorFitting(nw)
         poles_init = 2 * np.pi * np.array([-100e9, -10e9 + 100e9j])
-        vf.vector_fit(poles=poles_init)
+        vf.vector_fit(poles_init=poles_init)
         self.assertLess(vf.get_rms_error(), 0.01)
 
     def test_190ghz_measured(self):
@@ -123,10 +123,12 @@ class VectorFittingTestCase(unittest.TestCase):
         vf = skrf.VectorFitting(None)
 
         # non-passive example parameters from Gustavsen's passivity assessment paper:
-        vf.poles = np.array([-1, -5 + 6j])
-        vf.residues = np.array([[0.3, 4 + 5j], [0.1, 2 + 3j], [0.1, 2 + 3j], [0.4, 3 + 4j]])
-        vf.constant = np.array([0.2, 0.1, 0.1, 0.3])
-        vf.proportional = np.array([0.0, 0.0, 0.0, 0.0])
+        vf.poles = [np.array([-1, -5 + 6j])]
+        vf.residues = [np.array([[0.3, 4 + 5j], [0.1, 2 + 3j], [0.1, 2 + 3j], [0.4, 3 + 4j]])]
+        vf.constant = [np.array([0.2, 0.1, 0.1, 0.3])]
+        vf.proportional = [np.array([0.0, 0.0, 0.0, 0.0])]
+        vf.map_idx_response_to_idx_pole_group=np.array([0, 0, 0, 0])
+        vf.map_idx_response_to_idx_pole_group_member=np.array([0, 1, 2, 3])
 
         # test if model is not passive
         violation_bands = vf.passivity_test()

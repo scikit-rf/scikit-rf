@@ -82,9 +82,13 @@ class VectorFitting:
         self.constant = None
         """ Instance variable holding the list of fitted constants. Will be initialized by :func:`vector_fit`. """
 
-        self.wall_clock_time = 0
-        """ Instance variable holding the wall-clock time (in seconds) consumed by the most recent fitting process with
-        :func:`vector_fit`. Subsequent calls of :func:`vector_fit` will overwrite this value. """
+        self.map_idx_response_to_idx_pole_group = None
+        """ Instance variable holding a map that maps the idx_response to idx_pole_group
+        Will be initialized by :func:`vector_fit`. """
+
+        self.map_idx_response_to_idx_pole_group_member = None
+        """ Instance variable holding a map that maps idx_response to idx_pole_group_member
+        Will be initialized by :func:`vector_fit`. """
 
         self.d_tilde_history = []
         self.delta_rel_max_singular_value_A_dense_history = []
@@ -160,39 +164,35 @@ class VectorFitting:
 
         return spurious
 
-    def get_model_order(self, poles=None) -> int:
+    def get_model_order(self, idx_pole_group = None) -> int:
         """
         Returns the model order calculated with :math:`N_{real} + 2 N_{complex}` for a given set of poles.
 
         Parameters
         ----------
-        poles: ndarray
-            The poles of the model as a list or NumPy array.
+        idx_pole_group: ndarray with pole groups to be considered, optional
+            If not specified, the overall model order will be returned
 
         Returns
         -------
         order: int
         """
 
-        # Use internal poles if not provided
-        if poles is None:
-            poles = self.poles
-
-        # poles.imag != 0 is True(1) for complex poles, False (0) for real poles.
-        # Adding one to each element gives 2 columns for complex and 1 column for real poles.
-        if isinstance(poles, list):
-            model_order=0
-            for _poles in poles:
-                model_order += np.sum((_poles.imag != 0) + 1)
+        if idx_pole_group is None:
+            pole_group_indices = np.arange(len(self.poles))
         else:
-            model_order=np.sum((poles.imag != 0) + 1)
+            pole_group_indices = np.array([idx_pole_group])
+
+        model_order = 0
+        for idx_pole_group in pole_group_indices:
+            model_order += np.sum((self.poles[idx_pole_group].imag != 0) + 1)
 
         return model_order
 
     def vector_fit(self,
                  # Initial poles
-                 poles = None,
-                 n_poles_init: int = None, poles_init_type: str = 'complex', poles_init_spacing: str = 'lin',
+                 poles_init = None,
+                 n_poles_init = None, poles_init_type = 'complex', poles_init_spacing = 'lin',
 
                  # Weighting and fit options
                  weights = None,
@@ -205,6 +205,7 @@ class VectorFitting:
 
                  # Share poles between responses
                  pole_sharing: str = 'MIMO',
+                 pole_groups = None,
 
                  # Parameters for the vector fitting algorithm
                  max_iterations: int = 200,
@@ -226,22 +227,24 @@ class VectorFitting:
 
         Parameters
         ----------
-        poles: numpy array of initial poles (if shared_poles==True) or list of numpy arrays of initial poles (if
-        shared_poles==False), optional.
+        poles_init: numpy array of initial poles, or list of numpy arrays of initial poles, optional.
+            If specified, those poles will be used as initial poles.
+            If specified as a list, the list elements correspond to the pole groups
 
-        n_poles_init: int, optional
+        n_poles_init: int, or list of int, optional
             Number of poles in the initial model.
+            If not specified, the number of initial poles will be estimated from the data
+            If specified as a list, the list elements correspond to the pole groups
 
-        poles_init_type: str, optional
-            Type of poles in the initial model. Can be 'complex' or 'real'.
+        poles_init_type: str, or list of str, optional
+            Type of poles in the initial model. Can be 'complex' or 'real'. Only used if n_poles_init is specified.
+            Otherwise the type of initial poles is estimated from the data.
+            If specified as a list, the list elements correspond to the pole groups
 
-        poles_init_spacing: str, optional
-            Spacing of the initial poles in the frequency range
-
-            Type of initial pole spacing across the frequency interval of the S-matrix. Either *linear* (`'lin'`),
-            *logarithmic* (`'log'`), or `custom`. In case of `custom`, the initial poles must be stored in :attr:`poles`
-            as a NumPy array before calling this method. They will be overwritten by the final poles. The
-            initialization parameters `n_poles_real` and `n_poles_cmplx` will be ignored in case of `'custom'`.
+        poles_init_spacing: str, or list of str, optional
+            Spacing of the initial poles in the frequency range. Only used if n_poles_init is specified.
+            Otherwise the poles will be estimated from the data.
+            If specified as a list, the list elements correspond to the pole groups
 
         weights: numpy ndarray of size n_responses, n_freqs, optional
             If weights are provided, these weights are used. The weights must be in the order
@@ -349,65 +352,63 @@ class VectorFitting:
 
         # Get responses
         responses = self._get_responses(parameter_type)
+        n_responses = np.size(responses, axis=0)
 
         # Get weights
         if weights is None:
             weights=self._get_weights(weighting, weighting_accuracy_db, responses)
 
-        # Check if poles are shared between responses
-        if pole_sharing == 'mimo':
-            # Poles are shared between all responses
+        # Initialize pole sharing
+        self._init_pole_sharing(pole_sharing, n_responses, pole_groups)
+        n_pole_groups = len(self.poles)
 
-            # Get initial poles
-            if poles is None:
-                poles = self._get_initial_poles(omega, n_poles_init, poles_init_type,
-                                                poles_init_spacing, responses)
+        # Convert n_poles_init to list if it is provided as an int
+        if not isinstance(n_poles_init, list):
+            n_poles_init = [n_poles_init] * n_pole_groups
+
+        # Convert poles_init_type to list if it is provided as a str
+        if not isinstance(poles_init_type, list):
+            poles_init_type = [poles_init_type] * n_pole_groups
+
+        # Convert poles_init_spacing to list if it is provided as a str
+        if not isinstance(poles_init_spacing, list):
+            poles_init_spacing = [poles_init_spacing] * n_pole_groups
+
+        # Convert poles_init to list if it is provided as a numpy array
+        if poles_init is not None and not isinstance(poles_init, list):
+            poles_init = [poles_init] * n_pole_groups
+
+        # Fit each pole group
+        for idx_pole_group in range(n_pole_groups):
+            # Get the indices of all responses that are part of the pole group
+            indices_responses=np.nonzero(self.map_idx_response_to_idx_pole_group == idx_pole_group)
+
+            logger.info(f'Starting vector_fit for pole group {idx_pole_group+1} of {n_pole_groups}')
+
+            if poles_init is None:
+                # Get initial poles
+                poles = self._get_initial_poles(omega, n_poles_init[idx_pole_group], poles_init_type[idx_pole_group],
+                                                poles_init_spacing[idx_pole_group], responses[indices_responses])
+            else:
+                # Set initial poles to user-provided poles
+                poles = poles_init[idx_pole_group]
 
             # Call _vector_fit
-            poles, residues, constant, proportional=self._vector_fit(
-                poles, omega, responses, weights, fit_constant, fit_proportional, memory_saver,
+            poles, residues, constant, proportional = self._vector_fit(
+                poles, omega, responses[indices_responses], weights[indices_responses],
+                fit_constant, fit_proportional, memory_saver,
                 max_iterations, stagnation_threshold, abstol)
 
             # Save results
-            self._save_results(poles, residues, constant, proportional)
+            self._save_results(poles, residues, constant, proportional, idx_pole_group)
 
-        elif pole_sharing == 'multi-siso':
-            # Each response gets its own set of poles
-            n_responses=np.size(responses, axis=0)
-            poles_list = [None]*n_responses
-            residues_list = [None]*n_responses
-            const_list = [None]*n_responses
-            prop_list = [None]*n_responses
-
-            # Save initial poles if we have them
-            initial_poles=poles
-
-            for i in range(n_responses):
-                logger.info(f'Starting vector fit for response {i+1} of {n_responses}\n')
-
-                if initial_poles is None:
-                    # Get initial poles
-                    poles = self._get_initial_poles(omega, n_poles_init, poles_init_type,
-                                                    poles_init_spacing, responses)
-                else:
-                    # Set initial poles to user-provided poles
-                    poles = initial_poles[i]
-
-                # Call _auto_fit
-                poles_list[i], residues_list[i], const_list[i], prop_list[i]=self._vector_fit(
-                    poles, omega, responses[i, None], weights[i, None], fit_constant, fit_proportional, memory_saver,
-                    max_iterations, stagnation_threshold, abstol)
-
-                logger.info(f'Finished vector fit for response {i+1} of {n_responses}\n')
-
-            # Save results
-            self._save_results(poles_list, residues_list, const_list, prop_list)
+            logger.info(f'Finished vector_fit for pole group {idx_pole_group+1} of {n_pole_groups}')
 
         # Print model summary
         self.print_model_summary(verbose)
 
-        timer_stop = timer()
-        self.wall_clock_time = timer_stop - timer_start
+        wall_clock_time = timer() - timer_start
+        logger.info(f'Finished vector_fit. Time elapsed = {wall_clock_time:.4e} seconds\n')
 
     def _vector_fit(self, poles, omega, responses, weights, fit_constant, fit_proportional,
                     memory_saver, max_iterations, stagnation_threshold, abstol):
@@ -480,8 +481,8 @@ class VectorFitting:
 
     def auto_fit(self,
                  # Initial poles
-                 poles=None,
-                 n_poles_init: int = None, poles_init_type: str = 'complex', poles_init_spacing: str = 'lin',
+                 poles_init = None,
+                 n_poles_init = None, poles_init_type = 'complex', poles_init_spacing = 'lin',
 
                  # Weighting
                  weights = None,
@@ -494,6 +495,7 @@ class VectorFitting:
 
                  # Share poles between responses
                  pole_sharing: str = 'MIMO',
+                 pole_groups = None,
 
                  # Parameters for adding and skimming algorithm
                  n_poles_add_max: int = None, model_order_max: int = 1000,
@@ -508,7 +510,7 @@ class VectorFitting:
                  parameter_type: str = 's',
 
                  # Verbose
-                 verbose=False,
+                 verbose = False,
                  ) -> (np.ndarray, np.ndarray):
         """
         Automatic fitting routine implementing the "vector fitting with adding and skimming" algorithm as proposed in
@@ -519,20 +521,24 @@ class VectorFitting:
 
         Parameters
         ----------
-        poles: numpy array of initial poles (if shared_poles==True) or list of numpy arrays of initial poles (if
-        shared_poles==False), optional.
+        poles_init: numpy array of initial poles, or list of numpy arrays of initial poles, optional.
+            If specified, those poles will be used as initial poles.
+            If specified as a list, the list elements correspond to the pole groups
 
-        n_poles_init: int, optional
+        n_poles_init: int, or list of int, optional
             Number of poles in the initial model.
             If not specified, the number of initial poles will be estimated from the data
+            If specified as a list, the list elements correspond to the pole groups
 
-        poles_init_type: str, optional
+        poles_init_type: str, or list of str, optional
             Type of poles in the initial model. Can be 'complex' or 'real'. Only used if n_poles_init is specified.
             Otherwise the type of initial poles is estimated from the data.
+            If specified as a list, the list elements correspond to the pole groups
 
-        poles_init_spacing: str, optional
+        poles_init_spacing: str, or list of str, optional
             Spacing of the initial poles in the frequency range. Only used if n_poles_init is specified.
             Otherwise the poles will be estimated from the data.
+            If specified as a list, the list elements correspond to the pole groups
 
         n_poles_add_max: int, optional
             Maximum number of new poles allowed to be added in each iteration. Controls how fast
@@ -603,9 +609,47 @@ class VectorFitting:
         fit_proportional: bool, optional
             Decide whether the proportional term e is fitted or not.
 
-        pole_sharing: bool, optional
-            Decide whether to share one common pole set for all responses or
-            use separate pole sets for each response.
+        pole_sharing: str, optional
+            Decide whether and in which way poles are shared between responses for the fit (pole groups)
+
+            These options are available:
+            'MIMO':
+                All responses go into one shared pole group
+
+            'Multi-SISO':
+                Every response goes into a separate pole group
+
+            'Multi-SIMO':
+                Responses (1, 1) (2, 1) (3, 1) ... go into a pole group
+                Responses (1, 2) (2, 2) (3, 2) ... go into a pole group
+                ... and so on
+
+            'Multi-MISO':
+                Responses (1, 1) (1, 2) (1, 3) ... go into a pole group
+                Responses (2, 1) (2, 2) (2, 3) ... go into a pole group
+                ... and so on
+
+            'Custom':
+                You can create arbitrary custom pole groups by providing a matrix via the pole_groups argument.
+                See description of pole_groups how it works
+
+        pole_groups: numpy 2-d array of shape (n_ports, n_ports), optional
+            Custom pole groups can be created by specifying pole_sharing='Custom' and providing the pole_groups
+            matrix that contains integers.
+
+            If all integers are distinct, every response will go into its own pole group.
+            If some of the are equal, all of them will go into a common pole group.
+
+            Pole groups will be ordered such that the smallest integer in the matrix will represent the
+            first pole group and so on.
+
+            Example 1: To achieve the same effect as in pole_sharing='Multi-SIMO' for a 3 x 3 network,
+            you can provide the following pole_groups matrix:
+            pole_groups=np.array(([0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]))
+
+            Example 2: To put S11 and S13 into a separate pole group, and all other respones into
+            another pole group, for a 3 x 3 network, you can provide the following pole_groups matrix:
+            pole_groups=np.array(([0, 1, 0], [1, 1, 1], [1, 1, 1]))
 
         memory_saver: bool, optional
             Enables the memory saver. If enabled, the runtime might be longer but the memory usage is reduced.
@@ -655,75 +699,78 @@ class VectorFitting:
 
         # Get responses
         responses = self._get_responses(parameter_type)
+        n_responses = np.size(responses, axis=0)
 
         # Get weights
         if weights is None:
             weights=self._get_weights(weighting, weighting_accuracy_db, responses)
 
-        # Check if poles are shared between responses
-        if pole_sharing == 'mimo':
-            # Poles are shared between all responses
+        # Initialize pole sharing
+        self._init_pole_sharing(pole_sharing, n_responses, pole_groups)
+        n_pole_groups = len(self.poles)
 
-            # Get initial poles
-            if poles is None:
-                poles = self._get_initial_poles(omega, n_poles_init, poles_init_type,
-                                                poles_init_spacing, responses)
+        # Convert n_poles_init to list if it is provided as an int
+        if not isinstance(n_poles_init, list):
+            n_poles_init = [n_poles_init] * n_pole_groups
 
-            # Set n_poles_add_max if it is not provided
-            if n_poles_add_max is None:
+        # Convert poles_init_type to list if it is provided as a str
+        if not isinstance(poles_init_type, list):
+            poles_init_type = [poles_init_type] * n_pole_groups
+
+        # Convert poles_init_spacing to list if it is provided as a str
+        if not isinstance(poles_init_spacing, list):
+            poles_init_spacing = [poles_init_spacing] * n_pole_groups
+
+        # Convert poles_init to list if it is provided as a numpy array
+        if poles_init is not None and not isinstance(poles_init, list):
+            poles_init = [poles_init] * n_pole_groups
+
+        # Save n_poles_add_max
+        saved_n_poles_add_max = n_poles_add_max
+
+        # Fit each pole group
+        for idx_pole_group in range(n_pole_groups):
+            # Get the indices of all responses that are part of the pole group
+            indices_responses=np.nonzero(self.map_idx_response_to_idx_pole_group == idx_pole_group)
+
+            logger.info(f'Starting auto_fit for pole group {idx_pole_group+1} of {n_pole_groups}')
+
+            # Initialize poles
+            if poles_init is None:
+                # Get initial poles
+                poles = self._get_initial_poles(omega, n_poles_init[idx_pole_group], poles_init_type[idx_pole_group],
+                                                poles_init_spacing[idx_pole_group], responses[indices_responses])
+            else:
+                # Set initial poles to user-provided poles
+                poles = poles_init[idx_pole_group]
+
+            # Initialize n_poles_add_max. We have to do this for every pole group because
+            # it is set proportional to the number of poles if no user value is provided
+            # number of poles w
+            if saved_n_poles_add_max is None:
                 n_poles_add_max=max(2, int(len(poles)/2))
+            else:
+                # Set n_poles_add_max to user-provided value
+                n_poles_add_max = saved_n_poles_add_max
 
             # Call _auto_fit
-            poles, residues, constant, proportional=self._auto_fit(
-                poles, omega, responses, weights, fit_constant, fit_proportional, memory_saver,
+            poles, residues, constant, proportional = self._auto_fit(
+                poles, omega, responses[indices_responses], weights[indices_responses],
+                fit_constant, fit_proportional, memory_saver,
                 n_iterations_pre, n_iterations, n_iterations_post,
-                error_stagnation_threshold, spurious_pole_threshold, abstol, model_order_max, n_poles_add_max)
+                error_stagnation_threshold, spurious_pole_threshold,
+                abstol, model_order_max, n_poles_add_max)
 
             # Save results
-            self._save_results(poles, residues, constant, proportional)
+            self._save_results(poles, residues, constant, proportional, idx_pole_group)
 
-        elif pole_sharing == 'multi-siso':
-            # Each response gets its own set of poles
-            n_responses=np.size(responses, axis=0)
-            poles_list = [None]*n_responses
-            residues_list = [None]*n_responses
-            const_list = [None]*n_responses
-            prop_list = [None]*n_responses
-
-            # Save initial poles if we have them
-            initial_poles=poles
-
-            for i in range(n_responses):
-                logger.info(f'Starting auto_fit for response {i+1} of {n_responses}')
-
-                if initial_poles is None:
-                    # Get initial poles
-                    poles = self._get_initial_poles(omega, n_poles_init, poles_init_type,
-                                                    poles_init_spacing, responses)
-                else:
-                    # Set initial poles to user-provided poles
-                    poles = initial_poles[i]
-
-                # Set n_poles_add_max if it is not provided
-                if n_poles_add_max is None:
-                    n_poles_add_max=max(2, int(len(poles)/2))
-
-                # Call _auto_fit
-                poles_list[i], residues_list[i], const_list[i], prop_list[i]=self._auto_fit(
-                    poles, omega, responses[i, None], weights[i, None], fit_constant, fit_proportional, memory_saver,
-                    n_iterations_pre, n_iterations, n_iterations_post,
-                    error_stagnation_threshold, spurious_pole_threshold, abstol, model_order_max, n_poles_add_max)
-
-                logger.info(f'Finished auto_fit for response {i+1} of {n_responses}\n')
-
-            # Save results
-            self._save_results(poles_list, residues_list, const_list, prop_list)
+            logger.info(f'Finished auto_fit for pole group {idx_pole_group+1} of {n_pole_groups}')
 
         # Print model summary
         self.print_model_summary(verbose)
 
-        timer_stop = timer()
-        self.wall_clock_time = timer_stop - timer_start
+        wall_clock_time = timer() - timer_start
+        logger.info(f'Finished auto_fit. Time elapsed = {wall_clock_time:.4e} seconds\n')
 
     def _auto_fit(self,
                   poles, omega, responses, weights, fit_constant, fit_proportional, memory_saver,
@@ -751,7 +798,7 @@ class VectorFitting:
 
         # Initialize stopping condition variables of skim-and-add loop
         error_max = np.max(delta)
-        model_order = self.get_model_order(poles)
+        model_order = np.sum((poles.imag != 0) + 1)
         delta_eps_avg_m = 3 # Average the last m iterations of delta eps
         error_max_history = []
         iteration=0
@@ -819,7 +866,7 @@ class VectorFitting:
                     logger.info(f'Stopping AS-Loop because DeltaEps = {delta_eps:.4e} < '
                                 f'DeltaEpsMin = {delta_eps_min:.4e}')
                     break
-            model_order = self.get_model_order(poles)
+            model_order = np.sum((poles.imag != 0) + 1)
 
             # Check stopping condition of model order
             if model_order >= model_order_max:
@@ -831,7 +878,7 @@ class VectorFitting:
 
         # Final skimming of spurious poles
         logger.info('Final pole relocation')
-        spurious = self.get_spurious(poles, residues, spurious_pole_threshold=spurious_pole_threshold)
+        spurious = self.get_spurious(poles, residues, spurious_pole_threshold)
         poles = poles[~spurious]
 
         # Final pole relocation
@@ -844,6 +891,96 @@ class VectorFitting:
                                                               weights, fit_constant, fit_proportional)
 
         return poles, residues, constant, proportional
+
+    def _init_pole_sharing(self, pole_sharing, n_responses, pole_groups):
+        # Initializes all data structures needed for pole sharing
+
+        # Create pole group indices and pole group member indices. Both have n_responses elements
+        # and map idx_response to idx_pole_group and idx_pole_group_member.
+        #
+        # idx_pole_group is the index of the pole group of the response. It is used to index self.poles,
+        # self.residues, self.constant and self.proportional. Each of them contains a numpy array.
+        #
+        # idx_pole_group_member is used as an index on the numpy array in self.residues[idx_pole_group]
+        # to get the residues of a response.
+        #
+        # Note: The order of n_responses is S11, S12, ..., S21, S22, ...
+        if pole_sharing == 'mimo':
+            n_pole_groups = 1
+            # Every response goes in the same pole group 0
+            self.map_idx_response_to_idx_pole_group = np.zeros(n_responses, dtype=int)
+            # The order of the responses inside of pole group 0 is S11, S12, ..., S21, S22, ...
+            self.map_idx_response_to_idx_pole_group_member = np.arange(n_responses, dtype=int)
+
+        elif pole_sharing == 'multi-siso':
+            n_pole_groups = n_responses
+            # Every response goes into its own pole group
+            self.map_idx_response_to_idx_pole_group = np.arange(n_responses, dtype=int)
+            # Every pole group contains only one response
+            self.map_idx_response_to_idx_pole_group_member = np.zeros(n_responses, dtype=int)
+
+        elif pole_sharing == 'multi-simo':
+            n_ports = int(np.sqrt(n_responses))
+            n_pole_groups = n_ports
+            # We have n_ports pole groups
+            # Responses S11, S21, S31, ... go into pole group 0
+            # Responses S12, S22, S32, ... go into pole group 1 and so on
+            self.map_idx_response_to_idx_pole_group = np.tile(np.arange(n_ports, dtype=int), n_ports)
+            # Every pole group contains n_ports responses.
+            self.map_idx_response_to_idx_pole_group_member = np.repeat(np.arange(0, n_ports, dtype=int), n_ports)
+
+        elif pole_sharing == 'multi-miso':
+            n_ports = int(np.sqrt(n_responses))
+            n_pole_groups = n_ports
+            # We have n_ports pole groups
+            # Responses S11, S12, S13, ... go into pole group 0
+            # Responses S21, S22, S23, ... go into pole group 1 and so on
+            self.map_idx_response_to_idx_pole_group = np.repeat(np.arange(0, n_ports, dtype=int), n_ports)
+            # Every pole group contains n_ports responses.
+            self.map_idx_response_to_idx_pole_group_member = np.tile(np.arange(n_ports, dtype=int), n_ports)
+
+        elif pole_sharing == 'custom':
+            n_ports = int(np.sqrt(n_responses))
+            # Check correct shape of pole_groups
+            if not np.shape(pole_groups) == (n_ports, n_ports):
+                raise RuntimeError('Custom port groups matrix needs to be of shape (n_ports, n_ports)')
+            # Get number of unique values in pole_groups, which is n_pole_groups
+            sorted_unique_values = np.unique(pole_groups)
+            # Create dict mapping each unique value to idx_pole_group
+            map_value_to_idx_pole_group = {value: idx for idx, value in enumerate(sorted_unique_values)}
+            # Get number of pole groups
+            n_pole_groups = len(sorted_unique_values)
+            # Initialize maps
+            self.map_idx_response_to_idx_pole_group = np.empty((n_responses), dtype=int)
+            self.map_idx_response_to_idx_pole_group_member = np.empty((n_responses), dtype=int)
+            # Initialize member counters to zero. For each group we have a counter than will be incremented
+            # while scanning through pole_groups if we find a response that is part of this group
+            member_counters=np.zeros(n_pole_groups)
+            # Scan pole_groups
+            for i in range(n_ports):
+                for j in range(n_ports):
+                    idx_response = i * n_ports + j
+                    value=pole_groups[i, j]
+                    idx_pole_group=map_value_to_idx_pole_group[value]
+                    self.map_idx_response_to_idx_pole_group[idx_response]=idx_pole_group
+                    self.map_idx_response_to_idx_pole_group_member[idx_response]=member_counters[idx_pole_group]
+                    # Increment member counter
+                    member_counters[idx_pole_group] += 1
+
+        else:
+            warnings.warn('Invalid choice of pole_sharing. Proceeding with pole_sharing=\'MIMO\'',
+                          UserWarning, stacklevel=2)
+            n_pole_groups = 1
+            # Every response goes in the same pole group 0
+            self.map_idx_response_to_idx_pole_group = np.zeros(n_responses, dtype=int)
+            # The order of the responses inside of pole group 0 is S11, S12, ..., S21, S22, ...
+            self.map_idx_response_to_idx_pole_group_member = np.arange(n_responses, dtype=int)
+
+        # Initialize data structures for results
+        self.poles = [None] * n_pole_groups
+        self.residues = [None] * n_pole_groups
+        self.constant = [None] * n_pole_groups
+        self.proportional = [None] * n_pole_groups
 
     @staticmethod
     def _get_initial_poles(omega: list, n_poles: int, pole_type: str, pole_spacing: str, responses):
@@ -944,51 +1081,56 @@ class VectorFitting:
         self.history_rank_deficiency_A_dense = []
         self.max_singular_value_A_dense = 1
 
-    def _save_results(self, poles, residues, constant, proportional):
-        # Saves the results
-        self.poles = poles
-        self.residues = residues
-        self.constant = constant
-        self.proportional = proportional
-
     def _get_omega(self):
         # Calculates omega
         omega = 2.0 * np.pi * np.array(self.network.f)
         return omega
 
-    def get_n_poles_complex(self, poles=None) -> int:
-        # Returns the number of complex conjugate pole pairs
+    def _all_proportional_are_zero(self):
+        # Checks if all proportional terms are zero
+        all_proportional_are_zero=True
+        for proportional in self.proportional:
+            if not len(np.flatnonzero(proportional)) == 0:
+                all_proportional_are_zero=False
+                break
+        return all_proportional_are_zero
 
-        # Use internal poles if not provided
-        if poles is None:
-            poles = self.poles
+    def get_n_poles_complex(self, idx_pole_group = None) -> int:
+        # Returns the number of complex poles
 
-        if isinstance(poles, list):
-            n_poles_complex=0
-            for _poles in poles:
-                n_poles_complex += np.sum(_poles.imag > 0.0)
+        if idx_pole_group is None:
+            pole_group_indices = np.arange(len(self.poles))
         else:
-            n_poles_complex = np.sum(poles.imag > 0.0)
+            pole_group_indices = np.array([idx_pole_group])
+
+        n_poles_complex = 0
+        for idx_pole_group in pole_group_indices:
+            n_poles_complex += np.sum(self.poles[idx_pole_group].imag > 0)
 
         return n_poles_complex
 
-    def get_n_poles_real(self, poles=None) -> int:
+    def _save_results(self, poles, residues, constant, proportional, idx_pole_group):
+        # Saves the results
+        self.poles[idx_pole_group] = poles
+        self.residues[idx_pole_group] = residues
+        self.constant[idx_pole_group] = constant
+        self.proportional[idx_pole_group] = proportional
+
+    def get_n_poles_real(self, idx_pole_group = None) -> int:
         # Returns the number of real poles
 
-        # Use internal poles if not provided
-        if poles is None:
-            poles = self.poles
-
-        if isinstance(poles, list):
-            n_poles_real=0
-            for _poles in poles:
-                n_poles_real += np.sum(_poles.imag == 0.0)
+        if idx_pole_group is None:
+            pole_group_indices = np.arange(len(self.poles))
         else:
-            n_poles_real = np.sum(poles.imag == 0.0)
+            pole_group_indices = np.array([idx_pole_group])
+
+        n_poles_real = 0
+        for idx_pole_group in pole_group_indices:
+            n_poles_real += np.sum(self.poles[idx_pole_group].imag == 0)
 
         return n_poles_real
 
-    def print_model_summary(self, verbose=False):
+    def print_model_summary(self, verbose = False):
         # Prints a model summary
 
         n_ports=self._get_n_ports()
@@ -999,52 +1141,43 @@ class VectorFitting:
         print(f'Number of real poles = {self.get_n_poles_real()}')
         print(f'Number of complex conjugate pole pairs = {self.get_n_poles_complex()}')
 
-        # Can't evaluate passivity if non-zero proportional terms exist
-        if len(np.flatnonzero(self.proportional)) == 0:
-            print(f'Model is passive = {self.is_passive()}')
-        else:
-            print('Model is passive = unknown (Passivity test works only for models without proportional terms)')
-
         if self.network:
             print(f'Total absolute error (RMS) = {self.get_total_abs_error():.4e}')
             print(f'Total relative error (RMS) = {self.get_total_rel_error():.4e}')
 
-        if isinstance(self.poles, list):
-            print('Every response has its own set of poles')
-
-            if not verbose:
-                print('Run print_model_summary(verbose=True) for an extended summary')
-                return
-
-            for i in range(n_ports):
-                for j in range(n_ports):
-                    i_response=i * (n_ports-1) + j
-                    poles=self.poles[i_response]
-                    print(f'Response {i}, {j}:')
-                    print(f'\tModel order = {self.get_model_order(poles)}')
-                    print(f'\tNumber of real poles = {self.get_n_poles_real(poles)}')
-                    print(f'\tNumber of complex conjugate pole pairs = {self.get_n_poles_complex(poles)}')
-
+        if self._all_proportional_are_zero():
+            print(f'Model is passive = {self.is_passive()}')
         else:
-            print('Poles are shared between responses')
+            print('Model is passive = unknown (Passivity test works only for models without proportional terms)')
+
+        n_pole_groups=len(self.poles)
+        print(f'Number of pole groups = {n_pole_groups}')
 
         if not verbose:
             print('Run print_model_summary(verbose=True) for an extended summary')
             return
+
+        for idx_pole_group in range(n_pole_groups):
+            indices_responses=np.nonzero(self.map_idx_response_to_idx_pole_group == idx_pole_group)[0]
+            i = np.floor(indices_responses / n_ports).astype(int)
+            j = np.mod(indices_responses, n_ports)
+            member_responses = ' '.join(map(lambda x: f'({i[x] + 1}, {j[x] + 1})', range(len(i))))
+            print(f'Pole group {idx_pole_group+1}:')
+            print(f'\tModel order = {self.get_model_order(idx_pole_group)}')
+            print(f'\tNumber of real poles = {self.get_n_poles_real(idx_pole_group)}')
+            print(f'\tNumber of complex conjugate pole pairs = {self.get_n_poles_complex(idx_pole_group)}')
+            print(f'\tMember responses = {member_responses}')
 
         if self.network:
             abs_err=self.get_abs_error_vs_responses()
             rel_err=self.get_rel_error_vs_responses()
             for i in range(n_ports):
                 for j in range(n_ports):
-                    print(f'Response {i}, {j}: AbsErr={abs_err[i, j]:.4e} RelErr={rel_err[i, j]:.4e}')
+                    print(f'Response ({i+1}, {j+1}): AbsErr={abs_err[i, j]:.4e} RelErr={rel_err[i, j]:.4e}')
 
     def _get_n_ports(self):
-        # Returns the number of ports derived from self.residues
-        if isinstance(self.residues, list):
-            n_ports = int(np.sqrt(len(self.residues)))
-        else:
-            n_ports = int(np.sqrt(np.shape(self.residues)[0]))
+        # Returns the number of ports derived from self.map_idx_response_to_idx_pole_group
+        n_ports = int(np.sqrt(len(self.map_idx_response_to_idx_pole_group)))
 
         return n_ports
 
@@ -1465,7 +1598,7 @@ class VectorFitting:
         # to build the final real matrix for the eigenvalue calculation.
 
         # Get total number of poles, counting complex conjugate pairs as 2 poles
-        n_poles=self.get_model_order(poles)
+        n_poles=np.sum((poles.imag != 0) + 1)
 
         # Get indices of real poles
         idx_poles_real = np.nonzero(poles.imag == 0)[0]
@@ -1716,7 +1849,7 @@ class VectorFitting:
         s = 1j * omega
 
         # Get total number of poles, counting complex conjugate pairs as 2 poles
-        n_poles=self.get_model_order(poles)
+        n_poles=np.sum((poles.imag != 0) + 1)
 
         # Get indices of real poles
         idx_poles_real = np.nonzero(poles.imag == 0)[0]
@@ -2185,7 +2318,7 @@ class VectorFitting:
 
         return error
 
-    def _get_ABCDE(self, poles, residues, constant, proportional
+    def _get_ABCDE(self, idx_pole_group
                    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Private method.
@@ -2218,9 +2351,8 @@ class VectorFitting:
             Dec. 2008, DOI: 10.1109/TMTT.2008.2007319.
         """
 
-
         # Initial checks
-        if poles is None:
+        if self.poles is None:
             raise ValueError('poles = None; nothing to do. You need to run vector_fit() first.')
         if self.residues is None:
             raise ValueError('self.residues = None; nothing to do. You need to run vector_fit() first.')
@@ -2231,11 +2363,18 @@ class VectorFitting:
 
         # Assemble real-valued state-space matrices A, B, C, D, E from fitted complex-valued pole-residue model
 
-        # Determine size of the matrix system
+        # Get data
+        poles=self.poles[idx_pole_group]
+        residues=self.residues[idx_pole_group]
+        constant=self.constant[idx_pole_group]
+        proportional=self.proportional[idx_pole_group]
+
+        # Determine size of the matrix system. Note: This is the n_ports inside of
+        # the pole group and not the n_ports of the entire network!
         n_ports = int(np.sqrt(np.shape(residues)[0]))
 
-        n_poles_real = self.get_n_poles_real(poles)
-        n_poles_complex = self.get_n_poles_complex(poles)
+        n_poles_real = np.sum(poles.imag == 0)
+        n_poles_complex = np.sum(poles.imag != 0)
 
         n_matrix = (n_poles_real + 2 * n_poles_complex) * n_ports
 
@@ -2333,7 +2472,7 @@ class VectorFitting:
         stsp_S += D + 2j * np.pi * freqs[:, None, None] * E
         return stsp_S
 
-    def passivity_test(self, poles = None, residues=None, constant=None, proportional=None, parameter_type: str = 's'):
+    def passivity_test(self, idx_pole_group = None, parameter_type: str = 's'):
         """
         Evaluates the passivity of reciprocal vector fitted models by means of a half-size test matrix [#]_. Any
         existing frequency bands of passivity violations will be returned as a sorted list.
@@ -2382,7 +2521,7 @@ class VectorFitting:
 
         if parameter_type.lower() != 's':
             raise NotImplementedError('Passivity testing is currently only supported for scattering (S) parameters.')
-        if parameter_type.lower() == 's' and len(np.flatnonzero(self.proportional)) > 0:
+        if parameter_type.lower() == 's' and not self._all_proportional_are_zero():
             raise ValueError('Passivity testing of scattering parameters with nonzero proportional coefficients does '
                              'not make any sense; you need to run vector_fit() with option `fit_proportional=False` '
                              'first.')
@@ -2396,31 +2535,24 @@ class VectorFitting:
         #                   'The model needs to be reciprocal.')
         #     return
 
-        if poles is None or residues is None or constant is None or proportional is None:
-            poles=self.poles
-            residues=self.residues
-            constant=self.constant
-            proportional=self.proportional
-
-        if isinstance(poles, list):
+        if idx_pole_group is None:
+            # Return list of violation bands with one item per pole group for all pole groups
             violation_bands=[]
-            n_responses=len(poles)
-            for i_response in range(n_responses):
-                poles=self.poles[i_response]
-                residues=self.residues[i_response]
-                constant=self.constant[i_response]
-                proportional=self.proportional[i_response]
-                violation_bands.append(self._passivity_test(poles, residues, constant, proportional))
+            n_pole_groups=len(self.poles)
+            for idx_pole_group in range(n_pole_groups):
+                violation_bands.append(self._passivity_test(idx_pole_group))
         else:
-            violation_bands=self._passivity_test(poles, residues, constant, proportional)
+            # Return only the violation bands for the specified pole group
+            violation_bands=self._passivity_test(idx_pole_group)
 
         return violation_bands
 
-    def _passivity_test(self, poles, residues, constant, proportional) -> np.ndarray:
+    def _passivity_test(self, idx_pole_group) -> np.ndarray:
         # Implements the core of passivity test. Description of arguments see passivity_test
 
         # Get state-space matrices
-        A, B, C, D, E = self._get_ABCDE(poles, residues, constant, proportional)
+        A, B, C, D, E = self._get_ABCDE(idx_pole_group)
+
         n_ports = np.shape(D)[0]
 
         # Build half-size test matrix P from state-space matrices A, B, C, D
@@ -2480,8 +2612,7 @@ class VectorFitting:
 
         return np.array(violation_bands)
 
-    def is_passive(self, poles = None, residues = None, constant = None,
-                   proportional = None, parameter_type: str = 's') -> bool:
+    def is_passive(self, idx_pole_group = None, parameter_type: str = 's') -> bool:
         """
         Returns the passivity status of the model as a boolean value.
 
@@ -2512,13 +2643,16 @@ class VectorFitting:
         >>> vf.is_passive() # returns True or False
         """
 
-        violation_bands = self.passivity_test(poles, residues, constant, proportional, parameter_type)
+        violation_bands = self.passivity_test(idx_pole_group, parameter_type)
 
+        # Check if we got a list of violation bands or just one violation band
         if isinstance(violation_bands, list):
+            # Scan through list and return False as soon as we find a non-empty violation bands
             for _violation_bands in violation_bands:
                 if len(_violation_bands) != 0:
                     return False
         else:
+            # Return false if violation bands is not empty
             if len(violation_bands) != 0:
                 return False
 
@@ -2529,6 +2663,7 @@ class VectorFitting:
                           f_max: float = None,
                           parameter_type: str = 's',
                           max_iterations: int = 100,
+                          verbose = None,
                           ) -> None:
         """
         Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
@@ -2586,21 +2721,15 @@ class VectorFitting:
             Feb. 2009, DOI: 10.1109/TMTT.2008.2011201.
         """
 
-        if isinstance(self.poles, list):
-            n_responses=len(self.poles)
-            for i_response in range(n_responses):
-                poles=self.poles[i_response]
-                residues=self.residues[i_response]
-                constant=self.constant[i_response]
-                proportional=self.proportional[i_response]
-                self._passivity_enforce(poles, residues, constant, proportional, n_samples,
-                                        f_max, parameter_type, max_iterations)
-        else:
-            self._passivity_enforce(self.poles, self.residues, self.constant,self.proportional,
-                                    n_samples, f_max, parameter_type, max_iterations)
+        n_pole_groups = len(self.poles)
+
+        for idx_pole_group in range(n_pole_groups):
+            logger.info(f'Starting passivity enforcement for pole group {idx_pole_group + 1} of {n_pole_groups}')
+            self._passivity_enforce(idx_pole_group, n_samples, f_max, parameter_type, max_iterations)
+            logger.info(f'Finished passivity enforcement for pole group {idx_pole_group + 1} of {n_pole_groups}')
 
         # Print model summary
-        self.print_model_summary()
+        self.print_model_summary(verbose)
 
         # Run final passivity test to make sure passivation was successful
         violation_bands = self.passivity_test(parameter_type=parameter_type)
@@ -2610,19 +2739,19 @@ class VectorFitting:
                           f'bands:\n{violation_bands}.\nTry running this routine again with a larger number of samples '
                           '(parameter `n_samples`).', RuntimeWarning, stacklevel=2)
 
-    def _passivity_enforce(self, poles, residues, constant, proportional,
+    def _passivity_enforce(self, idx_pole_group,
                            n_samples, f_max, parameter_type, max_iterations) -> None:
         # Implements core of passivity_enforce. Description of arguments see passivity_enforce()
 
         if parameter_type.lower() != 's':
             raise NotImplementedError('Passivity testing is currently only supported for scattering (S) parameters.')
-        if parameter_type.lower() == 's' and len(np.flatnonzero(self.proportional)) > 0:
+        if parameter_type.lower() == 's' and len(np.flatnonzero(self.proportional[idx_pole_group])) > 0:
             raise ValueError('Passivity testing of scattering parameters with nonzero proportional coefficients does '
                              'not make any sense; you need to run vector_fit() with option `fit_proportional=False` '
                              'first.')
 
         # Run passivity test first
-        if self.is_passive(poles, residues, constant, proportional, parameter_type):
+        if self.is_passive(idx_pole_group, parameter_type):
             # Model is already passive; do nothing and return
             logger.info('Passivity enforcement: The model is already passive. Nothing to do.')
             return
@@ -2631,7 +2760,7 @@ class VectorFitting:
         # 1) the highest frequency of passivity violation (f_viol_max)
         # or
         # 2) the highest fitting frequency (f_samples_max)
-        violation_bands = self.passivity_test(poles, residues, constant, proportional, parameter_type)
+        violation_bands = self.passivity_test(idx_pole_group, parameter_type)
         f_viol_max = violation_bands[-1, 1]
 
         if f_max is None:
@@ -2659,7 +2788,7 @@ class VectorFitting:
             f_eval_max = 1.2 * f_viol_max
         freqs_eval = np.linspace(0, f_eval_max, n_samples)
 
-        A, B, C, D, E = self._get_ABCDE(poles, residues, constant, proportional)
+        A, B, C, D, E = self._get_ABCDE(idx_pole_group)
         dim_A = np.shape(A)[0]
         C_t = C
 
@@ -2761,6 +2890,10 @@ class VectorFitting:
         self.history_max_sigma = np.array(self.history_max_sigma)
 
         n_ports = np.shape(D)[0]
+        poles=self.poles[idx_pole_group]
+        residues=self.residues[idx_pole_group]
+        constant=self.constant[idx_pole_group]
+
         for i in range(n_ports):
             k = 0   # Column index in C_t
             for j in range(n_ports):
@@ -2851,8 +2984,10 @@ class VectorFitting:
         # Process each attribute
         process_data("poles", self.poles)
         process_data("residues", self.residues)
-        process_data("proportionals", self.proportional)
-        process_data("constants", self.constant)
+        process_data("proportional", self.proportional)
+        process_data("constant", self.constant)
+        process_data("map_idx_response_to_idx_pole_group", self.map_idx_response_to_idx_pole_group)
+        process_data("map_idx_response_to_idx_pole_group_member", self.map_idx_response_to_idx_pole_group_member)
 
         # Save the data
         np.savez_compressed(path, **save_dict)
@@ -2913,16 +3048,11 @@ class VectorFitting:
 
         # Reconstruct each attribute
         self.poles = reconstruct_data("poles")
-        self.proportional = reconstruct_data("proportionals")
-        self.constant = reconstruct_data("constants")
-
-        # legacy support for exported residues
-        if 'zeros' in data:
-            # old .npz file from deprecated write_npz() with residues called 'zeros'
-            self.residues = reconstruct_data("zeros")
-        else:
-            # new .npz file from current write_npz()
-            self.residues = reconstruct_data("residues")
+        self.proportional = reconstruct_data("proportional")
+        self.constant = reconstruct_data("constant")
+        self.residues = reconstruct_data("residues")
+        self.map_idx_response_to_idx_pole_group = reconstruct_data("map_idx_response_to_idx_pole_group")
+        self.map_idx_response_to_idx_pole_group_member = reconstruct_data("map_idx_response_to_idx_pole_group_member")
 
     def get_model_response(self, i: int, j: int, freqs: Any = None) -> np.ndarray:
         """
@@ -2978,16 +3108,20 @@ class VectorFitting:
         n_ports = self._get_n_ports()
         i_response = i * n_ports + j
 
-        # Get residues
-        residues = np.matrix.flatten(self.residues[i_response])
+        # Get pole group index
+        idx_pole_group=self.map_idx_response_to_idx_pole_group[i_response]
+
+        # Get pole group member index
+        idx_pole_group_member=self.map_idx_response_to_idx_pole_group_member[i_response]
+
+        # Get data
+        poles = self.poles[idx_pole_group]
+        residues = self.residues[idx_pole_group][idx_pole_group_member]
+        constant = self.constant[idx_pole_group][idx_pole_group_member]
+        proportional = self.proportional[idx_pole_group][idx_pole_group_member]
 
         # Calculate model_response
-        model_response = self.proportional[i_response] * s + self.constant[i_response]
-
-        if isinstance(self.poles, list):
-            poles=self.poles[i_response]
-        else:
-            poles=self.poles
+        model_response = proportional * s + constant
 
         for i, pole in enumerate(poles):
             if np.imag(pole) == 0.0:
@@ -2996,6 +3130,7 @@ class VectorFitting:
             else:
                 # complex conjugate pole
                 model_response += residues[i] / (s - pole) + np.conjugate(residues[i]) / (s - np.conjugate(pole))
+
         return model_response
 
     @axes_kwarg
@@ -3380,7 +3515,7 @@ class VectorFitting:
         return self.plot('im', *args, **kwargs)
 
     @axes_kwarg
-    def plot_s_singular(self, freqs: Any = None, *, ax: Axes = None, i = None, j = None) -> Axes:
+    def plot_s_singular(self, freqs: Any = None, *, ax: Axes = None, idx_pole_group = None) -> Axes:
         """
         Plots the singular values of the vector fitted S-matrix in linear scale.
 
@@ -3416,38 +3551,33 @@ class VectorFitting:
             else:
                 freqs = self.network.f
 
-        if isinstance(self.poles, list):
-            if i is None or j is None:
-                raise ValueError(
-                    'i and j need to be specified if shared_poles==False to select the response')
-            n_ports = self._get_n_ports()
-
-            i_response=i*(n_ports-1)+j
-            poles=self.poles[i_response]
-            residues=self.residues[i_response]
-            constant=self.constant[i_response]
-            proportional=self.proportional[i_response]
+        if idx_pole_group is None:
+            n_pole_groups = len(self.poles)
+            pole_group_indices = np.arange(n_pole_groups)
         else:
-            poles=self.poles
-            residues=self.residues
-            constant=self.constant
-            proportional=self.proportional
+            pole_group_indices = np.array([idx_pole_group])
 
-        # Get system matrices of state-space representation
-        A, B, C, D, E = self._get_ABCDE(poles, residues, constant, proportional)
+        for idx_pole_group in pole_group_indices:
+            # Get system matrices of state-space representation
+            A, B, C, D, E = self._get_ABCDE(idx_pole_group)
 
-        # Reset n_ports according to shape of D because for shared_poles==False, n_ports is always 1
-        n_ports = np.shape(D)[0]
+            # Reset n_ports according to shape of D because depending on the pole group we can have a varying number
+            # of responses / sub-ports
+            n_ports = np.shape(D)[0]
 
-        # Calculate singular values for each frequency
-        u, sigma, vh = np.linalg.svd(self._get_s_from_ABCDE(freqs, A, B, C, D, E))
+            # Calculate singular values for each frequency
+            u, sigma, vh = np.linalg.svd(self._get_s_from_ABCDE(freqs, A, B, C, D, E))
 
-        # Plot the frequency response of each singular value
-        for n in range(n_ports):
-            ax.plot(freqs, sigma[:, n], label=fr'$\sigma_{n + 1}$')
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Magnitude')
-        ax.legend(loc='best')
+            # Plot the frequency response of each singular value
+            for n in range(n_ports):
+                ax.plot(freqs, sigma[:, n], label=fr'$\sigma$ pole_group={idx_pole_group+1}, idx={n + 1}')
+            ax.set_xlabel('Frequency (Hz)')
+            ax.set_ylabel('Magnitude')
+            ax.legend(loc='best')
+
+        # Add a horizontal line at y=1
+        ax.plot(freqs, np.ones(np.size(freqs, axis=0)), color='black')
+
         return ax
 
     @axes_kwarg
@@ -3565,7 +3695,7 @@ class VectorFitting:
             return subcircuits[-1]
 
         with open(file, 'w') as f:
-            # write title line
+            # Write title line
             f.write('* EQUIVALENT CIRCUIT FOR VECTOR FITTED S-MATRIX\n')
             f.write('* Created using scikit-rf vectorFitting.py\n\n')
 
@@ -3629,11 +3759,15 @@ class VectorFitting:
                     # s11, s12, s13, ..., s21, s22, s23, ...
                     i_response = n * self.network.nports + j
 
+                    # Get idx_pole_group and idx_pole_group_member for current response
+                    idx_pole_group=self.map_idx_response_to_idx_pole_group[i_response]
+                    idx_pole_group_member=self.map_idx_response_to_idx_pole_group_member[i_response]
+
                     # Start with proportional and constant term of the model
                     # H(s) = d + s * e  model
                     # Y(s) = G + s * C  equivalent admittance
-                    g = self.constant[i_response]
-                    c = self.proportional[i_response]
+                    g = self.constant[idx_pole_group][idx_pole_group_member]
+                    c = self.proportional[idx_pole_group][idx_pole_group_member]
 
                     # R for constant term
                     if g < 0:
@@ -3648,18 +3782,15 @@ class VectorFitting:
                         f.write(f'C{n + 1}_{j + 1} nt_p_{j + 1} nt_c_{n + 1} {c}\n')
 
                     # Get residues
-                    residues = np.matrix.flatten(self.residues[i_response])
+                    residues = self.residues[idx_pole_group][idx_pole_group_member]
 
                     # Get poles
-                    if isinstance(self.poles, list):
-                        poles=self.poles[i_response]
-                    else:
-                        poles=self.poles
+                    poles=self.poles[idx_pole_group]
 
                     # Transfer admittances represented by poles and residues
-                    for i_pole in range(len(poles)):
-                        pole = poles[i_pole]
-                        residue = residues[i_pole]
+                    for idx_pole in range(len(poles)):
+                        pole = poles[idx_pole]
+                        residue = residues[idx_pole]
                         node = get_new_subckt_identifier()
 
                         if np.real(residue) < 0.0:
