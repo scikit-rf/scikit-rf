@@ -72,6 +72,7 @@ import pickle
 import sys
 import warnings
 from io import StringIO
+from pathlib import Path
 from pickle import UnpicklingError
 from typing import Any
 
@@ -113,7 +114,7 @@ def read(file, *args, **kwargs):
 
     Parameters
     ----------
-    file : str or file-object
+    file : str, Path, or file-object
         name of file, or  a file-object
     \*args, \*\*kwargs : arguments and keyword arguments
         passed through to pickle.load
@@ -174,7 +175,7 @@ def write(file, obj, overwrite = True):
 
     Parameters
     ----------
-    file : file or string
+    file : file, Path, or string
         File or filename to which the data is saved.  If file is a
         file-object, then the filename is unchanged.  If file is a
         string, an appropriate extension will be appended to the file
@@ -252,7 +253,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir: str ='.', sort = True, contains = None, f_unit = None,
+def read_all(dir: str | Path = '.', sort = True, contains = None, f_unit = None,
         obj_type=None, files: list=None, recursive=False) -> dict:
     """
     Read all skrf objects in a directory.
@@ -263,7 +264,7 @@ def read_all(dir: str ='.', sort = True, contains = None, f_unit = None,
 
     Parameters
     ----------
-    dir : str, optional
+    dir : str or Path, optional
         the directory to load from, default  \'.\'
     sort: boolean, default is True
         filenames sorted by https://docs.python.org/3/library/stdtypes.html#list.sort without arguements
@@ -311,6 +312,9 @@ def read_all(dir: str ='.', sort = True, contains = None, f_unit = None,
     read_all : read all skrf objects in a directory
     write_all : write dictionary of skrf objects to a directory
     """
+
+    # Convert a Path object to a string
+    dir = str(dir.resolve()) if isinstance(dir, Path) else dir
 
     out={}
 
@@ -630,7 +634,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
     if remove_tmp_file:
         os.rename(new_file_name,file_name)
 
-def network_2_spreadsheet(ntwk: Network, file_name: str = None,
+def network_2_spreadsheet(ntwk: Network, file_name: str | Path = None,
         file_type: str = 'excel', form: str ='db', *args, **kwargs):
     r"""
     Write a Network object to a spreadsheet, for your boss.
@@ -651,7 +655,7 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
     ----------
     ntwk :  :class:`~skrf.network.Network` object
         the network to write
-    file_name : str, None
+    file_name : str, Path or None
         the file_name to write. if None,  ntwk.name is used.
     file_type : ['csv','excel','html']
         the type of file to write. See `pandas.DataFrame.to_???` functions.
@@ -686,7 +690,7 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
         file_name = ntwk.name + '.'+file_extns[file_type]
 
     d = {}
-    index =ntwk.frequency.f
+    index = ntwk.frequency.f_scaled
 
     if form =='db':
         for m,n in ntwk.port_tuples:

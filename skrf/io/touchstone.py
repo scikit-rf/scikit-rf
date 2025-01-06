@@ -32,11 +32,13 @@ import typing
 import warnings
 import zipfile
 from dataclasses import dataclass, field
-from typing import Callable
+from functools import cached_property
+from pathlib import Path
+from typing import Callable, Literal
 
 import numpy as np
 
-from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT
+from ..constants import FREQ_UNITS, S_DEF_HFSS_DEFAULT, S_DEFINITIONS, SparamFormatT
 from ..media import DefinedGammaZ0
 from ..network import Network
 from ..util import get_fid
@@ -90,7 +92,7 @@ class ParserState:
 
         return self.rank * 2
 
-    @property
+    @cached_property
     def numbers_per_line(self) -> int:
         """Returns data points per frequency point.
 
@@ -99,7 +101,7 @@ class ParserState:
         """
         if self.matrix_format == "full":
             return self.rank**2 * 2
-        return self.rank**2 * self.rank
+        return self.rank*(self.rank+1)
 
     @property
     def parse_noise(self) -> bool:
@@ -165,7 +167,7 @@ class ParserState:
             err_msg = f"ERROR: illegal frequency_unit {self.frequency_unit}\n"
         if self.parameter not in "syzgh":
             err_msg = f"ERROR: illegal parameter value {self.parameter}\n"
-        if self.format not in ["ma", "db", "ri"]:
+        if self.format not in typing.get_args(SparamFormatT):
             err_msg = f"ERROR: illegal format value {self.format}\n"
 
         if err_msg:
@@ -188,13 +190,13 @@ class Touchstone:
     .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
 
-    def __init__(self, file: str | typing.TextIO, encoding: str | None = None):
+    def __init__(self, file: str | Path | typing.TextIO, encoding: str | None = None):
         """
         constructor
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             touchstone file to load
         encoding : str, optional
             define the file encoding to use. Default value is None,
@@ -257,7 +259,7 @@ class Touchstone:
         self.gamma = None
         self.z0 = None
         self.s_def = None
-        self.port_modes = None
+        self.port_modes = np.array([])
 
         # open the file depending on encoding
         # Guessing the encoding by trial-and-error, unless specified encoding
@@ -370,7 +372,7 @@ class Touchstone:
         # Should be .sNp for Touchstone format V1.0, and .ts for V2
         extension = self.filename.split(".")[-1].lower()
 
-        m = re.match(r"s(\d+)p", extension)
+        m = re.match(r"[ghsyz](\d+)p", extension)
         if m:
             state.rank = int(m.group(1))
         elif extension != "ts":
@@ -428,12 +430,19 @@ class Touchstone:
 
             line_l = line.lower()
 
-            for k, v in self._parse_dict.items():
-                if line_l.startswith(k):
-                    v(line)
-                    break
-            else:
-                values = [float(v) for v in line.partition("!")[0].split()]
+            is_data_line = True
+            # Avoid traversing the self._parse_dict for each line by checking the first letter
+            # {"!", "#", "["} covers all the first letters of the key of the current self._parse_dict
+            if line_l[0] in {"!", "#", "["}:
+                for k, v in self._parse_dict.items():
+                    if line_l.startswith(k):
+                        v(line)
+                        is_data_line = False
+                        break
+            if is_data_line:
+                if "!" in line:
+                    line = line.partition("!")[0]
+                values = list(map(float, line.split()))
                 if not values:
                     continue
 
@@ -498,6 +507,10 @@ class Touchstone:
 
             self.s_def = S_DEF_HFSS_DEFAULT
             self.has_hfss_port_impedances = True
+            # Load the reference impedance convention from the comments
+            for s_def in S_DEFINITIONS:
+                if f'S-parameter uses the {s_def} definition' in self.comments:
+                    self.s_def = s_def
         elif self.reference is None:
             self.z0 = np.broadcast_to(self.resistance, (len(state.f), state.rank)).copy()
         else:
@@ -524,7 +537,7 @@ class Touchstone:
         if state.matrix_format == "full":
             self.s[:] = s_flat
         else:
-            index = np.tril_indices(state.rank) if state.matrix_format == "lower" else np.triu_indices(self.rank)
+            index = np.tril_indices(state.rank) if state.matrix_format == "lower" else np.triu_indices(state.rank)
             index_flat = np.ravel_multi_index(index, (state.rank, state.rank))
             self.s[:, index_flat] = s_flat
 
@@ -533,8 +546,12 @@ class Touchstone:
         else:
             self.s = self.s.reshape((-1, state.rank, state.rank))
 
-        if state.matrix_format != "full":
-            self.s = np.nanmax((self.s, self.s.transpose(0, 2, 1)), axis=0)
+        if state.matrix_format == "upper":
+            index_lower = np.tril_indices(state.rank)
+            self.s[(...,*index_lower)] = self.s.transpose(0, 2, 1)[(...,*index_lower)]
+        elif state.matrix_format == "lower":
+            index_upper = np.triu_indices(state.rank)
+            self.s[(...,*index_upper)] = self.s.transpose(0, 2, 1)[(...,*index_upper)]
 
         self.port_modes = np.array(["S"] * state.rank)
         if state.mixed_mode_order:
@@ -633,7 +650,7 @@ class Touchstone:
                 pass
         return var_dict
 
-    def get_format(self, format="ri") -> str:
+    def get_format(self, format: Literal[SparamFormatT, Literal["orig"]]="ri") -> str:
         """
         Returns the file format string used for the given format.
 
@@ -649,9 +666,9 @@ class Touchstone:
             format = self.format
         else:
             frequency = "hz"
-        return f"{frequency} {self.parameter} {format} r {self.resistance}"
+        return f"{frequency} {self.parameter} {format.upper()} r {self.resistance}"
 
-    def get_sparameter_names(self, format: str="ri") -> list[str]:
+    def get_sparameter_names(self, format: SparamFormatT = "ri") -> list[str]:
         """
         Generate a list of column names for the s-parameter data.
         The names are different for each format.
@@ -670,7 +687,7 @@ class Touchstone:
         warnings.warn("This method is deprecated and will be removed.", DeprecationWarning, stacklevel=2)
         return self.get_sparameter_data(format).keys()
 
-    def get_sparameter_data(self, format: str="ri") -> dict[str, np.ndarray]:
+    def get_sparameter_data(self, format: SparamFormatT = "ri") -> dict[str, np.ndarray]:
         """
         Get the data of the s-parameter with the given format.
 
@@ -871,7 +888,7 @@ def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> dict[
     networks = dict()
     for fname in ziparchive.namelist():  # type: str
         directory = os.path.split(fname)[0]
-        if dir == directory and  re.match(r"s\d+p", fname.lower()):
+        if dir == directory and  re.search(r"s\d+p$", fname.lower()):
             network = Network.zipped_touchstone(fname, ziparchive)
             networks[network.name] = network
     return networks

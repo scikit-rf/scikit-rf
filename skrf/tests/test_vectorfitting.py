@@ -2,10 +2,14 @@ import os
 import sys
 import tempfile
 import unittest
+from contextlib import suppress
 from pathlib import Path
 
 import numpy as np
 import pytest
+
+with suppress(ImportError):
+    from PySpice.Spice.Parser import SpiceParser
 
 import skrf
 
@@ -74,8 +78,8 @@ class VectorFittingTestCase(unittest.TestCase):
         self.assertLess(vf.get_rms_error(), 0.2)
 
     @pytest.mark.skipif(
-        "matplotlib" not in sys.modules,
-        reason="Spice subcircuit uses Engformatter which is not available without matplotlib.")
+        "PySpice" not in sys.modules,
+        reason="test_spice_subcircuit uses PySpice parser but it is not available.")
     def test_spice_subcircuit(self):
         # fit ring slot example network
         nw = skrf.data.ring_slot
@@ -88,10 +92,15 @@ class VectorFittingTestCase(unittest.TestCase):
         tmp_file.close()
         vf.write_spice_subcircuit_s(name)
 
-        # written tmp file should contain 69 lines
-        with open(name) as f:
-            n_lines = len(f.readlines())
-        self.assertEqual(n_lines, 69)
+        parser = SpiceParser(name)
+
+        # Number of elements on global level
+        assert len(parser.subcircuits[0]._statements) == 38
+        # Number of elements in RLCG subckt
+        assert len(parser.subcircuits[1]._statements) == 4
+        # Number of elements in RL subckt
+        assert len(parser.subcircuits[2]._statements) == 2
+
         os.remove(name)
 
     def test_read_write_npz(self):
@@ -143,6 +152,17 @@ class VectorFittingTestCase(unittest.TestCase):
 
         # check if model is now passive
         self.assertTrue(vf.is_passive())
+
+    def test_autofit(self):
+        vf = skrf.VectorFitting(skrf.data.ring_slot)
+        vf.auto_fit()
+
+        assert vf.get_model_order(vf.poles) == 6
+        assert np.sum(vf.poles.imag == 0.0) == 0
+        assert np.sum(vf.poles.imag > 0.0) == 3
+
+        assert np.allclose(vf.get_rms_error(), 1.2748979815157275e-06)
+
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(VectorFittingTestCase)

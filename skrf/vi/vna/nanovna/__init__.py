@@ -1,1 +1,1 @@
-from .nanovna import NanoVNA
+from .nanovna import NanoVNAv2

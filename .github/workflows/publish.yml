@@ -1,0 +1,35 @@
+# This workflows will upload a Python Package using uv when a release is created
+# reference:
+# https://github.com/astral-sh/trusted-publishing-examples/blob/main/.github/workflows/release.yml
+
+name: Publish on PyPI
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build_and_deploy:
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set Up Python
+        run: uv python install
+
+      - name: Build Package
+        run: uv build
+
+      - name: Publish to PyPi
+        run: uv publish  --trusted-publishing always

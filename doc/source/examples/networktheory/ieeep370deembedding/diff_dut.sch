@@ -22,14 +22,14 @@
   <GND * 1 240 200 0 0 0 0>
   <.SP SP1 1 240 490 0 65 0 0 "lin" 1 "10 MHz" 1 "10 GHz" 1 "1000" 1 "no" 0 "1" 0 "2" 0 "no" 0 "no" 0>
   <SUBST Subst1 1 510 530 -30 24 0 0 "4.413" 1 "1.51 mm" 1 "50 um" 1 "0.0182" 1 "1.712e-8" 1 "0.15e-6" 1>
-  <MCOUPLED MS1 1 490 210 -30 88 0 0 "Subst1" 1 "3.2 mm" 1 "20 mm" 1 "1 mm" 1 "Kirschning" 1 "Kirschning" 1 "26.85" 0>
+  <MCOUPLED MS1 1 490 210 -30 88 0 0 "Subst1" 1 "2.05 mm" 1 "20 mm" 1 "1mm" 1 "Kirschning" 1 "Kirschning" 1 "26.85" 0>
   <Eqn Eqn1 1 670 510 -30 16 0 0 "S11_dB=dB(S[1,1])" 1 "S41_dB=dB(S[4,1])" 1 "yes" 0>
-  <MCOUPLED MS2 1 670 210 -30 88 0 0 "Subst1" 1 "9.6 mm" 1 "20 mm" 1 "1 mm" 1 "Kirschning" 1 "Kirschning" 1 "26.85" 0>
+  <MCOUPLED MS2 1 670 210 -30 88 0 0 "Subst1" 1 "6.15 mm" 1 "20 mm" 1 "1 mm" 1 "Kirschning" 1 "Kirschning" 1 "26.85" 0>
   <Pac P4 1 1080 310 18 -26 0 1 "4" 1 "50 Ohm" 1 "0 dBm" 0 "1 GHz" 0 "26.85" 0>
   <GND * 1 1080 340 0 0 0 0>
   <Pac P3 1 1080 170 18 -26 0 1 "3" 1 "50 Ohm" 1 "0 dBm" 0 "1 GHz" 0 "26.85" 0>
   <GND * 1 1080 200 0 0 0 0>
-  <MCOUPLED MS3 1 850 210 -30 88 0 0 "Subst1" 1 "3.2 mm" 1 "20 mm" 1 "1 mm" 1 "Kirschning" 1 "Kirschning" 1 "26.85" 0>
+  <MCOUPLED MS3 1 850 210 -30 88 0 0 "Subst1" 1 "2.05 mm" 1 "20 mm" 1 "1 mm" 1 "Kirschning" 1 "Kirschning" 1 "26.85" 0>
 </Components>
 <Wires>
   <240 140 460 140 "" 0 0 0 "">

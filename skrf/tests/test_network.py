@@ -62,6 +62,7 @@ class NetworkTestCase(unittest.TestCase):
         l1 = self.cpw.line(0.20, 'm', z0=50)
         l2 = self.cpw.line(0.07, 'm', z0=50)
         l3 = self.cpw.line(0.47, 'm', z0=50)
+        self.l2 = l2
         self.Fix = rf.concat_ports([l1, l1, l1, l1])
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
@@ -70,9 +71,11 @@ class NetworkTestCase(unittest.TestCase):
         self.Meas2 = rf.concat_ports([l3, l3, l3, l3], port_order='first')
         self.fet = rf.Network(os.path.join(self.test_dir, 'fet.s2p'))
         self.rng = np.random.default_rng()
+        self.ntwk_noise = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
 
     def test_network_copy(self):
         n = self.ntwk1
+        n._ext_attrs['_is_circuit_port'] = True
         n2 = n.copy()
         self.assertEqual( n.frequency, n2.frequency)
         self.assertNotEqual( id(n.frequency), id(n2.frequency))
@@ -80,6 +83,8 @@ class NetworkTestCase(unittest.TestCase):
 
         n.frequency.f[0] = 0
         self.assertNotEqual(n2.frequency.f[0], 0)
+
+        self.assertEqual(True, n2._ext_attrs.get('_is_circuit_port', False))
 
     def test_two_port_reflect(self):
         number_of_data_points = 10
@@ -104,6 +109,12 @@ class NetworkTestCase(unittest.TestCase):
             z0=np.linspace(50, 50.1,number_of_data_points ))
         empty_network = n[n.f < 0]
         self.assertIn('1-Port Network', repr(empty_network))
+
+    def test_network_sequence_frequency_with_f_unit(self):
+        n=rf.Network(frequency=self.freq.f, f_unit=self.freq.unit)
+        np.allclose(n.f, self.freq.f)
+        n=rf.Network(f=self.freq.f, f_unit=self.freq.unit)
+        np.allclose(n.f, self.freq.f)
 
     def test_timedomain(self):
         t = self.ntwk1.s11.s_time
@@ -146,6 +157,59 @@ class NetworkTestCase(unittest.TestCase):
         gated = ntwk.s11.time_gate()
         self.assertTrue(len(gated)== len(ntwk))
 
+    def test_lpi(self):
+        """Test low pass impulse response against data generated with METAS VNA Tools."""
+
+        path = Path(self.test_dir) / "metas_tdr"
+
+        for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g"]:
+
+            netw = rf.Network(path / f"{fname}.s1p")
+            ref = np.loadtxt(path / f"{fname}_low_pass_impulse.csv", skiprows=1, delimiter=";")
+            t, y = netw.impulse_response(window="boxcar", pad=0, squeeze=True)
+
+            np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
+            np.testing.assert_allclose(ref[:,1], y, rtol=5e-5)
+
+    def test_lps(self):
+        """Test low pass step response against data generated with METAS VNA Tools."""
+        path = Path(self.test_dir) / "metas_tdr"
+
+        for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g"]:
+            netw = rf.Network(path / f"{fname}.s1p")
+            ref = np.loadtxt(path / f"{fname}_low_pass_step.csv", skiprows=1, delimiter=";")
+            t, y = netw.step_response(window="boxcar", pad=0, squeeze=True)
+
+            np.testing.assert_allclose(ref[:, 0], t * 1e12, rtol=2e-5)
+            np.testing.assert_allclose(ref[:, 1], y, rtol=5e-5)
+
+    def test_bpi(self):
+        """Test band pass impulse response against data generated with METAS VNA Tools."""
+        path = Path(self.test_dir) / "metas_tdr"
+        for window in ["boxcar", None]:
+            # Check if window=None equals to window="boxcar"
+            for fname in ["short_10ps_dc_50g", "short_10ps_dc_40g", "short_10ps_10g_50g", "short_10ps_10g_40g"]:
+
+                netw = rf.Network(path / f"{fname}.s1p")
+                ref = np.loadtxt(path / f"{fname}_band_pass_impulse.csv", skiprows=1, delimiter=";")
+                t, y = netw.impulse_response(window=window, pad=0, squeeze=True, bandpass=True)
+
+                np.testing.assert_allclose(ref[:,0], t * 1e12, rtol=2e-5)
+                np.testing.assert_allclose(ref[:,1], np.abs(y), atol=1e-5)
+
+    def test_auto_use_bandpass(self):
+        path = Path(self.test_dir) / "metas_tdr"
+
+        for fname in ["short_10ps_dc_50g", "short_10ps_10g_50g"]:
+
+            netw = rf.Network(path / f"{fname}.s1p")
+            t, _y = netw.impulse_response(window="boxcar", pad=0, squeeze=True)
+            if netw.frequency.start == 0:
+                assert len(t) == 2 * len(netw) - 1
+            else:
+                assert len(t) == len(netw)
+
+
 
     def test_time_transform_v2(self):
         spb = (4, 5)
@@ -181,14 +245,11 @@ class NetworkTestCase(unittest.TestCase):
         s = np.ones(10)
         netw = rf.Network(frequency=freq, s=s)
 
-        n_lst = np.arange(-1,2) + 2 * (f_points) - 2
-        for n in n_lst:
-            t,y = netw.impulse_response('boxcar', n=n)
+        t, y = netw.impulse_response("boxcar", pad=0)
 
-            y_true = np.zeros_like(y)
-            y_true[t == 0] = 1
-            np.testing.assert_almost_equal(y, y_true)
-
+        y_true = np.zeros_like(y)
+        y_true[t == 0] = 1
+        np.testing.assert_almost_equal(y, y_true)
 
     def test_time_transform_nonlinear_f(self):
         netw_nonlinear_f = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))
@@ -268,12 +329,29 @@ class NetworkTestCase(unittest.TestCase):
             sio.name = os.path.basename(filename) # hack a bug to touchstone reader
             rf.Network(sio)
 
+    def test_constructor_from_stringio_hfss(self):
         filename = os.path.join(self.test_dir, 'hfss_oneport.s1p')
         with open(filename) as fid:
             data = fid.read()
             sio = io.StringIO(data)
             sio.name = os.path.basename(filename) # hack a bug to touchstone reader
             rf.Network(sio)
+
+    def test_constructor_from_stringio_name_kwawrg(self):
+        filename = os.path.join(self.test_dir, 'ntwk1.s2p')
+        with open(filename) as fid:
+            data = fid.read()
+            sio = io.StringIO(data)
+            rf.Network(sio, name=filename)
+
+    def test_different_ext(self):
+        filename= os.path.join(self.test_dir, 'ntwk1.s2p')
+        for par in ["g", "h", "s", "y", "z"]:
+            with open(filename) as fid:
+                data = fid.read()
+                sio = io.StringIO(data)
+                sio.name = f"test.{par}2p"
+                rf.Network(sio)
 
     def test_constructor_from_parameters(self):
         """Test creating Network from all supported parameters
@@ -339,6 +417,12 @@ class NetworkTestCase(unittest.TestCase):
         self.ntwk1.write_touchstone('ntwk1Saved',dir=self.test_dir)
         ntwk1Saved = rf.Network(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
         self.assertEqual(self.ntwk1, ntwk1Saved)
+
+        # Test that it still works with Pathlib objects
+        self.ntwk1.write_touchstone(Path('ntwk1Saved'),dir=Path(self.test_dir))
+        ntwk1Saved = rf.Network(Path(os.path.join(self.test_dir, 'ntwk1Saved.s2p')))
+        self.assertEqual(self.ntwk1, ntwk1Saved)
+
         os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
 
     def test_write_touchstone(self):
@@ -395,25 +479,40 @@ class NetworkTestCase(unittest.TestCase):
             snp = ntwk.write_touchstone(return_string=True)
 
     def test_write_touchstone_noisy(self):
-        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
+        ntwk = self.ntwk_noise
 
-        # Read back the written touchstone
-        ntwkstr = ntwk.write_touchstone(return_string=True)
-        strio = io.StringIO(ntwkstr)
-        strio.name = 'StringIO.s2p'
-        new_ntwk = rf.Network(strio)
+        # Test with and without noise data formatting
+        for use_formatting in (False, True):
+            # Read back the written touchstone
+            if use_formatting:
+                ntwkstr = ntwk.write_touchstone(
+                    return_string=True,
+                    format_spec_freq='{:<6.4f}',
+                    format_spec_A='\t{:>6.4f}',
+                    format_spec_B='\t{:>6.4f}',
+                    format_spec_nf_freq='{:<6.4f}',
+                    format_spec_nf_min='\t{:<6.4f}',
+                    format_spec_g_opt_mag='\t{:<6.4f}',
+                    format_spec_g_opt_phase='\t{:<6.4f}',
+                    format_spec_rn='\t{:<6.4f}',
+                )
+            else:
+                ntwkstr = ntwk.write_touchstone(return_string=True)
+            strio = io.StringIO(ntwkstr)
+            strio.name = 'StringIO.s2p'
+            new_ntwk = rf.Network(strio)
 
-        # Only compare to original noise data, not interpolated
-        ntwk.resample(ntwk.f_noise)
-        new_ntwk.resample(new_ntwk.f_noise)
+            # Only compare to original noise data, not interpolated
+            ntwk.resample(ntwk.f_noise)
+            new_ntwk.resample(new_ntwk.f_noise)
 
-        # Newly written noise properties should match the original
-        np.testing.assert_allclose(ntwk.f_noise.f_scaled, new_ntwk.f_noise.f_scaled)
-        np.testing.assert_allclose(ntwk.nfmin, new_ntwk.nfmin)
-        np.testing.assert_allclose(ntwk.nfmin_db, new_ntwk.nfmin_db)
-        np.testing.assert_allclose(ntwk.g_opt, new_ntwk.g_opt)
-        np.testing.assert_allclose(ntwk.rn, new_ntwk.rn)
-        np.testing.assert_allclose(ntwk.z0, new_ntwk.z0)
+            # Newly written noise properties should match the original
+            np.testing.assert_allclose(ntwk.f_noise.f_scaled, new_ntwk.f_noise.f_scaled)
+            np.testing.assert_allclose(ntwk.nfmin, new_ntwk.nfmin)
+            np.testing.assert_allclose(ntwk.nfmin_db, new_ntwk.nfmin_db)
+            np.testing.assert_allclose(ntwk.g_opt, new_ntwk.g_opt)
+            np.testing.assert_allclose(ntwk.rn, new_ntwk.rn)
+            np.testing.assert_allclose(ntwk.z0, new_ntwk.z0)
 
     def test_pickling(self):
         original_ntwk = self.ntwk1
@@ -437,6 +536,13 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(self.ntwk1 >> self.ntwk2, self.ntwk3)
         self.assertEqual(self.Fix2 >> self.DUT2 >> self.Fix2.flipped(), self.Meas2)
 
+    def test_concat_ports(self):
+        for idx in range(4):
+            i,j = 2*idx, 2*(idx+1)
+            self.assertTrue(np.allclose(self.DUT2.s[:, i:j, i:j], self.l2.s)) # check s-parameters
+            self.assertTrue(np.allclose(self.DUT2.z0[:, i:j], self.l2.z0)) # check z0
+        self.assertTrue(np.all(self.DUT2.port_modes == np.array(['S']*8))) # check port mode
+
     def test_connect(self):
         self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
             self.ntwk3)
@@ -456,7 +562,7 @@ class NetworkTestCase(unittest.TestCase):
         line = med.line(1, unit='m')
         line.z0 = [10, 20]
 
-        for nport_portnum in [3,4,5,6,7,8]:
+        for nport_portnum in [1,2,3,4,5,6,7,8]:
 
             # create a Nport network with port impedance i at port i
             nport = rf.Network()
@@ -576,6 +682,22 @@ class NetworkTestCase(unittest.TestCase):
                 np.testing.assert_almost_equal(net12.s, net3_ref.s)
                 np.testing.assert_almost_equal(net3_z, net3_ref.z)
 
+    def test_connect_drop_ext_attrs(self):
+        """Test that connecting a network created using the Circuit's class
+        method, which has '_ext_attr' attributes, to another standard network.
+        """
+        # Create a network with '_ext_attr' attributes
+        ntwk_tmp = self.ntwk1.copy()
+        ntwk_tmp._ext_attrs['_is_circuit_open'] = True
+
+        # Connect the network to another standard network
+        ntwk_connected = rf.connect(ntwk_tmp, 1, self.ntwk2, 0)
+        self.assertFalse(ntwk_connected._ext_attrs.get('_is_circuit_open', False))
+
+        # Connect the network to another standard network
+        ntwk_connected = rf.connect(self.ntwk2, 0, ntwk_tmp, 1)
+        self.assertFalse(ntwk_connected._ext_attrs.get('_is_circuit_open', False))
+
     def test_interconnect_complex_ports(self):
         """ Test that connecting two complex ports in a network
         gives the same S-parameters with all s_def when the rest of
@@ -597,6 +719,133 @@ class NetworkTestCase(unittest.TestCase):
                 np.testing.assert_almost_equal(net.s, net[0].s)
                 self.assertTrue((net.z0 == net[0].z0).all())
                 self.assertTrue(net.s_def != net[0].s_def)
+
+    def test_parallelconnect(self):
+        # Create 2 network with 2 ports
+        ntwka = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwka')
+        ntwkb = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkb')
+
+        # Connect the 2 networks together by connect
+        ntwk_cnt = rf.connect(ntwka, 1, ntwkb, 0)
+
+        # Connect the 2 networks together by parallelconnect
+        ntwk_par = rf.parallelconnect([ntwka, ntwkb], [1, 0])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_cnt.s, ntwk_par.s))
+
+    def test_parallelconnect_open(self):
+        # Create a network with 4 ports
+        s = self.rng.random((1, 4, 4))
+        ntwk = rf.Network(s=s, f=1)
+        open_port = rf.Network(s=np.ones((1, 1, 1)), f=1)
+
+        # Connect the first 2 ports together by innerconnect
+        ntwk_cnt = rf.connect(ntwk, 3, open_port, 0)
+
+        # Connect the first 2 ports together by parallelconnect
+        par_ntwk = rf.parallelconnect(ntwk, [3])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_cnt.s, par_ntwk.s))
+
+    def test_parallelconnect_inner(self):
+        # Create a network with 4 ports
+        s = self.rng.random((1, 4, 4))
+        ntwk = rf.Network(s=s, f=1, name='ntwk')
+
+        # Connect the first 2 ports together by innerconnect
+        ntwk_inter = rf.innerconnect(ntwk, 0, 1)
+
+        # Connect the first 2 ports together by parallelconnect
+        par_ntwka = rf.parallelconnect([ntwk], [[0, 1]])
+        par_ntwkb = rf.parallelconnect(ntwk, [[0, 1]])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_inter.s, par_ntwka.s))
+        self.assertTrue(np.allclose(ntwk_inter.s, par_ntwkb.s))
+
+        # Connect the last 3 ports together by circuit
+        port = rf.Circuit.Port(frequency=ntwk.frequency, name='port')
+        cnx = [
+            [(port, 0), (ntwk, 0)],
+            [(ntwk, 1), (ntwk, 2), (ntwk, 3)]
+        ]
+        ckt_ntwk = rf.Circuit(cnx, name='ckt_ntwk').network
+
+        # Connect the last 3 ports together by parallelconnect
+        par_ntwk = rf.parallelconnect(ntwk, [[1, 2, 3]])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ckt_ntwk.s, par_ntwk.s))
+
+    def test_parallelconnect_mismatch(self):
+        # Create 2 network with 2 ports
+        ntwka = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwka', z0=25)
+        ntwkb = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkb', z0=75)
+
+        # Connect the 2 networks together by connect
+        ntwk_cnt = rf.connect(ntwka, 1, ntwkb, 0)
+
+        # Connect the 2 networks together by parallelconnect
+        ntwk_par = rf.parallelconnect([ntwka, ntwkb], [1, 0])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_cnt.s, ntwk_par.s))
+
+        # Create matched network in circuit
+        port1 = rf.Circuit.Port(frequency=ntwka.frequency, name='port1', z0=50)
+        port2 = rf.Circuit.Port(frequency=ntwka.frequency, name='port2', z0=50)
+
+        cnx = [
+            [(port1, 0), (ntwka, 0)],
+            [(ntwka, 1), (ntwkb, 0)],
+            [(ntwkb, 1), (port2, 0)]
+        ]
+        ntwk_ckt = rf.Circuit(cnx, name='ckt_ntwk').network
+
+        # Check that the two networks are not equal
+        self.assertFalse(np.allclose(ntwk_ckt.s, ntwk_par.s))
+
+        # Renormalize matched network to match circuit
+        ntwk_par.renormalize(ntwk_ckt.z0)
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_ckt.s, ntwk_par.s))
+
+
+    def test_innerconnect_with_T(self):
+        # Create 3 network with 2 ports
+        ntwka = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwka')
+        ntwkb = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkb')
+        ntwkc = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwkc')
+
+        # Connect the 3 networks together by tee
+        media = rf.media.DefinedGammaZ0(frequency=ntwka.frequency)
+        tee_ntwk = media.tee()
+        tee_ntwk = rf.connect(tee_ntwk, 0, ntwka, 1)
+        tee_ntwk = rf.connect(tee_ntwk, 1, ntwkb, 1)
+        tee_ntwk = rf.connect(tee_ntwk, 2, ntwkc, 1)
+
+        # Connect the 3 networks together by circuit
+        port1 = rf.Circuit.Port(frequency=ntwka.frequency, name='port1')
+        port2 = rf.Circuit.Port(frequency=ntwkb.frequency, name='port2')
+        port3 = rf.Circuit.Port(frequency=ntwkc.frequency, name='port3')
+
+        cnxs = [
+            [(port1, 0), (ntwka, 0)],
+            [(port2, 0), (ntwkb, 0)],
+            [(port3, 0), (ntwkc, 0)],
+            [(ntwka, 1), (ntwkb, 1), (ntwkc, 1)]
+        ]
+        ckt_ntwk = rf.Circuit(cnxs, name='ckt_ntwk').network
+
+        # Connect the 3 networks together by parallelconnect
+        ntwk_par = rf.parallelconnect([ntwka, ntwkb, ntwkc], [1, 1, 1])
+
+        # Check that the two networks are the same
+        self.assertTrue(np.allclose(ntwk_par.s, tee_ntwk.s))
+        self.assertTrue(np.allclose(ntwk_par.s, ckt_ntwk.s))
 
     def test_max_stable_gain(self):
         # Check whether the maximum stable gain agrees with that derived from Y-parameters
@@ -729,6 +978,18 @@ class NetworkTestCase(unittest.TestCase):
         flipped.flip()
         c = rf.connect(gain,1,flipped,0)
         self.assertTrue(np.all(np.abs(c.s - np.array([[0,1],[1,0]])) < 1e-6))
+
+    def test_renumber(self):
+        ntwk = self.ntwk1
+        from_ports_num = [0,1]
+        to_ports_num = [1,0]
+        from_ports_name = ["A", "B"]
+        to_ports_name = ["B", "A"]
+
+        ntwk.port_names = from_ports_name
+        ntwk_renum = ntwk.renumbered(from_ports_num, to_ports_num)
+
+        assert to_ports_name == ntwk_renum.port_names
 
     def test_de_embed_by_inv(self):
         self.assertEqual(self.ntwk1.inv ** self.ntwk3, self.ntwk2)
@@ -1050,6 +1311,8 @@ class NetworkTestCase(unittest.TestCase):
         ntwk_orig.write_touchstone(os.path.join(self.test_dir, pwfile_skrf), write_z0=True, form='RI')
         ntwk_skrf = rf.Network(os.path.join(self.test_dir, pwfile_skrf))
 
+        # check if the s_def could be correctly recovered from scikit-rf's Touchstone file
+        self.assertTrue(ntwk_orig.s_def == ntwk_skrf.s_def)
         self.assertTrue(ntwk_orig == ntwk_skrf)
 
     def test_network_from_z_or_y(self):
@@ -1206,11 +1469,17 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue( ((a+[1+1j,2+2j]).s == np.array([[[2+3j]],[[5+6j]]])).all())
 
 
-    def test_interpolate(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1, f_unit="ghz")
-        freq = rf.F.from_f(np.linspace(1,2,4), unit='ghz')
-        b = a.interpolate(freq)
-        # TODO: numerically test for correct interpolation
+    def test_interpolate_linear(self):
+        net = rf.Network(f=[0, 1, 3, 4], s=[0,1,9,16], f_unit="Hz")
+
+        interp = net.interpolate(rf.Frequency(0, 4, 5, unit="Hz"), kind="linear")
+        assert np.allclose(interp.s[2], 5.0)
+
+    def test_interpolate_cubic(self):
+        net = rf.Network(f=[0, 1, 3, 4], s=[0,1,9,16], f_unit="Hz")
+
+        interp = net.interpolate(rf.Frequency(0, 4, 5, unit="Hz"), kind="cubic")
+        assert np.allclose(interp.s[2], 4.0)
 
     def test_interpolate_rational(self):
         a = rf.N(f=np.linspace(1,2,5),s=np.linspace(0,1,5)*(1+1j),z0=1, f_unit="ghz")
@@ -1224,20 +1493,13 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(all(np.diff(np.abs(b.s.flatten())) > 0))
         self.assertTrue(b.z0[0] == a.z0[0])
 
-    def test_interpolate_linear(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=[1,2], f_unit="ghz")
+    def test_interpolate_freq_cropped(self):
+        a = rf.N(f=np.arange(20), s=np.arange(20)*(1+1j),z0=1, f_unit="ghz")
         freq = rf.F.from_f(np.linspace(1,2,3,endpoint=True), unit='GHz')
-        b = a.interpolate(freq, kind='linear')
-        self.assertFalse(any(np.isnan(b.s)))
-        # Test that the endpoints are the equal
-        # Middle point can also be calculated in this case
-        self.assertTrue(b.s[0] == a.s[0])
-        self.assertTrue(b.s[1] == 0.5*(a.s[0] + a.s[1]))
-        self.assertTrue(b.s[-1] == a.s[-1])
-        # Check Z0 interpolation
-        self.assertTrue(b.z0[0] == a.z0[0])
-        self.assertTrue(b.z0[1] == 0.5*(a.z0[0] + a.z0[1]))
-        self.assertTrue(b.z0[-1] == a.z0[-1])
+        for method in ('linear', 'cubic', 'quadratic', 'rational'):
+            b = a.interpolate(freq, freq_cropped=False, kind=method)
+            c = a.interpolate(freq, kind=method)
+            self.assertTrue(np.allclose(b.s, c.s))
 
     def test_interpolate_self(self):
         """Test resample."""
@@ -1389,7 +1651,7 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_noise(self):
-        a = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
+        a = self.ntwk_noise
 
         nf = 10**(0.05)
         self.assertTrue(a.noisy)
@@ -1439,7 +1701,7 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_noise_dc_extrapolation(self):
-        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
+        ntwk = self.ntwk_noise
         ntwk = ntwk["0-1.5GHz"] # using only the first samples, as ntwk_noise has duplicate x value
         s11 = ntwk.s11
         s11_dc = s11.extrapolate_to_dc(kind='cubic')
@@ -1505,6 +1767,41 @@ class NetworkTestCase(unittest.TestCase):
             self.assertTrue(abs(nfmin_set - nfmin_rb) < 1.e-2, 'nf not retrieved by noise deembed')
             self.assertTrue(abs(gamma_opt_rb.s[0,0,0] - gamma_opt_set) < 1.e-1, 'nf not retrieved by noise deembed')
 
+    def test_noise_interpolation(self):
+
+        # Get a handle for the test network. Note that the s-parameter frequency range is beyond that of the NF data
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise_interp.s2p'))
+
+        # Pulling out the noise data should interpolate and fill extrapolated values with the default np.nan
+        self.assertIn(True, np.isnan(ntwk.copy().n))
+
+        # Check that a particular fill value is NOT in the noise data
+        fill_val = 12345 + 1j * 67890
+        new_ntwk = ntwk.copy()
+        self.assertNotIn(fill_val, new_ntwk.n)
+
+        # Change the interpolation fill value and check if it filled in properly
+        new_ntwk = ntwk.copy()
+        new_ntwk.noise_fill_value = fill_val
+        self.assertIn(fill_val, new_ntwk.n)
+
+    def test_spar_interpolation(self):
+
+        # Create new frequency vectors beyond the original limits of ntwk1
+        new_freqs_low = rf.Frequency.from_f(self.ntwk1.f / 2, unit="Hz")
+        new_freqs_high = rf.Frequency.from_f(self.ntwk1.f * 2, unit="Hz")
+
+        # Test that no kwargs results in ValueErrors
+        for new_f in (new_freqs_low, new_freqs_high):
+            new_ntwk = self.ntwk1.copy()
+            with self.assertRaises(ValueError) as context:
+                new_ntwk.resample(new_f)
+
+        # Test that kwargs can let the resampling work
+        for new_f in (new_freqs_low, new_freqs_high):
+            new_ntwk = self.ntwk1.copy()
+            new_ntwk.resample(new_f, bounds_error=False)
+            self.assertIn(True, np.isnan(new_ntwk.s))
 
     def test_se2gmm2se(self):
         # Test that se2gmm followed by gmm2se gives back the original network
@@ -1888,6 +2185,53 @@ class NetworkTestCase(unittest.TestCase):
         with pytest.raises(RuntimeWarning):
             self.fet['30GHz'].gain_circle(target_port=1, gain=100)
 
+    def test_nf_circle(self):
+        # Check whether the noise figure circle agrees with that calculated with Microwave Office
+        nf_circle_mwo = np.loadtxt(os.path.join(self.test_dir, 'nf_circle_mwo.csv'), encoding='utf-8',
+                                           delimiter=',')
+
+        assert np.allclose(
+            self.ntwk_noise["1GHz"].nf_circle(nf=1.0, npoints=6).flatten().real,
+            nf_circle_mwo[:6,0],
+        )
+        assert np.allclose(
+            self.ntwk_noise["1GHz"].nf_circle(nf=1.0, npoints=6).flatten().imag,
+            nf_circle_mwo[:6,1],
+        )
+
+        assert np.allclose(
+            self.ntwk_noise["2GHz"].nf_circle(nf=2.0, npoints=6).flatten().real,
+            nf_circle_mwo[6:12,0],
+        )
+        assert np.allclose(
+            self.ntwk_noise["2GHz"].nf_circle(nf=2.0, npoints=6).flatten().imag,
+            nf_circle_mwo[6:12,1],
+        )
+
+        # Check whether an error is raised when the network is not 2 port.
+        net = rf.Network(f=[1], s=np.eye(3), z0=50)
+        with pytest.raises(ValueError):
+            net.nf_circle(nf=1.0)
+
+        # Check whether an error is raised when the number of points is not positive.
+        with pytest.raises(ValueError):
+            net.nf_circle(nf=1.0, npoints=0)
+
+        # Check whether an error is raised when the network is missing noise data.
+        with pytest.raises(ValueError):
+            self.ntwk1.nf_circle(nf=1.0, npoints=0)
+
+        # Check whether the specified noise figure is too small.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.ntwk_noise['1GHz'].nf_circle(nf=0.1)
+
+            # Check that a warning was raised
+            assert len(w) > 0, "Expected a warning to be raised"
+
+            # Check that the warning is a RuntimeWarning
+            assert any(item.category is RuntimeWarning for item in w), "Expected RuntimeWarning was not raised"
+
     def test_de_embed_by_floordiv(self):
         ntwk_result_1 = self.ntwk1 // self.ntwk2
         ntwk_result_2 = self.ntwk1 // (self.ntwk2)
@@ -1903,6 +2247,28 @@ class NetworkTestCase(unittest.TestCase):
         # Check weather an error is raised when more than two networks are specified
         with pytest.raises(ValueError):
             ntwk_result_3 = self.ntwk1 // (self.ntwk1, self.ntwk2, self.ntwk3)
+
+    def test_fmt_trace_name(self):
+        # Test trace name of differential thru
+        s = np.zeros((1,4,4), dtype=complex)
+        s[:,2,0] = 1
+        s[:,0,2] = 1
+        s[:,3,1] = 1
+        s[:,1,3] = 1
+        # single-ended
+        se_thru = rf.Network(s=s, f=[1], z0=50)
+        self.assertTrue(np.all(se_thru.port_modes == "S"))
+        self.assertTrue(se_thru._fmt_trace_name(0, 0) == "11")
+        self.assertTrue(se_thru._fmt_trace_name(1, 0) == "21")
+        mm_thru = se_thru.copy()
+        mm_thru.se2gmm(p=2)
+        self.assertTrue(np.all(mm_thru.port_modes == ["D", "D", "C", "C"]))
+        self.assertTrue(mm_thru._fmt_trace_name(0, 0) == "dd11")
+        self.assertTrue(mm_thru._fmt_trace_name(1, 0) == "dd21")
+        self.assertTrue(mm_thru._fmt_trace_name(2, 2) == "cc33")
+        self.assertTrue(mm_thru._fmt_trace_name(3, 2) == "cc43")
+        self.assertTrue(mm_thru._fmt_trace_name(2, 0) == "cd31")
+        self.assertTrue(mm_thru._fmt_trace_name(1, 3) == "dc24")
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

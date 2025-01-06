@@ -87,6 +87,8 @@ PNA interaction
 
 """
 
+from __future__ import annotations
+
 import json
 import warnings
 from collections import OrderedDict, defaultdict
@@ -94,6 +96,7 @@ from copy import copy
 from itertools import combinations
 from numbers import Number
 from textwrap import dedent
+from typing import Literal
 from warnings import warn
 
 import numpy as np
@@ -278,7 +281,12 @@ class Calibration:
         # ensure all the measured Networks' frequency's are the same
         for measure in self.measured:
             if self.measured[0].frequency != measure.frequency:
-                raise(ValueError('measured Networks dont have matching frequencies.'))
+                raise(ValueError("Measured Networks don't have matching frequencies."))
+            if np.any(self.measured[0].z0 != measure.z0):
+                raise(ValueError("Measured Networks don't have matching z0."))
+        if len(self.measured) > 0:
+            if np.any(self.measured[0].z0 != self.measured[0].z0[0,0]):
+                warn("Non-constant z0 in measurements. Expect trouble", stacklevel=2)
         # ensure that all ideals have same frequency of the measured
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
@@ -295,7 +303,8 @@ class Calibration:
 
                 except Exception as err:
                     raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].')) from err
-
+            if np.any(self.ideals[k].z0 != self.measured[0].z0):
+                raise ValueError("Measured and ideals z0 are different.")
 
         # passed to calibration algorithm in run()
         self.kwargs = kwargs
@@ -2748,7 +2757,7 @@ class NISTMultilineTRL(EightTerm):
             self.z0_ref = [self.z0_ref] * fpoints
         if np.isscalar(self.z0_line):
             self.z0_line = [self.z0_line] * fpoints
-        if np.isscalar(self.z0_ref):
+        if np.isscalar(self.c0):
             self.c0 = [self.c0] * fpoints
 
         if np.isscalar(self.Grefls):
@@ -3543,12 +3552,12 @@ class TUGMultilineTRL(EightTerm):
     References
     ----------
     .. [1] Z. Hatab, M. Gadringer and W. Bösch, "Improving The Reliability of The Multiline TRL Calibration Algorithm,"
-        _2022 98th ARFTG Microwave Measurement Conference (ARFTG)_, Las Vegas, NV, USA, 2022, pp. 1-5,
+        2022 98th ARFTG Microwave Measurement Conference (ARFTG), Las Vegas, NV, USA, 2022, pp. 1-5,
         doi: https://doi.org/10.1109/ARFTG52954.2022.9844064
 
-    .. [2] Z. Hatab, M. Gadringer and W. Bösch, "Propagation of Linear Uncertainties through Multiline
-        Thru-Reflect-Line Calibration,"
-            2023, e-print: https://arxiv.org/abs/2301.09126
+    .. [2] Z. Hatab, M. Gadringer and W. Bösch, "Propagation of Linear Uncertainties Through Multiline
+        Thru-Reflect-Line Calibration," in IEEE Transactions on Instrumentation and Measurement,
+        vol. 72, pp. 1-9, 2023, doi: https://doi.org/10.1109/TIM.2023.3296123
 
     .. [3] https://ziadhatab.github.io/posts/multiline-trl-calibration/
 
@@ -3742,13 +3751,13 @@ class TUGMultilineTRL(EightTerm):
                 k2 = -v11*v22*v24/v12 + v11*v14*v22**2/v12**2 + v21*v24 - v14*v21*v22/v12
                 k1 = v11*v24/v12 - 2*v11*v14*v22/v12**2 - v23 + v13*v22/v12 + v14*v21/v12
                 k0 = v11*v14/v12**2 - v13/v12
-                c2 = np.array([(-k1 - np.sqrt(-4*k0*k2 + k1**2))/(2*k2), (-k1 + np.sqrt(-4*k0*k2 + k1**2))/(2*k2)])
+                c2 = np.roots([k2,k1,k0])*np.ones(2)
                 c1 = (1 - c2*v22)/v12
             else:
                 k2 = -v11*v12*v24/v22 + v11*v14 + v12**2*v21*v24/v22**2 - v12*v14*v21/v22
                 k1 = v11*v24/v22 - 2*v12*v21*v24/v22**2 + v12*v23/v22 - v13 + v14*v21/v22
                 k0 = v21*v24/v22**2 - v23/v22
-                c1 = np.array([(-k1 - np.sqrt(-4*k0*k2 + k1**2))/(2*k2), (-k1 + np.sqrt(-4*k0*k2 + k1**2))/(2*k2)])
+                c1 = np.roots([k2,k1,k0])*np.ones(2)
                 c2 = (1 - c1*v12)/v22
             x = np.array( [v1*x + v2*y for x,y in zip(c1,c2)] )  # 2 solutions
             mininx = np.argmin( abs(x - x_est).sum(axis=1) )
@@ -5226,7 +5235,7 @@ class LMR16(SixteenTerm):
         if switch_terms is None:
             warn('No switch terms provided', stacklevel=2)
 
-        if type(ideals) == Network:
+        if isinstance(ideals, Network):
             ideals = [ideals]
         if len(ideals) != 1:
             raise ValueError("One ideal must be given: Through or reflect definition.")
@@ -5553,6 +5562,11 @@ class MultiportCal:
                     frequency = m.frequency
                 elif m.frequency != frequency:
                     raise ValueError("Inconsistent frequency in measured.")
+            if "ideals" in c and z0 is not None:
+                for n in c["ideals"]:
+                    if n.z0[0,0] != z0:
+                        raise ValueError(f"Ideals and measured z0 doesn't match. {n.z0[0,0]} and {z0}")
+
         self.nports = nports = max_key_nports + 1
         if min_key_nports < 0:
             raise ValueError("Negative port number found. Minimum should be zero.")
@@ -5892,7 +5906,17 @@ class MultiportSOLT(MultiportCal):
     """
 
     family = 'Multiport'
-    def __init__(self, method, measured, ideals, isolation=None, switch_terms=None, thru_pos='auto', cal_args=None):
+
+    def __init__(
+        self,
+        method,
+        measured: Network,
+        ideals: list[Network],
+        isolation=None,
+        switch_terms=None,
+        thru_pos: Literal["first", "last", "auto"] = "auto",
+        cal_args: dict | None = None,
+    ):
         self.ideals = ideals
         self.measured = measured
         self.nports = ideals[0].nports
@@ -6472,24 +6496,37 @@ def convert_8term_2_12term(coefs_8term):
     k_first = coefs_8term.get('k first', k)
     k_second = coefs_8term.get('k second', k)
 
-    # taken from eq (36)-(39) in the Roger Marks paper given in the
-    # docstring
-    Elf  = Esr + (Err*gamma_f)/(1. - Edr * gamma_f)
-    Elr = Esf  + (Erf *gamma_r)/(1. - Edf  * gamma_r)
-    Etf  = ((Elf  - Esr)/gamma_f) * k_first
-    Etr = ((Elr - Esf )/gamma_r) * 1./k_second
-
     coefs_12term = {}
-    for l in ['forward directivity','forward source match',
-        'forward reflection tracking','reverse directivity',
-        'reverse reflection tracking','reverse source match',
-        'forward isolation', 'reverse isolation']:
-        coefs_12term[l] = coefs_8term[l].copy()
+
+    if np.allclose(gamma_f, np.zeros_like(gamma_f)):
+        # taken from eq (40),(41) in the Roger Marks paper
+        Elf = Esr
+        Etf = Err * k_first
+    else:
+        # taken from eq (36),(38) in the Roger Marks paper
+        Elf = Esr + (Err * gamma_f) / (1. - Edr * gamma_f)
+        Etf = ((Elf - Esr) / gamma_f) * k_first
+
+    if np.allclose(gamma_r, np.zeros_like(gamma_r)):
+        # taken from eq (43),(44) in the Roger Marks paper
+        Elr = Esf
+        Etr = Erf * 1. / k_second
+    else:
+        # taken from eq (37),(39) in the Roger Marks paper
+        Elr = Esf  + (Erf *gamma_r)/(1. - Edf  * gamma_r)
+        Etr = ((Elr - Esf )/gamma_r) * 1./k_second
 
     coefs_12term['forward load match'] = Elf
     coefs_12term['reverse load match'] = Elr
-    coefs_12term['forward transmission tracking'] =  Etf
-    coefs_12term['reverse transmission tracking'] =  Etr
+    coefs_12term['forward transmission tracking'] = Etf
+    coefs_12term['reverse transmission tracking'] = Etr
+
+    for l in ['forward directivity', 'forward source match',
+              'forward reflection tracking', 'reverse directivity',
+              'reverse reflection tracking', 'reverse source match',
+              'forward isolation', 'reverse isolation']:
+        coefs_12term[l] = coefs_8term[l].copy()
+
     return coefs_12term
 
 
@@ -6656,8 +6693,6 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
 
     if len (coefs.keys()) == 3:
         # ASSERT: we have one port data
-        ntwk = Network(**kwargs)
-
         if is_reciprocal:
             #TODO: make this better and maybe have phase continuity
             # functionality
@@ -6673,9 +6708,10 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
 
         s11 = coefs['directivity']
         s22 = coefs['source match']
-        ntwk.s = np.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
-        ntwk.frequency = frequency
-        return ntwk
+        return Network(
+            frequency = frequency,
+            s = np.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2),
+            **kwargs)
 
     else:
         p1,p2 = {},{}

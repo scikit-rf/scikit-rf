@@ -18,8 +18,6 @@ dist/
 *.iml
 
 .vscode/
-.coverage
-.tox/
 .coverage*
 
 poetry.lock
@@ -27,4 +25,3 @@ lint.xml
 .venv/
 test-results/*.xml
 testing.xlsx
-test.py

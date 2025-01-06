@@ -487,6 +487,7 @@ class Media(ABC):
         result = Network(**kwargs)
         result.frequency = self.frequency
         result.s = np.zeros((self.frequency.npoints, nports, nports), dtype=complex)
+        result.port_modes = np.array(["S"] * result.nports)
         if z0 is None:
             if self.z0_port is None:
                 z0 = self.z0
@@ -538,6 +539,7 @@ class Media(ABC):
         result.s = np.array(Gamma0).reshape(-1, 1, 1) * \
             np.eye(nports, dtype=complex).reshape((-1, nports, nports)).\
             repeat(self.frequency.npoints, 0)
+        result.port_modes = np.array(["S"] * result.nports)
         return result
 
     def short(self, nports: int = 1,
@@ -641,14 +643,27 @@ class Media(ABC):
         capacitor
         inductor
         """
-        result = self.match(nports=2, **kwargs)
-        y = np.zeros(shape=result.s.shape, dtype=complex)
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+        result = self.match(nports=2, s_def='power', **kwargs)
+        s = np.zeros(shape=result.s.shape, dtype=complex)
         R = np.array(R)
-        y[:, 0, 0] = 1.0 / R
-        y[:, 1, 1] = 1.0 / R
-        y[:, 0, 1] = -1.0 / R
-        y[:, 1, 0] = -1.0 / R
-        result.y = y
+        # Convert Y-parameters resistor to S-parameters in power wave to accommodate any R value.
+        # y[:, 0, 0] = 1.0 / R
+        # y[:, 1, 1] = 1.0 / R
+        # y[:, 0, 1] = -1.0 / R
+        # y[:, 1, 0] = -1.0 / R
+        z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
+        denom = R + (z0_0 + z0_1)
+        s[:, 0, 0] = (R - z0_0.conj() + z0_1) / denom
+        s[:, 1, 1] = (R + z0_0 - z0_1.conj()) / denom
+        s[:, 0, 1] = 2 * (z0_0.real * z0_1.real)**0.5 / denom
+        s[:, 1, 0] = 2 * (z0_0.real * z0_1.real)**0.5 / denom
+        result.s = s
+
+        # Renormalize into s_def if required
+        if s_def != 'power':
+            result.renormalize(z_new=result.z0, s_def=s_def)
+
         return result
 
     def capacitor(self, C: NumberLike, **kwargs) -> Network:
@@ -677,15 +692,28 @@ class Media(ABC):
         resistor
         inductor
         """
-        result = self.match(nports=2, **kwargs)
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+        result = self.match(nports=2, s_def='power', **kwargs)
         w = self.frequency.w
-        y = np.zeros(shape=result.s.shape, dtype=complex)
+        s = np.zeros(shape=result.s.shape, dtype=complex)
         C = np.array(C)
-        y[:, 0, 0] = 1j * w * C
-        y[:, 1, 1] = 1j * w * C
-        y[:, 0, 1] = -1j * w * C
-        y[:, 1, 0] = -1j * w * C
-        result.y = y
+        # Convert Y-parameters capacitor to S-parameters in power wave to accommodate any C value.
+        # y[:, 0, 0] = 1j * w * C
+        # y[:, 1, 1] = 1j * w * C
+        # y[:, 0, 1] = -1j * w * C
+        # y[:, 1, 0] = -1j * w * C
+        z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
+        denom = 1.0 + 1j * w * C * (z0_0 + z0_1)
+        s[:, 0, 0] = (1.0 - 1j * w * C * (z0_0.conj() - z0_1) ) / denom
+        s[:, 1, 1] = (1.0 - 1j * w * C * (z0_1.conj() - z0_0) ) / denom
+        s[:, 0, 1] = (2j * w * C * (z0_0.real * z0_1.real)**0.5) / denom
+        s[:, 1, 0] = (2j * w * C * (z0_0.real * z0_1.real)**0.5) / denom
+        result.s = s
+
+        # Renormalize into s_def if required
+        if s_def != 'power':
+            result.renormalize(z_new=result.z0, s_def=s_def)
+
         return result
 
     def inductor(self, L: NumberLike, **kwargs) -> Network:
@@ -714,15 +742,28 @@ class Media(ABC):
         capacitor
         resistor
         """
-        result = self.match(nports=2, **kwargs)
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+        result = self.match(nports=2, s_def='power', **kwargs)
         w = self.frequency.w
-        y = np.zeros(shape=result.s.shape, dtype=complex)
+        s = np.zeros(shape=result.s.shape, dtype=complex)
         L = np.array(L)
-        y[:, 0, 0] = 1.0 / (1j * w * L)
-        y[:, 1, 1] = 1.0 / (1j * w * L)
-        y[:, 0, 1] = -1.0 / (1j * w * L)
-        y[:, 1, 0] = -1.0 / (1j * w * L)
-        result.y = y
+        # Convert Y-parameters inductor to S-parameters in power wave to accommodate any L value.
+        # y[:, 0, 0] = 1.0 / (1j * w * L)
+        # y[:, 1, 1] = 1.0 / (1j * w * L)
+        # y[:, 0, 1] = -1.0 / (1j * w * L)
+        # y[:, 1, 0] = -1.0 / (1j * w * L)
+        z0_0, z0_1 = result.z0[:, 0], result.z0[:, 1]
+        denom = (1j * w * L) + (z0_0 + z0_1)
+        s[:, 0, 0] = (1j * w * L - z0_0.conj() + z0_1) / denom
+        s[:, 1, 1] = (1j * w * L + z0_0 - z0_1.conj()) / denom
+        s[:, 0, 1] = 2 * (z0_0.real * z0_1.real)**0.5 / denom
+        s[:, 1, 0] = 2 * (z0_0.real * z0_1.real)**0.5 / denom
+        result.s = s
+
+        # Renormalize into s_def if required
+        if s_def != 'power':
+            result.renormalize(z_new=result.z0, s_def=s_def)
+
         return result
 
     def impedance_mismatch(self, z1: NumberLike, z2: NumberLike, **kwargs) -> Network:
@@ -972,8 +1013,8 @@ class Media(ABC):
                 '`embed` will be removed in version 1.0',
               DeprecationWarning, stacklevel = 2)
 
-        if isinstance(z0,str):
-            z0 = parse_z0(z0)* self.z0
+        if isinstance(z0, str):
+            z0 = parse_z0(z0) * self.z0
 
         if z0 is None:
             z0 = self.z0
@@ -992,6 +1033,79 @@ class Media(ABC):
         s21 = np.exp(-1*theta)
         result.s = \
                 np.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
+
+        # renormalize (or embed) into z0_port if required
+        if self.z0_port is not None:
+            result.renormalize(self.z0_port)
+        result.renormalize(result.z0, s_def=s_def)
+
+        return result
+
+    def line_floating(self, d: NumberLike, unit: str = 'deg',
+                z0: NumberLike | str | None = None, **kwargs) -> Network:
+        r"""
+        Floating transmission line of a given length and impedance.
+
+        This method returns a transmission line with floating shields.
+        This is a four-port network, as opposed to the two-port _line_ method.
+        Ports 1 and 3 are one side of the line, and electrically connect to
+        ports 2 and 4 on the other side, respectively.
+
+        The units of `length` are interpreted according to the value
+        of `unit`. If `z0` is not None, then a line specified impedance
+        is produced.
+
+        Parameters
+        ----------
+        d : number
+                the length of transmission line (see unit argument)
+        unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
+                the units of d.  See :func:`to_meters`, for details
+        z0 : number, string, or array-like or None
+            the characteristic impedance of the line, if different
+            from `media.z0`. To set z0 in terms of normalized impedance,
+            pass a string, like `z0='1+.2j'`
+        \*\*kwargs : key word arguments
+            passed to :func:`match`, which is called initially to create a
+            'blank' network.
+
+        Returns
+        -------
+        line_floating : :class:`~skrf.network.Network` object
+            matched, floating transmission line of given length
+
+        Examples
+        --------
+        >>> my_media.line_floating(1, 'mm', z0=100)
+        >>> my_media.line_floating(90, 'deg', z0='2') # set z0 as normalized impedance
+
+        """
+        if isinstance(z0, str):
+            z0 = self.parse_z0(z0) * self.z0
+
+        if z0 is None:
+            z0 = self.z0
+
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+
+        # The use of either traveling or pseudo waves s-parameters definition
+        # is required here.
+        # The definition of the reflection coefficient for power waves has
+        # conjugation.
+        result = self.match(nports=4, z0=z0, s_def='traveling', **kwargs)
+
+        t = self.electrical_length(self.to_meters(d=d, unit=unit))
+
+        denom = -1 + 9*np.exp(2*t)
+        s11 = (1 + 3*np.exp(2*t)) / denom
+        s12 = 4*np.exp(t) / denom
+        s13 = (-2 + 6*np.exp(2*t)) / denom
+        s14 = -s12
+
+        result.s = np.array([[s11, s12, s13, s14],
+                             [s12, s11, s14, s13],
+                             [s13, s14, s11, s12],
+                             [s14, s13, s12, s11]]).transpose(2, 0, 1)
 
         # renormalize (or embed) into z0_port if required
         if self.z0_port is not None:
@@ -1565,6 +1679,7 @@ class Media(ABC):
         """
         result = self.match(nports = n_ports, **kwargs)
         result.s = mf.rand_c(self.frequency.npoints, n_ports,n_ports)
+        result.port_modes = np.array(["S"] * result.nports)
         if reciprocal and n_ports>1:
             for m in range(n_ports):
                 for n in range(n_ports):

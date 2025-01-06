@@ -1,5 +1,5 @@
 {% set name = "scikit-rf" %}
-{% set version = "1.0.0" %}
+{% set version = "1.5.0" %}
 {% set hash_val = "8223204281599ba14b685d7e28b7e361" %}
 
 package:
@@ -17,7 +17,7 @@ build:
 
 requirements:
   build:
-    - python>=3.7
+    - python>=3.8
     - setuptools
     - pandas
     - ipython
@@ -28,7 +28,7 @@ requirements:
 
     
   run:
-    - python>=3.7
+    - python>=3.8
     - setuptools
     - pandas
     - ipython
