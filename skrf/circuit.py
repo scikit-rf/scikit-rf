@@ -92,6 +92,7 @@ Graph representation
 """
 from __future__ import annotations
 
+import warnings
 from functools import cached_property
 from itertools import chain
 from typing import TYPE_CHECKING, Sequence, TypedDict
@@ -1237,7 +1238,14 @@ class Circuit:
 
         # Get the sub-matrices of inverse of intermediate temporary matrix t
         # The method np.linalg.solve(A, B) is equivalent to np.inv(A) @ B, but more efficient
-        tmp_mat = np.linalg.solve(t[D_idx], t[C_idx])
+        try:
+            tmp_mat = np.linalg.solve(t[D_idx], t[C_idx])
+        except np.linalg.LinAlgError:
+            warnings.warn('Singular matrix detected, using numpy.linalg.lstsq instead.', RuntimeWarning, stacklevel=2)
+            # numpy.linalg.lstsq only works for 2D arrays, so we need to loop over frequencies
+            tmp_mat = np.zeros((self.frequency.npoints, len(in_idxs), len(ext_idxs)), dtype='complex')
+            for i in range(self.frequency.npoints):
+                tmp_mat[i, :, :] = np.linalg.lstsq(t[i, D_idx[1], D_idx[2]], t[i, C_idx[1], C_idx[2]], rcond=None)[0]
 
         # Get the external S-parameters for the external ports
         # Calculated by multiplying the sub-matrices of x and t
