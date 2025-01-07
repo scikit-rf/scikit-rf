@@ -433,6 +433,8 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
         self.open = rf.Circuit.Open(self.freq, name='PortO')
         _media = rf.media.DefinedGammaZ0(frequency=self.freq)
         self.match = _media.match(name='match')
+        self.tee = _media.tee(name='tee')
+        self.thru = _media.thru()
 
     def test_cascade(self):
         """
@@ -470,6 +472,40 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
         circuit = rf.Circuit(connections)
         ntw = self.ntwk2 ** self.ntwk1
         assert_array_almost_equal(circuit.s_external, ntw.s)
+
+    def test_numerical_singular_corner_case(self):
+        """
+        Test a numerical singular corner case which 2 Tee Networks are cascaded.
+        Schematic of the test circuit:
+           +------+    +------+          +------------+            +------------+
+          -|0     |    |     1|-      p1-|T1(0)  T2(1)|-p3      p1-|T1(0)  T2(1)|-p2
+           |     2|----|0     |   =>     |            |     =>  +--|T1(1)  T2(2)|--+
+          -|1     |    |     2|-      p2-|T1(1)  T2(2)|-p4      |  +------------+  |
+           +------+    +------+          +------------+         +------------------+
+              T1          T2                  Temp                      Thru
+        """
+        T1, T2 = self.tee, self.tee
+        temp = rf.connect(T1, 2, T2, 0)
+
+        # Check the s-parameters of the temporary Network
+        assert_array_almost_equal(temp.s, np.array([ [ [-0.5,  0.5,  0.5,  0.5],
+                                                       [ 0.5, -0.5,  0.5,  0.5],
+                                                       [ 0.5,  0.5, -0.5,  0.5],
+                                                       [ 0.5,  0.5,  0.5, -0.5], ]
+                                                    for _ in range(self.tee.frequency.npoints) ]
+                                                    ,dtype=complex))
+
+        connections = [  [(self.port1, 0), (temp, 0)],
+                         [(temp, 1),       (temp, 3)],
+                         [(self.port2, 0), (temp, 2)] ]
+
+        # Check the s-parameters of the Circuit, which should raise a runtime warning and
+        # the Network should be equal to the thru Network
+        circuit = rf.Circuit(connections)
+        with self.assertWarns(RuntimeWarning):
+            ntw = circuit.network
+
+        assert_array_almost_equal(ntw.s, self.thru.s)
 
     def test_open_condensation(self):
         """

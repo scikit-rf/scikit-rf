@@ -47,6 +47,8 @@ Reading/Writing Anritsu VectorStar
 
 
 """
+from __future__ import annotations
+
 import os
 from warnings import warn
 
@@ -54,13 +56,14 @@ import numpy as np
 
 from .. import mathFunctions as mf
 from .. import util
+from ..constants import FREQ_UNITS, FrequencyUnitT
 from ..frequency import Frequency
 from ..network import Network
 
 # delayed imports
 # from pandas import Series, Index, DataFrame
 
-def read_pna_csv(filename, *args, **kwargs):
+def read_pna_csv(filename, *args, **kwargs) -> tuple[str, str, np.ndarray]:
     r"""
     Reads data from a csv file written by an Agilient PNA.
 
@@ -134,6 +137,17 @@ def read_pna_csv(filename, *args, **kwargs):
     # pna uses unicode coding for degree symbol, but we dont need that
     header = header.replace('\xb0','deg').rstrip('\n').rstrip('\r')
 
+    units_dict: dict[str, FrequencyUnitT] = {k.lower(): k for k in FREQ_UNITS.keys()}
+
+    # Get the frequency unit from the header and convert to Hz
+    unit_raw = header.split(',')[0].strip('Freq')[1:-1]
+    try:
+        unit_tmp = unit_raw.lower()
+        if unit_tmp in units_dict:
+            data[:, 0] *= FREQ_UNITS[units_dict[unit_tmp]]
+    except Exception as exc:
+        raise ValueError(f"Could not parse frequency unit '{unit_raw}'") from exc
+
     return header, comments, data
 
 def pna_csv_2_df(filename):
@@ -166,7 +180,7 @@ def pna_csv_2_ntwks2(filename, *args, **kwargs):
     header, comments, d = read_pna_csv(filename)
     ntwk_dict  = {}
     param_set=set([k[:3] for k in df.columns])
-    f = df.index.values*1e-9
+    f = df.index.values
     for param in param_set:
         try:
             s = mf.dbdeg_2_reim(
@@ -179,7 +193,7 @@ def pna_csv_2_ntwks2(filename, *args, **kwargs):
                 df[f'{param} (IMAG)'].values,
                 )
 
-        ntwk_dict[param] = Network(f=f, s=s, name=param, comments=comments)
+        ntwk_dict[param] = Network(f=f, s=s, name=param, comments=comments, f_unit='Hz')
 
 
     try:
@@ -216,8 +230,8 @@ def pna_csv_2_ntwks3(filename):
 
     # set impedance to 50 Ohm (doesn't matter for now)
     z0 = np.ones(np.shape(d)[0])*50
-    # read f values, convert to GHz
-    f = d[:,0]/1e9
+    # read f values
+    f = d[:,0]
 
     name = os.path.splitext(os.path.basename(filename))[0]
 
@@ -236,7 +250,7 @@ def pna_csv_2_ntwks3(filename):
             elif 's22' in h.lower() and 'db' in h.lower():
                 s[:,1,1] = mf.dbdeg_2_reim(d[:,k+1], d[:,k+2])
 
-        n = Network(f=f,s=s,z0=z0, name = name)
+        n = Network(f=f,s=s,z0=z0, name = name, f_unit="Hz")
         return n
 
     else:
@@ -619,16 +633,16 @@ def pna_csv_2_ntwks(filename):
 
     if (d.shape[1]-1)/2 == 0 :
         # this isnt complex data
-        f = d[:,0]*1e-9
+        f = d[:,0]
         if 'db' in header.lower():
             s = mf.db_2_mag(d[:,1])
         else:
             raise (NotImplementedError)
         name = os.path.splitext(os.path.basename(filename))[0]
-        return Network(f=f, s=s, name=name, comments=comments)
+        return Network(f=f, s=s, name=name, comments=comments, f_unit='Hz')
     else:
         for k in range(int((d.shape[1]-1)/2)):
-            f = d[:,0]*1e-9
+            f = d[:,0]
             name = names[k]
             print((names[k], names[k+1]))
             if 'db' in names[k].lower() and 'deg' in names[k+1].lower():
@@ -640,7 +654,7 @@ def pna_csv_2_ntwks(filename):
                 s = d[:,k*2+1]+1j*d[:,k*2+2]
 
             ntwk_list.append(
-                Network(f=f, s=s, name=name, comments=comments)
+                Network(f=f, s=s, name=name, comments=comments, f_unit='Hz')
                 )
 
     return ntwk_list
@@ -648,15 +662,9 @@ def pna_csv_2_ntwks(filename):
 def pna_csv_2_freq(filename):
     warn("deprecated", DeprecationWarning, stacklevel=2)
     header, comments, d = read_pna_csv(filename)
-    #try to pull out frequency unit
-    cols = pna_csv_header_split(filename)
-    try:
-        f_unit = cols[0].split('(')[1].split(')')[0]
-    except  Exception:
-        f_unit = 'hz'
 
     f = d[:,0]
-    return Frequency.from_f(f, unit = f_unit)
+    return Frequency.from_f(f, unit = "Hz")
 
 
 def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
@@ -683,15 +691,8 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
 
     cols = pna_csv_header_split(filename)
 
-
-    #try to pull out frequency unit
-    try:
-        f_unit = cols[0].split('(')[1].split(')')[0]
-    except  Exception:
-        f_unit = 'hz'
-
     f = d[:,0]
-    freq = Frequency.from_f(f, unit = f_unit)
+    freq = Frequency.from_f(f, unit = 'Hz')
 
     # loop through columns and create a single network for each column
     ntwk_list = []
