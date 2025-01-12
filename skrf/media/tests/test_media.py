@@ -100,6 +100,19 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         assert_array_almost_equal(ref.s, tee.s)
         assert_array_almost_equal(np.linalg.inv(tee.s), tee.s.conj())
 
+    def test_splitter_is_reciprocal_and_unitary(self):
+        """
+        Test the splitter's s-parameters is reciprocal and unitary matrix for
+        different port impedances.
+        """
+        # A unitary matrix satisfies the property that its inverse is equal to its conjugate transpose.
+        # Additionally, a reciprocal matrix satisfies the property that its transpose is equal to itself.
+        # Combining these properties, the inverse of the splitter's S-parameters is equal to its conjugate.
+        for z0 in ((50, 50, 50), (25, 50, 75), (25+25j, 50, 75-25j)):
+            # Test the reciprocal and unitary property for matched, mismatched and complex impedance Tee/splitters.
+            tee = self.dummy_media.tee(z0=z0)
+            assert_array_almost_equal(np.linalg.inv(tee.s), tee.s.conj())
+
     def test_thru(self):
         """
         Test the naming of the network. When circuit is used to connect a
