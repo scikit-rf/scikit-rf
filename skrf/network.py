@@ -116,6 +116,7 @@ Supporting Functions
     inv
     connect_s
     innerconnect_s
+    innerconnect_s_lstsq
     s2z
     s2y
     s2t
@@ -1413,6 +1414,10 @@ class Network:
             raise (TypeError('One-Port Networks don\'t have inverses'))
         out = self.copy()
         out.s = inv(self.s)
+        # flip the port impedances, nports is even guaranteed by inv() method
+        port_pairs: int = self.nports // 2
+        out.z0[:, :port_pairs] = self.z0[:, port_pairs:]
+        out.z0[:, port_pairs:] = self.z0[:, :port_pairs]
         out.deembed = True
         return out
 
@@ -5037,6 +5042,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     --------
     connect_s : actual  S-parameter connection algorithm.
     innerconnect_s : actual S-parameter connection algorithm.
+    innerconnect_s_lstsq : actual S-parameter connection algorithm using lstsq.
 
 
     Examples
@@ -5298,6 +5304,7 @@ def parallelconnect(ntwks: Sequence[Network] | Network,
     --------
     connect_s : actual S-parameter connection algorithm.
     innerconnect_s : actual S-parameter connection algorithm.
+    innerconnect_s_lstsq : actual S-parameter connection algorithm using lstsq.
 
 
     Examples
@@ -5471,6 +5478,7 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     --------
     connect_s : actual  S-parameter connection algorithm.
     innerconnect_s : actual S-parameter connection algorithm.
+    innerconnect_s_lstsq : actual S-parameter connection algorithm using lstsq.
 
 
     Examples
@@ -6273,6 +6281,7 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.
     --------
     connect : operates on :class:`Network` types
     innerconnect_s : function which implements the connection algorithm
+    innerconnect_s_lstsq : actual S-parameter connection algorithm using lstsq.
 
 
     """
@@ -6344,6 +6353,11 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
             new S-parameter matrix
 
 
+    See Also
+    --------
+    innerconnect_s_lstsq : actual S-parameter connection algorithm using lstsq.
+
+
     References
     ----------
     .. [#] Compton, R.C.; , "Perspectives in microwave circuit analysis," Circuits and Systems, 1989.,
@@ -6382,6 +6396,18 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
     Akk = A[:, k, k]
     All = A[:, l, l]
 
+    # create temporary matrices for calculation
+    det = (Akl * Alk - Akk * All)
+
+    # Check if the determinant is almost zero, in which case use lstsq solution
+    if np.allclose(det, 0.0):
+        warnings.warn(
+            'Singular matrix detected, using numpy.linalg.lstsq instead.',
+            RuntimeWarning,
+            stacklevel=2
+        )
+        return innerconnect_s_lstsq(A, k, l)
+
     # Indexing sub-matrices of other external ports
     Ake = A[:, k, ext_i].T
     Ale = A[:, l, ext_i].T
@@ -6392,14 +6418,75 @@ def innerconnect_s(A: np.ndarray, k: int, l: int) -> np.ndarray:
     i, j = np.meshgrid(ext_i, ext_i, indexing='ij', sparse=True)
     C = A[:, i, j]
 
-    # create temporary matrices for calculation
-    det = (Akl * Alk - Akk * All)
     tmp_a = Ael * (Alk / det) + Aek * (All / det)
     tmp_b = Ael * (Akk / det) + Aek * (Akl / det)
 
     # loop through ports and calculates resultant s-parameters
     for i in range(nA - 2):
         C[:, i, :] += (Ake * tmp_a[i] + Ale * tmp_b[i]).T
+
+    return C
+
+def innerconnect_s_lstsq(A: np.ndarray, k: int, l: int) -> np.ndarray:
+    """
+    Connect two ports of a single n-port network's s-matrix using a
+    least-squares solution. It uses a least-squares approach to handle
+    cases where the determinant of the sub-matrix is close to zero, which
+    can lead to numerical instability in the direct formula.
+
+
+    Note
+    ----
+    If the determinant of the sub-matrix is not close to zero, it is recommended
+    to use the `innerconnect_s` function instead, which uses a direct formula
+    for better numerical stability.
+
+
+    Parameters
+    ----------
+    A : :class:`numpy.ndarray`
+        S-parameter matrix of `A`, shape is fxnxn
+    k : int
+        port index on `A` (port indices start from 0)
+    l : int
+        port index on `A`
+
+    Returns
+    -------
+    AEE : :class:`numpy.ndarray`
+            new S-parameter matrix
+
+
+    See Also
+    --------
+    connect_s : actual  S-parameter connection algorithm.
+    innerconnect_s : actual S-parameter connection algorithm.
+    """
+
+    if k > A.shape[-1] - 1 or l > A.shape[-1] - 1:
+        raise (ValueError("port indices are out of range"))
+
+    nA = A.shape[1]  # num of ports on input s-matrix
+
+    # Identify internal and external port indices
+    int_i = (k, l)
+    ext_i = [i for i in range(nA) if i not in int_i]
+
+    # Extract sub-matrices for internal and external ports
+    AI = A[:, int_i[::-1], :]
+    AE = A[:, ext_i, :]
+    AII = AI[:, :, int_i]
+    AIE = AI[:, :, ext_i]
+    AEI = AE[:, :, int_i]
+    AEE = AE[:, :, ext_i]
+
+    # Preprocess AII and AEE matrix
+    AII = np.eye(2)[None, :, :] - AII
+    C = np.array(AEE, order='C')
+
+    # Perform least-squares solution for each frequency
+    for i in range(A.shape[0]):
+        C[i, :, :] += AEI[i, :, :] @ np.linalg.lstsq(AII[i, :, :], AIE[i, :, :], rcond=None)[0]
 
     return C
 

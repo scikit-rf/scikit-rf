@@ -847,6 +847,36 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(np.allclose(ntwk_par.s, tee_ntwk.s))
         self.assertTrue(np.allclose(ntwk_par.s, ckt_ntwk.s))
 
+    def test_innerconnect_with_singular_case(self):
+        # Schematic of the test circuit:
+        #   +------+    +------+          +------------+            +------------+
+        #  -|0     |    |     1|-      p1-|T1(0)  T2(1)|-p3      p1-|T1(0)  T2(1)|-p2
+        #   |     2|----|0     |   =>     |            |     =>  +--|T1(1)  T2(2)|--+
+        #  -|1     |    |     2|-      p2-|T1(1)  T2(2)|-p4      |  +------------+  |
+        #   +------+    +------+          +------------+         +------------------+
+        #      T1          T2                  Temp                      Thru
+
+        # Create media and Tees
+        media = rf.media.DefinedGammaZ0()
+        T1, T2 = media.tee(name='T1'), media.tee(name='T2')
+
+        # Connect the T1 and T2 together
+        temp = rf.connect(T1, 2, T2, 0)
+
+        # Check the s-parameters of the temporary Network
+        self.assertTrue(np.allclose(temp.s, np.array([ [ [-0.5,  0.5,  0.5,  0.5],
+                                                       [ 0.5, -0.5,  0.5,  0.5],
+                                                       [ 0.5,  0.5, -0.5,  0.5],
+                                                       [ 0.5,  0.5,  0.5, -0.5], ]
+                                                    for _ in range(media.frequency.npoints) ]
+                                                    ,dtype=complex)))
+
+        # Innerconnect the temp to ntw and compares with the expected result
+        with self.assertWarns(RuntimeWarning):
+            ntw = rf.innerconnect(temp, 1, 3)
+
+        self.assertTrue(np.allclose(ntw.s, media.thru().s))
+
     def test_max_stable_gain(self):
         # Check whether the maximum stable gain agrees with that derived from Y-parameters
         y12 = self.fet.y[:, 0, 1]
@@ -996,6 +1026,15 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(self.ntwk3 ** self.ntwk2.inv, self.ntwk1)
         self.assertEqual(self.Fix.inv ** self.Meas ** self.Fix.flipped().inv,
                          self.DUT)
+
+    def test_de_embed_port_impedance(self):
+        ntw = self.ntwk1.copy()
+        ntw.renormalize((25, 75))
+        ntw_inv = ntw.inv
+        self.assertTrue(np.allclose(ntw_inv.z0, (75, 25)))
+        rst = ntw_inv ** self.ntwk3
+        rst.renormalize(50)
+        self.assertEqual(rst, self.ntwk2)
 
     @pytest.mark.skipif("matplotlib" not in sys.modules, reason="Requires matplotlib in sys.modules.")
     def test_plot_one_port_db(self):
