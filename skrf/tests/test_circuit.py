@@ -499,13 +499,11 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
                          [(temp, 1),       (temp, 3)],
                          [(self.port2, 0), (temp, 2)] ]
 
-        # Check the s-parameters of the Circuit, which should raise a runtime warning and
-        # the Network should be equal to the thru Network
+        # Check the s-parameters of the Circuit, the Network should be equal to the thru Network
+        # RuntimeWarning not triggered after the PR #1227
         circuit = rf.Circuit(connections)
-        with self.assertWarns(RuntimeWarning):
-            ntw = circuit.network
 
-        assert_array_almost_equal(ntw.s, self.thru.s)
+        assert_array_almost_equal(circuit.network.s, self.thru.s)
 
     def test_open_condensation(self):
         """
