@@ -2584,13 +2584,13 @@ class Network:
                 if ntwk.noisy:
                     # if this is an MDIF file, format accordingly
                     if to_mdif:
-                        # this "END" terminates "ACDATA"
+                        # this "END" terminates "ACDATA" (s-parameters) and begins noise ("NDATA")
                         output.write("END\n\nBEGIN NDATA\n")
                         output.write("! Noise Data\n! freq\tnf_min_db\tmagGOpt\tdegGOpt\tRn_eff\n")
                         output.write("# GHz\tS\tMA\tR\t50\n")
                         output.write("%F  nfmin n11x n11y rn\n")
+                    # not an MDIF, just a Touchstone file
                     else:
-                        # not an MDIF, just a Touchstone file
                         output.write("! Noise Data\n! freq\tnf_min_db\tmagGOpt\tdegGOpt\tRn_eff\n")
                     new = ntwk.copy()
                     new.resample(ntwk.f_noise) # only write data from original noise freqs
