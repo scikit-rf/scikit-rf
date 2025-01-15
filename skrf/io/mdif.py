@@ -475,7 +475,7 @@ class Mdif:
                 mdif.write("\nBEGIN ACDATA\n")
                 mdif.write(optionstring + "\n")
                 mdif.write("! network name: " + ntwk.name + "\n")
-                data = ntwk.write_touchstone(return_string=True, **kwargs)
+                data = ntwk.write_touchstone(return_string=True, to_mdif=True, **kwargs)
                 mdif.write(data)
                 mdif.write("END\n\n")
 

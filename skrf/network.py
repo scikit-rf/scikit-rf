@@ -2337,7 +2337,7 @@ class Network:
                          format_spec_freq: str = '{}', r_ref: float = None,
                          format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
                          format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
-                         format_spec_rn: str = '{}') -> str | None:
+                         format_spec_rn: str = '{}', to_mdif: bool = False) -> str | None:
 
         """
         Write a contents of the :class:`Network` to a touchstone file.
@@ -2402,6 +2402,8 @@ class Network:
             Any valid format specifying string as given by
             https://docs.python.org/3/library/string.html#format-string-syntax
             This specifies the formatting in the resulting touchstone file for the noise resistance.
+        to_mdif : bool, optional
+            Write MDIF formatting when exporting noise parameters.
 
         Note
         ----
@@ -2580,7 +2582,16 @@ class Network:
 
                 # write noise data if it exists
                 if ntwk.noisy:
-                    output.write("! Noise Data\n! freq\tnf_min_db\tmagGOpt\tdegGOpt\tRn_eff\n")
+                    # if this is an MDIF file, format accordingly
+                    if to_mdif:
+                        # this "END" terminates "ACDATA"
+                        output.write("END\n\nBEGIN NDATA\n")
+                        output.write("! Noise Data\n! freq\tnf_min_db\tmagGOpt\tdegGOpt\tRn_eff\n")
+                        output.write("# GHz\tS\tMA\tR\t50\n")
+                        output.write("%F  nfmin n11x n11y rn\n")
+                    else:
+                        # not an MDIF, just a Touchstone file
+                        output.write("! Noise Data\n! freq\tnf_min_db\tmagGOpt\tdegGOpt\tRn_eff\n")
                     new = ntwk.copy()
                     new.resample(ntwk.f_noise) # only write data from original noise freqs
                     for f, nf, g_opt, rn, z0 in zip(new.f_noise.f_scaled, new.nfmin_db, new.g_opt, new.rn, new.z0):
