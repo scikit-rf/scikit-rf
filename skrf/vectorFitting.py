@@ -957,12 +957,48 @@ class VectorFitting:
         A[:, idx_constant] = 1
         A[:, idx_proportional] = s[:, None]
 
-        logger.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A))}')
+        # DC POINT ENFORCEMENT
+        if freqs[0] == 0.0:
+            # data contains the dc point; enforce dc point via linear equality constraint:
+            # 1: remove any one variable from the solution vector (choice: residue at index 0)
+            # 2: solve remaining linear system (without data at dc) with regular least-squares
+            #    the size of the solution vector, the coefficient matrix, and the right-hand side are reduced by 1
+            # 3: calculate the removed variable (residue 0) with the data from the dc point
+            #
+            # linear system: A * x = b
+            # solution vector x contains the unknown residues
+            # right-hand side b contains the frequency response to be fitted, sorted by ascending frequency (dc first)
+            # coefficient matrix A and vector b are split: A = [[A11, A12], [A21, A22]], b = [[b1], [b2]]
+            # [A11, A12] is the first row used later for dc enforcement
+            # A21 is a column vector, which is not required anymore
+            # A22 is the rest of the matrix
 
-        # solve least squares and obtain results as stack of real part vector and imaginary part vector
-        x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((A.real, A.imag)),
-                                                            np.hstack((freq_responses.real, freq_responses.imag)).T,
-                                                            rcond=None)
+            A11 = A[0, 0]
+            A12 = A[0, 1:]
+            A22 = A[1:, 1:]
+            b1 = freq_responses[:, 0]
+            b2 = freq_responses[:, 1:]
+
+            A_lstsq = np.vstack((A22.real, A22.imag))
+            b_lstsq = np.hstack((b2.real, b2.imag)).T
+
+            logger.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A_lstsq))}')
+
+            # solve least squares and obtain results as stack of real part vector and imaginary part vector
+            x2, residuals, rank, singular_vals = np.linalg.lstsq(A_lstsq, b_lstsq, rcond=None)
+
+            x1 = 1 / A11 * (b1 - np.dot(A12, x2))
+            x = np.vstack((x1, x2))
+
+        else:
+            # dc point not included; use and solve the entire linear system with least-squares
+            A_lstsq = np.vstack((A.real, A.imag))
+            b_lstsq = np.hstack((freq_responses.real, freq_responses.imag)).T
+
+            logger.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A_lstsq))}')
+
+            # solve least squares and obtain results as stack of real part vector and imaginary part vector
+            x, residuals, rank, singular_vals = np.linalg.lstsq(A_lstsq, b_lstsq, rcond=None)
 
         # extract residues from solution vector and align them with poles to get matching pole-residue pairs
         residues = np.empty((len(freq_responses), len(poles)), dtype=complex)
