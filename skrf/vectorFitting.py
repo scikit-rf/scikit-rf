@@ -791,6 +791,21 @@ class VectorFitting:
         # part 4: constant (variable d_res)
         A[:, :, -1] = -1 * freq_responses
 
+        # DC POINT ENFORCEMENT
+        if freqs[0] == 0.0:
+            dc_enforce = True
+            A11 = A[0, 0]
+            A12 = A[0, 1:]
+            A22 = A[1:, 1:]
+
+            A_lstsq = np.vstack((A22.real, A22.imag))
+
+        else:
+
+            dc_enforce = False
+
+        dc_enforce = False
+
         # calculation of matrix sizes after QR decomposition:
         # stacked coefficient matrix (A.real, A.imag) has shape (L, M, N)
         # with
@@ -825,8 +840,12 @@ class VectorFitting:
         R22 = weights_responses[:, None, None] * R22
 
         # assemble compressed coefficient matrix A_fast by row-stacking individual upper triangular matrices R22
-        A_fast = np.empty((n_responses * n_rows_r22 + 1, n_cols_used))
-        A_fast[:-1, :] = R22.reshape((n_responses * n_rows_r22, n_cols_used))
+        dim0 = n_responses * n_rows_r22 + 1
+        if dc_enforce:
+            dim0 -= 1
+
+        A_fast = np.empty((dim0, n_cols_used))
+        A_fast[:-1, :] = R22.reshape((dim0 - 1, n_cols_used))
 
         # extra equation to avoid trivial solution
         A_fast[-1, idx_res_real] = np.sum(coeff_real.real, axis=0)
@@ -838,7 +857,7 @@ class VectorFitting:
         A_fast[-1, :] = weight_extra * A_fast[-1, :]
 
         # right hand side vector (weighted)
-        b = np.zeros(n_responses * n_rows_r22 + 1)
+        b = np.zeros(dim0)
         b[-1] = weight_extra * n_samples
 
         # check condition of the linear system
