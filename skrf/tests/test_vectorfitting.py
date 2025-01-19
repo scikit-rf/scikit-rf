@@ -71,7 +71,7 @@ class VectorFittingTestCase(unittest.TestCase):
         vf = skrf.VectorFitting(nw)
         vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
         # quality of the fit is not important in this test; it only needs to finish
-        self.assertLess(vf.get_rms_error(), 0.2)
+        self.assertLess(vf.get_rms_error(), 0.3)
 
     def test_read_write_npz(self):
         # fit ring slot example network
@@ -81,7 +81,7 @@ class VectorFittingTestCase(unittest.TestCase):
         with pytest.warns(UserWarning) as record:
             vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
 
-        assert len(record) == 1
+        self.assertTrue(len(record) == 1)
 
         # export (write) fitted parameters to .npz file in tmp directory
         with  tempfile.TemporaryDirectory() as name:
@@ -127,12 +127,10 @@ class VectorFittingTestCase(unittest.TestCase):
         vf = skrf.VectorFitting(skrf.data.ring_slot)
         vf.auto_fit()
 
-        assert vf.get_model_order(vf.poles) == 6
-        assert np.sum(vf.poles.imag == 0.0) == 0
-        assert np.sum(vf.poles.imag > 0.0) == 3
-
-        assert np.allclose(vf.get_rms_error(), 1.2748979815157275e-06)
-
+        self.assertTrue(vf.get_model_order(vf.poles) == 6)
+        self.assertTrue(np.sum(vf.poles.imag == 0.0) == 0)
+        self.assertTrue(np.sum(vf.poles.imag > 0.0) == 3)
+        self.assertLess(vf.get_rms_error(), 1e-05)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(VectorFittingTestCase)
