@@ -791,20 +791,7 @@ class VectorFitting:
         # part 4: constant (variable d_res)
         A[:, :, -1] = -1 * freq_responses
 
-        # DC POINT ENFORCEMENT
-        if freqs[0] == 0.0:
-            dc_enforce = True
-            A11 = A[0, 0]
-            A12 = A[0, 1:]
-            A22 = A[1:, 1:]
-
-            A_lstsq = np.vstack((A22.real, A22.imag))
-
-        else:
-
-            dc_enforce = False
-
-        dc_enforce = False
+        A_ri = np.hstack((A.real, A.imag))
 
         # calculation of matrix sizes after QR decomposition:
         # stacked coefficient matrix (A.real, A.imag) has shape (L, M, N)
@@ -814,24 +801,27 @@ class VectorFitting:
         # N = n_cols_unused + n_cols_used
         # then
         # R has shape (L, K, N) with K = min(M, N)
-        dim_k = min(2 * n_freqs, n_cols_unused + n_cols_used)
+        dim_m = 2 * n_freqs
+        dim_n = n_cols_unused + n_cols_used
+        dim_k = min(dim_m, dim_n)
 
         # QR decomposition
-        # R = np.linalg.qr(np.hstack((A.real, A.imag)), 'r')
+        # R = np.linalg.qr(A_ri, 'r')
 
         # direct QR of stacked matrices for linalg.qr() only works with numpy>=1.22.0
         # workaround for old numpy:
-        R = np.empty((n_responses, dim_k, n_cols_unused + n_cols_used))
-        A_ri = np.hstack((A.real, A.imag))
+        R = np.empty((n_responses, dim_k, dim_n))
         for i in range(n_responses):
             R[i] = np.linalg.qr(A_ri[i], mode='r')
 
         # only R22 is required to solve for c_res and d_res
         # R12 and R22 can have a different number of rows, depending on K
-        if dim_k == 2 * n_freqs:
+        if dim_k == dim_m:
+            # K = M
             n_rows_r12 = n_freqs
             n_rows_r22 = n_freqs
         else:
+            # K = N
             n_rows_r12 = n_cols_unused
             n_rows_r22 = n_cols_used
         R22 = R[:, n_rows_r12:, n_cols_unused:]
@@ -841,8 +831,6 @@ class VectorFitting:
 
         # assemble compressed coefficient matrix A_fast by row-stacking individual upper triangular matrices R22
         dim0 = n_responses * n_rows_r22 + 1
-        if dc_enforce:
-            dim0 -= 1
 
         A_fast = np.empty((dim0, n_cols_used))
         A_fast[:-1, :] = R22.reshape((dim0 - 1, n_cols_used))
@@ -860,12 +848,33 @@ class VectorFitting:
         b = np.zeros(dim0)
         b[-1] = weight_extra * n_samples
 
-        # check condition of the linear system
-        cond = np.linalg.cond(A_fast)
-        full_rank = np.min(A_fast.shape)
+        # DC POINT ENFORCEMENT
+        if freqs[0] == 0.0:
+            A11 = A_fast[0, 0]
+            A12 = A_fast[0, 1:]
+            A22 = A_fast[1:, 1:]
+            b1 = b[0]
+            b2 = b[1:]
 
-        # solve least squares for real parts
-        x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
+            A_lstsq = np.vstack((A22.real, A22.imag))
+            b_lstsq = np.hstack((b2.real, b2.imag)).T
+
+            # check condition of the linear system
+            cond = np.linalg.cond(A_lstsq)
+            full_rank = np.min(A_lstsq.shape)
+
+            # solve least squares for real parts
+            x2, residuals, rank, singular_vals = np.linalg.lstsq(A_lstsq, b_lstsq, rcond=None)
+
+            x1 = 1 / A11 * (b1 - np.dot(A12, x2))
+            x = np.hstack((x1, x2))
+        else:
+            # check condition of the linear system
+            cond = np.linalg.cond(A_fast)
+            full_rank = np.min(A_fast.shape)
+
+            # solve least squares for real parts
+            x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
 
         # rank deficiency
         rank_deficiency = full_rank - rank
