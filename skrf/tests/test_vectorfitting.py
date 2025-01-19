@@ -64,14 +64,28 @@ class VectorFittingTestCase(unittest.TestCase):
 
         assert len(record) == 1
 
-    def test_dc(self):
+    def test_dc_enforcement(self):
         # perform the fit on data including a dc sample (0 Hz)
         s4p_file = Path(__file__).parent / 'cst_example_4ports.s4p'
         nw = skrf.Network(s4p_file)
         vf = skrf.VectorFitting(nw)
-        vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
-        # quality of the fit is not important in this test; it only needs to finish
-        self.assertLess(vf.get_rms_error(), 0.3)
+        vf.auto_fit()
+
+        # rough check on fit quality
+        self.assertLess(vf.get_rms_error(), 0.2)
+
+        # evaluate model error at the dc point
+        vf_fit = np.empty(nw.nports ** 2, dtype=complex)
+        abs_errors = np.empty(nw.nports ** 2)
+
+        for i in range(nw.nports):
+            for j in range(nw.nports):
+                vf_ij = vf.get_model_response(i, j, nw.f[0])
+                vf_fit[i * nw.nports + j] = vf_ij
+                abs_errors[i * nw.nports + j] = np.abs(vf_ij - nw.s[0, i, j])
+
+        self.assertTrue(np.all(abs_errors < 1e-10))
+
 
     def test_read_write_npz(self):
         # fit ring slot example network
