@@ -850,6 +850,20 @@ class VectorFitting:
 
         # DC POINT ENFORCEMENT
         if freqs[0] == 0.0:
+            # data contains the dc point; enforce dc point via linear equality constraint:
+            # 1: remove one variable from the solution vector (choice: residue at index 0).
+            # 2: solve remaining linear system (without data at dc) with regular least-squares, as usual. the size of
+            #    the solution vector, the coefficient matrix, and the right-hand side are reduced by 1
+            # 3: calculate the removed variable (residue 0) with the data from the dc point
+            #
+            # linear system: A_fast * x = b
+            # solution vector x contains the unknown residues
+            # right-hand side b contains the frequency response to be fitted, sorted by ascending frequency (dc first)
+            # coefficient matrix A_fast and vector b are split: A_fast = [[A11, A12], [A21, A22]], b = [[b1], [b2]]
+            # [A11, A12] is the first row used later for dc enforcement
+            # A21 is a column vector, which is not required anymore
+            # A22 is the rest of the matrix for usual least-squares fitting
+
             A11 = A_fast[0, 0]
             A12 = A_fast[0, 1:]
             A22 = A_fast[1:, 1:]
@@ -988,9 +1002,9 @@ class VectorFitting:
         # DC POINT ENFORCEMENT
         if freqs[0] == 0.0:
             # data contains the dc point; enforce dc point via linear equality constraint:
-            # 1: remove any one variable from the solution vector (choice: residue at index 0)
-            # 2: solve remaining linear system (without data at dc) with regular least-squares
-            #    the size of the solution vector, the coefficient matrix, and the right-hand side are reduced by 1
+            # 1: remove one variable from the solution vector (choice: residue at index 0).
+            # 2: solve remaining linear system (without data at dc) with regular least-squares, as usual. the size of
+            #    the solution vector, the coefficient matrix, and the right-hand side are reduced by 1
             # 3: calculate the removed variable (residue 0) with the data from the dc point
             #
             # linear system: A * x = b
@@ -999,7 +1013,7 @@ class VectorFitting:
             # coefficient matrix A and vector b are split: A = [[A11, A12], [A21, A22]], b = [[b1], [b2]]
             # [A11, A12] is the first row used later for dc enforcement
             # A21 is a column vector, which is not required anymore
-            # A22 is the rest of the matrix
+            # A22 is the rest of the matrix for usual least-squares fitting
 
             A11 = A[0, 0]
             A12 = A[0, 1:]
