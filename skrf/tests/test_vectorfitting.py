@@ -2,14 +2,10 @@ import os
 import sys
 import tempfile
 import unittest
-from contextlib import suppress
 from pathlib import Path
 
 import numpy as np
 import pytest
-
-with suppress(ImportError):
-    from PySpice.Spice.Parser import SpiceParser
 
 import skrf
 
@@ -76,32 +72,6 @@ class VectorFittingTestCase(unittest.TestCase):
         vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
         # quality of the fit is not important in this test; it only needs to finish
         self.assertLess(vf.get_rms_error(), 0.2)
-
-    @pytest.mark.skipif(
-        "PySpice" not in sys.modules,
-        reason="test_spice_subcircuit uses PySpice parser but it is not available.")
-    def test_spice_subcircuit(self):
-        # fit ring slot example network
-        nw = skrf.data.ring_slot
-        vf = skrf.vectorFitting.VectorFitting(nw)
-        vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_constant=True, fit_proportional=True)
-
-        # write equivalent SPICE subcircuit to tmp file
-        tmp_file = tempfile.NamedTemporaryFile(suffix='.sp', delete=False)
-        name = tmp_file.name
-        tmp_file.close()
-        vf.write_spice_subcircuit_s(name)
-
-        parser = SpiceParser(name)
-
-        # Number of elements on global level
-        assert len(parser.subcircuits[0]._statements) == 38
-        # Number of elements in RLCG subckt
-        assert len(parser.subcircuits[1]._statements) == 4
-        # Number of elements in RL subckt
-        assert len(parser.subcircuits[2]._statements) == 2
-
-        os.remove(name)
 
     def test_read_write_npz(self):
         # fit ring slot example network

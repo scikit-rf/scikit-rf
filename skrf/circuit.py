@@ -884,11 +884,18 @@ class Circuit:
         return edge_labels
 
 
-    def _Xk(self, cnx_k: list[tuple[Network, int]], order: MemoryLayoutT = 'C') -> np.ndarray:
+    def _Xk(self,
+            cnx_k: list[tuple[Network, int]],
+            order: MemoryLayoutT = 'C',
+            inverse: bool = False) -> np.ndarray:
         """
         Return the scattering matrices [X]_k of the individual intersections k.
         The results in [#]_ do not agree due to an error in the formula (3)
         for mismatched intersections.
+
+        Due to the ideal power splitter is unitary, that is [X]_k^H * [X]_k = I, where [X]_k^H is
+        the conjugate transpose of [X]_k. And considers the reciprocity, the inverse of [X]_k could
+        be simplified as the conjugate of [X]_k, that is [X]_k^-1 = [X]_k^*.
 
         Parameters
         ----------
@@ -897,6 +904,9 @@ class Circuit:
         order: str, optional
             'C' or 'F' for row-major or column-major order of the output array.
             Default is 'C'.
+        inverse: bool, optional
+            If True, return the inverse of the scattering matrix [X]_k.
+            Default is False.
 
         Returns
         -------
@@ -915,20 +925,30 @@ class Circuit:
 
         Xs = 2 *np.sqrt(np.einsum('ij,ik->ijk', y0s, y0s)) / y_k[:, None, None]
         np.einsum('kii->ki', Xs)[:] -= 1  # Sii
-        return Xs
 
-    def _X(self, order: MemoryLayoutT = 'C') -> np.ndarray:
+        return np.conjugate(Xs) if inverse else Xs
+
+
+    def _X(self, order: MemoryLayoutT = 'C', inverse: bool = False) -> np.ndarray:
         """
         Return the concatenated intersection matrix [X] of the circuit.
 
         It is composed of the individual intersection matrices [X]_k assembled
         by block diagonal.
 
+        Due to the concatenated intersection matrix [X] is a block diagonal matrix,
+        the inverse of [X] could be simplified as the block diagonal matrix of the
+        inverses of [X]_k.
+
         Parameters
         ----------
             order : str, optional
                 'C' or 'F' for row-major or column-major order of the output array.
                 Default is 'C'.
+
+            inverse : bool, optional
+                If True, return the inverse of the concatenated intersection matrix [X].
+                Default is False.
 
         Returns
         -------
@@ -946,7 +966,7 @@ class Circuit:
           order is a bottleneck. Numpy generally optimizes operators for 'C' order, which
           lead to performance issues when using 'F' order.
         """
-        Xks = [self._Xk(cnx, order) for cnx in self.connections]
+        Xks = [self._Xk(cnx, order, inverse) for cnx in self.connections]
 
         Xf = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex', order=order)
         off = np.array([0, 0])
@@ -1129,13 +1149,52 @@ class Circuit:
 
         Return the scattering parameters of both "inner" and "outer" ports.
 
+        Note
+        ----
+        The original implementation of this method calculated the S-parameters [S] using the global
+        scattering matrix [C] and the concatenated intersection matrix [X] by solving the equation:
+        [S] = [X] @ ([E] - [C] @ [X])^-1
+
+        where [E] is the identity matrix. However, this approach is computationally inefficient for
+        large networks due to its numerical bottlenecks.
+
+        The current implementation optimizes the calculation by leveraging matrix algebra to simplify
+        the relationship between the incident {a} and reflected {b} power waves. The key steps are as
+        follows:
+
+        1. Define the relationship between {b} and {a} using [X] and [C]:
+            {b} = [X] @ ([E] - [C] @ [X])^-1 @ {a}
+
+        2. Simplify the relationship between {a} and {b}:
+            {a} = ([X] @ ([E] - [C] @ [X])^-1)^-1 @ {b}
+                = ([E] - [C] @ [X]) @ [X]^-1 @ {b}
+                = ([X]^-1 - [C] @ [X] @ [X]^-1) @ {b}
+                = ([X]^-1 - [C]) @ {b}
+
+        3. Derive the S-parameters matrix [S] from the simplified relationship:
+            [S] = ([X]^-1 - [C])^-1
+
+        4. Leverage the property of the concatenated intersection matrix [X]:
+            - [X] is a block diagonal matrix composed of individual intersection matrices [X]_k:
+                [X] = diag([X_1], [X_2], ..., [X_n]).
+            - Each [X]_k represents an ideal lossless power splitter, which is unitary:
+                [X]_k^H @ [X]_k = I,
+                where [X]_k^H is the conjugate transpose of [X]_k.
+            - Due to reciprocity, the inverse of [X]_k is its conjugate:
+                [X]_k^-1 = [X]_k^*.
+
+        5. Substitute the property into the S-parameters equation:
+            [S] = ([X^T]^* - [C])^-1
+
+        This approach avoids the explicit computation of [X]^-1, significantly improving computational
+        efficiency for large-scale networks.
+
         Returns
         -------
         S : :class:`numpy.ndarray`
             global scattering parameters of the circuit.
         """
-        X = self.X
-        return X @ np.linalg.inv(np.identity(self.dim) - self.C @ X)
+        return np.linalg.inv(self._X(inverse=True) - self.C)
 
     @property
     def port_indexes(self) -> list[int]:
