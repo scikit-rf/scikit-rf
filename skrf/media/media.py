@@ -26,7 +26,7 @@ from scipy import stats
 from scipy.constants import c
 
 from .. import mathFunctions as mf
-from ..constants import S_DEF_DEFAULT, ZERO, NumberLike, to_meters
+from ..constants import INF, S_DEF_DEFAULT, ZERO, NumberLike, to_meters
 from ..frequency import Frequency
 from ..network import Network, connect, impedance_mismatch, innerconnect
 
@@ -843,17 +843,15 @@ class Media(ABC):
         one port meet the equivalent impedance of the other ports in parallel.
 
         .. math::
-            S_{ii} = \frac{Y_i - \sum_{j\neq i} Y_j}{Y_i + \sum_{j\neq i} Y_j}
-            = \frac{2Y_i}{\sum_{j=1...n} Y_j} - 1
+            s_{ii} = \frac{\frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}-Z_i^{*}}
+            {\frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}+Z_i}
 
         The remaining power is split between the other ports depending their
         impedances.
 
         .. math::
-            \sum_{j=1...n} S_{ij}^2 = 1 - S_{ii}^2
-
-        .. math::
-            S_{ij} = \frac{2\sqrt{Y_i \cdot Y_j}}{\sum_{k=1...n} Y_{k}}
+            S_{ij} = \frac{ 2 \sqrt{ {\Re}\left (Z_i \right) \cdot {\Re}\left (Z_j \right) } }
+            {Z_i \cdot Z_j \cdot  \sum_{k=1 \dots  n}\frac{1}{Z_j}}
 
         Parameters
         ----------
@@ -871,18 +869,12 @@ class Media(ABC):
         See Also
         --------
         match : called to create a 'blank' network
+        splitter_s : actual S-parameter matrix generator algorithm.
         """
         result = self.match(nports, **kwargs)
 
-        y0s = np.array(1./result.z0)
-        y_k = y0s.sum(axis=1)
-        s = np.zeros((self.frequency.npoints, nports, nports),
-                      dtype='complex')
-        s = 2 *np.sqrt(np.einsum('ki,kj->kij', y0s, y0s)) / y_k[:, None, None]
-        np.einsum('kii->ki', s)[:] -= 1  # Sii
-        result.s =  s
+        result.s = splitter_s(result.z0)
         return result
-
 
     # transmission line
 
@@ -1969,3 +1961,84 @@ def parse_z0(s: str) -> NumberLike:
     else:
         raise ValueError('couldnt parse z0 string')
     return out
+
+def get_z0_load(z0: np.ndarray,  port_idx: int) -> np.ndarray:
+    r"""
+    Calculate the load impedance for a given port index by parallel combining the impedances
+    of all other ports.
+
+    .. math::
+        Zload_{i} = \frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}
+
+    Parameters
+    ----------
+    z0 : ndarray
+        Port impedances, shape (n_frequencies, n_ports).
+    port_idx : int
+        The port index for which to calculate the load impedance.
+
+    Returns
+    -------
+    z0_load : number or None
+        the load impedance for the given port index, or None if the
+        media does not have a load impedance for that port index.
+
+    Raises
+    ------
+    IndexError
+        If the port index is out of range for the given port impedances.
+    """
+    nports: int = z0.shape[1]
+
+    if port_idx >= nports:
+        raise IndexError(f"Port index {port_idx} is out of range for Network, which has {nports} ports.")
+
+    if nports == 1:
+        return np.ones_like(z0) * INF
+
+    mask = np.arange(nports) != port_idx
+
+    return 1. / np.sum(1. / z0[:, mask], axis=1)
+
+
+def splitter_s(z0: np.ndarray) -> np.ndarray:
+    r"""
+    Generate ideal, lossless n-way splitter Network's s-parameters.
+
+    For n > 2, the splitter is not matched because the power wave entering
+    one port meet the equivalent impedance of the other ports in parallel.
+
+    .. math::
+        s_{ii} = \frac{\frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}-Z_i^{*}}
+        {\frac{1}{\sum_{j\neq i}\frac{1}{Z_j}}+Z_i}
+
+    The remaining power is split between the other ports depending their
+    impedances.
+
+    .. math::
+        S_{ij} = \frac{ 2 \sqrt{ {\Re}\left (Z_i \right) \cdot {\Re}\left (Z_j \right) } }
+        {Z_i \cdot Z_j \cdot  \sum_{k=1 \dots  n}\frac{1}{Z_j}}
+
+    Parameters
+    ----------
+    z0 : :class:`numpy.ndarray`
+        Impedances of the ports
+
+    Returns
+    -------
+    s : :class:`numpy.ndarray`
+        S-parameters of the splitter with given impedances
+
+    See Also
+    --------
+    splitter : splitter generator method.
+    """
+    nports = z0.shape[1]
+    s = 2 * np.sqrt(np.einsum('ki,kj->kij', z0.real, z0.real)) / np.einsum('ki,kj->kij', z0, z0)
+    s /= np.sum(1. / z0, axis=1)[:, None, None]
+
+    ports_idx = np.arange(nports)
+    z0_load = np.array([get_z0_load(z0=z0, port_idx=i) for i in ports_idx]).T
+    s[:, ports_idx, ports_idx] = (z0_load - z0.conj()) / (z0_load + z0)
+
+    return s

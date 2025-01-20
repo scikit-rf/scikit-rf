@@ -3095,6 +3095,16 @@ class Network:
             interp_rad = interp1d(f, rad, axis=0, fill_value='extrapolate')
             interp_mag = interp1d(f, mag, axis=0, fill_value='extrapolate')
             dc_sparam = interp_mag(0) * np.exp(1j * interp_rad(0))
+            # Extrapolate other points and insert
+            fstep = self.frequency.f[-1]/(points-1)
+            if self.frequency.f[0] >= 2*fstep:
+                len_interp = points - len(self)
+                extrapolated_f = Frequency(fstep, (len_interp-1) * fstep, len_interp-1, unit="Hz")
+                for freq in reversed(extrapolated_f.f):
+                    interp_sparam = interp_mag(freq) * np.exp(1j * interp_rad(freq))
+                    result.s = np.insert(result.s, 0, interp_sparam, axis=0)
+                    result.frequency._f = np.insert(result.frequency.f, 0, freq)
+                    result.z0 = np.insert(result.z0, 0, result.z0[0], axis=0)
         else:
             #Make numpy array if argument was list
             dc_sparam = np.array(dc_sparam)
