@@ -710,11 +710,6 @@ class VectorFitting:
         omega = 2 * np.pi * freqs
         s = 1j * omega
 
-        if freqs[0] == 0.0 and False:
-            dc_enforce = True
-        else:
-            dc_enforce = False
-
         # weight of extra equation to avoid trivial solution
         weight_extra = np.linalg.norm(weights_responses[:, None] * freq_responses) / n_samples
 
@@ -796,24 +791,7 @@ class VectorFitting:
         # part 4: constant (variable d_res)
         A[:, :, -1] = -1 * freq_responses
 
-        if dc_enforce:
-            # remove rows with dc samples for least-squares,
-            # remove one element from solution vector
-            # use them later for direct calculation of that solution element
-            mask_remove = np.ones(n_cols_unused + n_cols_used, dtype=bool)
-            mask_remove[[n_cols_unused]] = False
-
-            A_without_dc = A[:, 1:, mask_remove]
-            A_ri = np.hstack((A_without_dc.real, A_without_dc.imag))
-
-            # A_dc is to be used with the reduced solution (after QR decomposition), hence the smaller width
-            A_dc = A[:, 0, :]
-            A_dc_ri = np.vstack((A_dc.real, A_dc.imag))
-
-            #n_cols_unused -= 1
-            n_cols_used -= 1
-        else:
-            A_ri = np.hstack((A.real, A.imag))
+        A_ri = np.hstack((A.real, A.imag))
 
         # calculation of matrix sizes after QR decomposition:
         # stacked coefficient matrix (A.real, A.imag) has shape (L, M, N)
@@ -879,18 +857,6 @@ class VectorFitting:
 
         # rank deficiency
         rank_deficiency = full_rank - rank
-
-        if dc_enforce:
-            dim_m = 2
-            dim_n = n_cols_unused + n_cols_used + 1
-            dim_k = min(dim_m, dim_n)
-            R_dc = np.empty((n_responses, dim_k, dim_n))
-            for i in range(n_responses):
-                R_dc[i] = np.linalg.qr(A_dc_ri[i, :, None], mode='r')
-
-            R22_dc = R_dc[:, :, n_cols_unused:].reshape((n_responses * dim_m, n_cols_used + 1))
-            x_dc, _, _, _ = np.linalg.lstsq(R22_dc[:, 0, None], 0 - np.dot(R22_dc[:, 1:], x), rcond=None)
-            x = np.hstack((x_dc, x))
 
         # assemble individual result vectors from single LS result x
         c_res = x[:-1]
