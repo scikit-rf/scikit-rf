@@ -710,6 +710,11 @@ class VectorFitting:
         omega = 2 * np.pi * freqs
         s = 1j * omega
 
+        if freqs[0] == 0.0 and False:
+            dc_enforce = True
+        else:
+            dc_enforce = False
+
         # weight of extra equation to avoid trivial solution
         weight_extra = np.linalg.norm(weights_responses[:, None] * freq_responses) / n_samples
 
@@ -791,7 +796,24 @@ class VectorFitting:
         # part 4: constant (variable d_res)
         A[:, :, -1] = -1 * freq_responses
 
-        A_ri = np.hstack((A.real, A.imag))
+        if dc_enforce:
+            # remove rows with dc samples for least-squares,
+            # remove one element from solution vector
+            # use them later for direct calculation of that solution element
+            mask_remove = np.ones(n_cols_unused + n_cols_used, dtype=bool)
+            mask_remove[[n_cols_unused]] = False
+
+            A_without_dc = A[:, 1:, mask_remove]
+            A_ri = np.hstack((A_without_dc.real, A_without_dc.imag))
+
+            # A_dc is to be used with the reduced solution (after QR decomposition), hence the smaller width
+            A_dc = A[:, 0, :]
+            A_dc_ri = np.vstack((A_dc.real, A_dc.imag))
+
+            #n_cols_unused -= 1
+            n_cols_used -= 1
+        else:
+            A_ri = np.hstack((A.real, A.imag))
 
         # calculation of matrix sizes after QR decomposition:
         # stacked coefficient matrix (A.real, A.imag) has shape (L, M, N)
@@ -848,50 +870,27 @@ class VectorFitting:
         b = np.zeros(dim0)
         b[-1] = weight_extra * n_samples
 
-        # DC POINT ENFORCEMENT
-        if freqs[0] == 0.0:
-            # data contains the dc point; enforce dc point via linear equality constraint:
-            # 1: remove one variable from the solution vector (choice: residue at index 0).
-            # 2: solve remaining linear system (without data at dc) with regular least-squares, as usual. the size of
-            #    the solution vector, the coefficient matrix, and the right-hand side are reduced by 1
-            # 3: calculate the removed variable (residue 0) with the data from the dc point
-            #
-            # linear system: A_fast * x = b
-            # solution vector x contains the unknown residues
-            # right-hand side b contains the frequency response to be fitted, sorted by ascending frequency (dc first)
-            # coefficient matrix A_fast and vector b are split: A_fast = [[A11, A12], [A21, A22]], b = [[b1], [b2]]
-            # [A11, A12] is the first row used later for dc enforcement
-            # A21 is a column vector, which is not required anymore
-            # A22 is the rest of the matrix for usual least-squares fitting
+        # check condition of the linear system
+        cond = np.linalg.cond(A_fast)
+        full_rank = np.min(A_fast.shape)
 
-            A11 = A_fast[0, 0]
-            A12 = A_fast[0, 1:]
-            A22 = A_fast[1:, 1:]
-            b1 = b[0]
-            b2 = b[1:]
-
-            A_lstsq = np.vstack((A22.real, A22.imag))
-            b_lstsq = np.hstack((b2.real, b2.imag)).T
-
-            # check condition of the linear system
-            cond = np.linalg.cond(A_lstsq)
-            full_rank = np.min(A_lstsq.shape)
-
-            # solve least squares for real parts
-            x2, residuals, rank, singular_vals = np.linalg.lstsq(A_lstsq, b_lstsq, rcond=None)
-
-            x1 = 1 / A11 * (b1 - np.dot(A12, x2))
-            x = np.hstack((x1, x2))
-        else:
-            # check condition of the linear system
-            cond = np.linalg.cond(A_fast)
-            full_rank = np.min(A_fast.shape)
-
-            # solve least squares for real parts
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
+        # solve least squares for real parts
+        x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
 
         # rank deficiency
         rank_deficiency = full_rank - rank
+
+        if dc_enforce:
+            dim_m = 2
+            dim_n = n_cols_unused + n_cols_used + 1
+            dim_k = min(dim_m, dim_n)
+            R_dc = np.empty((n_responses, dim_k, dim_n))
+            for i in range(n_responses):
+                R_dc[i] = np.linalg.qr(A_dc_ri[i, :, None], mode='r')
+
+            R22_dc = R_dc[:, :, n_cols_unused:].reshape((n_responses * dim_m, n_cols_used + 1))
+            x_dc, _, _, _ = np.linalg.lstsq(R22_dc[:, 0, None], 0 - np.dot(R22_dc[:, 1:], x), rcond=None)
+            x = np.hstack((x_dc, x))
 
         # assemble individual result vectors from single LS result x
         c_res = x[:-1]
