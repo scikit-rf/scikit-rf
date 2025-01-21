@@ -994,9 +994,11 @@ class VectorFitting:
             # solve least squares and obtain results as stack of real part vector and imaginary part vector
             x2, residuals, rank, singular_vals = np.linalg.lstsq(A22, b2.T, rcond=None)
 
+            # solve for x1
             x1 = 1 / A11 * (b1 - np.dot(A12, x2))
-            x = np.vstack((x1, x2))
 
+            # reassemble x from x1 and x2
+            x = np.vstack((x1, x2))
         else:
             # dc point not included; use and solve the entire linear system with least-squares
             logger.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A_ri))}')
