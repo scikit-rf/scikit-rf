@@ -1560,15 +1560,48 @@ class VectorFitting:
             f_eval_max = 1.2 * f_viol_max
         freqs_eval = np.linspace(0, f_eval_max, n_samples)
 
+        # get model state-space matrices
         A, B, C, D, E = self._get_ABCDE()
         dim_A = np.shape(A)[0]
-        C_t = C
 
-        # only include constant if it has been fitted (not zero)
-        if len(np.nonzero(D)[0]) == 0:
-            D_t = None
+        # ASYMPTOTIC PASSIVITY ENFORCEMENT
+
+        # check if constant term has been fitted (not zero)
+        # a model without the constant term is always asymptotically passive
+        if len(np.nonzero(D)[0]) != 0:
+            # D was fitted;
+            # asymptotic passivity needs to be checked and enforced, if violated.
+            # for dc preservation, the asymptotic passivity violations in D are compensated using C
+            # D is not touched, because it contains the dc point ( lim s --> {inf S(s)} = D)
+            u, sigma, vh = np.linalg.svd(D, compute_uv=True)
+
+            # find and perturb singular values that cause passivity violations
+            # sigma_viol = sigma * upsilon - psi with
+            #       upsilon[sigma > delta] = 1
+            #       upsilon[sigma <= delta] = 0
+            #       psi[sigma > delta] = delta
+            #       psi[sigma <= delta] = 0
+            # (implemented below in a more compact form)
+            delta = 1
+            idx_viol = np.nonzero(sigma > delta)
+            sigma_viol = np.zeros_like(sigma)
+            sigma_viol[idx_viol] = sigma[idx_viol] - delta
+            S_viol = np.matmul(np.matmul(u, sigma_viol), vh)
+
+            # find new set of residues C_viol by solving underdetermined least-squares problem
+            # S_viol = C_viol * B
+            #
+            # mind the transpose of the system to compensate for the exchanged order of matrix multiplication:
+            # S_viol = C_viol * B <==> transpose(S_viol) = transpose(B) * transpose(C_viol)
+
+            C_viol, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((B.T.real, B.T.imag)),
+                                                                     np.hstack((S_viol.T.real, S_viol.T.imag)),
+                                                                     rcond=None)
+            C_t = C - C_viol
         else:
-            D_t = D
+            C_t = C
+
+        # UNIFORM PASSIVITY ENFORCEMENT
 
         if self.network is not None:
             # find highest singular value among all frequencies and responses to use as target for the perturbation
@@ -1581,6 +1614,7 @@ class VectorFitting:
             delta = 0.999  # predefined tolerance parameter (users should not need to change this)
 
         # calculate coefficient matrix
+        # A_freq = 2 * s_eval * I - A
         A_freq = np.linalg.inv(2j * np.pi * freqs_eval[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
 
         # construct coefficient matrix with an extra column for the constants (if present)
@@ -1610,6 +1644,12 @@ class VectorFitting:
             sigma_max = np.amax(sigma)
 
             # find and perturb singular values that cause passivity violations
+            # sigma_viol = sigma * upsilon - psi with
+            #       upsilon[sigma > delta] = 1
+            #       upsilon[sigma <= delta] = 0
+            #       psi[sigma > delta] = delta
+            #       psi[sigma <= delta] = 0
+            # (implemented below in a more compact form)
             idx_viol = np.nonzero(sigma > delta)
             sigma_viol = np.zeros_like(sigma)
             sigma_viol[idx_viol] = sigma[idx_viol] - delta
