@@ -964,9 +964,6 @@ class VectorFitting:
         A[:, idx_constant] = 1
         A[:, idx_proportional] = s[:, None]
 
-        A_ri = np.vstack((A.real, A.imag))
-        b_ri = np.hstack((freq_responses.real, freq_responses.imag))
-
         # DC POINT ENFORCEMENT
         if freqs[0] == 0.0:
             # data contains the dc point; enforce dc point via linear equality constraint:
@@ -983,24 +980,32 @@ class VectorFitting:
             # A21 is a column vector, which is not required anymore
             # A22 is the rest of the matrix for usual least-squares fitting
 
-            A11 = A_ri[0, 0]
-            A12 = A_ri[0, 1:]
-            A22 = A_ri[1:, 1:]
-            b1 = b_ri[:, 0]
-            b2 = b_ri[:, 1:]
+            A22 = A[1:, 1:]
+            b2 = freq_responses[:, 1:]
 
-            logger.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A22))}')
+            A22_ri = np.vstack((A22.real, A22.imag))
+            b22_ri = np.hstack((b2.real, b2.imag))
+
+            logger.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A22_ri))}')
 
             # solve least squares and obtain results as stack of real part vector and imaginary part vector
-            x2, residuals, rank, singular_vals = np.linalg.lstsq(A22, b2.T, rcond=None)
+            x2, residuals, rank, singular_vals = np.linalg.lstsq(A22_ri, b22_ri.T, rcond=None)
 
-            # solve for x1
-            x1 = 1 / A11 * (b1 - np.dot(A12, x2))
+            # solve for x1 using the first row (the dc row):
+
+            b1 = freq_responses[:, 0]
+
+            A11 = A[0, 0]
+            A12 = A[0, 1:]
+            x1 = np.real(1 / A11 * (b1 - np.dot(A12, x2)))
 
             # reassemble x from x1 and x2
             x = np.vstack((x1, x2))
         else:
             # dc point not included; use and solve the entire linear system with least-squares
+            A_ri = np.vstack((A.real, A.imag))
+            b_ri = np.hstack((freq_responses.real, freq_responses.imag))
+
             logger.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A_ri))}')
 
             # solve least squares and obtain results as stack of real part vector and imaginary part vector
