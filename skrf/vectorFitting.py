@@ -896,7 +896,7 @@ class VectorFitting:
         return poles, d_res, cond, rank_deficiency, residuals, singular_vals
 
     @staticmethod
-    def _fit_residues(poles, freqs, freq_responses, fit_constant, fit_proportional):
+    def _fit_residues(poles, freqs, freq_responses, fit_constant, fit_proportional, enforce_dc=True):
         n_responses, n_freqs = np.shape(freq_responses)
         omega = 2 * np.pi * freqs
         s = 1j * omega
@@ -965,12 +965,12 @@ class VectorFitting:
         A[:, idx_proportional] = s[:, None]
 
         # DC POINT ENFORCEMENT
-        if freqs[0] == 0.0:
+        if enforce_dc and freqs[0] == 0.0:
             # data contains the dc point; enforce dc point via linear equality constraint:
-            # 1: remove one variable from the solution vector (choice: residue at index 0).
+            # 1: remove one variable from the solution vector (constant term, if possible).
             # 2: solve remaining linear system (without data at dc) with regular least-squares, as usual. the size of
             #    the solution vector, the coefficient matrix, and the right-hand side are reduced by 1
-            # 3: calculate the removed variable (residue 0) with the data from the dc point
+            # 3: calculate the removed variable (constant term) with the data from the dc point
             #
             # linear system: A * x = b
             # solution vector x contains the unknown residues
@@ -980,7 +980,16 @@ class VectorFitting:
             # A21 is a column vector, which is not required anymore
             # A22 is the rest of the matrix for usual least-squares fitting
 
-            A22 = A[1:, 1:]
+            # indexing mask of constrained variable in the columns of matrix A
+            mask_idx_constrained = np.zeros(n_cols, dtype=bool)
+            if fit_constant:
+                # use constant term for constrained
+                mask_idx_constrained[idx_constant] = True
+            else:
+                # constant term not present; arbitrarily use first residue instead
+                mask_idx_constrained[0] = True
+
+            A22 = A[1:, ~mask_idx_constrained]
             b2 = freq_responses[:, 1:]
 
             A22_ri = np.vstack((A22.real, A22.imag))
@@ -988,19 +997,19 @@ class VectorFitting:
 
             logger.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A22_ri))}')
 
-            # solve least squares and obtain results as stack of real part vector and imaginary part vector
+            # solve least-squares and obtain results as stack of real part vector and imaginary part vector
             x2, residuals, rank, singular_vals = np.linalg.lstsq(A22_ri, b22_ri.T, rcond=None)
 
             # solve for x1 using the first row (the dc row):
-
             b1 = freq_responses[:, 0]
-
-            A11 = A[0, 0]
-            A12 = A[0, 1:]
+            A11 = A[0, mask_idx_constrained]
+            A12 = A[0, ~mask_idx_constrained]
             x1 = np.real(1 / A11 * (b1 - np.dot(A12, x2)))
 
             # reassemble x from x1 and x2
-            x = np.vstack((x1, x2))
+            x = np.empty((n_cols, n_responses))
+            x[mask_idx_constrained, :] = x1
+            x[~mask_idx_constrained, :] = x2
         else:
             # dc point not included; use and solve the entire linear system with least-squares
             A_ri = np.vstack((A.real, A.imag))
@@ -1008,7 +1017,7 @@ class VectorFitting:
 
             logger.info(f'Condition number of coefficient matrix = {int(np.linalg.cond(A_ri))}')
 
-            # solve least squares and obtain results as stack of real part vector and imaginary part vector
+            # solve least-squares and obtain results as stack of real part vector and imaginary part vector
             x, residuals, rank, singular_vals = np.linalg.lstsq(A_ri, b_ri.T, rcond=None)
 
         # extract residues from solution vector and align them with poles to get matching pole-residue pairs
@@ -1568,6 +1577,8 @@ class VectorFitting:
         A, B, C, D, E = self._get_ABCDE()
         dim_A = np.shape(A)[0]
 
+        # D = np.reshape(self.constant_coeff, (self.network.nports, self.network.nports))
+
         # ASYMPTOTIC PASSIVITY ENFORCEMENT
 
         # check if constant term has been fitted (not zero)
@@ -1590,25 +1601,27 @@ class VectorFitting:
             idx_viol = np.nonzero(sigma > delta)
             sigma_viol = np.zeros_like(sigma)
             sigma_viol[idx_viol] = sigma[idx_viol] - delta
-            S_viol = np.matmul(np.matmul(u, sigma_viol), vh)
+
+            # calculate S_viol from perturbed sigma and previous U and Vh
+            S_viol = np.dot(u * sigma_viol, vh)
 
             # find new set of residues C_viol by solving underdetermined least-squares problem
             # S_viol = C_viol * B
             #
             # mind the transpose of the system to compensate for the exchanged order of matrix multiplication:
             # S_viol = C_viol * B <==> transpose(S_viol) = transpose(B) * transpose(C_viol)
-
             C_viol, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((B.T.real, B.T.imag)),
-                                                                     np.hstack((S_viol.T.real, S_viol.T.imag)),
+                                                                     np.vstack((S_viol.T.real, S_viol.T.imag)),
                                                                      rcond=None)
-            C_t = C - C_viol
+            C_t = C - C_viol.T
         else:
+            # D was not fitted; asymptotic passivity enforcement not required/possible
             C_t = C
 
         # UNIFORM PASSIVITY ENFORCEMENT
 
         if self.network is not None:
-            # find highest singular value among all frequencies and responses to use as target for the perturbation
+            # find the highest singular value among all frequencies and responses to use as target for the perturbation
             # singular value decomposition
             sigma = np.linalg.svd(self.network.s, compute_uv=False)
             delta = np.amax(sigma)
@@ -1617,17 +1630,16 @@ class VectorFitting:
         else:
             delta = 0.999  # predefined tolerance parameter (users should not need to change this)
 
-        # calculate coefficient matrix
-        # A_freq = 2 * s_eval * I - A
+        # preparing coefficient matrix; can be reused in every iteration
+        # S(s_eval) = D + s_eval * C_t * inv(s_eval * I - A) * B
+        #           = D + s_eval * C_t * A_freq * B
+        # with
+        #   A_freq = inv(s_eval * I - A)
+        #   s_eval = j * omega_eval = 2j * pi * freqs_eval
         A_freq = np.linalg.inv(2j * np.pi * freqs_eval[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
 
-        # construct coefficient matrix with an extra column for the constants (if present)
-        if D_t is not None:
-            coeffs = np.empty((len(freqs_eval), np.shape(B)[0] + 1, np.shape(B)[1]), dtype=complex)
-            coeffs[:, :-1, :] = np.matmul(A_freq, B[None, :, :])
-            coeffs[:, -1, :] = 1
-        else:
-            coeffs = np.matmul(A_freq, B[None, :, :])
+        # construct coefficient matrix for least-squares residue fitting (C_viol)
+        coeffs = np.matmul(A_freq, B)
 
         # iterative compensation of passivity violations
         t = 0
@@ -1635,14 +1647,12 @@ class VectorFitting:
         while t < self.max_iterations:
             logger.info(f'Passivity enforcement; Iteration {t + 1}')
 
-            # calculate S-matrix at this frequency (shape fxNxN)
-            if D_t is not None:
-                s_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D_t, E)
-            else:
-                s_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D, E)
+            # calculate S-matrix of the model at freqs_eval (shape fxNxN)
+            #S_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D, E)
+            S_eval = D + np.matmul(C_t, coeffs)
 
             # singular value decomposition
-            u, sigma, vh = np.linalg.svd(s_eval, full_matrices=False)
+            u, sigma, vh = np.linalg.svd(S_eval)
 
             # keep track of the greatest singular value in every iteration step
             sigma_max = np.amax(sigma)
@@ -1663,32 +1673,46 @@ class VectorFitting:
             idx_diag = np.arange(np.shape(sigma)[1])
             sigma_viol_diag[:, idx_diag, idx_diag] = sigma_viol
 
-            # calculate violation S-responses
-            s_viol = np.matmul(np.matmul(u, sigma_viol_diag), vh)
+            # calculate violation S-responses with shape (n_freqs, n_ports, n_ports)
+            S_viol = np.matmul(np.matmul(u, sigma_viol_diag), vh)
 
-            # fit perturbed residues C_t for each response S_{i,j}
-            for i in range(np.shape(s_viol)[1]):
-                for j in range(np.shape(s_viol)[2]):
-                    # mind the transpose of the system to compensate for the exchanged order of matrix multiplication:
-                    # wanting to solve S = C_t * coeffs
-                    # but actually solving S = coeffs * C_t
-                    # S = C_t * coeffs <==> transpose(S) = transpose(coeffs) * transpose(C_t)
+            # stack frequency responses as a single vector
+            # stacking order (row-major):
+            # s11, s12, s13, ..., s21, s22, s23, ...
+            S_viol_stacked = []
+            for i in range(self.network.nports):
+                for j in range(self.network.nports):
+                    S_viol_stacked.append(S_viol[:, i, j])
+            S_viol_stacked = np.array(S_viol_stacked)
 
-                    # solve least squares (real-valued)
-                    x, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((np.real(coeffs[:, :, i]),
-                                                                                   np.imag(coeffs[:, :, i]))),
-                                                                        np.hstack((np.real(s_viol[:, j, i]),
-                                                                                   np.imag(s_viol[:, j, i]))),
-                                                                        rcond=None)
+            C_viol_stacked, D_viol_stacked, E_viol_stacked, residuals, rank, singular_vals = self._fit_residues(
+                self.poles, freqs_eval, S_viol_stacked, fit_constant=False, fit_proportional=False, enforce_dc=True)
 
-                    # perturb residues by subtracting respective row and column in C_t
-                    # one half of the solution will always be 0 due to construction of A and B
-                    # also perturb constants (if present)
-                    if D_t is not None:
-                        C_t[j, :] = C_t[j, :] - x[:-1]
-                        D_t[j, i] = D_t[j, i] - x[-1]
-                    else:
-                        C_t[j, :] = C_t[j, :] - x
+            # reshape C_viol into state-space format: [[R1.11, R2.11, R3.11, ..., R1.1N, R2.1N, R3.1N, ...],
+            #                                          [R1.21, R2.21, R3.21, ..., R1.2N, R3.2N, R3.2N, ...],
+            #                                           ...
+            #                                          [R1.N1, R2.N1, R3.N1, ..., R1.NN, R3.NN, R3.NN, ...]]
+            C_viol = np.empty_like(C_t)
+            n_ports = np.shape(C_viol)[0]
+            model_order = self.get_model_order(self.poles)
+
+            for i_port in range(n_ports):
+                for j_port in range(n_ports):
+                    j_residues = 0
+                    for residue in C_viol_stacked[i_port * n_ports + j_port]:
+                        if np.imag(residue) == 0.0:
+                            C_viol[i_port, j_port * model_order + j_residues] = np.real(residue)
+                            j_residues += 1
+                        else:
+                            C_viol[i_port, j_port * model_order + j_residues] = np.real(residue)
+                            C_viol[i_port, j_port * model_order + j_residues + 1] = np.imag(residue)
+                            j_residues += 2
+
+            # perturb residues by subtracting respective row and column in C_t
+            C_t = C_t - C_viol
+
+            # if D_viol_stacked is not None:
+            #     D_t = D_t - np.reshape(D_viol_stacked, (self.network.nports, self.network.nports))
 
             t += 1
             self.history_max_sigma.append(sigma_max)
@@ -1721,8 +1745,6 @@ class VectorFitting:
                         self.residues[i_response, z] = C_t[i, k] + 1j * C_t[i, k + 1]
                         k += 2
                     z += 1
-                if D_t is not None:
-                    self.constant_coeff[i_response] = D_t[i, j]
 
         # run final passivity test to make sure passivation was successful
         violation_bands = self.passivity_test()
