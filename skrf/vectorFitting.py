@@ -844,6 +844,9 @@ class VectorFitting:
         # weighting
         A_fast[-1, :] = weight_extra * A_fast[-1, :]
 
+        scaling = 1 / np.linalg.norm(A_fast, axis=0)
+        A_fast = scaling * A_fast
+
         # right hand side vector (weighted)
         b = np.zeros(dim0)
         b[-1] = weight_extra * n_samples
@@ -854,6 +857,8 @@ class VectorFitting:
 
         # solve least squares for real parts
         x, residuals, rank, singular_vals = np.linalg.lstsq(A_fast, b, rcond=None)
+
+        x = scaling * x
 
         # rank deficiency
         rank_deficiency = full_rank - rank
@@ -964,6 +969,9 @@ class VectorFitting:
         A[:, idx_constant] = 1
         A[:, idx_proportional] = s[:, None]
 
+        scaling = 1 / np.linalg.norm(A, axis=0)
+        A = scaling * A
+
         # DC POINT ENFORCEMENT
         if enforce_dc and freqs[0] == 0.0:
             # data contains the dc point; enforce dc point via linear equality constraint:
@@ -1019,6 +1027,8 @@ class VectorFitting:
 
             # solve least-squares and obtain results as stack of real part vector and imaginary part vector
             x, residuals, rank, singular_vals = np.linalg.lstsq(A_ri, b_ri.T, rcond=None)
+
+        x = scaling[:, None] * x
 
         # extract residues from solution vector and align them with poles to get matching pole-residue pairs
         residues = np.empty((len(freq_responses), len(poles)), dtype=complex)
@@ -1620,26 +1630,21 @@ class VectorFitting:
 
         # UNIFORM PASSIVITY ENFORCEMENT
 
-        if self.network is not None:
-            # find the highest singular value among all frequencies and responses to use as target for the perturbation
-            # singular value decomposition
-            sigma = np.linalg.svd(self.network.s, compute_uv=False)
-            delta = np.amax(sigma)
-            if delta > 0.999:
-                delta = 0.999
-        else:
-            delta = 0.999  # predefined tolerance parameter (users should not need to change this)
-
         # preparing coefficient matrix; can be reused in every iteration
-        # S(s_eval) = D + s_eval * C_t * inv(s_eval * I - A) * B
-        #           = D + s_eval * C_t * A_freq * B
+        # S(s_eval) = D_t + s_eval * C_t * inv(s_eval * I - A) * B
+        #           = D_t + s_eval * C_t * A_freq * B
         # with
         #   A_freq = inv(s_eval * I - A)
         #   s_eval = j * omega_eval = 2j * pi * freqs_eval
+        #freqs_eval = freqs_eval[1:]
         A_freq = np.linalg.inv(2j * np.pi * freqs_eval[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
 
         # construct coefficient matrix for least-squares residue fitting (C_viol)
         coeffs = np.matmul(A_freq, B)
+
+        C_viol = np.empty_like(C_t)
+        n_ports = np.shape(C_viol)[0]
+        model_order = self.get_model_order(self.poles)
 
         # iterative compensation of passivity violations
         t = 0
@@ -1651,11 +1656,25 @@ class VectorFitting:
             #S_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D, E)
             S_eval = D + np.matmul(C_t, coeffs)
 
-            # singular value decomposition
+            # singular value decomposition,
+            # shape(u) = (n_samples, n_ports, n_ports)
+            # shape(sigma) = (n_samples, n_ports)
+            # shape(vh) = (n_samples, n_ports, n_ports)
             u, sigma, vh = np.linalg.svd(S_eval)
 
             # keep track of the greatest singular value in every iteration step
             sigma_max = np.amax(sigma)
+            self.history_max_sigma.append(sigma_max)
+
+            # stop iterations when model is passive
+            if sigma_max < 1.0:
+                break
+
+            # if sigma_max > 0.999:
+            #     delta = 0.999
+            # else:
+            #     delta = sigma_max
+            delta = 0.999
 
             # find and perturb singular values that cause passivity violations
             # sigma_viol = sigma * upsilon - psi with
@@ -1668,13 +1687,7 @@ class VectorFitting:
             sigma_viol = np.zeros_like(sigma)
             sigma_viol[idx_viol] = sigma[idx_viol] - delta
 
-            # construct a stack of diagonal matrices with the perturbed singular values on the diagonal
-            sigma_viol_diag = np.zeros_like(u, dtype=float)
-            idx_diag = np.arange(np.shape(sigma)[1])
-            sigma_viol_diag[:, idx_diag, idx_diag] = sigma_viol
-
-            # calculate violation S-responses with shape (n_freqs, n_ports, n_ports)
-            S_viol = np.matmul(np.matmul(u, sigma_viol_diag), vh)
+            S_viol = np.matmul(u * sigma_viol[:, None, :], vh)
 
             # stack frequency responses as a single vector
             # stacking order (row-major):
@@ -1692,10 +1705,6 @@ class VectorFitting:
             #                                          [R1.21, R2.21, R3.21, ..., R1.2N, R3.2N, R3.2N, ...],
             #                                           ...
             #                                          [R1.N1, R2.N1, R3.N1, ..., R1.NN, R3.NN, R3.NN, ...]]
-            C_viol = np.empty_like(C_t)
-            n_ports = np.shape(C_viol)[0]
-            model_order = self.get_model_order(self.poles)
-
             for i_port in range(n_ports):
                 for j_port in range(n_ports):
                     j_residues = 0
@@ -1711,15 +1720,7 @@ class VectorFitting:
             # perturb residues by subtracting respective row and column in C_t
             C_t = C_t - C_viol
 
-            # if D_viol_stacked is not None:
-            #     D_t = D_t - np.reshape(D_viol_stacked, (self.network.nports, self.network.nports))
-
             t += 1
-            self.history_max_sigma.append(sigma_max)
-
-            # stop iterations when model is passive
-            if sigma_max < 1.0:
-                break
 
         # PASSIVATION PROCESS DONE; model is either passive or max. number of iterations have been exceeded
         if t == self.max_iterations:
