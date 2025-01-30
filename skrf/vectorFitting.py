@@ -2265,7 +2265,7 @@ class VectorFitting:
         Parameters
         ----------
         file : str
-            Path and filename including file extension (usually .sNp) for the subcircuit file.
+            Path and filename including file extension (usually .sp) for the subcircuit file.
 
         fitted_model_name: str
             Name of the resulting subcircuit, default "s_equivalent"
