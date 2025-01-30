@@ -1603,22 +1603,6 @@ class VectorFitting:
         A, B, C, D, E = self._get_ABCDE()
         dim_A = np.shape(A)[0]
 
-        # predefined tolerance parameter (users should not need to change this)
-        delta_threshold = 0.999
-
-        if self.network is not None:
-            # find highest singular value among all frequencies and responses to use as target for the perturbation
-            # singular value decomposition
-            sigma = np.linalg.svd(self.network.s, compute_uv=False)
-            sigma_max = np.amax(sigma)
-            if sigma_max > delta_threshold:
-                delta = delta_threshold
-            else:
-                delta = sigma_max
-        else:
-            sigma_max = 1.1     # just > 1, so that enforcement loop is entered
-            delta = delta_threshold
-
         # ASYMPTOTIC PASSIVITY ENFORCEMENT
 
         # check if constant term has been fitted (not zero)
@@ -1681,6 +1665,10 @@ class VectorFitting:
         n_ports = np.shape(C_viol)[0]
         model_order = self.get_model_order(self.poles)
 
+        # predefined tolerance parameter (users should not need to change this)
+        delta_threshold = 0.999
+        sigma_max = 1.1     # just to enter iteration loop for the first time
+
         # iterative compensation of passivity violations
         t = 0
         self.history_max_sigma = []
@@ -1700,6 +1688,11 @@ class VectorFitting:
             # keep track of the greatest singular value in every iteration step
             sigma_max = np.amax(sigma)
             self.history_max_sigma.append(sigma_max)
+
+            if sigma_max > delta_threshold:
+                delta = delta_threshold
+            else:
+                delta = sigma_max
 
             # find and perturb singular values that cause passivity violations
             # sigma_viol = sigma * upsilon - psi with
