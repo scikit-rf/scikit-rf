@@ -1481,7 +1481,8 @@ class VectorFitting:
         else:
             return False
 
-    def passivity_enforce(self, n_samples: int = 200, f_max: float = None, parameter_type: str = 's') -> None:
+    def passivity_enforce(self, n_samples: int = 200, f_max: float = None, parameter_type: str = 's',
+                          preserve_dc: bool = True) -> None:
         """
         Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
         presented in [#]_. Passivity is achieved by updating the residues and the constants.
@@ -1502,6 +1503,8 @@ class VectorFitting:
             Representation type of the fitted frequency responses. Either *scattering* (:attr:`s` or :attr:`S`),
             *impedance* (:attr:`z` or :attr:`Z`) or *admittance* (:attr:`y` or :attr:`Y`). Currently, only scattering
             parameters are supported for passivity evaluation.
+
+        preserve_dc : bool, optional
 
         Returns
         -------
@@ -1551,12 +1554,25 @@ class VectorFitting:
             logger.info('Passivity enforcement: The model is already passive. Nothing to do.')
             return
 
-        # find the highest relevant frequency; either
+        # check dc passivity and find the highest relevant frequency; either
         # 1) the highest frequency of passivity violation (f_viol_max)
         # or
         # 2) the highest fitting frequency (f_samples_max)
         violation_bands = self.passivity_test()
+        f_viol_min = violation_bands[0, 0]
         f_viol_max = violation_bands[-1, 1]
+
+        # check passivity at the dc point; 1) in the model, 2) in the original data, if available
+        if f_viol_min == 0.0:
+            preserve_dc = False
+            hint = ''
+
+            if self.network is not None:
+                if self.network.f[0] == 0.0 and not self.network.is_passive():
+                    hint = 'Hint: The dc point in the original network data is already non-passive.'
+
+            warnings.warn('Passivity enforcement: The dc point in the model is not passive. Cannot '
+                          f'preserve the dc point during passivity enforcement. {hint}', UserWarning, stacklevel=2)
 
         if f_max is None:
             if self.network is None:
@@ -1587,13 +1603,27 @@ class VectorFitting:
         A, B, C, D, E = self._get_ABCDE()
         dim_A = np.shape(A)[0]
 
-        # D = np.reshape(self.constant_coeff, (self.network.nports, self.network.nports))
+        # predefined tolerance parameter (users should not need to change this)
+        delta_threshold = 0.999
+
+        if self.network is not None:
+            # find highest singular value among all frequencies and responses to use as target for the perturbation
+            # singular value decomposition
+            sigma = np.linalg.svd(self.network.s, compute_uv=False)
+            sigma_max = np.amax(sigma)
+            if sigma_max > delta_threshold:
+                delta = delta_threshold
+            else:
+                delta = sigma_max
+        else:
+            sigma_max = 1.1     # just > 1, so that enforcement loop is entered
+            delta = delta_threshold
 
         # ASYMPTOTIC PASSIVITY ENFORCEMENT
 
         # check if constant term has been fitted (not zero)
         # a model without the constant term is always asymptotically passive
-        if len(np.nonzero(D)[0]) != 0:
+        if preserve_dc and len(np.nonzero(D)[0]) != 0:
             # D was fitted;
             # asymptotic passivity needs to be checked and enforced, if violated.
             # for dc preservation, the asymptotic passivity violations in D are compensated using C
@@ -1624,9 +1654,15 @@ class VectorFitting:
                                                                      np.vstack((S_viol.T.real, S_viol.T.imag)),
                                                                      rcond=None)
             C_t = C - C_viol.T
-        else:
+            D_t = D     # will be preserved
+        elif preserve_dc:
             # D was not fitted; asymptotic passivity enforcement not required/possible
             C_t = C
+            D_t = D     # zero vector, will be ignored
+        else:
+            # D was fitted and preserve_dc == False
+            C_t = C
+            D_t = D     # will be perturbed
 
         # UNIFORM PASSIVITY ENFORCEMENT
 
@@ -1636,7 +1672,6 @@ class VectorFitting:
         # with
         #   A_freq = inv(s_eval * I - A)
         #   s_eval = j * omega_eval = 2j * pi * freqs_eval
-        #freqs_eval = freqs_eval[1:]
         A_freq = np.linalg.inv(2j * np.pi * freqs_eval[:, None, None] * np.identity(dim_A)[None, :, :] - A[None, :, :])
 
         # construct coefficient matrix for least-squares residue fitting (C_viol)
@@ -1649,12 +1684,12 @@ class VectorFitting:
         # iterative compensation of passivity violations
         t = 0
         self.history_max_sigma = []
-        while t < self.max_iterations:
+        while t < self.max_iterations and sigma_max > 1.0:
             logger.info(f'Passivity enforcement; Iteration {t + 1}')
 
             # calculate S-matrix of the model at freqs_eval (shape fxNxN)
             #S_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D, E)
-            S_eval = D + np.matmul(C_t, coeffs)
+            S_eval = D_t + np.matmul(C_t, coeffs)
 
             # singular value decomposition,
             # shape(u) = (n_samples, n_ports, n_ports)
@@ -1665,16 +1700,6 @@ class VectorFitting:
             # keep track of the greatest singular value in every iteration step
             sigma_max = np.amax(sigma)
             self.history_max_sigma.append(sigma_max)
-
-            # stop iterations when model is passive
-            if sigma_max < 1.0:
-                break
-
-            # if sigma_max > 0.999:
-            #     delta = 0.999
-            # else:
-            #     delta = sigma_max
-            delta = 0.999
 
             # find and perturb singular values that cause passivity violations
             # sigma_viol = sigma * upsilon - psi with
@@ -1699,7 +1724,8 @@ class VectorFitting:
             S_viol_stacked = np.array(S_viol_stacked)
 
             C_viol_stacked, D_viol_stacked, E_viol_stacked, residuals, rank, singular_vals = self._fit_residues(
-                self.poles, freqs_eval, S_viol_stacked, fit_constant=False, fit_proportional=False, enforce_dc=True)
+                self.poles, freqs_eval, S_viol_stacked, fit_constant=preserve_dc, fit_proportional=False,
+                enforce_dc=preserve_dc)
 
             # reshape C_viol into state-space format: [[R1.11, R2.11, R3.11, ..., R1.1N, R2.1N, R3.1N, ...],
             #                                          [R1.21, R2.21, R3.21, ..., R1.2N, R3.2N, R3.2N, ...],
@@ -1719,6 +1745,9 @@ class VectorFitting:
 
             # perturb residues by subtracting respective row and column in C_t
             C_t = C_t - C_viol
+
+            if not preserve_dc:
+                D_t = D_t - np.reshape(D_viol_stacked, (n_ports, n_ports))
 
             t += 1
 
