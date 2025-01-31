@@ -525,7 +525,7 @@ class VectorFitting:
 
         # RESIDUE FITTING FOR ERROR COMPUTATION
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
-            poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=False)
         delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                 weights_responses)
         error_peak = np.max(delta)
@@ -605,7 +605,7 @@ class VectorFitting:
 
             # RESIDUE FITTING FOR ERROR COMPUTATION
             residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
-                poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
+                poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=False)
             delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                     weights_responses)
             error_peak_history.append(np.max(delta))
@@ -644,7 +644,7 @@ class VectorFitting:
 
         # FINAL RESIDUE FITTING
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
-            poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=True)
 
         # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
@@ -1563,13 +1563,14 @@ class VectorFitting:
         f_viol_max = violation_bands[-1, 1]
 
         # check passivity at the dc point; 1) in the model, 2) in the original data, if available
-        if f_viol_min == 0.0:
+        if preserve_dc and f_viol_min == 0.0:
+            # cannot preserve a non-passive dc point during passivity enforcement
             preserve_dc = False
             hint = ''
 
             if self.network is not None:
                 if self.network.f[0] == 0.0 and not self.network.is_passive():
-                    hint = 'Hint: The dc point in the original network data is already non-passive.'
+                    hint = '\nHint: The dc point in the original network data is already non-passive.'
 
             warnings.warn('Passivity enforcement: The dc point in the model is not passive. Cannot '
                           f'preserve the dc point during passivity enforcement. {hint}', UserWarning, stacklevel=2)
@@ -1597,17 +1598,20 @@ class VectorFitting:
             f_eval_max = 1.2 * f_samples_max
         else:
             f_eval_max = 1.2 * f_viol_max
+
+        # let's not automatically adjust n_samples. The calculated number can
+        # be huge (>100k). Combined with a high number of poles in the model, this can bust the memory.
         freqs_eval = np.linspace(0, f_eval_max, n_samples)
 
         # get model state-space matrices
-        A, B, C, D, E = self._get_ABCDE()
+        A, B, C_t, D, E = self._get_ABCDE()
         dim_A = np.shape(A)[0]
 
         # ASYMPTOTIC PASSIVITY ENFORCEMENT
 
         # check if constant term has been fitted (not zero)
         # a model without the constant term is always asymptotically passive
-        if preserve_dc and len(np.nonzero(D)[0]) != 0:
+        if len(np.nonzero(D)[0]) != 0:
             # D was fitted;
             # asymptotic passivity needs to be checked and enforced, if violated.
             # for dc preservation, the asymptotic passivity violations in D are compensated using C
@@ -1637,16 +1641,7 @@ class VectorFitting:
             C_viol, residuals, rank, singular_vals = np.linalg.lstsq(np.vstack((B.T.real, B.T.imag)),
                                                                      np.vstack((S_viol.T.real, S_viol.T.imag)),
                                                                      rcond=None)
-            C_t = C - C_viol.T
-            D_t = D     # will be preserved
-        elif preserve_dc:
-            # D was not fitted; asymptotic passivity enforcement not required/possible
-            C_t = C
-            D_t = D     # zero vector, will be ignored
-        else:
-            # D was fitted and preserve_dc == False
-            C_t = C
-            D_t = D     # will be perturbed
+            C_t -= C_viol.T
 
         # UNIFORM PASSIVITY ENFORCEMENT
 
@@ -1677,7 +1672,7 @@ class VectorFitting:
 
             # calculate S-matrix of the model at freqs_eval (shape fxNxN)
             #S_eval = self._get_s_from_ABCDE(freqs_eval, A, B, C_t, D, E)
-            S_eval = D_t + np.matmul(C_t, coeffs)
+            S_eval = D + np.matmul(C_t, coeffs)   # much faster!
 
             # singular value decomposition,
             # shape(u) = (n_samples, n_ports, n_ports)
@@ -1739,9 +1734,6 @@ class VectorFitting:
             # perturb residues by subtracting respective row and column in C_t
             C_t = C_t - C_viol
 
-            if not preserve_dc:
-                D_t = D_t - np.reshape(D_viol_stacked, (n_ports, n_ports))
-
             t += 1
 
         # PASSIVATION PROCESS DONE; model is either passive or max. number of iterations have been exceeded
@@ -1772,9 +1764,25 @@ class VectorFitting:
         # run final passivity test to make sure passivation was successful
         violation_bands = self.passivity_test()
         if len(violation_bands) > 0:
-            warnings.warn('Passivity enforcement was not successful.\nModel is still non-passive in these frequency '
-                          f'bands: {violation_bands}.\nTry running this routine again with a larger number of samples '
-                          '(parameter `n_samples`).', RuntimeWarning, stacklevel=2)
+            # trying to determine the required number of evaluation samples based on the bandwidth and separation
+            # distance of the violation bands
+            violation_band_separation = np.diff(violation_bands.flat)
+            min_spacing_nonzero = np.amin(violation_band_separation[violation_band_separation != 0.0])
+
+            # we should need an absolute minimum of 1 sample in each violating frequency band.
+            # in practice, the frequency spacing should preferrably be much more dense.
+            # let's recommend 2 samples per violation band.
+            n_samples_required = int(f_eval_max / min_spacing_nonzero * 2)
+
+            if n_samples_required > n_samples:
+                hint = f'Consider trying again with n_samples > {n_samples_required}.'
+            else:
+                hint = ''
+
+            warnings.warn('Passivity enforcement was not successful.\nModel is still non-passive in these '
+                          f'frequency bands: {violation_bands}.\nTry running this routine again with a larger number of'
+                          f' samples (parameter `n_samples`). This run was using n_samples = {n_samples}. {hint}',
+                          RuntimeWarning, stacklevel=2)
 
     def write_npz(self, path: str) -> None:
         """
