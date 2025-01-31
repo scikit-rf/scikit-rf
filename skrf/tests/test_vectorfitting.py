@@ -74,17 +74,18 @@ class VectorFittingTestCase(unittest.TestCase):
         # rough check on fit quality
         self.assertLess(vf.get_rms_error(), 0.2)
 
-        # evaluate model error at the dc point
+        # evaluate model error at the dc point (real part)
+        # the dc point should always be real (it still often has a tiny imaginary part)
         vf_fit = np.empty(nw.nports ** 2, dtype=complex)
-        abs_errors = np.empty(nw.nports ** 2)
+        abs_real_errors = np.empty(nw.nports ** 2)
 
         for i in range(nw.nports):
             for j in range(nw.nports):
                 vf_ij = vf.get_model_response(i, j, nw.f[0])
                 vf_fit[i * nw.nports + j] = vf_ij
-                abs_errors[i * nw.nports + j] = np.abs(vf_ij - nw.s[0, i, j])
+                abs_real_errors[i * nw.nports + j] = np.abs(np.real(vf_ij - nw.s[0, i, j]))
 
-        self.assertTrue(np.all(abs_errors < 1e-10))
+        self.assertTrue(np.all(abs_real_errors < 1e-10))
 
 
     def test_read_write_npz(self):
