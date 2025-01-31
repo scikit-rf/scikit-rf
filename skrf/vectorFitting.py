@@ -1706,8 +1706,8 @@ class VectorFitting:
             # stacking order (row-major):
             # s11, s12, s13, ..., s21, s22, s23, ...
             S_viol_stacked = []
-            for i in range(self.network.nports):
-                for j in range(self.network.nports):
+            for i in range(n_ports):
+                for j in range(n_ports):
                     S_viol_stacked.append(S_viol[:, i, j])
             S_viol_stacked = np.array(S_viol_stacked)
 
