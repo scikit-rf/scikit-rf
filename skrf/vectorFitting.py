@@ -421,7 +421,7 @@ class VectorFitting:
             Threshold for the detection of spurious poles.
 
         nu_samples: float, optional
-            Required and enforced (relative) spacing in termins of frequency samples between existing poles and
+            Required and enforced (relative) spacing in terms of frequency samples between existing poles and
             relocated or added poles. The number can be a float, it does not have to be an integer.
 
         parameter_type: str, optional
