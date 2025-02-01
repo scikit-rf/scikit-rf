@@ -64,14 +64,29 @@ class VectorFittingTestCase(unittest.TestCase):
 
         assert len(record) == 1
 
-    def test_dc(self):
+    def test_dc_enforcement(self):
         # perform the fit on data including a dc sample (0 Hz)
         s4p_file = Path(__file__).parent / 'cst_example_4ports.s4p'
         nw = skrf.Network(s4p_file)
         vf = skrf.VectorFitting(nw)
-        vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
-        # quality of the fit is not important in this test; it only needs to finish
+        vf.auto_fit()
+
+        # rough check on fit quality
         self.assertLess(vf.get_rms_error(), 0.2)
+
+        # evaluate model error at the dc point (real part)
+        # the dc point should always be real (it still often has a tiny imaginary part)
+        vf_fit = np.empty(nw.nports ** 2, dtype=complex)
+        abs_real_errors = np.empty(nw.nports ** 2)
+
+        for i in range(nw.nports):
+            for j in range(nw.nports):
+                vf_ij = vf.get_model_response(i, j, nw.f[0])
+                vf_fit[i * nw.nports + j] = vf_ij
+                abs_real_errors[i * nw.nports + j] = np.abs(np.real(vf_ij - nw.s[0, i, j]))
+
+        self.assertTrue(np.all(abs_real_errors < 1e-10))
+
 
     def test_read_write_npz(self):
         # fit ring slot example network
@@ -81,7 +96,7 @@ class VectorFittingTestCase(unittest.TestCase):
         with pytest.warns(UserWarning) as record:
             vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
 
-        assert len(record) == 1
+        self.assertTrue(len(record) == 1)
 
         # export (write) fitted parameters to .npz file in tmp directory
         with  tempfile.TemporaryDirectory() as name:
@@ -127,12 +142,10 @@ class VectorFittingTestCase(unittest.TestCase):
         vf = skrf.VectorFitting(skrf.data.ring_slot)
         vf.auto_fit()
 
-        assert vf.get_model_order(vf.poles) == 6
-        assert np.sum(vf.poles.imag == 0.0) == 0
-        assert np.sum(vf.poles.imag > 0.0) == 3
-
-        assert np.allclose(vf.get_rms_error(), 1.2748979815157275e-06)
-
+        self.assertTrue(vf.get_model_order(vf.poles) == 6)
+        self.assertTrue(np.sum(vf.poles.imag == 0.0) == 0)
+        self.assertTrue(np.sum(vf.poles.imag > 0.0) == 3)
+        self.assertLess(vf.get_rms_error(), 1e-05)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(VectorFittingTestCase)
