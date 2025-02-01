@@ -1484,14 +1484,16 @@ class VectorFitting:
     def passivity_enforce(self, n_samples: int = 200, f_max: float = None, parameter_type: str = 's',
                           preserve_dc: bool = True) -> None:
         """
-        Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
-        presented in [#]_. Passivity is achieved by updating the residues and the constants.
+        Enforces the passivity of the vector fitted model, if required. This is an implementation of the methods
+        presented in [#]_ and [#]_ using singular value perturbation. To preserve the dc point in the model during
+        passivity enforcement, only the residues are perturbed, not the constant term.
 
         Parameters
         ----------
         n_samples : int, optional
             Number of linearly spaced frequency samples at which passivity will be evaluated and enforced.
-            (Default: 100)
+            (Default: 200). If there are very narrow frequency bands of passivity violations, a sufficiently large
+            number of frequency samples is required.
 
         f_max : float or None, optional
             Highest frequency of interest for the passivity enforcement (in Hz, not rad/s). This limit usually
@@ -1505,6 +1507,9 @@ class VectorFitting:
             parameters are supported for passivity evaluation.
 
         preserve_dc : bool, optional
+            Enables dc point preservation during passivity enforcement. This only works if the fitted model is already
+            passive at the dc point, which is not always the case. If it is not passive, dc point preservation is
+            disabled and passivity is also enforced on the dc point.
 
         Returns
         -------
@@ -1538,7 +1543,11 @@ class VectorFitting:
         ----------
         .. [#] T. Dhaene, D. Deschrijver and N. Stevens, "Efficient Algorithm for Passivity Enforcement of S-Parameter-
             Based Macromodels," in IEEE Transactions on Microwave Theory and Techniques, vol. 57, no. 2, pp. 415-420,
-            Feb. 2009, DOI: 10.1109/TMTT.2008.2011201.
+            Feb. 2009, DOI: 10.1109/TMTT.2008.2011201
+
+        .. [#] D. Deschrijver and T. Dhaene, "DC-Preserving Passivity Enforcement for S-Parameter Based Macromodels,"
+            in IEEE Transactions on Microwave Theory and Techniques, vol. 58, no. 4, pp. 923-928, April 2010,
+            DOI: 10.1109/TMTT.2010.2042556
         """
 
         if parameter_type.lower() != 's':
@@ -1711,6 +1720,13 @@ class VectorFitting:
                     S_viol_stacked.append(S_viol[:, i, j])
             S_viol_stacked = np.array(S_viol_stacked)
 
+            # The existing method _fit_residues() can be use here to fit the violation residues. Enabling `fit_constant`
+            # in combination with `enforce_dc` removes the dc rows from the linear system and enforces the dc solution
+            # on the constant term. In case of dc preservation during passivity enforcement, we can ignore that constant
+            # term entirely and only use the violation residues.
+            # If dc preservation is disabled, we could also perturb the constant term. This is not currently done. In
+            # this new method, we always only perturb the residues. Disabling `fit_constant` and `preserve_dc` in this
+            # case will solve for the residues without the constant term in the linear system.
             C_viol_stacked, D_viol_stacked, E_viol_stacked, residuals, rank, singular_vals = self._fit_residues(
                 self.poles, freqs_eval, S_viol_stacked, fit_constant=preserve_dc, fit_proportional=False,
                 enforce_dc=preserve_dc)
