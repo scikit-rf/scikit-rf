@@ -581,6 +581,27 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         out.s[:,0,1] += self.Ir.s[:,0,0]
         return out
 
+    def test_renormalize(self):
+        dut = self.wg.random(n_ports=2, name='DUT')
+        dut_meas = self.measure(dut)
+        z_new = 100-30j
+        self.cal.renormalize(50, z_new)
+        dut_cal = self.cal.apply_cal(dut_meas)
+        dut.renormalize(z_new, s_def="traveling")
+        dut.z0 = 50
+        self.assertEqual(dut, dut_cal)
+
+    def test_renormalize2(self):
+        """
+        Test that roundtrip renormalization gives back the original calibration
+        """
+        old_coefs = copy.deepcopy(self.cal.coefs)
+        z_new = 10 + 20j
+        self.cal.renormalize(50, z_new)
+        self.cal.renormalize(z_new, 50)
+        for k in self.cal.coefs.keys():
+            np.testing.assert_array_almost_equal(old_coefs[k], self.cal.coefs[k], err_msg=k)
+
     def test_unterminating(self):
         a = self.wg.random(n_ports=self.n_ports)
         #unterminated measurement
@@ -1869,6 +1890,27 @@ class SixteenTermTest(unittest.TestCase, CalibrationTest):
         out = self.terminate(rf.connect(self.Z, 1, ntwk, 0, num=2))
         out.name = ntwk.name
         return out
+
+    def test_renormalize(self):
+        dut = self.wg.random(n_ports=2, name='DUT')
+        dut_meas = self.measure(dut)
+        z_new = 100-30j
+        self.cal.renormalize(50, z_new)
+        dut_cal = self.cal.apply_cal(dut_meas)
+        dut.renormalize(z_new, s_def="traveling")
+        dut.z0 = 50
+        self.assertEqual(dut, dut_cal)
+
+    def test_renormalize2(self):
+        """
+        Test that roundtrip renormalization gives back the original calibration
+        """
+        old_coefs = copy.deepcopy(self.cal.coefs)
+        z_new = 10 + 20j
+        self.cal.renormalize(50, z_new)
+        self.cal.renormalize(z_new, 50)
+        for k in self.cal.coefs.keys():
+            np.testing.assert_array_almost_equal(old_coefs[k], self.cal.coefs[k], err_msg=k)
 
     def test_forward_directivity_accuracy(self):
         self.assertEqual(
