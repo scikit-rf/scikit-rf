@@ -2576,12 +2576,12 @@ class VectorFitting:
 
                         if np.imag(pole) == 0.0:
                             # Real pole/residue pair; represented by one state
-                            f.write(f'Gr_{k + 1}_{i + 1}_{j + 1} {node_ref_i} s{i + 1} x{k + 1}_{j + 1} 0 {np.real(residue)}\n')
+                            f.write(f'Gr_{k + 1}_{i + 1}_{j + 1} {node_ref_i} s{i + 1} x{k + 1}_{j + 1} 0 {gain_b_i * np.real(residue)}\n')
                         else:
                             # Complex-conjugate pole/residue pair; represented by two states
                             # real part at x_{k + 1}_re_{i + 1}
                             # imaginary part at x_{k + 1}_im_{i + 1}
-                            f.write(f'Gr_{k + 1}_re_{i + 1}_{j + 1} {node_ref_i} s{i + 1} x{k + 1}_re_{j + 1} 0 {np.real(residue)}\n')
-                            f.write(f'Gr_{k + 1}_im_{i + 1}_{j + 1} {node_ref_i} s{i + 1} x{k + 1}_im_{j + 1} 0 {np.imag(residue)}\n')
+                            f.write(f'Gr_{k + 1}_re_{i + 1}_{j + 1} {node_ref_i} s{i + 1} x{k + 1}_re_{j + 1} 0 {gain_b_i * np.real(residue)}\n')
+                            f.write(f'Gr_{k + 1}_im_{i + 1}_{j + 1} {node_ref_i} s{i + 1} x{k + 1}_im_{j + 1} 0 {gain_b_i * np.imag(residue)}\n')
 
             f.write(f'.ENDS {fitted_model_name}\n')
