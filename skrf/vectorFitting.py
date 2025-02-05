@@ -2533,6 +2533,7 @@ class VectorFitting:
                         # Complex pole of a conjugate pair; represented by two states
                         # real part at x_{k + 1}_re_{i + 1}, input a_i is scaled by b = 2
                         xk_re_i = f'x{k + 1}_re_{i + 1}'
+                        xk_im_i = f'x{k + 1}_im_{i + 1}'
                         gp_re = np.real(pole)
                         gp_im = np.imag(pole)
                         f.write(f'C{k + 1}_re_{i + 1} {xk_re_i} 0 1.0\n')
@@ -2542,7 +2543,6 @@ class VectorFitting:
                         f.write(f'Gp_{k + 1}_re_im_{i + 1} 0 {xk_re_i} {xk_im_i} 0 {gp_im}\n')
 
                         # imaginary part at x_{k + 1}_im_{i + 1}, input a_i is inactive (b = 0)
-                        xk_im_i = f'x{k + 1}_im_{i + 1}'
                         f.write(f'C{k + 1}_im_{i + 1} {xk_im_i} 0 1.0\n')
                         f.write(f'Gp_{k + 1}_im_re_{i + 1} 0 {xk_im_i} {xk_re_i} 0 {-1 * gp_im}\n')
                         f.write(f'Gp_{k + 1}_im_im_{i + 1} 0 {xk_im_i} {xk_im_i} 0 {gp_re}\n')
@@ -2572,10 +2572,10 @@ class VectorFitting:
                     gain_cccs_a_j = np.sqrt(z0_j) / 2
 
                     # input a_j is scaled by constant term d_i_j and by current gain for b_i
-                    g = gain_b_i * d * gain_vccs_a_j
-                    f = gain_b_i * d * gain_cccs_a_j
-                    f.write(f'Ga{i + 1}_{j + 1} {node_ref_i} s{i + 1} p{j + 1} {node_ref_j} {g}\n')
-                    f.write(f'Fa{i + 1}_{j + 1} {node_ref_i} s{i + 1} V{j + 1} {f}\n')
+                    g_ij = gain_b_i * d * gain_vccs_a_j
+                    f_ij = gain_b_i * d * gain_cccs_a_j
+                    f.write(f'Ga{i + 1}_{j + 1} {node_ref_i} s{i + 1} p{j + 1} {node_ref_j} {g_ij}\n')
+                    f.write(f'Fa{i + 1}_{j + 1} {node_ref_i} s{i + 1} V{j + 1} {f_ij}\n')
 
                     # each residue rk_i_j at port i is multiplied by its respective state signal xk_j
                     for k in range(len(self.poles)):
