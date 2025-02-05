@@ -2523,23 +2523,29 @@ class VectorFitting:
                     # Transfer of input (a_i) to state networks (node xk_i)
                     if np.imag(pole) == 0.0:
                         # Real pole; represented by one state, input a_i is scaled by b = 1
-                        f.write(f'C{k + 1}_{i + 1} x{k + 1}_{i + 1} 0 1.0\n')
-                        f.write(f'Ga_{k + 1}_{i + 1} 0 x{k + 1}_{i + 1} p{i + 1} {node_ref_i} {1 * gain_vccs_a_i}\n')
-                        f.write(f'Fa_{k + 1}_{i + 1} 0 x{k + 1}_{i + 1} V{i + 1} {1 * gain_cccs_a_i}\n')
-                        f.write(f'Gp_{k + 1}_{i + 1} 0 x{k + 1}_{i + 1} x{k + 1}_{i + 1} 0 {np.real(pole)}\n')
+                        xki = f'x{k + 1}_{i + 1}'
+                        gp = np.real(pole)
+                        f.write(f'C{k + 1}_{i + 1} {xki} 0 1.0\n')
+                        f.write(f'Ga_{k + 1}_{i + 1} 0 {xki} p{i + 1} {node_ref_i} {1 * gain_vccs_a_i}\n')
+                        f.write(f'Fa_{k + 1}_{i + 1} 0 {xki} V{i + 1} {1 * gain_cccs_a_i}\n')
+                        f.write(f'Gp_{k + 1}_{i + 1} 0 {xki} x{k + 1}_{i + 1} 0 {gp}\n')
                     else:
                         # Complex pole of a conjugate pair; represented by two states
                         # real part at x_{k + 1}_re_{i + 1}, input a_i is scaled by b = 2
-                        f.write(f'C{k + 1}_re_{i + 1} x{k + 1}_re_{i + 1} 0 1.0\n')
-                        f.write(f'Ga_{k + 1}_re_{i + 1} 0 x{k + 1}_re_{i + 1} p{i + 1} {node_ref_i} {2 * gain_vccs_a_i}\n')
-                        f.write(f'Fa_{k + 1}_re_{i + 1} 0 x{k + 1}_re_{i + 1} V{i + 1} {2 * gain_cccs_a_i}\n')
-                        f.write(f'Gp_{k + 1}_re_re_{i + 1} 0 x{k + 1}_re_{i + 1} x{k + 1}_re_{i + 1} 0 {np.real(pole)}\n')
-                        f.write(f'Gp_{k + 1}_re_im_{i + 1} 0 x{k + 1}_re_{i + 1} x{k + 1}_im_{i + 1} 0 {np.imag(pole)}\n')
+                        xk_re_i = f'x{k + 1}_re_{i + 1}'
+                        gp_re = np.real(pole)
+                        gp_im = np.imag(pole)
+                        f.write(f'C{k + 1}_re_{i + 1} {xk_re_i} 0 1.0\n')
+                        f.write(f'Ga_{k + 1}_re_{i + 1} 0 {xk_re_i} p{i + 1} {node_ref_i} {2 * gain_vccs_a_i}\n')
+                        f.write(f'Fa_{k + 1}_re_{i + 1} 0 {xk_re_i} V{i + 1} {2 * gain_cccs_a_i}\n')
+                        f.write(f'Gp_{k + 1}_re_re_{i + 1} 0 {xk_re_i} {xk_re_i} 0 {gp_re}\n')
+                        f.write(f'Gp_{k + 1}_re_im_{i + 1} 0 {xk_re_i} {xk_im_i} 0 {gp_im}\n')
 
                         # imaginary part at x_{k + 1}_im_{i + 1}, input a_i is inactive (b = 0)
-                        f.write(f'C{k + 1}_im_{i + 1} x{k + 1}_im_{i + 1} 0 1.0\n')
-                        f.write(f'Gp_{k + 1}_im_re_{i + 1} 0 x{k + 1}_im_{i + 1} x{k + 1}_re_{i + 1} 0 {-1 * np.imag(pole)}\n')
-                        f.write(f'Gp_{k + 1}_im_im_{i + 1} 0 x{k + 1}_im_{i + 1} x{k + 1}_im_{i + 1} 0 {np.real(pole)}\n')
+                        xk_im_i = f'x{k + 1}_im_{i + 1}'
+                        f.write(f'C{k + 1}_im_{i + 1} {xk_im_i} 0 1.0\n')
+                        f.write(f'Gp_{k + 1}_im_re_{i + 1} 0 {xk_im_i} {xk_re_i} 0 {-1 * gp_im}\n')
+                        f.write(f'Gp_{k + 1}_im_im_{i + 1} 0 {xk_im_i} {xk_im_i} 0 {gp_re}\n')
 
                 # transfer of states and inputs from port j to port i
                 for j in range(self.network.nports):
@@ -2566,8 +2572,10 @@ class VectorFitting:
                     gain_cccs_a_j = np.sqrt(z0_j) / 2
 
                     # input a_j is scaled by constant term d_i_j and by current gain for b_i
-                    f.write(f'Ga{i + 1}_{j + 1} {node_ref_i} s{i + 1} p{j + 1} {node_ref_j} {gain_b_i * d * gain_vccs_a_j}\n')
-                    f.write(f'Fa{i + 1}_{j + 1} {node_ref_i} s{i + 1} V{j + 1} {gain_b_i * d * gain_cccs_a_j}\n')
+                    g = gain_b_i * d * gain_vccs_a_j
+                    f = gain_b_i * d * gain_cccs_a_j
+                    f.write(f'Ga{i + 1}_{j + 1} {node_ref_i} s{i + 1} p{j + 1} {node_ref_j} {g}\n')
+                    f.write(f'Fa{i + 1}_{j + 1} {node_ref_i} s{i + 1} V{j + 1} {f}\n')
 
                     # each residue rk_i_j at port i is multiplied by its respective state signal xk_j
                     for k in range(len(self.poles)):
@@ -2576,12 +2584,18 @@ class VectorFitting:
 
                         if np.imag(pole) == 0.0:
                             # Real pole/residue pair; represented by one state
-                            f.write(f'Gr_{k + 1}_{i + 1}_{j + 1} {node_ref_i} s{i + 1} x{k + 1}_{j + 1} 0 {gain_b_i * np.real(residue)}\n')
+                            xkj = f'x{k + 1}_{j + 1}'
+                            g = gain_b_i * np.real(residue)
+                            f.write(f'Gr_{k + 1}_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xkj} 0 {g}\n')
                         else:
                             # Complex-conjugate pole/residue pair; represented by two states
                             # real part at x_{k + 1}_re_{i + 1}
                             # imaginary part at x_{k + 1}_im_{i + 1}
-                            f.write(f'Gr_{k + 1}_re_{i + 1}_{j + 1} {node_ref_i} s{i + 1} x{k + 1}_re_{j + 1} 0 {gain_b_i * np.real(residue)}\n')
-                            f.write(f'Gr_{k + 1}_im_{i + 1}_{j + 1} {node_ref_i} s{i + 1} x{k + 1}_im_{j + 1} 0 {gain_b_i * np.imag(residue)}\n')
+                            xk_re_j = f'x{k + 1}_re_{j + 1}'
+                            xk_im_j = f'x{k + 1}_im_{j + 1}'
+                            g_re = gain_b_i * np.real(residue)
+                            g_im = gain_b_i * np.imag(residue)
+                            f.write(f'Gr_{k + 1}_re_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xk_re_j} 0 {g_re}\n')
+                            f.write(f'Gr_{k + 1}_im_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xk_im_j} 0 {g_im}\n')
 
             f.write(f'.ENDS {fitted_model_name}\n')
