@@ -2528,7 +2528,8 @@ class VectorFitting:
                         f.write(f'C{k + 1}_{i + 1} {xki} 0 1.0\n')
                         f.write(f'Ga_{k + 1}_{i + 1} 0 {xki} p{i + 1} {node_ref_i} {1 * gain_vccs_a_i}\n')
                         f.write(f'Fa_{k + 1}_{i + 1} 0 {xki} V{i + 1} {1 * gain_cccs_a_i}\n')
-                        f.write(f'Gp_{k + 1}_{i + 1} 0 {xki} {xki} 0 {gp}\n')
+                        # f.write(f'Gp_{k + 1}_{i + 1} 0 {xki} {xki} 0 {gp}\n')  # problem for LTspice
+                        f.write(f'Rp_{k + 1}_{i + 1} 0 {xki} {1 / gp}\n')   # dc path to gnd for LTspice
                     else:
                         # Complex pole of a conjugate pair; represented by two states
                         # real part at x_{k + 1}_re_{i + 1}, input a_i is scaled by b = 2
@@ -2539,13 +2540,15 @@ class VectorFitting:
                         f.write(f'C{k + 1}_re_{i + 1} {xk_re_i} 0 1.0\n')
                         f.write(f'Ga_{k + 1}_re_{i + 1} 0 {xk_re_i} p{i + 1} {node_ref_i} {2 * gain_vccs_a_i}\n')
                         f.write(f'Fa_{k + 1}_re_{i + 1} 0 {xk_re_i} V{i + 1} {2 * gain_cccs_a_i}\n')
-                        f.write(f'Gp_{k + 1}_re_re_{i + 1} 0 {xk_re_i} {xk_re_i} 0 {gp_re}\n')
+                        # f.write(f'Gp_{k + 1}_re_re_{i + 1} 0 {xk_re_i} {xk_re_i} 0 {gp_re}\n')  # problem for LTspice
+                        f.write(f'Rp_{k + 1}_re_re_{i + 1} 0 {xk_re_i} {1 / gp_re}\n')  # dc path to gnd for LTspice
                         f.write(f'Gp_{k + 1}_re_im_{i + 1} 0 {xk_re_i} {xk_im_i} 0 {gp_im}\n')
 
                         # imaginary part at x_{k + 1}_im_{i + 1}, input a_i is inactive (b = 0)
                         f.write(f'C{k + 1}_im_{i + 1} {xk_im_i} 0 1.0\n')
                         f.write(f'Gp_{k + 1}_im_re_{i + 1} 0 {xk_im_i} {xk_re_i} 0 {-1 * gp_im}\n')
-                        f.write(f'Gp_{k + 1}_im_im_{i + 1} 0 {xk_im_i} {xk_im_i} 0 {gp_re}\n')
+                        # f.write(f'Gp_{k + 1}_im_im_{i + 1} 0 {xk_im_i} {xk_im_i} 0 {gp_re}\n')  # problem for LTspice
+                        f.write(f'Rp_{k + 1}_im_im_{i + 1} 0 {xk_im_i} {1 / gp_re}\n')  # dc path to gnd for LTspice
 
                 # transfer of states and inputs from port j to port i
                 for j in range(self.network.nports):
