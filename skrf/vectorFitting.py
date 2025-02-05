@@ -2528,7 +2528,7 @@ class VectorFitting:
                         f.write(f'C{k + 1}_{i + 1} {xki} 0 1.0\n')
                         f.write(f'Ga_{k + 1}_{i + 1} 0 {xki} p{i + 1} {node_ref_i} {1 * gain_vccs_a_i}\n')
                         f.write(f'Fa_{k + 1}_{i + 1} 0 {xki} V{i + 1} {1 * gain_cccs_a_i}\n')
-                        f.write(f'Gp_{k + 1}_{i + 1} 0 {xki} x{k + 1}_{i + 1} 0 {gp}\n')
+                        f.write(f'Gp_{k + 1}_{i + 1} 0 {xki} {xki} 0 {gp}\n')
                     else:
                         # Complex pole of a conjugate pair; represented by two states
                         # real part at x_{k + 1}_re_{i + 1}, input a_i is scaled by b = 2
@@ -2565,7 +2565,7 @@ class VectorFitting:
                     # H(s) = d + s * e  model
                     # Z(s) = R + s * L  equivalent impedance
                     d = self.constant_coeff[idx_S_i_j]
-                    e = self.proportional_coeff[idx_S_i_j]
+                    # e = self.proportional_coeff[idx_S_i_j]
 
                     # VCCS and CCCS adding their currents to represent the incident wave a_j
                     gain_vccs_a_j = 1 / 2 / np.sqrt(z0_j)
@@ -2589,8 +2589,8 @@ class VectorFitting:
                             f.write(f'Gr_{k + 1}_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xkj} 0 {g}\n')
                         else:
                             # Complex-conjugate pole/residue pair; represented by two states
-                            # real part at x_{k + 1}_re_{i + 1}
-                            # imaginary part at x_{k + 1}_im_{i + 1}
+                            # real part at x_{k + 1}_re_{j + 1}
+                            # imaginary part at x_{k + 1}_im_{j + 1}
                             xk_re_j = f'x{k + 1}_re_{j + 1}'
                             xk_im_j = f'x{k + 1}_im_{j + 1}'
                             g_re = gain_b_i * np.real(residue)
