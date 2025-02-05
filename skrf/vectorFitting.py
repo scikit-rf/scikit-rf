@@ -2413,7 +2413,7 @@ class VectorFitting:
         return ax
 
     def write_spice_subcircuit_s(self, file: str, fitted_model_name: str = "s_equivalent",
-                                     create_reference_pins: bool = False) -> None:
+                                     create_reference_pins: bool = False, g_min: float = 1e-12) -> None:
         """
         Creates an equivalent N-port subcircuit based on its vector fitted S parameter responses
         in spice simulator netlist syntax (compatible with ngspice, Xyce, ...).
@@ -2436,6 +2436,11 @@ class VectorFitting:
             to the global ground net 0.
 
             The default is False
+
+        g_min: float or None
+            Specifying the minimal conductance in parallel to the current sources to provide an explicit dc path to
+            ground. This is often required, especially for LTspice. While the default value of 1e-12 should not affect
+            the results at all, the added conductance can be removed entirely with `g_min = None`.
 
         Returns
         -------
@@ -2528,8 +2533,10 @@ class VectorFitting:
                         f.write(f'C{k + 1}_{i + 1} {xki} 0 1.0\n')
                         f.write(f'Ga_{k + 1}_{i + 1} 0 {xki} p{i + 1} {node_ref_i} {1 * gain_vccs_a_i}\n')
                         f.write(f'Fa_{k + 1}_{i + 1} 0 {xki} V{i + 1} {1 * gain_cccs_a_i}\n')
-                        # f.write(f'Gp_{k + 1}_{i + 1} 0 {xki} {xki} 0 {gp}\n')  # problem for LTspice
-                        f.write(f'Rp_{k + 1}_{i + 1} 0 {xki} {1 / gp}\n')   # dc path to gnd for LTspice
+                        f.write(f'Gp_{k + 1}_{i + 1} 0 {xki} {xki} 0 {gp}\n')
+                        if g_min is not None and g_min > 0:
+                            # dc path to gnd for LTspice
+                            f.write(f'Rdc_{k + 1}_{i + 1} {xki} 0 {1 / g_min}\n')
                     else:
                         # Complex pole of a conjugate pair; represented by two states
                         # real part at x_{k + 1}_re_{i + 1}, input a_i is scaled by b = 2
@@ -2540,15 +2547,19 @@ class VectorFitting:
                         f.write(f'C{k + 1}_re_{i + 1} {xk_re_i} 0 1.0\n')
                         f.write(f'Ga_{k + 1}_re_{i + 1} 0 {xk_re_i} p{i + 1} {node_ref_i} {2 * gain_vccs_a_i}\n')
                         f.write(f'Fa_{k + 1}_re_{i + 1} 0 {xk_re_i} V{i + 1} {2 * gain_cccs_a_i}\n')
-                        # f.write(f'Gp_{k + 1}_re_re_{i + 1} 0 {xk_re_i} {xk_re_i} 0 {gp_re}\n')  # problem for LTspice
-                        f.write(f'Rp_{k + 1}_re_re_{i + 1} 0 {xk_re_i} {1 / gp_re}\n')  # dc path to gnd for LTspice
+                        f.write(f'Gp_{k + 1}_re_re_{i + 1} 0 {xk_re_i} {xk_re_i} 0 {gp_re}\n')
                         f.write(f'Gp_{k + 1}_re_im_{i + 1} 0 {xk_re_i} {xk_im_i} 0 {gp_im}\n')
+                        if g_min is not None and g_min > 0:
+                            # dc path to gnd for LTspice
+                            f.write(f'Rdc_{k + 1}_re_re_{i + 1} {xk_re_i} 0 {1 / g_min}\n')
 
                         # imaginary part at x_{k + 1}_im_{i + 1}, input a_i is inactive (b = 0)
                         f.write(f'C{k + 1}_im_{i + 1} {xk_im_i} 0 1.0\n')
                         f.write(f'Gp_{k + 1}_im_re_{i + 1} 0 {xk_im_i} {xk_re_i} 0 {-1 * gp_im}\n')
-                        # f.write(f'Gp_{k + 1}_im_im_{i + 1} 0 {xk_im_i} {xk_im_i} 0 {gp_re}\n')  # problem for LTspice
-                        f.write(f'Rp_{k + 1}_im_im_{i + 1} 0 {xk_im_i} {1 / gp_re}\n')  # dc path to gnd for LTspice
+                        f.write(f'Gp_{k + 1}_im_im_{i + 1} 0 {xk_im_i} {xk_im_i} 0 {gp_re}\n')
+                        if g_min is not None and g_min > 0:
+                            # dc path to gnd for LTspice
+                            f.write(f'Rdc_{k + 1}_im_im_{i + 1} {xk_im_i} 0 {1 / g_min}\n')
 
                 # transfer of states and inputs from port j to port i
                 for j in range(self.network.nports):
