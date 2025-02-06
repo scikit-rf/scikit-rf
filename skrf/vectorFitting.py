@@ -2574,15 +2574,18 @@ class VectorFitting:
                     d = self.constant_coeff[idx_S_i_j]
                     # e = self.proportional_coeff[idx_S_i_j]    # E is currently ignored
 
-                    # VCCS and CCCS adding their currents to represent the incident wave a_j
-                    gain_vccs_a_j = 1 / 2 / np.sqrt(z0_j)
-                    gain_cccs_a_j = np.sqrt(z0_j) / 2
+                    if d != 0.0:
+                        # avoid zero-valued coefficients (in case of fit_constant=False)
 
-                    # input a_j is scaled by constant term d_i_j and by current gain for b_i
-                    g_ij = gain_b_i * d * gain_vccs_a_j
-                    f_ij = gain_b_i * d * gain_cccs_a_j
-                    f.write(f'Ga{i + 1}_{j + 1} {node_ref_i} s{i + 1} p{j + 1} {node_ref_j} {g_ij}\n')
-                    f.write(f'Fa{i + 1}_{j + 1} {node_ref_i} s{i + 1} V{j + 1} {f_ij}\n')
+                        # VCCS and CCCS adding their currents to represent the incident wave a_j
+                        gain_vccs_a_j = 1 / 2 / np.sqrt(z0_j)
+                        gain_cccs_a_j = np.sqrt(z0_j) / 2
+
+                        # input a_j is scaled by constant term d_i_j and by current gain for b_i
+                        g_ij = gain_b_i * d * gain_vccs_a_j
+                        f_ij = gain_b_i * d * gain_cccs_a_j
+                        f.write(f'Ga{i + 1}_{j + 1} {node_ref_i} s{i + 1} p{j + 1} {node_ref_j} {g_ij}\n')
+                        f.write(f'Fa{i + 1}_{j + 1} {node_ref_i} s{i + 1} V{j + 1} {f_ij}\n')
 
                     # each residue rk_i_j at port i is multiplied by its respective state signal xk_j
                     for k in range(len(self.poles)):
