@@ -2416,12 +2416,13 @@ class VectorFitting:
                                      create_reference_pins: bool = False, g_min: float = 1e-12) -> None:
         """
         Creates an equivalent N-port subcircuit based on its vector fitted S parameter responses
-        in spice simulator netlist syntax (compatible with ngspice, Xyce, ...).
+        in spice simulator netlist syntax (compatible with LTspice, ngspice, Xyce, ...). The circuit synthesis is based
+        on a direct implementation of the state-space representation of the vector fitted model [#vf-book]_.
 
         Parameters
         ----------
         file : str
-            Path and filename including file extension (usually .sNp) for the subcircuit file.
+            Path and filename including file extension (usually .sp) for the subcircuit file.
 
         fitted_model_name: str
             Name of the resulting subcircuit, default "s_equivalent"
@@ -2438,9 +2439,9 @@ class VectorFitting:
             The default is False
 
         g_min: float or None
-            Specifying the minimal conductance in parallel to the current sources to provide an explicit dc path to
-            ground. This is often required, especially for LTspice. While the default value of 1e-12 should not affect
-            the results at all, the added conductance can be removed entirely with `g_min = None`.
+            Specifying the extra conductance to be added in parallel to the current sources to provide an explicit dc
+            path to ground. This is often required by most SPICE simulators. While the default value of 1e-12 S should
+            not affect the results at all, the added conductances can be removed entirely with `g_min = None`.
 
         Returns
         -------
@@ -2457,17 +2458,8 @@ class VectorFitting:
 
         References
         ----------
-        .. [1] G. Antonini, "SPICE Equivalent Circuits of Frequency-Domain Responses", IEEE Transactions on
-            Electromagnetic Compatibility, vol. 45, no. 3, pp. 502-512, August 2003,
-            doi: https://doi.org/10.1109/TEMC.2003.815528
-
-        .. [2] C. -C. Chou and J. E. Schutt-Ainé, "Equivalent Circuit Synthesis of Multiport S Parameters in
-            Pole–Residue Form," in IEEE Transactions on Components, Packaging and Manufacturing Technology,
-            vol. 11, no. 11, pp. 1971-1979, Nov. 2021, doi: 10.1109/TCPMT.2021.3115113
-
-        .. [3] Romano D, Antonini G, Grossner U, Kovačević-Badstübner I. Circuit synthesis techniques of
-            rational models of electromagnetic systems: A tutorial paper. Int J Numer Model. 2019
-            doi: https://doi.org/10.1002/jnm.2612
+        .. [#vf-book] S. Grivet-Talocia and B. Gustavsen, "Passive Macromodeling", Wiley, 2016,
+            doi: https://doi.org/10.1002/9781119140931
 
         """
 
@@ -2518,50 +2510,49 @@ class VectorFitting:
                 # dummy voltage source (v = 0) for port current sensing (I_i)
                 f.write(f'V{i + 1} p{i + 1} s{i + 1} 0\n')
 
-                # Port reference impedance Z0_i
+                # adding port reference resistor Ri = Z0_i
                 f.write(f'R{i + 1} s{i + 1} {node_ref_i} {z0_i}\n')
 
-                # create state networks driven by a_i
+                # create state networks driven by this port i (input variable u = a_i)
                 for k in range(len(self.poles)):
                     pole = self.poles[k]
+                    pole_re = np.real(pole)
+                    pole_im = np.imag(pole)
 
-                    # Transfer of input (a_i) to state networks (node xk_i)
-                    if np.imag(pole) == 0.0:
+                    # Transfer of input (a_i) to state networks (node xk_i) using VCCS and CCCS
+                    if pole_im == 0.0:
                         # Real pole; represented by one state, input a_i is scaled by b = 1
                         xki = f'x{k + 1}_{i + 1}'
-                        gp = np.real(pole)
-                        f.write(f'C{k + 1}_{i + 1} {xki} 0 1.0\n')
+                        f.write(f'C{k + 1}_{i + 1} {xki} 0 1.0\n')  # 1F capacitor makes math easy
                         f.write(f'Ga_{k + 1}_{i + 1} 0 {xki} p{i + 1} {node_ref_i} {1 * gain_vccs_a_i}\n')
                         f.write(f'Fa_{k + 1}_{i + 1} 0 {xki} V{i + 1} {1 * gain_cccs_a_i}\n')
-                        f.write(f'Gp_{k + 1}_{i + 1} 0 {xki} {xki} 0 {gp}\n')
+                        f.write(f'Gp_{k + 1}_{i + 1} 0 {xki} {xki} 0 {pole_re}\n')
                         if g_min is not None and g_min > 0:
-                            # dc path to gnd for LTspice
+                            # additional explicit dc path to gnd, if desired/required
                             f.write(f'Rdc_{k + 1}_{i + 1} {xki} 0 {1 / g_min}\n')
                     else:
                         # Complex pole of a conjugate pair; represented by two states
                         # real part at x_{k + 1}_re_{i + 1}, input a_i is scaled by b = 2
                         xk_re_i = f'x{k + 1}_re_{i + 1}'
                         xk_im_i = f'x{k + 1}_im_{i + 1}'
-                        gp_re = np.real(pole)
-                        gp_im = np.imag(pole)
-                        f.write(f'C{k + 1}_re_{i + 1} {xk_re_i} 0 1.0\n')
+                        f.write(f'C{k + 1}_re_{i + 1} {xk_re_i} 0 1.0\n')   # 1F capacitor makes math easy
                         f.write(f'Ga_{k + 1}_re_{i + 1} 0 {xk_re_i} p{i + 1} {node_ref_i} {2 * gain_vccs_a_i}\n')
                         f.write(f'Fa_{k + 1}_re_{i + 1} 0 {xk_re_i} V{i + 1} {2 * gain_cccs_a_i}\n')
-                        f.write(f'Gp_{k + 1}_re_re_{i + 1} 0 {xk_re_i} {xk_re_i} 0 {gp_re}\n')
-                        f.write(f'Gp_{k + 1}_re_im_{i + 1} 0 {xk_re_i} {xk_im_i} 0 {gp_im}\n')
+                        f.write(f'Gp_{k + 1}_re_re_{i + 1} 0 {xk_re_i} {xk_re_i} 0 {pole_re}\n')
+                        f.write(f'Gp_{k + 1}_re_im_{i + 1} 0 {xk_re_i} {xk_im_i} 0 {pole_im}\n')
                         if g_min is not None and g_min > 0:
-                            # dc path to gnd for LTspice
+                            # additional explicit dc path to gnd, if desired/required
                             f.write(f'Rdc_{k + 1}_re_re_{i + 1} {xk_re_i} 0 {1 / g_min}\n')
 
                         # imaginary part at x_{k + 1}_im_{i + 1}, input a_i is inactive (b = 0)
-                        f.write(f'C{k + 1}_im_{i + 1} {xk_im_i} 0 1.0\n')
-                        f.write(f'Gp_{k + 1}_im_re_{i + 1} 0 {xk_im_i} {xk_re_i} 0 {-1 * gp_im}\n')
-                        f.write(f'Gp_{k + 1}_im_im_{i + 1} 0 {xk_im_i} {xk_im_i} 0 {gp_re}\n')
+                        f.write(f'C{k + 1}_im_{i + 1} {xk_im_i} 0 1.0\n')   # 1F capacitor makes math easy
+                        f.write(f'Gp_{k + 1}_im_re_{i + 1} 0 {xk_im_i} {xk_re_i} 0 {-1 * pole_im}\n')
+                        f.write(f'Gp_{k + 1}_im_im_{i + 1} 0 {xk_im_i} {xk_im_i} 0 {pole_re}\n')
                         if g_min is not None and g_min > 0:
-                            # dc path to gnd for LTspice
+                            # additional explicit dc path to gnd, if desired/required
                             f.write(f'Rdc_{k + 1}_im_im_{i + 1} {xk_im_i} 0 {1 / g_min}\n')
 
-                # transfer of states and inputs from port j to port i
+                # transfer of states and inputs from port j to input/output network of port i
                 for j in range(self.network.nports):
                     if create_reference_pins:
                         node_ref_j = f'p{j + 1}_ref'
@@ -2575,11 +2566,8 @@ class VectorFitting:
                     # s11, s12, s13, ..., s21, s22, s23, ...
                     idx_S_i_j = i * self.network.nports + j
 
-                    # Start with proportional and constant term of the model
-                    # H(s) = d + s * e  model
-                    # Z(s) = R + s * L  equivalent impedance
                     d = self.constant_coeff[idx_S_i_j]
-                    # e = self.proportional_coeff[idx_S_i_j]
+                    # e = self.proportional_coeff[idx_S_i_j]    # E is currently ignored
 
                     # VCCS and CCCS adding their currents to represent the incident wave a_j
                     gain_vccs_a_j = 1 / 2 / np.sqrt(z0_j)
@@ -2595,20 +2583,19 @@ class VectorFitting:
                     for k in range(len(self.poles)):
                         pole = self.poles[k]
                         residue = self.residues[idx_S_i_j, k]
+                        g_re = gain_b_i * np.real(residue)
+                        g_im = gain_b_i * np.imag(residue)
 
                         if np.imag(pole) == 0.0:
                             # Real pole/residue pair; represented by one state
                             xkj = f'x{k + 1}_{j + 1}'
-                            g = gain_b_i * np.real(residue)
-                            f.write(f'Gr_{k + 1}_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xkj} 0 {g}\n')
+                            f.write(f'Gr_{k + 1}_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xkj} 0 {g_re}\n')
                         else:
                             # Complex-conjugate pole/residue pair; represented by two states
                             # real part at x_{k + 1}_re_{j + 1}
                             # imaginary part at x_{k + 1}_im_{j + 1}
                             xk_re_j = f'x{k + 1}_re_{j + 1}'
                             xk_im_j = f'x{k + 1}_im_{j + 1}'
-                            g_re = gain_b_i * np.real(residue)
-                            g_im = gain_b_i * np.imag(residue)
                             f.write(f'Gr_{k + 1}_re_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xk_re_j} 0 {g_re}\n')
                             f.write(f'Gr_{k + 1}_im_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xk_im_j} 0 {g_im}\n')
 
