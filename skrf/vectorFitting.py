@@ -2415,7 +2415,7 @@ class VectorFitting:
     def write_spice_subcircuit_s(self, file: str, fitted_model_name: str = "s_equivalent",
                                      create_reference_pins: bool = False, g_min: float = 1e-12) -> None:
         """
-        Creates an equivalent N-port subcircuit based on its vector fitted S parameter responses
+        Creates an equivalent N-port subcircuit based on its vector fitted scattering (S) parameter responses
         in spice simulator netlist syntax (compatible with LTspice, ngspice, Xyce, ...). The circuit synthesis is based
         on a direct implementation of the state-space representation of the vector fitted model [#vf-book]_.
 
@@ -2462,6 +2462,11 @@ class VectorFitting:
             doi: https://doi.org/10.1002/9781119140931
 
         """
+
+        if np.any(self.proportional_coeff):
+            raise NotImplementedError('The SPICE equivalent circuit synthesis currently only works models without the '
+                                      'proportional terms. For scattering parameters, it is usually best not to use '
+                                      'them in the vector fit (specify `vector_fit(..., fit_proportional=False)`).')
 
         with open(file, 'w') as f:
             # write title line
