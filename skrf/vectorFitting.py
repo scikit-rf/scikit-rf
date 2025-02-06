@@ -2623,7 +2623,7 @@ class VectorFitting:
                     f.write('*\n')
                     f.write(f'* Network with derivative of input a_{i + 1} for proportional term\n')
                     # voltage on node 'e{i + 1}' to gnd (0) represents time-derivative of input a_i for terms e_j_i
-                    f.write(f'Le{i + 1} e{i + 1} 0 1.0\n')  # 1H capacitor makes math easy
+                    f.write(f'Le{i + 1} e{i + 1} 0 1.0\n')  # 1H inductor makes math easy
                     f.write(f'Ge{i + 1} 0 e{i + 1} p{i + 1} {node_ref_i} {gain_vccs_a_i}\n')
                     f.write(f'Fe{i + 1} 0 e{i + 1} V{i + 1} {gain_cccs_a_i}\n')
 
