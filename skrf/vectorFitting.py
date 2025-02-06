@@ -2518,51 +2518,6 @@ class VectorFitting:
                 # adding port reference resistor Ri = Z0_i
                 f.write(f'R{i + 1} s{i + 1} {node_ref_i} {z0_i}\n')
 
-                if build_e:
-                    # voltage on node 'e{i + 1}' to gnd (0) represents time-derivative of input a_i for prop. terms in E
-                    f.write(f'Ce_{i + 1} e{i + 1} 0 1.0\n')  # 1F capacitor makes math easy
-                    f.write(f'Ge_{i + 1} 0 e{i + 1} p{i + 1} {node_ref_i} {gain_vccs_a_i}\n')
-                    f.write(f'Fe_{i + 1} 0 e{i + 1} V{i + 1} {gain_cccs_a_i}\n')
-
-                # create state networks driven by this port i (input variable u = a_i)
-                for k in range(len(self.poles)):
-                    pole = self.poles[k]
-                    pole_re = np.real(pole)
-                    pole_im = np.imag(pole)
-
-                    # Transfer of input (a_i) to state networks (node xk_i) using VCCS and CCCS
-                    if pole_im == 0.0:
-                        # Real pole; represented by one state, input a_i is scaled by b = 1
-                        xki = f'x{k + 1}_{i + 1}'
-                        f.write(f'C{k + 1}_{i + 1} {xki} 0 1.0\n')  # 1F capacitor makes math easy
-                        f.write(f'Ga_{k + 1}_{i + 1} 0 {xki} p{i + 1} {node_ref_i} {1 * gain_vccs_a_i}\n')
-                        f.write(f'Fa_{k + 1}_{i + 1} 0 {xki} V{i + 1} {1 * gain_cccs_a_i}\n')
-                        f.write(f'Gp_{k + 1}_{i + 1} 0 {xki} {xki} 0 {pole_re}\n')
-                        if g_min is not None and g_min > 0:
-                            # additional explicit dc path to gnd, if desired/required
-                            f.write(f'Rdc_{k + 1}_{i + 1} {xki} 0 {1 / g_min}\n')
-                    else:
-                        # Complex pole of a conjugate pair; represented by two states
-                        # real part at x_{k + 1}_re_{i + 1}, input a_i is scaled by b = 2
-                        xk_re_i = f'x{k + 1}_re_{i + 1}'
-                        xk_im_i = f'x{k + 1}_im_{i + 1}'
-                        f.write(f'C{k + 1}_re_{i + 1} {xk_re_i} 0 1.0\n')   # 1F capacitor makes math easy
-                        f.write(f'Ga_{k + 1}_re_{i + 1} 0 {xk_re_i} p{i + 1} {node_ref_i} {2 * gain_vccs_a_i}\n')
-                        f.write(f'Fa_{k + 1}_re_{i + 1} 0 {xk_re_i} V{i + 1} {2 * gain_cccs_a_i}\n')
-                        f.write(f'Gp_{k + 1}_re_re_{i + 1} 0 {xk_re_i} {xk_re_i} 0 {pole_re}\n')
-                        f.write(f'Gp_{k + 1}_re_im_{i + 1} 0 {xk_re_i} {xk_im_i} 0 {pole_im}\n')
-                        if g_min is not None and g_min > 0:
-                            # additional explicit dc path to gnd, if desired/required
-                            f.write(f'Rdc_{k + 1}_re_re_{i + 1} {xk_re_i} 0 {1 / g_min}\n')
-
-                        # imaginary part at x_{k + 1}_im_{i + 1}, input a_i is inactive (b = 0)
-                        f.write(f'C{k + 1}_im_{i + 1} {xk_im_i} 0 1.0\n')   # 1F capacitor makes math easy
-                        f.write(f'Gp_{k + 1}_im_re_{i + 1} 0 {xk_im_i} {xk_re_i} 0 {-1 * pole_im}\n')
-                        f.write(f'Gp_{k + 1}_im_im_{i + 1} 0 {xk_im_i} {xk_im_i} 0 {pole_re}\n')
-                        if g_min is not None and g_min > 0:
-                            # additional explicit dc path to gnd, if desired/required
-                            f.write(f'Rdc_{k + 1}_im_im_{i + 1} {xk_im_i} 0 {1 / g_min}\n')
-
                 # transfer of states and inputs from port j to input/output network of port i
                 for j in range(self.network.nports):
                     if create_reference_pins:
@@ -2590,8 +2545,8 @@ class VectorFitting:
                         # input a_j is scaled by constant term d_i_j and by current gain for b_i
                         g_ij = gain_b_i * d * gain_vccs_a_j
                         f_ij = gain_b_i * d * gain_cccs_a_j
-                        f.write(f'Ga{i + 1}_{j + 1} {node_ref_i} s{i + 1} p{j + 1} {node_ref_j} {g_ij}\n')
-                        f.write(f'Fa{i + 1}_{j + 1} {node_ref_i} s{i + 1} V{j + 1} {f_ij}\n')
+                        f.write(f'Gd{i + 1}_{j + 1} {node_ref_i} s{i + 1} p{j + 1} {node_ref_j} {g_ij}\n')
+                        f.write(f'Fd{i + 1}_{j + 1} {node_ref_i} s{i + 1} V{j + 1} {f_ij}\n')
 
                     if e != 0.0:
                         # avoid zero-valued coefficients (in case of fit_proportional=False)
@@ -2611,15 +2566,65 @@ class VectorFitting:
 
                         if np.imag(pole) == 0.0:
                             # Real pole/residue pair; represented by one state
-                            xkj = f'x{k + 1}_{j + 1}'
-                            f.write(f'Gr_{k + 1}_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xkj} 0 {g_re}\n')
+                            xkj = f'x{k + 1}_a{j + 1}'
+                            f.write(f'Gr{k + 1}_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xkj} 0 {g_re}\n')
                         else:
                             # Complex-conjugate pole/residue pair; represented by two states
                             # real part at x_{k + 1}_re_{j + 1}
                             # imaginary part at x_{k + 1}_im_{j + 1}
-                            xk_re_j = f'x{k + 1}_re_{j + 1}'
-                            xk_im_j = f'x{k + 1}_im_{j + 1}'
-                            f.write(f'Gr_{k + 1}_re_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xk_re_j} 0 {g_re}\n')
-                            f.write(f'Gr_{k + 1}_im_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xk_im_j} 0 {g_im}\n')
+                            xk_re_j = f'x{k + 1}_re_a{j + 1}'
+                            xk_im_j = f'x{k + 1}_im_a{j + 1}'
+                            f.write(f'Gr{k + 1}_re_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xk_re_j} 0 {g_re}\n')
+                            f.write(f'Gr{k + 1}_im_{i + 1}_{j + 1} {node_ref_i} s{i + 1} {xk_im_j} 0 {g_im}\n')
+
+                # create state networks driven by this port i (input variable u = a_i)
+                f.write('*\n')
+                f.write(f'* State networks driven by port {i + 1}\n')
+                for k in range(len(self.poles)):
+                    pole = self.poles[k]
+                    pole_re = np.real(pole)
+                    pole_im = np.imag(pole)
+
+                    # Transfer of input (a_i) to state networks (node xk_i) using VCCS and CCCS
+                    if pole_im == 0.0:
+                        # Real pole; represented by one state, input a_i is scaled by b = 1
+                        xki = f'x{k + 1}_a{i + 1}'
+                        f.write(f'Cx{k + 1}_a{i + 1} {xki} 0 1.0\n')  # 1F capacitor makes math easy
+                        f.write(f'Gx{k + 1}_a{i + 1} 0 {xki} p{i + 1} {node_ref_i} {1 * gain_vccs_a_i}\n')
+                        f.write(f'Fx{k + 1}_a{i + 1} 0 {xki} V{i + 1} {1 * gain_cccs_a_i}\n')
+                        f.write(f'Gp{k + 1}_a{i + 1} 0 {xki} {xki} 0 {pole_re}\n')
+                        if g_min is not None and g_min > 0:
+                            # additional explicit dc path to gnd, if desired/required
+                            f.write(f'Rdc{k + 1}_a{i + 1} {xki} 0 {1 / g_min}\n')
+                    else:
+                        # Complex pole of a conjugate pair; represented by two states
+                        # real part at x_{k + 1}_re_{i + 1}, input a_i is scaled by b = 2
+                        xk_re_i = f'x{k + 1}_re_a{i + 1}'
+                        xk_im_i = f'x{k + 1}_im_a{i + 1}'
+                        f.write(f'Cx{k + 1}_re_a{i + 1} {xk_re_i} 0 1.0\n')  # 1F capacitor makes math easy
+                        f.write(
+                            f'Gx{k + 1}_re_a{i + 1} 0 {xk_re_i} p{i + 1} {node_ref_i} {2 * gain_vccs_a_i}\n')
+                        f.write(f'Fx{k + 1}_re_a{i + 1} 0 {xk_re_i} V{i + 1} {2 * gain_cccs_a_i}\n')
+                        f.write(f'Gp{k + 1}_re_re_a{i + 1} 0 {xk_re_i} {xk_re_i} 0 {pole_re}\n')
+                        f.write(f'Gp{k + 1}_re_im_a{i + 1} 0 {xk_re_i} {xk_im_i} 0 {pole_im}\n')
+                        if g_min is not None and g_min > 0:
+                            # additional explicit dc path to gnd, if desired/required
+                            f.write(f'Rdc{k + 1}_re_re_a{i + 1} {xk_re_i} 0 {1 / g_min}\n')
+
+                        # imaginary part at x_{k + 1}_im_{i + 1}, input a_i is inactive (b = 0)
+                        f.write(f'Cx{k + 1}_im_a{i + 1} {xk_im_i} 0 1.0\n')  # 1F capacitor makes math easy
+                        f.write(f'Gp{k + 1}_im_re_a{i + 1} 0 {xk_im_i} {xk_re_i} 0 {-1 * pole_im}\n')
+                        f.write(f'Gp{k + 1}_im_im_a{i + 1} 0 {xk_im_i} {xk_im_i} 0 {pole_re}\n')
+                        if g_min is not None and g_min > 0:
+                            # additional explicit dc path to gnd, if desired/required
+                            f.write(f'Rdc{k + 1}_im_im_a{i + 1} {xk_im_i} 0 {1 / g_min}\n')
+
+                if build_e:
+                    f.write('*\n')
+                    f.write(f'* Network with derivative of input a_{i + 1} for proportional term\n')
+                    # voltage on node 'e{i + 1}' to gnd (0) represents time-derivative of input a_i for terms e_j_i
+                    f.write(f'Le{i + 1} e{i + 1} 0 1.0\n')  # 1H capacitor makes math easy
+                    f.write(f'Ge{i + 1} 0 e{i + 1} p{i + 1} {node_ref_i} {gain_vccs_a_i}\n')
+                    f.write(f'Fe{i + 1} 0 e{i + 1} V{i + 1} {gain_cccs_a_i}\n')
 
             f.write(f'.ENDS {fitted_model_name}\n')
