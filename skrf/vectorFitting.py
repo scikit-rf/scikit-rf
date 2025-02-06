@@ -2464,9 +2464,9 @@ class VectorFitting:
         """
 
         if np.any(self.proportional_coeff):
-            raise NotImplementedError('The SPICE equivalent circuit synthesis currently only works models without the '
-                                      'proportional terms. For scattering parameters, it is usually best not to use '
-                                      'them in the vector fit (specify `vector_fit(..., fit_proportional=False)`).')
+            build_e = True
+        else:
+            build_e = False
 
         with open(file, 'w') as f:
             # write title line
@@ -2517,6 +2517,12 @@ class VectorFitting:
 
                 # adding port reference resistor Ri = Z0_i
                 f.write(f'R{i + 1} s{i + 1} {node_ref_i} {z0_i}\n')
+
+                if build_e:
+                    # voltage on node 'e{i + 1}' to gnd (0) represents time-derivative of input a_i for prop. terms in E
+                    f.write(f'Ce_{i + 1} e{i + 1} 0 1.0\n')  # 1F capacitor makes math easy
+                    f.write(f'Ge_{i + 1} 0 e{i + 1} p{i + 1} {node_ref_i} {gain_vccs_a_i}\n')
+                    f.write(f'Fe_{i + 1} 0 e{i + 1} V{i + 1} {gain_cccs_a_i}\n')
 
                 # create state networks driven by this port i (input variable u = a_i)
                 for k in range(len(self.poles)):
@@ -2571,21 +2577,30 @@ class VectorFitting:
                     # s11, s12, s13, ..., s21, s22, s23, ...
                     idx_S_i_j = i * self.network.nports + j
 
+                    # VCCS and CCCS adding their currents to represent the incident wave a_j
+                    gain_vccs_a_j = 1 / 2 / np.sqrt(z0_j)
+                    gain_cccs_a_j = np.sqrt(z0_j) / 2
+
                     d = self.constant_coeff[idx_S_i_j]
-                    # e = self.proportional_coeff[idx_S_i_j]    # E is currently ignored
+                    e = self.proportional_coeff[idx_S_i_j]
 
                     if d != 0.0:
                         # avoid zero-valued coefficients (in case of fit_constant=False)
-
-                        # VCCS and CCCS adding their currents to represent the incident wave a_j
-                        gain_vccs_a_j = 1 / 2 / np.sqrt(z0_j)
-                        gain_cccs_a_j = np.sqrt(z0_j) / 2
 
                         # input a_j is scaled by constant term d_i_j and by current gain for b_i
                         g_ij = gain_b_i * d * gain_vccs_a_j
                         f_ij = gain_b_i * d * gain_cccs_a_j
                         f.write(f'Ga{i + 1}_{j + 1} {node_ref_i} s{i + 1} p{j + 1} {node_ref_j} {g_ij}\n')
                         f.write(f'Fa{i + 1}_{j + 1} {node_ref_i} s{i + 1} V{j + 1} {f_ij}\n')
+
+                    if e != 0.0:
+                        # avoid zero-valued coefficients (in case of fit_proportional=False)
+                        # proportional coefficients require an extra node for the differentiation using a capacitor
+                        # [Y(s) ~ s * E * U(s)]
+
+                        # differentiated input a_j is scaled by proportional term e_i_j and by current gain for b_i
+                        g_ij = gain_b_i * e
+                        f.write(f'Ge{i + 1}_{j + 1} {node_ref_i} s{i + 1} e{j + 1} 0 {g_ij}\n')
 
                     # each residue rk_i_j at port i is multiplied by its respective state signal xk_j
                     for k in range(len(self.poles)):
