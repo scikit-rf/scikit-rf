@@ -2543,9 +2543,9 @@ class VectorFitting:
                         f.write(f'Gd{i + 1}_{j + 1} {node_ref_i} s{i + 1} p{j + 1} {node_ref_j} {g_ij}\n')
                         f.write(f'Fd{i + 1}_{j + 1} {node_ref_i} s{i + 1} V{j + 1} {f_ij}\n')
 
-                    if e != 0.0:
+                    if build_e and e != 0.0:
                         # avoid zero-valued coefficients (in case of fit_proportional=False)
-                        # proportional coefficients require an extra node for the differentiation using a capacitor
+                        # proportional coefficients require an extra node for the differentiation using an inductor
                         # [Y(s) ~ s * E * U(s)]
 
                         # differentiated input a_j is scaled by proportional term e_i_j and by current gain for b_i
@@ -2605,6 +2605,7 @@ class VectorFitting:
                         f.write(f'Gp{k + 1}_im_re_a{i + 1} 0 {xk_im_i} {xk_re_i} 0 {-1 * pole_im}\n')
                         f.write(f'Rp{k + 1}_im_im_a{i + 1} 0 {xk_im_i} {-1 / pole_re}\n')
 
+                # create differentiation network for this port i (input variable u = a_i)
                 if build_e:
                     f.write('*\n')
                     f.write(f'* Network with derivative of input a_{i + 1} for proportional term\n')
