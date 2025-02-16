@@ -2354,7 +2354,9 @@ class EightTerm(Calibration):
         #Port impedances before renormalization.
         #Only the DUT side (port 2) is renormalized.
         #VNA side (port 1) stays unchanged.
-        z = np.array([z0_new, z0_old]).transpose()
+        z = np.zeros((len(k),2), dtype=complex)
+        z[:,0] = z0_new
+        z[:,1] = z0_old
 
         if powerwave:
             S1 = renormalize_s(S1, z, z0_new, s_def='power')
@@ -5168,6 +5170,57 @@ class SixteenTerm(Calibration):
         E4 = -invT4 @ T3
 
         return E1, E2, E3, E4
+
+    def renormalize(self, z0_old, z0_new):
+        """
+        Renormalizes the calibration error boxes to a new reference impedance.
+        """
+
+        Z = np.zeros((len(self.coefs['k']), 4, 4), dtype=complex)
+        Z[:,0,0] = self.coefs['forward directivity']
+        Z[:,1,1] = self.coefs['forward source match']
+        Z[:,2,2] = self.coefs['reverse source match']
+        Z[:,3,3] = self.coefs['reverse directivity']
+        Z[:,1,0] = self.coefs['k']
+        Z[:,0,1] = self.coefs['forward reflection tracking'] / self.coefs['k']
+        Z[:,2,3] = 1
+        Z[:,3,2] = self.coefs['reverse reflection tracking']
+        Z[:,3,0] = self.coefs['forward isolation']
+        Z[:,0,3] = self.coefs['reverse isolation']
+        Z[:,2,1] = self.coefs['forward port isolation']
+        Z[:,1,2] = self.coefs['reverse port isolation']
+        Z[:,2,0] = self.coefs['forward port 1 isolation']
+        Z[:,0,2] = self.coefs['reverse port 1 isolation']
+        Z[:,3,1] = self.coefs['forward port 2 isolation']
+        Z[:,1,3] = self.coefs['reverse port 2 isolation']
+
+        #Port impedances before renormalization.
+        #Only the DUT side (port 2 and 3) is renormalized.
+        #VNA side (port 1 and 4) stays unchanged.
+        z = np.zeros((len(self.coefs['k']),4), dtype=complex)
+        z[:,0] = z0_new
+        z[:,1] = z0_old
+        z[:,2] = z0_old
+        z[:,3] = z0_new
+
+        Z = renormalize_s(Z, z, z0_new, s_def='traveling')
+
+        self.coefs['k'] = Z[:,1,0] / Z[:,2,3]
+        self.coefs['forward directivity'] = Z[:,0,0]
+        self.coefs['forward source match'] = Z[:,1,1]
+        self.coefs['reverse source match'] = Z[:,2,2]
+        self.coefs['reverse directivity'] = Z[:,3,3]
+        self.coefs['forward reflection tracking'] = Z[:,1,0] * Z[:,0,1]
+        self.coefs['reverse reflection tracking'] = Z[:,2,3] * Z[:,3,2]
+        self.coefs['forward isolation'] = Z[:,3,0]
+        self.coefs['reverse isolation'] = Z[:,0,3]
+        self.coefs['forward port isolation'] = Z[:,2,1]
+        self.coefs['reverse port isolation'] = Z[:,1,2]
+        self.coefs['forward port 1 isolation'] = Z[:,2,0] / Z[:,2,3]
+        self.coefs['reverse port 1 isolation'] = Z[:,0,2] * Z[:,2,3]
+        self.coefs['forward port 2 isolation'] = Z[:,3,1] * Z[:,2,3]
+        self.coefs['reverse port 2 isolation'] = Z[:,1,3] / Z[:,2,3]
+        return None
 
 
 class LMR16(SixteenTerm):
