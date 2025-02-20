@@ -4221,8 +4221,8 @@ class Network:
                 FFT windowing function. (Default is 'hamming')
         n : int
                 Length of impulse response output.
-                If n is not specified, 2 * (m - 1) points are used,
-                where m = len(self) + pad. (Default is None)
+                If n is not specified, 2m - 1 points are used in low-pass mode,
+                or m points in band-pass mode, where m = len(self) + pad. (default is None).
         pad : int
                 Number of zeros to add as padding for FFT.
                 Adding more zeros improves accuracy of peaks. (Default is 0)
@@ -4291,8 +4291,8 @@ class Network:
                 FFT windowing function. (Default is 'hamming')
         n : int
                 Length of step response output.
-                If n is not specified, 2 * (m - 1) points are used,
-                where m = len(self) + pad. (Default is None)
+                If n is not specified, 2m - 1 points are used in low-pass mode
+                where m = len(self) + pad. (default is None).
         pad : int
                 Number of zeros to add as padding for FFT.
                 Adding more zeros improves accuracy of peaks. (Default is 0)
