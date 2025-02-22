@@ -4869,8 +4869,8 @@ class Network:
 
             if attribute[0].lower() == "z":
                 y_label = "Z (Ohm)"
-                y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
-                y[x == -1.] = -1. + 1e-12  # solve numerical singularity
+                y[y ==  1.] =  1. + 1e-12  # solve numerical singularity
+                y[y == -1.] = -1. - 1e-12  # solve numerical singularity
                 y = self.z0[0].real * (1+y) / (1-y)
 
         for m in M:
