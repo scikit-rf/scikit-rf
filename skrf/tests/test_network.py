@@ -12,7 +12,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 from scipy import signal
-from scipy.constants import  c
 
 import skrf as rf
 from skrf import setup_pylab
