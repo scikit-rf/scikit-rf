@@ -2337,7 +2337,7 @@ class Network:
                          format_spec_freq: str = '{}', r_ref: float = None,
                          format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
                          format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
-                         format_spec_rn: str = '{}') -> str | None:
+                         format_spec_rn: str = '{}', write_noise: bool = True) -> str | None:
 
         """
         Write a contents of the :class:`Network` to a touchstone file.
@@ -2402,6 +2402,8 @@ class Network:
             Any valid format specifying string as given by
             https://docs.python.org/3/library/string.html#format-string-syntax
             This specifies the formatting in the resulting touchstone file for the noise resistance.
+        write_noise : bool, optional
+            Write noise parameters.
 
         Note
         ----
@@ -2579,16 +2581,10 @@ class Network:
                         output.write('\n')
 
                 # write noise data if it exists
-                if ntwk.noisy:
-                    output.write("! Noise Data\n! freq\tnf_min_db\tmagGOpt\tdegGOpt\tRn_eff\n")
-                    new = ntwk.copy()
-                    new.resample(ntwk.f_noise) # only write data from original noise freqs
-                    for f, nf, g_opt, rn, z0 in zip(new.f_noise.f_scaled, new.nfmin_db, new.g_opt, new.rn, new.z0):
-                        output.write(format_spec_nf_freq.format(f) + ' ' \
-                             + format_spec_nf_min.format(nf) + ' ' \
-                             + format_spec_g_opt_mag.format(mf.complex_2_magnitude(g_opt)) + ' ' \
-                             + format_spec_g_opt_phase.format(mf.complex_2_degree(g_opt)) + ' ' \
-                             + format_spec_rn.format(rn/z0[0].real) + ' ' "\n")
+                if ntwk.noisy and write_noise:
+                    self._write_noisedata(output, format_spec_nf_freq, format_spec_nf_min,
+                                          format_spec_g_opt_mag, format_spec_g_opt_phase,
+                                          format_spec_rn)
 
             elif ntwk.number_of_ports == 3:
                 # 3-port is written over 3 lines / matrix order
@@ -2654,6 +2650,22 @@ class Network:
                 to_archive.writestr(filename, output.getvalue())
             elif return_string is True:
                 return output.getvalue()
+
+    def _write_noisedata(self, output, format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
+                         format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
+                         format_spec_rn: str = '{}'):
+        ntwk = self.copy()
+
+        output.write("! Noise Data\n! freq\tnf_min_db\tmagGOpt\tdegGOpt\tRn_eff\n")
+        new = ntwk.copy()
+        new.resample(ntwk.f_noise) # only write data from original noise freqs
+        for f, nf, g_opt, rn, z0 in zip(new.f_noise.f_scaled, new.nfmin_db, new.g_opt, new.rn, new.z0):
+            output.write(format_spec_nf_freq.format(f) + ' ' \
+                    + format_spec_nf_min.format(nf) + ' ' \
+                    + format_spec_g_opt_mag.format(mf.complex_2_magnitude(g_opt)) + ' ' \
+                    + format_spec_g_opt_phase.format(mf.complex_2_degree(g_opt)) + ' ' \
+                    + format_spec_rn.format(rn/z0[0].real) + ' ' "\n")
+
 
     def write(self, file: str | Path = None, *args, **kwargs) -> None:
         r"""
