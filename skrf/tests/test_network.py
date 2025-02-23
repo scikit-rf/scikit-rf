@@ -714,7 +714,7 @@ class NetworkTestCase(unittest.TestCase):
 
         # this keeps port_names from splitter and provides port_names for thru
         np.testing.assert_almost_equal(ntwk1.z0[0], [10, 3, 4])
-        self.assertTrue(ntwk1.port_names == ["a", "3", "4"])
+        self.assertTrue(ntwk1.port_names == ["a", "2", "3"])
 
         # this removes port_names from splitter
         ntwk2 = rf.connect(self.thru, 2, self.splitter, 0, 2)
