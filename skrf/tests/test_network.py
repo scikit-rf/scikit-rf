@@ -721,7 +721,6 @@ class NetworkTestCase(unittest.TestCase):
         np.testing.assert_almost_equal(ntwk2.z0[0], [1, 2, 30])
         self.assertTrue(ntwk2.port_names is None)
 
-
     def test_interconnect_complex_ports(self):
         """ Test that connecting two complex ports in a network
         gives the same S-parameters with all s_def when the rest of
