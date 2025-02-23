@@ -63,6 +63,9 @@ class NetworkTestCase(unittest.TestCase):
         l2 = self.cpw.line(0.07, 'm', z0=50)
         l3 = self.cpw.line(0.47, 'm', z0=50)
         self.l2 = l2
+        freq = rf.Frequency(0, 2, 3, 'GHz')
+        m50 = rf.media.DefinedGammaZ0(frequency = freq, z0_port = 50, z0 = 50)
+        self.o1 = m50.open()
         self.Fix = rf.concat_ports([l1, l1, l1, l1])
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
@@ -1059,6 +1062,11 @@ class NetworkTestCase(unittest.TestCase):
     @pytest.mark.skipif("matplotlib" not in sys.modules, reason="Requires matplotlib in sys.modules.")
     def test_plot_two_port_smith(self):
         self.ntwk1.plot_s_smith()
+
+    @pytest.mark.skipif("matplotlib" not in sys.modules, reason="Requires matplotlib in sys.modules.")
+    def test_plot_z_responses_singularities(self):
+        with np.errstate(divide='raise'):
+            self.o1.plot_z_time_impulse(window = None)
 
     def test_zy_singularities(self):
         networks = [
