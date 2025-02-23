@@ -5083,6 +5083,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     # create port_names if required
     if ntwkB.port_names is None:
         if ntwkA.port_names is not None:
+            ntwkB = ntwkB.copy()
             ntwkB.port_names = [str(x) for x in range(ntwkB.nports)]
 
     have_complex_ports = (ntwkA.z0.imag != 0).any() or (ntwkB.z0.imag != 0).any()

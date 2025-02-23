@@ -12,12 +12,13 @@ from pathlib import Path
 import numpy as np
 import pytest
 from scipy import signal
+from scipy.constants import  c
 
 import skrf as rf
 from skrf import setup_pylab
 from skrf.constants import S_DEF_HFSS_DEFAULT, S_DEFINITIONS
 from skrf.frequency import Frequency, InvalidFrequencyWarning
-from skrf.media import CPW, DistributedCircuit
+from skrf.media import CPW, DefinedGammaZ0, DistributedCircuit
 from skrf.networkSet import tuner_constellation
 
 try:
@@ -63,8 +64,8 @@ class NetworkTestCase(unittest.TestCase):
         l2 = self.cpw.line(0.07, 'm', z0=50)
         l3 = self.cpw.line(0.47, 'm', z0=50)
         self.l2 = l2
-        freq = rf.Frequency(0, 2, 3, 'GHz')
-        m50 = rf.media.DefinedGammaZ0(frequency = freq, z0_port = 50, z0 = 50)
+        freq = Frequency(0, 9, 10, 'GHz')
+        m50 = DefinedGammaZ0(frequency = freq, z0_port = 50, z0 = 50)
         self.o1 = m50.open()
         self.splitter = m50.splitter(nports = 3, z0 = [10, 20, 30])
         self.splitter.port_names = ["a", "b", "c"]
