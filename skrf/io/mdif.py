@@ -453,6 +453,7 @@ class Mdif:
                 mdif.write(f"! {c}\n")
 
             nports = ns[0].nports
+            is_noisy = ns[0].noisy
 
             optionstring = Mdif.__create_optionstring(nports)
 
@@ -479,12 +480,12 @@ class Mdif:
                 data = ntwk.write_touchstone(return_string=True, write_noise=False, **kwargs)
                 mdif.write(data)
 
-                # this "END" terminates "ACDATA" (s-parameters) and begins noise ("NDATA")
-                mdif.write("END\n\nBEGIN NDATA\n")
-                mdif.write("%F nfmin n11x n11y rn\n")
-                mdif.write(f"# {ntwk.frequency.unit} S MA R {ntwk.z0[0, 0].real}\n")
-
-                ntwk._write_noisedata(output=mdif)
+                if is_noisy:
+                    # this "END" terminates "ACDATA" (s-parameters) and begins noise ("NDATA")
+                    mdif.write("END\n\nBEGIN NDATA\n")
+                    mdif.write("%F nfmin n11x n11y rn\n")
+                    mdif.write(f"# {ntwk.frequency.unit} S MA R {ntwk.z0[0, 0].real}\n")
+                    ntwk._write_noisedata(output=mdif)
 
                 mdif.write("END\n\n")
 
