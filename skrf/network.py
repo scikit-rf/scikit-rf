@@ -5086,7 +5086,6 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         if ntwkA.port_names is not None:
             ntwkB.port_names = [str(x) for x in range(ntwkB.nports)]
 
-
     have_complex_ports = (ntwkA.z0.imag != 0).any() or (ntwkB.z0.imag != 0).any()
 
     # If definitions aren't identical and there are complex ports renormalize first
