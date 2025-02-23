@@ -66,6 +66,10 @@ class NetworkTestCase(unittest.TestCase):
         freq = rf.Frequency(0, 2, 3, 'GHz')
         m50 = rf.media.DefinedGammaZ0(frequency = freq, z0_port = 50, z0 = 50)
         self.o1 = m50.open()
+        self.splitter = m50.splitter(nports = 3, z0 = [10, 20, 30])
+        self.splitter.port_names = ["a", "b", "c"]
+        self.thru = rf.concat_ports([m50.thru()] * 2, port_order='second')
+        self.thru.renormalize([1, 2, 3, 4])
         self.Fix = rf.concat_ports([l1, l1, l1, l1])
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
@@ -700,6 +704,23 @@ class NetworkTestCase(unittest.TestCase):
         # Connect the network to another standard network
         ntwk_connected = rf.connect(self.ntwk2, 0, ntwk_tmp, 1)
         self.assertFalse(ntwk_connected._ext_attrs.get('_is_circuit_open', False))
+
+    def test_connect_port_names(self):
+        """Test that connecting a network with port_names to another network
+        without port_names in case of mismatch and multiple connections gives
+        the propers port_names and port impedances.
+        """
+        ntwk1 = rf.connect(self.splitter, 1, self.thru, 0, 2)
+
+        # this keeps port_names from splitter and provides port_names for thru
+        np.testing.assert_almost_equal(ntwk1.z0[0], [10, 3, 4])
+        self.assertTrue(ntwk1.port_names == ["a", "3", "4"])
+
+        # this removes port_names from splitter
+        ntwk2 = rf.connect(self.thru, 2, self.splitter, 0, 2)
+        np.testing.assert_almost_equal(ntwk2.z0[0], [1, 2, 30])
+        self.assertTrue(ntwk2.port_names is None)
+
 
     def test_interconnect_complex_ports(self):
         """ Test that connecting two complex ports in a network
