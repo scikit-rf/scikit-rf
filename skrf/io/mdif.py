@@ -317,6 +317,7 @@ class Mdif:
         params = dict()
 
         in_data_block = False
+        in_noise_block = False
 
         for line in fid:
 
@@ -343,19 +344,31 @@ class Mdif:
             # ....
             # end
             if line.lower().startswith('end'):
-                ntwk = self._parse_data(block_data)
-                ntwk.params = params
-                ntwks.append(ntwk)
+                if in_data_block:
+                    ntwk = self._parse_data(block_data)
+                    ntwk.params = params
+                    ntwks.append(ntwk)
+                    # reset parsed values
+                    in_data_block = False
+                    params = dict()
+                if in_noise_block:
+                    in_noise_block = False
+                    noise_arr = np.array(
+                        [e.split() for e in block_data if not e.startswith(("!", "#", "%"))]
+                        ).astype(float)
+                    freq, nfmin, gamma_opt_mag, gamma_opt_angle, rn = noise_arr.T
+                    nfreq = Frequency.from_f(freq, unit=ntwk.frequency.unit)
+                    gamma = gamma_opt_mag * np.exp(1j*np.deg2rad(gamma_opt_angle))
+                    ntwk.set_noise_a(nfreq, nfmin, gamma, rn * ntwk.z0[0,0])
 
-                # reset parsed values
-                in_data_block = False
                 block_data = []
-                params = dict()
 
-            if in_data_block:
+            if in_data_block or in_noise_block:
                 block_data.append(line)
 
-            if line.lower().startswith('begin'):
+            if line.lower().startswith("begin ndata"):
+                in_noise_block = True
+            elif line.lower().startswith('begin'):
                 in_data_block = True
 
         return ntwks
