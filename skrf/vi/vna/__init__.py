@@ -179,4 +179,4 @@ Here's an example of using a validator:
 """
 
 from .vna import VNA, Channel, ValuesFormat  # isort: skip
-from . import keysight, nanovna, rohde_schwarz  # isort: skip
+from . import keysight, nanovna, rohde_schwarz, hp  # isort: skip
