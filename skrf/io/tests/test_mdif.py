@@ -92,6 +92,26 @@ class MdifTestCase(unittest.TestCase):
         # to Networkset Init
         ns = rf.NetworkSet.from_mdif(file)
 
+    def test_read_and_write_back_noise(self):
+        net = rf.Network("skrf/io/tests/ts/ex_18.s2p")
+        nset1 = rf.NetworkSet([net.copy() for _i in range(4)])
+
+        #nset1 = rf.NetworkSet.from_mdif("amplifier.mdf")
+        nset1.write_mdif("out1.mdf")
+        nset2 = rf.NetworkSet.from_mdif("out1.mdf")
+        nset2.write_mdif("out2.mdf")
+        nset3 = rf.NetworkSet.from_mdif("out2.mdf")
+        nset3.write_mdif("out3.mdf")
+        nset4 = rf.NetworkSet.from_mdif("out3.mdf")
+        assert nset1 == nset4
+
+        for n1, n2 in zip(nset1, nset4):
+            np.testing.assert_allclose(n1.noise, n2.noise)
+
+        os.remove("out1.mdf")
+        os.remove("out2.mdf")
+        os.remove("out3.mdf")
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(MdifTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
