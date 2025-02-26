@@ -5092,6 +5092,12 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     if (l + num - 1 > ntwkB.nports - 1):
         raise IndexError('Port `l` out of range')
 
+    # create port_names if required
+    if ntwkB.port_names is None:
+        if ntwkA.port_names is not None:
+            ntwkB = ntwkB.copy()
+            ntwkB.port_names = [str(x) for x in range(ntwkB.nports)]
+
     have_complex_ports = (ntwkA.z0.imag != 0).any() or (ntwkB.z0.imag != 0).any()
 
     # If definitions aren't identical and there are complex ports renormalize first
@@ -5145,9 +5151,12 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     # call s-matrix connection function
     ntwkC.s = connect_s(ntwkC.s if not z0_equal else ntwkA.s, k, ntwkB.s, l, num)
 
-    # combine z0 arrays and remove ports which were `connected`
+    # combine z0 and port_names arrays and remove ports which were `connected`
     ntwkC.z0 = np.hstack(
         (np.delete(ntwkA.z0, range(k, k + 1), 1), np.delete(ntwkB.z0, range(l, l + 1), 1)))
+    if ntwkA.port_names is not None:
+        ntwkC.port_names = np.concatenate(
+            (np.delete(ntwkA.port_names, k), np.delete(ntwkB.port_names, l)))
 
     # if we're connecting more than one port, call innerconnect recursively
     # until all connections are made to finish the job
@@ -5530,6 +5539,8 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     z0_equal = (ntwkC.z0[:, k] == ntwkC.z0[:, l]).all()
 
     if not z0_equal:
+        if ntwkC.port_names is not None:
+            port_names = ntwkC.port_names.copy()
         # connect a impedance mismatch, which will takes into account the
         # effect of differing port impedances
         mismatch = impedance_mismatch(ntwkA.z0[:, k], ntwkA.z0[:, l], ntwkA.s_def)
@@ -5540,12 +5551,16 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
         ntwkC.z0[:, k:] = np.hstack((ntwkC.z0[:, k + 1:], ntwkC.z0[:, [l]]))
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
                        to_ports=list(range(k, ntwkC.nports)))
+        if ntwkC.port_names is not None:
+            ntwkC.port_names = port_names
 
     # call s-matrix connection function
     ntwkC.s = innerconnect_s(ntwkC.s if not z0_equal else ntwkA.s, k, l)
 
-    # update the characteristic impedance matrix
+    # update the characteristic impedance matrix and port_names
     ntwkC.z0 = np.delete(ntwkC.z0, list(range(k, k + 1)) + list(range(l, l + 1)), 1)
+    if ntwkC.port_names is not None:
+        ntwkC.port_names = np.delete(ntwkC.port_names, [k] + [l]).tolist()
 
     # recur if we're connecting more than one port
     if num > 1:
