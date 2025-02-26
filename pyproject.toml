@@ -98,7 +98,8 @@ build-backend = "setuptools.build_meta"
 
 
 [tool.setuptools]
-license-files = ["LICENSE.txt"]
+# license-files = ["LICENSE.txt"]  # tempfix bug in setuptool
+license-files = []
 
 [tool.setuptools.dynamic]
 version = {attr = "skrf.__version__"}
