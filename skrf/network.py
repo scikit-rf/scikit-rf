@@ -6150,6 +6150,69 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
         subntwk.port_names = [ntwk.port_names[idx] for idx in ports]
     return subntwk
 
+
+def s_error(ntwkA: Network, ntwkB: Network, error_function: str = "average_l2_norm") -> np.ndarray:
+    """
+    Compute the error between s-parameters of ntwkA and ntwkB.
+
+    Parameters
+    ----------
+    ntwkA : :class:`Network` object
+        The first network.
+    ntwkB : :class:`Network` object
+        A second network used to compute the error with ntwkA
+    error_function : str
+        average_l1_norm, average_l2_norm, maximum_l1_norm, or average_normalized_l1_norm.
+
+    Returns
+    -------
+    error : :class:`numpy.ndarray`
+        The error between ntwkA and ntwkB
+
+    Description
+    -----------
+    Average L1 Norm. The weighted difference is the average magnitude of the difference between each
+    element of the S-parameter matrix.
+
+    Average L2 Norm. The weighted difference is the average squared magnitude of the difference
+    between each element of the S-parameter matrix.
+
+    Maximum L1 Norm. The maximum difference is the magnitude of the maximum difference between each
+    element of the S-parameter matrix (the magnitude of the largest difference between any pair of
+    entries in the S-parameter matrices).
+
+    Average Normalized L1 Norm. The magnitude of the difference between each element of the
+    S-parameter matrix is calculated. Each difference is then normalized by the average magnitude of
+    the two matrix elements (one from each set).
+
+    """
+
+    # check that ntwkA and ntwkB have the same frequency grid.
+    if ntwkA.frequency != ntwkB.frequency:
+        raise ValueError(f"Networks '{ntwkA.name}' and '{ntwkB.name}' must have the same frequency grid.")
+
+    nports_square = ntwkA.nports**2
+
+    # absolute value of the complex difference:
+    absdiff = np.abs(ntwkA.s - ntwkB.s)
+
+    # make string comparisons on lower case
+    error_function = error_function.lower()
+
+    if error_function == "average_l1_norm":
+        error = absdiff.sum(axis=1).sum(axis=1) / nports_square
+    elif error_function == "average_l2_norm":
+        error = (absdiff**2).sum(axis=1).sum(axis=1) / nports_square
+    elif error_function == "maximum_l1_norm":
+        error = absdiff.max(axis=1).max(axis=1)
+    elif error_function == "average_normalized_l1_norm":
+        temp = 2 * absdiff / (np.abs(ntwkA.s) + np.abs(ntwkB.s))
+        error = temp.sum(axis=1).sum(axis=1) / nports_square
+    else:
+        raise ValueError(f"Invalid error function '{error_function}'")
+
+    return error
+
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network:
     r"""
