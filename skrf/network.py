@@ -6152,7 +6152,7 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
 
 
 def s_error(ntwkA: Network, ntwkB: Network, error_function: str = "average_l2_norm") -> np.ndarray:
-    """
+    r"""
     Compute the error between s-parameters of ntwkA and ntwkB.
 
     Parameters
@@ -6174,17 +6174,38 @@ def s_error(ntwkA: Network, ntwkB: Network, error_function: str = "average_l2_no
     Average L1 Norm. The weighted difference is the average magnitude of the difference between each
     element of the S-parameter matrix.
 
+    .. math::
+
+        \delta =  \frac{1}{N^2} \sum_{i=1}^{N} \sum_{j=1}^{N} |S_{ij}^A - S_{ij}^B|
+
     Average L2 Norm. The weighted difference is the average squared magnitude of the difference
     between each element of the S-parameter matrix.
+
+    .. math::
+
+        \delta =  \frac{1}{N^2} \sum_{i=1}^{N} \sum_{j=1}^{N} |S_{ij}^A - S_{ij}^B|^2
 
     Maximum L1 Norm. The maximum difference is the magnitude of the maximum difference between each
     element of the S-parameter matrix (the magnitude of the largest difference between any pair of
     entries in the S-parameter matrices).
 
+    .. math::
+
+        \delta = \max(|S_{ij}^A - S_{ij}^B|)
+
     Average Normalized L1 Norm. The magnitude of the difference between each element of the
     S-parameter matrix is calculated. Each difference is then normalized by the average magnitude of
     the two matrix elements (one from each set).
 
+    .. math::
+
+        \delta =  \frac{2}{N^2} \sum_{i=1}^{N} \sum_{j=1}^{N} \frac{|S_{ij}^A - S_{ij}^B|}{|S_{ij}^A| + |S_{ij}^B|}
+
+    To express these in decibels, use:
+
+    .. math::
+
+        20\log_{10} \delta
     """
 
     # check that ntwkA and ntwkB have the same frequency grid.
