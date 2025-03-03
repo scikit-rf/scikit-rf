@@ -185,6 +185,7 @@ from .constants import (
     CircuitComponentT,
     ComponentFuncT,
     CoordT,
+    ErrorFunctionsT,
     FrequencyUnitT,
     InterpolKindT,
     NumberLike,
@@ -3817,16 +3818,7 @@ class Network:
         else:
             return (forward - reverse)
 
-    def s_error(
-        self,
-        ntwk: Network,
-        error_function: Literal[
-            "average_l1_norm",
-            "average_l2_norm",
-            "maximum_l1_norm",
-            "average_normalized_l1_norm",
-        ] = "average_l2_norm",
-    ) -> np.ndarray:
+    def s_error(self, ntwk: Network, error_function: ErrorFunctionsT = "average_l2_norm") -> np.ndarray:
         """
         Compute the error between s-parameters of this network and another network `ntwk`.
 
@@ -6167,16 +6159,7 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
         subntwk.port_names = [ntwk.port_names[idx] for idx in ports]
     return subntwk
 
-def s_error(
-    ntwkA: Network,
-    ntwkB: Network,
-    error_function: Literal[
-        "average_l1_norm",
-        "average_l2_norm",
-        "maximum_l1_norm",
-        "average_normalized_l1_norm",
-    ] = "average_l2_norm",
-) -> np.ndarray:
+def s_error(ntwkA: Network, ntwkB: Network, error_function: ErrorFunctionsT = "average_l2_norm") -> np.ndarray:
     r"""
     Compute the error between s-parameters of ntwkA and ntwkB.
 
