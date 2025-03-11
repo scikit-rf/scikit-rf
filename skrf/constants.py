@@ -123,6 +123,7 @@ SparamFormatT = Literal["db", "ri", "ma"]
 PortOrderT = Literal["first", "second", "third", "last", "auto"]
 CircuitComponentT = Literal["_is_circuit_port", "_is_circuit_ground", "_is_circuit_open"]
 MemoryLayoutT = Literal["C", "F"]
+ErrorFunctionsT = Literal["average_l1_norm", "average_l2_norm", "maximum_l1_norm", "average_normalized_l1_norm"]
 
 NumberLike = Union[Number, Sequence[Number], np.ndarray]
 

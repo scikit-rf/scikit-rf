@@ -185,6 +185,7 @@ from .constants import (
     CircuitComponentT,
     ComponentFuncT,
     CoordT,
+    ErrorFunctionsT,
     FrequencyUnitT,
     InterpolKindT,
     NumberLike,
@@ -3817,6 +3818,14 @@ class Network:
         else:
             return (forward - reverse)
 
+    def s_error(self, ntwk: Network, error_function: ErrorFunctionsT = "average_l2_norm") -> np.ndarray:
+        """
+        Compute the error between s-parameters of this network and another network `ntwk`.
+
+        See `skrf.s_error()`.
+        """
+        return s_error(ntwkA=self, ntwkB=ntwk, error_function=error_function)
+
     # generalized mixed mode transformations
     def se2gmm(self, p: int, z0_mm: np.ndarray = None, s_def : str = None) -> None:
         """
@@ -6149,6 +6158,89 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
     if ntwk.port_names:
         subntwk.port_names = [ntwk.port_names[idx] for idx in ports]
     return subntwk
+
+def s_error(ntwkA: Network, ntwkB: Network, error_function: ErrorFunctionsT = "average_l2_norm") -> np.ndarray:
+    r"""
+    Compute the error between s-parameters of ntwkA and ntwkB.
+
+    Parameters
+    ----------
+    ntwkA : :class:`Network` object
+        The first network.
+    ntwkB : :class:`Network` object
+        A second network used to compute the error with ntwkA
+    error_function : str
+        average_l1_norm, average_l2_norm, maximum_l1_norm, or average_normalized_l1_norm.
+
+    Returns
+    -------
+    error : :class:`numpy.ndarray`
+        The error between ntwkA and ntwkB
+
+    Description
+    -----------
+    Average L1 Norm. The weighted difference is the average magnitude of the difference between each
+    element of the S-parameter matrix.
+
+    .. math::
+
+        \delta =  \frac{1}{N^2} \sum_{i=1}^{N} \sum_{j=1}^{N} |S_{ij}^A - S_{ij}^B|
+
+    Average L2 Norm. The weighted difference is the average squared magnitude of the difference
+    between each element of the S-parameter matrix.
+
+    .. math::
+
+        \delta =  \frac{1}{N^2} \sum_{i=1}^{N} \sum_{j=1}^{N} |S_{ij}^A - S_{ij}^B|^2
+
+    Maximum L1 Norm. The maximum difference is the magnitude of the maximum difference between each
+    element of the S-parameter matrix (the magnitude of the largest difference between any pair of
+    entries in the S-parameter matrices).
+
+    .. math::
+
+        \delta = \max(|S_{ij}^A - S_{ij}^B|)
+
+    Average Normalized L1 Norm. The magnitude of the difference between each element of the
+    S-parameter matrix is calculated. Each difference is then normalized by the average magnitude of
+    the two matrix elements (one from each set).
+
+    .. math::
+
+        \delta =  \frac{2}{N^2} \sum_{i=1}^{N} \sum_{j=1}^{N} \frac{|S_{ij}^A - S_{ij}^B|}{|S_{ij}^A| + |S_{ij}^B|}
+
+    To express these in decibels, use:
+
+    .. math::
+
+        20\log_{10} \delta
+    """
+
+    # check that ntwkA and ntwkB have the same frequency grid.
+    if ntwkA.frequency != ntwkB.frequency:
+        raise ValueError(f"Networks '{ntwkA.name}' and '{ntwkB.name}' must have the same frequency grid.")
+
+    nports_square = ntwkA.nports**2
+
+    # absolute value of the complex difference:
+    absdiff = np.abs(ntwkA.s - ntwkB.s)
+
+    # make string comparisons on lower case
+    error_function = error_function.lower()
+
+    if error_function == "average_l1_norm":
+        error = absdiff.sum(axis=1).sum(axis=1) / nports_square
+    elif error_function == "average_l2_norm":
+        error = (absdiff**2).sum(axis=1).sum(axis=1) / nports_square
+    elif error_function == "maximum_l1_norm":
+        error = absdiff.max(axis=1).max(axis=1)
+    elif error_function == "average_normalized_l1_norm":
+        temp = 2 * absdiff / (np.abs(ntwkA.s) + np.abs(ntwkB.s))
+        error = temp.sum(axis=1).sum(axis=1) / nports_square
+    else:
+        raise ValueError(f"Invalid error function '{error_function}'")
+
+    return error
 
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network:

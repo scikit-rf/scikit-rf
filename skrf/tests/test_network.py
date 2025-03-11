@@ -10,6 +10,7 @@ from functools import partial
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 from scipy import signal
 
@@ -2336,6 +2337,41 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(mm_thru._fmt_trace_name(3, 2) == "cc43")
         self.assertTrue(mm_thru._fmt_trace_name(2, 0) == "cd31")
         self.assertTrue(mm_thru._fmt_trace_name(1, 3) == "dc24")
+
+    def test_s_error(self):
+        """Tests Network.s_error() method against AWR Microwave Office SMODEL measurement.
+
+        The error between s-parameters of Mini-circuits LFCN-2352+ at 25 C and 125 C will be
+        computed using the four error functions using AWR Microwave Office's SMODEL measurement and
+        Network.s_error().
+        """
+        TEST_DIR = Path(self.test_dir)
+
+        # load error data exported from AWR Microwave Office SMODEL measurement
+        awr_data_file = TEST_DIR / 'smodel export from mwo.txt'
+        awr_data = pd.read_csv(awr_data_file,delimiter="\t",index_col=0)
+
+        # load networks for LFCN-2352+ at 25 C and 125 C
+        ntwkA = rf.Network(TEST_DIR / 'LFCN-2352+_Plus125degC.s2p')
+        ntwkB = rf.Network(TEST_DIR / 'LFCN-2352+_Plus25degC.s2p')
+
+        awr_errorfunctions = [
+            'DB(SModel(LFCN_2352__Plus125degC,1)) : LFCN_2352__Plus25degC',
+            'DB(SModel(LFCN_2352__Plus125degC,2)) : LFCN_2352__Plus25degC',
+            'DB(SModel(LFCN_2352__Plus125degC,3)) : LFCN_2352__Plus25degC',
+            'DB(SModel(LFCN_2352__Plus125degC,4)) : LFCN_2352__Plus25degC']
+
+        skrf_errorfunctions = [
+            "average_l1_norm",
+            "average_l2_norm",
+            "maximum_l1_norm",
+            "average_normalized_l1_norm"]
+
+        # test the four error functions
+        for awr_error_fcn,skrf_error_fcn in zip(awr_errorfunctions,skrf_errorfunctions):
+            error_awr_dB = awr_data[awr_error_fcn].values
+            error_skrf_dB = 20*np.log10(ntwkA.s_error(ntwkB,error_function=skrf_error_fcn))
+            np.testing.assert_almost_equal(error_awr_dB,error_skrf_dB,decimal=3)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
