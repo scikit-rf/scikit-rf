@@ -23,7 +23,7 @@ class MdifTestCase(unittest.TestCase):
         self.twoport_example2 = rf.Mdif(self.test_dir + 'test_2p_gmdif_2.mdf')
         self.twoport_example3 = rf.Mdif(self.test_dir + 'test_2p_gmdif_3.mdf')
         self.twoport_example_z = rf.Mdif(self.test_dir + 'test_2p_gmdif_z.mdf')
-        self.twoport_example_yz = rf.Mdif(self.test_dir + 'test_3p_gmdif.mdf')
+        self.twoport_example_yz = rf.Mdif(self.test_dir + 'test_2p_gmdif_yz.mdf')
         self.threeport_example = rf.Mdif(self.test_dir + 'test_3p_gmdif.mdf')
         self.fourport_example1 = rf.Mdif(self.test_dir + 'test_4p_gmdif.mdf')
         self.fiveport_example1 = rf.Mdif(self.test_dir + 'test_5p_gmdif.mdf')
