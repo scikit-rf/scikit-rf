@@ -187,8 +187,23 @@ class Mdif:
         # Flag for adding comments to the network
         no_more_comments = False
 
+        # Append tabbed lines to previous line so it reads data block correctly
+        cleaned_lines = []
+        current_line = block_data[0]
+        for line in block_data[1:]:
+            if line.strip() == '\n':
+                cleaned_lines.append(line)
+            elif line.startswith('\t'):
+                current_line = current_line.rstrip(' \n')
+                stripped_line = line.lstrip('\t').rstrip(' \n')
+                current_line += ' '+ stripped_line + ' \n'
+            else:
+                cleaned_lines.append(current_line)
+                current_line = line
+        cleaned_lines.append(current_line)
+
         # Extract and group parameter informations and values
-        for line in block_data:
+        for line in cleaned_lines:
             # Parse the option line (as in Touchstone)
             if line.startswith('#'):
                 # Flag that no more comments are coming as we're now after the option line
@@ -529,7 +544,7 @@ class Mdif:
         else:
             corestring = "n{}{}x n{}{}y "
 
-        optionstring = "%F "
+        optionstring = "% F "
 
         if nports == 2:
             optionstring += "n11x n11y n21x n21y n12x n12y n22x n22y"
@@ -545,14 +560,14 @@ class Mdif:
                 if nports == 3:
                     # 3 ports
                     if not (np.remainder(i[1], 3)):
-                        optionstring += "\n"
+                        optionstring += "\n\t"
 
                 # touchstone spec allows only 4 data pairs per line
                 if nports >= 4:
                     if np.remainder(i[1], 4) == 0:
-                        optionstring += "\n"
+                        optionstring += "\n\t"
                     # NOTE: not sure if this is needed. Doesn't seem to be required by Microwave Office
                     if i[1] == nports:
-                        optionstring += "\n"
+                       optionstring += "\n\t"
 
         return optionstring
