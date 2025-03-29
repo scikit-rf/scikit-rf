@@ -7,9 +7,9 @@ version: 2
 
 # Set the version of Python and other tools you might need
 build:
-  os: ubuntu-20.04
+  os: ubuntu-22.04
   tools:
-    python: "3.10"
+    python: "3.12"
   commands:
     - asdf plugin add uv
     - asdf install uv latest
@@ -26,4 +26,4 @@ sphinx:
 # build docs in additional formats
 formats:
   - pdf
-  - epub
+  - htmlzip
