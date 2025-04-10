@@ -4782,7 +4782,8 @@ class Network:
         stability_circle
         gain_circle
         g_opt: The optimum source reflection coefficient to minimize noise.
-        nf_min : The minimum noise figure of the network.
+        nfmin : The minimum noise figure of the network.
+        nfmin_db : The minimum noise figure for the network in dB.
         rn : The equivalent noise resistance of the network.
 
         """
