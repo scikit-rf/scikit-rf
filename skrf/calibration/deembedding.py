@@ -4255,6 +4255,25 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
                 z0 = self.z0)
             leadin1 = IEEEP370.shiftOnePort(temp1, -self.leadin, 0)
             leadin2 = IEEEP370.shiftOnePort(temp2, -self.leadin, 1)
+            if self.verbose:
+                fig, axs = subplots(1, 2, sharex = True, figsize=(2*6.4, 4.8))
+                n = len(f)
+                zfdf1 = IEEEP370.getz(sfix_dut_fix.s[:, 0, 0], f, self.z0)
+                zlead1 = IEEEP370.getz(leadin1.s[:, 0, 0], f, self.z0)
+                axs[0].plot(ifftshift(zfdf1), label = 'FDF')
+                axs[0].plot(ifftshift(zlead1), label = f'leadin ({self.leadin})')
+                axs[0].set_xlim((n-self.leadin-10, n+10))
+                axs[0].legend()
+                axs[0].set_title('Left leadin')
+                axs[0].set_ylabel('Z (ohm)')
+                zfdf2 = IEEEP370.getz(sfix_dut_fix.s[:, 1, 1], f, self.z0)
+                zlead2 = IEEEP370.getz(leadin2.s[:, 1, 1], f, self.z0)
+                axs[1].plot(ifftshift(zfdf2), label = 'FDF')
+                axs[1].plot(ifftshift(zlead2), label = f'leadin ({self.leadin})')
+                axs[1].set_xlim((n-self.leadin-10, n+10))
+                axs[1].legend()
+                axs[1].set_title('Right leadin')
+                axs[1].set_ylabel('Z (ohm)')
 
         # calculate gamma
         #grabbing s21
