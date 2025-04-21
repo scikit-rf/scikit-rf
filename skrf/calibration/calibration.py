@@ -3212,7 +3212,12 @@ class NISTMultilineTRL(EightTerm):
                     if best_error is None or error < best_error:
                         best_error = error
                         best_values = v
-                B1, B2, CoA1, CoA2 = best_values[1:]
+                if best_error is None:
+                    # All roots are numerically badly behaved, just choose the
+                    # original estimate
+                    B1, B2, CoA1, CoA2 = values[0][1:]
+                else:
+                    B1, B2, CoA1, CoA2 = best_values[1:]
                 A1, A2 = solve_A(B1, B2, CoA1, CoA2, S_thru, m)
 
             sigmab = np.sqrt(1/(np.sum(inv_Vb).real))
