@@ -321,10 +321,10 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
         Time unit for start, stop, center and span arguments, defaults to seconds (s).
 
         Possible values:
-            * 's': seconds
+            * 's': seconds (default)
             * 'ms': milliseconds
             * 'µs' or 'us': microseconds
-            * 'ns': nanoseconds (default)
+            * 'ns': nanoseconds 
             * 'ps': picoseconds
 
 
