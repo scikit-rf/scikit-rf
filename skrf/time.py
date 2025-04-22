@@ -324,7 +324,7 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
             * 's': seconds (default)
             * 'ms': milliseconds
             * 'µs' or 'us': microseconds
-            * 'ns': nanoseconds 
+            * 'ns': nanoseconds
             * 'ps': picoseconds
 
 
