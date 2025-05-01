@@ -114,7 +114,7 @@ class MdifTestCase(unittest.TestCase):
             cpy_nset = rf.NetworkSet.from_mdif(new_name)
 
             assert nset == cpy_nset
-           
+
             os.remove(new_name)
 
     def test_read_and_write_back_noise(self):

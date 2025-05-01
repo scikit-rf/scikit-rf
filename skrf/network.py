@@ -2646,8 +2646,8 @@ class Network:
                         output.write('\n')
                         if m != ntwk.number_of_ports - 1:
                             output.write('\t')
-                    
-                    
+
+
 
                     # write out the z0 following hfss's convention if desired
                     if write_z0:

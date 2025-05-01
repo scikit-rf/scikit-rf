@@ -574,4 +574,3 @@ class DeembeddingTestCase(unittest.TestCase):
         qm = td_qm.check_se_quality(thru_non_causal)
         self.assertTrue(np.round(qm['causality']['value'], 4) == 10.0500,
                         'TD quality causality violation')
-
