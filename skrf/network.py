@@ -2595,16 +2595,19 @@ class Network:
                 for m in range(1, 4):
                     for n in range(1, 4):
                         output.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
-                    output.write('\n!')
+                    output.write('\n!\t')
                 output.write('\n')
                 # write out data
                 for f in range(len(ntwk.f)):
                     output.write(format_spec_freq.format(scaled_freq[f]))
+                    output.write(' ')
                     for m in range(3):
                         for n in range(3):
-                            output.write(' ' + c2str_A(ntwk.s[f, m, n]) + ' ' \
-                                         + c2str_B(ntwk.s[f, m, n]))
+                            output.write(c2str_A(ntwk.s[f, m, n]) + ' ' \
+                                         + c2str_B(ntwk.s[f, m, n]) + ' ')
                         output.write('\n')
+                        if m != 2:
+                            output.write('\t')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
                         output.write('! Port Impedance')
@@ -2622,23 +2625,29 @@ class Network:
 
                 # write comment line for users (optional)
                 output.write('!freq')
+                output.write(' ')
                 for m in range(1, 1 + ntwk.number_of_ports):
                     for n in range(1, 1 + ntwk.number_of_ports):
-                        if (n > 0 and (n % 4) == 0):
-                            output.write('\n!')
-                        output.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
-                    output.write('\n!')
+                        if (n > 0 and (n % 5) == 0):
+                            output.write('\n!\t')
+                        output.write("{labelA}S{m}{n} {labelB}S{m}{n} ".format(m=m, n=n, **formatDic))
+                    output.write('\n!\t')
                 output.write('\n')
                 # write out data
                 for f in range(len(ntwk.f)):
                     output.write(format_spec_freq.format(scaled_freq[f]))
+                    output.write(' ')
                     for m in range(ntwk.number_of_ports):
                         for n in range(ntwk.number_of_ports):
                             if (n > 0 and (n % 4) == 0):
-                                output.write('\n')
-                            output.write(' ' + c2str_A(ntwk.s[f, m, n]) + ' ' \
-                                         + c2str_B(ntwk.s[f, m, n]))
+                                output.write('\n\t')
+                            output.write(c2str_A(ntwk.s[f, m, n]) + ' ' \
+                                         + c2str_B(ntwk.s[f, m, n]) + ' ')
                         output.write('\n')
+                        if m != ntwk.number_of_ports - 1:
+                            output.write('\t')
+
+
 
                     # write out the z0 following hfss's convention if desired
                     if write_z0:

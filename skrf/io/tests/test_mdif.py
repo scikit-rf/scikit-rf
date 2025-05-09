@@ -24,13 +24,17 @@ class MdifTestCase(unittest.TestCase):
         self.twoport_example3 = rf.Mdif(self.test_dir + 'test_2p_gmdif_3.mdf')
         self.twoport_example_z = rf.Mdif(self.test_dir + 'test_2p_gmdif_z.mdf')
         self.twoport_example_yz = rf.Mdif(self.test_dir + 'test_2p_gmdif_yz.mdf')
-
+        self.threeport_example = rf.Mdif(self.test_dir + 'test_3p_gmdif.mdf')
         self.fourport_example1 = rf.Mdif(self.test_dir + 'test_4p_gmdif.mdf')
+        self.fiveport_example1 = rf.Mdif(self.test_dir + 'test_5p_gmdif.mdf')
+        self.fiveport_example2 = rf.Mdif(self.test_dir + 'test_5p_gmdif_2.mdf')
 
         self.examples = [self.oneport_example1, self.oneport_example2,
                          self.twoport_example1, self.twoport_example2,
                          self.twoport_example3,
-                         self.fourport_example1]
+                         self.threeport_example,
+                         self.fourport_example1,
+                         self.fiveport_example1, self.fiveport_example2]
 
         # constructor from file-object
         file = open(self.test_dir + 'test_1p_gmdif.mdf')
@@ -41,6 +45,8 @@ class MdifTestCase(unittest.TestCase):
         self.assertTrue(self.oneport_example1, self.oneport_example1)
         self.assertTrue(self.oneport_example1, self.oneport_example1_from_fo)
         self.assertTrue(self.twoport_example_z, self.twoport_example_yz)
+
+        self.assertTrue(self.fiveport_example1, self.fiveport_example2)
 
     def test_to_networkset(self):
         """ Test if MDIF are correctly converted into NetworkSet """
@@ -53,7 +59,10 @@ class MdifTestCase(unittest.TestCase):
         self.assertEqual(self.oneport_example2.params, ['mag', 'Phase'])
         self.assertEqual(self.twoport_example1.params, ['Cm'])
         self.assertEqual(self.twoport_example2.params, ['L1'])
+        self.assertEqual(self.threeport_example.params, ['x1', 'x2'])
         self.assertEqual(self.fourport_example1.params, ['Cm'])
+        self.assertEqual(self.fiveport_example1.params, ['L1', 'R1'])
+        self.assertEqual(self.fiveport_example2.params, ['L1', 'R1'])
 
     def test_to_to_networkset_params(self):
         """ Test if the params are correctly passed to the NetworkSet """
@@ -61,7 +70,10 @@ class MdifTestCase(unittest.TestCase):
         self.assertEqual(self.oneport_example2.to_networkset().params, ['mag', 'Phase'])
         self.assertEqual(self.twoport_example1.to_networkset().params, ['Cm'])
         self.assertEqual(self.twoport_example2.to_networkset().params, ['L1'])
+        self.assertEqual(self.threeport_example.to_networkset().params, ['x1', 'x2'])
         self.assertEqual(self.fourport_example1.to_networkset().params, ['Cm'])
+        self.assertEqual(self.fiveport_example1.to_networkset().params, ['L1', 'R1'])
+        self.assertEqual(self.fiveport_example2.to_networkset().params, ['L1', 'R1'])
 
     def test_to_networkset_values(self):
         """ Test if we extract correctly the numerical values """
@@ -91,6 +103,19 @@ class MdifTestCase(unittest.TestCase):
         mdif = rf.Mdif(file)
         # to Networkset Init
         ns = rf.NetworkSet.from_mdif(file)
+
+    def test_read_after_write_mdf(self):
+        for mdf in self.examples:
+            basename = os.path.basename(mdf.filename)
+            new_name = '{}_copy.mdf'.format(basename.split('.')[0])
+
+            nset = mdf.to_networkset()
+            nset.write_mdif(new_name)
+            cpy_nset = rf.NetworkSet.from_mdif(new_name)
+
+            assert nset == cpy_nset
+
+            os.remove(new_name)
 
     def test_read_and_write_back_noise(self):
         net = rf.Network("skrf/io/tests/ts/ex_18.s2p")
