@@ -2462,29 +2462,23 @@ class Network:
 
         # set internal variables according to form
         form = form.lower()
+        a_func = np.vectorize(lambda x: format_spec_A.format(x) + " ")
+        b_func = np.vectorize(lambda x: format_spec_B.format(x))
+        f_func = np.vectorize(lambda x: format_spec_freq.format(x))
+        f_data = f_func(ntwk.frequency.f_scaled)
+
         if form == "ri":
             formatDic = {"labelA": "Re", "labelB": "Im"}
-            funcA = np.real
-            funcB = np.imag
+            data = np.char.add(a_func(np.real(ntwk.s)), b_func(np.imag(ntwk.s)))
         elif form == "db":
             formatDic = {"labelA": "dB", "labelB": "ang"}
-            funcA = mf.complex_2_db
-            funcB = mf.complex_2_degree
+            data = np.char.add(a_func(mf.complex_2_db(ntwk.s)), b_func(mf.complex_2_degree(ntwk.s)), axis=2)
         elif form == "ma":
             formatDic = {"labelA": "mag", "labelB": "ang"}
-            funcA = mf.complex_2_magnitude
-            funcB = mf.complex_2_degree
+            data = np.char.add(a_func(mf.complex_2_magnitude(ntwk.s)), b_func(mf.complex_2_degree(ntwk.s)), axis=2)
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
-
-        # add formatting to funcA and funcB so we don't have to write it out many many times.
-        def c2str_A(c: NumberLike) -> str:
-            """Take a complex number for the A part of param and return an appropriately formatted string."""
-            return format_spec_A.format(funcA(c))
-
-        def c2str_B(c: NumberLike) -> str:
-            """Take a complex number for B part of param and return an appropriately formatted string."""
-            return format_spec_B.format(funcB(c))
+        
 
         def get_buffer() -> io.StringIO:
             if return_string is True or type(to_archive) is zipfile.ZipFile:
@@ -2536,17 +2530,13 @@ class Network:
             except AttributeError:
                 pass
 
-            scaled_freq = ntwk.frequency.f_scaled
-
             if ntwk.number_of_ports == 1:
                 # write comment line for users (optional)
                 output.write('!freq {labelA}S11 {labelB}S11\n'.format(**formatDic))
                 # write out data
+
                 for f in range(len(ntwk.f)):
-                    output.write(format_spec_freq.format(scaled_freq[f]) + ' ' \
-                                 + c2str_A(ntwk.s[f, 0, 0]) + ' ' \
-                                 + c2str_B(ntwk.s[f, 0, 0]) + '\n')
-                    # write out the z0 following hfss's convention if desired
+                    output.write(f"{f_data[f]} {data[f,0,0]}\n")
                     if write_z0:
                         output.write('! Port Impedance ')
                         for n in range(ntwk.number_of_ports):
@@ -2565,16 +2555,7 @@ class Network:
                         **formatDic))
                 # write out data
                 for f in range(len(ntwk.f)):
-                    output.write(format_spec_freq.format(scaled_freq[f]) + ' ' \
-                                 + c2str_A(ntwk.s[f, 0, 0]) + ' ' \
-                                 + c2str_B(ntwk.s[f, 0, 0]) + ' ' \
-                                 + c2str_A(ntwk.s[f, 1, 0]) + ' ' \
-                                 + c2str_B(ntwk.s[f, 1, 0]) + ' ' \
-                                 + c2str_A(ntwk.s[f, 0, 1]) + ' ' \
-                                 + c2str_B(ntwk.s[f, 0, 1]) + ' ' \
-                                 + c2str_A(ntwk.s[f, 1, 1]) + ' ' \
-                                 + c2str_B(ntwk.s[f, 1, 1]) + '\n')
-                    # write out the z0 following hfss's convention if desired
+                    output.write(f"{f_data[f]} {data[f,0,0]} {data[f,1,0]} {data[f,0,1]} {data[f,1,1]}\n")
                     if write_z0:
                         output.write('! Port Impedance')
                         for n in range(2):
@@ -2599,11 +2580,10 @@ class Network:
                 output.write('\n')
                 # write out data
                 for f in range(len(ntwk.f)):
-                    output.write(format_spec_freq.format(scaled_freq[f]))
+                    output.write(f_data[f])
                     for m in range(3):
                         for n in range(3):
-                            output.write(' ' + c2str_A(ntwk.s[f, m, n]) + ' ' \
-                                         + c2str_B(ntwk.s[f, m, n]))
+                            output.write(f" {data[f,m,n]}")
                         output.write('\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
@@ -2631,13 +2611,12 @@ class Network:
                 output.write('\n')
                 # write out data
                 for f in range(len(ntwk.f)):
-                    output.write(format_spec_freq.format(scaled_freq[f]))
+                    output.write(f_data[f])
                     for m in range(ntwk.number_of_ports):
                         for n in range(ntwk.number_of_ports):
                             if (n > 0 and (n % 4) == 0):
                                 output.write('\n')
-                            output.write(' ' + c2str_A(ntwk.s[f, m, n]) + ' ' \
-                                         + c2str_B(ntwk.s[f, m, n]))
+                            output.write(f" {data[f,m,n]}")
                         output.write('\n')
 
                     # write out the z0 following hfss's convention if desired
