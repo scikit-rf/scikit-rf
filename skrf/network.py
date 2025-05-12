@@ -2338,7 +2338,7 @@ class Network:
                          format_spec_freq: str = '{}', r_ref: float = None,
                          format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
                          format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
-                         format_spec_rn: str = '{}', write_noise: bool = True, 
+                         format_spec_rn: str = '{}', write_noise: bool = True,
                          parameter: Literal["S", "Y", "Z"] = "S") -> str | None:
 
         """
@@ -2484,7 +2484,7 @@ class Network:
             data = np.char.add(a_func(mf.complex_2_magnitude(pdata)), b_func(mf.complex_2_degree(pdata)), axis=2)
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
-        
+
 
         def get_buffer() -> io.StringIO:
             if return_string is True or type(to_archive) is zipfile.ZipFile:
