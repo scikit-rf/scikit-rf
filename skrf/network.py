@@ -2478,10 +2478,10 @@ class Network:
             data = np.char.add(a_func(np.real(pdata)), b_func(np.imag(pdata)))
         elif form == "db":
             formatDic = {"labelA": "dB", "labelB": "ang"}
-            data = np.char.add(a_func(mf.complex_2_db(pdata)), b_func(mf.complex_2_degree(pdata)), axis=2)
+            data = np.char.add(a_func(mf.complex_2_db(pdata)), b_func(mf.complex_2_degree(pdata)))
         elif form == "ma":
             formatDic = {"labelA": "mag", "labelB": "ang"}
-            data = np.char.add(a_func(mf.complex_2_magnitude(pdata)), b_func(mf.complex_2_degree(pdata)), axis=2)
+            data = np.char.add(a_func(mf.complex_2_magnitude(pdata)), b_func(mf.complex_2_degree(pdata)))
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
 
