@@ -2338,7 +2338,8 @@ class Network:
                          format_spec_freq: str = '{}', r_ref: float = None,
                          format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
                          format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
-                         format_spec_rn: str = '{}', write_noise: bool = True) -> str | None:
+                         format_spec_rn: str = '{}', write_noise: bool = True, 
+                         parameter: Literal["S", "Y", "Z"] = "S") -> str | None:
 
         """
         Write a contents of the :class:`Network` to a touchstone file.
@@ -2462,6 +2463,11 @@ class Network:
 
         # set internal variables according to form
         form = form.lower()
+
+        parameter = parameter.upper()
+        if parameter in ["S", "Y", "Z"]:
+            pdata = getattr(ntwk, parameter.lower())
+
         a_func = np.vectorize(lambda x: format_spec_A.format(x) + " ")
         b_func = np.vectorize(lambda x: format_spec_B.format(x))
         f_func = np.vectorize(lambda x: format_spec_freq.format(x))
@@ -2469,13 +2475,13 @@ class Network:
 
         if form == "ri":
             formatDic = {"labelA": "Re", "labelB": "Im"}
-            data = np.char.add(a_func(np.real(ntwk.s)), b_func(np.imag(ntwk.s)))
+            data = np.char.add(a_func(np.real(pdata)), b_func(np.imag(pdata)))
         elif form == "db":
             formatDic = {"labelA": "dB", "labelB": "ang"}
-            data = np.char.add(a_func(mf.complex_2_db(ntwk.s)), b_func(mf.complex_2_degree(ntwk.s)), axis=2)
+            data = np.char.add(a_func(mf.complex_2_db(pdata)), b_func(mf.complex_2_degree(pdata)), axis=2)
         elif form == "ma":
             formatDic = {"labelA": "mag", "labelB": "ang"}
-            data = np.char.add(a_func(mf.complex_2_magnitude(ntwk.s)), b_func(mf.complex_2_degree(ntwk.s)), axis=2)
+            data = np.char.add(a_func(mf.complex_2_magnitude(pdata)), b_func(mf.complex_2_degree(pdata)), axis=2)
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
         
