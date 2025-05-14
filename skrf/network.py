@@ -2442,6 +2442,9 @@ class Network:
             This specifies the formatting in the resulting touchstone file for the noise resistance.
         write_noise : bool, optional
             Write noise parameters.
+        parameter : string
+    	    Specify the network parameter ("S", "Y", "Z", "G", "H") to write, defaults to "S".
+            "G" and "H" is only available for 2-port Networks.
 
         Note
         ----
@@ -2488,26 +2491,26 @@ class Network:
             else:
                 raise ValueError('No filename given. Network must have a name, or you must provide a filename')
 
-        if get_extn(filename) is None:
-            if isinstance(filename, Path):
-                filename = str(filename.resolve())
-
-            filename = filename + '.s%ip' % ntwk.number_of_ports
-
-        if dir is not None:
-            filename = os.path.join(dir, filename)
-
         # set internal variables according to form
         form = form.lower()
 
         parameter = parameter.upper()
-        if parameter not in ["S", "Y", "Z", "G", "H"]:
+        if parameter not in ["S", "Y", "Z", "G", "H"] or (parameter in ["G", "H"] and ntwk.nports != 2):
             msg = f"Invalid network parameter {parameter}"
             raise AttributeError(msg)
-
+        
         pdata = ntwk.s
         if parameter != "S":
             pdata = globals()[f"s2{parameter.lower()}"](pdata, self.z0) / self.z0[:,:,None]
+        
+        if get_extn(filename) is None:
+            if isinstance(filename, Path):
+                filename = str(filename.resolve())
+
+            filename = f"{filename}.{parameter.lower()}{ntwk.nports}p"
+
+        if dir is not None:
+            filename = os.path.join(dir, filename)
 
         a_func = np.vectorize(lambda x: format_spec_A.format(x) + " ")
         b_func = np.vectorize(lambda x: format_spec_B.format(x))
