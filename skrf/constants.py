@@ -116,7 +116,7 @@ FREQ_UNITS: dict[FrequencyUnitT, float] = {"Hz": 1.0, "kHz": 1e3, "MHz": 1e6, "G
 SweepTypeT = Literal["lin", "log"]
 CoordT = Literal["cart", "polar"]
 InterpolKindT = Literal["linear", "cubic", "nearest", "zero", "slinear", "quadratic", "rational"]
-PrimaryPropertiesT = Literal['s', 'z', 'y', 'a', 'h', 't']
+PrimaryPropertiesT = Literal['s', 'z', 'y', 'a', 'g', 'h', 't']
 ComponentFuncT = Literal["re", "im", "mag", "db", "db10", "rad", "deg", "arcl", "rad_unwrap", "deg_unwrap",
                          "arcl_unwrap", "vswr", "time", "time_db", "time_mag", "time_impulse", "time_step"]
 SparamFormatT = Literal["db", "ri", "ma"]

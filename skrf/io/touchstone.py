@@ -291,6 +291,7 @@ class Touchstone:
             self.load_file(fid)
 
         except Exception as e:
+            print("abc", e)
             raise ValueError("Something went wrong by the file opening") from e
 
         finally:
@@ -422,6 +423,8 @@ class Touchstone:
             "[mixed-mode order]": lambda line: setattr(state, "mixed_mode_order", line.lower().split()[2:]),
             "[end]": lambda x: None,
         }
+
+
 
         while True:
             line = fid.readline()
