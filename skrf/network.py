@@ -1097,14 +1097,14 @@ class Network:
         Inverse hybrid parameter matrix.
 
         The g-matrix [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
-        `fxnxn`, where `f` is frequency axis and `n` is number of ports.
-        Note that indexing starts at 0, so h11 can be accessed by
-        taking the slice `h[:,0,0]`.
+        `fx2x2`, where `f` is frequency axis.
+        Note that indexing starts at 0, so g11 can be accessed by
+        taking the slice `g[:,0,0]`.
 
 
         Returns
         -------
-        h : complex :class:`numpy.ndarray` of shape `fxnxn`
+        h : complex :class:`numpy.ndarray` of shape `fx2x2`
                 the inverse hybrid parameter matrix.
 
         See Also
@@ -1132,14 +1132,14 @@ class Network:
         Hybrid parameter matrix.
 
         The h-matrix [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
-        `fxnxn`, where `f` is frequency axis and `n` is number of ports.
+        `fx2x2`, where `f` is frequency axis.
         Note that indexing starts at 0, so h11 can be accessed by
         taking the slice `h[:,0,0]`.
 
 
         Returns
         -------
-        h : complex :class:`numpy.ndarray` of shape `fxnxn`
+        h : complex :class:`numpy.ndarray` of shape `fx2x2`
                 the hybrid parameter matrix.
 
         See Also
