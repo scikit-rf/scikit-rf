@@ -7929,7 +7929,7 @@ def s2g(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
 
     Returns
     -------
-    s : complex array-like
+    g : complex array-like
         inverse hybrid parameters
 
     """
