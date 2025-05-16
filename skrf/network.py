@@ -1104,7 +1104,7 @@ class Network:
 
         Returns
         -------
-        h : complex :class:`numpy.ndarray` of shape `fx2x2`
+        g : complex :class:`numpy.ndarray` of shape `fx2x2`
                 the inverse hybrid parameter matrix.
 
         See Also
