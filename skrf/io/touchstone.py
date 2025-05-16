@@ -423,8 +423,6 @@ class Touchstone:
             "[end]": lambda x: None,
         }
 
-
-
         while True:
             line = fid.readline()
             if not line:
