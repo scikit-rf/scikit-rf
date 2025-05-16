@@ -291,7 +291,6 @@ class Touchstone:
             self.load_file(fid)
 
         except Exception as e:
-            print("abc", e)
             raise ValueError("Something went wrong by the file opening") from e
 
         finally:
