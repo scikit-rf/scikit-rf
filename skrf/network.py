@@ -2501,7 +2501,7 @@ class Network:
 
         pdata = ntwk.s
         if parameter != "S":
-            pdata = globals()[f"s2{parameter.lower()}"](pdata, self.z0) / self.z0[:,:,None]
+            pdata = globals()[f"s2{parameter.lower()}"](pdata, 1)
 
         if get_extn(filename) is None:
             if isinstance(filename, Path):
