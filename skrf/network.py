@@ -121,6 +121,7 @@ Supporting Functions
     s2y
     s2t
     s2a
+    s2g
     s2h
     z2s
     z2y
@@ -1091,19 +1092,54 @@ class Network:
         self.s = s2s(s, self.z0, self.s_def, 'pseudo')
 
     @property
+    def g(self) -> np.ndarray:
+        """
+        Inverse hybrid parameter matrix.
+
+        The g-matrix [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
+        `fx2x2`, where `f` is frequency axis.
+        Note that indexing starts at 0, so g11 can be accessed by
+        taking the slice `g[:,0,0]`.
+
+
+        Returns
+        -------
+        g : complex :class:`numpy.ndarray` of shape `fx2x2`
+                the inverse hybrid parameter matrix.
+
+        See Also
+        --------
+        s
+        y
+        z
+        t
+        a
+        h
+
+        References
+        ----------
+        .. [#] https://en.wikipedia.org/wiki/Two-port_network#Inverse_hybrid_parameters_(g-parameters)
+        """
+        return s2g(self.s, self.z0)
+
+    @g.setter
+    def g(self, value: np.ndarray) -> None:
+        self._s = g2s(fix_param_shape(value), self.z0)
+
+    @property
     def h(self) -> np.ndarray:
         """
         Hybrid parameter matrix.
 
         The h-matrix [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
-        `fxnxn`, where `f` is frequency axis and `n` is number of ports.
+        `fx2x2`, where `f` is frequency axis.
         Note that indexing starts at 0, so h11 can be accessed by
         taking the slice `h[:,0,0]`.
 
 
         Returns
         -------
-        h : complex :class:`numpy.ndarray` of shape `fxnxn`
+        h : complex :class:`numpy.ndarray` of shape `fx2x2`
                 the hybrid parameter matrix.
 
         See Also
@@ -2338,7 +2374,8 @@ class Network:
                          format_spec_freq: str = '{}', r_ref: float = None,
                          format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
                          format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
-                         format_spec_rn: str = '{}', write_noise: bool = True) -> str | None:
+                         format_spec_rn: str = '{}', write_noise: bool = True,
+                         parameter: Literal["S", "Y", "Z", "G", "H"] = "S") -> str | None:
 
         """
         Write a contents of the :class:`Network` to a touchstone file.
@@ -2405,6 +2442,9 @@ class Network:
             This specifies the formatting in the resulting touchstone file for the noise resistance.
         write_noise : bool, optional
             Write noise parameters.
+        parameter : string
+            Specify the network parameter ("S", "Y", "Z", "G", "H") to write, defaults to "S".
+            "G" and "H" is only available for 2-port Networks.
 
         Note
         ----
@@ -2451,40 +2491,44 @@ class Network:
             else:
                 raise ValueError('No filename given. Network must have a name, or you must provide a filename')
 
+        # set internal variables according to form
+        form = form.lower()
+
+        parameter = parameter.upper()
+        if parameter not in ["S", "Y", "Z", "G", "H"] or (parameter in ["G", "H"] and ntwk.nports != 2):
+            msg = f"Invalid network parameter {parameter}"
+            raise AttributeError(msg)
+
+        pdata = ntwk.s
+        if parameter != "S":
+            pdata = globals()[f"s2{parameter.lower()}"](pdata, 1)
+
         if get_extn(filename) is None:
             if isinstance(filename, Path):
                 filename = str(filename.resolve())
 
-            filename = filename + '.s%ip' % ntwk.number_of_ports
+            filename = f"{filename}.{parameter.lower()}{ntwk.nports}p"
 
         if dir is not None:
             filename = os.path.join(dir, filename)
 
-        # set internal variables according to form
-        form = form.lower()
+        a_func = np.vectorize(lambda x: format_spec_A.format(x) + " ")
+        b_func = np.vectorize(lambda x: format_spec_B.format(x))
+        f_func = np.vectorize(lambda x: format_spec_freq.format(x))
+        f_data = f_func(ntwk.frequency.f_scaled)
+
         if form == "ri":
-            formatDic = {"labelA": "Re", "labelB": "Im"}
-            funcA = np.real
-            funcB = np.imag
+            formatDic = {"labelA": "Re", "labelB": "Im", "param": parameter}
+            data = np.char.add(a_func(np.real(pdata)), b_func(np.imag(pdata)))
         elif form == "db":
-            formatDic = {"labelA": "dB", "labelB": "ang"}
-            funcA = mf.complex_2_db
-            funcB = mf.complex_2_degree
+            formatDic = {"labelA": "dB", "labelB": "ang", "param": parameter}
+            data = np.char.add(a_func(mf.complex_2_db(pdata)), b_func(mf.complex_2_degree(pdata)))
         elif form == "ma":
-            formatDic = {"labelA": "mag", "labelB": "ang"}
-            funcA = mf.complex_2_magnitude
-            funcB = mf.complex_2_degree
+            formatDic = {"labelA": "mag", "labelB": "ang", "param": parameter}
+            data = np.char.add(a_func(mf.complex_2_magnitude(pdata)), b_func(mf.complex_2_degree(pdata)))
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
 
-        # add formatting to funcA and funcB so we don't have to write it out many many times.
-        def c2str_A(c: NumberLike) -> str:
-            """Take a complex number for the A part of param and return an appropriately formatted string."""
-            return format_spec_A.format(funcA(c))
-
-        def c2str_B(c: NumberLike) -> str:
-            """Take a complex number for B part of param and return an appropriately formatted string."""
-            return format_spec_B.format(funcB(c))
 
         def get_buffer() -> io.StringIO:
             if return_string is True or type(to_archive) is zipfile.ZipFile:
@@ -2515,7 +2559,7 @@ class Network:
             if write_z0:
                 output.write('! Data is not renormalized\n')
                 output.write(f'! S-parameter uses the {self.s_def} definition\n')
-                output.write(f'# {ntwk.frequency.unit} S {form.upper()} R\n')
+                output.write(f'# {ntwk.frequency.unit} {parameter} {form.upper()} R\n')
             else:
                 # Write "r_ref.real" instead of "r_ref", so we get a real number "a" instead
                 # of a complex number "(a+0j)", which is unsupported by the standard Touchstone
@@ -2524,7 +2568,7 @@ class Network:
                 assert r_ref.imag == 0, "Complex reference impedance is encountered when " \
                                         "generating a standard Touchstone (non-HFSS), this " \
                                         "should never happen in scikit-rf."
-                output.write(f'# {ntwk.frequency.unit} S {form.upper()} R {r_ref.real} \n')
+                output.write(f'# {ntwk.frequency.unit} {parameter} {form.upper()} R {r_ref.real} \n')
 
             # write ports
             try:
@@ -2536,17 +2580,13 @@ class Network:
             except AttributeError:
                 pass
 
-            scaled_freq = ntwk.frequency.f_scaled
-
             if ntwk.number_of_ports == 1:
                 # write comment line for users (optional)
-                output.write('!freq {labelA}S11 {labelB}S11\n'.format(**formatDic))
+                output.write('!freq {labelA}{param}11 {labelB}{param}11\n'.format(**formatDic))
                 # write out data
+
                 for f in range(len(ntwk.f)):
-                    output.write(format_spec_freq.format(scaled_freq[f]) + ' ' \
-                                 + c2str_A(ntwk.s[f, 0, 0]) + ' ' \
-                                 + c2str_B(ntwk.s[f, 0, 0]) + '\n')
-                    # write out the z0 following hfss's convention if desired
+                    output.write(f"{f_data[f]} {data[f,0,0]}\n")
                     if write_z0:
                         output.write('! Port Impedance ')
                         for n in range(ntwk.number_of_ports):
@@ -2560,21 +2600,12 @@ class Network:
 
                 # write comment line for users (optional)
                 output.write(
-                    ("!freq {labelA}S11 {labelB}S11 {labelA}S21 {labelB}S21 "
-                           "{labelA}S12 {labelB}S12 {labelA}S22 {labelB}S22\n").format(
+                    ("!freq {labelA}{param}11 {labelB}{param}11 {labelA}{param}21 {labelB}{param}21 "
+                           "{labelA}{param}12 {labelB}{param}12 {labelA}{param}22 {labelB}{param}22\n").format(
                         **formatDic))
                 # write out data
                 for f in range(len(ntwk.f)):
-                    output.write(format_spec_freq.format(scaled_freq[f]) + ' ' \
-                                 + c2str_A(ntwk.s[f, 0, 0]) + ' ' \
-                                 + c2str_B(ntwk.s[f, 0, 0]) + ' ' \
-                                 + c2str_A(ntwk.s[f, 1, 0]) + ' ' \
-                                 + c2str_B(ntwk.s[f, 1, 0]) + ' ' \
-                                 + c2str_A(ntwk.s[f, 0, 1]) + ' ' \
-                                 + c2str_B(ntwk.s[f, 0, 1]) + ' ' \
-                                 + c2str_A(ntwk.s[f, 1, 1]) + ' ' \
-                                 + c2str_B(ntwk.s[f, 1, 1]) + '\n')
-                    # write out the z0 following hfss's convention if desired
+                    output.write(f"{f_data[f]} {data[f,0,0]} {data[f,1,0]} {data[f,0,1]} {data[f,1,1]}\n")
                     if write_z0:
                         output.write('! Port Impedance')
                         for n in range(2):
@@ -2594,16 +2625,15 @@ class Network:
                 output.write('!freq')
                 for m in range(1, 4):
                     for n in range(1, 4):
-                        output.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
+                        output.write(" {labelA}{param}{m}{n} {labelB}{param}{m}{n}".format(m=m, n=n, **formatDic))
                     output.write('\n!')
                 output.write('\n')
                 # write out data
                 for f in range(len(ntwk.f)):
-                    output.write(format_spec_freq.format(scaled_freq[f]))
+                    output.write(f_data[f])
                     for m in range(3):
                         for n in range(3):
-                            output.write(' ' + c2str_A(ntwk.s[f, m, n]) + ' ' \
-                                         + c2str_B(ntwk.s[f, m, n]))
+                            output.write(f" {data[f,m,n]}")
                         output.write('\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
@@ -2626,18 +2656,17 @@ class Network:
                     for n in range(1, 1 + ntwk.number_of_ports):
                         if (n > 0 and (n % 4) == 0):
                             output.write('\n!')
-                        output.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
+                        output.write(" {labelA}{param}{m}{n} {labelB}{param}{m}{n}".format(m=m, n=n, **formatDic))
                     output.write('\n!')
                 output.write('\n')
                 # write out data
                 for f in range(len(ntwk.f)):
-                    output.write(format_spec_freq.format(scaled_freq[f]))
+                    output.write(f_data[f])
                     for m in range(ntwk.number_of_ports):
                         for n in range(ntwk.number_of_ports):
                             if (n > 0 and (n % 4) == 0):
                                 output.write('\n')
-                            output.write(' ' + c2str_A(ntwk.s[f, m, n]) + ' ' \
-                                         + c2str_B(ntwk.s[f, m, n]))
+                            output.write(f" {data[f,m,n]}")
                         output.write('\n')
 
                     # write out the z0 following hfss's convention if desired
@@ -7886,6 +7915,25 @@ def g2s(g: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
 
     """
     return h2s(np.linalg.inv(g), z0)
+
+def s2g(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
+    """
+    Convert inverse hybrid parameters to s parameters.
+
+    Parameters
+    ----------
+    s : complex array-like
+        scattering parameters
+    z0 : complex array-like or number
+        port impedances
+
+    Returns
+    -------
+    g : complex array-like
+        inverse hybrid parameters
+
+    """
+    return z2h(s2y(s, z0))
 
 
 ## these methods are used in the secondary properties
