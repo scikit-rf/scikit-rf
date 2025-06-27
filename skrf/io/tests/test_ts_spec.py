@@ -1,3 +1,4 @@
+import io
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +21,15 @@ def test_ex_2():
         f_unit="mhz"
                      )
     assert ts == ref
+
+def test_ex_2_write():
+    ts = rf.Network(test_data / "ex_2.ts")
+
+    stream = io.StringIO(ts.write_touchstone(return_string=True, form="ma", parameter="Z"))
+    stream.name = "ex_2.s1p"
+    ts_read_back = rf.Network(stream)
+
+    assert ts == ts_read_back
 
 def test_ex_3():
     ts = rf.Network(test_data / "ex_3.ts")
@@ -96,6 +106,24 @@ def test_ts_example_9_10():
 
     assert np.allclose(ex_9.z, ex_10.z)
 
+def test_ex_9_write():
+    ts = rf.Network(test_data / "ex_9.s1p")
+
+    stream = io.StringIO(ts.write_touchstone(return_string=True, form="ma", parameter="Z"))
+    stream.name = "ex_9.s1p"
+    ts_read_back = rf.Network(stream)
+
+    assert ts == ts_read_back
+
+def test_ex_10_write():
+    ts = rf.Network(test_data / "ex_10.ts")
+
+    stream = io.StringIO(ts.write_touchstone(return_string=True, form="ma", parameter="Z"))
+    stream.name = "ex_10.s1p"
+    ts_read_back = rf.Network(stream)
+
+    assert ts == ts_read_back
+
 def test_ts_example_11_12():
     ex_11 = rf.Network(test_data / "ex_11.s2p")
     ex_12 = rf.Network(test_data / "ex_12.ts")
@@ -107,6 +135,24 @@ def test_ts_example_12_12g():
     ex_12_g = rf.Network(test_data / "ex_12_g.ts")
 
     assert np.allclose(ex_12.s, ex_12_g.s, atol=0.01)
+
+def test_ex_12_g_write():
+    ts = rf.Network(test_data / "ex_12_g.ts")
+
+    stream = io.StringIO(ts.write_touchstone(return_string=True, form="ma", parameter="G"))
+    stream.name = "ex_12_g.s2p"
+    ts_read_back = rf.Network(stream)
+
+    assert ts == ts_read_back
+
+def test_ex_12_h_write():
+    ts = rf.Network(test_data / "ex_12.ts")
+
+    stream = io.StringIO(ts.write_touchstone(return_string=True, form="ma", parameter="H"))
+    stream.name = "ex_12.s2p"
+    ts_read_back = rf.Network(stream)
+
+    assert ts == ts_read_back
 
 def test_ts_example_13():
     snp = rf.Network(test_data / "ex_13.s2p")
