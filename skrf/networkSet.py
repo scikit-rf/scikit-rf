@@ -1398,7 +1398,7 @@ class NetworkSet:
             raise ValueError(f'Parameter {param} is not found in the NetworkSet params.')
         if isinstance(x, Number):
             if not (min(self.coords[param]) < x < max(self.coords[param])):
-                ValueError(f'Out of bound values: {x} is not inside {self.coords[param]}. Cannot interpolate.')
+                raise ValueError(f'Out of bound values: {x} is not inside {self.coords[param]}. Cannot interpolate.')
         else:
             raise ValueError('Cannot interpolate between string-based parameters.')
 
