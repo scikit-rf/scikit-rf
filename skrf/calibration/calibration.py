@@ -1078,9 +1078,8 @@ class OnePort(Calibration):
     Where **m**'s and **i**'s are the measured and ideal reflection coefficients,
     respectively.
 
-
-    If more than three standards are supplied, then a least square
-    algorithm is applied.
+    See :func:`__init__` for the correct parameters order. If more than three
+    standards are supplied, then a least square algorithm is applied.
 
     See [1]_  and [2]_
 
@@ -1224,18 +1223,54 @@ class OnePort(Calibration):
 
 class SDDLWeikle(OnePort):
     """
-    Short-Delay-Delay-Load (Oneport Calibration).
+    Short-Delay-Delay-Load (Oneport Calibration), Liu-Weikle formulation.
 
-    One-port self-calibration, which contains a short, a load, and
-    two delays shorts of unity magnitude but unknown phase. Originally
-    designed to be resistant to flange misalignment, see [1]_.
+    One-port self-calibration, which contains a known short, a known
+    mismatched load, and two partially-unknown delay shorts.
+    The short can be an offset short with known phase, or a zero-length
+    (flush) short. The load can have an arbitrary impedance, as long
+    as it's reflective (not perfectly matched) and known exactly. This
+    is especially useful when an ideal load is impractical to fabricate.
+    The delay shorts have unity reflection magnitudes, but unknown phases
+    (unknown electrical lengths).
 
+    See :func:`__init__` for the correct parameters order.
+
+    This class uses the Liu-Weikle formulation,
+    which requires a mismatched load (i.e. non-zero reflection coefficient).
+    Calibration fails if the load is perfectly matched. In the paper, a
+    fully-known radiating open is used as the load standard.
+
+    It was originally designed for waveguide calibration with resistance to
+    flange misalignment by Liu-Weikle [1]_, which was itself a modification
+    of the earlier Sigg-Simon SDDM calibration [2]_. In Sigg-Simon's SDDM,
+    the load must be matched, while Liu-Weikle SDDL only allows a mismatched
+    load.
+
+    .. note::
+       This algorithm is bandwidth-limited due to phase wrapping,
+       conceptually similar to TRL's bandwidth limit. Some over-determined
+       multi-line variants allow wideband calibration, but this is not
+       implemented in scikit-rf. If a wideband calibration is required (common
+       for coaxial systems), it's necessary to manually split measurements to
+       multiple subbands and calibrate each band separately.
+
+       Band edges may suffer from increased errors. It's recommended to test
+       line lengths experimentally via simulations first. Choosing an optimal
+       selection of line lengths that covers the widest bandwidth is a
+       non-trivial optimization problem, with several proposed solutions [3]_.
 
     References
     ----------
     .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment,"
         Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
 
+    .. [2] W. Sigg and J. Simon, "Reflectometer calibration using load, short and offset shorts with
+        unknown phase," Electronics Letters, vol. 27, no. 18, pp. 1650–1651, 1991.
+
+    .. [3] A. Lewandowski, W. Wiatr, L. J. Opalski and R. Biedrzycki, "Accuracy and Bandwidth Optimization of the
+        Over-Determined Offset-Short Reflectometer Calibration," in IEEE Transactions on Microwave Theory and
+        Techniques, vol. 63, no. 3, pp. 1076-1089, March 2015, doi: 10.1109/TMTT.2015.2396496.
     """
 
     family = 'SDDL'
@@ -1321,17 +1356,53 @@ class SDDLWeikle(OnePort):
 
 class SDDL(OnePort):
     """
-    Short-Delay-Delay-Load (Oneport Calibration).
+    Short-Delay-Delay-Load (Oneport Calibration), formulation by Arsenovic
+    et, al.
 
-    One-port self-calibration, which contains a short, a load, and
-    two delays shorts of unity magnitude but unknown phase. Originally
-    designed to be resistant to flange misalignment, see [1]_.
+    One-port self-calibration, which contains a known short, a known
+    arbitrary-impedance load, and two partially-unknown delay shorts.
+    The short can be an offset short with known phase, or a zero-length
+    (flush) short. The load can be perfectly matched or an arbitrary impedance
+    standard, as long as it's known exactly. This is especially useful when
+    an ideal load is impractical to fabricate. The delay shorts have unity
+    reflection magnitudes, but unknown phases (unknown electrical lengths).
+
+    See :func:`__init__` for the correct parameters order.
+
+    This class uses the Arsenovic et, al. formulation [1]_, which allows
+    either a mismatched or a matched load as the calibration standard.
+    It's a generalization of both Sigg-Simon's original SDDM [2]_ and
+    Liu-Weikle's modified SDDL methods [3]_, which are limited to matching
+    or reflective loads only. The latter was originally designed for waveguide
+    calibration with resistance to flange misalignment.
+
+    .. note::
+       This algorithm is bandwidth-limited due to phase wrapping,
+       conceptually similar to TRL's bandwidth limit. Some over-determined
+       multi-line variants allow wideband calibration, but this is not
+       implemented in scikit-rf. If a wideband calibration is required (common
+       for coaxial systems), it's necessary to manually split measurements to
+       multiple subbands and calibrate each band separately.
+
+       Band edges may suffer from increased errors. It's recommended to test
+       line lengths experimentally via simulations first. Choosing an optimal
+       selection of line lengths that covers the widest bandwidth is a
+       non-trivial optimization problem, with several proposed solutions [4]_.
 
     References
     ----------
-    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment,"
+    .. [1] A. Arsenovic, R. M. Weikle, and J. L. Hesler, “Reflectometer calibration with a pair of partially known
+        standards,” European Microwave Conference, pp. 327–330, Dec. 2015, doi: 10.1109/EUMC.2015.7345766.
+
+    .. [2] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment,"
         Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
 
+    .. [3] W. Sigg and J. Simon, "Reflectometer calibration using load, short and offset shorts with
+        unknown phase," Electronics Letters, vol. 27, no. 18, pp. 1650–1651, 1991.
+
+    .. [4] A. Lewandowski, W. Wiatr, L. J. Opalski and R. Biedrzycki, "Accuracy and Bandwidth Optimization of the
+        Over-Determined Offset-Short Reflectometer Calibration," in IEEE Transactions on Microwave Theory and
+        Techniques, vol. 63, no. 3, pp. 1076-1089, March 2015, doi: 10.1109/TMTT.2015.2396496.
     """
 
     family = 'SDDL'
@@ -1401,14 +1472,57 @@ class SDDL(OnePort):
 
 class PHN(OnePort):
     """
-    Pair of Half Knowns (One Port self-calibration).
+    Pair of Half Knowns (Oneport Calibration).
+
+    One-port self-calibration, which contains two fully-known arbitrary
+    impedance standards, and two partially-known standards (such as open
+    or short circuits with unknown phase). See :func:`__init__` for the
+    correct parameters order.
+
+    This is a generalization of the SDDL calibration algorithm, see [1]_.
+
+    .. important::
+      Unfortunately, due to a square-root sign ambiguity in the solution of a
+      quadratic equation, this algorithm can be unstable. While it has proven to
+      be reliable in rectangular waveguide calibration scenarios, it often fails
+      for arbitrary-impedance standards with random reflection coefficients. This
+      is a major drawback in the current solution, but the authors believe this
+      problem may be overcome analytically by future research.
+
+    References
+    ----------
+    .. [1] A. Arsenovic, R. M. Weikle, and J. L. Hesler, “Reflectometer calibration with a pair of partially known
+        standards,” European Microwave Conference, pp. 327–330, Dec. 2015, doi: 10.1109/EUMC.2015.7345766.
     """
 
     family = 'PHN'
     def __init__(self, measured, ideals, *args, **kwargs):
         """
+        Half-Half-Full-Full initializer.
 
+        Measured and ideal networks must be in the order:
 
+        [Half-Known 1, Half-Known 2, Fully-Known 1, Fully-Known 2]
+
+        The phases of half-known standards can be set to an approximate
+        value, as they are determined during the calibration.
+
+        Parameters
+        ----------
+        measured : list/dict  of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must align with the `ideals` parameter.
+
+        ideals : list/dict of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `ideals` list.
+
+        args, kwargs :
+            passed to func:`Calibration.__init__`
+
+        See Also
+        --------
+        Calibration.__init__
         """
         if (len(measured) != 4) or (len(ideals)) != 4:
             raise IndexError('Incorrect number of standards.')
