@@ -175,6 +175,7 @@ from scipy import stats  # for Network.add_noise_*, and Network.windowed
 from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d  # for Network.interpolate()
 
+from . import __version__
 from . import mathFunctions as mf
 from . import plotting as rfplt
 from .constants import (
@@ -2391,7 +2392,7 @@ class Network:
             write impedance information into touchstone as comments,
             like Ansoft HFSS does
         skrf_comment : bool, optional
-            write `created by skrf` comment
+            write `created by skrf <version>` comment
         return_string : bool, optional
             return the file_string rather than write to a file
         to_archive : zipfile.Zipfile
@@ -2548,7 +2549,7 @@ class Network:
             except AttributeError:
                 pass
             if skrf_comment:
-                commented_header += '! Created with skrf (http://scikit-rf.org).\n'
+                commented_header += '! Created with skrf ' + __version__ + ' (http://scikit-rf.org).\n'
 
             output.write(commented_header)
 
