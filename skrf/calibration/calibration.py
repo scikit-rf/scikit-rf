@@ -4668,7 +4668,7 @@ class LRRM(EightTerm):
             if init_guess[li] < np.mean(min_l(l0)**2):
                 l0 = best_guess
 
-            sol = least_squares(min_l, l0, method='lm')
+            sol = least_squares(min_l, l0, method="lm", diff_step=np.sqrt(np.finfo(np.float64).resolution))
             match_l = sol.x * np.ones(match_l.shape)
             match_c = zeros
 
