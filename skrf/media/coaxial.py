@@ -323,8 +323,7 @@ class Coaxial(DistributedCircuit, Media):
             distributed conductance, in S/m
 
         """
-        f =  self.frequency.f
-        return f*self.epsilon_second/log(self.b/self.a)
+        return 2*pi*self.frequency.w*self.epsilon_second/log(self.b/self.a)
 
     def __str__(self):
         f=self.frequency
