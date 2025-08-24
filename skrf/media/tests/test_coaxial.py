@@ -121,3 +121,13 @@ class MediaTestCase(unittest.TestCase):
 
             self.assertTrue(abs(1 - coax.R[0]/dc_res) < 1e-2)
             self.assertTrue(abs(1 - coax.R[1]/R_simple[1]) < 1e-2)
+
+    def test_LC(self):
+        """Assert that LC = mu*eps_prime."""
+        coax = Coaxial(
+            frequency = rf.Frequency(1, 10, npoints=100, unit='GHz'),
+            Dint=1e-3, Dout=3e-3, epsilon_r=2.29,
+            tan_delta=4e-4, sigma=1./1.68e-8,
+            z0_port = 50.
+            )
+        assert_array_almost_equal(coax.L*coax.C, rf.mu_0*coax.epsilon_prime)
