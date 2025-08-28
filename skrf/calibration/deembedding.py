@@ -1810,8 +1810,9 @@ class IEEEP370_FD_QM:
         IEEE 370 initial quality checking of raw data at the given frequency
         samples.
 
-        Passivity, reciprocity, and causality checks are
-        performed on the original S-parameters data in the frequency domain.
+        Initial passivity (PQMi), reciprocity (RQMi), and causality (CQMi)
+        checks are performed on the original S-parameters data in the frequency
+        domain.
 
         Based on [IEEE370]_.
 
@@ -1831,8 +1832,8 @@ class IEEEP370_FD_QM:
 
     def check_causality(self, ntwk: Network) -> float:
         """
-        Causality quality metrics verify that the complex S-parameters
-        rotate clockwise in the complex plane.
+        Initial Causality Quality Metric (CQMi): verify that the complex
+        S-parameters rotate clockwise in the complex plane.
 
         This is done by computing the normalized vector product on pairs of
         consecutive vectors between two frequency points.
@@ -1872,8 +1873,8 @@ class IEEEP370_FD_QM:
 
     def check_passivity(self, ntwk: Network) -> float:
          """
-         Passivity quality metrics verify that the 2-Norm of S-parameters is
-         smaller or equal to 1 at each frequency.
+         Initial Passivity Quality Metric (PQMi): verify that the 2-Norm of
+         S-parameters is smaller or equal to 1 at each frequency.
 
          This is equivalent to checking the eigenvalues of the unity matrix
          subtracted by complex conjugate transposed S time S is greater or
@@ -1908,7 +1909,8 @@ class IEEEP370_FD_QM:
 
     def check_reciprocity(self, ntwk: Network) -> float:
         """
-        Integrates the absolute difference between Sij and Sji at
+        Initial Reciprocity Quality Metric (RQMi):
+        integrates the absolute difference between Sij and Sji at
         each frequency point. Ideally, Sij should be equal to Sji.
 
         Parameters
@@ -2076,7 +2078,8 @@ class IEEEP370_TD_QM:
                  extrapolation: int = 2, verbose: bool = False) -> None:
         """
         IEEEP370_TD_QM Application-based quality checking of in the time
-        domain.
+        domain using causality (CQMa), passivity (PQMa), and reciprocity (RQMa)
+        metrics.
 
         If necessary, the original S-parameters are extrapolated to a frequency
         of three times the desired data rate. Causal, passive, and reciprocal
@@ -2747,7 +2750,9 @@ class IEEEP370_TD_QM:
 
     def check_se_quality(self, ntwk: Network, verbose: bool = False) -> dict:
         """
-        Single-ended application-based quality checking of in the time domain.
+        Single-ended application-based quality checking in the time domain
+        using causality (CQMa), passivity (PQMa), and reciprocity (RQMa)
+        metrics.
 
         If necessary, the original S-parameters are extrapolated to a frequency
         of three times the desired data rate. Causal, passive, and reciprocal
