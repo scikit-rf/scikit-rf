@@ -1848,9 +1848,6 @@ class IEEEP370_FD_QM:
         PQM : :class:`~skrf.network.Network` object
               Causality quality metric in percents
         """
-        if ntwk.nports == 1:
-            raise (ValueError('Doesn\'t exist for one-ports'))
-
         Nf = ntwk.frequency.npoints
         CQM = zeros((ntwk.nports, ntwk.nports))
         for i in range(ntwk.nports):
