@@ -379,7 +379,7 @@ class Touchstone:
             for line in fid:
                 if re.search(r'^\s*\!', line) is not None:
                     continue
-                
+
                 if not re.search(r'^\[Version\]', line):
                     msg = (f"{self.filename} does not have a s-parameter extension ({extension})."
                             "Please, correct the extension to of form: 'sNp', where N is any integer for Touchstone v1,"
