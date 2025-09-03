@@ -11,7 +11,7 @@
 ! Command Line:
 !     /rsc/user/Tools/helic_2024.R2.1_ece/tools/bin/x86_64/extEngine -d /rsc/user/test/ -n my_project --config-file /rsc/user/test/typical_25C/my_config.config
 ! Config file:
-!     bandwidth = 60e9
+!     bandwidth = 100e9
 !     capacitance-enable-lde = 0
 !     compress-logfile = 0
 !     create-logfile = 1

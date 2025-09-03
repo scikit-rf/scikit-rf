@@ -160,6 +160,7 @@ class ConvenienceTestCase(unittest.TestCase):
         ntwk_helic_ts_extension = rf.Network(os.path.join(self.test_dir, 'helic_example_6ports_V2.ts'))
         ntwk_helic_sp_extension = rf.Network(os.path.join(self.test_dir, 'helic_example_6ports_V2.sp'))
 
-        self.assertTrue(np.allclose(ntwk_helic_ts_extension.f, ntwk_helic_sp_extension.f))
-        self.assertTrue(np.allclose(ntwk_helic_ts_extension.z0, ntwk_helic_sp_extension.z0))
-        self.assertTrue(np.allclose(ntwk_helic_ts_extension.s, ntwk_helic_sp_extension.s))
+        self.assertTrue((ntwk_helic_ts_extension.f == ntwk_helic_sp_extension.f).all())
+        self.assertTrue((ntwk_helic_ts_extension.z0 == ntwk_helic_sp_extension.z0).all())
+        self.assertTrue((ntwk_helic_ts_extension.s == ntwk_helic_sp_extension.s).all())        
+
