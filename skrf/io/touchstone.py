@@ -376,10 +376,13 @@ class Touchstone:
         if m:
             state.rank = int(m.group(1))
         elif extension != "ts":
-            msg = (f"{self.filename} does not have a s-parameter extension ({extension})."
-                    "Please, correct the extension to of form: 'sNp', where N is any integer for Touchstone v1,"
-                    "or ts for Touchstone v2.")
-            raise ValueError(msg)
+            if not re.search(r'^\[Version\]', fid.readline()):
+                msg = (f"{self.filename} does not have a s-parameter extension ({extension})."
+                        "Please, correct the extension to of form: 'sNp', where N is any integer for Touchstone v1,"
+                        "or ts for Touchstone v2.")
+                raise ValueError(msg)
+            else:
+                fid.seek(0)
 
         # Lookup dictionary for parser
         # Dictionary has string keys and values contains functions which
