@@ -163,4 +163,3 @@ class ConvenienceTestCase(unittest.TestCase):
         self.assertTrue(np.allclose(ntwk_helic_ts_extension.f, ntwk_helic_sp_extension.f))
         self.assertTrue(np.allclose(ntwk_helic_ts_extension.z0, ntwk_helic_sp_extension.z0))
         self.assertTrue(np.allclose(ntwk_helic_ts_extension.s, ntwk_helic_sp_extension.s))
-        
