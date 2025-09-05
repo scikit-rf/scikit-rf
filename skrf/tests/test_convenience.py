@@ -155,3 +155,12 @@ class ConvenienceTestCase(unittest.TestCase):
                                     [-9.748145748042E-6, 5.737806652221E-6, -7.2831384009613E-1,  -7.2022385218772E-6]))
         self.assertTrue(np.allclose(ntwk.s_im[0][2], # check s3n_im
                                     [4.4579440784571E-6, 5.3413994843693E-6, -4.5314024673959E-1, 5.6678579987964E-7]))
+
+    def test_helic_touchstone_V2_network(self):
+        ntwk_helic_ts_extension = rf.Network(os.path.join(self.test_dir, 'helic_example_6ports_V2.ts'))
+        ntwk_helic_sp_extension = rf.Network(os.path.join(self.test_dir, 'helic_example_6ports_V2.sp'))
+
+        self.assertTrue((ntwk_helic_ts_extension.f == ntwk_helic_sp_extension.f).all())
+        self.assertTrue((ntwk_helic_ts_extension.z0 == ntwk_helic_sp_extension.z0).all())
+        self.assertTrue((ntwk_helic_ts_extension.s == ntwk_helic_sp_extension.s).all())
+
