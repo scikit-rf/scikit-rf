@@ -1400,7 +1400,7 @@ class VectorFitting:
 
         # purely imaginary square roots of eigenvalues identify frequencies (2*pi*f) of borders of passivity violations
         freqs_violation = []
-        for sqrt_eigenval in np.sqrt(P_eigs):
+        for sqrt_eigenval in np.sqrt(P_eigs, dtype=complex):
             if np.real(sqrt_eigenval) == 0.0:
                 freqs_violation.append(np.imag(sqrt_eigenval) / 2 / np.pi)
 
