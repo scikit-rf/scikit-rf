@@ -465,10 +465,18 @@ class Media(ABC):
         nports : int
             number of ports
         z0 : number, or array-like or None
-            port impedance. Default is
-            None, in which case the Media's :attr:`z0` is used.
-            This sets the resultant Network's
+            port impedance. This sets the resultant
+            :class:`~skrf.network.Network`’s
             :attr:`~skrf.network.Network.z0`.
+            Default is None, the Media’s :attr:`~skrf.media.Media.z0_port`
+            value is used. If :attr:`~skrf.media.Media.z0_port` is
+            also None (by default), in which case the Media's native
+            :attr:`~skrf.media.Media.z0` is used.
+            A Media's :attr:`~skrf.media.Media.z0_port` is an optional
+            attribute for renormalizing resultant
+            :class:`~skrf.network.Network` to a new
+            reference impedance that differs from a Media's native
+            :attr:`~skrf.media.Media.z0`.
         z0_norm : bool
             is z0 normalized to this media's `z0`?
         \*\*kwargs : key word arguments
@@ -516,10 +524,18 @@ class Media(ABC):
         nports : int
             number of ports
         z0 : number, or array-like or None
-            port impedance. Default is
-            None, in which case the Media's :attr:`z0` is used.
-            This sets the resultant Network's
+            port impedance. This sets the resultant
+            :class:`~skrf.network.Network`’s
             :attr:`~skrf.network.Network.z0`.
+            Default is None, the Media’s :attr:`~skrf.media.Media.z0_port`
+            value is used. If :attr:`~skrf.media.Media.z0_port` is
+            also None (by default), in which case the Media's native
+            :attr:`~skrf.media.Media.z0` is used.
+            A Media's :attr:`~skrf.media.Media.z0_port` is an optional
+            attribute for renormalizing resultant
+            :class:`~skrf.network.Network` to a new
+            reference impedance that differs from a Media's native
+            :attr:`~skrf.media.Media.z0`.
         \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
@@ -555,10 +571,18 @@ class Media(ABC):
             number of ports
         \*\*kwargs : key word arguments passed to :func:`load`.
         z0 : number, or array-like or None
-            port impedance. Default is
-            None, in which case the Media's :attr:`z0` is used.
-            This sets the resultant Network's
+            port impedance. This sets the resultant
+            :class:`~skrf.network.Network`’s
             :attr:`~skrf.network.Network.z0`.
+            Default is None, the Media’s :attr:`~skrf.media.Media.z0_port`
+            value is used. If :attr:`~skrf.media.Media.z0_port` is
+            also None (by default), in which case the Media's native
+            :attr:`~skrf.media.Media.z0` is used.
+            A Media's :attr:`~skrf.media.Media.z0_port` is an optional
+            attribute for renormalizing resultant
+            :class:`~skrf.network.Network` to a new
+            reference impedance that differs from a Media's native
+            :attr:`~skrf.media.Media.z0`.
         Returns
         -------
         match : :class:`~skrf.network.Network` object
@@ -933,10 +957,18 @@ class Media(ABC):
         Parameters
         ----------
         z0 : number, or array-like or None
-            port impedance. Default is
-            None, in which case the Media's :attr:`z0` is used.
-            This sets the resultant Network's
+            port impedance. This sets the resultant
+            :class:`~skrf.network.Network`’s
             :attr:`~skrf.network.Network.z0`.
+            Default is None, the Media’s :attr:`~skrf.media.Media.z0_port`
+            value is used. If :attr:`~skrf.media.Media.z0_port` is
+            also None (by default), in which case the Media's native
+            :attr:`~skrf.media.Media.z0` is used.
+            A Media's :attr:`~skrf.media.Media.z0_port` is an optional
+            attribute for renormalizing resultant
+            :class:`~skrf.network.Network` to a new
+            reference impedance that differs from a Media's native
+            :attr:`~skrf.media.Media.z0`.
         \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
