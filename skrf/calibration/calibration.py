@@ -4086,7 +4086,13 @@ class UnknownThru(EightTerm):
         IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
 
     """
+
     family = 'UnknownThru'
+
+    # Use standard SOL calibration to solve two 1-port error boxes
+    # before the Thru calibration.
+    _ONEPORT_ALGO = OnePort
+
     def __init__(self, measured, ideals,  *args, **kwargs):
         r"""
         UnknownThru Initializer.
@@ -4123,8 +4129,8 @@ class UnknownThru(EightTerm):
         thru_m = self.measured_unterminated[-1]
 
         # create one port calibration for all reflective standards
-        port1_cal = OnePort(measured = p1_m, ideals = p1_i)
-        port2_cal = OnePort(measured = p2_m, ideals = p2_i)
+        port1_cal = self._ONEPORT_ALGO(measured = p1_m, ideals = p1_i)
+        port2_cal = self._ONEPORT_ALGO(measured = p2_m, ideals = p2_i)
 
         # cal coefficient dictionaries
         p1_coefs = port1_cal.coefs.copy()
@@ -4133,24 +4139,6 @@ class UnknownThru(EightTerm):
         e_rf = port1_cal.coefs_ntwks['reflection tracking']
         e_rr = port2_cal.coefs_ntwks['reflection tracking']
 
-        # create a fully-determined 8-term cal just get estimate on k's sign
-        # this is really inefficient, i need to work out the math on the
-        # closed form solution
-        et = EightTerm(
-            measured = self.measured,
-            ideals = self.ideals,
-            switch_terms= self.switch_terms)
-        k_approx = et.coefs['k'].flatten()
-
-        # this is equivalent to sqrt(detX*detY/detM)
-        e10e32 = np.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
-
-        k_ = e10e32/e_rr.s.flatten()
-        k_ = find_closest(k_, -1*k_, k_approx)
-
-        #import pylab as plb
-        #plot(abs(k_-k_approx))
-        #plb.show()
         # create single dictionary for all error terms
         coefs = {}
 
@@ -4171,10 +4159,49 @@ class UnknownThru(EightTerm):
                 'forward switch term': np.zeros(len(self.frequency), dtype=complex),
                 'reverse switch term': np.zeros(len(self.frequency), dtype=complex),
                 })
-
-        coefs.update({'k':k_})
-
         self.coefs = coefs
+
+        # this is equivalent to sqrt(detX*detY/detM)
+        e10e32 = np.sqrt((e_rf * e_rr * thru_m.s21 / thru_m.s12).s.flatten())
+
+        # We have almost all the information in self.coefs, except the last
+        # one, self.coefs['k']. This parameter has a sign ambiguity because
+        # e10e32 is a square root with two solutions. We need to pick the
+        # solution with the phase angle closer to the user's approximate
+        # definition.
+        k_ambiguous = e10e32 / e_rr.s.flatten()
+        self._choose_k(k_ambiguous)
+
+    def _choose_k(self, k_ambiguous):
+        # square root is multi-valued
+        k1 = k_ambiguous
+        k2 = -1 * k_ambiguous
+
+        # Measured thru network (including crosstalk) and the user-provided
+        # definition.
+        thru_meas = self.measured[-1]
+        thru_def = self.ideals[-1]
+
+        # solution of the Thru using k1
+        self.coefs.update({'k': k1})
+        solved_thru_k1 = self.apply_cal(thru_meas)
+
+        # solution of the Thru using k2
+        self.coefs.update({'k': k2})
+        solved_thru_k2 = self.apply_cal(thru_meas)
+
+        # Compare the phase angle differences of two solutions.
+        arg_diff1 = np.abs(
+            np.angle(solved_thru_k1.s[:,1,0] / thru_def.s[:,1,0])
+        )
+        arg_diff2 = np.abs(
+            np.angle(solved_thru_k2.s[:,1,0] / thru_def.s[:,1,0])
+        )
+
+        # At every frequency, pick the corresponding k value from k1 if
+        # arg_diff1 is smaller, or vice versa.
+        k_chosen = np.where(arg_diff1 < arg_diff2, k1, k2)
+        self.coefs.update({'k': k_chosen})
 
 
 class LRM(EightTerm):
@@ -4874,7 +4901,14 @@ class MRC(UnknownThru):
 
 
     """
+
     family = 'MRC'
+
+    # Use standard SDDL calibration to solve two 1-port error boxes
+    # before the Thru calibration. This overrides the algorithm used
+    # by UnknownThru.run()
+    _ONEPORT_ALGO = SDDL
+
     def __init__(self, measured, ideals,  *args, **kwargs):
         r"""
         MRC Initializer
@@ -4906,69 +4940,6 @@ class MRC(UnknownThru):
 
         UnknownThru.__init__(self, measured = measured, ideals = ideals,
                            **kwargs)
-
-
-    def run(self):
-        p1_m = [k.s11 for k in self.measured_unterminated[:-1]]
-        p2_m = [k.s22 for k in self.measured_unterminated[:-1]]
-        p1_i = [k.s11 for k in self.ideals[:-1]]
-        p2_i = [k.s22 for k in self.ideals[:-1]]
-
-        thru_m = self.measured_unterminated[-1]
-
-        # create one port calibration for all reflective standards
-        port1_cal = SDDL(measured = p1_m, ideals = p1_i)
-        port2_cal = SDDL(measured = p2_m, ideals = p2_i)
-
-        # cal coefficient dictionaries
-        p1_coefs = port1_cal.coefs.copy()
-        p2_coefs = port2_cal.coefs.copy()
-
-        e_rf = port1_cal.coefs_ntwks['reflection tracking']
-        e_rr = port2_cal.coefs_ntwks['reflection tracking']
-
-        # create a fully-determined 8-term cal just get estimate on k's sign
-        # this is really inefficient, i need to work out the math on the
-        # closed form solution
-        et = EightTerm(
-            measured = self.measured,
-            ideals = self.ideals,
-            switch_terms= self.switch_terms)
-        k_approx = et.coefs['k'].flatten()
-
-        # this is equivalent to sqrt(detX*detY/detM)
-        e10e32 = np.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
-
-        k_ = e10e32/e_rr.s.flatten()
-        k_ = find_closest(k_, -1*k_, k_approx)
-
-        #import pylab as plb
-        #plot(abs(k_-k_approx))
-        #plb.show()
-        # create single dictionary for all error terms
-        coefs = {}
-
-        coefs.update({f'forward {k}': p1_coefs[k] for k in p1_coefs})
-        coefs.update({f'reverse {k}': p2_coefs[k] for k in p2_coefs})
-
-        coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
-        coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
-
-        if self.switch_terms is not None:
-            coefs.update({
-                'forward switch term': self.switch_terms[0].s.flatten(),
-                'reverse switch term': self.switch_terms[1].s.flatten(),
-                })
-        else:
-            warn('No switch terms provided', stacklevel=2)
-            coefs.update({
-                'forward switch term': np.zeros(len(self.frequency), dtype=complex),
-                'reverse switch term': np.zeros(len(self.frequency), dtype=complex),
-                })
-
-        coefs.update({'k':k_})
-
-        self.coefs = coefs
 
 
 class SixteenTerm(Calibration):
