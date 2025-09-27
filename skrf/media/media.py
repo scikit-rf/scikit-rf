@@ -124,7 +124,7 @@ class Media(ABC):
         """
         out = copy(self)
         for k in kw:
-            setattr(self, k, kw[k])
+            setattr(out, k, kw[k])
         return out
 
     def copy(self) -> Media:
