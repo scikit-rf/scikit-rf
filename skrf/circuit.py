@@ -366,7 +366,7 @@ class Circuit:
         name: str | None = None,
         *,
         inplace: bool = False,
-        auto_reduce: bool = False, **kwargs: Unpack[self._REDUCE_OPTIONS]) -> Circuit | None:
+        auto_reduce: bool = False, **kwargs: Unpack[_REDUCE_OPTIONS]) -> Circuit | None:
         """
         Update the circuit connections with a new set of networks.
 
