@@ -866,7 +866,7 @@ def flatten_c_mat(s: NumberLike, order: str = 'F'):
     ------------
     s : ndarray
         input 2D array
-    order : sting, optional
+    order : string, optional
         either 'F' or 'C', for the order of flattening
     """
     return complex2Scalar(s.flatten(order='F'))

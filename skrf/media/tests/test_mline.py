@@ -203,7 +203,7 @@ class MLineTestCase(unittest.TestCase):
             fig2, axs2 = plt.subplots(2, 2, figsize = (8,6))
             fig2.suptitle('ads/skrf residuals')
 
-        # todo: restore to smal values
+        # todo: restore to small values
         limit_db = 0.1
         limit_deg = 1.
 

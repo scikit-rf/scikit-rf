@@ -21,7 +21,7 @@ from skrf.vi.vna import VNA
 
 class HP8720B(VNA):
     '''
-    HP 8720B driver, created by modifiying the 8510C driver and commenting out
+    HP 8720B driver, created by modifying the 8510C driver and commenting out
     the additional sweep options. The instrument natively supports
     (3/11/21/51/101/201/401/801/1601pts).
 
@@ -76,7 +76,7 @@ class HP8720B(VNA):
         #     address="gpib0,16::INSTR", backend='C:\\WINDOWS\\system32\\visa32.dll'
 
         # 8720s are slow. This check ensures we won't wait 60s for connection error.
-        self._resource.timeout = 2_000 * (3_000 / self.if_bandwidth) # Speed dependant on IF bandwidth selected
+        self._resource.timeout = 2_000 * (3_000 / self.if_bandwidth) # Speed dependent on IF bandwidth selected
         id_str = self.query('OUTPIDEN;')
         assert('8720' in id_str) # example: 'HP8720B,0,1.01'
 

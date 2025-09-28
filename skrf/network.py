@@ -349,7 +349,7 @@ class Network:
         name : str, optional
             Name of this Network. if None will try to use file, if it is a str
         params : dict, optional
-            Dictionnary of parameters associated with the Network
+            Dictionary of parameters associated with the Network
         comments : str, optional
             Comments associated with the Network
         s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
@@ -5468,7 +5468,7 @@ def parallelconnect(ntwks: Sequence[Network] | Network,
         # Convert the int port to list
         port = [port] if isinstance(port, int) else port
 
-        # Che the port indecies valid or not
+        # Che the port indices valid or not
         if len(port) != len(set(port)):
             raise ValueError(f"{ntw.name}'s port should not be duplicated.")
         if max(port) >= nports or min(port) < 0:
@@ -6273,7 +6273,7 @@ def s_error(ntwkA: Network, ntwkB: Network, error_function: ErrorFunctionsT = "a
 
     return error
 
-## Building composit networks from sub-networks
+## Building composite networks from sub-networks
 def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network:
     r"""
     Build an N-port Network from list of N one-ports.
@@ -6470,13 +6470,13 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.
         C[:, k + nB :, k + nB :] = A[:, k:, k:]
         C[:, k : k + nB, k : k + nB] = B
 
-        # call innerconnect_s() on composit matrix C
+        # call innerconnect_s() on composite matrix C
         return innerconnect_s(C, k + nB, k + l)
     else:
         C[:, :nA, :nA] = A
         C[:, nA:, nA:] = B
 
-        # call innerconnect_s() on composit matrix C
+        # call innerconnect_s() on composite matrix C
         return innerconnect_s(C, k, nA + l)
 
 
@@ -8113,7 +8113,7 @@ def renormalize_s(
         s_def_old = s_def
     if s_def not in S_DEFINITIONS:
         raise ValueError('s_def parameter should be one of:', S_DEFINITIONS)
-    # thats a heck of a one-liner!
+    # that's a heck of a one-liner!
     return z2s(s2z(s, z0=z_old, s_def=s_def_old), z0=z_new, s_def=s_def)
 
 def fix_param_shape(p: NumberLike):
@@ -8381,7 +8381,7 @@ def assert_nports_equal(ntwkA: Network, ntwkB: Network) -> bool:
 # this is needed for port impedance mismatches
 def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: SdefT = 'traveling') -> np.ndarray:
     """
-    Create a two-port s-matrix for a impedance mis-match.
+    Create a two-port s-matrix for a impedance mismatch.
 
     Parameters
     ----------
@@ -8398,7 +8398,7 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: SdefT = 'traveling
 
     Returns
     -------
-    s : 2-port s-matrix for the impedance mis-match
+    s : 2-port s-matrix for the impedance mismatch
 
     References
     ----------

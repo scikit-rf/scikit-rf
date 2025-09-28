@@ -1018,7 +1018,7 @@ class IEEEP370(Deembedding):
     def extrapolate_to_dc(ntwk: Network) -> Network:
         """
         Extrapolate the network to DC using IEEE370 NZC algorithm.
-        This is usefull to compare the fixtures and deembedded networks
+        This is useful to compare the fixtures and deembedded networks
         to the input data in the same conditions used by NZC algorithm.
         If the network already have a DC point, it will be replaced.
 
@@ -1956,7 +1956,7 @@ class IEEEP370_FD_QM:
         Returns
         -------
         QM : :class:`dict` object
-              Dictionnary with quality metrics
+              Dictionary with quality metrics
         """
         verbose = self.verbose or verbose
         QM = {'causality': {'value': self.check_causality(ntwk), 'evaluation': ''},
@@ -2040,7 +2040,7 @@ class IEEEP370_FD_QM:
         Returns
         -------
         QM : :class:`dict` object
-              Dictionnary with quality metrics
+              Dictionary with quality metrics
         """
         mm = ntwk.copy()
         mm.se2gmm(p = 2)
@@ -2051,12 +2051,12 @@ class IEEEP370_FD_QM:
 
     def print_qm(self, QM: dict) -> dict:
         """
-        Print the quality metrics dictionnary.
+        Print the quality metrics dictionary.
 
         Parameters
         ----------
         QM: :class:`dict` object
-            Dictionnary with quality metrics to print
+            Dictionary with quality metrics to print
         """
         if 'dd' in QM:
             print('Differential mode')
@@ -2519,7 +2519,7 @@ class IEEEP370_TD_QM:
         rise_time_per: :float
                        Rise time from 20% to 80% divided by width
         verbose      : :boolean
-                       Plot referrence and generated pulses in the time
+                       Plot reference and generated pulses in the time
                        domain
 
         Returns
@@ -2769,11 +2769,11 @@ class IEEEP370_TD_QM:
         Returns
         -------
         QM : :class:`dict` object
-              Dictionnary with quality metrics
+              Dictionary with quality metrics
         """
         verbose = self.verbose or verbose
         if (1.5 * self.data_rate) > ntwk.frequency.f[-1]:
-            warnings.warn('Maximum frequency is less then recomended frequency.',
+            warnings.warn('Maximum frequency is less then recommended frequency.',
                           RuntimeWarning, stacklevel=2)
 
         # extrapolate max freq
@@ -2979,7 +2979,7 @@ class IEEEP370_TD_QM:
         Returns
         -------
         QM : :class:`dict` object
-              Dictionnary with quality metrics
+              Dictionary with quality metrics
         """
         mm = ntwk.copy()
         mm.se2gmm(p = 2)
@@ -2990,12 +2990,12 @@ class IEEEP370_TD_QM:
 
     def print_qm(self, QM: dict) -> dict:
         """
-        Print the quality metrics dictionnary.
+        Print the quality metrics dictionary.
 
         Parameters
         ----------
         QM: :class:`dict` object
-            Dictionnary with quality metrics to print
+            Dictionary with quality metrics to print
         """
         if 'dd' in QM:
             print('Differential mode')
@@ -4323,7 +4323,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         s_side2 = IEEEP370.thru(sfix_dut_fix)
 
         # In the implementation, FIX-2 is flipped.
-        # This does not met IEEEP370 numbering recommandation but is left as
+        # This does not met IEEEP370 numbering recommendation but is left as
         # is for comparison ease.
         if self.pullback1 == self.pullback2 and self.side1 and self.side2:
             (s_side1, s_side2) = self.makeErrorBox_v7(sfix_dut_fix, s2xthru,
@@ -4372,7 +4372,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
             s_side1, _ = IEEEP370.NRP(s_side1, TD, 0)
             s_side2, _ = IEEEP370.NRP(s_side2, TD, 1)
 
-        # unflip FIX-2 as per IEEEP370 numbering recommandation
+        # unflip FIX-2 as per IEEEP370 numbering recommendation
         return (s_side1, s_side2.flipped())
 
     def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):

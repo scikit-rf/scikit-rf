@@ -1367,7 +1367,7 @@ class NetworkTestCase(unittest.TestCase):
         pwfile = 'hfss_oneport_powerwave.s1p'
         pwfile_skrf = 'tmp_skrf_oneport_powerwave.s1p'
 
-        # s_def must be explicitely passed as 'power',
+        # s_def must be explicitly passed as 'power',
         # otherwise 'traveling' would have been assumed (being default HFSS setting)
         ntwk_orig = rf.Network(os.path.join(self.test_dir, pwfile))
         self.assertEqual(ntwk_orig.s_def, S_DEF_HFSS_DEFAULT)

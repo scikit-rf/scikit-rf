@@ -69,7 +69,7 @@ class IOTestCase(unittest.TestCase):
         """
         test_readwrite_networkSet
         TODO: need __eq__ method for NetworkSet
-        This doesnt test equality between  read/write, because there is no
+        This doesn't test equality between  read/write, because there is no
         __eq__ test for NetworkSet. it only tests for other errors
         """
         rf.write(self.pickle_file,rf.NS([self.ntwk1, self.ntwk2]))

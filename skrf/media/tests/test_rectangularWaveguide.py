@@ -42,7 +42,7 @@ class MediaTestCase(unittest.TestCase):
     def test_conductor_loss(self):
         """
         This only compares the magnitude of the generated line, because
-        the loss approximation doesnt account for reactance of field on
+        the loss approximation doesn't account for reactance of field on
         sidewalls.
         """
         ntwk = Network(os.path.join(self.pwd, 'wr1p5_1in_swg_Al_0rough.s2p'))
@@ -58,7 +58,7 @@ class MediaTestCase(unittest.TestCase):
     def test_roughness(self):
         """
         This only compares the magnitude of the generated line, because
-        the loss approximation doesnt account for reactance of field on
+        the loss approximation doesn't account for reactance of field on
         sidewalls.
         """
         ntwk = Network(os.path.join(self.pwd, 'wr1p5_1in_swg_Al_100nm_rough.s2p'))

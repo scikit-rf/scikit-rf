@@ -189,7 +189,7 @@ def write(file, obj, overwrite = True):
 
 
     .. note::
-        If `file` is a string, but doesnt contain a suffix, one is chosen
+        If `file` is a string, but doesn't contain a suffix, one is chosen
         automatically. Here are the extensions:
 
 
@@ -267,7 +267,7 @@ def read_all(dir: str | Path = '.', sort = True, contains = None, f_unit = None,
     dir : str or Path, optional
         the directory to load from, default  \'.\'
     sort: boolean, default is True
-        filenames sorted by https://docs.python.org/3/library/stdtypes.html#list.sort without arguements
+        filenames sorted by https://docs.python.org/3/library/stdtypes.html#list.sort without arguments
     contains : str, optional
         if not None, only files containing this substring will be loaded
     f_unit : ['hz','khz','mhz','ghz','thz']

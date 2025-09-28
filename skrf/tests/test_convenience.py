@@ -69,9 +69,9 @@ class ConvenienceTestCase(unittest.TestCase):
         Touchstone files are not necessarily indicating such impedances,
         especially if they vary with frequency.
 
-        HFSS Touchstone file format supports port informations (as an option) for gamma and z0
+        HFSS Touchstone file format supports port information (as an option) for gamma and z0
         When HFSS files are read with Network() (or hfss_touchstone_2_network()),
-        the port informations are taken into account.
+        the port information are taken into account.
         """
         # Comparing the S-params of the same device expressed with same z0
         nw_50 = rf.Network(self.hfss_threeport_file_50ohm)

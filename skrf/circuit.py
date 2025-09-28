@@ -153,7 +153,7 @@ class Circuit:
         check_duplication : bool, optional.
                 If True, check if the connections have duplicate names. Default is True.
         split_ground : bool, optional.
-                If True, split the global ground connection to independant ground connections. Default is True.
+                If True, split the global ground connection to independent ground connections. Default is True.
         split_multi : bool, optional.
                 If True, use a splitter to handle connections involving more than two components. This approach
                 increases the computational load for individual computations. However, it proves advantageous for
@@ -207,7 +207,7 @@ class Circuit:
             check_duplication : boolean. Default is True.
                 Controls whether to check the connections have duplicate names.
             split_ground : boolean. Default is False.
-                Controls whether to split the global ground connection to independant.
+                Controls whether to split the global ground connection to independent.
             split_multi : boolean, optional.
                 If True, use a splitter to handle connections involving more than two components. This approach
                 increases the computational load for individual computations. However, it proves advantageous for
@@ -317,7 +317,7 @@ class Circuit:
         # All frequencies are the same, Circuit frequency can be any of the ntw
         self.frequency = ntws[0].frequency
 
-        # Check that a (ntwk, port) combination appears only once in the connexion map
+        # Check that a (ntwk, port) combination appears only once in the connection map
         Circuit.check_duplicate_names(self.connections_list)
 
         # Get the keyword arguments for the reduce_circuit method
@@ -389,7 +389,7 @@ class Circuit:
 
             `check_duplication` kwarg controls whether to check the connections have duplicate names. Default is True.
 
-            `split_ground` kwarg controls whether to split the global ground connection to independant.
+            `split_ground` kwarg controls whether to split the global ground connection to independent.
             Default is False.
 
             `max_nports` kwarg controls the maximum number of ports of a Network that can be reduced in circuit. If a
@@ -408,7 +408,7 @@ class Circuit:
 
         See Also
         --------
-        Circuit.__init__ : Circuit construtor method.
+        Circuit.__init__ : Circuit constructor method.
 
 
         Examples
@@ -475,7 +475,7 @@ class Circuit:
     @classmethod
     def check_duplicate_names(cls, connections_list: list[tuple[int, tuple[Network, int]]]):
         """
-        Check that a (ntwk, port) combination appears only once in the connexion map
+        Check that a (ntwk, port) combination appears only once in the connection map
         """
         nodes = [(ntwk.name, port) for (_, (ntwk, port)) in connections_list]
         if len(nodes) > len(set(nodes)):
@@ -730,7 +730,7 @@ class Circuit:
         Returns
         -------
         dict
-            Dictionnary of Networks
+            Dictionary of Networks
         """
         if not connections:
             connections = self.connections
@@ -1021,7 +1021,7 @@ class Circuit:
         There is a numerical bottleneck in this function,
         when creating the block diagonal matrice [X] from the [X]_k matrices.
         """
-        # Check if X_F is alread computed, if so, convert it to C-order
+        # Check if X_F is already computed, if so, convert it to C-order
         if self.__dict__.get('X_F', None) is not None:
             return np.ascontiguousarray(self.X_F)
 
@@ -1044,7 +1044,7 @@ class Circuit:
         F-order has a numerical bottleneck in matrix operations, but the assignment
         is more efficient.
         """
-        # Check if X is alread computed, if so, convert it to F-order
+        # Check if X is already computed, if so, convert it to F-order
         if self.__dict__.get('X', None) is not None:
             return np.asfortranarray(self.X)
 
@@ -1061,7 +1061,7 @@ class Circuit:
             Global scattering matrix of the networks.
             Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
         """
-        # Check if C_F is alread computed, if so, convert it to C-order
+        # Check if C_F is already computed, if so, convert it to C-order
         if self.__dict__.get('C_F', None) is not None:
             return np.ascontiguousarray(self.C_F)
 
@@ -1084,7 +1084,7 @@ class Circuit:
         F-order has a numerical bottleneck in matrix operations, but the assignment
         is more efficient.
         """
-        # Check if C is alread computed, if so, convert it to F-order
+        # Check if C is already computed, if so, convert it to F-order
         if self.__dict__.get('C', None) is not None:
             return np.asfortranarray(self.C)
 
@@ -1897,7 +1897,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     check_duplication : bool, optional.
             If True, check if the connections have duplicate names. Default is True.
     split_ground : bool, optional.
-            If True, split the global ground connection to independant ground connections. Default is True.
+            If True, split the global ground connection to independent ground connections. Default is True.
     split_multi : bool, optional.
             If True, use a splitter to handle connections involving more than two components. This approach
             increases the computational load for individual computations. However, it proves advantageous for

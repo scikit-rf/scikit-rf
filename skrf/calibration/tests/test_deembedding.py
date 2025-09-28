@@ -363,8 +363,8 @@ class DeembeddingTestCase(unittest.TestCase):
     def test_IEEEP370_SE_NZC_2xThru_with_interpolation(self):
         """
         Test test_IEEEP370_SE_NZC_2xThru_with_interpolation.
-        While interpolation should be avoided, it keep usefull in some cases,
-        e.g. when the measurement frequency axis was not well formated but
+        While interpolation should be avoided, it keep useful in some cases,
+        e.g. when the measurement frequency axis was not well formatted but
         a result is still needed and some deviation acceptable.
         After de-embedding fixtures model from 2xtru, the network is a perfect
         thru.
@@ -444,8 +444,8 @@ class DeembeddingTestCase(unittest.TestCase):
     def test_IEEEP370_SE_ZC_2xThru_with_interpolation(self):
         """
         Test test_IEEEP370_SE_ZC_2xThru_with_interpolation.
-        While interpolation should be avoided, it keep usefull in some cases,
-        e.g. when the measurement frequency axis was not well formated but
+        While interpolation should be avoided, it keep useful in some cases,
+        e.g. when the measurement frequency axis was not well formatted but
         a result is still needed and some deviation acceptable.
         After de-embedding fixtures model from 2xtru, the network is a perfect
         thru.

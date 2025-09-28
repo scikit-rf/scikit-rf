@@ -19,7 +19,7 @@ class QfactorTests(unittest.TestCase):
 
     def setUp(self):
         """
-        Q-factor tests initalizer.
+        Q-factor tests initializer.
         """
         self.test_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
         self.ntwk_2port = rf.data.ring_slot
@@ -64,7 +64,7 @@ class QfactorTests(unittest.TestCase):
         # Passing a 2-port Network raises a ValueError
         self.assertRaises(ValueError, rf.Qfactor, self.ntwk_2port, 'reflection')
 
-        # Uncorrect resonance type raises a ValueError
+        # Incorrect resonance type raises a ValueError
         self.assertRaises(ValueError, rf.Qfactor, self.ntwk_1port, 'dummy')
 
         # Asking for fitted S-param and Network without prior fit raises a ValueError

@@ -42,7 +42,7 @@ def _format_cmd(cmd: str, **kwargs) -> str:
 
 
 class ValuesFormat(Enum):
-    """How values are written to and queried from the insturment"""
+    """How values are written to and queried from the instrument"""
 
     #: 32 bits per value
     BINARY_32 = auto()

@@ -226,7 +226,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = qucs_ntwk.frequency
         mismatch_z0_tuple = ([25, 50], [25-5j, 50+10j], [25, 50-10j])
 
-        # Test against Y-parameter defination
+        # Test against Y-parameter definition
         def resistor_y_def(media: DefinedGammaZ0, R, **kwargs):
             result = media.match(nports=2, **kwargs)
             y = np.zeros(shape=result.s.shape, dtype=complex)
@@ -238,7 +238,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
             result.y = y
             return result
 
-        # Test real and imag port impedance with Y-parameter defination and renormalize()
+        # Test real and imag port impedance with Y-parameter definition and renormalize()
         for mismatch_z0 in mismatch_z0_tuple:
             qucs_ntwk_copy = qucs_ntwk.copy()
             qucs_ntwk_copy.renormalize(mismatch_z0)
@@ -309,7 +309,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = qucs_ntwk.frequency
         mismatch_z0_tuple = ([25, 50], [25-5j, 50+10j], [25, 50-10j])
 
-        # Test against Y-parameter defination
+        # Test against Y-parameter definition
         def capacitor_y_def(media: DefinedGammaZ0, C, **kwargs):
             result = media.match(nports=2, **kwargs)
             w = media.frequency.w
@@ -322,7 +322,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
             result.y = y
             return result
 
-        # Test real and imag port impedance with Y-parameter defination and renormalize()
+        # Test real and imag port impedance with Y-parameter definition and renormalize()
         for mismatch_z0 in mismatch_z0_tuple:
             qucs_ntwk_copy = qucs_ntwk.copy()
             qucs_ntwk_copy.renormalize(mismatch_z0)
@@ -424,7 +424,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.frequency = qucs_ntwk.frequency
         mismatch_z0_tuple = ([25, 50], [25-5j, 50+10j], [25, 50-10j])
 
-        # Test against Y-parameter defination
+        # Test against Y-parameter definition
         def inductor_y_def(media: DefinedGammaZ0, L, **kwargs):
             result = media.match(nports=2, **kwargs)
             w = media.frequency.w
@@ -437,7 +437,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
             result.y = y
             return result
 
-        # Test real and imag port impedance with Y-parameter defination and renormalize()
+        # Test real and imag port impedance with Y-parameter definition and renormalize()
         for mismatch_z0 in mismatch_z0_tuple:
             qucs_ntwk_copy = qucs_ntwk.copy()
             qucs_ntwk_copy.renormalize(mismatch_z0)

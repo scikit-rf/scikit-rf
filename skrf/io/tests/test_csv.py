@@ -31,7 +31,7 @@ class AgilentCSVTestCase(unittest.TestCase):
                                              '"A,1"(IMAG)', '"R1,1"(REAL)',
                                              '"R1,1"(IMAG)'])
 
-    @pytest.mark.skip(reason='unicode error with carrage returns for p3 vs p2')
+    @pytest.mark.skip(reason='unicode error with carriage returns for p3 vs p2')
     def test_comments(self):
         """
         This tests reading of comment lines in the test file.
