@@ -161,8 +161,8 @@ class MLine(Media):
 
     References
     ----------
-    .. [QUCS_repo] http://qucs.sourceforge.net/docs/technical.pdf
-    .. [QUCS_github] https://github.com/Qucs/qucsator/blob/develop/src/components/microstrip/msline.cpp
+    .. [QUCS_tech] http://qucs.sourceforge.net/docs/technical.pdf
+    .. [QUCS_repo] https://github.com/Qucs/qucsator/blob/develop/src/components/microstrip/msline.cpp
     .. [Hammerstad] E. Hammerstad and Ø. Jensen,
         "Accurate Models for Microstrip Computer-Aided Design",
         Symposium on Microwave Theory and Techniques, pp. 407-409, June 1980.
