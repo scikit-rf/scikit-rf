@@ -138,7 +138,8 @@ coefs_list_12term =[
     'reverse reflection tracking',
     'reverse transmission tracking',
     'reverse source match',
-    'reverse isolation'
+    'reverse isolation',
+    'system impedance'
     ]
 
 
@@ -164,13 +165,15 @@ coefs_list_8term = [
     'reverse switch term',
     'k',
     'forward isolation',
-    'reverse isolation'
+    'reverse isolation',
+    'system impedance',
     ]
 global coefs_list_3term
 coefs_list_3term = [
     'directivity',
     'source match',
     'reflection tracking',
+    'system impedance',
     ]
 
 
@@ -284,9 +287,10 @@ class Calibration:
                 raise(ValueError("Measured Networks don't have matching frequencies."))
             if np.any(self.measured[0].z0 != measure.z0):
                 raise(ValueError("Measured Networks don't have matching z0."))
-        if len(self.measured) > 0:
-            if np.any(self.measured[0].z0 != self.measured[0].z0[0,0]):
-                warn("Non-constant z0 in measurements. Expect trouble", stacklevel=2)
+
+        # ensure all the measured Networks' impedance's are acceptable
+        self._validate_impedance()
+
         # ensure that all ideals have same frequency of the measured
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
@@ -315,6 +319,47 @@ class Calibration:
         self._residual_ntwks = None
         self._caled_ntwks =None
         self._caled_ntwk_sets = None
+
+    def _validate_impedance(self):
+        if len(self.measured) > 0:
+            if np.any(self.measured[0].z0 != self.measured[0].z0[0,0]):
+                warn(
+                    "Non-constant z0 in measurements. Expect trouble",
+                    stacklevel=2
+                )
+
+            # Trouble #1: Non-constant impedance per frequency. This is not
+            # supported in scikit-rf as it's untested. Nevertheless, the
+            # current design already tracks reference impedance per frequency,
+            # so in theory it can be implemented in the future if there's a
+            # need.
+            if np.any(self.measured[0].z0 != self.measured[0].z0[0]):
+                warn(
+                    "scikit-rf assumes all data points at all frequencies "
+                    "use the same reference impedance, having different "
+                    "impedances per frequency point is not supported. "
+                    "Calibration will likely be incorrect.",
+                    stacklevel=2
+                )
+
+            # Trouble #2: Non-constant impedance per port. This is not
+            # supported in scikit-rf, as all calibration algorithms assume
+            # a constant system impedance. This feature will be extremely
+            # difficult, if ever possible to support, a major redesign would
+            # be necessary.
+            measured_multiports = [
+                measure for measure in self.measured if measure.nports > 1
+            ]
+            for measure in measured_multiports:
+                z0_per_port = measure.z0.transpose()
+                if np.any(z0_per_port != z0_per_port[0]):
+                    warn(
+                        "scikit-rf assumes all ports use the same reference "
+                        "impedance, having different impedances per port is "
+                        "not supported. Calibration will be incorrect.",
+                        stacklevel=2
+                    )
+                    break
 
     def __str__(self):
         if self.name is None:
@@ -467,6 +512,7 @@ class Calibration:
             coefs_ntwks = NetworkSet(coefs_ntwks).to_dict()
 
         coefs = NetworkSet(coefs_ntwks).to_s_dict()
+        coefs['system impedance'] = list(coefs_ntwks.values())[0].z0[:,0]
 
         frequency = list(coefs_ntwks.values())[0].frequency
 
@@ -602,8 +648,12 @@ class Calibration:
         coefs_12term_ntwks
         coefs_8term_ntwks
         """
-        ns = NetworkSet.from_s_dict(d=self.coefs,
-                                    frequency=self.frequency)
+        coefs = {
+            k: v for k, v in self.coefs.items() if "system impedance" not in k
+        }
+        ns = NetworkSet.from_s_dict(d=coefs,
+                                    frequency=self.frequency,
+                                    z0=self.coefs['system impedance'])
         return ns.to_dict()
 
     @property
@@ -614,12 +664,14 @@ class Calibration:
         Contains the keys:
             * directivity
             * source match
-            * reflection tracking'
+            * reflection tracking
+            * system impedance
         """
         return {k: self.coefs.get(k) for k in [\
             'directivity',
             'source match',
             'reflection tracking',
+            'system impedance'
             ]}
 
     @property
@@ -627,8 +679,12 @@ class Calibration:
         """
         Dictionary of error coefficients in form of Network objects.
         """
-        ns = NetworkSet.from_s_dict(d=self.coefs_3term,
-                                    frequency=self.frequency)
+        coefs = {
+            k: v for k, v in self.coefs_3term if "system impedance" not in k
+        }
+        ns = NetworkSet.from_s_dict(d=coefs,
+                                    frequency=self.frequency,
+                                    z0=self.coefs_3term['system impedance'])
         return ns.to_dict()
 
     @property
@@ -669,6 +725,7 @@ class Calibration:
             * k
             * forward isolation
             * reverse isolation
+            * system impedance
 
         Notes
         -----
@@ -699,8 +756,12 @@ class Calibration:
         """
         Dictionary of error coefficients in form of Network objects.
         """
-        ns = NetworkSet.from_s_dict(d=self.coefs_8term,
-                                    frequency=self.frequency)
+        coefs = {
+            k: v for k, v in self.coefs_8term.items() if "system impedance" not in k
+        }
+        ns = NetworkSet.from_s_dict(d=coefs,
+                                    frequency=self.frequency,
+                                    z0=self.coefs_8term['system impedance'])
         return ns.to_dict()
 
     @property
@@ -721,6 +782,7 @@ class Calibration:
             * reverse transmission tracking
             * reverse source match
             * reverse isolation
+            * system impedance
 
         Notes
         -----
@@ -751,8 +813,12 @@ class Calibration:
         """
         Dictionary or error coefficients in form of Network objects.
         """
-        ns = NetworkSet.from_s_dict(d=self.coefs_12term,
-                                    frequency=self.frequency)
+        coefs = {
+            k: v for k, v in self.coefs_12term.items() if "system impedance" not in k
+        }
+        ns = NetworkSet.from_s_dict(d=coefs,
+                                    frequency=self.frequency,
+                                    z0=self.coefs_12term['system impedance'])
         return ns.to_dict()
 
     @property
@@ -1192,9 +1258,9 @@ class OnePort(Calibration):
         self._coefs = {\
                 'directivity':e00,\
                 'reflection tracking':e01e10, \
-                'source match':e11\
+                'source match':e11,
+                'system impedance': self.measured[0].z0[:,0]
                 }
-
 
         # output is a dictionary of information
         self._output_from_run = {
@@ -1205,15 +1271,9 @@ class OnePort(Calibration):
         return None
 
     def apply_cal(self, ntwk):
-        er_ntwk = Network(frequency = self.frequency, name=ntwk.name)
-        tracking  = self.coefs['reflection tracking']
-        s12 = np.sqrt(tracking)
-        s21 = s12
-
-        s11 = self.coefs['directivity']
-        s22 = self.coefs['source match']
-        er_ntwk.s = np.array([[s11, s12],[s21,s22]]).transpose(2,0,1)
-        return er_ntwk.inv**ntwk
+        caled = self.error_ntwk.inv ** ntwk
+        caled.name = ntwk.name
+        return caled
 
     def embed(self,ntwk):
         embedded = self.error_ntwk ** ntwk
@@ -1351,7 +1411,8 @@ class SDDLWeikle(OnePort):
         self._coefs = {\
                 'directivity':e00,\
                 'reflection tracking':e01e10, \
-                'source match':e11\
+                'source match':e11,
+                'system impedance': self.measured[0].z0[:,0]
                 }
 
 class SDDL(OnePort):
@@ -1769,6 +1830,8 @@ class TwelveTerm(Calibration):
 
         # update coefs
         coefs = {}
+
+        coefs['system impedance'] = self.measured[0].z0[:,0]
 
         coefs.update({f'forward {k}': p1_coefs[k] for k in p1_coefs})
         coefs.update({f'reverse {k}': p2_coefs[k] for k in p2_coefs})
@@ -2314,6 +2377,7 @@ class EightTerm(Calibration):
                 'k':e[:,6],
                 }
 
+        self._coefs['system impedance'] = self.measured[0].z0[:,0]
         self._coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         self._coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
@@ -3437,6 +3501,7 @@ class NISTMultilineTRL(EightTerm):
                 'k':e[:,6],
                 }
 
+        self._coefs['system impedance'] = self.measured[0].z0[:,0]
         self._coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         self._coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
@@ -4013,6 +4078,7 @@ class TUGMultilineTRL(EightTerm):
                 'reverse reflection tracking':e[:,4]*e[:,3]-e[:,5],
                 'k':e[:,6],
                 }
+        self._coefs['system impedance'] = self.measured[0].z0[:,0]
         self._coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         self._coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
@@ -4141,6 +4207,10 @@ class UnknownThru(EightTerm):
 
         # create single dictionary for all error terms
         coefs = {}
+
+        del p1_coefs['system impedance']
+        del p2_coefs['system impedance']
+        coefs['system impedance'] = self.measured[0].z0[:,0]
 
         coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
@@ -4380,6 +4450,7 @@ class LRM(EightTerm):
                 'k':e[6],
                 }
 
+        self._coefs['system impedance'] = self.measured[0].z0[:,0]
         self._coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         self._coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
@@ -4804,6 +4875,7 @@ class LRRM(EightTerm):
                 'k':e[6],
                 }
 
+        self._coefs['system impedance'] = self.measured[0].z0[:,0]
         self._coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
         self._coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
@@ -5125,6 +5197,7 @@ class SixteenTerm(Calibration):
                 'reverse port 2 isolation':e3[:,0,1],
                 'forward port isolation':e4[:,1,0],
                 'reverse port isolation':e4[:,0,1],
+                'system impedance': self.measured[0].z0[:,0]
                 }
 
         if self.switch_terms is not None:
@@ -5521,6 +5594,7 @@ class LMR16(SixteenTerm):
             'reverse port 2 isolation':e3[:,0,1],
             'forward port isolation':e4[:,1,0],
             'reverse port isolation':e4[:,0,1],
+            'system impedance': self.measured[0].z0[:,0]
             }
 
         if self.switch_terms is not None:
@@ -5804,6 +5878,13 @@ class MultiportCal:
                 self._coefs[p[k_side]][c] = coefs[c]
                 if 'k' not in self._coefs[p[not k_side]].keys():
                     self._coefs[p[not k_side]][c] = one
+            elif c == "system impedance":
+                self._coefs[p[0]]["system impedance"] = (
+                    coefs["system impedance"]
+                )
+                self._coefs[p[1]]["system impedance"] = (
+                    coefs["system impedance"]
+                )
             else:
                 warn(f'Unknown coefficient in calibration {c}', stacklevel=2)
 
@@ -6366,6 +6447,9 @@ def compute_switch_terms(ntwks):
     if len(ntwks) < 3:
         raise ValueError("At least three networks are required.")
 
+    # TODO: need to check if all the input networks have the same
+    # reference impedance
+
     fpoints = len(ntwks[0].frequency)
     Gamma21_fill = np.zeros(shape=(fpoints,), dtype=complex)  # forward switch term
     Gamma12_fill = np.zeros(shape=(fpoints,), dtype=complex)  # reverse switch term
@@ -6379,8 +6463,14 @@ def compute_switch_terms(ntwks):
         Gamma21_fill[inx] = nullspace[1]/nullspace[2]
         Gamma12_fill[inx] = nullspace[0]/nullspace[3]
 
-    Gamma21 = Network(s=Gamma21_fill, frequency=ntwks[0].frequency, name='Gamma21')
-    Gamma12 = Network(s=Gamma12_fill, frequency=ntwks[0].frequency, name='Gamma12')
+    Gamma21 = Network(
+        s=Gamma21_fill, frequency=ntwks[0].frequency, name='Gamma21',
+        z0=ntwks[0].z0[:,0]
+    )
+    Gamma12 = Network(
+        s=Gamma12_fill, frequency=ntwks[0].frequency, name='Gamma12',
+        z0=ntwks[0].z0[:,0]
+    )
 
     return [Gamma21, Gamma12]
 
@@ -6611,7 +6701,7 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     for l in ['forward directivity','forward source match',
         'forward reflection tracking','reverse directivity',
         'reverse reflection tracking','reverse source match',
-        'forward isolation', 'reverse isolation']:
+        'forward isolation', 'reverse isolation', 'system impedance']:
         coefs_8term[l] = coefs_12term[l].copy()
 
     coefs_8term['forward switch term'] = gamma_f
@@ -6667,7 +6757,7 @@ def convert_8term_2_12term(coefs_8term):
     for l in ['forward directivity', 'forward source match',
               'forward reflection tracking', 'reverse directivity',
               'reverse reflection tracking', 'reverse source match',
-              'forward isolation', 'reverse isolation']:
+              'forward isolation', 'reverse isolation', 'system impedance']:
         coefs_12term[l] = coefs_8term[l].copy()
 
     return coefs_12term
@@ -6833,8 +6923,12 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
     """
     Create a Network from a dictionary of standard error terms.
     """
+    assert 'system impedance' in coefs
+    coefs_no_impedance = {
+        k: v for k, v in coefs.items() if "system impedance" not in k
+    }
 
-    if len (coefs.keys()) == 3:
+    if len(coefs_no_impedance.keys()) == 3:
         # ASSERT: we have one port data
         if is_reciprocal:
             #TODO: make this better and maybe have phase continuity
@@ -6854,10 +6948,15 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
         return Network(
             frequency = frequency,
             s = np.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2),
+            z0=coefs['system impedance'],
             **kwargs)
 
     else:
         p1,p2 = {},{}
+
+        p1['system impedance'] = coefs['system impedance']
+        p2['system impedance'] = coefs['system impedance']
+
         for k in ['source match','directivity','reflection tracking']:
             p1[k] = coefs['forward '+k]
             p2[k] = coefs['reverse '+k]
