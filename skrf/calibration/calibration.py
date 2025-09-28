@@ -5676,7 +5676,8 @@ class MultiportCal:
     multi-ports in which case a subnetwork is taken for calibration according to
     the key.
 
-    Example cal_dict for three port measurement:
+    Example cal_dict for three port measurement::
+
         {(0,1): {'method':SOLT, 'measured': [list of measured networks], 'ideals': [list of ideal networks]},
          (0,2): {'method':SOLT, 'measured': [list of measured networks], 'ideals': [list of ideal networks]}
         }
@@ -5685,7 +5686,7 @@ class MultiportCal:
     calibration. If None, no isolation calibration is performed.
 
     Parameters
-    --------------
+    ----------
     cal_dict : dictionary
         Dictionary of port pair keys as specified above.
     isolation: :class:`~skrf.network.Network` or None

@@ -689,9 +689,8 @@ class NetworkSet:
         """
         Return a scalar ndarray representing `param` data vs freq and element idx.
 
-        output is a 3d array with axes  (freq, ns_index, port/ri)
-
-        ports is a flattened re/im components of port index (`len = 2*nports**2`)
+        Output is a 3d array with axes  (freq, ns_index, port/ri).
+        ports is a flattened re/im components of port index (`len = 2*nports**2`).
 
         Parameter
         ---------

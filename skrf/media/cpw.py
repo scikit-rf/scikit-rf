@@ -329,11 +329,12 @@ class CPW(Media):
                            h: NumberLike, t: NumberLike,
                            has_metal_backside: bool):
         """
-        This function calculates the quasi-static impedance of a coplanar
-        waveguide line, the value of the effective permittivity as per filling
+        Calculates quasi-static impedance of a coplanar waveguide line.
+
+        The value of the effective permittivity as per filling
         factor, and the effective width due to the finite conductor thickness
         for the given coplanar waveguide line and substrate properties.
-        Model from [#]_ with air backside and [#]_ with a metal backside.
+        Model from [GhNa84]_ with air backside and [GhNa83]_ with a metal backside.
         The models are corrected to account for
         strip thickness using a first-order approach described in [GGBB96]_.
         ADS simulator report to use a custom correction based on [Cohn60]_.
@@ -471,17 +472,19 @@ class CPW(Media):
                     f: NumberLike, w: NumberLike, t: NumberLike, s: NumberLike,
                     k1: NumberLike, kk1: NumberLike, kpk1: NumberLike):
         """
-        The function calculates the conductor and dielectric losses of a
-        complanar waveguide line using wheeler's incremental inductance rule.
+        Calculates conductor and dielectric losses of a coplanar waveguide line.
+
+        Use wheeler's incremental inductance rule [1]_, [2]_, [3]_.
+
 
         References
         ----------
-        .. [#] H. A. Wheeler, "Formulas for the Skin Effect,"
+        .. [1] H. A. Wheeler, "Formulas for the Skin Effect,"
             Proceedings of the IRE, vol. 30, no. 9, pp. 412-424, Sept. 1942.
-        .. [#] G. H. Owyang and T. T. Wu, "The Approximate Parameters of Slot
+        .. [2] G. H. Owyang and T. T. Wu, "The Approximate Parameters of Slot
             Lines and Their Complement" IRE Transactions on Antennas and
             Propagation, pp. 49-55, Jan. 1958.
-        .. [#] G. Ghione, "A CAD-Oriented Analytical Model for the Losses of
+        .. [3] G. Ghione, "A CAD-Oriented Analytical Model for the Losses of
             General Asymmetric Coplanar Lines in Hybrid and Monolithic MICs"
             IEEE Trans. on Microwave Theory and Techniques,
             vol. 41, no. 9, pp. 1499-1510, Sept. 1993.

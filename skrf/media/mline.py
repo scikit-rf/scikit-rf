@@ -31,10 +31,10 @@ class MLine(Media):
     and height on a given relative permittivity substrate. The line has a
     conductor resistivity and a tangential loss factor.
 
-    This class is highly inspired from the technical documentation [#]_
-    and sources provided by the qucs project [#]_ .
+    This class is highly inspired from the technical documentation [QUCS_tech]_
+    and sources provided by the qucs project [QUCS_repo]_ .
 
-    In addition, Djordjevic [#]_ /Svensson [#]_  wideband debye dielectric
+    In addition, Djordjevic [Djordjevic]_ /Svensson [Svensson]_  wideband debye dielectric
     model is considered to provide more realistic modelling of broadband
     microstrip with as causal time domain response.
 
@@ -42,28 +42,28 @@ class MLine(Media):
     Keysight ADS. There is known differences in the output of these
     simulators.
 
-    The quasi-static models of chercteristic impedance and effective
+    The quasi-static models of characteristic impedance and effective
     permittivity give the value at zero frequency. The dispersion models
     compute a frequency-dependant values of these variables.
 
     * Quasi-static characteristic impedance and effective permittivity models:
 
-        + Hammerstad and Jensen (default)
-        + Schneider
-        + Wheeler
+        + Hammerstad and Jensen (default) [Hammerstad]_
+        + Schneider [Schneider1969]_
+        + Wheeler [Wheeler1942]_, [Wheeler1977]_
 
     * Frequency dispersion of impedance and effective permittivity models:
 
-        + Hammerstad and Jensen
-        + Kirschning and Jansen (default)
-        + Kobayashi
-        + Schneider
-        + Yamashita
+        + Hammerstad and Jensen [Hammerstad]_
+        + Kirschning and Jansen (default) [Kirschning]_
+        + Kobayashi [Kobayashi]_
+        + Schneider [Schneider1972]_
+        + Yamashita [Yamashita]_
         + (No dispersion)
 
     * Strip thickness correction model:
 
-        + all quasi-static models add a certain amount to W to accound for
+        + all quasi-static models add a certain amount to W to account for
           non-zero thickness of the strip. Computation with zero  thickness is
           possible.
 
@@ -136,7 +136,7 @@ class MLine(Media):
     f_epr_tand : number, or array-like
         measurement frequency for ep_r and tand of dielectric, in Hz
     compatibility_mode: str or None (default)
-        If set to 'qucs', following behavious happens :
+        If set to 'qucs', following behaviour happens :
 
         * Characteristic impedance will be real (no imaginary part due to tand)
         * Quasi-static relative permittivity and impedance will by used for
@@ -161,43 +161,43 @@ class MLine(Media):
 
     References
     ----------
-    .. [#] http://qucs.sourceforge.net/docs/technical.pdf
-    .. [#] https://github.com/Qucs/qucsator/blob/develop/src/components/microstrip/msline.cpp
-    .. [#] E. Hammerstad and Ø. Jensen,
+    .. [QUCS_repo] http://qucs.sourceforge.net/docs/technical.pdf
+    .. [QUCS_github] https://github.com/Qucs/qucsator/blob/develop/src/components/microstrip/msline.cpp
+    .. [Hammerstad] E. Hammerstad and Ø. Jensen,
         "Accurate Models for Microstrip Computer-Aided Design",
         Symposium on Microwave Theory and Techniques, pp. 407-409, June 1980.
-    .. [#] M. Kirschning and R. H. Jansen,
+    .. [Kirschning] M. Kirschning and R. H. Jansen,
         "Accurate Model for Effective Dielectric Constant of Microstrip with
         Validity up to Millimeter-Wave Frequencies", Electronics Letters,
         vol. 8, no. 6, pp. 272-273, Mar. 1982.
-    .. [#] R. H. Jansen and M. Kirschning,
+    .. [Jansen] R. H. Jansen and M. Kirschning,
         "Arguments and an accurate Model for the Power-Current Formulation of
         Microstrip Characteristic Impedance",
         Archiv für Elektronik und Übertragungstechnik (AEÜ), vol. 37,
         pp. 108-112, 1983.
-    .. [#] M. Kobayashi,
+    .. [Kobayashi] M. Kobayashi,
         "A Dispersion Formula Satisfying Recent Requirements in Microstrip
         CAD", IEEE Trans. on Microwave Theory and Techniques, vol. 36, no. 8,
         pp. 1246-1250, Aug. 1988.
-    .. [#] M. V. Schneider,
+    .. [Schneider1969] M. V. Schneider,
         "Microstrip Lines for Microwave Integrated Circuits",
         The Bell System Technical Journal, vol. 48, pp. 1421-1444, May 1969.
-    .. [#] M. V. Schneider, "Microstrip Dispersion", Proceedings of the IEEE,
+    .. [Schneider1972] M. V. Schneider, "Microstrip Dispersion", Proceedings of the IEEE,
         Letters, vol. 60, Jan. 1972, pp. 144-146.
-    .. [#] H. A. Wheeler,
+    .. [Wheeler1977] H. A. Wheeler,
         "Transmission-Line Properties of a Strip on a Dielectric Sheet on a
         Plane, IEEE Trans. on Microwave Theory and Techniques, vol. 25, no. 8,
         pp. 631-647, Aug. 1977.
-    .. [#] H. A. Wheeler, "Formulas for the Skin Effect,"
+    .. [Wheeler1942] H. A. Wheeler, "Formulas for the Skin Effect,"
         Proceedings of the IRE, vol. 30, no. 9, pp. 412-424, Sept. 1942.
-    .. [#] E. Yamashita, K. Atsuki, and T. Ueda,
+    .. [Yamashita] E. Yamashita, K. Atsuki, and T. Ueda,
         "An Approximate Dispersion Formula of Microstrip Lines for Computer
         Aided Design of Microwave Integrated Circuits", IEEE Trans. on
         Microwave Theory and Techniques, vol. 27, pp. 1036-1038, Dec. 1979.
-    .. [#] C. Svensson, G.E. Dermer,
+    .. [Svensson] C. Svensson, G.E. Dermer,
         Time domain modeling of lossy interconnects,
         IEEE Trans. on Advanced Packaging, May 2001, N2, Vol. 24, pp.191-196.
-    .. [#] Djordjevic, R.M. Biljic, V.D. Likar-Smiljanic, T.K. Sarkar,
+    .. [Djordjevic] Djordjevic, R.M. Biljic, V.D. Likar-Smiljanic, T.K. Sarkar,
         Wideband frequency-domain characterization of FR-4 and time-domain
         causality,
         IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.

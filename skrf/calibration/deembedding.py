@@ -3556,7 +3556,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
     use `Network.renumber` to change port ordering.
 
     Example
-    --------
+    -------
     >>> import skrf as rf
     >>> from skrf.calibration import IEEEP370_MM_NZC_2xThru
 
@@ -3587,10 +3587,10 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
     Warning
     -------
     There are two differences compared to the original matlab implementation
-    [I3E370]:
-        - FIX-2 is flipped (see diagram above)
-        - A more robust root choice solution is used that avoids the apparition
-          of 180° phase jumps in the fixtures in certain circumstances
+    [I3E370]_:
+    - FIX-2 is flipped (see diagram above)
+    - A more robust root choice solution is used that avoids the apparition
+    of 180° phase jumps in the fixtures in certain circumstances
 
     References
     ----------
@@ -3955,8 +3955,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
     Warning
     -------
     There is one difference compared to the original matlab implementation
-    [I3E370]:
-        - FIX-2 is flipped (see diagram above)
+    [I3E370]_:
+    - FIX-2 is flipped (see diagram above)
 
     References
     ----------

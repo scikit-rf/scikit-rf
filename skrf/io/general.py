@@ -829,11 +829,19 @@ class TouchstoneEncoder(json.JSONEncoder):
 
 def to_json_string(network):
     """
-    Dumps Network to JSON string. Faster than converting and saving as touchstone.
+    Dumps Network to JSON string.
+
+    Faster than converting and saving as touchstone.
     Safer than pickling (no arbitrary code execution on load).
-    :param network: :class:`~skrf.network.Network` object
+
+    Parameters
+    ----------
+    network: :class:`~skrf.network.Network` object
         A Network object to be serialized and returned as a JSON string.
-    :return: str
+
+    Returns
+    -------
+    json : str
         JSON string representation of a network object.
     """
     return json.dumps(network.__dict__, cls=TouchstoneEncoder)
@@ -842,9 +850,15 @@ def to_json_string(network):
 def from_json_string(obj_string):
     """
     Loads network object from JSON string representation.
-    :param obj_string: str
+
+    Parameters
+    ----------
+    obj_string : str
         JSON string representation of a network object.
-    :return: :class:`~skrf.network.Network` object
+
+    Returns
+    -------
+    ntwk : :class:`~skrf.network.Network` object
         A Network object, rebuilt from JSON.
     """
     obj = json.loads(obj_string)
