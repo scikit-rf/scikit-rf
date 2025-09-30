@@ -5,7 +5,9 @@ import pytest
 
 import skrf
 import skrf.calibration as skrf_cal
-from skrf.media import Coaxial, DefinedGammaZ0, RectangularWaveguide
+from skrf.media import (
+    Coaxial, DefinedGammaZ0, DistributedCircuit, RectangularWaveguide
+)
 from skrf.util import suppress_warning_decorator
 
 # TODO: Fix the random seed of the test, so each test generates reproducible
@@ -19,9 +21,16 @@ NPTS = 10
 
 # System reference impedance of the calculated S-parameters,
 # also known as a medium or network's "port impedance"
-Z0_REF = [1, 50, 75, 93, 600]
+Z0_REF = [10, 50, 75, 93, 600]
 #Z0_REF = [50]
+#Z0_REF = [75]
 #Z0_REF = [None]
+# TODO: LRMTest fails if Z0_REF is less or equal to 2 ohms.
+# Numerical stability issues? I see the schoolbook quadratic
+# root formula, perhaps that's the issue?
+#
+# TODO: LRRMTest fails if Z0_REF is 3 ohms (other values are
+# untested), same problem?
 
 # Different transmission lines and waveguides to test calibration with.
 # This list should cover diverse media with different characteristic
@@ -45,9 +54,7 @@ MEDIUM = [
     # 610 to 446 ohm, z0_port to be renormalized.
     RectangularWaveguide(
         skrf.F(75, 100, NPTS, unit='GHz'),
-        a=100 * skrf.mil, rho='gold',
-        #z0_override=75,
-        z0_port=75
+        a=100 * skrf.mil, rho='gold'
     ),
 
     # 3.5 mm coaxial air line, Dout = 3.5 mm, Din = 1.52 mm, lossy (copper),
@@ -254,9 +261,11 @@ class AbstractIncompleteCalTest:
                 else:
                     group_medium = medium.mode(z0_port=z0_ref)
 
+                testgroup = {}
+
                 vna = self.setup_vna_for_testgroup(group_medium)
                 std_fulldefs, std_defs, std_meas = self.setup_std_for_testgroup(
-                    group_medium, vna
+                    group_medium, vna, testgroup
                 )
                 dut_def = group_medium.random(
                     n_ports=self.nports, name='dut_def'
@@ -267,17 +276,17 @@ class AbstractIncompleteCalTest:
                 dut_meas = vna_portext.measure(dut_def)
                 dut_meas.name = 'dut_meas'
 
-                self.testgroup_list.append({
-                    "vna": vna_portext,
-                    "medium": group_medium,
-                    "z0_ref": z0_ref,
-                    "std_fulldefs": std_fulldefs,
-                    "std_defs": std_defs,
-                    "std_meas": std_meas,
-                    "cal": cal,
-                    "dut_def": dut_def,
-                    "dut_meas": dut_meas
-                })
+                testgroup["vna"] = vna_portext
+                testgroup["medium"] = group_medium
+                testgroup["z0_ref"] = z0_ref
+                testgroup["std_fulldefs"] = std_fulldefs
+                testgroup["std_defs"] = std_defs
+                testgroup["std_meas"] = std_meas
+                testgroup["cal"] = cal
+                testgroup["dut_def"] = dut_def
+                testgroup["dut_meas"] = dut_meas
+
+                self.testgroup_list.append(testgroup)
 
     @property
     def nports(self):
@@ -309,7 +318,7 @@ class AbstractIncompleteCalTest:
         """
         return UncalibratedNetworkAnalyzer(medium, nports=self.nports)
 
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         """
         Return three lists that contain the perfect calibration standards
         definitions, partial calibration standards definitions due to
@@ -477,7 +486,7 @@ class ComputeSwitchTermsTest(AbstractIncompleteCalTest, unittest.TestCase):
             medium, nports=self.nports, leakage_err=False
         )
 
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         # reciprocal devices: asymmetric and both transmissive and reflective
         # devices
         r_list = [25, 50, 100]
@@ -653,7 +662,7 @@ class OnePortTest(AbstractOnePortTest, unittest.TestCase):
     """
     Test skrf.calibration.OnePort.
     """
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         std_defs = [
             medium.short(name='short'),
             medium.delay_short(45, unit='deg', name='ew'),
@@ -683,7 +692,7 @@ class SDDLTest(AbstractOnePortTest, unittest.TestCase):
     def valid_frequency(self):
         return skrf.Frequency(75, 100, 2, unit='GHz')
 
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         # SDDL assumes the offset shorts are lossless
         lossless_medium = lossless_from_lossy(medium)
 
@@ -727,9 +736,9 @@ class SDDLNoneTest(SDDLTest):
     Test skrf.calibration.SDDL with None as the definition of
     two delayed short termination.
     """
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         std_defs, std_defs_incomplete_knowledge, std_meas = (
-            super().setup_std_for_testgroup(medium, vna)
+            super().setup_std_for_testgroup(medium, vna, testgroup)
         )
         std_defs_incomplete_knowledge[1] = None
         std_defs_incomplete_knowledge[2] = None
@@ -744,7 +753,7 @@ class SDDLWeikleTest(AbstractOnePortTest, unittest.TestCase):
     def valid_frequency(self):
         return skrf.Frequency(75, 100, 2, unit='GHz')
 
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         # SDDL assumes the offset shorts are lossless
         lossless_medium = lossless_from_lossy(medium)
 
@@ -795,7 +804,7 @@ class SDDMTest(AbstractOnePortTest, unittest.TestCase):
     def valid_frequency(self):
         return skrf.Frequency(75, 100, 2, unit='GHz')
 
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         # SDDL assumes the offset shorts are lossless
         lossless_medium = lossless_from_lossy(medium)
 
@@ -846,7 +855,7 @@ class SDDMTest(AbstractOnePortTest, unittest.TestCase):
 #    TODO: Find a suitable standard definition or frequency range to test
 #    that the algorithm indeed works within suitable bands and standards.
 #    """
-#    def setup_std_for_testgroup(self, medium, vna):
+#    def setup_std_for_testgroup(self, medium, vna, testgroup):
 #        known1 = medium.random()
 #        known2 = medium.random()
 #
@@ -979,7 +988,7 @@ class EightTermTest(AbstractTwoPortTest, unittest.TestCase):
     """
     Test skrf.calibration.EightTermTest
     """
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         std_defs = [
             medium.short(nports=2, name='short'),
             medium.open(nports=2, name='open'),
@@ -1019,7 +1028,7 @@ class UnknownThruTest(EightTermTest):
     """
     Test skrf.calibration.UnknownThru
     """
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         std_defs_incomplete_knowledge = [
             medium.short(nports=2, name='short'),
             medium.open(nports=2, name='open'),
@@ -1061,7 +1070,7 @@ class MRCTest(EightTermTest):
         # MRC uses SDDL + UnknownThru, the former is bandwidth-limited.
         return skrf.Frequency(75, 100, 2, unit='GHz')
 
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         # MRC assumes the offset shorts are lossless
         lossless_medium = lossless_from_lossy(medium)
 
@@ -1121,7 +1130,7 @@ class TRLTest(EightTermTest):
             medium, nports=self.nports, transmissive_err=True
         )
 
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         # This is the dark side of z0_port in medium - when it's set,
         # it creates ideal calibration standards with respect to the
         # characteristic impedance of the medium, and renormalizing the
@@ -1182,7 +1191,7 @@ class TRLUnknownDefinitionTest(TRLTest):
     """
     Test skrf.calibration.TRL
     """
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         matched_medium = medium.mode(z0_override=medium.z0_port, z0_port=None)
 
         # Don't define the calibration standard at all, not even
@@ -1214,7 +1223,7 @@ class TRLLongThruTest(EightTermTest):
     """
     Test skrf.calibration.TRL
     """
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         matched_medium = medium.mode(z0_override=medium.z0_port, z0_port=None)
 
         # reflect reference plane is at the Thru center
@@ -1282,7 +1291,7 @@ class TRLLongThruTest(EightTermTest):
 
 
 class TRLMultiline(EightTermTest):
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         matched_medium = medium.mode(z0_override=medium.z0_port, z0_port=None)
 
         std_defs = [
@@ -1324,7 +1333,7 @@ class NISTMultilineTRLTest(EightTermTest):
     def valid_frequency(self):
         return skrf.Frequency(75, 100, 2, unit='GHz')
 
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         matched_medium = medium.mode(z0_override=medium.z0_port, z0_port=None)
 
         std_defs = [
@@ -1362,6 +1371,131 @@ class NISTMultilineTRLTest(EightTermTest):
             self.assertTrue(max(solved_gamma - actual_gamma) < 1e-3)
 
 
+class NISTMultilineTRLTestRefPlaneShift(EightTermTest):
+    """
+    Test skrf.calibration.NISTMultilineTRL
+    """
+    @property
+    def valid_frequency(self):
+        return skrf.Frequency(75, 100, 2, unit='GHz')
+
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
+        rng = np.random.default_rng()
+
+        # This is a special test using one medium only. Ignore the
+        # global medium passed to us.
+        self.c = 1e-12 * rng.uniform(100, 200, NPTS)
+        rlgc = DistributedCircuit(
+            frequency=medium.frequency,
+            R=rng.uniform(10, 100, NPTS),
+            L=1e-9 * rng.uniform(100, 200, NPTS),
+            G=np.zeros(NPTS),
+            C=self.c
+        )
+        testgroup["rlgc_medium"] = rlgc
+
+        std_defs = [
+            rlgc.line(1000, 'um'),
+            (
+                rlgc.line(500, 'um') **
+                rlgc.short(nports=2) **
+                rlgc.line(500, 'um')
+            ),
+            rlgc.line(1010, 'um'),
+            rlgc.line(1100, 'um'),
+            rlgc.line(1800, 'um'),
+        ]
+        std_meas = [vna.measure(std) for std in std_defs]
+        return std_defs, std_defs, std_meas
+
+    def setup_cal(self, vna, std_defs, std_meas):
+        # Danger here! In theory we're not allowed to pass or access
+        # information via class-wide member variables using self.c,
+        # because a single instance is used for many different test
+        # groups. But our framework doesn't provide any way to insert
+        # auxiliary information into a test group. This hack only works
+        # here because setup_cal() is executed immediately after
+        # setup_std_for_testgroup() for every test group, so self.c
+        # happens to be the unchanged at this moment.
+        cal = skrf_cal.NISTMultilineTRL(
+            measured=std_meas,
+            isolation=std_meas[1],
+            Grefls=[-1],
+            refl_offset=500e-6,
+            l=[1000e-6, 1010e-6, 1100e-6, 1800e-6],
+            c0=self.c,
+            z0_ref=std_meas[0].z0[0,0],
+            gamma_root_choice='real',
+            switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"])
+        )
+        cal.run()
+        return cal
+
+    def test_solved_gamma(self):
+        for testgroup in self.testgroup_list:
+            medium_gamma = testgroup["rlgc_medium"].gamma
+            solved_gamma = testgroup["cal"].gamma
+            self.assertTrue(max(np.abs(medium_gamma - solved_gamma) < 1e-3))
+
+    def test_solved_z0(self):
+        for testgroup in self.testgroup_list:
+            medium_z0 = testgroup["rlgc_medium"].z0
+            solved_z0 = testgroup["cal"].z0
+            self.assertTrue(max(np.abs(medium_z0 - solved_z0) < 1e-3))
+
+    def test_ref_plane_shift(self):
+        for testgroup in self.testgroup_list:
+            vna = testgroup["vna"]
+            cal = testgroup["cal"]
+
+            # Run a different calibration with different line length
+            # and calibration plane offsets. The result should be equivalent.
+            cal_shift = skrf_cal.NISTMultilineTRL(
+                measured=testgroup["std_meas"],
+                isolation=testgroup["std_meas"][1],
+                Grefls=[-1],
+                refl_offset=0,
+                ref_plane=-500e-6,
+                l=[0, 10e-6, 100e-6, 800e-6],
+                c0=cal.c0,
+                z0_ref=cal.z0_ref,
+                gamma_root_choice='real',
+                switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"])
+            )
+            cal_shift.run()
+
+            # compare solved error coefficients
+            for k in cal.coefs.keys():
+                self.assertTrue(
+                    all(np.abs(cal.coefs[k] - cal_shift.coefs[k]) < 1e-9)
+                )
+
+    def test_numpy_float_arguments(self):
+        # see gh-895
+        for testgroup in self.testgroup_list:
+            vna = testgroup["vna"]
+
+            cal = skrf_cal.NISTMultilineTRL(
+                measured=testgroup["std_meas"][:3],
+                Grefls=[-1],
+                l=[np.float64(1000e-6), 1010e-6],
+                switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"])
+            )
+            cal.run()
+            cal.apply_cal(testgroup["std_meas"][0])
+
+            cal = skrf_cal.NISTMultilineTRL(
+                measured=testgroup["std_meas"][:3],
+                Grefls=[-1],
+                l=[1000e-6, 1010e-6],
+                z0_ref=np.float64(50),
+                z0_line=np.float64(50),
+                switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"])
+            )
+            cal.run()
+            cal.apply_cal(testgroup["std_meas"][0])
+
+
 class TUGMultilineTRLTest(NISTMultilineTRLTest):
     """
     Test skrf.calibration.TUGMultilineTRL
@@ -1380,11 +1514,183 @@ class TUGMultilineTRLTest(NISTMultilineTRLTest):
         return cal
 
 
+class LRMTest(EightTermTest):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
+        std_defs_incomplete_knowledge = [
+            medium.line(d=50, unit='um', name='thru'),
+            medium.short(nports=2, name='short'),
+            skrf.two_port_reflect(
+                medium.load(0, nports=1, name='match'),
+                medium.load(0, nports=1, name='match')
+            )
+        ]
+
+        imperfect_reflect = (
+            medium.inductor(5e-12) **
+            medium.load(-0.95, nports=1, name='short')
+        )
+        std_defs = [
+            medium.line(d=50, unit='um', name='thru'),
+            skrf.two_port_reflect(imperfect_reflect, imperfect_reflect),
+            skrf.two_port_reflect(
+                medium.load(0, nports=1, name='match'),
+                medium.load(0, nports=1, name='match')
+            )
+        ]
+        std_meas = [vna.measure(std) for std in std_defs]
+        return std_defs, std_defs_incomplete_knowledge, std_meas
+
+    def setup_cal(self, vna, std_defs, std_meas):
+        cal = skrf_cal.LRM(
+            ideals=std_defs,
+            measured=std_meas,
+            isolation=std_meas[2],
+            switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"])
+        )
+        cal.run()
+        return cal
+
+    def test_solved_reflect(self):
+        for testgroup in self.testgroup_list:
+            self.assertEqual(
+                testgroup["std_fulldefs"][1].s11,
+                testgroup["std_fulldefs"][1].s22
+            )
+            self.assertEqual(
+                testgroup["std_fulldefs"][1].s11,
+                testgroup["cal"].solved_r
+            )
+
+
+class LRRMTest(EightTermTest):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
+        imperfect_short = (
+            medium.inductor(5e-12) **
+            medium.load(-0.95, nports=1, name='short')
+        )
+        imperfect_open = (
+            medium.shunt_capacitor(5e-15) **
+            medium.open(nports=1, name='open')
+        )
+        parasitic_l = np.random.default_rng().uniform(1e-12, 20e-12)
+        imperfect_load = (
+            medium.inductor(L=parasitic_l) **
+            medium.load(0.1, nports=1, name='load')
+        )
+        imperfect_thru = medium.line(d=50, z0=75, unit='um', name='thru')
+
+        testgroup["parasitic_l"] = parasitic_l
+
+        # make sure calibration works with non-symmetric thru
+        imperfect_thru.s[:,1,1] += 0.02 + 0.05j
+
+        std_defs_incomplete_knowledge = [
+            imperfect_thru,
+            medium.short(nports=2, name='short'),
+            medium.load(1, nports=2, name='open'),
+            medium.load(0.1, nports=2, name='load')
+        ]
+
+        std_defs = [
+            imperfect_thru,
+            skrf.two_port_reflect(imperfect_short, imperfect_short),
+            skrf.two_port_reflect(imperfect_open, imperfect_open),
+            skrf.two_port_reflect(imperfect_load, imperfect_load)
+        ]
+        std_meas = [vna.measure(std) for std in std_defs]
+        return std_defs, std_defs_incomplete_knowledge, std_meas
+
+    def setup_cal(self, vna, std_defs, std_meas):
+        cal = skrf_cal.LRRM(
+            ideals=std_defs,
+            measured=std_meas,
+            isolation=std_meas[3],
+            switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"]),
+            z0=std_meas[0].z0[0,0]
+        )
+        cal.run()
+        return cal
+
+    # Test the solved standards, don't use exact equality because of inductance
+    # fitting tolerance.
+    def test_solved_inductance(self):
+        for testgroup in self.testgroup_list:
+            defined_l = testgroup["parasitic_l"]
+            solved_l = np.mean(testgroup["cal"].solved_l)
+
+            self.assertTrue(np.abs(defined_l - solved_l) < 1e-3 * defined_l)
+
+    def test_solved_r1(self):
+        for testgroup in self.testgroup_list:
+            defined_r1 = testgroup["std_fulldefs"][1]
+            solved_r1 = testgroup["cal"].solved_r1
+
+            self.assertEqual(defined_r1.s11, defined_r1.s22)
+            self.assertEqual(defined_r1.s11, solved_r1)
+
+    def test_solved_r2(self):
+        for testgroup in self.testgroup_list:
+            defined_r2 = testgroup["std_fulldefs"][2]
+            solved_r2 = testgroup["cal"].solved_r2
+
+            self.assertEqual(defined_r2.s11, defined_r2.s22)
+            self.assertEqual(defined_r2.s11, solved_r2)
+
+
+class LRRMNoFittingTest(EightTermTest):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
+        imperfect_short = (
+            medium.inductor(5e-12) **
+            medium.load(-0.95, nports=1, name='short')
+        )
+        imperfect_open = (
+            medium.shunt_capacitor(5e-15) **
+            medium.open(nports=1, name='open')
+        )
+        parasitic_l = np.random.default_rng().uniform(1e-12, 20e-12)
+        imperfect_load = (
+            medium.inductor(L=parasitic_l) **
+            medium.load(0, nports=1, name='load')
+        )
+        imperfect_thru = medium.line(d=50, unit='um', name='thru')
+
+        testgroup["parasitic_l"] = parasitic_l
+
+        std_defs_incomplete_knowledge = [
+            imperfect_thru,
+            medium.short(nports=2, name='short'),
+            medium.load(1, nports=2, name='open'),
+            # Doesn't work correctly for non-50 ohm match.
+            medium.load(0, nports=2, name='load')
+        ]
+
+        std_defs = [
+            imperfect_thru,
+            skrf.two_port_reflect(imperfect_short, imperfect_short),
+            skrf.two_port_reflect(imperfect_open, imperfect_open),
+            skrf.two_port_reflect(imperfect_load, imperfect_load)
+        ]
+        std_meas = [vna.measure(std) for std in std_defs_incomplete_knowledge]
+        return std_defs, std_defs_incomplete_knowledge, std_meas
+
+    def setup_cal(self, vna, std_defs, std_meas):
+        cal = skrf_cal.LRRM(
+            ideals=std_defs,
+            measured=std_meas,
+            isolation=std_meas[3],
+            switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"]),
+            z0=std_meas[0].z0[0,0],
+            match_fit='none',
+        )
+        cal.run()
+        return cal
+
+
 class TwelveTermTest(AbstractTwoPortTest, unittest.TestCase):
     """
     Test skrf.calibration.TwelveTermTest
     """
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         std_defs = [
             medium.short(nports=2, name='short'),
             medium.open(nports=2, name='open'),
@@ -1420,7 +1726,7 @@ class SOLTTest(TwelveTermTest):
     """
     Test skrf.calibration.SOLT
     """
-    def setup_std_for_testgroup(self, medium, vna):
+    def setup_std_for_testgroup(self, medium, vna, testgroup):
         std_defs_incomplete_knowledge = [
             medium.short(nports=2, name='short'),
             medium.open(nports=2, name='open'),
