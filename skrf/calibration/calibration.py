@@ -4413,7 +4413,10 @@ class LRM(EightTerm):
         z = np.where(root, zs[0], zs[1])
         y = x * z**2 / xyz2
 
-        self._solved_r = Network(s=gr, frequency=self.measured[0].frequency)
+        self._solved_r = Network(
+            s=gr, frequency=self.measured[0].frequency,
+            z0=self.measured[0].z0[:,0]
+        )
 
         # Calculate error matrices
         t10 = np.transpose(np.array([[ones, x], [gr, gm*x]]), [2,0,1]) \
@@ -4587,6 +4590,15 @@ class LRRM(EightTerm):
             switch_terms = switch_terms,
             isolation = isolation,
             **kwargs)
+
+        if z0 != self.measured[0].z0[0,0]:
+            warnings.warn(
+                "LRRM.__init__(z0=%s) and calibration standards have "
+                "different reference impedances! Using z0=%s from the "
+                "calibration standards for error coefficients, but "
+                "z0=%s for the fitted inductance. Calibration result "
+                "is likely incorrect!" % (z0, self.measured[0].z0[0,0], z0)
+            )
 
     def run(self):
         mList = [k for k in self.measured_unterminated]
@@ -4837,8 +4849,14 @@ class LRRM(EightTerm):
         self._solved_l = match_l
         self._solved_c = match_c
         self._solved_m = Network(s=gamma_m, frequency=freq, name='LRRM match')
-        self._solved_r1 = Network(s=gr1, frequency=freq, name='LRRM reflect 1')
-        self._solved_r2 = Network(s=gr2, frequency=freq, name='LRRM reflect 2')
+        self._solved_r1 = Network(
+            s=gr1, frequency=freq, name='LRRM reflect 1',
+            z0=self.measured[0].z0[:,0]
+        )
+        self._solved_r2 = Network(
+            s=gr2, frequency=freq, name='LRRM reflect 2',
+            z0=self.measured[0].z0[:,0]
+        )
 
         # Calculate error matrices
         t10 = np.transpose(np.array([[ones, x], [gr1, gr2*x]]), [2,0,1]) \
@@ -6780,6 +6798,7 @@ def convert_pnacoefs_2_skrf(coefs):
         same error coefficients but with keys matching skrf's convention
 
     """
+    # TODO: Add a "system impedance" key
 
     coefs_map ={'Directivity':'directivity',
                 'SourceMatch':'source match',
@@ -6841,6 +6860,7 @@ def convert_skrfcoefs_2_pna(coefs, ports = (1,2)):
 
 
     """
+    # TODO: Add a "system impedance" key
     if not hasattr(ports, '__len__'):
         ports = ports,
 
