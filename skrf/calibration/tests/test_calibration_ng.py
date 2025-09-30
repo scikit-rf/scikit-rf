@@ -20,6 +20,8 @@ NPTS = 10
 # System reference impedance of the calculated S-parameters,
 # also known as a medium or network's "port impedance"
 Z0_REF = [1, 50, 75, 93, 600]
+#Z0_REF = [50]
+#Z0_REF = [None]
 
 # Different transmission lines and waveguides to test calibration with.
 # This list should cover diverse media with different characteristic
@@ -33,36 +35,38 @@ MEDIUM = [
     # WR10/WG27/R900 75 to 110 GHz, 0.1x0.05 inch (2.54x1.27 mm)
     # lossless (perfect conductor), z0_characteristic vary from
     # 610 to 446 ohm, z0_port to be renormalized.
-    RectangularWaveguide(
-        skrf.F(75, 100, NPTS, unit='GHz'),
-        a=100 * skrf.mil
-    ),
+    #RectangularWaveguide(
+    #    skrf.F(75, 100, NPTS, unit='GHz'),
+    #    a=100 * skrf.mil,
+    #),
 
     # WR10/WG27/R900 75 to 110 GHz, 0.1x0.05 inch (2.54x1.27 mm)
     # z0 from 610 to 446 ohm, lossy (gold), z0_characteristic vary from
     # 610 to 446 ohm, z0_port to be renormalized.
     RectangularWaveguide(
         skrf.F(75, 100, NPTS, unit='GHz'),
-        a=100 * skrf.mil, rho='gold'
+        a=100 * skrf.mil, rho='gold',
+        #z0_override=75,
+        z0_port=75
     ),
 
     # 3.5 mm coaxial air line, Dout = 3.5 mm, Din = 1.52 mm, lossy (copper),
     # upper frequency 26.5 GHz, z0_characteristic close to 50 ohm,
     # z0_port to be renormalized.
-    Coaxial(
-        skrf.F(0.1, 26.5, NPTS, unit='GHz'),
-        Dout=3.5e-3, Din=1.52e-3, epsilon_r=1,
-        sigma=1 / skrf.data.materials["copper"]["resistivity(ohm*m)"]
-    ),
+    #Coaxial(
+    #    skrf.F(0.1, 26.5, NPTS, unit='GHz'),
+    #    Dout=3.5e-3, Din=1.52e-3, epsilon_r=1,
+    #    sigma=1 / skrf.data.materials["copper"]["resistivity(ohm*m)"]
+    #),
 
-    # RG-59 Cable TV coax, Dout = 3.7 mm, Din = 0.58 mm, lossy (copper),
-    # upper frequency 1 GHz, solid PE dielectric, z0_characteristic close
-    # to 75 ohm, z0_port to be renormalized.
-    Coaxial(
-        skrf.F(0.1, 1, NPTS, unit='GHz'),
-        Dout=3.7e-3, Din=0.58e-3, epsilon_r=2.3,
-        sigma=1 / skrf.data.materials["copper"]["resistivity(ohm*m)"]
-    )
+    ## RG-59 Cable TV coax, Dout = 3.7 mm, Din = 0.58 mm, lossy (copper),
+    ## upper frequency 1 GHz, solid PE dielectric, z0_characteristic close
+    ## to 75 ohm, z0_port to be renormalized.
+    #Coaxial(
+    #    skrf.F(0.1, 1, NPTS, unit='GHz'),
+    #    Dout=3.7e-3, Din=0.58e-3, epsilon_r=2.3,
+    #    sigma=1 / skrf.data.materials["copper"]["resistivity(ohm*m)"]
+    #)
 ]
 
 
@@ -129,12 +133,22 @@ class UncalibratedNetworkAnalyzer:
         that contains 2 terms only. If crosstalk is significant (in the
         case of the SixteenTerm error model), the VNA error boxes must be
         modeled as 4-port networks (which is not implemented here).
+
+    transmissive_err : bool
+        Modify the random error boxes with much higher transmissive
+        coefficients (S21, S12) in comparison to reflection coefficients
+        (S11, S22). This is needed for TRL calibration algorithms to
+        guess the lengths of line standards.
     """
-    def __init__(self, medium, nports, switch_err=True, leakage_err=True):
+    def __init__(
+        self, medium, nports, switch_err=True, leakage_err=True,
+        transmissive_err=False
+    ):
         self.medium = medium
         self.nports = nports
         self.switch_err = switch_err
         self.leakage_err = leakage_err
+        self.transmissive_err = transmissive_err
 
         if nports not in [1, 2]:
             raise NotImplementedError(
@@ -171,6 +185,12 @@ class UncalibratedNetworkAnalyzer:
             else:
                 self.err["iso_f"] = self.medium.match(n_ports=1, name='Iso_f')
                 self.err["iso_r"] = self.medium.match(n_ports=1, name='Iso_r')
+
+            if self.transmissive_err:
+                self.err["x"].s[:,0,0] *= 1e-1
+                self.err["y"].s[:,0,0] *= 1e-1
+                self.err["x"].s[:,1,1] *= 1e-1
+                self.err["y"].s[:,1,1] *= 1e-1
 
     def measure(self, dut):
         """
@@ -235,21 +255,26 @@ class AbstractIncompleteCalTest:
                     group_medium = medium.mode(z0_port=z0_ref)
 
                 vna = self.setup_vna_for_testgroup(group_medium)
-                std_defs, std_meas = self.setup_std_for_testgroup(
+                std_fulldefs, std_defs, std_meas = self.setup_std_for_testgroup(
                     group_medium, vna
                 )
                 dut_def = group_medium.random(
                     n_ports=self.nports, name='dut_def'
                 )
-                dut_meas = vna.measure(dut_def)
+                cal = self.setup_cal(vna, std_defs, std_meas)
+
+                vna_portext = self.setup_vna_port_extension(group_medium, vna)
+                dut_meas = vna_portext.measure(dut_def)
                 dut_meas.name = 'dut_meas'
 
                 self.testgroup_list.append({
-                    "vna": vna,
+                    "vna": vna_portext,
+                    "medium": group_medium,
                     "z0_ref": z0_ref,
+                    "std_fulldefs": std_fulldefs,
                     "std_defs": std_defs,
                     "std_meas": std_meas,
-                    "cal": self.setup_cal(vna, std_defs, std_meas),
+                    "cal": cal,
                     "dut_def": dut_def,
                     "dut_meas": dut_meas
                 })
@@ -286,8 +311,12 @@ class AbstractIncompleteCalTest:
 
     def setup_std_for_testgroup(self, medium, vna):
         """
-        Return two lists that contain calibration standards definitions
-        and imperfect measurements by vna, respectively.
+        Return three lists that contain the perfect calibration standards
+        definitions, partial calibration standards definitions due to
+        incomplete knowledge, and imperfect measurements by vna, respectively.
+
+        For most calibration tests, exact definitions are used, so the first
+        and second list elements are the same.
 
         Must be implemented by the subclass.
         """
@@ -302,6 +331,19 @@ class AbstractIncompleteCalTest:
         Must be implemented by the subclass.
         """
         raise NotImplementedError
+
+    def setup_vna_port_extension(self, medium, vna):
+        """
+        In TRL calibration, its the reference plane is located at the
+        center of the Thru standard, not at the VNA port, so all tests
+        fail due to reference plane mismatched. Before the TRL calibration's
+        result is checked, we need to extend the port of the virtual VNA
+        by inserting transmission line segments.
+
+        It's not needed for non-TRL calibration classes or TRL calibration
+        that places the reference plane at the ports (e.g. multi-line TRL).
+        """
+        return vna
 
 
 class AbstractCalTest(AbstractIncompleteCalTest):
@@ -429,7 +471,7 @@ class ComputeSwitchTermsTest(AbstractIncompleteCalTest, unittest.TestCase):
     def nports(self):
         return 2
 
-    def setup_vna_for_testgroup(self, medium, z0_ref=None):
+    def setup_vna_for_testgroup(self, medium):
         # this algorithm assumes no crosstalks
         return UncalibratedNetworkAnalyzer(
             medium, nports=self.nports, leakage_err=False
@@ -445,7 +487,7 @@ class ComputeSwitchTermsTest(AbstractIncompleteCalTest, unittest.TestCase):
         std_meas = [
             vna.measure(dut) for dut in std_defs
         ]
-        return std_defs, std_meas
+        return std_defs, std_defs, std_meas
 
     def setup_cal(self, vna, std_defs, std_meas):
         # Not applicable, this is not a full VNA calibration test
@@ -455,23 +497,101 @@ class ComputeSwitchTermsTest(AbstractIncompleteCalTest, unittest.TestCase):
 
     def test_accuracy_of_solved_switch_terms(self):
         for testgroup in self.testgroup_list:
-            continue  # disable
             vna = testgroup["vna"]
             std_meas = testgroup["std_meas"]
 
-            # solve switch error terms.
+            # solve switch error terms
             gamma_f, gamma_r = skrf_cal.compute_switch_terms(std_meas)
 
             # compare them with the actual VNA switch error terms
-            print(gamma_f, vna.err["gamma_f"])
-            print(gamma_r, vna.err["gamma_r"])
-            self.assertTrue(
-                gamma_f == vna.err["gamma_f"]
-                #all(np.abs(gamma_f.s - vna.err["gamma_f"].s) < 1e-9)
+            self.assertTrue(gamma_f == vna.err["gamma_f"])
+            self.assertTrue(gamma_r == vna.err["gamma_r"])
+
+
+class InconsistentFreqImpedanceTest(AbstractIncompleteCalTest, unittest.TestCase):
+    """
+    Test that calibration inputs with different impedances per
+    frequency generates a warning. This is not supported in scikit-rf
+    as it's untested. Nevertheless, the current design already tracks
+    reference impedance per frequency, so in theory it can be implemented
+    in the future if there's a need.
+
+    We run the test in OnePort instead of AbstractOnePortTest because
+    different one-port calibration algorithm requires different inputs,
+    but this check is found within the calibration base class, so we only
+    need to test it once.
+    """
+    def setUp(self):
+        pass
+
+    @property
+    def nports(self):
+        return 1
+
+    def test_input_networks_inconsistent_frequency_impedance(self):
+        medium = Coaxial(
+            skrf.F(0.1, 26.5, 10, unit='GHz')
+        )
+        vna = self.setup_vna_for_testgroup(medium)
+        std_defs = [
+            medium.open(),
+            medium.short(),
+            medium.match()
+        ]
+
+        for std in std_defs:
+            std.renormalize(np.array(
+                [50, 75, 50, 75, 50, 75, 50, 75, 50, 75]
+            ))
+
+        # no need to run calibration, we only check the warning message here
+        with self.assertWarns(UserWarning):
+            cal = skrf_cal.OnePort(
+                is_reciprocal=True,
+                ideals=std_defs,
+                measured=std_defs  # no need to actually measure them
             )
-            self.assertTrue(
-                gamma_r == vna.err["gamma_r"]
-                #all(np.abs(gamma_r.s - vna.err["gamma_r"].s) < 1e-9)
+
+
+class InconsistentPortImpedanceTest(AbstractIncompleteCalTest, unittest.TestCase):
+    """
+    Test that calibration inputs with different impedances per
+    port generates a warning. This is not supported in scikit-rf,
+    as all calibration algorithms assume a constant system impedance.
+    This feature will be extremely difficult, if ever possible to
+    support, a major redesign would be necessary.
+
+    We run the test in EightTerm only because different two-port calibration
+    algorithm requires different inputs, but this check is found within the
+    calibration base class, so we only need to test it once.
+    """
+    def setUp(self):
+        pass
+
+    @property
+    def nports(self):
+        return 2
+
+    def test_input_networks_inconsistent_port_impedance(self):
+        medium = Coaxial(
+            skrf.F(0.1, 26.5, 10, unit='GHz')
+        )
+        vna = self.setup_vna_for_testgroup(medium)
+        std_defs = [
+            medium.open(nports=2),
+            medium.short(nports=2),
+            medium.match(nports=2),
+            medium.thru()
+        ]
+
+        for std in std_defs:
+            std.renormalize(np.array([50, 75]))
+
+        # no need to run calibration, we only check the warning message here
+        with self.assertWarns(UserWarning):
+            cal = skrf_cal.EightTerm(
+                ideals=std_defs,
+                measured=std_defs,  # no need to actually measure them
             )
 
 
@@ -543,7 +663,7 @@ class OnePortTest(AbstractOnePortTest, unittest.TestCase):
         std_meas = [
             vna.measure(dut) for dut in std_defs
         ]
-        return std_defs, std_meas
+        return std_defs, std_defs, std_meas
 
     def setup_cal(self, vna, std_defs, std_meas):
         cal = skrf_cal.OnePort(
@@ -553,40 +673,6 @@ class OnePortTest(AbstractOnePortTest, unittest.TestCase):
         )
         cal.run()
         return cal
-
-    def test_input_networks_inconsistent_frequency_impedance(self):
-        """
-        Test that calibration inputs with different impedances per
-        frequency generates a warning. This is not supported in scikit-rf
-        as it's untested. Nevertheless, the current design already tracks
-        reference impedance per frequency, so in theory it can be implemented
-        in the future if there's a need.
-
-        We run the test in OnePortTest instead of AbstractOnePortTest because
-        different one-port calibration algorithm requires different inputs,
-        but this check is found within the calibration base class, so we only
-        need to test it once.
-        """
-        medium = Coaxial(
-            skrf.F(0.1, 26.5, 10, unit='GHz')
-        )
-        vna = self.setup_vna_for_testgroup(medium)
-        std_defs = [
-            medium.open(),
-            medium.short(),
-            medium.match()
-        ]
-        std_meas = [
-            vna.measure(dut) for dut in std_defs
-        ]
-
-        for std in std_defs + std_meas:
-            std.renormalize(np.array(
-                [50, 75, 50, 75, 50, 75, 50, 75, 50, 75]
-            ))
-
-        with self.assertWarns(UserWarning):
-            cal = self.setup_cal(vna, std_defs, std_defs)
 
 
 class SDDLTest(AbstractOnePortTest, unittest.TestCase):
@@ -616,7 +702,7 @@ class SDDLTest(AbstractOnePortTest, unittest.TestCase):
         std_meas = [
             vna.measure(dut) for dut in std_defs
         ]
-        return std_defs_incomplete_knowledge, std_meas
+        return std_defs, std_defs_incomplete_knowledge, std_meas
 
     def setup_cal(self, vna, std_defs, std_meas):
         cal = skrf_cal.SDDL(
@@ -642,12 +728,12 @@ class SDDLNoneTest(SDDLTest):
     two delayed short termination.
     """
     def setup_std_for_testgroup(self, medium, vna):
-        std_defs_incomplete_knowledge, std_meas = (
+        std_defs, std_defs_incomplete_knowledge, std_meas = (
             super().setup_std_for_testgroup(medium, vna)
         )
         std_defs_incomplete_knowledge[1] = None
         std_defs_incomplete_knowledge[2] = None
-        return std_defs_incomplete_knowledge, std_meas
+        return std_defs, std_defs_incomplete_knowledge, std_meas
 
 
 class SDDLWeikleTest(AbstractOnePortTest, unittest.TestCase):
@@ -677,7 +763,7 @@ class SDDLWeikleTest(AbstractOnePortTest, unittest.TestCase):
         std_meas = [
             vna.measure(dut) for dut in std_defs
         ]
-        return std_defs_incomplete_knowledge, std_meas
+        return std_defs, std_defs_incomplete_knowledge, std_meas
 
     def setup_cal(self, vna, std_defs, std_meas):
         cal = skrf_cal.SDDLWeikle(
@@ -728,7 +814,7 @@ class SDDMTest(AbstractOnePortTest, unittest.TestCase):
         std_meas = [
             vna.measure(dut) for dut in std_defs
         ]
-        return std_defs_incomplete_knowledge, std_meas
+        return std_defs, std_defs_incomplete_knowledge, std_meas
 
     def setup_cal(self, vna, std_defs, std_meas):
         cal = skrf_cal.SDDL(
@@ -903,7 +989,7 @@ class EightTermTest(AbstractTwoPortTest, unittest.TestCase):
         std_meas = [
             vna.measure(dut) for dut in std_defs
         ]
-        return std_defs, std_meas
+        return std_defs, std_defs, std_meas
 
     def setup_cal(self, vna, std_defs, std_meas):
         cal = skrf_cal.EightTerm(
@@ -927,35 +1013,6 @@ class EightTermTest(AbstractTwoPortTest, unittest.TestCase):
                 cal.coefs_12term,
                 skrf.convert_8term_2_12term(cal.coefs)
             )
-
-    def test_input_networks_inconsistent_port_impedance(self):
-        """
-        Test that calibration inputs with different impedances per
-        port generates a warning. This is not supported in scikit-rf,
-        as all calibration algorithms assume a constant system impedance.
-        This feature will be extremely difficult, if ever possible to
-        support, a major redesign would be necessary.
-
-        We run the test in EightTermTest instead of AbstractTwoPortTest
-        because different two-port calibration algorithm requires different
-        inputs, but this check is found within the calibration base class,
-        so we only need to test it once.
-        """
-        frequency = skrf.F(0.1, 1, 6, unit='GHz')
-        medium = DefinedGammaZ0(frequency)
-
-        vna = self.setup_vna_for_testgroup(medium)
-        std_defs = [
-            medium.open(nports=2),
-            medium.short(nports=2),
-            medium.match(nports=2),
-            medium.thru()
-        ]
-        for std in std_defs:
-            std.renormalize(np.array([50, 75]))
-
-        with self.assertWarns(UserWarning):
-            cal = self.setup_cal(vna, std_defs, std_defs)
 
 
 class UnknownThruTest(EightTermTest):
@@ -982,7 +1039,7 @@ class UnknownThruTest(EightTermTest):
         std_meas = [
             vna.measure(dut) for dut in std_defs
         ]
-        return std_defs_incomplete_knowledge, std_meas
+        return std_defs, std_defs_incomplete_knowledge, std_meas
 
     def setup_cal(self, vna, std_defs, std_meas):
         cal = skrf_cal.UnknownThru(
@@ -997,7 +1054,7 @@ class UnknownThruTest(EightTermTest):
 
 class MRCTest(EightTermTest):
     """
-    Test skrf.calibration.MRCTest
+    Test skrf.calibration.MRC
     """
     @property
     def valid_frequency(self):
@@ -1030,7 +1087,7 @@ class MRCTest(EightTermTest):
         std_meas = [
             vna.measure(dut) for dut in std_defs
         ]
-        return std_defs_incomplete_knowledge, std_meas
+        return std_defs, std_defs_incomplete_knowledge, std_meas
 
     def _two_ports_delay_shorts(self, medium, deg1, deg2):
         ds1 = medium.delay_short(deg1, 'deg')
@@ -1047,9 +1104,280 @@ class MRCTest(EightTermTest):
         cal.run()
         return cal
 
-    @pytest.mark.skip(reason='not applicable')
-    def test_input_networks_inconsistent_port_impedance(self):
-        pass
+
+class TRLTest(EightTermTest):
+    """
+    Test skrf.calibration.TRL
+    """
+    @property
+    def valid_frequency(self):
+        return skrf.Frequency(75, 100, 2, unit='GHz')
+
+    def setup_vna_for_testgroup(self, medium):
+        # The error networks must have higher transmission than reflection
+        # in order for TRL() to automatically detremine which standard is
+        # which
+        return UncalibratedNetworkAnalyzer(
+            medium, nports=self.nports, transmissive_err=True
+        )
+
+    def setup_std_for_testgroup(self, medium, vna):
+        # This is the dark side of z0_port in medium - when it's set,
+        # it creates ideal calibration standards with respect to the
+        # characteristic impedance of the medium, and renormalizing the
+        # result again to a new reference impedance. But in TRL calibration,
+        # if we're calibrating to the system impedance, we must create
+        # perfect standards with respect to the system impedance without
+        # renormalization.
+        matched_medium = medium.mode(z0_override=medium.z0_port, z0_port=None)
+
+        std_defs_incomplete_knowledge = [
+            matched_medium.thru(name='thru'),
+            matched_medium.short(nports=2, name='short'),
+            matched_medium.line(90, 'deg', name='line'),
+        ]
+        std_defs = [
+            matched_medium.thru(name='thru'),
+            skrf.two_port_reflect(
+                matched_medium.load(-.9-.1j),
+                matched_medium.load(-.9-.1j)
+            ),
+            matched_medium.attenuator(-3, True, 45, 'deg')
+        ]
+        std_meas = [vna.measure(std) for std in std_defs]
+        return std_defs, std_defs_incomplete_knowledge, std_meas
+
+    def setup_cal(self, vna, std_defs, std_meas):
+        cal = skrf_cal.TRL(
+            ideals=std_defs,
+            measured=std_meas,
+            isolation=std_meas[1],
+            switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"])
+        )
+        cal.run()
+        return cal
+
+    def test_found_reflect(self):
+        """
+        Can TRL() determine which measurement is the Reflect standards?"
+        """
+        for testgroup in self.testgroup_list:
+            self.assertEqual(
+                testgroup["cal"].ideals[1],
+                testgroup["std_fulldefs"][1]
+            )
+
+    def test_found_line(self):
+        """
+        Can TRL() determine which measurement is the Line standards?"
+        """
+        for testgroup in self.testgroup_list:
+            self.assertEqual(
+                testgroup["cal"].ideals[2],
+                testgroup["std_fulldefs"][2]
+            )
+
+
+class TRLUnknownDefinitionTest(TRLTest):
+    """
+    Test skrf.calibration.TRL
+    """
+    def setup_std_for_testgroup(self, medium, vna):
+        matched_medium = medium.mode(z0_override=medium.z0_port, z0_port=None)
+
+        # Don't define the calibration standard at all, not even
+        # approximate knowledge. TRL should be able to solve it.
+        std_defs_incomplete_knowledge = []
+        std_defs = [
+            matched_medium.thru(name='thru'),
+            skrf.two_port_reflect(
+                matched_medium.delay_short(20, 'deg'),
+                matched_medium.delay_short(20, 'deg')
+            ),
+            matched_medium.attenuator(-3, True, 45, 'deg')
+        ]
+        std_meas = [vna.measure(std) for std in std_defs]
+        return std_defs, std_defs_incomplete_knowledge, std_meas
+
+    def setup_cal(self, vna, std_defs, std_meas):
+        cal = skrf_cal.TRL(
+            ideals=None,
+            measured=std_meas,
+            isolation=std_meas[1],
+            switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"])
+        )
+        cal.run()
+        return cal
+
+
+class TRLLongThruTest(EightTermTest):
+    """
+    Test skrf.calibration.TRL
+    """
+    def setup_std_for_testgroup(self, medium, vna):
+        matched_medium = medium.mode(z0_override=medium.z0_port, z0_port=None)
+
+        # reflect reference plane is at the Thru center
+        reflect = matched_medium.load(-.9-.1j)
+        reflect_shifted = matched_medium.line(50, 'um') ** reflect
+
+        std_defs_incomplete_knowledge = [
+            matched_medium.line(100, 'um', name='thru'),
+            matched_medium.short(nports=2, name='short'),
+            matched_medium.line(1100, 'um', name='thru')
+        ]
+        std_defs = [
+            matched_medium.line(100, 'um', name='thru'),
+            skrf.two_port_reflect(
+                reflect_shifted,
+                reflect_shifted
+            ),
+            matched_medium.line(1100, 'um', name='thru')
+        ]
+        std_meas = [vna.measure(std) for std in std_defs]
+        return std_defs, std_defs_incomplete_knowledge, std_meas
+
+    def setup_cal(self, vna, std_defs, std_meas):
+        cal = skrf_cal.TRL(
+            ideals=std_defs,
+            measured=std_meas,
+            isolation=std_meas[1],
+            switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"])
+        )
+        cal.run()
+        return cal
+
+    def setup_vna_port_extension(self, medium, vna):
+        matched_medium = medium.mode(z0_override=medium.z0_port, z0_port=None)
+
+        # Calibration is done at the center of the thru, add half thru
+        # to error networks so that tests pass.
+        vna.err["x"] = vna.err["x"] ** matched_medium.line(50, 'um')
+        vna.err["y"] = matched_medium.line(50, 'um') ** vna.err["y"]
+        return vna
+
+    def test_found_reflect(self):
+        # solved Reflect is at the Thru center
+        for testgroup in self.testgroup_list:
+            medium = testgroup["medium"]
+            matched_medium = (
+                medium.mode(
+                    z0_override=medium.z0_port, z0_port=None
+                )
+            )
+            reflect = matched_medium.load(-.9-.1j)
+
+            self.assertEqual(
+                testgroup["cal"].ideals[1],
+                skrf.two_port_reflect(reflect, reflect)
+            )
+
+    def test_found_line(self):
+        # solved Line is difference between Line and Thru
+        for testgroup in self.testgroup_list:
+            self.assertEqual(
+                testgroup["cal"].ideals[2],
+                testgroup["std_defs"][2] ** testgroup["std_defs"][0].inv
+            )
+
+
+class TRLMultiline(EightTermTest):
+    def setup_std_for_testgroup(self, medium, vna):
+        matched_medium = medium.mode(z0_override=medium.z0_port, z0_port=None)
+
+        std_defs = [
+            matched_medium.thru(name='thru'),
+            matched_medium.short(nports=2, name='short'),
+            matched_medium.open(nports=2, name='open'),
+            matched_medium.attenuator(-3, True, 45, 'deg'),
+            matched_medium.attenuator(-6, True, 90, 'deg'),
+            matched_medium.attenuator(-8, True, 145, 'deg'),
+        ]
+        std_meas = [vna.measure(std) for std in std_defs]
+        return std_defs, std_defs, std_meas
+
+    def setup_cal(self, vna, std_defs, std_meas):
+        cal = skrf_cal.TRL(
+            ideals=[None, -1, 1, None, None, None],
+            measured=std_meas,
+            n_reflects=2,
+            isolation=std_meas[1],
+            switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"])
+        )
+        cal.run()
+        return cal
+
+    def test_found_line(self):
+        for testgroup in self.testgroup_list:
+            for k in range(2, 5):
+                self.assertTrue(
+                    testgroup["cal"].ideals[k],
+                    testgroup["std_fulldefs"][k]
+                )
+
+
+class NISTMultilineTRLTest(EightTermTest):
+    """
+    Test skrf.calibration.NISTMultilineTRL
+    """
+    @property
+    def valid_frequency(self):
+        return skrf.Frequency(75, 100, 2, unit='GHz')
+
+    def setup_std_for_testgroup(self, medium, vna):
+        matched_medium = medium.mode(z0_override=medium.z0_port, z0_port=None)
+
+        std_defs = [
+            matched_medium.thru(),
+            skrf.two_port_reflect(
+                matched_medium.load(-.98-.1j), matched_medium.load(-.98-.1j)
+            ),
+            skrf.two_port_reflect(
+                matched_medium.load(.99+0.05j), matched_medium.load(.99+0.05j)
+            ),
+            matched_medium.line(100, 'um'),
+            matched_medium.line(200, 'um'),
+            matched_medium.line(900, 'um')
+        ]
+        std_meas = [vna.measure(std) for std in std_defs]
+        return std_defs, std_defs, std_meas
+
+    def setup_cal(self, vna, std_defs, std_meas):
+        cal = skrf_cal.NISTMultilineTRL(
+            measured=std_meas,
+            isolation=std_meas[1],
+            Grefls=[-1, 1],
+            l=[0, 100e-6, 200e-6, 900e-6],
+            er_est=1,
+            gamma_root_choice='real',
+            switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"])
+        )
+        cal.run()
+        return cal
+
+    def test_solved_line_constant(self):
+        for testgroup in self.testgroup_list:
+            solved_gamma = testgroup["medium"].gamma
+            actual_gamma = testgroup["cal"].gamma
+            self.assertTrue(max(solved_gamma - actual_gamma) < 1e-3)
+
+
+class TUGMultilineTRLTest(NISTMultilineTRLTest):
+    """
+    Test skrf.calibration.TUGMultilineTRL
+    """
+    def setup_cal(self, vna, std_defs, std_meas):
+        cal = skrf_cal.TUGMultilineTRL(
+            line_meas=[std_meas[0]] + std_meas[3:],
+            line_lengths=[0, 100e-6, 200e-6, 900e-6],
+            er_est=1,
+            reflect_meas=std_meas[1:3],
+            reflect_est=[-1, 1],
+            isolation=std_meas[1],
+            switch_terms=(vna.err["gamma_f"], vna.err["gamma_r"])
+        )
+        cal.run()
+        return cal
 
 
 class TwelveTermTest(AbstractTwoPortTest, unittest.TestCase):
@@ -1067,7 +1395,7 @@ class TwelveTermTest(AbstractTwoPortTest, unittest.TestCase):
         std_meas = [
             vna.measure(dut) for dut in std_defs
         ]
-        return std_defs, std_meas
+        return std_defs, std_defs, std_meas
 
     def setup_cal(self, vna, std_defs, std_meas):
         cal = skrf_cal.TwelveTerm(
@@ -1108,7 +1436,7 @@ class SOLTTest(TwelveTermTest):
         std_meas = [
             vna.measure(dut) for dut in std_defs
         ]
-        return std_defs_incomplete_knowledge, std_meas
+        return std_defs, std_defs_incomplete_knowledge, std_meas
 
     def setup_cal(self, vna, std_defs, std_meas):
         cal = skrf_cal.SOLT(
