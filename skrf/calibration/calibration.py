@@ -3542,18 +3542,24 @@ class NISTMultilineTRL(EightTerm):
         Calibration.from_coefs_ntwks
 
         """
-        # assigning this measured network is a hack so that
+        # assigning garbage data as "measured" networks is a hack so that
         # * `calibration.frequency` property evaluates correctly
         # * __init__() will not throw an error
+        # Note that z0_ref is meaningful because it's used to set the
+        # self.z0_ref attribute
         n = Network(frequency = frequency,
-                    s = rand_c(frequency.npoints,2,2))
+                    s = rand_c(frequency.npoints,2,2),
+                    z0=coefs["system impedance"]
+                    )
         measured = [n,n,n]
 
         if 'forward switch term' in coefs:
             switch_terms = (Network(frequency = frequency,
-                                    s=coefs['forward switch term']),
+                                    s=coefs['forward switch term'],
+                                    z0=coefs["system impedance"]),
                             Network(frequency = frequency,
-                                    s=coefs['reverse switch term']))
+                                    s=coefs['reverse switch term'],
+                                    z0=coefs["system impedance"]))
             kwargs['switch_terms'] = switch_terms
 
 
@@ -4535,7 +4541,7 @@ class LRRM(EightTerm):
     family = 'LRRM'
 
     def __init__(self, measured, ideals, switch_terms=None, isolation=None,
-            z0=50, match_fit='l', *args, **kwargs):
+            z0=None, match_fit='l', *args, **kwargs):
         """
         LRRM Initializer.
 
@@ -4558,9 +4564,11 @@ class LRRM(EightTerm):
             between the ports. Used for determining the isolation error terms.
             If no measurement is given leakage is assumed to be zero.
 
-        z0 : int
+        z0 : int or None
             Calibration reference impedance. Only affects the solved match
             inductance. Has no effect on the solved calibration parameters.
+            By default, the reference impedance of the input measurement
+            standards is used.
 
         match_fit : string or None
             Match model. Valid choices are:
@@ -4591,14 +4599,8 @@ class LRRM(EightTerm):
             isolation = isolation,
             **kwargs)
 
-        if z0 != self.measured[0].z0[0,0]:
-            warnings.warn(
-                "LRRM.__init__(z0=%s) and calibration standards have "
-                "different reference impedances! Using z0=%s from the "
-                "calibration standards for error coefficients, but "
-                "z0=%s for the fitted inductance. Calibration result "
-                "is likely incorrect!" % (z0, self.measured[0].z0[0,0], z0)
-            )
+        if z0 is None:
+            z0 = self.measured[0].z0[0,0]
 
     def run(self):
         mList = [k for k in self.measured_unterminated]
@@ -5477,11 +5479,17 @@ class LMR16(SixteenTerm):
             self.through = ideals[0].copy()
             self.reflect = None
             self._solved_through = self.through
-            self._solved_reflect = Network(s=[0]*len(self.through.f), f=self.through.f, f_unit='Hz')
+            self._solved_reflect = Network(
+                s=[0]*len(self.through.f), f=self.through.f, f_unit='Hz',
+                z0=measured[0].z0[:,0]
+            )
         else:
             self.through = None
             self.reflect = ideals[0].copy()
-            self._solved_through = Network(s=[[[0,1],[1,0]]]*len(self.reflect.f), f=self.reflect.f, f_unit='Hz')
+            self._solved_through = Network(
+                s=[[[0,1],[1,0]]]*len(self.reflect.f), f=self.reflect.f, f_unit='Hz',
+                z0=measured[0].z0[:,0]
+            )
             self._solved_reflect = self.reflect
 
         if len(measured) != 5:
@@ -6046,7 +6054,10 @@ class MultiportCal:
 
         # Consistent internal port Z0.
         nout.z0 = 50
-        Z = Network(s=Z, frequency=nout.frequency, z0=50)
+        Z = Network(
+            s=Z, frequency=nout.frequency,
+            z0=self.coefs['system impedance']
+        )
         nout = connect(Z, nports, nout, 0, nports)
         nout = terminate_nport(nout, gammas)
         nout += self.isolation
