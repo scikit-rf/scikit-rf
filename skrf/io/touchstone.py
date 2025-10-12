@@ -615,7 +615,7 @@ class Touchstone:
         Returns the comments which appear anywhere in the file.
 
         Comment lines containing ignored comments are removed.
-        By default these are comments which contain special meaning withing
+        By default these are comments which contain special meaning within
         skrf and are not user comments.
 
         Returns
@@ -643,7 +643,7 @@ class Touchstone:
         Returns
         -------
         var_dict : dict (numbers, units)
-            Dictionnary containing the comments
+            Dictionary containing the comments
         """
         comments = self.comments
         p1 = re.compile(r"\w* = \w*.*")

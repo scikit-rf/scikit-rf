@@ -187,7 +187,7 @@ class Mdif:
         # Flag for adding comments to the network
         no_more_comments = False
 
-        # Extract and group parameter informations and values
+        # Extract and group parameter information and values
         for line in block_data:
             # Parse the option line (as in Touchstone)
             if line.startswith('#'):
@@ -409,7 +409,7 @@ class Mdif:
         filename : string
             Output MDIF file name.
         values : dictionary or None. Default is None.
-            The keys of the dictionnary are MDIF variables and its values are
+            The keys of the dictionary are MDIF variables and its values are
             a list of the parameter values.
             If None, then the values will be set to the NetworkSet names
             and the datatypes will be set to "string".

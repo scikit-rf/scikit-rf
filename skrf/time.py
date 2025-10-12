@@ -330,7 +330,7 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
 
     Note
     ----
-    You cant gate things that are 'behind' strong reflections. This
+    You can't gate things that are 'behind' strong reflections. This
     is due to the multiple reflections that occur.
 
     If you need to time-gate an N-port network, then you should
@@ -369,7 +369,7 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
 
     else:
         if center is None:
-            # they didnt provide center, so find the peak
+            # they didn't provide center, so find the peak
             n = ntwk.s_time_mag.argmax()
             center = ntwk.frequency.t_ns[n]
 

@@ -1786,7 +1786,7 @@ class VectorFitting:
             min_spacing_nonzero = np.amin(violation_band_separation[violation_band_separation != 0.0])
 
             # we should need an absolute minimum of 1 sample in each violating frequency band.
-            # in practice, the frequency spacing should preferrably be much more dense.
+            # in practice, the frequency spacing should preferably be much more dense.
             # let's recommend 2 samples per violation band.
             n_samples_required = int(f_eval_max / min_spacing_nonzero * 2)
 
@@ -1928,7 +1928,7 @@ class VectorFitting:
                 self.constant_coeff = constant_coeff
             else:
                 raise ValueError('The shapes of the provided parameters are not compatible. The coefficient file needs '
-                                 'to contain NumPy arrays labled `poles`, `residues`, `proportionals`, and '
+                                 'to contain NumPy arrays labeled `poles`, `residues`, `proportionals`, and '
                                  '`constants`. Their shapes must match the number of network ports and the number of '
                                  'frequencies.')
 
@@ -2168,10 +2168,10 @@ class VectorFitting:
         Parameters
         ----------
         *args : any, optional
-            Additonal arguments to be passed to :func:`plot`.
+            Additional arguments to be passed to :func:`plot`.
 
         **kwargs : dict, optional
-            Additonal keyword arguments to be passed to :func:`plot`.
+            Additional keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
@@ -2193,10 +2193,10 @@ class VectorFitting:
         Parameters
         ----------
         *args : any, optional
-            Additonal arguments to be passed to :func:`plot`.
+            Additional arguments to be passed to :func:`plot`.
 
         **kwargs : dict, optional
-            Additonal keyword arguments to be passed to :func:`plot`.
+            Additional keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
@@ -2218,10 +2218,10 @@ class VectorFitting:
         Parameters
         ----------
         *args : any, optional
-            Additonal arguments to be passed to :func:`plot`.
+            Additional arguments to be passed to :func:`plot`.
 
         **kwargs : dict, optional
-            Additonal keyword arguments to be passed to :func:`plot`.
+            Additional keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
@@ -2243,10 +2243,10 @@ class VectorFitting:
         Parameters
         ----------
         *args : any, optional
-            Additonal arguments to be passed to :func:`plot`.
+            Additional arguments to be passed to :func:`plot`.
 
         **kwargs : dict, optional
-            Additonal keyword arguments to be passed to :func:`plot`.
+            Additional keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
@@ -2268,10 +2268,10 @@ class VectorFitting:
         Parameters
         ----------
         *args : any, optional
-            Additonal arguments to be passed to :func:`plot`.
+            Additional arguments to be passed to :func:`plot`.
 
         **kwargs : dict, optional
-            Additonal keyword arguments to be passed to :func:`plot`.
+            Additional keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------
@@ -2293,10 +2293,10 @@ class VectorFitting:
         Parameters
         ----------
         *args : any, optional
-            Additonal arguments to be passed to :func:`plot`.
+            Additional arguments to be passed to :func:`plot`.
 
         **kwargs : dict, optional
-            Additonal keyword arguments to be passed to :func:`plot`.
+            Additional keyword arguments to be passed to :func:`plot`.
 
         Returns
         -------

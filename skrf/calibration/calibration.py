@@ -575,7 +575,7 @@ class Calibration:
         """
         Return any output from the :func:`run`.
 
-        This just returns whats in  _output_from_run, and calls
+        This just returns what's in  _output_from_run, and calls
         :func:`run` if that attribute is  non-existent.
         finally, returns None if run() is called, and nothing is in
         _output_from_run.
@@ -583,7 +583,7 @@ class Calibration:
         try:
             return self._output_from_run
         except(AttributeError):
-            # maybe i havent run yet
+            # maybe i haven't run yet
             self.run()
             try:
                 return self._output_from_run
@@ -1567,7 +1567,7 @@ class PHN(OnePort):
         a2 = -(f*b2 + g)/(z*b2 + e)
 
         # temporarily translate into s-parameters so make the root-choice
-        #  choosing a root in impedance doesnt generally work for typical
+        #  choosing a root in impedance doesn't generally work for typical
         # calibration standards
         b1_s = z2s(b1.reshape(-1,1,1),1)
         b2_s = z2s(b2.reshape(-1,1,1),1)
@@ -1672,7 +1672,7 @@ class TwelveTerm(Calibration):
         # note: this will enable sloppy_input and align stds if necessary
         Calibration.__init__(self, *args, **kwargs)
 
-        # if they didnt tell us the number of thrus, then lets
+        # if they didn't tell us the number of thrus, then lets
         # heuristically determine it
         trans_thres_mag = 10 ** (trans_thres / 20)
 
@@ -1891,7 +1891,7 @@ class SOLT(TwelveTerm):
         """
         SOLT initializer.
 
-        If you arent using `sloppy_input`, then the order of the
+        If you aren't using `sloppy_input`, then the order of the
         standards must align.
 
         If `n_thrus!=None`, then the thru standard[s] must be last in
@@ -3840,7 +3840,7 @@ class TUGMultilineTRL(EightTerm):
 
         def compute_gamma(X_inv, M, lengths, gamma_est, inx=0):
             # gamma = alpha + 1j*beta is determined through linear weighted least-squares
-            # with inx you can choose the refrence line. doesn't make any difference.
+            # with inx you can choose the reference line. doesn't make any difference.
             lengths = lengths - lengths[inx]
             EX = (X_inv@M)[[0,-1],:]             # extract z and y columns
             EX = np.diag(1/EX[:,inx])@EX        # normalize to a reference line based on index `inx` (can be any)
@@ -3860,8 +3860,8 @@ class TUGMultilineTRL(EightTerm):
             return alpha + 1j*beta
 
         def solve_quadratic(v1, v2, inx, x_est):
-            # This is realted to solving the normalized error terms using nullspace approach.
-            # The variable `inx` allowes to reuse the function to shuffel the coeffiecient to get other error terms.
+            # This is related to solving the normalized error terms using nullspace approach.
+            # The variable `inx` allowes to reuse the function to shuffel the coefficient to get other error terms.
             v12,v13 = v1[inx]
             v22,v23 = v2[inx]
             mask = np.ones(v1.shape, bool)
@@ -5647,7 +5647,8 @@ class MultiportCal:
     multi-ports in which case a subnetwork is taken for calibration according to
     the key.
 
-    Example cal_dict for three port measurement:
+    Example cal_dict for three port measurement::
+
         {(0,1): {'method':SOLT, 'measured': [list of measured networks], 'ideals': [list of ideal networks]},
          (0,2): {'method':SOLT, 'measured': [list of measured networks], 'ideals': [list of ideal networks]}
         }
@@ -5656,7 +5657,7 @@ class MultiportCal:
     calibration. If None, no isolation calibration is performed.
 
     Parameters
-    --------------
+    ----------
     cal_dict : dictionary
         Dictionary of port pair keys as specified above.
     isolation: :class:`~skrf.network.Network` or None
@@ -6189,7 +6190,7 @@ def unterminate(ntwk, gamma_f, gamma_r):
         \Gamma_r = \frac{a1}{b1} ,\qquad\text{sourced by port 2}
 
     These can be measured by four-sampler VNA's by setting up
-    user-defined traces onboard the VNA. If the VNA doesnt have
+    user-defined traces onboard the VNA. If the VNA doesn't have
     4-samplers, then you can measure switch terms indirectly by using a
     two-tier two-port calibration. First do a SOLT, then convert
     the 12-term error coefs to 8-term, and pull out the switch terms.
@@ -6484,7 +6485,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
         approximate One-port network for the reflect.  if None, then
         we assume its a flush short (gamma=-1)
     return_all: bool
-        return all possible values fo reflect, one for each root-choice.
+        return all possible values for reflect, one for each root-choice.
         useful for troubleshooting.
 
     Returns
@@ -6520,7 +6521,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     # The variables a, b, c define a quadratic equation for which the solutions sol1 and sol2 correspond to the
     # ratios (r11/r21) and (r12/r22) from equations (30) and (31) in the paper
     # The quadratic equation has solutions sol1 = (-b-sqrt(b*b-4*a*c))/(2*a), sol2 = (-b+sqrt(b*b-4*a*c))/(2*a)
-    # For a=0 these become degenerate. Also the consequtive equations for x1 and x2 contain singularities for a=0 or c=0
+    # For a=0 these become degenerate. Also the consecutive equations for x1 and x2 contain singularities for a=0 or c=0
 
     sol1 = (-b-sqrtD)/(2*a)
     sol2 = (-b+sqrtD)/(2*a)

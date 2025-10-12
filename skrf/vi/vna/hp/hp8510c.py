@@ -107,7 +107,7 @@ class HP8510C(VNA):
         id_str = self.query('OUTPIDEN;')
         assert('HP8510' in id_str) # example: 'HP8510C.07.14: Aug 26  1998 '
 
-        # 8510s are slow. Actual work might take acutal 60 seconds.
+        # 8510s are slow. Actual work might take actual 60 seconds.
         self._resource.timeout = 60_000
         self._resource.read_termination = False # Binary mode doesn't work if we allow premature termination on \n
         self.read_raw = self._resource.read_raw

@@ -78,6 +78,7 @@ Circuit reduction
    :toctree: generated/
 
    reduce_circuit
+   Circuit._REDUCE_OPTIONS
 
 Graph representation
 --------------------
@@ -144,6 +145,29 @@ class Circuit:
             raise ImportError('networkx package as not been installed and is required.') from err
 
     class _REDUCE_OPTIONS(TypedDict):
+        """
+        Optional parameters passed to `reduce_circuit`.
+
+        Attributes
+        ----------
+        check_duplication : bool, optional.
+                If True, check if the connections have duplicate names. Default is True.
+        split_ground : bool, optional.
+                If True, split the global ground connection to independent ground connections. Default is True.
+        split_multi : bool, optional.
+                If True, use a splitter to handle connections involving more than two components. This approach
+                increases the computational load for individual computations. However, it proves advantageous for
+                batch processing by enabling a more comprehensive reduction of circuits, leading to more efficiency
+                in batch computations. Default is False.
+        max_nports : int, optional.
+                The maximum number of ports of a Network that can be reduced in circuit. If a Network in the
+                circuit has a number of ports (nports), using the Network.connect() method to reduce the circuit's
+                dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
+                This value depends on the performance of the computer and the scale of the circuit. Default is 20.
+        dynamic_networks : Sequence[Network], optional.
+                A sequence of Networks to ignore in the reduction process. Default is an empty tuple.
+
+        """
         check_duplication: NotRequired[bool]
         split_ground: NotRequired[bool]
         split_multi: NotRequired[bool]
@@ -180,38 +204,41 @@ class Circuit:
         **kwargs :
             keyword arguments passed to `reduce_circuit` method.
 
-            `check_duplication` kwarg controls whether to check the connections have duplicate names. Default is True.
-
-            `split_ground` kwarg controls whether to split the global ground connection to independant.
-            Default is False.
-
-            `max_nports` kwarg controls the maximum number of ports of a Network that can be reduced in circuit. If a
-            Network in the circuit has a number of ports (nports), using the Network.connect() method to reduce the
-            circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
-            This value depends on the performance of the computer and the scale of the circuit. Default is 20.
-
-            `dynamic_networks` kwarg is a sequence of Networks to be skipped during the reduction process.
-            Default is an empty tuple.
-
+            check_duplication : boolean. Default is True.
+                Controls whether to check the connections have duplicate names.
+            split_ground : boolean. Default is False.
+                Controls whether to split the global ground connection to independent.
+            split_multi : boolean, optional.
+                If True, use a splitter to handle connections involving more than two components. This approach
+                increases the computational load for individual computations. However, it proves advantageous for
+                batch processing by enabling a more comprehensive reduction of circuits, leading to more efficiency
+                in batch computations. Default is False.
+            max_nports : int. Default is 20.
+                Controls the maximum number of ports of a Network that can be reduced in circuit. If a
+                Network in the circuit has a number of ports (nports), using the Network.connect() method to reduce the
+                circuit's dimensions becomes less efficient compared to directly calculating it with Circuit.s_external.
+                This value depends on the performance of the computer and the scale of the circuit.
+            dynamic_networks : tuple. Default is an empty tuple.
+                Sequence of Networks to be skipped during the reduction process.
 
         Examples
         --------
-        Example of connections between two 1-port networks:
-        ::
+        Example of connections between two 1-port networks::
+
             connections = [
                 [(network1, 0), (network2, 0)],
             ]
 
         Example of a connection between three 1-port networks connected
-        to a single node:
-        ::
+        to a single node::
+
             connections = [
                 [(network1, 0), (network2, 0), (network3, 0)]
             ]
 
         Example of a connection between two 1-port networks (port1 and port2)
-        and two 2-ports networks (ntw1 and ntw2):
-        ::
+        and two 2-ports networks (ntw1 and ntw2)::
+
             connections = [
                 [(port1, 0), (ntw1, 0)],
                 [(ntw1, 1), (ntw2, 0)],
@@ -219,8 +246,8 @@ class Circuit:
             ]
 
         Example of a connection between three 1-port networks (port1, port2 and port3)
-        and a 3-ports network (ntw):
-        ::
+        and a 3-ports network (ntw)::
+
             connections = [
                 [(port1, 0), (ntw, 0)],
                 [(port2, 0), (ntw, 1)],
@@ -228,8 +255,8 @@ class Circuit:
             ]
 
         Example of a connection between three 1-port networks (port1, port2 and open)
-        and a 3-ports network (ntw):
-        ::
+        and a 3-ports network (ntw)::
+
             connections = [
                 [(port1, 0), (ntw, 0)],
                 [(open, 0), (ntw, 1)],
@@ -243,8 +270,8 @@ class Circuit:
             ]
 
         Example of a connection between three 1-port networks (port1, port2 and match)
-        and a 3-ports network (ntw):
-        ::
+        and a 3-ports network (ntw)::
+
             connections = [
                 [(port1, 0), (ntw, 0)],
                 [(match, 0), (ntw, 1)],
@@ -290,7 +317,7 @@ class Circuit:
         # All frequencies are the same, Circuit frequency can be any of the ntw
         self.frequency = ntws[0].frequency
 
-        # Check that a (ntwk, port) combination appears only once in the connexion map
+        # Check that a (ntwk, port) combination appears only once in the connection map
         Circuit.check_duplicate_names(self.connections_list)
 
         # Get the keyword arguments for the reduce_circuit method
@@ -362,7 +389,7 @@ class Circuit:
 
             `check_duplication` kwarg controls whether to check the connections have duplicate names. Default is True.
 
-            `split_ground` kwarg controls whether to split the global ground connection to independant.
+            `split_ground` kwarg controls whether to split the global ground connection to independent.
             Default is False.
 
             `max_nports` kwarg controls the maximum number of ports of a Network that can be reduced in circuit. If a
@@ -381,7 +408,7 @@ class Circuit:
 
         See Also
         --------
-        Circuit.__init__ : Circuit construtor method.
+        Circuit.__init__ : Circuit constructor method.
 
 
         Examples
@@ -448,7 +475,7 @@ class Circuit:
     @classmethod
     def check_duplicate_names(cls, connections_list: list[tuple[int, tuple[Network, int]]]):
         """
-        Check that a (ntwk, port) combination appears only once in the connexion map
+        Check that a (ntwk, port) combination appears only once in the connection map
         """
         nodes = [(ntwk.name, port) for (_, (ntwk, port)) in connections_list]
         if len(nodes) > len(set(nodes)):
@@ -703,7 +730,7 @@ class Circuit:
         Returns
         -------
         dict
-            Dictionnary of Networks
+            Dictionary of Networks
         """
         if not connections:
             connections = self.connections
@@ -750,8 +777,8 @@ class Circuit:
         """
         Return the full list of connections, including intersections.
 
-        The resulting list if of the form:
-        ::
+        The resulting list if of the form::
+
             [
              [connexion_number, connexion],
              [connexion_number, connexion],
@@ -836,6 +863,7 @@ class Circuit:
         Return a dictionary of all intersections with associated ports and z0:
 
         ::
+
             { k: [(ntw1_name, ntw1_port), (ntw1_z0, ntw2_name, ntw2_port), ntw2_z0], ... }
         """
         inter_dict = {}
@@ -860,8 +888,8 @@ class Circuit:
         """
         Return a dictionary describing the port and z0 of all graph edges.
 
-        Dictionary is in the form:
-        ::
+        Dictionary is in the form::
+
             {('ntw1_name', 'X0'): '3 (50+0j)',
              ('ntw2_name', 'X0'): '0 (50+0j)',
              ('ntw2_name', 'X1'): '2 (50+0j)', ... }
@@ -993,7 +1021,7 @@ class Circuit:
         There is a numerical bottleneck in this function,
         when creating the block diagonal matrice [X] from the [X]_k matrices.
         """
-        # Check if X_F is alread computed, if so, convert it to C-order
+        # Check if X_F is already computed, if so, convert it to C-order
         if self.__dict__.get('X_F', None) is not None:
             return np.ascontiguousarray(self.X_F)
 
@@ -1016,7 +1044,7 @@ class Circuit:
         F-order has a numerical bottleneck in matrix operations, but the assignment
         is more efficient.
         """
-        # Check if X is alread computed, if so, convert it to F-order
+        # Check if X is already computed, if so, convert it to F-order
         if self.__dict__.get('X', None) is not None:
             return np.asfortranarray(self.X)
 
@@ -1033,7 +1061,7 @@ class Circuit:
             Global scattering matrix of the networks.
             Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
         """
-        # Check if C_F is alread computed, if so, convert it to C-order
+        # Check if C_F is already computed, if so, convert it to C-order
         if self.__dict__.get('C_F', None) is not None:
             return np.ascontiguousarray(self.C_F)
 
@@ -1056,7 +1084,7 @@ class Circuit:
         F-order has a numerical bottleneck in matrix operations, but the assignment
         is more efficient.
         """
-        # Check if C is alread computed, if so, convert it to F-order
+        # Check if C is already computed, if so, convert it to F-order
         if self.__dict__.get('C', None) is not None:
             return np.asfortranarray(self.C)
 
@@ -1742,8 +1770,8 @@ class Circuit:
         """
         Plot the graph of the circuit using networkx drawing capabilities.
 
-        Customisation options with default values:
-        ::
+        Customisation options with default values::
+
             'network_shape': 's'
             'network_color': 'gray'
             'network_size', 300
@@ -1869,7 +1897,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     check_duplication : bool, optional.
             If True, check if the connections have duplicate names. Default is True.
     split_ground : bool, optional.
-            If True, split the global ground connection to independant ground connections. Default is True.
+            If True, split the global ground connection to independent ground connections. Default is True.
     split_multi : bool, optional.
             If True, use a splitter to handle connections involving more than two components. This approach
             increases the computational load for individual computations. However, it proves advantageous for

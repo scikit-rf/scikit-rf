@@ -206,6 +206,7 @@ class Network:
 
     For instructions on how to create Network see  :func:`__init__`.
     An n-port network [#TwoPortWiki]_ may be defined by three quantities
+
     * network parameter matrix (s, z, or y-matrix)
     * port characteristic impedance matrix
     * frequency information
@@ -266,7 +267,6 @@ class Network:
     :func:`plot_s_db`          Plot magnitude (in dB) of s-parameters vs frequency.
     :func:`plot_s_deg`         Plot phase of s-parameters (in degrees) vs frequency.
     :func:`plot_s_deg_unwrap`  Plot phase of s-parameters (in unwrapped degrees) vs frequency.
-
     =========================  =============================================
 
     :class:`Network`  objects can be created from a touchstone or pickle
@@ -349,7 +349,7 @@ class Network:
         name : str, optional
             Name of this Network. if None will try to use file, if it is a str
         params : dict, optional
-            Dictionnary of parameters associated with the Network
+            Dictionary of parameters associated with the Network
         comments : str, optional
             Comments associated with the Network
         s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
@@ -1019,7 +1019,7 @@ class Network:
         Returns
         -------
         s : complex :class:`numpy.ndarray` of shape `fxnxn`
-            The scattering parameter matrix.
+            The scattering parameter [#]_ matrix.
 
         See Also
         --------
@@ -1046,7 +1046,7 @@ class Network:
         Returns
         -------
         s : complex :class:`numpy.ndarray` of shape `fxnxn`
-            The scattering parameter matrix.
+            The scattering parameter [#]_ matrix.
 
         See Also
         --------
@@ -1073,7 +1073,7 @@ class Network:
         Returns
         -------
         s : complex :class:`numpy.ndarray` of shape `fxnxn`
-            The scattering parameter matrix.
+            The scattering parameter [#]_ matrix.
 
         See Also
         --------
@@ -1806,7 +1806,7 @@ class Network:
     @property
     def max_stable_gain(self) -> np.ndarray:
         r"""
-        Maximum stable power gain (in linear).
+        Maximum stable power gain [1]_ (in linear).
 
         .. math::
 
@@ -1855,7 +1855,7 @@ class Network:
         The maximum available power gain is defined for a unconditionally stable network (K > 1).
         For K <= 1, this property returns the maximum stable gain instead.
         This behavior is similar to the max_gain() function in Keysight's Advanced Design System
-        (but differs in decibel or linear) [3]_.
+        (but differs in decibel or linear) [1]_ [2]_ [3]_.
 
         References
         ----------
@@ -1883,7 +1883,7 @@ class Network:
     @property
     def unilateral_gain(self) -> np.ndarray:
         r"""
-        Mason's unilateral power gain (in linear).
+        Mason's unilateral power gain [1]_ (in linear).
 
         .. math::
 
@@ -5365,7 +5365,7 @@ def parallelconnect(ntwks: Sequence[Network] | Network,
     Note
     ----
     This function calculates the resulting scattering parameters after parallel connecting
-    a set of networks. This algorithm, adapted from the `Circuit.s` method, constructs the
+    a set of networks. This algorithm [#]_, adapted from the `Circuit.s` method, constructs the
     concatenated intersection matrix [X] and the global scattering matrix [C] to perform
     the calculations.
 
@@ -5468,7 +5468,7 @@ def parallelconnect(ntwks: Sequence[Network] | Network,
         # Convert the int port to list
         port = [port] if isinstance(port, int) else port
 
-        # Che the port indecies valid or not
+        # Che the port indices valid or not
         if len(port) != len(set(port)):
             raise ValueError(f"{ntw.name}'s port should not be duplicated.")
         if max(port) >= nports or min(port) < 0:
@@ -6273,7 +6273,7 @@ def s_error(ntwkA: Network, ntwkB: Network, error_function: ErrorFunctionsT = "a
 
     return error
 
-## Building composit networks from sub-networks
+## Building composite networks from sub-networks
 def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network:
     r"""
     Build an N-port Network from list of N one-ports.
@@ -6314,7 +6314,7 @@ def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
     From these measurements, you can construct p.s3p.
 
     By default all entries of result.s are filled with 0's, in case  you
-    dont fully specify the entire s-matrix of the resultant ntwk.
+    don't fully specify the entire s-matrix of the resultant ntwk.
 
     Parameters
     ----------
@@ -6470,13 +6470,13 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.
         C[:, k + nB :, k + nB :] = A[:, k:, k:]
         C[:, k : k + nB, k : k + nB] = B
 
-        # call innerconnect_s() on composit matrix C
+        # call innerconnect_s() on composite matrix C
         return innerconnect_s(C, k + nB, k + l)
     else:
         C[:, :nA, :nA] = A
         C[:, nA:, nA:] = B
 
-        # call innerconnect_s() on composit matrix C
+        # call innerconnect_s() on composite matrix C
         return innerconnect_s(C, k, nA + l)
 
 
@@ -6776,7 +6776,7 @@ def s2y(s: np.ndarray, z0:NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.n
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -6871,7 +6871,7 @@ def s2t(s: np.ndarray) -> np.ndarray:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7134,7 +7134,7 @@ def z2y(z: np.ndarray) -> np.ndarray:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7186,7 +7186,7 @@ def z2t(z: np.ndarray) -> NoReturn:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7278,7 +7278,7 @@ def a2z(a: np.ndarray) -> np.ndarray:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7322,7 +7322,7 @@ def z2a(z: np.ndarray) -> np.ndarray:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7436,7 +7436,7 @@ def y2s(y: NumberLike, z0:NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> Netw
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7530,7 +7530,7 @@ def y2z(y: np.ndarray) -> np.ndarray:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7583,7 +7583,7 @@ def y2t(y: np.ndarray) -> NoReturn:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7602,12 +7602,12 @@ def y2t(y: np.ndarray) -> NoReturn:
 
 def t2s(t: np.ndarray) -> np.ndarray:
     """
-    Converts scattering transfer parameters [#]_ to scattering parameters [#]_.
+    Converts scattering transfer parameters [1]_ to scattering parameters [2]_.
 
     transfer parameters are also referred to as
     'wave cascading matrix', this function only operates on 2N-ports
     networks with same number of input and output ports, also known as
-    'balanced networks'.
+    'balanced networks' [3]_.
 
     Parameters
     ----------
@@ -7630,7 +7630,7 @@ def t2s(t: np.ndarray) -> np.ndarray:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7641,9 +7641,9 @@ def t2s(t: np.ndarray) -> np.ndarray:
 
     References
     -----------
-    .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
-    .. [#] http://en.wikipedia.org/wiki/S-parameters
-    .. [#] Janusz A. Dobrowolski, "Scattering Parameter in RF and Microwave Circuit Analysis and Design",
+    .. [1] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
+    .. [2] http://en.wikipedia.org/wiki/S-parameters
+    .. [3] Janusz A. Dobrowolski, "Scattering Parameter in RF and Microwave Circuit Analysis and Design",
            Artech House, 2016, pp. 65-68
     """
     z, y, x = t.shape
@@ -7696,7 +7696,7 @@ def t2z(t: np.ndarray) -> NoReturn:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7740,7 +7740,7 @@ def t2y(t: np.ndarray) -> NoReturn:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7784,7 +7784,7 @@ def h2z(h: np.ndarray) -> np.ndarray:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -7877,7 +7877,7 @@ def z2h(z: np.ndarray) -> np.ndarray:
     z2t
     y2s
     y2z
-    y2z
+    y2t
     t2s
     t2z
     t2y
@@ -8113,7 +8113,7 @@ def renormalize_s(
         s_def_old = s_def
     if s_def not in S_DEFINITIONS:
         raise ValueError('s_def parameter should be one of:', S_DEFINITIONS)
-    # thats a heck of a one-liner!
+    # that's a heck of a one-liner!
     return z2s(s2z(s, z0=z_old, s_def=s_def_old), z0=z_new, s_def=s_def)
 
 def fix_param_shape(p: NumberLike):
@@ -8274,7 +8274,7 @@ def flip(a: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     a : :class:`numpy.ndarray`
-            scattering parameter matrix. shape should be should be `2nx2n`, or
+            scattering parameter matrix. shape should be `2nx2n`, or
             `fx2nx2n`
 
     Returns
@@ -8381,7 +8381,7 @@ def assert_nports_equal(ntwkA: Network, ntwkB: Network) -> bool:
 # this is needed for port impedance mismatches
 def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: SdefT = 'traveling') -> np.ndarray:
     """
-    Create a two-port s-matrix for a impedance mis-match.
+    Create a two-port s-matrix for a impedance mismatch.
 
     Parameters
     ----------
@@ -8398,7 +8398,7 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike, s_def: SdefT = 'traveling
 
     Returns
     -------
-    s' : 2-port s-matrix for the impedance mis-match
+    s : 2-port s-matrix for the impedance mismatch
 
     References
     ----------
@@ -8455,7 +8455,7 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network | None = None, name : str | 
     Note
     ----
     The resultant Network is copied from `ntwk1`, so its various
-    properties(name, frequency, etc) are inherited from that Network.
+    properties(name, frequency, etc.) are inherited from that Network.
 
 
     Examples

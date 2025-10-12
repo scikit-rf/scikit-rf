@@ -5,7 +5,13 @@ This list has been extracted from a `"scikit-rf" research on OpenAlex <https://o
 
 2025
 ----
-
+* Molina‐Cuberos, Gregorio J., García-Collado, Ángel J. et al., "A Reconfigurable Metasurface for Linear-to-Circular Polarization Conversion Using Mechanical Rotation", Electronics, 2025
+* Kuznetsov, Vadim, "Microstrip Line Modeling Taking into Account Dispersion Using a General-Purpose SPICE Simulator", Journal of Low Power Electronics and Applications, 2025
+* Van de Lindt, J.G., Wukitch, S. et al., "Design workflow of a symmetric traveling wave antenna for fast ion production on DD tokamaks", Nuclear Fusion, 2025
+* Gabe Hoshino, S. Knirck, et al., "First Axionlike Particle Results from a Broadband Search for Wavelike Dark Matter in the 44 to 52 μeV Range with a Coaxial Dish Antenna", Physical Review Letters, 2025
+* Paliwoda, Matt, Tejero, Erik, et al., "De-embedding a pair of dipoles to calibrate the mutual impedance plasma density diagnostic", Frontiers in Astronomy and Space Sciences, 2025
+* Greenfield, Jonathan, Bell, Cynthia S., et al., "Kinetic inductance and non-linearity of MgB2 films at 4K", Applied Physics Letters, 2025
+* Stepanov, I., et al. "Setup and first operation of the Wendelstein 7-X ICRH matching system." Fusion Engineering and Design 211 (2025): 114794. https://doi.org/10.1016/j.fusengdes.2024.114794
 * Paliwoda, Matthew Crawford, Erik M. Tejero, and George R. Gatling. "De-embedding a pair of dipoles to calibrate the mutual impedance plasma density diagnostic." Frontiers in Astronomy and Space Sciences 12: 1519446.
 * Hillairet, Julien. "WEST Ion Cyclotron Antenna electrical model digital twin." OSSFE 2025-Open-Source Software for Fusion Energy. Zenodo, 2025. https://dx.doi.org/10.5281/zenodo.15053680
 * Mueller, Mark Niklas, and Martin Vechev. "Automated Benchmark Generation for Repository-Level Coding Tasks." ICLR 2025 Third Workshop on Deep Learning for Code. https://openreview.net/forum?id=BQA7dkV3iZ
@@ -19,8 +25,7 @@ This list has been extracted from a `"scikit-rf" research on OpenAlex <https://o
 
 2024
 ----
-
-* Stepanov, I., et al. "Setup and first operation of the Wendelstein 7-X ICRH matching system." Fusion Engineering and Design 211 (2025): 114794. https://doi.org/10.1016/j.fusengdes.2024.114794
+* Emser, A. L. , Metzger, C. et al., "Thin-film quartz for high-coherence piezoelectric phononic crystal resonators ", Physical Review Applied, 2024
 * Prod'homme, Hugo, and Philipp del Hougne. "Updatable Closed-Form Evaluation of Arbitrarily Complex Multi-Port Network Connections." arXiv preprint arXiv:2412.17884 (2024). https://doi.org/10.48550/arXiv.2412.17884
 * Gregory, Andrew P., Peter D. Woolliams, and Stephen M. Hanham. "Robust Algorithms for Fitting Q-Factor in the Complex Domain." IEEE Access (2024). https://doi.org/10.1109/ACCESS.2024.3514707
 * Karime, Ahmad, Alberto Battistel, and Knut Möller. "Vector Network Analyzer (VNA) Measurements for Electrical Impedance Tomography." Current Directions in Biomedical Engineering. Vol. 10. No. 4. De Gruyter, 2024. https://doi.org/10.1515/cdbme-2024-2088

@@ -296,7 +296,7 @@ class CPWTestCase(unittest.TestCase):
 
     def test_zero_thickness(self):
         """
-        Test if alpha_conductor is nullified when thikness = 0. or None
+        Test if alpha_conductor is nullified when thickness = 0. or None
         """
         assert_array_almost_equal(self.cpw4.alpha_conductor, 0.00, decimal=6)
         assert_array_almost_equal(self.cpw5.alpha_conductor, 0.00, decimal=6)

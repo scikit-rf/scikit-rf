@@ -293,10 +293,10 @@ class Qfactor:
         method : str, optional
             Fitting method : 'NLQFIT6' (default), 'NLQFIT7', 'NLQFIT8':
 
-            - 'NLQFIT6': Least Square Minimum of Eq.21 [MAT58]_ with 6 coeffcients.
-            - 'NLQFIT7': Least Square Minimum of Eq.26 [MAT58]_ with 7 coeffcients,
+            - 'NLQFIT6': Least Square Minimum of Eq.21 [MAT58]_ with 6 coefficients.
+            - 'NLQFIT7': Least Square Minimum of Eq.26 [MAT58]_ with 7 coefficients,
               including one that characterize the trans. line length.
-            - 'NLQFIT8': Least Square Minimum of Eq.43 [MAT58]_ with 8 coeffcients,
+            - 'NLQFIT8': Least Square Minimum of Eq.43 [MAT58]_ with 8 coefficients,
               A model for frequency-dependent leakage.
         loop_plan : str, optional
             Defines order of steps used by the fitting process.

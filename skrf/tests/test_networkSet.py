@@ -321,7 +321,7 @@ class NetworkSetTestCase(unittest.TestCase):
         self.assertEqual(self.ns_params.sel(), self.ns_params)
         self.assertEqual(self.ns_params.sel({}), self.ns_params)
 
-        # should pass a dictionnary
+        # should pass a dictionary
         self.assertRaises(TypeError, self.ns_params.sel, 'wrong')
         self.assertRaises(TypeError, self.ns_params.sel, 1)
 
@@ -364,7 +364,7 @@ class NetworkSetTestCase(unittest.TestCase):
         self.assertTrue(np.all(ns2.interpolate_from_params('s', 0.3).s == 0.3))
 
     def test_params_values(self):
-        """Test the dictionnary containing all parameters names and values"""
+        """Test the dictionary containing all parameters names and values"""
         # returns None when no parameters are defined in a NetworkSet
         self.assertEqual(self.ns.params_values, None)
         # return a dict when parameters have been defined

@@ -978,7 +978,7 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         ps = self.phase_shifter(phase_deg)
         hybrid1, hybrid2 = self.hybrid(), self.hybrid()
         # connecting the networks together.
-        # NB: in order to know which port corresponds to which, it is usefull
+        # NB: in order to know which port corresponds to which, it is useful
         # to define different port characteristic impedances like
         # hybrid1.z0 = [11, 12, 13, 14]
         # hybrid2.z0 = [21, 22, 23, 24]

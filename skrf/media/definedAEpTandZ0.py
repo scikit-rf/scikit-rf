@@ -118,7 +118,7 @@ class DefinedAEpTandZ0(Media):
         where :math:`Z_n` is the nominal impedance and :math:`Z_0` is the
         characteristic impedance.
     Z0 : number, array-like, or None
-        deprecated parameter, only emmit a deprecation warning.
+        deprecated parameter, only emit a deprecation warning.
     f_low : number, default 1e3, optional
         Low frequency in Hz for  for Djordjevic/Svennson dispersion model.
         See `ep_r`.
