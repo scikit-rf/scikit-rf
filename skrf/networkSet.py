@@ -640,7 +640,7 @@ class NetworkSet:
         else:
             return sorted_ns
 
-    def rand(self, n: int = 1):
+    def rand(self, n: int = 1, rng: None | np.random.Generator = None):
         """
         Return `n` random samples from this NetworkSet.
 
@@ -648,9 +648,15 @@ class NetworkSet:
         ----------
         n : int
             number of samples to return (default is 1)
+        rng : :class:`numpy.random.Generator` or None
+            override the global :mod:`numpy` random number generator,
+            useful for multi-threaded programs since
+            :func:`skrf.mathFunctions.set_rand_rng` is not thread-safe.
 
         """
-        idx = np.random.default_rng().randint(0,len(self), n)
+        if rng is None:
+            rng = mf.rand_rng()
+        idx = rng.randint(0,len(self), n)
         out = [self.ntwk_set[k] for k in idx]
 
         if n ==1:
