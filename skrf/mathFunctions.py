@@ -65,6 +65,15 @@ Special Functions
         null
         cross_ratio
 
+Random Number Generation
+--------------------------------
+.. autosummary::
+        :toctree: generated/
+
+        set_rand_rng
+        rand_rng
+        rand_c
+
 Various Utility Functions
 --------------------------
 .. autosummary::
@@ -872,7 +881,42 @@ def flatten_c_mat(s: NumberLike, order: str = 'F'):
     return complex2Scalar(s.flatten(order='F'))
 
 
-def rand_c(*size) -> np.ndarray:
+_global_rng = np.random.default_rng()
+
+
+def set_rand_rng(rng: np.random.Generator) -> None:
+    """
+    Set the global :mod:`numpy` random number generator instance
+    for generating random numbers in scikit-rf. This is useful for
+    fixing a random seed for reproducible Monte Carlo analysis.
+
+    This function is expected to be called before using any scikit-rf
+    features, since it's a global variable and thread-unsafe. To temporarily
+    change the random number generator of a particular method (e.g.
+    :meth:`skrf.media.Media.random`), use the ``rng`` argument instead.
+
+    Parameters
+    -----------
+    rng : :class:`numpy.random.Generator`
+        Any random number generator accepted by :mod:`numpy`.
+
+    Examples
+    ---------
+    >>> set_rand_rng(np.random.default_rng(seed=42))
+    """
+    global _global_rng
+    _global_rng = rng
+
+
+def rand_rng() -> np.random.Generator:
+    """
+    Obtain the global :mod:`numpy` random number generator instance.
+    By default, it is :func:`numpy.random.default_rng`.
+    """
+    return _global_rng
+
+
+def rand_c(*size, rng=None) -> np.ndarray:
     """
     Creates a complex random array of shape s.
 
@@ -883,14 +927,18 @@ def rand_c(*size) -> np.ndarray:
     s : list-like
         shape of array
 
+    rng : :class:`numpy.random.Generator` or None
+        Any random number generator accepted by :mod:`numpy`.
+
     Examples
     ---------
-    >>> x = rf.rand_c(2,2)
+    >>> x1 = rf.rand_c(2, 2)
+    >>> x2 = rf.rand_c(2, 2, np.random.default_rng(seed=42))
     """
-    rng = np.random.default_rng()
+    if rng is None:
+        rng = _global_rng
     return 1-2*rng.random(size) + \
         1j-2j*rng.random(size)
-
 
 
 def psd2TimeDomain(f: np.ndarray, y: np.ndarray, windowType: str = 'hamming'):
