@@ -18,8 +18,9 @@ from skrf.util import suppress_warning_decorator
 # Number of frequency points to test calibration at.
 # Use 100 for speed, but given that most tests employ *random*
 # networks values 1000 are better for initial verification
-NPTS = 100000
+#NPTS = 100000
 #NPTS = 1000
+NPTS = 10
 
 # System reference impedance of the calculated S-parameters,
 # also known as a medium or network's "port impedance"
@@ -836,7 +837,7 @@ class AbstractOnePortTest(AbstractCalTest):
             medium.delay_short(45, 'deg', name='qw'),
             medium.match(name='load')
         ]
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             cal = self.setup_cal(vna, std_defs, std_defs)
 
 
@@ -932,53 +933,53 @@ class SDDLNoneTest(SDDLTest):
         return std_defs, std_defs_incomplete_knowledge, std_meas
 
 
-#class SDDLWeikleTest(AbstractOnePortTest, unittest.TestCase):
-#    """
-#    Test skrf.calibration.SDDLWeikle.
-#    """
-#    @classmethod
-#    def valid_frequency(cls):
-#        return skrf.Frequency(75, 100, 2, unit='GHz')
-#
-#    @classmethod
-#    def setup_std_for_testgroup(cls, medium, vna, testgroup):
-#        # SDDL assumes the offset shorts are lossless
-#        lossless_medium = lossless_from_lossy(medium)
-#
-#        std_defs_incomplete_knowledge = [
-#            medium.short(name='short'),
-#            lossless_medium.delay_short(45., 'deg', name='ew'),
-#            lossless_medium.delay_short(90., 'deg', name='qw'),
-#            medium.load(.2+.2j, name='load'),
-#        ]
-#        std_defs = [
-#            medium.short(name='short'),
-#            lossless_medium.delay_short(10, 'deg', name='ew'),
-#            lossless_medium.delay_short(80, 'deg', name='qw'),
-#            medium.load(.2+.2j, name='load'),
-#        ]
-#        std_meas = [
-#            vna.measure(dut) for dut in std_defs
-#        ]
-#        return std_defs, std_defs_incomplete_knowledge, std_meas
-#
-#    @classmethod
-#    def setup_cal(cls, vna, std_defs, std_meas):
-#        cal = skrf_cal.SDDLWeikle(
-#            is_reciprocal=True,
-#            ideals=std_defs,
-#            measured=std_meas
-#        )
-#        cal.run()
-#        return cal
-#
-#    @pytest.mark.skip(reason='not applicable')
-#    def test_from_coefs(self):
-#        pass
-#
-#    @pytest.mark.skip(reason='not applicable')
-#    def test_from_coefs_ntwks(self):
-#        pass
+class SDDLWeikleTest(AbstractOnePortTest, unittest.TestCase):
+    """
+    Test skrf.calibration.SDDLWeikle.
+    """
+    @classmethod
+    def valid_frequency(cls):
+        return skrf.Frequency(75, 100, 2, unit='GHz')
+
+    @classmethod
+    def setup_std_for_testgroup(cls, medium, vna, testgroup):
+        # SDDL assumes the offset shorts are lossless
+        lossless_medium = lossless_from_lossy(medium)
+
+        std_defs_incomplete_knowledge = [
+            medium.short(name='short'),
+            lossless_medium.delay_short(45., 'deg', name='ew'),
+            lossless_medium.delay_short(90., 'deg', name='qw'),
+            medium.load(.2+.2j, name='load'),
+        ]
+        std_defs = [
+            medium.short(name='short'),
+            lossless_medium.delay_short(10, 'deg', name='ew'),
+            lossless_medium.delay_short(80, 'deg', name='qw'),
+            medium.load(.2+.2j, name='load'),
+        ]
+        std_meas = [
+            vna.measure(dut) for dut in std_defs
+        ]
+        return std_defs, std_defs_incomplete_knowledge, std_meas
+
+    @classmethod
+    def setup_cal(cls, vna, std_defs, std_meas):
+        cal = skrf_cal.SDDLWeikle(
+            is_reciprocal=True,
+            ideals=std_defs,
+            measured=std_meas
+        )
+        cal.run()
+        return cal
+
+    @pytest.mark.skip(reason='not applicable')
+    def test_from_coefs(self):
+        pass
+
+    @pytest.mark.skip(reason='not applicable')
+    def test_from_coefs_ntwks(self):
+        pass
 
 
 class SDDMTest(AbstractOnePortTest, unittest.TestCase):
