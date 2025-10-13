@@ -1675,7 +1675,8 @@ class Media(ABC):
         return result
 
     def random(self, n_ports: int = 1, reciprocal: bool = False, matched: bool = False,
-               symmetric: bool = False, **kwargs) -> Network:
+               symmetric: bool = False, rng: None | np.random.Generator = None,
+               **kwargs) -> Network:
         r"""
         Complex random network.
 
@@ -1692,6 +1693,10 @@ class Media(ABC):
             makes s-matrix diagonal have single value ($S_{mm}=S_{nn}$)
         matched : bool
             makes diagonals of s-matrix zero
+        rng : :class:`numpy.random.Generator` or None
+            override the global :mod:`numpy` random number generator,
+            useful for multi-threaded programs since
+            :func:`skrf.mathFunctions.set_rand_rng` is not thread-safe.
 
         \*\*kwargs : passed to :class:`~skrf.network.Network`
                 initializer
@@ -1702,7 +1707,7 @@ class Media(ABC):
                 the network
         """
         result = self.match(nports = n_ports, **kwargs)
-        result.s = mf.rand_c(self.frequency.npoints, n_ports,n_ports)
+        result.s = mf.rand_c(self.frequency.npoints, n_ports,n_ports, rng=rng)
         result.port_modes = np.array(["S"] * result.nports)
         if reciprocal and n_ports>1:
             for m in range(n_ports):

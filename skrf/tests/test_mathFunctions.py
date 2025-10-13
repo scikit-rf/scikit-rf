@@ -7,7 +7,7 @@ from numpy.testing import assert_almost_equal, assert_equal
 
 import skrf as rf
 from skrf.constants import EIG_MIN
-from skrf.mathFunctions import LOG_OF_NEG
+from skrf.mathFunctions import LOG_OF_NEG, rand_c, set_rand_rng
 
 
 class TestUnitConversions(unittest.TestCase):
@@ -207,3 +207,29 @@ class TestUnitConversions(unittest.TestCase):
         np.testing.assert_allclose(A2[:,0,0], EIG_MIN)
         A3 = rf.nudge_eig(A, min_eig=1e-10)
         np.testing.assert_allclose(A3[:,0,0], 1e-10)
+
+
+class TestRandom(unittest.TestCase):
+    """
+    Test set_rand_rng().
+    """
+    def setUp(self):
+        pass
+
+    def test_set_rand_rng(self):
+        set_rand_rng(np.random.default_rng(seed=42))
+        result1_seed42 = rand_c(2, 2)
+
+        set_rand_rng(np.random.default_rng(seed=43))
+        result1_seed43 = rand_c(2, 2)
+
+        set_rand_rng(np.random.default_rng(seed=42))
+        result2_seed42 = rand_c(2, 2)
+
+        set_rand_rng(np.random.default_rng(seed=43))
+        result2_seed43 = rand_c(2, 2)
+
+        self.assertTrue((result1_seed42 == result2_seed42).all())
+        self.assertTrue((result1_seed43 == result2_seed43).all())
+        self.assertFalse((result1_seed42 == result1_seed43).all())
+        self.assertFalse((result2_seed42 == result2_seed43).all())
