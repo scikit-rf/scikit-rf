@@ -295,7 +295,7 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
 
     def test_input_networks_1port(self):
         # test users do not enter 2-port networks by accident
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             wg = self.wg
             ideals = [
                     two_port_reflect(wg.short( name='short'), wg.short( name='short')),
@@ -304,7 +304,9 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
                     wg.match( name='load'),
                     ]
             measured = [self.measure(k) for k in ideals]
-            cal = rf.OnePort(
+            # create another calibration instance of the same class
+            cal_class = type(self.cal)
+            cal = cal_class(
                is_reciprocal = True,
                ideals = ideals,
                measured = measured,

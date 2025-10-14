@@ -1133,6 +1133,12 @@ class OnePort(Calibration):
         Calibration.__init__(self, measured, ideals,
                              *args, **kwargs)
 
+    def _check_input(self):
+        if not all([n.number_of_ports==1 for n in self.ideals]):
+            raise ValueError(f'ideals for {self.family} should be 1-port Networks')
+        if not all([n.number_of_ports==1 for n in self.measured]):
+            raise ValueError(f'measured networks for {self.family} should be 1-port Networks')
+
     def run(self):
         """ Run the calibration algorithm.
         """
@@ -1142,10 +1148,7 @@ class OnePort(Calibration):
         mList = [self.measured[k].s.reshape((-1,1)) for k in range(numStds)]
         iList = [self.ideals[k].s.reshape((-1,1)) for k in range(numStds)]
 
-        if not all([n.number_of_ports==1 for n in self.ideals]):
-            raise RuntimeError(f'ideals for {self.family} should be 1-port Networks')
-        if not all([n.number_of_ports==1 for n in self.measured]):
-            raise RuntimeError(f'measured networks for {self.family} should be 1-port Networks')
+        self._check_input()
 
         # ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
         fLength = len(mList[0])
@@ -1309,6 +1312,8 @@ class SDDLWeikle(OnePort):
                              ideals =ideals, **kwargs)
 
     def run(self):
+        self._check_input()
+
         #measured reflection coefficients
         w_s = self.measured[0].s.flatten() # short
         w_1 = self.measured[1].s.flatten() # delay short 1
@@ -1451,6 +1456,7 @@ class SDDL(OnePort):
 
 
     def run(self):
+        self._check_input()
 
         #measured impedances
         d = s2z(self.measured[0].s,1) # short
@@ -1532,6 +1538,7 @@ class PHN(OnePort):
 
 
     def run(self):
+        self._check_input()
 
         # ideals (in impedance)
         a = s2z(self.ideals[0].s,1).flatten() # half known
