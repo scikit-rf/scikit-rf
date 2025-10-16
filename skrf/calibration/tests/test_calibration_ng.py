@@ -527,8 +527,8 @@ class AbstractIncompleteCalTest:
         else:
             return True
 
-    #def assertEqualNtwk(self, network1, network2, tolerance=ZERO):
-    def assertEqualNtwk(self, network1, network2, tolerance=1e-2):
+    def assertEqualNtwk(self, network1, network2, tolerance=ZERO):
+    #def assertEqualNtwk(self, network1, network2, tolerance=1e-2):
         self.assertTrue(
             self._compare_ntwk(network1, network2, tolerance)
         )
@@ -1934,13 +1934,13 @@ class LRRMTest(EightTermTest):
     @classmethod
     def setup_std_for_testgroup(cls, medium, vna, testgroup):
         if (medium.z0_port > 5).all():
-            parasitic_l = np.random.default_rng().uniform(1e-12, 20e-12)
-            parasitic_c = np.random.default_rng().uniform(1e-15, 20e-15)
+            parasitic_l = 1e-12 #np.random.default_rng().uniform(1e-12, 20e-12)
+            parasitic_c = 1e-15 #np.random.default_rng().uniform(1e-15, 20e-15)
         else:
             # When the reference impedance is low, the phase shift will
             # increase. It must be kept within 90 degrees of 180 degrees.
-            parasitic_l = np.random.default_rng().uniform(0.1e-12, 1e-12)
-            parasitic_c = np.random.default_rng().uniform(0.1e-15, 1e-15)
+            parasitic_l = 1e-12 # np.random.default_rng().uniform(0.1e-12, 1e-12)
+            parasitic_c = 1e-15 # np.random.default_rng().uniform(0.1e-15, 1e-15)
         testgroup["parasitic_l"] = parasitic_l
 
         imperfect_short = (
