@@ -436,15 +436,19 @@ class Touchstone:
             if not line:
                 break
 
-            line_l = line.lower()
+            # some malformed Touchstone files have leading spaces, strip them,
+            # otherwise we can't identify the keywords in option lines.
+            line_l = line.strip()
+            if not line_l:
+                continue
 
             is_data_line = True
             # Avoid traversing the self._parse_dict for each line by checking the first letter
             # {"!", "#", "["} covers all the first letters of the key of the current self._parse_dict
             if line_l[0] in {"!", "#", "["}:
                 for k, v in self._parse_dict.items():
-                    if line_l.startswith(k):
-                        v(line)
+                    if line_l.lower().startswith(k):
+                        v(line_l)
                         is_data_line = False
                         break
             if is_data_line:
