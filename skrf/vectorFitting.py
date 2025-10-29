@@ -69,17 +69,36 @@ class VectorFitting:
         which may be changed or set to *None*. """
 
         self.poles = None
-        """ Instance variable holding the list of fitted poles. Will be initialized by :func:`vector_fit`. """
+        """ Instance variable holding the list of fitted poles. It will be initialized by :func:`vector_fit` or
+        :func:`auto_fit`. This array is 1-dimensional with shape :math:`(K)`, where :math:`K_{real} + K_{complex}` is
+        the number of real and complex-conjugate poles. This implies that only one part of a complex-conjugate pair is
+        stored in this array (the one with the positive imaginary part). When calculating the model response in
+        pole-residue form, the missing part of each complex-conjugate pair has to be added manually. See the source
+        code of :func:`get_model_response()` as an example. """
 
         self.residues = None
-        """ Instance variable holding the list of fitted residues. Will be initialized by :func:`vector_fit`. """
+        """ Instance variable holding the list of fitted residues. It will be initialized by :func:`vector_fit` or
+        :func:`auto_fit`. This array is 2-dimensional with shape :math:`(M, K)`, where :math:`M = N_{ports}^2` is the
+        number of frequency responses of the fitted network, and :math:`K` is the number of real and complex-conjugate
+        poles. See the documentation of :attr:`poles` for details about complex-conjugate pairs. The residues of the
+        individual frequency responses are stacked in row-major format (C-like), for example `[[S11_1, S11_2, ...],
+        [S12_1, S12_2, ...], [S21_1, S21_2, ...], [S22_1, S22_2, ...]]` for a 2-port network. """
 
         self.proportional_coeff = None
-        """ Instance variable holding the list of fitted proportional coefficients. Will be initialized by
-        :func:`vector_fit`. """
+        """ Instance variable holding the list of fitted proportional coefficients. It will be initialized by
+        :func:`vector_fit` or :func:`auto_fit`. This array is 1-dimensional with shape :math:`M`, where
+        :math:`M = N_{ports}^2` is the number of frequency responses of the fitted network, and :math:`K` is the number
+        of real and complex-conjugate poles. See the documentation of :attr:`poles` for details about complex-conjugate
+        pairs. The proportional coefficient of the individual frequency responses are stacked in row-major format
+        (C-like), for example `[S11, S12, S21, S22]` for a 2-port network. """
 
         self.constant_coeff = None
-        """ Instance variable holding the list of fitted constants. Will be initialized by :func:`vector_fit`. """
+        """ Instance variable holding the list of fitted constants. It will be initialized by :func:`vector_fit` or
+        :func:`auto_fit`. This array is 1-dimensional with shape :math:`M`, where :math:`M = N_{ports}^2` is the number
+        of frequency responses of the fitted network, and :math:`K` is the number of real and complex-conjugate poles.
+        See the documentation of :attr:`poles` for details about complex-conjugate pairs. The constants of the
+        individual frequency responses are stacked in row-major format (C-like), for example `[S11, S12, S21, S22]` for
+        a 2-port network. """
 
         self.max_iterations = 100
         """ Instance variable specifying the maximum number of iterations for the fitting process and for the passivity
