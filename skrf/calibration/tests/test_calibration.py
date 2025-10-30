@@ -160,6 +160,21 @@ class ComputeSwitchTermsTest(unittest.TestCase):
     def test_gamma_r(self):
         self.assertTrue(all(np.abs(self.gamma_r_indirect.s - self.gamma_r.s) < 1e-9))
 
+
+class TCheckTest(unittest.TestCase):
+    """
+    Test the T-Check metric
+    """
+    def setUp(self):
+        pass
+
+    def test_t_check(self):
+        medium = rf.media.DefinedGammaZ0()
+        tee = medium.tee()
+        ct = rf.calibration.t_check(tee.subnetwork([1, 2]))
+        self.assertTrue(np.allclose(ct, 1))
+
+
 class CalibrationTest:
     """
     This is the generic Calibration test case which all Calibration

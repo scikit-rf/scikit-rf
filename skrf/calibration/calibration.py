@@ -76,6 +76,8 @@ Generic Methods
    terminate
    unterminate
    determine_line
+   t_check
+   plot_t_check
 
 PNA interaction
 ---------------
@@ -105,6 +107,7 @@ from numpy.linalg import det
 from scipy.optimize import least_squares
 
 from .. import __version__ as skrf__version__
+from .. import plotting as rfplt
 from .. import util
 from ..io.touchstone import read_zipped_touchstones
 from ..mathFunctions import ALMOST_ZERO, cross_ratio, find_closest, find_correct_sign, rand_c, sqrt_phase_unwrap
@@ -6572,6 +6575,146 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     reflect.s[:,0,0] = closer
 
     return reflect.s11
+
+
+def t_check(ntwk : Network) -> np.array:
+    """
+    Evaluate 2-port measurement self-consistency metric via T-Check formula.
+    It enables an operator to verify a VNA calibration's self-consistency
+    without relying on characterized standards.
+
+    This method uses a 3-port "tee" junction as the DUT. After
+    Port 3 is terminated by an arbitrary complex impedance, Port 1 and Port 2
+    are measured as a 2-port network. If the 3-port DUT is lossless, the
+    following identity holds true.
+
+    .. math::
+
+        \\begin{aligned}
+        C_T &=
+        \\frac{|S_{13}| \\cdot |S_{23}|}
+        {\\sqrt{|S_{13}|^2 \\cdot |S_{23}|^2}}
+        \\\\
+        &=
+        \\frac{|S_{11} S_{21}^{*} + S_{12} S_{22}^{*}|}
+        {\\sqrt{(1 - |S_{11}|^2 - |S_{12}|^2) (1 - |S_{21}|^2 - |S_{22}|^2)}}
+        \\\\
+        &= 1
+        \\end{aligned}
+
+    The quotient is known as the T-Check formula, which provides a figure of
+    merit :math:`C_T` of the self-consistency of the measured 2-port
+    S-parameters:
+
+         * :math:`C_T = 1.00`: Perfect
+         * :math:`C_T >= 0.90` and :math:`C_T <= 1.10`: Good
+         * :math:`C_T >= 0.85` and :math:`C_T <= 1.15`: Acceptable
+         * :math:`C_T < 0.85` or :math:`C_T > 1.15`: Poor
+
+    The 3-port DUT needs only to be lossless, it needs *not* to be matched,
+    reciprocal, or symmetric. For perfect 2-port measurements, :math:`C_T`
+    should be exactly 1.00. A poor :math:`C_T` indicates inconsistent
+    measurement data due to poor calibration, or a lossy DUT unsuitable for
+    T-Check.
+
+    Parameters
+    ----------
+    ntwk : :class:`~skrf.network.Network`
+        A 2-port network after calibration, it's created by measuring Port 1
+        and Port 2 of a 3-port DUT, while DUT's Port 3 is terminated by an
+        arbitrary complex impedance.
+
+    Returns
+    -------
+    ct : class:`np.ndarray`
+        T-Check figure of merit :math:`C_T` at each frequency.
+
+    Examples
+    --------
+    >>> medium = rf.media.DefinedGammaZ0()
+    >>> tee = medium.tee()
+    >>> ct = rf.calibration.t_check(tee.subnetwork([1, 2]))
+
+    References
+    ----------
+    [1] O. Ostwald, “T-Check accuracy test for Vector Network Analyzers
+    utilizing a tee-junction,” Rohde & Schwarz, Application Note 1EZ43_0E,
+    June 1998.
+    https://web.archive.org/web/20250823184616/https://scdn.rohde-schwarz.com/ur/pws/dl_downloads/dl_application/application_notes/1ez43/1ez43_0e.pdf
+    """
+    if ntwk.nports != 2:
+        raise ValueError("T-Check expects 2-port measurements.")
+
+    num = np.abs(
+        ntwk.s[:,0,0] * np.conj(ntwk.s[:,1,0]) +
+        ntwk.s[:,0,1] * np.conj(ntwk.s[:,1,1])
+    )
+    denom = np.sqrt(
+        (1 - np.abs(ntwk.s[:,0,0]) ** 2 - np.abs(ntwk.s[:,0,1]) ** 2) *
+        (1 - np.abs(ntwk.s[:,1,0]) ** 2 - np.abs(ntwk.s[:,1,1]) ** 2)
+    )
+    ct = num / denom
+    return ct
+
+
+def plot_t_check(ntwk : Network,
+                 ax: util.Axes=None,
+                 show_legend=True,
+                 y_label=None,
+                 **kwargs) -> None:
+    """
+    Plot 2-port measurement self-consistency metric via T-Check
+    formula as a line chart. Green, yellow and red regions of the chart
+    correspond to a good, acceptable or poor :math:`C_T` metric.
+
+    Parameters
+    ----------
+    ntwk : :class:`~skrf.network.Network`
+        A 2-port network after calibration, it's created by measuring Port 1
+        and Port 2 of a 3-port DUT, while DUT's Port 3 is terminated by an
+        arbitrary complex impedance.
+    ax : :class:`matplotlib.Axes` object, optional
+        An existing Axes object to plot on
+    show_legend : Boolean
+        draw legend or not
+    y_label : string, optional
+        the y-axis label
+    \\**kwargs : arguments, keyword arguments
+        passed to :func:`matplotlib.plot`
+
+    Examples
+    --------
+    >>> medium = rf.media.DefinedGammaZ0()
+    >>> tee = medium.tee()
+    >>> rf.calibration.plot_t_check(tee.subnetwork([1, 2]))
+
+    See Also
+    --------
+    :func:`t_check`
+    """
+    ct = t_check(ntwk)
+
+    if ax is None:
+        ax = rfplt.plt.gca()
+    if y_label is None:
+        y_label = "C_T"
+
+    rfplt.plot(
+        ntwk, ct, label='C_T',
+        ax=ax,
+        **kwargs
+    )
+    if show_legend:
+        ax.legend()
+
+    ax.set_ylabel(y_label)
+    ax.axhspan(0.90, 1.10, color='green', alpha=0.3)
+    ax.axhspan(0.85, 0.90, color='yellow', alpha=0.3)
+    ax.axhspan(1.10, 1.15, color='yellow', alpha=0.3)
+
+    ymin, ymax = ax.get_ylim()
+    ax.axhspan(ymin, 0.85, color='red', alpha=0.3)
+    ax.axhspan(1.15, ymax, color='red', alpha=0.3)
 
 
 def convert_12term_2_8term(coefs_12term, redundant_k = False):
