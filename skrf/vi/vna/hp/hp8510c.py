@@ -239,7 +239,7 @@ class HP8510C(VNA):
         ''' Ramp (fast, not synthesized) sweep. Must have standard npoint. '''
         if npoint not in [51,101,201,401,801]:
             print("Warning: 8510C only supports NPOINT in [51,101,201,401,801]")
-        self.resource.clear()
+        self._resource.clear()
         self.write('RAMP; STAR %f; STOP %f; POIN%i;'%(hz_start,hz_stop,npoint))
 
     @property
