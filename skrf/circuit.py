@@ -96,9 +96,10 @@ from __future__ import annotations
 import warnings
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING, Sequence, TypedDict
+from typing import TYPE_CHECKING, Callable, Sequence, TypedDict
 
 import numpy as np
+from scipy.optimize import Bounds, OptimizeResult, differential_evolution
 from typing_extensions import NotRequired, Unpack
 
 from .constants import S_DEF_DEFAULT, MemoryLayoutT, NumberLike
@@ -362,7 +363,7 @@ class Circuit:
             self.__dict__.pop(item, None)
 
     def update_networks(
-        self, networks: tuple[Network],
+        self, networks: tuple[Network, ...],
         name: str | None = None,
         *,
         inplace: bool = False,
@@ -372,7 +373,7 @@ class Circuit:
 
         Parameters
         ----------
-        networks : tuple[Network]
+        networks : tuple[Network, ...]
             A tuple of Networks to be updated in the circuit.
         name : string, optional
             Name assigned to the circuit (Network). Default is None.
@@ -1876,6 +1877,79 @@ class Circuit:
         # remove x and y axis and labels
         ax.axis('off')
         fig.tight_layout()
+
+    def optimize(self, fitness_func: Callable[[Circuit], float],
+                 update_func: Callable[..., tuple[Network, ...]],
+                 x0: Sequence[float],  bounds: Sequence[tuple] | Bounds,
+                 args: tuple = (), disp: bool = True, **kwargs) -> tuple[OptimizeResult, Circuit]:
+        """
+        Optimize the Circuit for minimizing (or maximizing) objective function, possibly subject
+        to constraints.
+
+        `Circuit.optimize` is based on the `scipy.optimize.differential_evolution` function.
+
+        Args:
+            fitness_func : Callable[[Circuit], float]
+                The objective function to be minimized.
+            update_func : Callable[..., tuple[Network, ...]]
+                A function to update the Circuit's Networks with the new values.
+            x0 : Sequence[float]
+                Provides an initial guess to the minimization.
+            bounds : Sequence[tuple] | Bounds
+                Bounds for variables. There are two ways to specify the bounds:
+                1. Instance of `Bounds` class.
+                2. ``(min, max)`` pairs for each element in ``x``, defining the finite
+                lower and upper bounds for the optimizing argument of `func`.
+                The total number of bounds is used to determine the number of
+                parameters, N.
+            args : tuple, optional
+                Any additional fixed parameters needed to
+                completely specify the objective function.
+            disp : bool, optional
+                Prints the evaluated func at every iteration. Default is True.
+            **kwargs :
+                Additional options to be passed to `scipy.optimize.differential_evolution`.
+
+        Returns:
+            tuple[OptimizeResult, Circuit]: The OptimizeResult object and the updated Circuit object.
+        """
+        # Get dynamic networks
+        dynamic_networks = update_func(x0)
+
+        # Reduce circuit and create a new Circuit object with reduced connections
+        connections = reduce_circuit(self.connections,
+                                          check_duplication=False,
+                                          split_multi=True,
+                                          max_nports=999,
+                                          dynamic_networks=dynamic_networks)
+
+        ckt_reduced = Circuit(connections)
+
+        def fun(x, *args) -> float:
+            # Update the networks with the new values
+            networks = update_func(x)
+
+            # Update the circuit with the new networks
+            ckt_updated = ckt_reduced.update_networks(
+                networks=networks, auto_reduce=True, inplace=False
+            )
+
+            # Check if the circuit is valid
+            if ckt_updated is not None:
+                return fitness_func(ckt_updated, *args)
+
+            raise ValueError("Invalid circuit")
+
+        opt_result: OptimizeResult = differential_evolution(
+            func=fun, args=args, x0=x0, bounds=bounds, disp=disp, **kwargs
+        )
+
+        if opt_result.success:
+            opt_circuit = ckt_reduced.update_networks(networks=update_func(opt_result.x))
+            if opt_circuit is not None:
+                return (opt_result, opt_circuit)
+
+        raise ValueError("Optimization failed")
 
 ## Functions operating on Circuit
 def reduce_circuit(connections: list[list[tuple[Network, int]]],
