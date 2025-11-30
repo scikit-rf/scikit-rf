@@ -137,20 +137,18 @@ class HP8510C(VNA):
     def wait_until_finished(self):
         self.query("OUTPIDEN;")
 
-    def get_snp_network(self, ports, **kwargs):
+    def get_snp_network(self, ports, cw=False, **kwargs):
         ''' MAIN METHOD for obtaining S parameters, like get_snp_network((1,)) or get_snp_network((1,2)). '''
         ports = tuple(ports)
         sweep = kwargs.get("sweep", True)
-        # name = kwargs.get("name", "")
-        # raw_data = kwargs.get("raw_data", True)
         if ports==(1,):
             self.write('s11;')
-            return self.one_port(fresh_sweep=sweep)
+            return self.one_port(fresh_sweep=sweep, cw=cw)
         elif ports==(2,):
             self.write('s22;')
-            return self.one_port(fresh_sweep=sweep)
+            return self.one_port(fresh_sweep=sweep, cw=cw)
         elif ports==(1,2) or ports==(2,1):
-            return self.two_port(fresh_sweep=sweep)
+            return self.two_port(fresh_sweep=sweep, cw=cw)
         else:
             raise(ValueError("Invalid ports "+str(ports)+". Options: (1,) (2,) (1,2)."))
 
@@ -217,6 +215,21 @@ class HP8510C(VNA):
             hz = hz[valid]
         self.compound_sweep_plan = SweepPlan.from_hz(hz)
 
+    def set_frequency_single_point(self, f_cw, npoint=51, **kwargs):
+        ''' Set single point mode (CW) '''
+        self.compound_sweep_plan = None
+        f_unit = kwargs.get("f_unit", "hz").lower()
+        if f_unit != "hz":
+            hz_cw = self.to_hz(f_cw, f_unit)
+        else:
+            hz_cw = f_cw
+        if self._resource is not None:
+            self._resource.clear()
+        if npoint not in [51,101,201,401,801]:
+            raise(ValueError("Invalid npoints "+str(npoint)+". Options: 51,101,201,401,801."))
+        self.write('SINP; CWFREQ %f;POIN%i;'%(hz_cw, npoint))
+
+
     def set_frequency_sweep(self, f_start, f_stop, f_npoints, **kwargs):
         ''' Interprets units and calls set_frequency_step '''
         f_unit = kwargs.get("f_unit", "hz").lower()
@@ -239,7 +252,7 @@ class HP8510C(VNA):
         ''' Ramp (fast, not synthesized) sweep. Must have standard npoint. '''
         if npoint not in [51,101,201,401,801]:
             print("Warning: 8510C only supports NPOINT in [51,101,201,401,801]")
-        self.resource.clear()
+        self._resource.clear()
         self.write('RAMP; STAR %f; STOP %f; POIN%i;'%(hz_start,hz_stop,npoint))
 
     @property
@@ -338,10 +351,13 @@ class HP8510C(VNA):
         cmplxs = (floats[:,0] + 1j*floats[:,1]).flatten()
         return cmplxs
 
-    def _one_port(self, expected_hz=None, fresh_sweep=True):
+    def _one_port(self, cw=False, expected_hz=None, fresh_sweep=True):
         ''' Perform a single sweep and return Network data. '''
         if fresh_sweep:
-             self.write('SING;') # Poll for sweep status
+            if cw:
+                self.write('SINP;') # Poll for sweep status
+            else:
+                self.write('SING;') # Poll for sweep status
         s =  self.ask_for_cmplx('OUTPDATA')
         ntwk = skrf.Network()
         ntwk.s = s
@@ -350,10 +366,10 @@ class HP8510C(VNA):
         ntwk.frequency = skrf.Frequency.from_f(hz,unit='hz')
         return ntwk
 
-    def one_port(self, **kwargs):
+    def one_port(self, cw=False, **kwargs):
         ''' Performs a single sweep OR COMPOUND SWEEP and returns Network data. '''
         if self.compound_sweep_plan is None:
-            return self._one_port()
+            return self._one_port(cw=cw)
         old_start_hz, old_stop_hz = self.freq_start, self.freq_stop
         stitched_network = None
         for sweep_section in self.compound_sweep_plan.get_sections():
@@ -366,7 +382,7 @@ class HP8510C(VNA):
         self.freq_stop  = old_stop_hz
         return stitched_network
 
-    def _two_port(self, expected_hz=None, fresh_sweep=True):
+    def _two_port(self, cw=False, expected_hz=None, fresh_sweep=True):
         ''' Performs a single sweep and returns Network data. '''
         # ASCII vs Binary transfer performance:
         #  ascii_xfer separate_sweep: 32s
@@ -385,13 +401,13 @@ class HP8510C(VNA):
         #  --------------------------
         #  Decision: use consecutive Sxx sweeps everywhere for simplicity + max speed of fast sweeps
         self.write('s11;')
-        s11 = self._one_port(expected_hz=expected_hz, fresh_sweep=fresh_sweep).s[:,0,0]
+        s11 = self._one_port(expected_hz=expected_hz, cw=cw, fresh_sweep=fresh_sweep).s[:,0,0]
         self.write('s12;')
-        s12 = self._one_port(expected_hz=expected_hz, fresh_sweep=fresh_sweep).s[:,0,0]
+        s12 = self._one_port(expected_hz=expected_hz, cw=cw, fresh_sweep=fresh_sweep).s[:,0,0]
         self.write('s22;')
-        s22 = self._one_port(expected_hz=expected_hz, fresh_sweep=fresh_sweep).s[:,0,0]
+        s22 = self._one_port(expected_hz=expected_hz, cw=cw, fresh_sweep=fresh_sweep).s[:,0,0]
         self.write('s21;')
-        s21 = self._one_port(expected_hz=expected_hz, fresh_sweep=fresh_sweep).s[:,0,0]
+        s21 = self._one_port(expected_hz=expected_hz, cw=cw, fresh_sweep=fresh_sweep).s[:,0,0]
 
         ntwk = skrf.Network()
         ntwk.s = np.array(\
@@ -404,10 +420,10 @@ class HP8510C(VNA):
 
         return ntwk
 
-    def two_port(self, **kwargs):
+    def two_port(self, cw=False, **kwargs):
         ''' Performs a single sweep OR COMPOUND SWEEP and returns Network data. '''
         if self.compound_sweep_plan is None:
-            return self._two_port()
+            return self._two_port(cw=cw)
         old_start_hz, old_stop_hz = self.freq_start, self.freq_stop
         stitched_network = None
         for sweep_chunk in self.compound_sweep_plan.get_sections():
