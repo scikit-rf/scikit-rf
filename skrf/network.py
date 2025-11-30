@@ -117,6 +117,7 @@ Supporting Functions
     connect_s
     innerconnect_s
     innerconnect_s_lstsq
+    s2s
     s2z
     s2y
     s2t
@@ -135,6 +136,10 @@ Supporting Functions
     t2y
     h2s
     h2z
+    s2s_active
+    s2z_active
+    s2y_active
+    s2vswr_active
     fix_z0_shape
     renormalize_s
     passivity
@@ -146,11 +151,13 @@ Misc Functions
     :toctree: generated/
 
     average
+    impedance_mismatch
     two_port_reflect
     chopinhalf
     Network.nudge
     Network.renormalize
     Network.drop_non_monotonic_increasing
+    twoport_to_nport
 
 """
 from __future__ import annotations
