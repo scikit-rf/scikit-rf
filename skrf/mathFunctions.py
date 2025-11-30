@@ -10,7 +10,8 @@ Mathematical Constants
 Some convenient constants are defined in the :mod:`skrf.constants` module.
 
 Complex Component Conversion
----------------------------------
+----------------------------
+
 .. autosummary::
         :toctree: generated/
 
@@ -22,19 +23,33 @@ Complex Component Conversion
         complex_2_degree
         complex_2_magnitude
         complex_2_quadrature
+        complex_components
+
+Magnitude and decibel
+---------------------
+
+.. autosummary::
+        :toctree: generated/
+
+        magnitude_2_db
+        mag_2_db
+        mag_2_db10
+        db_2_magnitude
+        db_2_mag
+        db10_2_mag
 
 Phase Unwrapping
---------------------------------
+----------------
+
 .. autosummary::
         :toctree: generated/
 
         unwrap_rad
         sqrt_phase_unwrap
 
-
-
 Unit Conversion
---------------------------------
+---------------
+
 .. autosummary::
         :toctree: generated/
 
@@ -42,9 +57,13 @@ Unit Conversion
         degree_2_radian
         np_2_db
         db_2_np
+        feet_2_meter
+        meter_2_feet
+        db_per_100feet_2_db_per_100meter
 
 Scalar-Complex Conversion
----------------------------------
+-------------------------
+
 These conversions are useful for wrapping other functions that don't
 support complex numbers.
 
@@ -54,9 +73,9 @@ support complex numbers.
         complex2Scalar
         scalar2Complex
 
-
 Special Functions
----------------------------------
+-----------------
+
 .. autosummary::
         :toctree: generated/
 
@@ -66,7 +85,8 @@ Special Functions
         cross_ratio
 
 Random Number Generation
---------------------------------
+------------------------
+
 .. autosummary::
         :toctree: generated/
 
@@ -89,6 +109,12 @@ Various Utility Functions
         is_positive_definite
         is_positive_semidefinite
         get_Hermitian_transpose
+        sqrt_known_sign
+        find_correct_sign
+        find_closest
+        inf_to_num
+        rsolve
+        nudge_eig
 
 
 """
