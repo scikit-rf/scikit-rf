@@ -23,6 +23,10 @@ This module contains constants, numerical approximations, and unit conversions
 
     0 + epsilon where epsilon is small. Used to avoid numerical error.
 
+.. data:: LOG_OF_NEG
+
+    Very low but minus infinity value for numerical purposes.
+
 .. data:: K_BOLTZMANN
 
     Boltzmann constant (1.38064852e-23)
@@ -40,9 +44,13 @@ This module contains constants, numerical approximations, and unit conversions
 
 .. autodata:: S_DEF_HFSS_DEFAULT
 
+    Default ANSYS HFSS S-parameter definition: 'traveling'
+
 .. autodata:: SweepTypeT
 
 .. autodata:: FrequencyUnitT
+
+    Frequency units: "Hz", "kHz", "MHz", "GHz", "THz" (case-insensitive).
 
 .. autosummary::
    :toctree: generated/

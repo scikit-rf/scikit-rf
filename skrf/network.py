@@ -4,7 +4,6 @@
 network (:mod:`skrf.network`)
 ========================================
 
-
 Provide an n-port network class and associated functions.
 
 Much of the functionality in this module is provided as methods and
@@ -51,6 +50,7 @@ Connecting Networks
     cascade_list
     de_embed
     flip
+    inv
     parallelconnect
 
 
@@ -63,6 +63,7 @@ Interpolation and Concatenation Along Frequency Axis
 
     stitch
     overlap
+    overlap_multi
     Network.resample
     Network.interpolate
     Network.interpolate_self
@@ -77,8 +78,9 @@ Combining and Splitting Networks
     subnetwork
 
     one_port_2_two_port
-    n_oneports_2_nport
+    twoport_to_nport
     four_oneports_2_twoport
+    n_oneports_2_nport
     n_twoports_2_nport
     concat_ports
 
@@ -151,13 +153,32 @@ Misc Functions
     :toctree: generated/
 
     average
+    stdev
+    s_error
     impedance_mismatch
     two_port_reflect
     chopinhalf
     Network.nudge
     Network.renormalize
     Network.drop_non_monotonic_increasing
-    twoport_to_nport
+    evenodd2delta
+
+Network utilities
+=====================
+.. autosummary::
+    :toctree: generated/
+
+    fix_param_shape
+    fix_fix_z0_shape
+    check_frequency_exist
+    check_nports_equal
+    check_frequency_equal
+    check_z0_equal
+    assert_frequency_equal
+    assert_nports_equal
+    assert_frequency_exist
+    assert_z0_equal
+    assert_z0_at_ports_equal
 
 """
 from __future__ import annotations
