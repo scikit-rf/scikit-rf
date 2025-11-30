@@ -516,7 +516,7 @@ class Network:
 
         Examples
         --------
-        >>> f = rf.Frequency(start=1, stop=2, npoints=4, unit="Hz")  # 4 frequency points
+        >>> f = rf.Frequency(start=1, stop=2, npoints=4, unit="GHz")  # 4 frequency points
         >>> z = np.random.rand(len(f),2,2) + np.random.rand(len(f),2,2)*1j  # 2-port z-matrix: shape=(4,2,2)
         >>> ntw = rf.Network.from_z(z, frequency=f)
 
