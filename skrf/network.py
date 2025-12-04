@@ -3925,7 +3925,7 @@ class Network:
 
         >>> ntwk.renumber([0,1,2], [2,1,0])
         >>> ntwk.se2gmm(p=1)
-        >>> ntwk.renumber([2,1,0], [0,1,2])
+        >>> ntwk.renumber([0,1,2], [1,2,0])
 
         In the resulting network, port 0 is single-ended, port 1 is
         differential mode, and port 2 is common mode.
