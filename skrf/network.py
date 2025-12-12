@@ -6164,7 +6164,7 @@ def evenodd2delta(n: Network, z0: NumberLike = 50, renormalize: bool = True,
     return n_delta
 
 
-def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
+def subnetwork(ntwk: Network, ports: Sequence[int], offby:int = 1) -> Network:
     """
     Return a subnetwork of a given Network from a list of port numbers.
 
