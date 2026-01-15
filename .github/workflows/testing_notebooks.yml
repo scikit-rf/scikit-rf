@@ -9,7 +9,7 @@ jobs:
     if: github.event.pull_request.draft == false
     strategy:
       matrix:
-        python-version: ['3.9']
+        python-version: ['3.12']
 
     steps:
     - uses: actions/checkout@v4
