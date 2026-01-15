@@ -2542,13 +2542,15 @@ class Network:
             filename = os.path.join(dir, filename)
 
         fmt_str = format_spec_freq
-        for _ in range(ntwk.number_of_ports):
-            for n in range(ntwk.number_of_ports):
+        for _ in range(ntwk.number_of_ports if ntwk.number_of_ports > 2 else 1):
+            for n in range(ntwk.number_of_ports if ntwk.number_of_ports != 2 else 4):
                 if (n > 0 and (n % 4) == 0):
                     fmt_str += '\n'
                 fmt_str += f' {format_spec_A} {format_spec_B}'
             fmt_str += '\n'
-
+        if ntwk.number_of_ports == 2:
+            # transpose matrix:
+            pdata = np.ascontiguousarray(np.transpose(pdata, (0, 2, 1)))
         if form == "ri":
             formatDic = {"labelA": "Re", "labelB": "Im", "param": parameter}
             data = pdata.view(float)
@@ -2564,12 +2566,7 @@ class Network:
             data[:, :, 1::2] = mf.complex_2_degree(pdata)
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
-
-        if ntwk.number_of_ports == 2:
-            # transpose matrix:
-            data = np.transpose(data, (0, 2, 1))
         data = np.column_stack([ntwk.frequency.f_scaled, data.reshape((data.shape[0],-1))])
-        data = np.apply_along_axis(lambda x: fmt_str.format(*x), 1, data)
 
         def get_buffer() -> io.StringIO:
             if return_string is True or type(to_archive) is zipfile.ZipFile:
@@ -2651,7 +2648,7 @@ class Network:
 
             # write out data
             for f in range(len(ntwk.f)):
-                output.write(data[f])
+                output.write(fmt_str.format(*data[f]))
                 if write_z0:
                     output.write('! Port Impedance')
                     for n in range(ntwk.number_of_ports):
