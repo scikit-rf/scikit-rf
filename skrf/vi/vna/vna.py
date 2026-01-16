@@ -79,9 +79,9 @@ class Channel:
 class VNA:
     _scpi = True  # Set to false in subclasses that don't use SCPI
 
-    def __init__(self, address: str, backend: str = "@py", timeout: int | None = None) -> None:
+    def __init__(self, address: str, backend: str = "@py") -> None:
         rm = pyvisa.ResourceManager(backend)
-        self._resource = rm.open_resource(address, timeout=timeout)
+        self._resource = rm.open_resource(address)
 
         # Reading and setting the query values format is instrument specific
         # and must be done for each subclass. We default to using ASCII

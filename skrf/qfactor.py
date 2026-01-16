@@ -95,7 +95,7 @@ at the resonator couplings can be expressed like [MAT58]_, [Galwas]_ :
 
 .. math::
 
-    S = S_D + d \frac{e^{−2j\delta}}{1 + j Q_L t}
+    S = S_D + d \frac{e^{-2j\delta}}{1 + j Q_L t}
 
 
 where :math:`S_D` is the detuned S-parameter measured at frequencies far above or below
@@ -105,7 +105,7 @@ is the fractional offset frequency given by:
 
 .. math::
 
-    t = \frac{f}{f_L} - \frac{f_L}{f}  \approx 2 \frac{f − f_L}{f_L}
+    t = \frac{f}{f_L} - \frac{f_L}{f}  \approx 2 \frac{f - f_L}{f_L}
 
 
 where :math:`f_L` is the loaded resonant frequency and :math:`f` the frequency
@@ -124,7 +124,7 @@ References
 .. [Pozar] D. M. Pozar, Microwave engineering, 4th ed. J. Wiley, 2012.
 
 .. [Galwas] B. A. Galwas, ‘Scattering Matrix Description of Microwave
-   Resonators’, IEEE Trans. Microwave Theory Techn., vol. 31, no. 8,
+   Resonators', IEEE Trans. Microwave Theory Techn., vol. 31, no. 8,
    pp. 669–671, Aug. 1983, doi: 10.1109/TMTT.1983.1131566.
 
 """
@@ -1153,7 +1153,7 @@ class Qfactor:
 
         .. math::
 
-            t = \frac{f}{f_L} - \frac{f_L}{f}  \approx 2 \frac{f − f_L}{f_L}
+            t = \frac{f}{f_L} - \frac{f_L}{f}  \approx 2 \frac{f - f_L}{f_L}
 
 
         Parameters

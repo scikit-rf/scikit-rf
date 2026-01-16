@@ -142,7 +142,6 @@ Supporting Functions
     s2z_active
     s2y_active
     s2vswr_active
-    fix_z0_shape
     renormalize_s
     passivity
     reciprocity
@@ -169,7 +168,7 @@ Network utilities
     :toctree: generated/
 
     fix_param_shape
-    fix_fix_z0_shape
+    fix_z0_shape
     check_frequency_exist
     check_nports_equal
     check_frequency_equal

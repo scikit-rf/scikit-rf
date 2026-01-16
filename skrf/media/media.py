@@ -466,9 +466,9 @@ class Media(ABC):
             number of ports
         z0 : number, or array-like or None
             port impedance. This sets the resultant
-            :class:`~skrf.network.Network`’s
+            :class:`~skrf.network.Network`'s
             :attr:`~skrf.network.Network.z0`.
-            Default is None, the Media’s :attr:`~skrf.media.Media.z0_port`
+            Default is None, the Media's :attr:`~skrf.media.Media.z0_port`
             value is used. If :attr:`~skrf.media.Media.z0_port` is
             also None (by default), in which case the Media's native
             :attr:`~skrf.media.Media.z0` is used.
@@ -525,9 +525,9 @@ class Media(ABC):
             number of ports
         z0 : number, or array-like or None
             port impedance. This sets the resultant
-            :class:`~skrf.network.Network`’s
+            :class:`~skrf.network.Network`'s
             :attr:`~skrf.network.Network.z0`.
-            Default is None, the Media’s :attr:`~skrf.media.Media.z0_port`
+            Default is None, the Media's :attr:`~skrf.media.Media.z0_port`
             value is used. If :attr:`~skrf.media.Media.z0_port` is
             also None (by default), in which case the Media's native
             :attr:`~skrf.media.Media.z0` is used.
@@ -572,9 +572,9 @@ class Media(ABC):
         \*\*kwargs : key word arguments passed to :func:`load`.
         z0 : number, or array-like or None
             port impedance. This sets the resultant
-            :class:`~skrf.network.Network`’s
+            :class:`~skrf.network.Network`'s
             :attr:`~skrf.network.Network.z0`.
-            Default is None, the Media’s :attr:`~skrf.media.Media.z0_port`
+            Default is None, the Media's :attr:`~skrf.media.Media.z0_port`
             value is used. If :attr:`~skrf.media.Media.z0_port` is
             also None (by default), in which case the Media's native
             :attr:`~skrf.media.Media.z0` is used.
@@ -958,9 +958,9 @@ class Media(ABC):
         ----------
         z0 : number, or array-like or None
             port impedance. This sets the resultant
-            :class:`~skrf.network.Network`’s
+            :class:`~skrf.network.Network`'s
             :attr:`~skrf.network.Network.z0`.
-            Default is None, the Media’s :attr:`~skrf.media.Media.z0_port`
+            Default is None, the Media's :attr:`~skrf.media.Media.z0_port`
             value is used. If :attr:`~skrf.media.Media.z0_port` is
             also None (by default), in which case the Media's native
             :attr:`~skrf.media.Media.z0` is used.

@@ -15,12 +15,12 @@ if "matplotlib" not in sys.modules:
 
 @pytest.fixture
 def mocked_ff(mocker):
-    mocker.patch("skrf.vi.vna.rohde_schwarz.ZVA.__init__", return_value=None)
-    mocker.patch("skrf.vi.vna.rohde_schwarz.ZVA.write")
-    mocker.patch("skrf.vi.vna.rohde_schwarz.ZVA.write_values")
-    mocker.patch("skrf.vi.vna.rohde_schwarz.ZVA.query")
-    mocker.patch("skrf.vi.vna.rohde_schwarz.ZVA.query_values")
-    mock = rohde_schwarz.ZVA("TEST")
+    mocker.patch("skrf.vi.vna.rohde_schwarz.ZNA.__init__", return_value=None)
+    mocker.patch("skrf.vi.vna.rohde_schwarz.ZNA.write")
+    mocker.patch("skrf.vi.vna.rohde_schwarz.ZNA.write_values")
+    mocker.patch("skrf.vi.vna.rohde_schwarz.ZNA.query")
+    mocker.patch("skrf.vi.vna.rohde_schwarz.ZNA.query_values")
+    mock = rohde_schwarz.ZNA("TEST")
     mock.model = "TEST"
 
     # This gets done in init, but we are mocking init to prevent super().__init__, so just call here
@@ -114,7 +114,7 @@ def test_frequency_write(mocker, mocked_ff):
 def test_active_channel_query(mocker, mocked_ff):
     mocked_ff.query.return_value = 1
     test = mocked_ff.active_channel
-    assert isinstance(test, rohde_schwarz.ZVA.Channel)
+    assert isinstance(test, rohde_schwarz.ZNA.Channel)
     assert test.cnum == 1
 
 
@@ -201,7 +201,7 @@ def test_get_measurement(mocker, mocked_ff):
     assert isinstance(test, skrf.Network)
 
 
-# FIXME: This test keeps failing saying ZVA doesn't have "query_format"...which isn't true
+# FIXME: This test keeps failing saying ZNA doesn't have "query_format"...which isn't true
 # def test_get_active_trace(mocker, mocked_ff):
 #     mock_sdata = np.array(
 #         [
@@ -219,7 +219,7 @@ def test_get_measurement(mocker, mocked_ff):
 #     mocked_ff.query.side_effect = query_responses
 #     mocked_ff.ch1.sweep = mocker.MagicMock()
 #     mocker.patch(
-#         "skrf.vi.vna.rohde_schwarz.ZVA.Channel.active_trace_sdata",
+#         "skrf.vi.vna.rohde_schwarz.ZNA.Channel.active_trace_sdata",
 #         return_value=mock_sdata,
 #         new_callable=mocker.PropertyMock,
 #     )

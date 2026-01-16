@@ -19,6 +19,7 @@ VNA Classes
    keysight.FieldFox
    keysight.PNA
    nanovna.NanoVNAv2
+   rohde_schwarz.ZNA
    rohde_schwarz.ZVA
 
 The Base Class and Writing an Instrument Driver
