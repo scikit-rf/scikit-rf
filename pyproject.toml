@@ -136,8 +136,7 @@ select = ["B", "E", "F", "FA", "I", "NPY", "UP", "W"]
 # E741: ambiguous-variable-name
 # UP031: Use format specifiers instead of percent format
 # B905: zip-without-explicit-strict
-# UP038: non-pep604-isinstance
-ignore = ["E741", "UP031", "B905", "UP038"]
+ignore = ["E741", "UP031", "B905"]
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore some rules for some specific files
