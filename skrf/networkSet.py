@@ -46,10 +46,11 @@ NetworkSet Utilities
 from __future__ import annotations
 
 import zipfile
+from collections.abc import Mapping
 from io import BytesIO
 from numbers import Number
 from pathlib import Path
-from typing import Any, Mapping, TextIO
+from typing import Any, TextIO
 
 import numpy as np
 import pandas as pd

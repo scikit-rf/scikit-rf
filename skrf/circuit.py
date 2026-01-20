@@ -94,9 +94,10 @@ Graph representation
 from __future__ import annotations
 
 import warnings
+from collections.abc import Sequence
 from functools import cached_property
 from itertools import chain
-from typing import TYPE_CHECKING, Sequence, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 import numpy as np
 from typing_extensions import NotRequired, Unpack
