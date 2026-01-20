@@ -60,8 +60,9 @@ This module contains constants, numerical approximations, and unit conversions
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from numbers import Number
-from typing import Literal, Sequence, Union, get_args
+from typing import Literal, get_args
 
 import numpy as np
 from scipy.constants import c, inch, mil
@@ -142,7 +143,7 @@ CircuitComponentT = Literal["_is_circuit_port", "_is_circuit_ground", "_is_circu
 MemoryLayoutT = Literal["C", "F"]
 ErrorFunctionsT = Literal["average_l1_norm", "average_l2_norm", "maximum_l1_norm", "average_normalized_l1_norm"]
 
-NumberLike = Union[Number, Sequence[Number], np.ndarray]
+NumberLike = Number | Sequence[Number] | np.ndarray
 
 global distance_dict
 distance_dict = {
