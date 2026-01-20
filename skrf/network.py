@@ -169,7 +169,7 @@ Network utilities
     :toctree: generated/
 
     fix_param_shape
-    fix_fix_z0_shape
+    fix_z0_shape
     check_frequency_exist
     check_nports_equal
     check_frequency_equal
@@ -643,7 +643,7 @@ class Network:
         inv : inverse s-parameters
         """
 
-        if isinstance(other, (list, tuple)):
+        if isinstance(other, list | tuple):
             if len(other) >= 3:
                 raise ValueError('Incorrect number of networks.')
             other_tpl = other[:2]
@@ -1620,7 +1620,7 @@ class Network:
       g = self.copy().s11
       nfreq = self.noise_freq.npoints
 
-      if isinstance(gs, (int, float, complex)) :
+      if isinstance(gs, int | float | complex):
           g.s[:,0,0] = gs
           nfdb = 10.*np.log10(self.nf( g.z[:,0,0]))
       elif isinstance(gs, np.ndarray) :
