@@ -2542,6 +2542,15 @@ class Network:
         if dir is not None:
             filename = os.path.join(dir, filename)
 
+        # Create format string for full frequency block
+        # Build according to touchstone specs:
+        # - One line for each matrix row with 4 format_spec_A / format_spec_B pairs max.
+        # - Frequency with format_spec_freq on the first line
+        # - continuation lines (anything except first) go with indent
+        #   this is not part of the spec, but many tools handle it this way
+        #   -> allows to parse without knowledge of number of ports
+        # Special case for 2-port networks:
+        # single line, and S21, S12 in reverse order by transposing matrix
         fmt_str = format_spec_freq
         for _ in range(ntwk.number_of_ports if ntwk.number_of_ports > 2 else 1):
             for n in range(ntwk.number_of_ports if ntwk.number_of_ports != 2 else 4):
@@ -2551,10 +2560,10 @@ class Network:
             fmt_str += '\n'
         if ntwk.number_of_ports == 2:
             # transpose matrix:
-            pdata = np.ascontiguousarray(np.transpose(pdata, (0, 2, 1)))
+            pdata = np.transpose(pdata, (0, 2, 1))
         if form == "ri":
             formatDic = {"labelA": "Re", "labelB": "Im", "param": parameter}
-            data = pdata.view(float)
+            data = np.ascontiguousarray(pdata).view(float)
         elif form == "db":
             formatDic = {"labelA": "dB", "labelB": "ang", "param": parameter}
             data = np.empty((pdata.shape[0], pdata.shape[1], pdata.shape[2] * 2), dtype='float64')
