@@ -126,7 +126,7 @@ class DefinedAEpTandZ0TestCase(unittest.TestCase):
             tanD = self.tand,
             z0_port = 50
             )
-        # z0_characteristic complex and frequency dependant
+        # z0_characteristic complex and frequency dependent
         self.assertTrue(np.all(np.abs(np.imag(m.z0_characteristic) > 1e-1)))
         self.assertTrue(m.z0_characteristic[0] != m.z0_characteristic[-1])
 

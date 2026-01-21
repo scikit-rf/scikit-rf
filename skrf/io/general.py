@@ -189,7 +189,7 @@ def write(file, obj, overwrite = True):
 
 
     .. note::
-        If `file` is a string, but doesnt contain a suffix, one is chosen
+        If `file` is a string, but doesn't contain a suffix, one is chosen
         automatically. Here are the extensions:
 
 
@@ -267,7 +267,7 @@ def read_all(dir: str | Path = '.', sort = True, contains = None, f_unit = None,
     dir : str or Path, optional
         the directory to load from, default  \'.\'
     sort: boolean, default is True
-        filenames sorted by https://docs.python.org/3/library/stdtypes.html#list.sort without arguements
+        filenames sorted by https://docs.python.org/3/library/stdtypes.html#list.sort without arguments
     contains : str, optional
         if not None, only files containing this substring will be loaded
     f_unit : ['hz','khz','mhz','ghz','thz']
@@ -829,11 +829,19 @@ class TouchstoneEncoder(json.JSONEncoder):
 
 def to_json_string(network):
     """
-    Dumps Network to JSON string. Faster than converting and saving as touchstone.
+    Dumps Network to JSON string.
+
+    Faster than converting and saving as touchstone.
     Safer than pickling (no arbitrary code execution on load).
-    :param network: :class:`~skrf.network.Network` object
+
+    Parameters
+    ----------
+    network: :class:`~skrf.network.Network` object
         A Network object to be serialized and returned as a JSON string.
-    :return: str
+
+    Returns
+    -------
+    json : str
         JSON string representation of a network object.
     """
     return json.dumps(network.__dict__, cls=TouchstoneEncoder)
@@ -842,9 +850,15 @@ def to_json_string(network):
 def from_json_string(obj_string):
     """
     Loads network object from JSON string representation.
-    :param obj_string: str
+
+    Parameters
+    ----------
+    obj_string : str
         JSON string representation of a network object.
-    :return: :class:`~skrf.network.Network` object
+
+    Returns
+    -------
+    ntwk : :class:`~skrf.network.Network` object
         A Network object, rebuilt from JSON.
     """
     obj = json.loads(obj_string)

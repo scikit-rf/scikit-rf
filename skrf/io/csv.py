@@ -125,7 +125,7 @@ def read_pna_csv(filename, *args, **kwargs) -> tuple[str, str, np.ndarray]:
             **kwargs
             )
     except(ValueError):
-        # carrage returns require a doubling of skiplines
+        # carriage returns require a doubling of skiplines
         data = np.genfromtxt(
             filename,
             delimiter = ',',
@@ -360,7 +360,7 @@ class AgilentCSV:
                 skip_footer = footer,
                 )
         except(ValueError):
-            # carrage returns require a doubling of skiplines
+            # carriage returns require a doubling of skiplines
             data = np.genfromtxt(
                 self.filename,
                 delimiter = ',',
@@ -411,7 +411,7 @@ class AgilentCSV:
         """
         header,  d = self.header, self.data
 
-        n_traces =  d.shape[1] - 1 # because theres is one frequency column
+        n_traces =  d.shape[1] - 1 # because there's is one frequency column
 
         if header.count(',') == n_traces:
             cols = header.split(',') # column names
@@ -450,7 +450,7 @@ class AgilentCSV:
         """
         comments = self.comments
         d = self.data
-        n_traces =  d.shape[1] - 1 # because theres is one frequency column
+        n_traces =  d.shape[1] - 1 # because there's is one frequency column
         cols = self.columns
         freq = self.frequency
 
@@ -496,7 +496,7 @@ class AgilentCSV:
 
         ntwk_list = []
         if (self.n_traces)//2 == 0 : # / --> // for Python3 compatibility
-            # this isnt complex data
+            # this isn't complex data
             return self.scalar_networks
         else:
             for k in range((self.n_traces)//2):
@@ -522,7 +522,7 @@ class AgilentCSV:
     @property
     def dict(self):
         """
-        Dictionnary representation of csv file.
+        Dictionary representation of csv file.
 
         Returns
         -------
@@ -632,7 +632,7 @@ def pna_csv_2_ntwks(filename):
 
 
     if (d.shape[1]-1)/2 == 0 :
-        # this isnt complex data
+        # this isn't complex data
         f = d[:,0]
         if 'db' in header.lower():
             s = mf.db_2_mag(d[:,1])

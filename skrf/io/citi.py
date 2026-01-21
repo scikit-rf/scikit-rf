@@ -169,12 +169,12 @@ class Citi:
                 data_list.append(name)  # to be popped out after
 
             if line.strip().upper().startswith('VAR_LIST_BEGIN'):
-                # read the number of occurence lines for a param (FIFO param)
+                # read the number of occurrence lines for a param (FIFO param)
                 _param_values = []
                 cur_name = params_list.pop(0)
                 for _idx in range(self._params[cur_name]['occurences']):
                     line = lines.pop(0)  # goes next line
-                    # reads the nb of occurences
+                    # reads the nb of occurrences
                     _param_values.append(line.strip())
 
                 self._params[cur_name]['values'] = np.array(_param_values, dtype=float)
@@ -183,7 +183,7 @@ class Citi:
                 _data_values = []
                 cur_name = data_list.pop(0)
                 # data are ordered for each param(s), then for each frequency
-                # so number of lines to read is the product of the occurences of each param
+                # so number of lines to read is the product of the occurrences of each param
                 nb_lines = np.prod([self._params[name]['occurences'] for name in self._params.keys()])
                 for _idx in range(nb_lines):
                     line = lines.pop(0)  # goes next line

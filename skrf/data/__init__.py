@@ -167,7 +167,7 @@ materials = {
     },
 }
 """
-materials : Dictionnary of materials properties
+materials : Dictionary of materials properties
 """
 
 for k1,k2 in [

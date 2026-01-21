@@ -60,11 +60,12 @@ import pprint
 import re
 import sys
 import warnings
+from collections.abc import Callable, Iterable
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
 from subprocess import PIPE, Popen
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, TypeVar
 
 import numpy as np
 
@@ -159,7 +160,7 @@ def now_string() -> str:
     Returns
     -------
     now : string
-        curent date-time stamps.
+        current date-time stamps.
 
     See Also
     --------
@@ -378,7 +379,7 @@ def dict_2_recarray(d: dict, delim: str, dtype: list[tuple]) -> np.ndarray:
     Parameters
     ----------
     d : dict
-        dictionnary of structured keys
+        dictionary of structured keys
     delim : str
         delimiter string
     dtype : list of tuple

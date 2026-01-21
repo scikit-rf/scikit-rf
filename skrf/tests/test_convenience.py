@@ -69,9 +69,9 @@ class ConvenienceTestCase(unittest.TestCase):
         Touchstone files are not necessarily indicating such impedances,
         especially if they vary with frequency.
 
-        HFSS Touchstone file format supports port informations (as an option) for gamma and z0
+        HFSS Touchstone file format supports port information (as an option) for gamma and z0
         When HFSS files are read with Network() (or hfss_touchstone_2_network()),
-        the port informations are taken into account.
+        the port information are taken into account.
         """
         # Comparing the S-params of the same device expressed with same z0
         nw_50 = rf.Network(self.hfss_threeport_file_50ohm)
@@ -155,6 +155,34 @@ class ConvenienceTestCase(unittest.TestCase):
                                     [-9.748145748042E-6, 5.737806652221E-6, -7.2831384009613E-1,  -7.2022385218772E-6]))
         self.assertTrue(np.allclose(ntwk.s_im[0][2], # check s3n_im
                                     [4.4579440784571E-6, 5.3413994843693E-6, -4.5314024673959E-1, 5.6678579987964E-7]))
+
+    def test_RS_ZVR_1_20_beta_f(self):
+        """
+        Try reading an old R&S ZVR (v1.20 beta F, circa 1998) Touchstone 2-port
+        measurement file.
+
+        The only difference is that the file contains leading spaces and
+        trailing spaces in in all lines, including the "#" line. Applications
+        should strip all leading spaces before parsing it, otherwise the option
+        lines won't be correctly identified.
+        """
+        filename = "RS_ZVR_1.20_beta_f.s2p"
+        ntwk = rf.Network(os.path.join(self.test_dir, filename))
+
+        # Check if port characteristic impedance is correctly parsed
+        self.assertTrue(np.isclose(np.unique(ntwk.z0), 50))
+        # For this specific file, the port#1 min return loss is @1 kHz
+        self.assertTrue(ntwk.frequency.f[np.argmin(ntwk.s11.s_mag)], 1.0e3)
+
+        self.assertTrue(np.allclose(ntwk.s_db[0,0,0], -0.00001))
+        self.assertTrue(np.allclose(ntwk.s_db[0,1,0], -0.00002))
+        self.assertTrue(np.allclose(ntwk.s_db[0,0,1], -0.0003))
+        self.assertTrue(np.allclose(ntwk.s_db[0,1,1], -0.00004))
+
+        self.assertTrue(np.allclose(ntwk.s_deg[0,0,0], -100.001))
+        self.assertTrue(np.allclose(ntwk.s_deg[0,1,0], -0.00002))
+        self.assertTrue(np.allclose(ntwk.s_deg[0,0,1], -0.00003))
+        self.assertTrue(np.allclose(ntwk.s_deg[0,1,1], -100.004))
 
     def test_helic_touchstone_V2_network(self):
         ntwk_helic_ts_extension = rf.Network(os.path.join(self.test_dir, 'helic_example_6ports_V2.ts'))

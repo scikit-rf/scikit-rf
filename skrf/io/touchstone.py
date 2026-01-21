@@ -31,10 +31,11 @@ import re
 import typing
 import warnings
 import zipfile
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
-from typing import Callable, Literal
+from typing import Literal
 
 import numpy as np
 
@@ -436,15 +437,19 @@ class Touchstone:
             if not line:
                 break
 
-            line_l = line.lower()
+            # some malformed Touchstone files have leading spaces, strip them,
+            # otherwise we can't identify the keywords in option lines.
+            line_l = line.strip()
+            if not line_l:
+                continue
 
             is_data_line = True
             # Avoid traversing the self._parse_dict for each line by checking the first letter
             # {"!", "#", "["} covers all the first letters of the key of the current self._parse_dict
             if line_l[0] in {"!", "#", "["}:
                 for k, v in self._parse_dict.items():
-                    if line_l.startswith(k):
-                        v(line)
+                    if line_l.lower().startswith(k):
+                        v(line_l)
                         is_data_line = False
                         break
             if is_data_line:
@@ -615,7 +620,7 @@ class Touchstone:
         Returns the comments which appear anywhere in the file.
 
         Comment lines containing ignored comments are removed.
-        By default these are comments which contain special meaning withing
+        By default these are comments which contain special meaning within
         skrf and are not user comments.
 
         Returns
@@ -643,7 +648,7 @@ class Touchstone:
         Returns
         -------
         var_dict : dict (numbers, units)
-            Dictionnary containing the comments
+            Dictionary containing the comments
         """
         comments = self.comments
         p1 = re.compile(r"\w* = \w*.*")

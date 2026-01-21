@@ -54,8 +54,9 @@ from __future__ import annotations
 
 import os
 import warnings
+from collections.abc import Callable
 from numbers import Number
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 try:
     import matplotlib as mpl
@@ -1042,10 +1043,10 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
     >>> myntwk.plot_s_smith()
     >>> myntwk.plot_s_smith(m=0,n=1,color='b', marker='x')
     """
-    # TODO: prevent this from re-drawing smith chart if one alread
+    # TODO: prevent this from re-drawing smith chart if one already
     # exists on current set of axes
 
-    # get current axis if user doesnt supply and axis
+    # get current axis if user doesn't supply and axis
     if ax is None:
         ax = plt.gca()
 
@@ -1067,7 +1068,7 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
     for m in M:
         for n in N:
             # set the legend label for this trace to the networks name if it
-            # exists, and they didnt pass a name key in the kwargs
+            # exists, and they didn't pass a name key in the kwargs
             if generate_label:
                 kwargs['label'] = _get_label_str(netw, "S", m, n)
 
@@ -1768,7 +1769,7 @@ def plot_prop_complex(netw: Network, prop_name: str,
     m : int, optional
         first index of s-parameter matrix, if None will use all
     n : int, optional
-        secon index of the s-parameter matrix, if None will use all
+        second index of the s-parameter matrix, if None will use all
     ax : :class:`matplotlib.Axes` object, optional
         An existing Axes object to plot on
     show_legend : Boolean
@@ -1833,7 +1834,7 @@ def plot_prop_polar(netw: Network, prop_name: str,
     m : int, optional
         first index of s-parameter matrix, if None will use all
     n : int, optional
-        secon index of the s-parameter matrix, if None will use all
+        second index of the s-parameter matrix, if None will use all
     ax : :class:`matplotlib.Axes` object, optional
         An existing Axes object to plot on
     show_legend : Boolean

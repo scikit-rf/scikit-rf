@@ -293,10 +293,10 @@ class Qfactor:
         method : str, optional
             Fitting method : 'NLQFIT6' (default), 'NLQFIT7', 'NLQFIT8':
 
-            - 'NLQFIT6': Least Square Minimum of Eq.21 [MAT58]_ with 6 coeffcients.
-            - 'NLQFIT7': Least Square Minimum of Eq.26 [MAT58]_ with 7 coeffcients,
+            - 'NLQFIT6': Least Square Minimum of Eq.21 [MAT58]_ with 6 coefficients.
+            - 'NLQFIT7': Least Square Minimum of Eq.26 [MAT58]_ with 7 coefficients,
               including one that characterize the trans. line length.
-            - 'NLQFIT8': Least Square Minimum of Eq.43 [MAT58]_ with 8 coeffcients,
+            - 'NLQFIT8': Least Square Minimum of Eq.43 [MAT58]_ with 8 coefficients,
               A model for frequency-dependent leakage.
         loop_plan : str, optional
             Defines order of steps used by the fitting process.
@@ -980,9 +980,9 @@ class Qfactor:
 
         Parameters
         ----------
-       opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
-           Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
-           If None, uses the solution previously calculated, if performed.
+        opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
+            Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
+            If None, uses the solution previously calculated, if performed.
         A : None of float. Default is None.
             Scaling factor as defined in MAT 58 [MAT58]_.
             For `reflection` resonance type, can be set as None
@@ -1020,7 +1020,7 @@ class Qfactor:
 
         if A is None:
             A = 1.0 / abs(complex(m1, m2))  # scale to S_V
-        elif not isinstance(A, (int, float)):
+        elif not isinstance(A, int | float):
             raise ValueError("A should be a float or None")
 
         aqratio = complex(m1, m2)
@@ -1042,9 +1042,9 @@ class Qfactor:
 
         Parameters
         ----------
-       opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
-           Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
-           If None, uses the solution previously calculated, if performed.
+        opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
+            Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
+            If None, uses the solution previously calculated, if performed.
         A : float or None. Default is None.
             Scaling factor as defined in MAT 58 [MAT58]_.
             For `reflection` resonance type, can be set as None
@@ -1071,7 +1071,7 @@ class Qfactor:
 
         if A is None:
             auto_flag = True
-        elif isinstance(A, (int, float)):
+        elif isinstance(A, int | float):
             auto_flag = False
         else:
             raise ValueError("Illegal Scaling factor; should be a float or  None")
@@ -1141,6 +1141,7 @@ class Qfactor:
                  opt_res: None | OptimizedResult = None,
                  f: None | np.ndarray = None
                  ) -> np.ndarray:
+        # if no solution passed, use internal solution if exist
         r"""S-parameter response of an equivalent circuit model resonator.
 
         The approximate solution and estimated is obtained from [MAT58]_:
@@ -1158,9 +1159,9 @@ class Qfactor:
 
         Parameters
         ----------
-       opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
-           Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
-           If None, uses the solution previously calculated, if performed.
+        opt_res : None or :class:`~skrf.qfactor.OptimizedResult`. Default is None.
+            Solution produced by the :meth:`~skrf.qfactor.Qfactor.fit` method.
+            If None, uses the solution previously calculated, if performed.
         f : None or np.ndarray. Default is None.
             frequency array [Hz]. If None, use the self frequencies.
 
@@ -1177,7 +1178,6 @@ class Qfactor:
             section 2.2, eqn. (21).
 
         """
-        # if no solution passed, use internal solution if exist
         if opt_res is None:
             if self.opt_res is None:
                 raise ValueError('No solution found or passed.')

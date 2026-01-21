@@ -67,15 +67,30 @@ Three Receiver (1.5 port)
    TwoPortOnePath
    EnhancedResponse
 
+Switch Terms
+------------
+
+.. autosummary::
+   :toctree: generated/
+
+   compute_switch_terms
 
 Generic Methods
 ---------------
 .. autosummary::
    :toctree: generated/
 
+   ideal_coefs_12term
    terminate
+   terminate_nport
    unterminate
    determine_line
+   determine_reflect
+   convert_12term_2_8term
+   convert_8term_2_12term
+   align_measured_ideals
+   two_port_error_vector_2_Ts
+   error_dict_2_network
 
 PNA interaction
 ---------------
@@ -141,8 +156,6 @@ coefs_list_12term =[
     'reverse isolation'
     ]
 
-
-
 global coefs_list_8term
 """
 There are various notations used for this same model. Given that all
@@ -166,6 +179,7 @@ coefs_list_8term = [
     'forward isolation',
     'reverse isolation'
     ]
+
 global coefs_list_3term
 coefs_list_3term = [
     'directivity',
@@ -575,7 +589,7 @@ class Calibration:
         """
         Return any output from the :func:`run`.
 
-        This just returns whats in  _output_from_run, and calls
+        This just returns what's in  _output_from_run, and calls
         :func:`run` if that attribute is  non-existent.
         finally, returns None if run() is called, and nothing is in
         _output_from_run.
@@ -583,7 +597,7 @@ class Calibration:
         try:
             return self._output_from_run
         except(AttributeError):
-            # maybe i havent run yet
+            # maybe i haven't run yet
             self.run()
             try:
                 return self._output_from_run
@@ -1133,6 +1147,12 @@ class OnePort(Calibration):
         Calibration.__init__(self, measured, ideals,
                              *args, **kwargs)
 
+    def _check_input(self):
+        if not all([n.number_of_ports==1 for n in self.ideals]):
+            raise ValueError(f'ideals for {self.family} should be 1-port Networks')
+        if not all([n.number_of_ports==1 for n in self.measured]):
+            raise ValueError(f'measured networks for {self.family} should be 1-port Networks')
+
     def run(self):
         """ Run the calibration algorithm.
         """
@@ -1142,10 +1162,7 @@ class OnePort(Calibration):
         mList = [self.measured[k].s.reshape((-1,1)) for k in range(numStds)]
         iList = [self.ideals[k].s.reshape((-1,1)) for k in range(numStds)]
 
-        if not all([n.number_of_ports==1 for n in self.ideals]):
-            raise RuntimeError(f'ideals for {self.family} should be 1-port Networks')
-        if not all([n.number_of_ports==1 for n in self.measured]):
-            raise RuntimeError(f'measured networks for {self.family} should be 1-port Networks')
+        self._check_input()
 
         # ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
         fLength = len(mList[0])
@@ -1309,6 +1326,8 @@ class SDDLWeikle(OnePort):
                              ideals =ideals, **kwargs)
 
     def run(self):
+        self._check_input()
+
         #measured reflection coefficients
         w_s = self.measured[0].s.flatten() # short
         w_1 = self.measured[1].s.flatten() # delay short 1
@@ -1451,6 +1470,7 @@ class SDDL(OnePort):
 
 
     def run(self):
+        self._check_input()
 
         #measured impedances
         d = s2z(self.measured[0].s,1) # short
@@ -1532,6 +1552,7 @@ class PHN(OnePort):
 
 
     def run(self):
+        self._check_input()
 
         # ideals (in impedance)
         a = s2z(self.ideals[0].s,1).flatten() # half known
@@ -1567,7 +1588,7 @@ class PHN(OnePort):
         a2 = -(f*b2 + g)/(z*b2 + e)
 
         # temporarily translate into s-parameters so make the root-choice
-        #  choosing a root in impedance doesnt generally work for typical
+        #  choosing a root in impedance doesn't generally work for typical
         # calibration standards
         b1_s = z2s(b1.reshape(-1,1,1),1)
         b2_s = z2s(b2.reshape(-1,1,1),1)
@@ -1672,7 +1693,7 @@ class TwelveTerm(Calibration):
         # note: this will enable sloppy_input and align stds if necessary
         Calibration.__init__(self, *args, **kwargs)
 
-        # if they didnt tell us the number of thrus, then lets
+        # if they didn't tell us the number of thrus, then lets
         # heuristically determine it
         trans_thres_mag = 10 ** (trans_thres / 20)
 
@@ -1891,7 +1912,7 @@ class SOLT(TwelveTerm):
         """
         SOLT initializer.
 
-        If you arent using `sloppy_input`, then the order of the
+        If you aren't using `sloppy_input`, then the order of the
         standards must align.
 
         If `n_thrus!=None`, then the thru standard[s] must be last in
@@ -3840,7 +3861,7 @@ class TUGMultilineTRL(EightTerm):
 
         def compute_gamma(X_inv, M, lengths, gamma_est, inx=0):
             # gamma = alpha + 1j*beta is determined through linear weighted least-squares
-            # with inx you can choose the refrence line. doesn't make any difference.
+            # with inx you can choose the reference line. doesn't make any difference.
             lengths = lengths - lengths[inx]
             EX = (X_inv@M)[[0,-1],:]             # extract z and y columns
             EX = np.diag(1/EX[:,inx])@EX        # normalize to a reference line based on index `inx` (can be any)
@@ -3860,8 +3881,8 @@ class TUGMultilineTRL(EightTerm):
             return alpha + 1j*beta
 
         def solve_quadratic(v1, v2, inx, x_est):
-            # This is realted to solving the normalized error terms using nullspace approach.
-            # The variable `inx` allowes to reuse the function to shuffel the coeffiecient to get other error terms.
+            # This is related to solving the normalized error terms using nullspace approach.
+            # The variable `inx` allowes to reuse the function to shuffel the coefficient to get other error terms.
             v12,v13 = v1[inx]
             v22,v23 = v2[inx]
             mask = np.ones(v1.shape, bool)
@@ -4086,7 +4107,13 @@ class UnknownThru(EightTerm):
         IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
 
     """
+
     family = 'UnknownThru'
+
+    # Use standard SOL calibration to solve two 1-port error boxes
+    # before the Thru calibration.
+    _ONEPORT_ALGO = OnePort
+
     def __init__(self, measured, ideals,  *args, **kwargs):
         r"""
         UnknownThru Initializer.
@@ -4123,8 +4150,8 @@ class UnknownThru(EightTerm):
         thru_m = self.measured_unterminated[-1]
 
         # create one port calibration for all reflective standards
-        port1_cal = OnePort(measured = p1_m, ideals = p1_i)
-        port2_cal = OnePort(measured = p2_m, ideals = p2_i)
+        port1_cal = self._ONEPORT_ALGO(measured = p1_m, ideals = p1_i)
+        port2_cal = self._ONEPORT_ALGO(measured = p2_m, ideals = p2_i)
 
         # cal coefficient dictionaries
         p1_coefs = port1_cal.coefs.copy()
@@ -4133,24 +4160,6 @@ class UnknownThru(EightTerm):
         e_rf = port1_cal.coefs_ntwks['reflection tracking']
         e_rr = port2_cal.coefs_ntwks['reflection tracking']
 
-        # create a fully-determined 8-term cal just get estimate on k's sign
-        # this is really inefficient, i need to work out the math on the
-        # closed form solution
-        et = EightTerm(
-            measured = self.measured,
-            ideals = self.ideals,
-            switch_terms= self.switch_terms)
-        k_approx = et.coefs['k'].flatten()
-
-        # this is equivalent to sqrt(detX*detY/detM)
-        e10e32 = np.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
-
-        k_ = e10e32/e_rr.s.flatten()
-        k_ = find_closest(k_, -1*k_, k_approx)
-
-        #import pylab as plb
-        #plot(abs(k_-k_approx))
-        #plb.show()
         # create single dictionary for all error terms
         coefs = {}
 
@@ -4171,10 +4180,49 @@ class UnknownThru(EightTerm):
                 'forward switch term': np.zeros(len(self.frequency), dtype=complex),
                 'reverse switch term': np.zeros(len(self.frequency), dtype=complex),
                 })
-
-        coefs.update({'k':k_})
-
         self.coefs = coefs
+
+        # this is equivalent to sqrt(detX*detY/detM)
+        e10e32 = np.sqrt((e_rf * e_rr * thru_m.s21 / thru_m.s12).s.flatten())
+
+        # We have almost all the information in self.coefs, except the last
+        # one, self.coefs['k']. This parameter has a sign ambiguity because
+        # e10e32 is a square root with two solutions. We need to pick the
+        # solution with the phase angle closer to the user's approximate
+        # definition.
+        k_ambiguous = e10e32 / e_rr.s.flatten()
+        self._choose_k(k_ambiguous)
+
+    def _choose_k(self, k_ambiguous):
+        # square root is multi-valued
+        k1 = k_ambiguous
+        k2 = -1 * k_ambiguous
+
+        # Measured thru network (including crosstalk) and the user-provided
+        # definition.
+        thru_meas = self.measured[-1]
+        thru_def = self.ideals[-1]
+
+        # solution of the Thru using k1
+        self.coefs.update({'k': k1})
+        solved_thru_k1 = self.apply_cal(thru_meas)
+
+        # solution of the Thru using k2
+        self.coefs.update({'k': k2})
+        solved_thru_k2 = self.apply_cal(thru_meas)
+
+        # Compare the phase angle differences of two solutions.
+        arg_diff1 = np.abs(
+            np.angle(solved_thru_k1.s[:,1,0] / thru_def.s[:,1,0])
+        )
+        arg_diff2 = np.abs(
+            np.angle(solved_thru_k2.s[:,1,0] / thru_def.s[:,1,0])
+        )
+
+        # At every frequency, pick the corresponding k value from k1 if
+        # arg_diff1 is smaller, or vice versa.
+        k_chosen = np.where(arg_diff1 < arg_diff2, k1, k2)
+        self.coefs.update({'k': k_chosen})
 
 
 class LRM(EightTerm):
@@ -4874,7 +4922,14 @@ class MRC(UnknownThru):
 
 
     """
+
     family = 'MRC'
+
+    # Use standard SDDL calibration to solve two 1-port error boxes
+    # before the Thru calibration. This overrides the algorithm used
+    # by UnknownThru.run()
+    _ONEPORT_ALGO = SDDL
+
     def __init__(self, measured, ideals,  *args, **kwargs):
         r"""
         MRC Initializer
@@ -4906,69 +4961,6 @@ class MRC(UnknownThru):
 
         UnknownThru.__init__(self, measured = measured, ideals = ideals,
                            **kwargs)
-
-
-    def run(self):
-        p1_m = [k.s11 for k in self.measured_unterminated[:-1]]
-        p2_m = [k.s22 for k in self.measured_unterminated[:-1]]
-        p1_i = [k.s11 for k in self.ideals[:-1]]
-        p2_i = [k.s22 for k in self.ideals[:-1]]
-
-        thru_m = self.measured_unterminated[-1]
-
-        # create one port calibration for all reflective standards
-        port1_cal = SDDL(measured = p1_m, ideals = p1_i)
-        port2_cal = SDDL(measured = p2_m, ideals = p2_i)
-
-        # cal coefficient dictionaries
-        p1_coefs = port1_cal.coefs.copy()
-        p2_coefs = port2_cal.coefs.copy()
-
-        e_rf = port1_cal.coefs_ntwks['reflection tracking']
-        e_rr = port2_cal.coefs_ntwks['reflection tracking']
-
-        # create a fully-determined 8-term cal just get estimate on k's sign
-        # this is really inefficient, i need to work out the math on the
-        # closed form solution
-        et = EightTerm(
-            measured = self.measured,
-            ideals = self.ideals,
-            switch_terms= self.switch_terms)
-        k_approx = et.coefs['k'].flatten()
-
-        # this is equivalent to sqrt(detX*detY/detM)
-        e10e32 = np.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
-
-        k_ = e10e32/e_rr.s.flatten()
-        k_ = find_closest(k_, -1*k_, k_approx)
-
-        #import pylab as plb
-        #plot(abs(k_-k_approx))
-        #plb.show()
-        # create single dictionary for all error terms
-        coefs = {}
-
-        coefs.update({f'forward {k}': p1_coefs[k] for k in p1_coefs})
-        coefs.update({f'reverse {k}': p2_coefs[k] for k in p2_coefs})
-
-        coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
-        coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
-
-        if self.switch_terms is not None:
-            coefs.update({
-                'forward switch term': self.switch_terms[0].s.flatten(),
-                'reverse switch term': self.switch_terms[1].s.flatten(),
-                })
-        else:
-            warn('No switch terms provided', stacklevel=2)
-            coefs.update({
-                'forward switch term': np.zeros(len(self.frequency), dtype=complex),
-                'reverse switch term': np.zeros(len(self.frequency), dtype=complex),
-                })
-
-        coefs.update({'k':k_})
-
-        self.coefs = coefs
 
 
 class SixteenTerm(Calibration):
@@ -5676,7 +5668,8 @@ class MultiportCal:
     multi-ports in which case a subnetwork is taken for calibration according to
     the key.
 
-    Example cal_dict for three port measurement:
+    Example cal_dict for three port measurement::
+
         {(0,1): {'method':SOLT, 'measured': [list of measured networks], 'ideals': [list of ideal networks]},
          (0,2): {'method':SOLT, 'measured': [list of measured networks], 'ideals': [list of ideal networks]}
         }
@@ -5685,7 +5678,7 @@ class MultiportCal:
     calibration. If None, no isolation calibration is performed.
 
     Parameters
-    --------------
+    ----------
     cal_dict : dictionary
         Dictionary of port pair keys as specified above.
     isolation: :class:`~skrf.network.Network` or None
@@ -6218,7 +6211,7 @@ def unterminate(ntwk, gamma_f, gamma_r):
         \Gamma_r = \frac{a1}{b1} ,\qquad\text{sourced by port 2}
 
     These can be measured by four-sampler VNA's by setting up
-    user-defined traces onboard the VNA. If the VNA doesnt have
+    user-defined traces onboard the VNA. If the VNA doesn't have
     4-samplers, then you can measure switch terms indirectly by using a
     two-tier two-port calibration. First do a SOLT, then convert
     the 12-term error coefs to 8-term, and pull out the switch terms.
@@ -6513,7 +6506,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
         approximate One-port network for the reflect.  if None, then
         we assume its a flush short (gamma=-1)
     return_all: bool
-        return all possible values fo reflect, one for each root-choice.
+        return all possible values for reflect, one for each root-choice.
         useful for troubleshooting.
 
     Returns
@@ -6549,7 +6542,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     # The variables a, b, c define a quadratic equation for which the solutions sol1 and sol2 correspond to the
     # ratios (r11/r21) and (r12/r22) from equations (30) and (31) in the paper
     # The quadratic equation has solutions sol1 = (-b-sqrt(b*b-4*a*c))/(2*a), sol2 = (-b+sqrt(b*b-4*a*c))/(2*a)
-    # For a=0 these become degenerate. Also the consequtive equations for x1 and x2 contain singularities for a=0 or c=0
+    # For a=0 these become degenerate. Also the consecutive equations for x1 and x2 contain singularities for a=0 or c=0
 
     sol1 = (-b-sqrtD)/(2*a)
     sol2 = (-b+sqrtD)/(2*a)
