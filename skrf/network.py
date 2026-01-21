@@ -2561,6 +2561,9 @@ class Network:
         if ntwk.number_of_ports == 2:
             # transpose matrix:
             pdata = np.transpose(pdata, (0, 2, 1))
+
+        # expand complex numbers into real parts according to form
+        # creating a new array with shape (nfreqs, nports, nports*2)
         if form == "ri":
             formatDic = {"labelA": "Re", "labelB": "Im", "param": parameter}
             data = np.ascontiguousarray(pdata).view(float)
@@ -2576,6 +2579,9 @@ class Network:
             data[:, :, 1::2] = mf.complex_2_degree(pdata)
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
+
+        # flatten inner two dimensions and combining with frequency column:
+        # array with one line per frequency point
         data = np.column_stack([ntwk.frequency.f_scaled, data.reshape((data.shape[0],-1))])
 
         def get_buffer() -> io.StringIO:
@@ -2656,7 +2662,7 @@ class Network:
                     output.write('\n!')
                 output.write('\n')
 
-            # write out data
+            # write out data one frequency at a time
             for f in range(len(ntwk.f)):
                 output.write(fmt_str.format(*data[f]))
                 if write_z0:
