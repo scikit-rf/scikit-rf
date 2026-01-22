@@ -4,8 +4,10 @@ import unittest
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from scipy.constants import mu_0
 
 import skrf as rf
+from skrf.mathFunctions import db_2_np, meter_2_feet
 from skrf.media import Coaxial
 
 
@@ -57,22 +59,22 @@ class MediaTestCase(unittest.TestCase):
         _att = rng.random()
         # dB/m
         coax = Coaxial.from_attenuation_VF(frequency=frequency, VF=1, att=_att, unit='dB/m')
-        assert_almost_equal(coax.gamma.real,  rf.db_2_np(_att))
+        assert_almost_equal(coax.gamma.real,  db_2_np(_att))
         # dB/100m
         coax = Coaxial.from_attenuation_VF(frequency=frequency, VF=1, att=_att, unit='dB/100m')
-        assert_almost_equal(coax.gamma.real,  rf.db_2_np(_att)/100)
+        assert_almost_equal(coax.gamma.real,  db_2_np(_att)/100)
         # dB/feet
         coax = Coaxial.from_attenuation_VF(frequency=frequency, VF=1, att=_att, unit='dB/feet')
-        assert_almost_equal(coax.gamma.real,  rf.db_2_np(_att)*rf.meter_2_feet())
+        assert_almost_equal(coax.gamma.real,  db_2_np(_att)*meter_2_feet())
         # dB/100m
         coax = Coaxial.from_attenuation_VF(frequency=frequency, VF=1, att=_att, unit='dB/100feet')
-        assert_almost_equal(coax.gamma.real,  rf.db_2_np(_att)/100*rf.meter_2_feet())
+        assert_almost_equal(coax.gamma.real,  db_2_np(_att)/100*meter_2_feet())
         # Neper/m
         coax = Coaxial.from_attenuation_VF(frequency=frequency, VF=1, att=_att, unit='Np/m')
         assert_almost_equal(coax.gamma.real,  _att)
         # Neper/feet
         coax = Coaxial.from_attenuation_VF(frequency=frequency, VF=1, att=_att, unit='Np/feet')
-        assert_almost_equal(coax.gamma.real,  _att*rf.meter_2_feet())
+        assert_almost_equal(coax.gamma.real,  _att*meter_2_feet())
 
         with self.assertRaises(ValueError):
             coax = Coaxial.from_attenuation_VF(frequency=frequency, VF=1, att=np.array([.1, .2]), unit='Np/feet')
@@ -96,7 +98,7 @@ class MediaTestCase(unittest.TestCase):
 
         coax = Coaxial.from_attenuation_VF(frequency=frequency, att=att, unit='dB/m')
         # check alpha in gamma
-        assert_array_almost_equal(rf.db_2_np(att), coax.gamma.real)
+        assert_array_almost_equal(db_2_np(att), coax.gamma.real)
 
         # if the attenuation array length does not match the frequency,
         # should raise a ValueError
@@ -130,4 +132,4 @@ class MediaTestCase(unittest.TestCase):
             tan_delta=4e-4, sigma=1./1.68e-8,
             z0_port = 50.
             )
-        assert_array_almost_equal(coax.L*coax.C, rf.mu_0*coax.epsilon_prime)
+        assert_array_almost_equal(coax.L*coax.C, mu_0*coax.epsilon_prime)

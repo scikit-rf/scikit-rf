@@ -6,7 +6,7 @@ implemented in Python.
 __version__ = '1.9.0'
 ## Import all  module names for coherent reference of name-space
 #import io
-
+import os as os_
 
 from . import (
     calibration,
@@ -19,33 +19,37 @@ from . import (
     media,
     network,
     networkSet,
+    plotting,
     qfactor,
     taper,
     tlineFunctions,
     util,
     vectorFitting,
 )
-from .calibration import *
-from .circuit import *
-from .constants import *
 
-# Import contents into current namespace for ease of calling
-from .frequency import *
-from .instances import *
-from .io import *
-from .mathFunctions import *
-from .network import *
-from .networkSet import *
-from .qfactor import *
-from .taper import *
-from .tlineFunctions import *
-from .util import *
-from .vectorFitting import *
+# from .calibration.calibration import Calibration
+from .calibration import calibrationSet, deembedding
+from .circuit import Circuit
+from .frequency import Frequency
+from .network import Network
+from .networkSet import NetworkSet
+
+# from .qfactor import Qfactor
+# from .vectorFitting import VectorFitting
+# from .io.general import load_all_touchstones
+# from .io.touchstone import Touchstone
+# from .taper import *
+# from .tlineFunctions import *
+# from .util import *
+# from .instances import *
+# from .io import *
+# from .mathFunctions import *
+# from .constants import *
 
 # Try to import vi, but if except if pyvisa not installed
 try:
-    import vi
-    from vi import *
+    from . import vi
+    # from vi import *
 except ImportError:
     pass
 
@@ -56,18 +60,15 @@ try:
 except Exception:
     pass
 
-def __getattr__(name: str):
-    return getattr(instances._instances, name)
-
 ## built-in imports
-from copy import deepcopy as copy
+# from copy import deepcopy as copy
 
 ## Shorthand Names
 F = Frequency
 N = Network
 NS = NetworkSet
 C = Circuit
-lat = load_all_touchstones
+# lat = load_all_touchstones
 # saf  = save_all_figs
 saf = None
 stylely = None
@@ -80,7 +81,6 @@ def setup_pylab() -> bool:
         print("matplotlib not found while setting up plotting")
         return False
 
-    from . import plotting
 
     global saf, stylely
     saf = plotting.save_all_figs
@@ -89,7 +89,7 @@ def setup_pylab() -> bool:
 
 
 def setup_plotting():
-    plotting_environment = os.environ.get('SKRF_PLOT_ENV', "pylab").lower()
+    plotting_environment = os_.environ.get('SKRF_PLOT_ENV', "pylab").lower()
 
     if plotting_environment == "pylab":
         setup_pylab()

@@ -6,6 +6,20 @@ import pytest
 from scipy.constants import c, pi
 
 import skrf as rf
+from skrf.calibration.deembedding import (
+    IEEEP370_FD_QM,
+    IEEEP370_TD_QM,
+    AdmittanceCancel,
+    IEEEP370_SE_NZC_2xThru,
+    IEEEP370_SE_ZC_2xThru,
+    ImpedanceCancel,
+    Open,
+    OpenShort,
+    Short,
+    ShortOpen,
+    SplitPi,
+    SplitTee,
+)
 from skrf.media import MLine
 
 
@@ -224,15 +238,15 @@ class DeembeddingTestCase(unittest.TestCase):
         self.thru6_1f = self.thru6['10GHz']
 
         # create de-embedding objects
-        self.dm = rf.OpenShort(self.open, self.short)
-        self.dm_os = rf.OpenShort(self.open_1f, self.short_1f)
-        self.dm_o = rf.Open(self.open7_1f)
-        self.dm_so = rf.ShortOpen(self.short2_1f, self.open2_1f)
-        self.dm_s = rf.Short(self.short8_1f)
-        self.dm_pi = rf.SplitPi(self.thru3_1f)
-        self.dm_tee = rf.SplitTee(self.thru4_1f)
-        self.dm_ac = rf.AdmittanceCancel(self.thru5_1f)
-        self.dm_ic = rf.ImpedanceCancel(self.thru6_1f)
+        self.dm = OpenShort(self.open, self.short)
+        self.dm_os = OpenShort(self.open_1f, self.short_1f)
+        self.dm_o = Open(self.open7_1f)
+        self.dm_so = ShortOpen(self.short2_1f, self.open2_1f)
+        self.dm_s = Short(self.short8_1f)
+        self.dm_pi = SplitPi(self.thru3_1f)
+        self.dm_tee = SplitTee(self.thru4_1f)
+        self.dm_ac = AdmittanceCancel(self.thru5_1f)
+        self.dm_ic = ImpedanceCancel(self.thru6_1f)
 
         # relative tolerance for comparisons
         self.rtol = 1e-6
@@ -242,7 +256,7 @@ class DeembeddingTestCase(unittest.TestCase):
         Check that a warning is caught when networks are of different frequencies
         """
         with self.assertWarns(RuntimeWarning):
-            rf.OpenShort(self.open, self.short[0:len(self.short)//2])
+            OpenShort(self.open, self.short[0:len(self.short)//2])
 
         with self.assertWarns(RuntimeWarning):
             self.dm.deembed(self.raw[0:len(self.raw)//2])
@@ -328,7 +342,7 @@ class DeembeddingTestCase(unittest.TestCase):
         Test that this thru has S21 amplitude and phase smaller than a limit.
         """
         s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
-        dm_nzc = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru,
+        dm_nzc = IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru,
                                         name = '2xthru')
         residuals = dm_nzc.deembed(s2xthru)
         # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
@@ -350,7 +364,7 @@ class DeembeddingTestCase(unittest.TestCase):
         # interpolate to dc
         s2xthru_dc = s2xthru.extrapolate_to_dc(kind='linear')
         with pytest.warns(RuntimeWarning, match="DC point detected"):
-            dm_nzc = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_dc,
+            dm_nzc = IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_dc,
                                         name = '2xthru')
         residuals = dm_nzc.deembed(s2xthru_dc)
         # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
@@ -376,7 +390,7 @@ class DeembeddingTestCase(unittest.TestCase):
                                        npoints=len(s2xthru)-10, unit='Hz')
         s2xthru_nu = s2xthru.interpolate(nonuniform_freq)
         with pytest.warns(RuntimeWarning, match="Non-uniform frequency vector detected"):
-            dm_nzc_nu = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_nu,
+            dm_nzc_nu = IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_nu,
                                                 name = '2xthru')
         residuals = dm_nzc_nu.deembed(s2xthru_nu)
         # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
@@ -396,7 +410,7 @@ class DeembeddingTestCase(unittest.TestCase):
         """
         s2xthru = rf.Network(os.path.join(self.test_dir, 's2xthru.s2p'))
         fdf = rf.Network(os.path.join(self.test_dir, 'fdf.s2p'))
-        dm_zc  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru,
+        dm_zc  = IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru,
                                        dummy_fix_dut_fix = fdf,
                                        bandwidth_limit = 10e9,
                                        pullback1 = 0, pullback2 = 0,
@@ -425,7 +439,7 @@ class DeembeddingTestCase(unittest.TestCase):
         s2xthru_dc = s2xthru.extrapolate_to_dc(kind='linear')
         fdf_dc = fdf.extrapolate_to_dc(kind='linear')
         with pytest.warns(RuntimeWarning, match="DC point detected"):
-            dm_zc  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru_dc,
+            dm_zc  = IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru_dc,
                                         dummy_fix_dut_fix = fdf_dc,
                                         bandwidth_limit = 10e9,
                                         pullback1 = 0, pullback2 = 0,
@@ -459,7 +473,7 @@ class DeembeddingTestCase(unittest.TestCase):
         s2xthru_nu = s2xthru.interpolate(nonuniform_freq)
         fdf_nu = fdf.interpolate(nonuniform_freq)
         with pytest.warns(RuntimeWarning, match="Non-uniform frequency vector detected"):
-            dm_zc_nu  = rf.IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru_nu,
+            dm_zc_nu  = IEEEP370_SE_ZC_2xThru(dummy_2xthru = s2xthru_nu,
                                         dummy_fix_dut_fix = fdf_nu,
                                         bandwidth_limit = 10e9,
                                         pullback1 = 0, pullback2 = 0,
@@ -491,7 +505,7 @@ class DeembeddingTestCase(unittest.TestCase):
         # implementation, but small enough to keep within 1° limit line
         s2xthru_pn = s2xthru.copy()
         s2xthru_pn.add_noise_polar(0.0002, 0.2)
-        dm_nzc_pn = rf.IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_pn,
+        dm_nzc_pn = IEEEP370_SE_NZC_2xThru(dummy_2xthru = s2xthru_pn,
                                         name = '2xthru')
         residuals = dm_nzc_pn.deembed(s2xthru_pn)
         # insertion loss magnitude deviate from 1.0 from less than 0.1 dB
@@ -530,8 +544,8 @@ class DeembeddingTestCase(unittest.TestCase):
         thru  = m.line(0.050, 'm', z0 = 52.5)
         thru.name = "thru"
         # perfect data
-        fd_qm = rf.IEEEP370_FD_QM()
-        td_qm = rf.IEEEP370_TD_QM(1e9, # bps
+        fd_qm = IEEEP370_FD_QM()
+        td_qm = IEEEP370_TD_QM(1e9, # bps
                                   32,  # samples per UI
                                   0.4, # rise time per UI
                                   1,   # gaussian pulse

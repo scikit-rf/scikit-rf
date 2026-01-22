@@ -4,6 +4,7 @@ import unittest
 import numpy as np
 
 import skrf as rf
+from skrf.io.mdif import Mdif
 
 
 class MdifTestCase(unittest.TestCase):
@@ -17,15 +18,15 @@ class MdifTestCase(unittest.TestCase):
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/MDIF_CITI_MDL/'
 
         # constructor from filename
-        self.oneport_example1 = rf.Mdif(self.test_dir + 'test_1p_gmdif.mdf')
-        self.oneport_example2 = rf.Mdif(self.test_dir + 'test_1p_gmdif_2.mdf')
-        self.twoport_example1 = rf.Mdif(self.test_dir + 'test_2p_gmdif.mdf')
-        self.twoport_example2 = rf.Mdif(self.test_dir + 'test_2p_gmdif_2.mdf')
-        self.twoport_example3 = rf.Mdif(self.test_dir + 'test_2p_gmdif_3.mdf')
-        self.twoport_example_z = rf.Mdif(self.test_dir + 'test_2p_gmdif_z.mdf')
-        self.twoport_example_yz = rf.Mdif(self.test_dir + 'test_2p_gmdif_yz.mdf')
+        self.oneport_example1 = Mdif(self.test_dir + 'test_1p_gmdif.mdf')
+        self.oneport_example2 = Mdif(self.test_dir + 'test_1p_gmdif_2.mdf')
+        self.twoport_example1 = Mdif(self.test_dir + 'test_2p_gmdif.mdf')
+        self.twoport_example2 = Mdif(self.test_dir + 'test_2p_gmdif_2.mdf')
+        self.twoport_example3 = Mdif(self.test_dir + 'test_2p_gmdif_3.mdf')
+        self.twoport_example_z = Mdif(self.test_dir + 'test_2p_gmdif_z.mdf')
+        self.twoport_example_yz = Mdif(self.test_dir + 'test_2p_gmdif_yz.mdf')
 
-        self.fourport_example1 = rf.Mdif(self.test_dir + 'test_4p_gmdif.mdf')
+        self.fourport_example1 = Mdif(self.test_dir + 'test_4p_gmdif.mdf')
 
         self.examples = [self.oneport_example1, self.oneport_example2,
                          self.twoport_example1, self.twoport_example2,
@@ -34,7 +35,7 @@ class MdifTestCase(unittest.TestCase):
 
         # constructor from file-object
         file = open(self.test_dir + 'test_1p_gmdif.mdf')
-        self.oneport_example1_from_fo = rf.Mdif(file)
+        self.oneport_example1_from_fo = Mdif(file)
 
     def test_equal(self):
         """ Test the comparison between two Mdif objects """
@@ -88,7 +89,7 @@ class MdifTestCase(unittest.TestCase):
         """Test reading a MDIF file which has comments after BEGIN ACDATA. """
         file = self.test_dir + 'test_comment_after_BEGIN.mdf'
         # Mdif Object Init
-        mdif = rf.Mdif(file)
+        mdif = Mdif(file)
         # to Networkset Init
         ns = rf.NetworkSet.from_mdif(file)
 

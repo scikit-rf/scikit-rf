@@ -28,8 +28,8 @@ class DotOneport(unittest.TestCase,CalsetTest):
 
     """
     def setUp(self):
-        self.wg = rf.RectangularWaveguide(rf.F(75, 100, 11, unit='GHz'),
-                                          a = 100*rf.mil, z0_override = 50)
+        self.wg = rf.instances.RectangularWaveguide(rf.F(75, 100, 11, unit='GHz'),
+                                          a = 100*rf.constants.mil, z0_override = 50)
         wg = self.wg
         self.n_ports = 1
         self.E = wg.random(n_ports =2, name = 'E')
@@ -62,8 +62,8 @@ class DotEightTerm(unittest.TestCase, CalsetTest):
     @suppress_warning_decorator("divide by zero encountered in true_divide")
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75, 100, 3, unit='GHz'),
-                                          a = 100*rf.mil, z0_override = 50)
+        self.wg = rf.instances.RectangularWaveguide(rf.F(75, 100, 3, unit='GHz'),
+                                          a = 100*rf.constants.mil, z0_override = 50)
         wg= self.wg
         wg.frequency = rf.F.from_f([100], unit='GHz')
 

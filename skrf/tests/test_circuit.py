@@ -5,6 +5,8 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 
 import skrf as rf
+from skrf.constants import INF
+from skrf.network import connect, innerconnect, renormalize_s
 
 
 class CircuitTestConstructor(unittest.TestCase):
@@ -182,7 +184,7 @@ class CircuitClassMethods(unittest.TestCase):
     """
     def setUp(self):
         self.freq = rf.Frequency(start=1, stop=2, npoints=101, unit='GHz')
-        self.media = rf.DefinedGammaZ0(self.freq)
+        self.media = rf.media.DefinedGammaZ0(self.freq)
 
     def test_ground(self):
         """
@@ -217,7 +219,7 @@ class CircuitClassMethods(unittest.TestCase):
 
     def test_series_impedance(self):
         z0s = [1, 50]
-        Zs = [1, 1 + 1j, rf.INF]
+        Zs = [1, 1 + 1j, INF]
         for z0 in z0s:
             for Z in Zs:
                 assert_array_almost_equal(
@@ -233,17 +235,17 @@ class CircuitClassMethods(unittest.TestCase):
 
     def test_shunt_admittance(self):
         z0s = [1, 50]
-        Ys = [1, 1 + 1j, rf.INF]
+        Ys = [1, 1 + 1j, INF]
         for z0 in z0s:
             for Y in Ys:
                 assert_array_almost_equal(
                     rf.Circuit.ShuntAdmittance(self.freq, Y, 'imp', z0=z0).s,
-                    self.media.shunt(self.media.load(rf.zl_2_Gamma0(z0, 1/Y))).s
+                    self.media.shunt(self.media.load(rf.tlineFunctions.zl_2_Gamma0(z0, 1/Y))).s
                     )
 
         # Y=INF is a a 2-ports short
         assert_array_almost_equal(
-            rf.Circuit.ShuntAdmittance(self.freq, rf.INF, 'imp').s,
+            rf.Circuit.ShuntAdmittance(self.freq, INF, 'imp').s,
             self.media.short(nports=2).s
             )
 
@@ -368,12 +370,12 @@ class CircuitTestWilkinson(unittest.TestCase):
         T1 = self.line_branches.splitter(3, z0=z0_port)
         T2 = self.line_branches.splitter(3, z0=z0_port)
 
-        _wilkinson1 = rf.connect(T0, 1, self.branch1, 0)
-        _wilkinson2 = rf.connect(_wilkinson1, 2, self.branch2, 0)
-        _wilkinson3 = rf.connect(_wilkinson2, 1, T1, 0)
-        _wilkinson4 = rf.connect(_wilkinson3, 1, T2, 0)
-        _wilkinson5 = rf.connect(_wilkinson4, 1, self.resistor, 0)
-        wilkinson = rf.innerconnect(_wilkinson5, 1, 4)
+        _wilkinson1 = connect(T0, 1, self.branch1, 0)
+        _wilkinson2 = connect(_wilkinson1, 2, self.branch2, 0)
+        _wilkinson3 = connect(_wilkinson2, 1, T1, 0)
+        _wilkinson4 = connect(_wilkinson3, 1, T2, 0)
+        _wilkinson5 = connect(_wilkinson4, 1, self.resistor, 0)
+        wilkinson = innerconnect(_wilkinson5, 1, 4)
 
         ntw_C = self.C.network
 
@@ -485,7 +487,7 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
               T1          T2                  Temp                      Thru
         """
         T1, T2 = self.tee, self.tee
-        temp = rf.connect(T1, 2, T2, 0)
+        temp = connect(T1, 2, T2, 0)
 
         # Check the s-parameters of the temporary Network
         assert_array_almost_equal(temp.s, np.array([ [ [-0.5,  0.5,  0.5,  0.5],
@@ -668,7 +670,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         b.s = np.random.default_rng().random(4).reshape(2, 2)
 
         # classic connecting
-        c = rf.connect(a, 1, b, 0)
+        c = connect(a, 1, b, 0)
 
         # Circuit connecting
         port1 = rf.Circuit.Port(freq,  name='port1')
@@ -699,7 +701,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         b.z0 = z0
 
         # classic connecting
-        c = rf.connect(a, 1, b, 0)
+        c = connect(a, 1, b, 0)
 
         # Circuit connecting
         port1 = rf.Circuit.Port(freq, z0=z0, name='port1')
@@ -729,7 +731,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         b.z0 = [11, 12]
 
         # classic connecting
-        c = rf.connect(a, 1, b, 0)
+        c = connect(a, 1, b, 0)
 
         # Circuit connecting
         port1 = rf.Circuit.Port(freq, z0=1, name='port1')
@@ -757,7 +759,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         b.s = np.random.default_rng().random(16).reshape(4, 4)
 
         # classic connecting
-        c = rf.connect(a, 2, b, 0, 2)
+        c = connect(a, 2, b, 0, 2)
 
         # Circuit connecting
         port1 = rf.Circuit.Port(freq, name='port1')
@@ -793,7 +795,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         b.z0 = z0
 
         # classic connecting
-        c = rf.connect(a, 2, b, 0, 2)
+        c = connect(a, 2, b, 0, 2)
 
         # circuit connecting
         port1 = rf.Circuit.Port(freq, z0=z0, name='port1')
@@ -829,8 +831,8 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         b.z0 = [11, 12, 13, 14]
 
         # classic connecting
-        _c = rf.connect(a, 2, b, 0)
-        c = rf.innerconnect(_c, 2, 3)
+        _c = connect(a, 2, b, 0)
+        c = innerconnect(_c, 2, 3)
 
         # Circuit connecting
         port1 = rf.Circuit.Port(freq, z0=1, name='port1')
@@ -932,7 +934,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         circuit = rf.Circuit(connections)
 
         # Reduce the circuit
-        reduced_cnxs = rf.reduce_circuit(connections)
+        reduced_cnxs = rf.circuit.reduce_circuit(connections)
         reduced_circuit = rf.Circuit(reduced_cnxs)
 
         assert_array_almost_equal(circuit.network.s, reduced_circuit.network.s)
@@ -985,9 +987,9 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         # ps.z0 = [31, 32]
         # and to make a drawing of each steps.
         # This is not convenient, that's why the Circuit approach can be easier.
-        _temp = rf.connect(hybrid1, 2, ps, 0)
-        _temp = rf.connect(_temp, 1, hybrid2, 0)
-        _temp = rf.innerconnect(_temp, 1, 5)
+        _temp = connect(hybrid1, 2, ps, 0)
+        _temp = connect(_temp, 1, hybrid2, 0)
+        _temp = innerconnect(_temp, 1, 5)
         # re-order port numbers to match the example
         _temp.renumber([0, 1, 2, 3], [3, 0, 2, 1])
         return _temp
@@ -1153,14 +1155,14 @@ class CircuitTestComplexCharacteristicImpedance(unittest.TestCase):
         self.cir_complex = rf.Circuit(cnx_complex)
 
         # references for each s-param definition
-        self.s_legacy = rf.renormalize_s(self.s0, [50,50], [50,self.zdut],
+        self.s_legacy = renormalize_s(self.s0, [50,50], [50,self.zdut],
                                          s_def='traveling')
-        self.s_power = rf.renormalize_s(self.s0, [50,50], [50,self.zdut],
+        self.s_power = renormalize_s(self.s0, [50,50], [50,self.zdut],
                                          s_def='power')
-        self.s_pseudo = rf.renormalize_s(self.s0, [50,50], [50,self.zdut],
+        self.s_pseudo = renormalize_s(self.s0, [50,50], [50,self.zdut],
                                          s_def='pseudo')
         # for real values, should be = whatever s-param definition
-        self.s_real = rf.renormalize_s(self.s0, [50,50], [50,100])
+        self.s_real = renormalize_s(self.s0, [50,50], [50,100])
 
     def test_verify_reference(self):
         ' Check that the reference results comes from power-waves definition'
@@ -1219,7 +1221,7 @@ class CircuitTestVoltagesCurrents(unittest.TestCase):
         self.V_in = np.sqrt(2*self.Z*self.P_f)*np.exp(1j*self.phase_f)
         self.I_in = np.sqrt(2*self.P_f/self.Z)*np.exp(1j*self.phase_f)
         # forward voltages and currents at the output of the test line
-        theta = rf.theta(self.line_media.gamma, self.freq.f, self.L)  # electrical length
+        theta = rf.tlineFunctions.theta(self.line_media.gamma, self.freq.f, self.L)  # electrical length
         self.V_out, self.I_out = rf.tlineFunctions.voltage_current_propagation(self.V_in, self.I_in, self.Z, theta)
 
         # Equivalent model with Circuit

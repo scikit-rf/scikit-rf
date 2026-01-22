@@ -51,7 +51,7 @@ def test_plot_s_smith(ntwk1_dc: rf.Network, ):
     ntwk1_dc.plot_s_smith()
 
 def test_z_time_impulse_step_z0(ntwk1_dc: rf.Network, ):
-    se_diff = rf.concat_ports([ntwk1_dc, ntwk1_dc], port_order = 'second')
+    se_diff = rf.network.concat_ports([ntwk1_dc, ntwk1_dc], port_order = 'second')
     mm_diff = se_diff.copy()
     mm_diff.se2gmm(p = 2)
     fig, ax = mpl.pyplot.subplots(1, 1)

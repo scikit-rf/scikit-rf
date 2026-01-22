@@ -209,17 +209,17 @@ class FieldFox(vna.VNA):
         self.npoints = f.npoints
 
     @property
-    def calibration(self) -> skrf.Calibration:
+    def calibration(self) -> skrf.calibration.Calibration:
         """The currently defined calibration as a :class:`skrf.calibration.calibration.Calibration`"""
         cal_dict = {}
         for cal_key, term in self._cal_term_map.items():
             vals = self.query_values(f"SENS:CORR:COEF? {term}", container=np.array, complex_values=True)
             cal_dict[cal_key] = vals
 
-        return skrf.Calibration.from_coefs(self.frequency, cal_dict)
+        return skrf.calibration.Calibration.from_coefs(self.frequency, cal_dict)
 
     @calibration.setter
-    def calibration(self, cal: skrf.Calibration) -> None:
+    def calibration(self, cal: skrf.calibration.Calibration) -> None:
         cal_dict = cal.coefs_12term
         for cal_key, term in self._cal_term_map.items():
             self.write_values(f"SENS:CORR:COEF {term},", cal_dict[cal_key], complex_values=True)
