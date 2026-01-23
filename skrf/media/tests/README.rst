@@ -29,4 +29,4 @@ Structure of tests
 
 The test module `test_all_construction.py` tests that all media classes can call network creation methods that are inherited from the `Media` class.
 
-In addition to this, each media class should have a seperate test module that tests its functionality.
+In addition to this, each media class should have a separate test module that tests its functionality.

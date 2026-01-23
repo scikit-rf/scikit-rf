@@ -16,6 +16,7 @@ Mdif class and utilities
 from __future__ import annotations
 
 from itertools import product
+from pathlib import Path
 from typing import TextIO
 
 import numpy as np
@@ -69,13 +70,13 @@ class Mdif:
 
     """
 
-    def __init__(self, file: str | TextIO):
+    def __init__(self, file: str | Path | TextIO):
         """
         Constructor
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             mdif file to load
         """
         with get_fid(file) as fid:
@@ -142,7 +143,13 @@ class Mdif:
             if line.strip().startswith('!'):
                 comments.append(line[1:].strip())
 
-        return ' '.join(comments)
+            # Break out after the first network starts, thereby only
+            # pulling out the comments for the entire NetworkSet, not
+            # everything for each network. That's pulled out later.
+            if line.strip().lower().startswith('begin'):
+                break
+
+        return comments
 
 
     def _parse_data(self, block_data: list) -> Network:
@@ -167,6 +174,7 @@ class Mdif:
         """
         kinds = []
         data_lines = []
+        comments = []
 
         # Assumes default unit and format if not found during parsing
         frequency_unit = 'hz'
@@ -176,10 +184,16 @@ class Mdif:
         nb_lines_per_freq = 1
         ntwk_name = ''
 
-        # Extract and group parameter informations and values
+        # Flag for adding comments to the network
+        no_more_comments = False
+
+        # Extract and group parameter information and values
         for line in block_data:
             # Parse the option line (as in Touchstone)
             if line.startswith('#'):
+                # Flag that no more comments are coming as we're now after the option line
+                no_more_comments = True
+
                 toks = line[1:].strip().split()
                 # fill the option line with the missing defaults
                 toks.extend(['ghz', 's', 'ma', 'r', '50'][len(toks):])
@@ -194,10 +208,13 @@ class Mdif:
                 if formt not in ['ma', 'db', 'ri']:
                     raise NotImplementedError(f'ERROR: illegal format value {formt}')
 
-            elif line.startswith('!'):
+            elif line.strip().startswith('!'):
                 if line[1:].startswith(' network name:'):
                     ntwk_name = line.split(':')[-1].strip()
 
+                # Append the comments to the list of comments for that data block
+                if no_more_comments is not False:
+                    comments.append(line.strip()[1:])
 
             # Parameter kinds (s11, z21, ...) are described as
             #
@@ -277,7 +294,7 @@ class Mdif:
 
         # building the Network
         freq = Frequency.from_f(f, unit=frequency_unit)
-        ntwk = Network(frequency=freq, s=s, z0=z0, name=ntwk_name)
+        ntwk = Network(frequency=freq, s=s, z0=z0, name=ntwk_name, comments="\n".join(comments))
 
         return ntwk
 
@@ -300,6 +317,7 @@ class Mdif:
         params = dict()
 
         in_data_block = False
+        in_noise_block = False
 
         for line in fid:
 
@@ -326,19 +344,31 @@ class Mdif:
             # ....
             # end
             if line.lower().startswith('end'):
-                ntwk = self._parse_data(block_data)
-                ntwk.params = params
-                ntwks.append(ntwk)
+                if in_data_block:
+                    ntwk = self._parse_data(block_data)
+                    ntwk.params = params
+                    ntwks.append(ntwk)
+                    # reset parsed values
+                    in_data_block = False
+                    params = dict()
+                if in_noise_block:
+                    in_noise_block = False
+                    noise_arr = np.array(
+                        [e.split() for e in block_data if not e.startswith(("!", "#", "%"))]
+                        ).astype(float)
+                    freq, nfmin, gamma_opt_mag, gamma_opt_angle, rn = noise_arr.T
+                    nfreq = Frequency.from_f(freq, unit=ntwk.frequency.unit)
+                    gamma = gamma_opt_mag * np.exp(1j*np.deg2rad(gamma_opt_angle))
+                    ntwk.set_noise_a(nfreq, nfmin, gamma, rn * ntwk.z0[0,0])
 
-                # reset parsed values
-                in_data_block = False
                 block_data = []
-                params = dict()
 
-            if in_data_block:
+            if in_data_block or in_noise_block:
                 block_data.append(line)
 
-            if line.lower().startswith('begin'):
+            if line.lower().startswith("begin ndata"):
+                in_noise_block = True
+            elif line.lower().startswith('begin'):
                 in_data_block = True
 
         return ntwks
@@ -367,8 +397,8 @@ class Mdif:
               data_types: dict | None = None,
               comments: str | None = None,
               *,
-              skrf_comment: bool = True,
-              ads_compatible: bool = True):
+              ads_compatible: bool = True,
+              **kwargs):
         """
         Write a MDIF file from a NetworkSet.
 
@@ -379,7 +409,7 @@ class Mdif:
         filename : string
             Output MDIF file name.
         values : dictionary or None. Default is None.
-            The keys of the dictionnary are MDIF variables and its values are
+            The keys of the dictionary are MDIF variables and its values are
             a list of the parameter values.
             If None, then the values will be set to the NetworkSet names
             and the datatypes will be set to "string".
@@ -389,11 +419,11 @@ class Mdif:
         comments: list of strings
             Comments to add to output_file.
             Each list items is a separate comment line
-        skrf_comment : bool, optional
-            write `created by skrf` comment
         ads_compatible: bool. Default is True.
             Indicates whether to write the file in a format that
             ADS will read properly.
+        **kwargs: dictionary with extra arguments to pass through to the
+            underlying write_touchstone() method in the Network class
 
         See Also
         --------
@@ -422,6 +452,9 @@ class Mdif:
                 # using Network names (->string)
                 data_types = {"name": "string"}
 
+        # Remove the return_string argument, as it's a required argument for this method
+        kwargs.pop('return_string', None)
+
         # VAR datatypes
         dict_types = dict({"int": "0", "double": "1", "string": "2"})
 
@@ -433,6 +466,7 @@ class Mdif:
                 mdif.write(f"! {c}\n")
 
             nports = ns[0].nports
+            is_noisy = ns[0].noisy
 
             optionstring = Mdif.__create_optionstring(nports)
 
@@ -455,8 +489,17 @@ class Mdif:
                 mdif.write("\nBEGIN ACDATA\n")
                 mdif.write(optionstring + "\n")
                 mdif.write("! network name: " + ntwk.name + "\n")
-                data = ntwk.write_touchstone(return_string=True, skrf_comment=skrf_comment)
+
+                data = ntwk.write_touchstone(return_string=True, write_noise=False, **kwargs)
                 mdif.write(data)
+
+                if is_noisy:
+                    # this "END" terminates "ACDATA" (s-parameters) and begins noise ("NDATA")
+                    mdif.write("END\n\nBEGIN NDATA\n")
+                    mdif.write("%F nfmin n11x n11y rn\n")
+                    mdif.write(f"# {ntwk.frequency.unit} S MA R {ntwk.z0[0, 0].real}\n")
+                    ntwk._write_noisedata(output=mdif)
+
                 mdif.write("END\n\n")
 
     def __eq__(self, other) -> bool:

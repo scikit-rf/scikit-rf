@@ -19,6 +19,7 @@ VNA Classes
    keysight.FieldFox
    keysight.PNA
    nanovna.NanoVNAv2
+   rohde_schwarz.ZVA
 
 The Base Class and Writing an Instrument Driver
 ===============================================
@@ -34,6 +35,7 @@ depending on the capabilities of the instrument.
 
 When writing a new instrument driver, the following minimum questions should be
 considered:
+
     * Does the instrument use SCPI?
     * Does the instrument support multiple channels?
 
@@ -176,5 +178,6 @@ Here's an example of using a validator:
     # example, the string '100000' to the int 100_000
     _ = instr.ch1.freq_start
 """
-from .vna import VNA, Channel, ValuesFormat # isort: skip
-from . import keysight, nanovna # isort: skip
+
+from .vna import VNA, Channel, ValuesFormat  # isort: skip
+from . import keysight, nanovna, rohde_schwarz, hp  # isort: skip

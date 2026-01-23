@@ -64,35 +64,29 @@ class VectorFittingTestCase(unittest.TestCase):
 
         assert len(record) == 1
 
-    def test_dc(self):
+    def test_dc_enforcement(self):
         # perform the fit on data including a dc sample (0 Hz)
         s4p_file = Path(__file__).parent / 'cst_example_4ports.s4p'
         nw = skrf.Network(s4p_file)
-        vf = skrf.VectorFitting(nw)
-        vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
-        # quality of the fit is not important in this test; it only needs to finish
+        vf = skrf.vectorFitting.VectorFitting(nw)
+        vf.auto_fit()
+
+        # rough check on fit quality
         self.assertLess(vf.get_rms_error(), 0.2)
 
-    @pytest.mark.skipif(
-        "matplotlib" not in sys.modules,
-        reason="Spice subcircuit uses Engformatter which is not available without matplotlib.")
-    def test_spice_subcircuit(self):
-        # fit ring slot example network
-        nw = skrf.data.ring_slot
-        vf = skrf.vectorFitting.VectorFitting(nw)
-        vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_constant=True, fit_proportional=True)
+        # evaluate model error at the dc point (real part)
+        # the dc point should always be real (it still often has a tiny imaginary part)
+        vf_fit = np.empty(nw.nports ** 2, dtype=complex)
+        abs_real_errors = np.empty(nw.nports ** 2)
 
-        # write equivalent SPICE subcircuit to tmp file
-        tmp_file = tempfile.NamedTemporaryFile(suffix='.sp', delete=False)
-        name = tmp_file.name
-        tmp_file.close()
-        vf.write_spice_subcircuit_s(name)
+        for i in range(nw.nports):
+            for j in range(nw.nports):
+                vf_ij = vf.get_model_response(i, j, nw.f[0])
+                vf_fit[i * nw.nports + j] = vf_ij
+                abs_real_errors[i * nw.nports + j] = np.abs(np.real(vf_ij - nw.s[0, i, j]))
 
-        # written tmp file should contain 69 lines
-        with open(name) as f:
-            n_lines = len(f.readlines())
-        self.assertEqual(n_lines, 69)
-        os.remove(name)
+        self.assertTrue(np.all(abs_real_errors < 1e-10))
+
 
     def test_read_write_npz(self):
         # fit ring slot example network
@@ -102,7 +96,7 @@ class VectorFittingTestCase(unittest.TestCase):
         with pytest.warns(UserWarning) as record:
             vf.vector_fit(n_poles_real=3, n_poles_cmplx=0)
 
-        assert len(record) == 1
+        self.assertTrue(len(record) == 1)
 
         # export (write) fitted parameters to .npz file in tmp directory
         with  tempfile.TemporaryDirectory() as name:
@@ -125,7 +119,7 @@ class VectorFittingTestCase(unittest.TestCase):
             vf.plot_convergence()
 
     def test_passivity_enforcement(self):
-        vf = skrf.VectorFitting(None)
+        vf = skrf.vectorFitting.VectorFitting(None)
 
         # non-passive example parameters from Gustavsen's passivity assessment paper:
         vf.poles = np.array([-1, -5 + 6j])
@@ -143,6 +137,15 @@ class VectorFittingTestCase(unittest.TestCase):
 
         # check if model is now passive
         self.assertTrue(vf.is_passive())
+
+    def test_autofit(self):
+        vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
+        vf.auto_fit()
+
+        self.assertTrue(vf.get_model_order(vf.poles) == 6)
+        self.assertTrue(np.sum(vf.poles.imag == 0.0) == 0)
+        self.assertTrue(np.sum(vf.poles.imag > 0.0) == 3)
+        self.assertLess(vf.get_rms_error(), 1e-05)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(VectorFittingTestCase)

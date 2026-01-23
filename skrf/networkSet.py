@@ -46,14 +46,16 @@ NetworkSet Utilities
 from __future__ import annotations
 
 import zipfile
+from collections.abc import Mapping
 from io import BytesIO
 from numbers import Number
-from typing import Any, Mapping, TextIO
+from pathlib import Path
+from typing import Any, TextIO
 
 import numpy as np
 
 from . import mathFunctions as mf
-from .constants import NumberLike
+from .constants import NumberLike, PrimaryPropertiesT
 from .network import COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency, Network
 from .util import copy_doc, now_string_2_dt
 
@@ -140,7 +142,7 @@ class NetworkSet:
         """
         if ntwk_set is None:
             ntwk_set = []
-        if not isinstance(ntwk_set, (list, dict)):
+        if not isinstance(ntwk_set, list | dict):
             raise ValueError('NetworkSet requires a list as argument')
 
         # dict is authorized for convenience
@@ -219,13 +221,13 @@ class NetworkSet:
             self.__add_a_operator(operator_name)
 
     @classmethod
-    def from_zip(cls, zip_file_name: str, sort_filenames: bool = True, *args, **kwargs):
+    def from_zip(cls, zip_file_name: str | Path, sort_filenames: bool = True, *args, **kwargs):
         r"""
         Create a NetworkSet from a zipfile of touchstones.
 
         Parameters
         ----------
-        zip_file_name : string
+        zip_file_name : string or Path
             name of zipfile
         sort_filenames: Boolean
             sort the filenames in the zip file before constructing the
@@ -267,7 +269,7 @@ class NetworkSet:
         return cls(ntwk_list)
 
     @classmethod
-    def from_dir(cls, dir: str = '.', *args, **kwargs):
+    def from_dir(cls, dir: str | Path = '.', *args, **kwargs):
         r"""
         Create a NetworkSet from a directory containing Networks.
 
@@ -277,7 +279,7 @@ class NetworkSet:
 
         Parameters
         ----------
-        dir : str
+        dir : str or Path
             directory containing Network files.
 
         \*args, \*\*kwargs :
@@ -322,13 +324,13 @@ class NetworkSet:
                             **kwargs)  for k in d])
 
     @classmethod
-    def from_mdif(cls, file: str | TextIO) -> NetworkSet:
+    def from_mdif(cls, file: str | Path | TextIO) -> NetworkSet:
         """
         Create a NetworkSet from a MDIF file.
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, file-object
             MDIF file to load
 
         Returns
@@ -345,13 +347,13 @@ class NetworkSet:
         return Mdif(file).to_networkset()
 
     @classmethod
-    def from_citi(cls, file: str | TextIO) -> NetworkSet:
+    def from_citi(cls, file: str | Path | TextIO) -> NetworkSet:
         """
         Create a NetworkSet from a CITI file.
 
         Parameters
         ----------
-        file : str or file-object
+        file : str, Path, or file-object
             CITI file to load
 
         Returns
@@ -458,7 +460,7 @@ class NetworkSet:
         """
         Dynamically add a property to this class (NetworkSet).
 
-        this is mostly used internally to genrate all of the classes
+        this is mostly used internally to generate all of the classes
         properties.
 
         Parameters
@@ -588,7 +590,7 @@ class NetworkSet:
 
     def copy(self) -> NetworkSet:
         """
-        Copie each network of the network set.
+        Copy each network of the network set.
 
         Return
         ------
@@ -637,7 +639,7 @@ class NetworkSet:
         else:
             return sorted_ns
 
-    def rand(self, n: int = 1):
+    def rand(self, n: int = 1, rng: None | np.random.Generator = None):
         """
         Return `n` random samples from this NetworkSet.
 
@@ -645,9 +647,15 @@ class NetworkSet:
         ----------
         n : int
             number of samples to return (default is 1)
+        rng : :class:`numpy.random.Generator` or None
+            override the global :mod:`numpy` random number generator,
+            useful for multi-threaded programs since
+            :func:`skrf.mathFunctions.set_rand_rng` is not thread-safe.
 
         """
-        idx = np.random.default_rng().randint(0,len(self), n)
+        if rng is None:
+            rng = mf.rand_rng()
+        idx = rng.randint(0,len(self), n)
         out = [self.ntwk_set[k] for k in idx]
 
         if n ==1:
@@ -686,9 +694,8 @@ class NetworkSet:
         """
         Return a scalar ndarray representing `param` data vs freq and element idx.
 
-        output is a 3d array with axes  (freq, ns_index, port/ri)
-
-        ports is a flattened re/im components of port index (`len = 2*nports**2`)
+        Output is a 3d array with axes  (freq, ns_index, port/ri).
+        ports is a flattened re/im components of port index (`len = 2*nports**2`).
 
         Parameter
         ---------
@@ -827,8 +834,9 @@ class NetworkSet:
         """
         return fon(self.ntwk_set, func, a_property, *args, **kwargs)
 
-
-    def uncertainty_ntwk_triplet(self, attribute: str, n_deviations: int = 3) -> (Network, Network, Network):
+    def uncertainty_ntwk_triplet(self, attribute: PrimaryPropertiesT, n_deviations: int = 3) -> tuple(
+        Network, Network, Network
+    ):
         """
         Return a 3-tuple of Network objects which contain the
         mean, upper_bound, and lower_bound for the given Network
@@ -947,10 +955,8 @@ class NetworkSet:
                    filename: str,
                    values: dict | None = None,
                    data_types: dict | None = None,
-                   comments: str | None = None,
-                   *,
-                   skrf_comment: bool = True,
-                   ads_compatible: bool = True):
+                   comments: list[str] | None = None,
+                   **kwargs):
         """Convert a scikit-rf NetworkSet object to a Generalized MDIF file.
 
         Parameters
@@ -968,11 +974,8 @@ class NetworkSet:
         comments: list of strings
             Comments to add to output_file.
             Each list items is a separate comment line
-        skrf_comment : bool, optional
-            write `created by skrf` comment
-        ads_compatible: bool. Default is True.
-            Indicates whether to write the file in a format that
-            ADS will read properly.
+        **kwargs: dictionary with extra arguments to pass through to the
+            underlying Mdif.write and Network.write_touchstone methods
 
         See Also
         --------
@@ -985,10 +988,9 @@ class NetworkSet:
         if comments is None:
             comments = []
         Mdif.write(ns=self, filename=filename, values=values,
-                   data_types=data_types, ads_compatible=ads_compatible,
-                   comments=comments, skrf_comment=skrf_comment)
+                   data_types=data_types, comments=comments, **kwargs)
 
-    def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):
+    def ntwk_attr_2_df(self, attr='s_db', m=0, n=0, *args, **kwargs):
         """
         Converts an attributes of the Networks within a NetworkSet to a Pandas DataFrame.
 
@@ -1154,7 +1156,7 @@ class NetworkSet:
         Returns
         -------
         values : dict or None.
-            Dictionnary of all parameters names and their values (into a list).
+            Dictionary of all parameters names and their values (into a list).
             Return None if no parameters are defined in the NetworkSet.
 
         """
@@ -1176,7 +1178,7 @@ class NetworkSet:
         Returns
         -------
         data_types : dict or None.
-            Dictionnary of the (guessed) type of each parameters.
+            Dictionary of the (guessed) type of each parameters.
             Return None if no parameters are defined in the NetworkSet.
 
         """
@@ -1200,6 +1202,65 @@ class NetworkSet:
         else:
             return None
 
+    def to_dataframe(self, attrs: list[str] = None, ports: list[tuple[int, int]] = None, port_sep: str | None = None):
+        """
+        Convert attributes of a NetworkSet to a pandas DataFrame.
+
+        Use the same parameters than :func:`skrf.io.general.network_2_dataframe`
+
+        Parameters
+        ----------
+        attrs : list of string
+            Network attributes to convert, like ['s_db','s_deg']
+        ports : list of tuples
+            list of port pairs to write. defaults to ntwk.port_tuples
+            (like [[0,0]])
+        port_sep : string
+            defaults to None, which means a empty string "" is used for
+            networks with lower than 10 ports. (s_db 11, s_db 21)
+            For more than ten ports a "_" is used to avoid ambiguity.
+            (s_db 1_1, s_db 2_1)
+            For consistent behaviour it's recommended to specify "_" or
+            "," explicitly.
+
+        Returns
+        -------
+        df : `pandas.DataFrame`
+
+        Raises
+        ------
+        ValueError : if the networkset doesn't have parameters
+
+
+        See Also
+        ---------
+        skrf.io.general.network_2_dataframe
+        """
+
+        if not self.params:
+            raise ValueError(
+                "The NetworkSet must have parameters to be combined into a dataframe. "
+                "Try using `ntwk_attr_2_df` instead."
+            )
+
+        dfs = []
+        for ntwk in self.ntwk_set:
+            # Create a dataframe for each network
+            df = ntwk.to_dataframe(attrs=attrs, ports=ports, port_sep=port_sep)
+
+            # Insert the parameters and values for each network
+            df[list(ntwk.params.keys())] = list(ntwk.params.values())
+
+            # Get the columns by type
+            data_cols = df.columns[:-1 * len(ntwk.params)].tolist()
+            param_cols = df.columns[-1 * len(ntwk.params):].tolist()
+
+            # Append to the list of dataframes with the parameter columns first
+            dfs.append(df[param_cols + data_cols])
+
+        # Return a concatenated dataframe
+        from pandas import concat
+        return concat(dfs)
 
     def sel(self, indexers: Mapping[Any, Any] = None) -> NetworkSet:
         """
@@ -1215,8 +1276,8 @@ class NetworkSet:
         Returns
         -------
         ns : NetworkSet
-            NetworkSet containing the selected Networks or
-            empty NetworkSet if no match found
+             NetworkSet containing the selected Networks or
+             an empty NetworkSet if no match is found
 
         Example
         -------
@@ -1294,7 +1355,7 @@ class NetworkSet:
         x : float
             Point to evaluate the interpolated network at
         sub_params : dict, optional
-            Dictionnary of parameter/values to filter the NetworkSet,
+            Dictionary of parameter/values to filter the NetworkSet,
             if necessary to avoid an ambiguity.
             Default is empty dict.
         interp_kind: str
@@ -1344,7 +1405,7 @@ class NetworkSet:
             raise ValueError(f'Parameter {param} is not found in the NetworkSet params.')
         if isinstance(x, Number):
             if not (min(self.coords[param]) < x < max(self.coords[param])):
-                ValueError(f'Out of bound values: {x} is not inside {self.coords[param]}. Cannot interpolate.')
+                raise ValueError(f'Out of bound values: {x} is not inside {self.coords[param]}. Cannot interpolate.')
         else:
             raise ValueError('Cannot interpolate between string-based parameters.')
 

@@ -60,14 +60,17 @@ import pprint
 import re
 import sys
 import warnings
+from collections.abc import Callable, Iterable
 from datetime import datetime
 from functools import wraps
+from pathlib import Path
 from subprocess import PIPE, Popen
-from typing import Any, Callable, Iterable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from .constants import Number
+if TYPE_CHECKING:
+    from .constants import Number
 
 
 def partial_with_docs(func, *args1, **kwargs1):
@@ -75,6 +78,7 @@ def partial_with_docs(func, *args1, **kwargs1):
     def method(self, *args2, **kwargs2):
         return func(self, *args1, *args2, **kwargs1, **kwargs2)
     return method
+
 
 def copy_doc(copy_func: Callable) -> Callable:
     """Use Example: copy_doc(self.copy_func)(self.func) or used as deco"""
@@ -95,7 +99,7 @@ def now_string() -> str:
     Returns
     -------
     now : string
-        curent date-time stamps.
+        current date-time stamps.
 
     See Also
     --------
@@ -210,7 +214,7 @@ def get_fid(file, *args, **kwargs):
 
     Parameters
     ----------
-    file : str/unicode or file-object
+    file : str/unicode, Path, or file-object
         file to open
     \*args, \*\*kwargs : arguments and keyword arguments to `open()`
 
@@ -219,13 +223,13 @@ def get_fid(file, *args, **kwargs):
     fid : file object
 
     """
-    if isinstance(file, str):
+    if isinstance(file, str | Path):
         return open(file, *args, **kwargs)
     else:
         return file
 
 
-def get_extn(filename: str) -> str:
+def get_extn(filename: str | Path) -> str:
     """
     Get the extension from a filename.
 
@@ -234,7 +238,7 @@ def get_extn(filename: str) -> str:
 
     Parameters
     ----------
-    filename : string
+    filename : string or Path
         the filename
 
     Returns
@@ -244,6 +248,10 @@ def get_extn(filename: str) -> str:
         isn't one
 
     """
+
+    if isinstance(filename, Path):
+        return filename.suffix.strip('.') or None
+
     ext = os.path.splitext(filename)[-1]
     if len(ext) == 0:
         return None
@@ -310,7 +318,7 @@ def dict_2_recarray(d: dict, delim: str, dtype: list[tuple]) -> np.ndarray:
     Parameters
     ----------
     d : dict
-        dictionnary of structured keys
+        dictionary of structured keys
     delim : str
         delimiter string
     dtype : list of tuple

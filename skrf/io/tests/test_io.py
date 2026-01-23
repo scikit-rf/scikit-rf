@@ -4,7 +4,8 @@ import unittest
 import numpy as np
 
 import skrf as rf
-from skrf.io import Touchstone, network_2_dataframe
+from skrf.io import Touchstone
+from skrf.io.general import network_2_dataframe
 
 
 class IOTestCase(unittest.TestCase):
@@ -33,28 +34,28 @@ class IOTestCase(unittest.TestCase):
         function to test write/read equivalence for an obj which has
         __eq__ defined
         """
-        rf.write(self.pickle_file,obj)
-        self.assertEqual(rf.read(self.pickle_file), obj)
+        rf.io.write(self.pickle_file,obj)
+        self.assertEqual(rf.io.read(self.pickle_file), obj)
        # os.remove(self.pickle_file)
 
 
 
     def test_read_all(self):
-        rf.read_all(self.test_dir)
+        rf.io.read_all(self.test_dir)
 
     def test_read_all_files(self):
-        rf.read_all(files=self.test_files)
+        rf.io.read_all(files=self.test_files)
 
     def test_save_sesh(self):
         a=self.ntwk1
         b=self.ntwk2
         c=self.ntwk3
-        rf.save_sesh(locals(),self.pickle_file )
+        rf.io.general.save_sesh(locals(),self.pickle_file )
         #os.remove(self.pickle_file)
 
     def test_write_all_dict(self):
         d = dict(a=self.ntwk1, b=self.ntwk2,   c=self.ntwk3)
-        rf.write_all(d, dir =self.test_dir )
+        rf.io.write_all(d, dir =self.test_dir )
         os.remove(os.path.join(self.test_dir, 'a.ntwk'))
         os.remove(os.path.join(self.test_dir, 'b.ntwk'))
         os.remove(os.path.join(self.test_dir, 'c.ntwk'))
@@ -69,12 +70,12 @@ class IOTestCase(unittest.TestCase):
         """
         test_readwrite_networkSet
         TODO: need __eq__ method for NetworkSet
-        This doesnt test equality between  read/write, because there is no
+        This doesn't test equality between  read/write, because there is no
         __eq__ test for NetworkSet. it only tests for other errors
         """
-        rf.write(self.pickle_file,rf.NS([self.ntwk1, self.ntwk2]))
-        rf.read(self.pickle_file)
-        #self.assertEqual(rf.read(self.pickle_file), rf.NS([self.ntwk1, self.ntwk2])
+        rf.io.write(self.pickle_file,rf.NS([self.ntwk1, self.ntwk2]))
+        rf.io.read(self.pickle_file)
+        #self.assertEqual(rf.io.read(self.pickle_file), rf.NS([self.ntwk1, self.ntwk2])
         #os.remove(self.pickle_file)
 
     def test_readwrite_frequency(self):
@@ -89,7 +90,7 @@ class IOTestCase(unittest.TestCase):
             ideals.append(ntwk)
             measured.append(self.embeding_network ** ntwk)
 
-        cal = rf.Calibration(\
+        cal = rf.calibration.Calibration(\
                 ideals = ideals,\
                 measured = measured,\
                 type = 'one port',\
@@ -97,8 +98,8 @@ class IOTestCase(unittest.TestCase):
                 )
 
         original = cal
-        rf.write(self.pickle_file, original)
-        unpickled = rf.read(self.pickle_file)
+        rf.io.write(self.pickle_file, original)
+        unpickled = rf.io.read(self.pickle_file)
         # TODO: this test should be more extensive
         self.assertEqual(original.ideals, unpickled.ideals)
         self.assertEqual(original.measured, unpickled.measured)
@@ -124,7 +125,7 @@ class IOTestCase(unittest.TestCase):
     def test_readwrite_RectangularWaveguide(self):
         a_media = rf.media.RectangularWaveguide(
             frequency = self.freq,
-            a=100*rf.mil,
+            a=100*rf.constants.mil,
             z0=50,
             )
         self.read_write(a_media)
@@ -148,7 +149,7 @@ class IOTestCase(unittest.TestCase):
         Tests if snp object saved to json and reloaded is still the same.
         """
         given = self.ntwk1
-        actual = rf.from_json_string(rf.to_json_string(given))
+        actual = rf.io.general.from_json_string(rf.io.general.to_json_string(given))
         self.assertEqual(actual, given)
         self.assertEqual(actual.frequency, given.frequency)
         self.assertEqual(actual.name, given.name)

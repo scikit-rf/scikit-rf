@@ -10,7 +10,8 @@ Mathematical Constants
 Some convenient constants are defined in the :mod:`skrf.constants` module.
 
 Complex Component Conversion
----------------------------------
+----------------------------
+
 .. autosummary::
         :toctree: generated/
 
@@ -22,19 +23,33 @@ Complex Component Conversion
         complex_2_degree
         complex_2_magnitude
         complex_2_quadrature
+        complex_components
+
+Magnitude and decibel
+---------------------
+
+.. autosummary::
+        :toctree: generated/
+
+        magnitude_2_db
+        mag_2_db
+        mag_2_db10
+        db_2_magnitude
+        db_2_mag
+        db10_2_mag
 
 Phase Unwrapping
---------------------------------
+----------------
+
 .. autosummary::
         :toctree: generated/
 
         unwrap_rad
         sqrt_phase_unwrap
 
-
-
 Unit Conversion
---------------------------------
+---------------
+
 .. autosummary::
         :toctree: generated/
 
@@ -42,9 +57,13 @@ Unit Conversion
         degree_2_radian
         np_2_db
         db_2_np
+        feet_2_meter
+        meter_2_feet
+        db_per_100feet_2_db_per_100meter
 
 Scalar-Complex Conversion
----------------------------------
+-------------------------
+
 These conversions are useful for wrapping other functions that don't
 support complex numbers.
 
@@ -54,9 +73,9 @@ support complex numbers.
         complex2Scalar
         scalar2Complex
 
-
 Special Functions
----------------------------------
+-----------------
+
 .. autosummary::
         :toctree: generated/
 
@@ -64,6 +83,16 @@ Special Functions
         neuman
         null
         cross_ratio
+
+Random Number Generation
+------------------------
+
+.. autosummary::
+        :toctree: generated/
+
+        set_rand_rng
+        rand_rng
+        rand_c
 
 Various Utility Functions
 --------------------------
@@ -80,12 +109,18 @@ Various Utility Functions
         is_positive_definite
         is_positive_semidefinite
         get_Hermitian_transpose
+        sqrt_known_sign
+        find_correct_sign
+        find_closest
+        inf_to_num
+        rsolve
+        nudge_eig
 
 
 """
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 from numpy import imag, pi, real, unwrap
@@ -865,13 +900,48 @@ def flatten_c_mat(s: NumberLike, order: str = 'F'):
     ------------
     s : ndarray
         input 2D array
-    order : sting, optional
+    order : string, optional
         either 'F' or 'C', for the order of flattening
     """
     return complex2Scalar(s.flatten(order='F'))
 
 
-def rand_c(*size) -> np.ndarray:
+_global_rng = np.random.default_rng()
+
+
+def set_rand_rng(rng: np.random.Generator) -> None:
+    """
+    Set the global :mod:`numpy` random number generator instance
+    for generating random numbers in scikit-rf. This is useful for
+    fixing a random seed for reproducible Monte Carlo analysis.
+
+    This function is expected to be called before using any scikit-rf
+    features, since it's a global variable and thread-unsafe. To temporarily
+    change the random number generator of a particular method (e.g.
+    :meth:`skrf.media.Media.random`), use the ``rng`` argument instead.
+
+    Parameters
+    -----------
+    rng : :class:`numpy.random.Generator`
+        Any random number generator accepted by :mod:`numpy`.
+
+    Examples
+    ---------
+    >>> set_rand_rng(np.random.default_rng(seed=42))
+    """
+    global _global_rng
+    _global_rng = rng
+
+
+def rand_rng() -> np.random.Generator:
+    """
+    Obtain the global :mod:`numpy` random number generator instance.
+    By default, it is :func:`numpy.random.default_rng`.
+    """
+    return _global_rng
+
+
+def rand_c(*size, rng=None) -> np.ndarray:
     """
     Creates a complex random array of shape s.
 
@@ -882,14 +952,18 @@ def rand_c(*size) -> np.ndarray:
     s : list-like
         shape of array
 
+    rng : :class:`numpy.random.Generator` or None
+        Any random number generator accepted by :mod:`numpy`.
+
     Examples
     ---------
-    >>> x = rf.rand_c(2,2)
+    >>> x1 = rf.rand_c(2, 2)
+    >>> x2 = rf.rand_c(2, 2, np.random.default_rng(seed=42))
     """
-    rng = np.random.default_rng()
+    if rng is None:
+        rng = _global_rng
     return 1-2*rng.random(size) + \
         1j-2j*rng.random(size)
-
 
 
 def psd2TimeDomain(f: np.ndarray, y: np.ndarray, windowType: str = 'hamming'):
@@ -1007,11 +1081,11 @@ def rational_interp(
     hd = (x[n//2] - x[n//2-1])**d
     for k in range(n):
         for i in range(max(0,k-d), min(k+1, n-d)):
-            p = hd
+            p, xk = hd, x[k]
             for j in range(i,min(n,i+d+1)):
                 if j == k:
                     continue
-                p *= 1/(x[k] - x[j])
+                p /= (xk - x[j])
             if i % 2 == 1:
                 w[k] -= p
             else:
@@ -1034,8 +1108,8 @@ def rational_interp(
         xi = xi.reshape(*w_shape)
         with np.errstate(divide='ignore', invalid='ignore'):
             assert axis == 0
-            v = sum(y[i]*w[i]/(xi - x[i]) for i in range(n))\
-                /sum(w[i]/(xi - x[i]) for i in range(n))
+            tmp = [w[i] / (xi - x[i]) for i in range(n)]
+            v = sum(y[i] * tmp[i] for i in range(n)) / sum(tmp)
 
         # Fix divide by zero errors
         for e, i in enumerate(nearest_idx):

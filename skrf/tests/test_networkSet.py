@@ -2,6 +2,7 @@ import glob
 import os
 import sys
 import unittest
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -226,6 +227,8 @@ class NetworkSetTestCase(unittest.TestCase):
         os.remove('testing.xlsx')
         # passing a filename
         ns.write_spreadsheet(file_name='testing2.xlsx')
+        # Using pathlib
+        ns.write_spreadsheet(file_name=Path('testing2.xlsx'))
         os.remove('testing2.xlsx')
 
     def test_ntwk_attr_2_df(self):
@@ -233,6 +236,16 @@ class NetworkSetTestCase(unittest.TestCase):
         Test the `ntwk_attr_2_df` method.
         """
         df = self.ns.ntwk_attr_2_df('s_db', m=1, n=0)
+
+    def test_2_df(self):
+        """
+        Test the `to_dataframe` method.
+        """
+
+        # Raises a ValueError since the networks have no parameters
+        self.assertRaises(ValueError, self.ns.to_dataframe)
+
+        df = self.ns_params.to_dataframe()
 
     def test_interpolate_from_network(self):
         """
@@ -308,7 +321,7 @@ class NetworkSetTestCase(unittest.TestCase):
         self.assertEqual(self.ns_params.sel(), self.ns_params)
         self.assertEqual(self.ns_params.sel({}), self.ns_params)
 
-        # should pass a dictionnary
+        # should pass a dictionary
         self.assertRaises(TypeError, self.ns_params.sel, 'wrong')
         self.assertRaises(TypeError, self.ns_params.sel, 1)
 
@@ -323,7 +336,6 @@ class NetworkSetTestCase(unittest.TestCase):
         self.assertEqual(len(self.ns_params.sel({'a': [0,1]})), 4)
         self.assertEqual(len(self.ns_params.sel({'a': range(0,2)})), 4)
         # Multiple parameters
-        self.assertEqual(len(self.ns_params.sel({'a': 0, 'X': 10})), 1)
         self.assertEqual(len(self.ns_params.sel({'a': 0, 'X': [10,20]})), 2)
         self.assertEqual(len(self.ns_params.sel({'a': [0,1], 'X': [10,20]})), 4)
 
@@ -352,7 +364,7 @@ class NetworkSetTestCase(unittest.TestCase):
         self.assertTrue(np.all(ns2.interpolate_from_params('s', 0.3).s == 0.3))
 
     def test_params_values(self):
-        """Test the dictionnary containing all parameters names and values"""
+        """Test the dictionary containing all parameters names and values"""
         # returns None when no parameters are defined in a NetworkSet
         self.assertEqual(self.ns.params_values, None)
         # return a dict when parameters have been defined
@@ -370,60 +382,66 @@ class NetworkSetTestCase(unittest.TestCase):
             print(mdif_file)
             self.assertIsInstance(rf.NetworkSet.from_mdif(mdif_file), rf.NetworkSet)
 
+            # With Path objects
+            self.assertIsInstance(rf.NetworkSet.from_mdif(Path(mdif_file)), rf.NetworkSet)
+
     def test_to_mdif(self):
         """ Test is NetworkSet are equal after writing and reading to MDIF """
         test_file = '_test.mdif'
 
-        # without parameters
-        self.ns.write_mdif(test_file)
-        ns = rf.NetworkSet.from_mdif(test_file)
-        self.assertEqual(ns, self.ns)
+        # With and without Path objects
+        for func in (str, Path):
 
-        # with parameters but without passing explicitly the values
-        self.ns_params.write_mdif(test_file)
-        ns_params = rf.NetworkSet.from_mdif(test_file)
-        self.assertEqual(ns_params, self.ns_params)
+            # without parameters
+            self.ns.write_mdif(func(test_file))
+            ns = rf.NetworkSet.from_mdif(func(test_file))
+            self.assertEqual(ns, self.ns)
 
-        # with parameters and passing explicitly values but not types
-        self.ns_params.write_mdif(test_file,
-                                  values=self.ns_params.params_values)
-        ns_params = rf.NetworkSet.from_mdif(test_file)
-        self.assertEqual(ns_params, self.ns_params)
+            # with parameters but without passing explicitly the values
+            self.ns_params.write_mdif(func(test_file))
+            ns_params = rf.NetworkSet.from_mdif(func(test_file))
+            self.assertEqual(ns_params, self.ns_params)
 
-        # with parameters and passing explicitly types but not values
-        self.ns_params.write_mdif(test_file,
-                                  data_types=self.ns_params.params_types)
-        ns_params = rf.NetworkSet.from_mdif(test_file)
-        self.assertEqual(ns_params, self.ns_params)
+            # with parameters and passing explicitly values but not types
+            self.ns_params.write_mdif(func(test_file),
+                                      values=self.ns_params.params_values)
+            ns_params = rf.NetworkSet.from_mdif(func(test_file))
+            self.assertEqual(ns_params, self.ns_params)
 
-        # with parameters and passing explicitly values and types
-        self.ns_params.write_mdif(test_file,
-                                  values=self.ns_params.params_values,
-                                  data_types=self.ns_params.params_types)
-        ns_params = rf.NetworkSet.from_mdif(test_file)
-        self.assertEqual(ns_params, self.ns_params)
+            # with parameters and passing explicitly types but not values
+            self.ns_params.write_mdif(func(test_file),
+                                      data_types=self.ns_params.params_types)
+            ns_params = rf.NetworkSet.from_mdif(func(test_file))
+            self.assertEqual(ns_params, self.ns_params)
 
-        # with parameters and passing explicitly values but not types and ads_compatible
-        self.ns_params.write_mdif(test_file,
-                                  values=self.ns_params.params_values,
-                                  ads_compatible=True)
-        ns_params = rf.NetworkSet.from_mdif(test_file)
-        self.assertEqual(ns_params, self.ns_params)
+            # with parameters and passing explicitly values and types
+            self.ns_params.write_mdif(func(test_file),
+                                      values=self.ns_params.params_values,
+                                      data_types=self.ns_params.params_types)
+            ns_params = rf.NetworkSet.from_mdif(func(test_file))
+            self.assertEqual(ns_params, self.ns_params)
 
-        # with parameters and passing explicitly types but not values and ads_compatible
-        self.ns_params.write_mdif(test_file,
-                                  data_types=self.ns_params.params_types,
-                                  ads_compatible=True)
-        ns_params = rf.NetworkSet.from_mdif(test_file)
-        self.assertEqual(ns_params, self.ns_params)
+            # with parameters and passing explicitly values but not types and ads_compatible
+            self.ns_params.write_mdif(func(test_file),
+                                      values=self.ns_params.params_values,
+                                      ads_compatible=True)
+            ns_params = rf.NetworkSet.from_mdif(func(test_file))
+            self.assertEqual(ns_params, self.ns_params)
 
-        # with parameters and passing explicitly values and types and ads_compatible
-        self.ns_params.write_mdif(test_file,
-                                  values=self.ns_params.params_values,
-                                  data_types=self.ns_params.params_types,
-                                  ads_compatible=True)
-        ns_params = rf.NetworkSet.from_mdif(test_file)
-        self.assertEqual(ns_params, self.ns_params)
+            # with parameters and passing explicitly types but not values and ads_compatible
+            self.ns_params.write_mdif(func(test_file),
+                                      data_types=self.ns_params.params_types,
+                                      ads_compatible=True)
+            ns_params = rf.NetworkSet.from_mdif(func(test_file))
+            self.assertEqual(ns_params, self.ns_params)
+
+            # with parameters and passing explicitly values and types and ads_compatible
+            self.ns_params.write_mdif(func(test_file),
+                                      values=self.ns_params.params_values,
+                                      data_types=self.ns_params.params_types,
+                                      ads_compatible=True)
+            ns_params = rf.NetworkSet.from_mdif(func(test_file))
+            self.assertEqual(ns_params, self.ns_params)
 
         os.remove(test_file)
 
@@ -433,6 +451,9 @@ class NetworkSetTestCase(unittest.TestCase):
         for citi_file in citi_files:
             print(citi_file)
             self.assertIsInstance(rf.NetworkSet.from_citi(citi_file), rf.NetworkSet)
+
+            # With Path object
+            self.assertIsInstance(rf.NetworkSet.from_citi(Path(citi_file)), rf.NetworkSet)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkSetTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

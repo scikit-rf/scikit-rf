@@ -17,5 +17,3 @@ module.
 #from parametricStandard import *
 from . import calibration, calibrationSet, deembedding
 from .calibration import *
-from .calibrationSet import *
-from .deembedding import *

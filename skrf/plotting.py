@@ -25,7 +25,6 @@ Plots and Charts
     plot_minmax_bounds_s_time_db
 
     plot_uncertainty_bounds_component
-    plot_uncertainty_bounds_s
     plot_uncertainty_bounds_s_db
     plot_uncertainty_bounds_s_time_db
 
@@ -54,27 +53,26 @@ Convenience plotting functions
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from functools import wraps
 from numbers import Number
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import TypeVar
-    Figure = TypeVar("Figure")
-    Axes = TypeVar("Axes")
-    import matplotlib.pyplot as plt
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
 import warnings
 
 import numpy as np
 
 from . import mathFunctions as mf
-from .constants import NumberLike
 from .util import now_string_2_dt
 
 if TYPE_CHECKING:
-    from . import Network, NetworkSet
+    from .constants import NumberLike, PrimaryPropertiesT
     from .frequency import Frequency
+    from .network import Network, NetworkSet
 
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
 SI_CONVERSION = {key: 10**((8-i)*3) for i, key in enumerate(SI_PREFIXES_ASCII)}
@@ -98,10 +96,45 @@ def axes_kwarg(func):
             if ax is None:
                 ax = plt.gca()
         except ImportError as err:
-            raise RuntimeError("Plotting not available") from err
+            raise RuntimeError("Plotting is not available") from err
         func(*args, ax=ax, **kwargs)
 
     return wrapper
+
+
+def figure(*args, **kwargs) -> Figure:
+    """
+    Wraps the matplotlib figure call and raises if not available.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to get subplots without matplotlib installed.
+    """
+
+    try:
+        import matplotlib.pyplot as plt
+        return plt.figure(*args, **kwargs)
+    except ImportError as err:
+        raise RuntimeError("Plotting is not available") from err
+
+
+def subplots(*args, **kwargs) -> tuple[Figure, np.ndarray]:
+    """
+    Wraps the matplotlib subplots call and raises if not available.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to get subplots without matplotlib installed.
+    """
+
+    try:
+        import matplotlib.pyplot as plt
+        return plt.subplots(*args, **kwargs)
+    except ImportError as err:
+        raise RuntimeError("Plotting is not available") from err
+
 
 def _get_label_str(netw: Network, param: str, m: int, n: int) -> str:
     import matplotlib.pyplot as plt
@@ -213,7 +246,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
         xLightList = np.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
 
     # vswr lines
-    if isinstance(draw_vswr, (tuple,list)):
+    if isinstance(draw_vswr, tuple | list):
         vswrVeryLightList = draw_vswr
     elif draw_vswr is True:
         # use the default I like
@@ -742,7 +775,7 @@ def shade_bands(edges: NumberLike, y_range: tuple | None = None,
     import matplotlib.pyplot as plt
 
     cmap = plt.cm.get_cmap(cmap)
-    if not isinstance(y_range, (tuple, list)) or (len(y_range) != 2):
+    if not isinstance(y_range, tuple | list) or (len(y_range) != 2):
         y_range=plt.gca().get_ylim()
     axis = plt.axis()
     for k in range(len(edges)-1):
@@ -827,7 +860,7 @@ def add_markers_to_lines(ax: Axes = None,
     [line.set_markevery(markevery) for line in lines]
 
 @axes_kwarg
-def legend_off(ax: plt.Axes = None):
+def legend_off(ax: Axes = None):
     """
     Turn off the legend for a given axes.
 
@@ -1092,10 +1125,10 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
     >>> myntwk.plot_s_smith()
     >>> myntwk.plot_s_smith(m=0,n=1,color='b', marker='x')
     """
-    # TODO: prevent this from re-drawing smith chart if one alread
+    # TODO: prevent this from re-drawing smith chart if one already
     # exists on current set of axes
 
-    # get current axis if user doesnt supply and axis
+    # get current axis if user doesn't supply and axis
     import matplotlib.pyplot as plt
 
     if ax is None:
@@ -1119,7 +1152,7 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
     for m in M:
         for n in N:
             # set the legend label for this trace to the networks name if it
-            # exists, and they didnt pass a name key in the kwargs
+            # exists, and they didn't pass a name key in the kwargs
             if generate_label:
                 kwargs['label'] = _get_label_str(netw, "S", m, n)
 
@@ -1285,7 +1318,7 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
 
 @axes_kwarg
 def plot_uncertainty_bounds_component(
-        self: NetworkSet, attribute: str,
+        self: NetworkSet, attribute: PrimaryPropertiesT,
         m: int | None = None, n: int | None = None, *,
         type: str = 'shade', n_deviations: int = 3,
         alpha: float = .3, color_error: str | None = None,
@@ -1405,7 +1438,7 @@ def plot_uncertainty_bounds_component(
             ax.axis('tight')
 
 @axes_kwarg
-def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
+def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: int = 0,
                                  *, type: str = 'shade',
                                  alpha: float = .3, color_error: str | None = None,
                                  markevery_error: int = 20, ax: Axes = None,
@@ -1510,11 +1543,11 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: str, m: int = 0, n
     ax.axis('tight')
 
 @axes_kwarg
-def plot_violin(self: NetworkSet, attribute: str, m: int = 0, n: int = 0,
+def plot_violin(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: int = 0,
                          *, widths: float = None, showmeans: bool = True,
                          showextrema: bool = True, showmedians: bool = False,
                          quantiles = None, points: int = 100, bw_method = None,
-                         ax: plt.Axes = None, **kwargs
+                         ax: Axes = None, **kwargs
     ):
     r"""Plots the violin plot of the network set for the desired attribute.
 
@@ -1637,6 +1670,7 @@ def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0):
         second s-parameter index
 
     """
+    import matplotlib.pyplot as plt
     if self.name is not None:
         plt.title(f"Uncertainty Decomposition: {self.name} $S_{{{self.ntwk_set[0]._fmt.trace_name(m,n)}}}$")
     self.std_s.plot_s_mag(label='Distance', m=m,n=n)
@@ -1835,7 +1869,7 @@ def plot_prop_complex(netw: Network, prop_name: str,
     m : int, optional
         first index of s-parameter matrix, if None will use all
     n : int, optional
-        secon index of the s-parameter matrix, if None will use all
+        second index of the s-parameter matrix, if None will use all
     ax : :class:`matplotlib.Axes` object, optional
         An existing Axes object to plot on
     show_legend : Boolean
@@ -1900,7 +1934,7 @@ def plot_prop_polar(netw: Network, prop_name: str,
     m : int, optional
         first index of s-parameter matrix, if None will use all
     n : int, optional
-        secon index of the s-parameter matrix, if None will use all
+        second index of the s-parameter matrix, if None will use all
     ax : :class:`matplotlib.Axes` object, optional
         An existing Axes object to plot on
     show_legend : Boolean

@@ -23,6 +23,10 @@ This module contains constants, numerical approximations, and unit conversions
 
     0 + epsilon where epsilon is small. Used to avoid numerical error.
 
+.. data:: LOG_OF_NEG
+
+    Very low but minus infinity value for numerical purposes.
+
 .. data:: K_BOLTZMANN
 
     Boltzmann constant (1.38064852e-23)
@@ -38,9 +42,15 @@ This module contains constants, numerical approximations, and unit conversions
 
     Default S-parameter definition: 'power', for power-wave definition.
 
-.. data:: S_DEF_HFSS_DEFAULT
+.. autodata:: S_DEF_HFSS_DEFAULT
 
-    Default S-parameter definition setting in HFSS: 'traveling' ("Generalized" in HFSS)
+    Default ANSYS HFSS S-parameter definition: 'traveling'
+
+.. autodata:: SweepTypeT
+
+.. autodata:: FrequencyUnitT
+
+    Frequency units: "Hz", "kHz", "MHz", "GHz", "THz" (case-insensitive).
 
 .. autosummary::
    :toctree: generated/
@@ -48,8 +58,11 @@ This module contains constants, numerical approximations, and unit conversions
    to_meters
 
 """
+from __future__ import annotations
+
+from collections.abc import Sequence
 from numbers import Number
-from typing import Sequence, Union
+from typing import Literal, get_args
 
 import numpy as np
 from scipy.constants import c, inch, mil
@@ -103,13 +116,34 @@ Minimum eigenvalue used in :meth:`~skrf.mathFunctions.nudge_eig`
 """
 
 # S-parameter definition labels and default definition
-S_DEFINITIONS = ['power', 'pseudo', 'traveling']
+SdefT = Literal["power", "pseudo", "traveling"]
+S_DEFINITIONS: list[SdefT] = list(get_args(SdefT))
 S_DEF_DEFAULT = 'power'
 S_DEF_HFSS_DEFAULT = 'traveling'
 
-FREQ_UNITS = {"Hz": 1.0, "kHz": 1e3, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}
+FrequencyUnitT = Literal["Hz", "kHz", "MHz", "GHz", "THz"]
+"""
+Frequency units: "Hz", "kHz", "MHz", "GHz", "THz" (case-insensitive).
+"""
+FREQ_UNITS: dict[FrequencyUnitT, float] = {"Hz": 1.0, "kHz": 1e3, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}
 
-NumberLike = Union[Number, Sequence[Number], np.ndarray]
+SweepTypeT = Literal["lin", "log"]
+"""
+Frequency sweep type, either "lin" or "log".
+"""
+
+CoordT = Literal["cart", "polar"]
+InterpolKindT = Literal["linear", "cubic", "nearest", "zero", "slinear", "quadratic", "rational"]
+PrimaryPropertiesT = Literal['s', 'z', 'y', 'a', 'g', 'h', 't']
+ComponentFuncT = Literal["re", "im", "mag", "db", "db10", "rad", "deg", "arcl", "rad_unwrap", "deg_unwrap",
+                         "arcl_unwrap", "vswr", "time", "time_db", "time_mag", "time_impulse", "time_step"]
+SparamFormatT = Literal["db", "ri", "ma"]
+PortOrderT = Literal["first", "second", "third", "last", "auto"]
+CircuitComponentT = Literal["_is_circuit_port", "_is_circuit_ground", "_is_circuit_open"]
+MemoryLayoutT = Literal["C", "F"]
+ErrorFunctionsT = Literal["average_l1_norm", "average_l2_norm", "maximum_l1_norm", "average_normalized_l1_norm"]
+
+NumberLike = Number | Sequence[Number] | np.ndarray
 
 global distance_dict
 distance_dict = {

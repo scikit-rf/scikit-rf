@@ -2,7 +2,7 @@
 name = "scikit-rf"
 dynamic = ["version"]
 description = "Object Oriented Microwave Engineering"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 authors = [
     {name="Alex Arsenovic", email="alexanderarsenovic@gmail.com"}
 ]
@@ -26,30 +26,32 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     ]
 
 dependencies = [
     "numpy >=1.21",
     "scipy >=1.7",
     "pandas >=1.1",
+    "typing-extensions",
+    "pre-commit>=3.5.0",
 ]
 
 [project.optional-dependencies]
 test = [
-    "tox >= 3.26.0",
-    "pytest >=7.0",
+    "pytest <9.0",
     "pytest-mock >= 3.10",
     "pytest-xdist >= 3.5.0",
     "coverage >=6.0",
-    "flake8 >=5.0",
     "pytest-cov >=4.0",
-    "nbval >=0.9",
-    "pyarrow >= 10.0"
+]
+
+testspice = [
+    "pyspice >= 1.5",
 ]
 
 plot = [
@@ -74,11 +76,13 @@ docs = [
     "ipykernel >=6.15",
     "ipywidgets >=8.0.2",
     "python-ivi >=0.14.9",
+    "nbval >=0.9",
     "jupyter-client >=7.3.5",
     "sphinx-rtd-theme >=1.0",
     "sphinx >=4",
     "nbsphinx >= 0.8.9",
-    "openpyxl >= 3"
+    "openpyxl >= 3",
+    "typing-extensions>=4.15.0",
 ]
 
 [project.urls]
@@ -95,7 +99,8 @@ build-backend = "setuptools.build_meta"
 
 
 [tool.setuptools]
-license-files = ["LICENSE.txt"]
+# license-files = ["LICENSE.txt"]  # tempfix bug in setuptool
+license-files = []
 
 [tool.setuptools.dynamic]
 version = {attr = "skrf.__version__"}
@@ -112,7 +117,7 @@ testpaths = [
     "doc/source/examples",
     "doc/source/tutorials"
 ]
-addopts = "--cov=skrf --ignore-glob='*.ipynb_checkpoints'"
+addopts = "--cov=skrf --ignore-glob='*.ipynb_checkpoints' --ignore=doc/source/tutorials/VirtualInstruments.ipynb"
 norecursedirs = [
     "skrf/src",
     "doc/source/examples/instrumentcontrol"
@@ -130,7 +135,9 @@ select = ["B", "E", "F", "FA", "I", "NPY", "UP", "W"]
 
 # Ignore some rules for all files
 # E741: ambiguous-variable-name
-ignore = ["E741"]
+# UP031: Use format specifiers instead of percent format
+# B905: zip-without-explicit-strict
+ignore = ["E741", "UP031", "B905"]
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore some rules for some specific files

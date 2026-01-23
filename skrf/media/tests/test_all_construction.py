@@ -20,6 +20,13 @@ class MediaTestCase:
     def test_z0_value(self):
         self.media.z0
 
+    def test_mode_original_not_modified(self):
+        # https://github.com/scikit-rf/scikit-rf/issues/1319
+        network1 = self.media.delay_short(30, unit='deg')
+        newmedia = self.media.mode(z0_port=1)  # unused newmedia
+        network2 = self.media.delay_short(30, unit='deg')
+        self.assertEqual(network1, network2)
+
     def test_match(self):
         self.media.match()
 
@@ -58,6 +65,9 @@ class MediaTestCase:
 
     def test_line(self):
         self.media.line(1)
+
+    def test_line_floating(self):
+        self.media.line_floating(1)
 
     def test_delay_load(self):
         self.media.delay_load(1,2)

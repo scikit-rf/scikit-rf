@@ -63,6 +63,9 @@ There is multiple ways to contribute to an open-source project like scikit-rf!
 
 ![skrfshirt](https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/logo/skrfshirtwhite.png)
 
+## Authors
+The list of the developers of scikit-rf is available on the [contributors page](https://github.com/scikit-rf/scikit-rf/graphs/contributors/).
+
 ## License
 
 scikit-rf is permissively licensed under a [3-clause BSD license](LICENSE.txt).

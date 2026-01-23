@@ -26,8 +26,15 @@ through the Network constructor, :func:`~skrf.network.Network.__init__`
 
 """
 
-from .citi import *
-from .csv import *
-from .general import *
-from .mdif import *
-from .touchstone import *
+from . import citi, csv, general, mdif, metas, touchstone
+from .citi import Citi
+from .general import load_all_touchstones, read, read_all, write, write_all
+from .mdif import Mdif
+from .metas import ns_2_sdatcv
+from .touchstone import (
+    Touchstone,
+    hfss_touchstone_2_gamma_z0,
+    hfss_touchstone_2_media,
+    hfss_touchstone_2_network,
+    read_zipped_touchstones,
+)

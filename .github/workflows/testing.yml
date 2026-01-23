@@ -11,33 +11,38 @@ jobs:
       pull-requests: write
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+    - uses: astral-sh/setup-uv@v7
 
-    - name: Install dependencies
+    - name: Install minimal dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install tox tox-gh-actions
+        uv venv
+        uv pip install -e .
+        . .venv/bin/activate
+        python -c "import skrf; print(skrf.__version__)"  # Test import with minimal dependencies
 
     # run the tests located in skrf/
     - name: Test the code, tutorials and examples
       if: ${{ always() }}
       run: |
-        tox
+        uv pip install -e .[test,visa,netw,xlsx,plot,docs,testspice] --compile
+        . .venv/bin/activate
+        python -m pytest -n auto --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }}
 
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: Test Results (Python ${{ matrix.python-version }})
         path: test-results/*.xml
-                  
+
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
@@ -81,7 +86,7 @@ jobs:
 
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: artifacts
 

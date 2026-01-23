@@ -18,8 +18,9 @@ behaviour is frequency invariant.
 from __future__ import annotations
 
 import warnings
+from collections.abc import Sequence
 
-from numpy import imag, log, ones, pi, real, sqrt
+from numpy import imag, log, ndarray, ones, pi, real, sqrt
 from scipy.constants import c
 
 from ..constants import NumberLike
@@ -32,7 +33,7 @@ class DefinedAEpTandZ0(Media):
     Transmission line medium defined by A, Ep, Tand and Z0.
 
     This medium is defined by attenuation `A`, relative permittivity `Ep_r`,
-    loss angle `tand` and characteristic impedance `Z0`.
+    loss angle `tand` and nominal impedance `Z0`.
 
     Djirdjevic [#Djordjevic]_ / Svennson [#Svensson]_ dispersion model
     is provided for dielectric. Default behaviour is frequency invariant.
@@ -51,7 +52,7 @@ class DefinedAEpTandZ0(Media):
         (Default is None)
     A : number, array-like, default 0.0
         Attenuation due to conductor loss in dB/m/sqrt(Hz)
-        The attenuation :math:`A(f)`at frequency :math:`f` is:
+        The attenuation :math:`A(f)` at frequency :math:`f` is:
 
         .. math::
 
@@ -86,14 +87,43 @@ class DefinedAEpTandZ0(Media):
     tanD : number, array-like, default 0.0
         Dielectric relative permittivity loss tangent :math:`\tan\delta`. See `ep_r`.
     z0 : number, array-like, default 50.0
-        Quasi-static characteristic impedance of the medium.
+        Quasi-static nominal impedance of the medium.
+        Because of the dispersion introduced by the conductor and dielectric
+        losses, the characteristic impedance can be frequency-dependent with an
+        imaginary part. The characteristic impedance is computed with an RLGC
+        model.
+        If the impedance parameter is array-like, the characteristic impedance
+        is assigned to this value without modification.
+
+        .. math::
+
+            R = 2 Z_n \alpha_{conductor}
+
+        .. math::
+
+            L = \frac{Z_n \sqrt{\epsilon_r}}{C_0}
+
+        .. math::
+
+            G = \frac{2}{Z_n} \alpha_{dielectric}
+
+        .. math::
+
+            C = \frac{\sqrt{\epsilon_r}}{C_0 Z_n}
+
+        .. math::
+
+            Z_0 = \sqrt{\frac{R + j\omega L}{G + j\omega C}}
+
+        where :math:`Z_n` is the nominal impedance and :math:`Z_0` is the
+        characteristic impedance.
     Z0 : number, array-like, or None
-        deprecated parameter, only emmit a deprecation warning.
+        deprecated parameter, only emit a deprecation warning.
     f_low : number, default 1e3, optional
-        Low frequency in Hz for  for Djirdjevic/Svennson dispersion model.
+        Low frequency in Hz for  for Djordjevic/Svennson dispersion model.
         See `ep_r`.
     f_high : number, default 1e12, optional
-        High frequency in Hz for  for Djirdjevic/Svennson dispersion model.
+        High frequency in Hz for for Djordjevic/Svennson dispersion model.
         See `ep_r`.
     f_ep : number, default 1e9, , optional
         Specification frequency in Hz for  for Djirdjevic/Svennson dispersion model.
@@ -139,9 +169,24 @@ class DefinedAEpTandZ0(Media):
         Media.__init__(self, frequency=frequency, z0_port=z0_port)
         self.A, self.f_A = A, f_A
         self.ep_r, self.tanD = ep_r, tanD
-        self.z0_characteristic = z0
+
         self.f_low, self.f_high, self.f_ep = f_low, f_high, f_ep
         self.model = model
+
+        if isinstance(z0, (Sequence, ndarray)):
+            # keep raw impedance for characteristic impedance
+            self.z0_characteristic = z0
+        else:
+            # z0 is the nominal impedance. Compute characteristic impedance with
+            # an RLGC model based on alpha conductor and alpha dielectric.
+            self.Zn = z0
+            self.R = 2 * self.Zn * self.alpha_conductor
+            self.L = self.Zn * sqrt(self.ep_r) / c
+            self.G = 2 / self.Zn * self.alpha_dielectric
+            self.C = sqrt(ep_r) / c / self.Zn
+            self.z0_characteristic = sqrt(
+                (self.R + 1j * self.frequency.w * self.L) /
+                (self.G + 1j * self.frequency.w * self.C))
 
         if Z0 is not None:
             # warns of deprecation
@@ -169,11 +214,14 @@ class DefinedAEpTandZ0(Media):
         f_low, f_high, f_ep = self.f_low, self.f_high, self.f_ep
         f = self.frequency.f
         if self.model == 'djordjevicsvensson':
-            # compute the slope for a log frequency scale, tanD dependent.
-            m = (ep_r*tand) * (pi/(2*log(10)))
-            # value for frequency above f_high
-            ep_inf = (ep_r - 1j*ep_r*tand - m*log((f_high + 1j*f_ep)/(f_low + 1j*f_ep)))
-            return ep_inf + m*log((f_high + 1j*f)/(f_low + 1j*f))
+           # compute the slope for a log frequency scale, tanD dependent.
+           k = log((f_high + 1j * f_ep) / (f_low + 1j * f_ep))
+           fd = log((f_high + 1j * f) / (f_low + 1j * f))
+           ep_d = -tand * ep_r  / imag(k)
+           # value for frequency above f_high
+           ep_inf = ep_r * (1. + tand * real(k) / imag(k))
+           # compute complex permitivity
+           return ep_inf + ep_d * fd
         elif self.model == 'frequencyinvariant':
             return ones(self.frequency.f.shape) * (ep_r - 1j*ep_r*tand)
         else:

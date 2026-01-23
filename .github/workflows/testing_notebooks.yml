@@ -9,22 +9,24 @@ jobs:
     if: github.event.pull_request.draft == false
     strategy:
       matrix:
-        python-version: ['3.9']
+        python-version: ['3.12']
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
+    - uses: astral-sh/setup-uv@v7
 
-    - name: Install dependencies
+    - name: Install dependencies for Notebooks
       run: |
-        python -m pip install --upgrade pip
-        pip install tox tox-gh-actions
+        uv venv
+        uv pip install -e .[test,visa,netw,xlsx,plot,docs,testspice] --compile
 
     # test code *and* notebooks (tutorials and examples)
     - name: Test the code, tutorials and examples
       if: ${{ always() }}
       run: |
-        tox --skip-env minimal-dependencies -- --nbval-lax --nbval-current-env --dist loadscope
+        . .venv/bin/activate
+        python -m pytest -n=auto --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }} --nbval-lax --nbval-current-env --dist loadscope

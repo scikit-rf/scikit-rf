@@ -20,9 +20,10 @@ Time domain functions
 from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
 
 # imports for type hinting
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 from numpy.fft import fft, fftshift, ifft, ifftshift, irfft, rfft
@@ -320,16 +321,16 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
         Time unit for start, stop, center and span arguments, defaults to seconds (s).
 
         Possible values:
-            * 's': seconds
+            * 's': seconds (default)
             * 'ms': milliseconds
             * 'µs' or 'us': microseconds
-            * 'ns': nanoseconds (default)
+            * 'ns': nanoseconds
             * 'ps': picoseconds
 
 
     Note
     ----
-    You cant gate things that are 'behind' strong reflections. This
+    You can't gate things that are 'behind' strong reflections. This
     is due to the multiple reflections that occur.
 
     If you need to time-gate an N-port network, then you should
@@ -368,7 +369,7 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
 
     else:
         if center is None:
-            # they didnt provide center, so find the peak
+            # they didn't provide center, so find the peak
             n = ntwk.s_time_mag.argmax()
             center = ntwk.frequency.t_ns[n]
 

@@ -72,6 +72,7 @@ import pickle
 import sys
 import warnings
 from io import StringIO
+from pathlib import Path
 from pickle import UnpicklingError
 from typing import Any
 
@@ -112,7 +113,7 @@ def read(file, *args, **kwargs):
 
     Parameters
     ----------
-    file : str or file-object
+    file : str, Path, or file-object
         name of file, or  a file-object
     \*args, \*\*kwargs : arguments and keyword arguments
         passed through to pickle.load
@@ -173,7 +174,7 @@ def write(file, obj, overwrite = True):
 
     Parameters
     ----------
-    file : file or string
+    file : file, Path, or string
         File or filename to which the data is saved.  If file is a
         file-object, then the filename is unchanged.  If file is a
         string, an appropriate extension will be appended to the file
@@ -187,7 +188,7 @@ def write(file, obj, overwrite = True):
 
 
     .. note::
-        If `file` is a string, but doesnt contain a suffix, one is chosen
+        If `file` is a string, but doesn't contain a suffix, one is chosen
         automatically. Here are the extensions:
 
 
@@ -251,7 +252,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir: str ='.', sort = True, contains = None, f_unit = None,
+def read_all(dir: str | Path = '.', sort = True, contains = None, f_unit = None,
         obj_type=None, files: list=None, recursive=False) -> dict:
     """
     Read all skrf objects in a directory.
@@ -262,10 +263,10 @@ def read_all(dir: str ='.', sort = True, contains = None, f_unit = None,
 
     Parameters
     ----------
-    dir : str, optional
+    dir : str or Path, optional
         the directory to load from, default  \'.\'
     sort: boolean, default is True
-        filenames sorted by https://docs.python.org/3/library/stdtypes.html#list.sort without arguements
+        filenames sorted by https://docs.python.org/3/library/stdtypes.html#list.sort without arguments
     contains : str, optional
         if not None, only files containing this substring will be loaded
     f_unit : ['hz','khz','mhz','ghz','thz']
@@ -310,6 +311,9 @@ def read_all(dir: str ='.', sort = True, contains = None, f_unit = None,
     read_all : read all skrf objects in a directory
     write_all : write dictionary of skrf objects to a directory
     """
+
+    # Convert a Path object to a string
+    dir = str(dir.resolve()) if isinstance(dir, Path) else dir
 
     out={}
 
@@ -629,7 +633,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
     if remove_tmp_file:
         os.rename(new_file_name,file_name)
 
-def network_2_spreadsheet(ntwk: Network, file_name: str = None,
+def network_2_spreadsheet(ntwk: Network, file_name: str | Path = None,
         file_type: str = 'excel', form: str ='db', *args, **kwargs):
     r"""
     Write a Network object to a spreadsheet, for your boss.
@@ -650,7 +654,7 @@ def network_2_spreadsheet(ntwk: Network, file_name: str = None,
     ----------
     ntwk :  :class:`~skrf.network.Network` object
         the network to write
-    file_name : str, None
+    file_name : str, Path or None
         the file_name to write. if None,  ntwk.name is used.
     file_type : ['csv','excel','html']
         the type of file to write. See `pandas.DataFrame.to_???` functions.
@@ -830,11 +834,19 @@ class TouchstoneEncoder(json.JSONEncoder):
 
 def to_json_string(network):
     """
-    Dumps Network to JSON string. Faster than converting and saving as touchstone.
+    Dumps Network to JSON string.
+
+    Faster than converting and saving as touchstone.
     Safer than pickling (no arbitrary code execution on load).
-    :param network: :class:`~skrf.network.Network` object
+
+    Parameters
+    ----------
+    network: :class:`~skrf.network.Network` object
         A Network object to be serialized and returned as a JSON string.
-    :return: str
+
+    Returns
+    -------
+    json : str
         JSON string representation of a network object.
     """
     return json.dumps(network.__dict__, cls=TouchstoneEncoder)
@@ -843,9 +855,15 @@ def to_json_string(network):
 def from_json_string(obj_string):
     """
     Loads network object from JSON string representation.
-    :param obj_string: str
+
+    Parameters
+    ----------
+    obj_string : str
         JSON string representation of a network object.
-    :return: :class:`~skrf.network.Network` object
+
+    Returns
+    -------
+    ntwk : :class:`~skrf.network.Network` object
         A Network object, rebuilt from JSON.
     """
     obj = json.loads(obj_string)

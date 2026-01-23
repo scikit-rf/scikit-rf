@@ -6,24 +6,37 @@ import numpy as np
 import pytest
 
 import skrf as rf
-from skrf import two_port_reflect
 from skrf.calibration import (
+    LMR16,
+    LRM,
+    LRRM,
+    MRC,
     PHN,
+    SDDL,
     SOLT,
+    TRL,
+    EightTerm,
     MultiportCal,
     MultiportSOLT,
     NISTMultilineTRL,
+    OnePort,
+    SDDLWeikle,
+    SixteenTerm,
     TUGMultilineTRL,
     TwelveTerm,
     TwoPortOnePath,
     UnknownThru,
     compute_switch_terms,
+    convert_8term_2_12term,
+    convert_12term_2_8term,
     determine_line,
     determine_reflect,
     terminate,
     terminate_nport,
 )
-from skrf.media import Coaxial, DistributedCircuit
+from skrf.constants import mil
+from skrf.media import Coaxial, DistributedCircuit, RectangularWaveguide
+from skrf.network import two_port_reflect
 from skrf.networkSet import NetworkSet
 from skrf.util import suppress_warning_decorator
 
@@ -35,9 +48,9 @@ NPTS = 1
 
 # WR10/WG27/R900 75 to 110 GHz, 0.1x0.05 inch (2.54x1.27 mm)
 # z0 from 610 to 446 ohm
-WG_lossless = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'),
-                                      a=100*rf.mil, z0_override=50)
-WG = rf.RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*rf.mil,
+WG_lossless = RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'),
+                                      a=100*mil, z0_override=50)
+WG = RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*mil,
                                       rho='gold', z0_override=50)
 
 def _compare_dicts_allclose(first: dict, second: dict) -> None:
@@ -69,7 +82,7 @@ class DetermineTest(unittest.TestCase):
                     for p in [-.9,-1]]
 
 
-        self.R = [rf.two_port_reflect(k,k) for k in self.r]
+        self.R = [two_port_reflect(k,k) for k in self.r]
 
         short= wg.short()
         open = wg.open()
@@ -97,11 +110,11 @@ class DetermineTest(unittest.TestCase):
         thru = medium.line(0, 'm')
         line = medium.line(0.12, 'm')
 
-        short = rf.two_port_reflect(medium.short(), medium.short())
+        short = two_port_reflect(medium.short(), medium.short())
         r = determine_reflect(thru, short, line)
         np.testing.assert_array_almost_equal( r.s, -np.ones_like(r.s))
 
-        reflect = rf.two_port_reflect(medium.open(), medium.open())
+        reflect = two_port_reflect(medium.open(), medium.open())
         r = determine_reflect(thru, reflect, line, reflect_approx = medium.open())
         np.testing.assert_array_almost_equal(r.s, np.ones_like(r.s))
 
@@ -116,7 +129,7 @@ class DetermineTest(unittest.TestCase):
         rng = np.random.default_rng(12)
         short.s[:, 0, 0] += rng.uniform(-.02, 0.02, freq.f.size) + rng.uniform(-.02, 0.02, freq.f.size)*1j
 
-        r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
+        r = determine_reflect(thru, two_port_reflect(short, short), line)
         np.testing.assert_array_almost_equal( r.s, short.s)
 
 
@@ -128,7 +141,7 @@ class DetermineTest(unittest.TestCase):
         line = medium.line(0.12, 'm')
         short = rf.Network(frequency=freq, s=[[[(-1.+0.017870117714376983j)] ] ])
 
-        r = determine_reflect(thru, rf.two_port_reflect(short, short), line)
+        r = determine_reflect(thru, two_port_reflect(short, short), line)
         np.testing.assert_array_almost_equal( r.s, short.s)
 
 class ComputeSwitchTermsTest(unittest.TestCase):
@@ -174,18 +187,18 @@ class CalibrationTest:
         self.assertEqual(c,a)
 
     def test_error_ntwk(self):
-        a= self.cal.error_ntwk
+        a = self.cal.error_ntwk
 
     def test_coefs_ntwks(self):
-        a= self.cal.coefs_ntwks
+        a = self.cal.coefs_ntwks
 
     @suppress_warning_decorator("only gave a single measurement orientation")
     def test_caled_ntwks(self):
-        a= self.cal.caled_ntwks
+        a = self.cal.caled_ntwks
 
     @suppress_warning_decorator("only gave a single measurement orientation")
     def test_residual_ntwks(self):
-        a= self.cal.residual_ntwks
+        a = self.cal.residual_ntwks
 
     def test_embed_then_apply_cal(self):
         a = self.wg.random(n_ports=self.n_ports)
@@ -208,6 +221,64 @@ class CalibrationTest:
         self.assertEqual(cal_from_coefs.apply_cal(self.cal.embed(ntwk)),ntwk)
 
 
+class CalibrationInputsTest(unittest.TestCase):
+    """Test Calibration class input validation"""
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+
+        self.ideals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='load'),
+            wg.thru(name='thru'),
+            ]
+
+        self.measured = [k.copy() for k in self.ideals]
+
+    def init(self):
+        self.cal = rf.calibration.Calibration(
+            ideals = self.ideals,
+            measured = self.measured
+            )
+
+    def test_meas_z0(self):
+        self.measured[0].z0 *= 0.5
+        with pytest.raises(ValueError):
+            self.init()
+
+    def test_ideals_z0(self):
+        self.ideals[0].z0 *= 0.5
+        with pytest.raises(ValueError):
+            self.init()
+
+    def test_ideals_frequency(self):
+        freqs = rf.F(1, 10, NPTS+1, unit="GHz")
+        self.ideals[-1] = rf.Network(s=np.zeros([NPTS + 1, 2, 2]), frequency=freqs)
+        with pytest.raises(IndexError):
+            self.init()
+
+    def test_measured_frequency(self):
+        freqs = rf.F(1, 10, NPTS+1, unit="GHz")
+        self.measured[-1] = rf.Network(s=np.zeros([NPTS + 1, 2, 2]), frequency=freqs)
+        with pytest.raises(ValueError):
+            self.init()
+
+    def test_ideals_frequency2(self):
+        freqs = self.wg.frequency.copy()
+        freqs._f += 1e9
+        self.ideals[-1].frequency = freqs
+        with pytest.raises(IndexError):
+            self.init()
+
+    def test_measured_frequency2(self):
+        freqs = self.wg.frequency.copy()
+        freqs._f += 1e9
+        self.measured[-1].frequency = freqs
+        with pytest.raises(ValueError):
+            self.init()
+
 class OnePortTest(unittest.TestCase, CalibrationTest):
     """
     One-port calibration test.
@@ -229,7 +300,7 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
                 ]
         measured = [self.measure(k) for k in ideals]
 
-        self.cal = rf.OnePort(
+        self.cal = OnePort(
             is_reciprocal = True,
             ideals = ideals,
             measured = measured,
@@ -237,7 +308,7 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
 
     def test_input_networks_1port(self):
         # test users do not enter 2-port networks by accident
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             wg = self.wg
             ideals = [
                     two_port_reflect(wg.short( name='short'), wg.short( name='short')),
@@ -246,7 +317,9 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
                     wg.match( name='load'),
                     ]
             measured = [self.measure(k) for k in ideals]
-            cal = rf.OnePort(
+            # create another calibration instance of the same class
+            cal_class = type(self.cal)
+            cal = cal_class(
                is_reciprocal = True,
                ideals = ideals,
                measured = measured,
@@ -302,7 +375,7 @@ class SDDLTest(OnePortTest):
                 ]
         measured = [self.measure(k) for k in actuals]
 
-        self.cal = rf.SDDL(
+        self.cal = SDDL(
             is_reciprocal = True,
             ideals = ideals,
             measured = measured,
@@ -328,7 +401,7 @@ class SDDLTest(OnePortTest):
                 ]
         measured = [self.measure(k) for k in actuals]
 
-        self.cal = rf.SDDL(
+        self.cal = SDDL(
             is_reciprocal = True,
             ideals = ideals,
             measured = measured,
@@ -344,7 +417,7 @@ class SDDLTest(OnePortTest):
         pass
 
 
-class SDDLWeikle(OnePortTest):
+class SDDLWeikleTest(OnePortTest):
     def setUp(self):
         self.n_ports = 1
         #Exact only with a lossless waveguide
@@ -368,7 +441,7 @@ class SDDLWeikle(OnePortTest):
                 ]
         measured = [self.measure(k) for k in actuals]
 
-        self.cal = rf.SDDLWeikle(
+        self.cal = SDDLWeikle(
             is_reciprocal = True,
             ideals = ideals,
             measured = measured,
@@ -412,7 +485,7 @@ class SDDMTest(OnePortTest):
                 ]
         measured = [self.measure(k) for k in actuals]
 
-        self.cal = rf.SDDL(
+        self.cal = SDDL(
             is_reciprocal = True,
             ideals = ideals,
             measured = measured,
@@ -503,7 +576,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
 
         measured = [self.measure(k) for k in ideals]
 
-        self.cal = rf.EightTerm(
+        self.cal = EightTerm(
             ideals = ideals,
             measured = measured,
             isolation = measured[2],
@@ -522,6 +595,27 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         out.s[:,1,0] += self.If.s[:,0,0]
         out.s[:,0,1] += self.Ir.s[:,0,0]
         return out
+
+    def test_renormalize(self):
+        dut = self.wg.random(n_ports=2, name='DUT')
+        dut_meas = self.measure(dut)
+        z_new = 100-30j
+        self.cal.renormalize(50, z_new)
+        dut_cal = self.cal.apply_cal(dut_meas)
+        dut.renormalize(z_new, s_def="traveling")
+        dut.z0 = 50
+        self.assertEqual(dut, dut_cal)
+
+    def test_renormalize2(self):
+        """
+        Test that roundtrip renormalization gives back the original calibration
+        """
+        old_coefs = copy.deepcopy(self.cal.coefs)
+        z_new = 10 + 20j
+        self.cal.renormalize(50, z_new)
+        self.cal.renormalize(z_new, 50)
+        for k in self.cal.coefs.keys():
+            np.testing.assert_array_almost_equal(old_coefs[k], self.cal.coefs[k], err_msg=k)
 
     def test_unterminating(self):
         a = self.wg.random(n_ports=self.n_ports)
@@ -586,7 +680,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         self.assertEqual(self.cal.coefs_8term, self.cal.coefs)
 
     def test_coefs_12term(self):
-        _compare_dicts_allclose(self.cal.coefs_12term, rf.convert_8term_2_12term(self.cal.coefs))
+        _compare_dicts_allclose(self.cal.coefs_12term, convert_8term_2_12term(self.cal.coefs))
 
     def test_input_not_modified(self):
         dut_before = self.X.copy()
@@ -607,8 +701,8 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
                 coefs['forward switch term'] = st[0]
                 coefs['reverse switch term'] = st[1]
 
-                coefs_12term = rf.convert_8term_2_12term(coefs)
-                coefs_8term = rf.convert_12term_2_8term(coefs_12term)
+                coefs_12term = convert_8term_2_12term(coefs)
+                coefs_8term = convert_12term_2_8term(coefs_12term)
                 for k in self.cal.coefs.keys():
                     np.testing.assert_almost_equal(coefs_8term[k], coefs[k])
 
@@ -634,7 +728,7 @@ class TRLTest(EightTermTest):
 
         actuals = [
             wg.thru( name='thru'),
-            rf.two_port_reflect(wg.load(-.9-.1j),wg.load(-.9-.1j)),
+            two_port_reflect(wg.load(-.9-.1j),wg.load(-.9-.1j)),
             wg.attenuator(-3,True, 45,'deg')
             #wg.line(45,'deg',name='line'),
             ]
@@ -647,7 +741,7 @@ class TRLTest(EightTermTest):
 
         measured = [self.measure(k) for k in actuals]
 
-        self.cal = rf.TRL(
+        self.cal = TRL(
             ideals = ideals,
             measured = measured,
             isolation = measured[1],
@@ -691,7 +785,7 @@ class TRLLongThruTest(EightTermTest):
 
         actuals = [
             wg.line(100, 'um', name='thru'),
-            rf.two_port_reflect(reflect_shifted, reflect_shifted),
+            two_port_reflect(reflect_shifted, reflect_shifted),
             wg.line(1100, 'um', name='thru'),
             ]
 
@@ -710,7 +804,7 @@ class TRLLongThruTest(EightTermTest):
         self.X = self.X ** wg.line(50, 'um')
         self.Y = wg.line(50, 'um') ** self.Y
 
-        self.cal = rf.TRL(
+        self.cal = TRL(
             ideals = ideals,
             measured = measured,
             isolation = measured[1],
@@ -725,7 +819,7 @@ class TRLLongThruTest(EightTermTest):
     def test_found_reflect(self):
         self.cal.run()
         # Solved reflect is at the thru center
-        self.assertTrue(self.cal.ideals[1]==rf.two_port_reflect(self.reflect, self.reflect))
+        self.assertTrue(self.cal.ideals[1]==two_port_reflect(self.reflect, self.reflect))
 
 class TRLWithNoIdealsTest(EightTermTest):
     def setUp(self):
@@ -749,12 +843,12 @@ class TRLWithNoIdealsTest(EightTermTest):
         r = wg.delay_short(20,'deg')
 
         self.actuals=[wg.thru( name='thru'),
-                      rf.two_port_reflect(r,r),\
+                      two_port_reflect(r,r),\
                       wg.attenuator(-3,True, 45,'deg')]
 
         measured = [self.measure(k) for k in self.actuals]
 
-        self.cal = rf.TRL(
+        self.cal = TRL(
             ideals = None,
             measured = measured,
             isolation = measured[1],
@@ -801,7 +895,7 @@ class TRLMultiline(EightTermTest):
 
         measured = [self.measure(k) for k in actuals]
 
-        self.cal = rf.TRL(
+        self.cal = TRL(
             ideals = [None, -1,1,None,None,None],
             measured = measured,
             isolation = measured[1],
@@ -831,8 +925,8 @@ class NISTMultilineTRLTest(EightTermTest):
 
         actuals = [
             wg.thru(),
-            rf.two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
-            rf.two_port_reflect(wg.load(.99+0.05j),wg.load(.99+0.05j)),
+            two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
+            two_port_reflect(wg.load(.99+0.05j),wg.load(.99+0.05j)),
             wg.line(100,'um'),
             wg.line(200,'um'),
             wg.line(900,'um'),
@@ -969,8 +1063,8 @@ class TUGMultilineTest(EightTermTest):
 
         actuals = [
             wg.thru(),
-            rf.two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
-            rf.two_port_reflect(wg.load(.99+0.05j),wg.load(.99+0.05j)),
+            two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
+            two_port_reflect(wg.load(.99+0.05j),wg.load(.99+0.05j)),
             wg.line(100,'um'),
             wg.line(200,'um'),
             wg.line(900,'um'),
@@ -1014,7 +1108,7 @@ class TREightTermTest(unittest.TestCase, CalibrationTest):
 
         measured = [self.measure_std(k) for k in ideals]
 
-        cal1 = rf.TwoPortOnePath(
+        cal1 = TwoPortOnePath(
             ideals = ideals,
             measured = measured
             )
@@ -1023,7 +1117,7 @@ class TREightTermTest(unittest.TestCase, CalibrationTest):
 
 
         measured = [self.measure(k) for k in ideals]
-        self.cal = rf.EightTerm(
+        self.cal = EightTerm(
             ideals = ideals,
             measured = measured,
             switch_terms = switch_terms,
@@ -1090,7 +1184,7 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
 
         measured = [ self.measure(k) for k in ideals]
 
-        self.cal = rf.TwelveTerm(
+        self.cal = TwelveTerm(
             ideals = ideals,
             measured = measured,
             n_thrus=2,
@@ -1172,15 +1266,15 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
             self.cal.coefs_ntwks['reverse isolation'])
 
     def test_convert_12term_2_8term(self):
-        converted = rf.convert_8term_2_12term(
-                    rf.convert_12term_2_8term(self.cal.coefs, redundant_k=True))
+        converted = convert_8term_2_12term(
+                    convert_12term_2_8term(self.cal.coefs, redundant_k=True))
 
         for k in converted:
             self.assertTrue(abs(self.cal.coefs[k] - converted[k])<1e-9)
 
     def test_convert_12term_2_8term_correction_accuracy(self):
-        converted = rf.convert_8term_2_12term(
-                    rf.convert_12term_2_8term(self.cal.coefs, redundant_k=True))
+        converted = convert_8term_2_12term(
+                    convert_12term_2_8term(self.cal.coefs, redundant_k=True))
 
         self.cal._coefs = converted
         a = self.wg.random(n_ports=2)
@@ -1190,7 +1284,7 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         self.assertEqual(a,c)
 
     def test_coefs_8term(self):
-        self.assertEqual(self.cal.coefs_8term, rf.convert_12term_2_8term(self.cal.coefs))
+        self.assertEqual(self.cal.coefs_8term, convert_12term_2_8term(self.cal.coefs))
 
     def test_coefs_12term(self):
         self.assertEqual(self.cal.coefs_12term, self.cal.coefs)
@@ -1408,7 +1502,7 @@ class UnknownThruTest(EightTermTest):
 
         measured = [self.measure(k) for k in actuals]
 
-        self.cal = rf.UnknownThru(
+        self.cal = UnknownThru(
             ideals = ideals,
             measured = measured,
             switch_terms = [self.gamma_f, self.gamma_r]
@@ -1433,10 +1527,10 @@ class LRMTest(EightTermTest):
 
         # Actual reflects with parasitics
         s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
-        ss = rf.two_port_reflect(s, s)
+        ss = two_port_reflect(s, s)
 
         m = wg.load(0, nports=1, name='match')
-        mm = rf.two_port_reflect(m, m)
+        mm = two_port_reflect(m, m)
 
         # Store reflect for other tests
         self.s = s
@@ -1455,7 +1549,7 @@ class LRMTest(EightTermTest):
 
         measured = [self.measure(k) for k in ideals]
 
-        self.cal = rf.LRM(
+        self.cal = LRM(
             ideals = approx_ideals,
             measured = measured,
             switch_terms = [self.gamma_f, self.gamma_r],
@@ -1497,13 +1591,13 @@ class LRRMTest(EightTermTest):
         m = l**m_i
 
         # Make standards two-ports
-        oo = rf.two_port_reflect(o, o)
-        ss = rf.two_port_reflect(s, s)
-        mm = rf.two_port_reflect(m, o)
+        oo = two_port_reflect(o, o)
+        ss = two_port_reflect(s, s)
+        mm = two_port_reflect(m, o)
 
-        oo_i = rf.two_port_reflect(o_i, o_i)
-        ss_i = rf.two_port_reflect(s_i, s_i)
-        mm_i = rf.two_port_reflect(m_i, m_i)
+        oo_i = two_port_reflect(o_i, o_i)
+        ss_i = two_port_reflect(s_i, s_i)
+        mm_i = two_port_reflect(m_i, m_i)
 
         # Store open and short for other tests.
         self.s = s
@@ -1525,7 +1619,7 @@ class LRRMTest(EightTermTest):
 
         measured = [self.measure(k) for k in ideals]
 
-        self.cal = rf.LRRM(
+        self.cal = LRRM(
             ideals = approx_ideals,
             measured = measured,
             switch_terms = [self.gamma_f, self.gamma_r],
@@ -1573,13 +1667,13 @@ class LRRMTestNoFit(LRRMTest):
         m = l**m_i
 
         # Make standards two-ports
-        oo = rf.two_port_reflect(o, o)
-        ss = rf.two_port_reflect(s, s)
-        mm = rf.two_port_reflect(m, o)
+        oo = two_port_reflect(o, o)
+        ss = two_port_reflect(s, s)
+        mm = two_port_reflect(m, o)
 
-        oo_i = rf.two_port_reflect(o_i, o_i)
-        ss_i = rf.two_port_reflect(s_i, s_i)
-        mm_i = rf.two_port_reflect(m_i, m_i)
+        oo_i = two_port_reflect(o_i, o_i)
+        ss_i = two_port_reflect(s_i, s_i)
+        mm_i = two_port_reflect(m_i, m_i)
 
         # Store open and short for other tests.
         self.s = s
@@ -1601,7 +1695,7 @@ class LRRMTestNoFit(LRRMTest):
 
         measured = [self.measure(k) for k in ideals]
 
-        self.cal = rf.LRRM(
+        self.cal = LRRM(
             ideals = approx_ideals,
             measured = measured,
             switch_terms = [self.gamma_f, self.gamma_r],
@@ -1628,7 +1722,7 @@ class MRCTest(EightTermTest):
         def delay_shorts(d1,d2):
             ds1 = wg.delay_short(d1,'deg')
             ds2 = wg.delay_short(d2,'deg')
-            return rf.two_port_reflect(ds1,ds2)
+            return two_port_reflect(ds1,ds2)
 
         actuals = [
             wg.short(nports=2, name='short'),
@@ -1649,7 +1743,7 @@ class MRCTest(EightTermTest):
 
         measured = [self.measure(k) for k in actuals]
 
-        self.cal = rf.MRC(
+        self.cal = MRC(
             ideals = ideals,
             measured = measured,
             switch_terms = [self.gamma_f, self.gamma_r]
@@ -1666,7 +1760,7 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
     @suppress_warning_decorator("n_thrus is None")
     def setUp(self):
         self.n_ports = 2
-        wg= rf.wr10
+        wg= rf.instances.wr10
         wg.frequency = rf.F.from_f([100], unit='GHz')
         self.wg = wg
         self.X = wg.random(n_ports =2, name = 'X')
@@ -1686,14 +1780,14 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
 
         measured = [ self.measure(k) for k in ideals]
         with warnings.catch_warnings(record=False):
-            self.cal = rf.TwelveTerm(
+            self.cal = TwelveTerm(
             ideals = ideals,
             measured = measured,
             isolation=measured[2]
             )
 
 
-        coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs)
+        coefs = convert_12term_2_8term(self.cal.coefs)
         coefs = NetworkSet.from_s_dict(coefs,
                                     frequency=self.cal.frequency).to_dict()
         self.coefs= coefs
@@ -1779,10 +1873,10 @@ class SixteenTermTest(unittest.TestCase, CalibrationTest):
         o = wg.open(nports=1, name='open')
         s = wg.short(nports=1, name='short')
         m = wg.match(nports=1, name='load')
-        om = rf.two_port_reflect(o, m)
-        mo = rf.two_port_reflect(m, o)
-        oo = rf.two_port_reflect(o, o)
-        ss = rf.two_port_reflect(s, s)
+        om = two_port_reflect(o, m)
+        mo = two_port_reflect(m, o)
+        oo = two_port_reflect(o, o)
+        ss = two_port_reflect(s, s)
         thru = wg.thru(name='thru')
 
         ideals = [
@@ -1795,7 +1889,7 @@ class SixteenTermTest(unittest.TestCase, CalibrationTest):
 
         measured = [self.measure(k) for k in ideals]
 
-        self.cal = rf.SixteenTerm(
+        self.cal = SixteenTerm(
             measured = measured,
             ideals = ideals,
             switch_terms=(self.gamma_f, self.gamma_r)
@@ -1808,9 +1902,30 @@ class SixteenTermTest(unittest.TestCase, CalibrationTest):
         return terminate(ntwk,self.gamma_f, self.gamma_r)
 
     def measure(self,ntwk):
-        out = self.terminate(rf.connect(self.Z, 1, ntwk, 0, num=2))
+        out = self.terminate(rf.network.connect(self.Z, 1, ntwk, 0, num=2))
         out.name = ntwk.name
         return out
+
+    def test_renormalize(self):
+        dut = self.wg.random(n_ports=2, name='DUT')
+        dut_meas = self.measure(dut)
+        z_new = 100-30j
+        self.cal.renormalize(50, z_new)
+        dut_cal = self.cal.apply_cal(dut_meas)
+        dut.renormalize(z_new, s_def="traveling")
+        dut.z0 = 50
+        self.assertEqual(dut, dut_cal)
+
+    def test_renormalize2(self):
+        """
+        Test that roundtrip renormalization gives back the original calibration
+        """
+        old_coefs = copy.deepcopy(self.cal.coefs)
+        z_new = 10 + 20j
+        self.cal.renormalize(50, z_new)
+        self.cal.renormalize(z_new, 50)
+        for k in self.cal.coefs.keys():
+            np.testing.assert_array_almost_equal(old_coefs[k], self.cal.coefs[k], err_msg=k)
 
     def test_forward_directivity_accuracy(self):
         self.assertEqual(
@@ -1906,10 +2021,10 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
         o = wg.open(nports=1, name='open')
         s = wg.short(nports=1, name='short')
         m = wg.match(nports=1, name='load')
-        om = rf.two_port_reflect(o, m)
-        mo = rf.two_port_reflect(m, o)
-        oo = rf.two_port_reflect(o, o)
-        ss = rf.two_port_reflect(s, s)
+        om = two_port_reflect(o, m)
+        mo = two_port_reflect(m, o)
+        oo = two_port_reflect(o, o)
+        ss = two_port_reflect(s, s)
         thru = wg.thru(name='thru')
 
         ideals = [
@@ -1922,7 +2037,7 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
 
         measured = [self.measure(k) for k in ideals]
 
-        self.cal16 = rf.SixteenTerm(
+        self.cal16 = SixteenTerm(
             measured = measured,
             ideals = ideals,
             switch_terms=(self.gamma_f, self.gamma_r)
@@ -1930,10 +2045,10 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
 
         r = wg.load(.95+.1j,nports=1)
         m = wg.match(nports=1)
-        mm = rf.two_port_reflect(m, m)
-        rm = rf.two_port_reflect(r, m)
-        mr = rf.two_port_reflect(m, r)
-        rr = rf.two_port_reflect(r, r)
+        mm = two_port_reflect(m, m)
+        rm = two_port_reflect(r, m)
+        mr = two_port_reflect(m, r)
+        rr = two_port_reflect(r, r)
 
         ideals = [
             thru,
@@ -1945,7 +2060,7 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
 
         measured = [self.measure(k) for k in ideals]
 
-        self.cal_lmr16 = rf.LMR16(
+        self.cal_lmr16 = LMR16(
             measured = measured,
             ideals = [thru],
             ideal_is_reflect = False,
@@ -1971,7 +2086,7 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
 
         measured = [self.measure(k) for k in ideals]
 
-        self.cal8 = rf.EightTerm(
+        self.cal8 = EightTerm(
             measured = measured,
             ideals = ideals,
             switch_terms=(self.gamma_f, self.gamma_r),
@@ -1984,7 +2099,7 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
         return terminate(ntwk,self.gamma_f, self.gamma_r)
 
     def measure(self,ntwk):
-        out = self.terminate(rf.connect(self.Z, 1, ntwk, 0, num=2))
+        out = self.terminate(rf.network.connect(self.Z, 1, ntwk, 0, num=2))
         out.name = ntwk.name
         return out
 
@@ -2013,10 +2128,10 @@ class LMR16Test(SixteenTermTest):
 
         r = wg.short(nports=1, name='short')
         m = wg.match(nports=1, name='load')
-        mm = rf.two_port_reflect(m, m)
-        rm = rf.two_port_reflect(r, m)
-        mr = rf.two_port_reflect(m, r)
-        rr = rf.two_port_reflect(r, r)
+        mm = two_port_reflect(m, m)
+        rm = two_port_reflect(r, m)
+        mr = two_port_reflect(m, r)
+        rr = two_port_reflect(r, r)
 
         thru_length = np.random.default_rng().uniform(0,10)
         thru = wg.line(thru_length,'deg',name='line')
@@ -2033,7 +2148,7 @@ class LMR16Test(SixteenTermTest):
 
         measured = [self.measure(k) for k in ideals]
 
-        self.cal = rf.LMR16(
+        self.cal = LMR16(
             measured = measured,
             ideals = [r],
             ideal_is_reflect = True,
@@ -2064,7 +2179,7 @@ class MultiportCalTest(unittest.TestCase):
 
         actuals = [
             wg.thru(),
-            rf.two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
+            two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
             wg.line(100,'um'),
             wg.line(900,'um'),
             ]
@@ -2076,7 +2191,7 @@ class MultiportCalTest(unittest.TestCase):
 
         for p in [(0, 1), (0, 2)]:
 
-            measured = [self.measure(rf.twoport_to_nport(k, p[0], p[1], nports)) for k in actuals]
+            measured = [self.measure(rf.network.twoport_to_nport(k, p[0], p[1], nports)) for k in actuals]
             cal_dict[p] = {}
             cal_dict[p]['method'] = NISTMultilineTRL
             cal_dict[p]['measured'] = measured
@@ -2149,7 +2264,7 @@ class MultiportCalTest(unittest.TestCase):
         return terminate_nport(ntwk, self.gammas)
 
     def measure(self, ntwk):
-        out = self.terminate(rf.connect(self.Z, self.n_ports, ntwk, 0, num=self.n_ports))
+        out = self.terminate(rf.network.connect(self.Z, self.n_ports, ntwk, 0, num=self.n_ports))
         out = out + self.isolation
         out.name = ntwk.name
         return out
@@ -2179,7 +2294,7 @@ class MultiportSOLTTest(MultiportCalTest):
             ideals = []
             # nports-1 thrus from port 0 to all other ports.
             for i in range(1, nports):
-                thru_i = rf.twoport_to_nport(thru, 0, i, nports)
+                thru_i = rf.network.twoport_to_nport(thru, 0, i, nports)
                 ideals.append(thru_i)
 
             ideals.extend([o,s,m])
