@@ -46,23 +46,23 @@ NetworkSet Utilities
 from __future__ import annotations
 
 import zipfile
-from collections.abc import Mapping
 from io import BytesIO
 from numbers import Number
 from pathlib import Path
-from typing import Any, TextIO
+from typing import TYPE_CHECKING, Any, TextIO
 
 import numpy as np
 
 from . import mathFunctions as mf
-from .constants import NumberLike, PrimaryPropertiesT
 from .network import COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency, Network
 from .util import copy_doc, now_string_2_dt
 
-try:
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from numpy.typing import ArrayLike
-except ImportError:
-    ArrayLike = Any
+
+    from .constants import NumberLike, PrimaryPropertiesT
 
 from . import plotting as skrf_plt
 

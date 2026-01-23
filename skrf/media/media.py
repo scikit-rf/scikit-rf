@@ -22,8 +22,8 @@ from pathlib import Path
 
 import numpy as np
 from numpy import any, array, gradient, imag, ones, real
-from scipy.constants import c
 
+from .. import constants as const_
 from .. import mathFunctions as mf
 from ..constants import INF, S_DEF_DEFAULT, ZERO, NumberLike, to_meters
 from ..frequency import Frequency
@@ -944,7 +944,7 @@ class Media(ABC):
                 # too little points, as it uses gradient)
                 v_g = -self.v_g.imag.mean()
             else:
-                v_g = c
+                v_g = const_.c
             return to_meters(d=d,unit=unit, v_g=v_g)
 
     def thru(self,

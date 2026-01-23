@@ -62,17 +62,16 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
+    from .constants import NumberLike, PrimaryPropertiesT
+    from .frequency import Frequency
+    from .network import Network, NetworkSet
+
 import warnings
 
 import numpy as np
 
 from . import mathFunctions as mf
 from .util import now_string_2_dt
-
-if TYPE_CHECKING:
-    from .constants import NumberLike, PrimaryPropertiesT
-    from .frequency import Frequency
-    from .network import Network, NetworkSet
 
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
 SI_CONVERSION = {key: 10**((8-i)*3) for i, key in enumerate(SI_PREFIXES_ASCII)}

@@ -105,6 +105,7 @@ from typing_extensions import NotRequired, Unpack
 from .constants import S_DEF_DEFAULT
 from .media import media
 from .network import Network, connect, innerconnect, s2s
+from .plotting import subplots
 
 if TYPE_CHECKING:
     from .constants import MemoryLayoutT, NumberLike
@@ -1794,9 +1795,6 @@ class Circuit:
             'label_shift_y': 0
 
         """
-        import matplotlib.pyplot as plt
-        subplots = plt.subplots
-
         nx = self._get_nx()
         G = self.G
 

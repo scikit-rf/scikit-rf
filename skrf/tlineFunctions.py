@@ -113,8 +113,8 @@ Transmission Line Physics
 
 import numpy as np
 from numpy import array, exp, pi, real, sqrt
-from scipy.constants import mu_0
 
+from . import constants as const
 from . import mathFunctions as mf
 from .constants import INF, ONE, NumberLike
 
@@ -156,7 +156,7 @@ def skin_depth(f: NumberLike, rho: float, mu_r: float):
     surface_resistivity
 
     """
-    return sqrt(rho/(pi*f*mu_r*mu_0))
+    return sqrt(rho/(pi*f*mu_r*const.mu_0))
 
 
 def surface_resistivity(f: NumberLike, rho: float, mu_r: float):

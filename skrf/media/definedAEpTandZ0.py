@@ -21,8 +21,8 @@ import warnings
 from collections.abc import Sequence
 
 from numpy import imag, log, ndarray, ones, pi, real, sqrt
-from scipy.constants import c
 
+from .. import constants as const_
 from ..constants import NumberLike
 from ..frequency import Frequency
 from .media import Media
@@ -173,7 +173,7 @@ class DefinedAEpTandZ0(Media):
         self.f_low, self.f_high, self.f_ep = f_low, f_high, f_ep
         self.model = model
 
-        if isinstance(z0, (Sequence, ndarray)):
+        if isinstance(z0, Sequence | ndarray):
             # keep raw impedance for characteristic impedance
             self.z0_characteristic = z0
         else:
@@ -181,9 +181,9 @@ class DefinedAEpTandZ0(Media):
             # an RLGC model based on alpha conductor and alpha dielectric.
             self.Zn = z0
             self.R = 2 * self.Zn * self.alpha_conductor
-            self.L = self.Zn * sqrt(self.ep_r) / c
+            self.L = self.Zn * sqrt(self.ep_r) / const_.c
             self.G = 2 / self.Zn * self.alpha_dielectric
-            self.C = sqrt(ep_r) / c / self.Zn
+            self.C = sqrt(ep_r) / const_.c / self.Zn
             self.z0_characteristic = sqrt(
                 (self.R + 1j * self.frequency.w * self.L) /
                 (self.G + 1j * self.frequency.w * self.C))
@@ -250,7 +250,7 @@ class DefinedAEpTandZ0(Media):
         """
         ep_r, tand = real(self.ep_r_f), self.tand_f
         f = self.frequency.f
-        return pi*sqrt(ep_r)*f/c * tand
+        return pi*sqrt(ep_r)*f/const_.c * tand
 
     @property
     def beta_phase(self) -> NumberLike:
@@ -258,7 +258,7 @@ class DefinedAEpTandZ0(Media):
         Phase parameter
         """
         ep_r, f = real(self.ep_r_f), self.frequency.f
-        return 2*pi*f*sqrt(ep_r)/c
+        return 2*pi*f*sqrt(ep_r)/const_.c
 
     @property
     def gamma(self) -> NumberLike:

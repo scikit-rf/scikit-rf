@@ -62,10 +62,12 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from numbers import Number
-from typing import Literal, get_args
+from typing import Any, Literal, get_args
 
 import numpy as np
-from scipy.constants import c, inch, mil
+import scipy as scipy_
+
+scipy_consts = ["c", "inch", "mil", "mu_0", "epsilon_0"]
 
 # used as substitutes to handle mathematical singularities.
 INF = 1e99
@@ -145,22 +147,31 @@ ErrorFunctionsT = Literal["average_l1_norm", "average_l2_norm", "maximum_l1_norm
 
 NumberLike = Number | Sequence[Number] | np.ndarray
 
-global distance_dict
-distance_dict = {
-    'm': 1.,
-    'cm': 1e-2,
-    'mm': 1e-3,
-    'um': 1e-6,
-    'in': inch,
-    'mil': mil,
-    's': c,
-    'us': 1e-6*c,
-    'ns': 1e-9*c,
-    'ps': 1e-12*c,
-}
+
+def get_distance_dict() -> dict[str, float]:
+    """Get a dictionary of distance units to meters conversion factors.
+
+    Returns
+    -------
+    distance_dict : dict
+        A dictionary where keys are unit strings and values are conversion factors to meters.
+    """
+    distance_dict = {
+        'm': 1.,
+        'cm': 1e-2,
+        'mm': 1e-3,
+        'um': 1e-6,
+        'in': scipy_.constants.inch,
+        'mil': scipy_.constants.mil,
+        's': scipy_.constants.c,
+        'us': 1e-6 * scipy_.constants.c,
+        'ns': 1e-9 * scipy_.constants.c,
+        'ps': 1e-12 * scipy_.constants.c,
+    }
+    return distance_dict
 
 
-def to_meters(d: NumberLike, unit: str = 'm', v_g: float = c) -> NumberLike:
+def to_meters(d: NumberLike, unit: str = 'm', v_g: float | None = None) -> NumberLike:
     """
     Translate various units of distance into meters.
 
@@ -179,13 +190,16 @@ def to_meters(d: NumberLike, unit: str = 'm', v_g: float = c) -> NumberLike:
     d_m : number of array-like
         distance in meters
     """
+    if v_g is None:
+        v_g = scipy_.constants.c
+
     _distance_dict = {
         'm': 1.,
         'cm': 1e-2,
         'mm': 1e-3,
         'um': 1e-6,
-        'in': inch,
-        'mil': mil,
+        'in': scipy_.constants.inch,
+        'mil': scipy_.constants.mil,
         's': v_g,
         'us': 1e-6*v_g,
         'ns': 1e-9*v_g,
@@ -197,3 +211,11 @@ def to_meters(d: NumberLike, unit: str = 'm', v_g: float = c) -> NumberLike:
         return _distance_dict[unit]*d
     except KeyError as err:
         raise(ValueError('Incorrect unit')) from err
+
+
+def __getattr__(name: str) -> Any:
+    if name in scipy_consts:
+        return getattr(scipy_.constants, name)
+    if name == "distance_dict":
+        return get_distance_dict()
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
