@@ -28,30 +28,15 @@ from . import (
     util,
     vectorFitting,
 )
-
-# from .calibration.calibration import Calibration
 from .calibration import calibrationSet, deembedding
 from .circuit import Circuit
 from .frequency import Frequency
 from .network import Network
 from .networkSet import NetworkSet
 
-# from .qfactor import Qfactor
-# from .vectorFitting import VectorFitting
-# from .io.general import load_all_touchstones
-# from .io.touchstone import Touchstone
-# from .taper import *
-# from .tlineFunctions import *
-# from .util import *
-# from .instances import *
-# from .io import *
-# from .mathFunctions import *
-# from .constants import *
-
 # Try to import vi, but if except if pyvisa not installed
 try:
     from . import vi
-    # from vi import *
 except ImportError:
     pass
 
