@@ -77,8 +77,8 @@ def __getattr__(name: str):
         ]:
             result = getattr(module, name, None)
             if result is not None:
-                warn(f"skrf.{name} is deprecated. Please import {name} from skrf.{
-                    module.__name__.split('.')[-1]} instead.", FutureWarning, stacklevel=2)
+                warn(f"skrf.{name} is deprecated. Please import {name} from "
+                     f"skrf.{module.__name__.split('.')[-1]} instead.", FutureWarning, stacklevel=2)
                 return result
         result = getattr(instances._instances, name, None)
         if result is not None:

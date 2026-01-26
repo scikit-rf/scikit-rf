@@ -52,7 +52,7 @@ def __getattr__(name: str):
         ]:
             result = getattr(module, name, None)
             if result is not None:
-                warn(f"skrf.io.{name} is deprecated. Please import {name} from skrf.io.{
-                    module.__name__.split('.')[-1]} instead.", FutureWarning, stacklevel=2)
+                warn(f"skrf.io.{name} is deprecated. Please import {name} from "
+                     f"skrf.io.{module.__name__.split('.')[-1]} instead.", FutureWarning, stacklevel=2)
                 return result
     raise AttributeError(f"module 'skrf.io' has no attribute '{name}'")
