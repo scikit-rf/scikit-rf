@@ -14,6 +14,7 @@ from . import (
     calibration,
     circuit,
     constants,
+    data,
     frequency,
     instances,
     io,
@@ -27,6 +28,7 @@ from . import (
     tlineFunctions,
     util,
     vectorFitting,
+    vi,
 )
 from .calibration import calibrationSet, deembedding
 from .circuit import Circuit
@@ -34,30 +36,12 @@ from .frequency import Frequency
 from .network import Network
 from .networkSet import NetworkSet
 
-# Try to import vi, but if except if pyvisa not installed
-try:
-    from . import vi
-except ImportError:
-    pass
-
-# try to import data but if it fails whatever. it fails if some pickles
-# dont unpickle. but its not important
-try:
-    from . import data
-except Exception:
-    pass
-
 
 # Defer imports for deprecated names and issue warnings
 def __getattr__(name: str):
     if name not in ['__warningregistry__']:
-        if 'vi' in sys_.modules:
-            result = getattr(vi, os_.name, None)
-            if result is not None:
-                warn(f"skrf.{name} is deprecated. Please import {name} from skrf.vi instead.",
-                     FutureWarning, stacklevel=2)
-                return result
         for module in [
+            vi,
             vectorFitting,
             util,
             tlineFunctions,
@@ -86,9 +70,6 @@ def __getattr__(name: str):
                  FutureWarning, stacklevel=2)
             return result
     raise AttributeError(f"module 'skrf' has no attribute '{name}'")
-
-## built-in imports
-# from copy import deepcopy as copy
 
 ## Shorthand Names
 F = Frequency
