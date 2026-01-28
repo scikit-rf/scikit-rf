@@ -39,6 +39,10 @@ from .networkSet import NetworkSet
 
 # Defer imports for deprecated names and issue warnings
 def __getattr__(name: str):
+    if name == 'lat':
+        from .io import load_all_touchstones
+        warn("skrf.lat is deprecated. Please use skrf.io.load_all_touchstones instead.", FutureWarning, stacklevel=2)
+        return load_all_touchstones
     if name not in ['__warningregistry__']:
         for module in [
             vi,
@@ -71,7 +75,6 @@ F = Frequency
 N = Network
 NS = NetworkSet
 C = Circuit
-# lat = load_all_touchstones
 # saf  = save_all_figs
 saf = None
 stylely = None
