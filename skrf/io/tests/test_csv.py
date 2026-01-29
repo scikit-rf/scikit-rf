@@ -51,7 +51,7 @@ class AgilentCSVTestCase(unittest.TestCase):
         """
         This tests the reading of frequency from the test file
         """
-        self.assertEqual(self.acsv.frequency, rf.F(750e9, 1100e9, 2, 'hz'))
+        self.assertEqual(self.acsv.frequency, rf.Frequency(750e9, 1100e9, 2, 'hz'))
 
     @suppress_warning_decorator("CSV format unrecognized")
     def test_networks(self):

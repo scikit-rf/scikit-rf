@@ -25,7 +25,7 @@ through the Network constructor, :func:`~skrf.network.Network.__init__`
 
 
 """
-from warnings import warn
+from warnings import warn as _warn
 
 from . import citi, csv, general, mdif, metas, touchstone
 from .citi import Citi
@@ -52,7 +52,7 @@ def __getattr__(name: str):
         ]:
             result = getattr(module, name, None)
             if result is not None:
-                warn(f"skrf.io.{name} is deprecated. Please import {name} from "
+                _warn(f"skrf.io.{name} is deprecated. Please import {name} from "
                      f"skrf.io.{module.__name__.split('.')[-1]} instead.", FutureWarning, stacklevel=2)
                 return result
     raise AttributeError(f"module 'skrf.io' has no attribute '{name}'")

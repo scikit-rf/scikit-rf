@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 import skrf as rf
+from skrf.networkSet import NetworkSet
 
 if "matplotlib" not in sys.modules:
     pytest.skip(allow_module_level=True)
@@ -92,31 +93,31 @@ def test_plot_polar(ntwk1_dc: rf.Network, usetex):
     with mpl.rc_context({'text.usetex': usetex}):
         ntwk1_dc.plot_s_polar()
 
-def test_plot_uncertainty_bounds_s(ntwk_set_zip: rf.NetworkSet):
+def test_plot_uncertainty_bounds_s(ntwk_set_zip: NetworkSet):
     ntwk_set_zip.plot_uncertainty_bounds_s()
 
-def test_plot_uncertainty_bounds_s_db(ntwk_set_zip: rf.NetworkSet):
+def test_plot_uncertainty_bounds_s_db(ntwk_set_zip: NetworkSet):
     ntwk_set_zip.plot_uncertainty_bounds_s_db()
 
-def test_plot_uncertainty_bounds_s_time_db(ntwk_set_zip: rf.NetworkSet):
+def test_plot_uncertainty_bounds_s_time_db(ntwk_set_zip: NetworkSet):
     ntwk_set_zip.plot_uncertainty_bounds_s_time_db()
 
-def test_plot_uncertainty_decomposition(ntwk_set_zip: rf.NetworkSet):
+def test_plot_uncertainty_decomposition(ntwk_set_zip: NetworkSet):
     ntwk_set_zip.plot_uncertainty_decomposition()
 
-def test_plot_minmax_bounds_s_db(ntwk_set_zip: rf.NetworkSet):
+def test_plot_minmax_bounds_s_db(ntwk_set_zip: NetworkSet):
     ntwk_set_zip.plot_minmax_bounds_s_db()
 
-def test_plot_minmax_bounds_s_db10(ntwk_set_zip: rf.NetworkSet):
+def test_plot_minmax_bounds_s_db10(ntwk_set_zip: NetworkSet):
     ntwk_set_zip.plot_minmax_bounds_s_db10()
 
-def test_plot_minmax_bounds_s_time_db(ntwk_set_zip: rf.NetworkSet):
+def test_plot_minmax_bounds_s_time_db(ntwk_set_zip: NetworkSet):
     ntwk_set_zip.plot_minmax_bounds_s_time_db()
 
-def test_plot_signature(ntwk_set_zip: rf.NetworkSet):
+def test_plot_signature(ntwk_set_zip: NetworkSet):
     ntwk_set_zip.signature()
 
-def test_generated_violin_plots(ntwk_set_zip: rf.NetworkSet, generated_functions: str):
+def test_generated_violin_plots(ntwk_set_zip: NetworkSet, generated_functions: str):
     if "time" not in generated_functions:
         fig = ntwk_set_zip.plot_violin(generated_functions)
     else:

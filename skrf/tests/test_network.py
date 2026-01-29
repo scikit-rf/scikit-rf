@@ -16,6 +16,7 @@ from scipy import signal
 
 import skrf as rf
 from skrf import setup_pylab
+from skrf.circuit import Circuit
 from skrf.constants import S_DEF_HFSS_DEFAULT, S_DEFINITIONS
 from skrf.frequency import Frequency, InvalidFrequencyWarning
 from skrf.mathFunctions import complex_2_degree, complex_2_magnitude
@@ -819,12 +820,12 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(np.allclose(ntwk_inter.s, par_ntwkb.s))
 
         # Connect the last 3 ports together by circuit
-        port = rf.Circuit.Port(frequency=ntwk.frequency, name='port')
+        port = Circuit.Port(frequency=ntwk.frequency, name='port')
         cnx = [
             [(port, 0), (ntwk, 0)],
             [(ntwk, 1), (ntwk, 2), (ntwk, 3)]
         ]
-        ckt_ntwk = rf.Circuit(cnx, name='ckt_ntwk').network
+        ckt_ntwk = Circuit(cnx, name='ckt_ntwk').network
 
         # Connect the last 3 ports together by parallelconnect
         par_ntwk = parallelconnect(ntwk, [[1, 2, 3]])
@@ -847,15 +848,15 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(np.allclose(ntwk_cnt.s, ntwk_par.s))
 
         # Create matched network in circuit
-        port1 = rf.Circuit.Port(frequency=ntwka.frequency, name='port1', z0=50)
-        port2 = rf.Circuit.Port(frequency=ntwka.frequency, name='port2', z0=50)
+        port1 = Circuit.Port(frequency=ntwka.frequency, name='port1', z0=50)
+        port2 = Circuit.Port(frequency=ntwka.frequency, name='port2', z0=50)
 
         cnx = [
             [(port1, 0), (ntwka, 0)],
             [(ntwka, 1), (ntwkb, 0)],
             [(ntwkb, 1), (port2, 0)]
         ]
-        ntwk_ckt = rf.Circuit(cnx, name='ckt_ntwk').network
+        ntwk_ckt = Circuit(cnx, name='ckt_ntwk').network
 
         # Check that the two networks are not equal
         self.assertFalse(np.allclose(ntwk_ckt.s, ntwk_par.s))
@@ -881,9 +882,9 @@ class NetworkTestCase(unittest.TestCase):
         tee_ntwk = connect(tee_ntwk, 2, ntwkc, 1)
 
         # Connect the 3 networks together by circuit
-        port1 = rf.Circuit.Port(frequency=ntwka.frequency, name='port1')
-        port2 = rf.Circuit.Port(frequency=ntwkb.frequency, name='port2')
-        port3 = rf.Circuit.Port(frequency=ntwkc.frequency, name='port3')
+        port1 = Circuit.Port(frequency=ntwka.frequency, name='port1')
+        port2 = Circuit.Port(frequency=ntwkb.frequency, name='port2')
+        port3 = Circuit.Port(frequency=ntwkc.frequency, name='port3')
 
         cnxs = [
             [(port1, 0), (ntwka, 0)],
@@ -891,7 +892,7 @@ class NetworkTestCase(unittest.TestCase):
             [(port3, 0), (ntwkc, 0)],
             [(ntwka, 1), (ntwkb, 1), (ntwkc, 1)]
         ]
-        ckt_ntwk = rf.Circuit(cnxs, name='ckt_ntwk').network
+        ckt_ntwk = Circuit(cnxs, name='ckt_ntwk').network
 
         # Connect the 3 networks together by parallelconnect
         ntwk_par = parallelconnect([ntwka, ntwkb, ntwkc], [1, 1, 1])
@@ -1120,13 +1121,13 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_zy_singularities(self):
         networks = [
-            rf.N(f=[1], s=[1], z0=[50]),
-            rf.N(f=[1], s=[-1], z0=[50]),
-            rf.N(f=[1], s=[[0, 1], [1, 0]], z0=[50]),
-            rf.N(f=[1], s=[[1, 0], [0, 1]], z0=50),
-            rf.N(f=[1], s=[[-1, 0], [0, -1]], z0=50),
-            rf.N(f=[1], s=[[0.5, 0.5], [0.5, 0.5]], z0=[50]),
-            rf.N(f=[1], s=[[-0.5, -0.5], [-0.5, -0.5]], z0=[50]),
+            rf.Network(f=[1], s=[1], z0=[50]),
+            rf.Network(f=[1], s=[-1], z0=[50]),
+            rf.Network(f=[1], s=[[0, 1], [1, 0]], z0=[50]),
+            rf.Network(f=[1], s=[[1, 0], [0, 1]], z0=50),
+            rf.Network(f=[1], s=[[-1, 0], [0, -1]], z0=50),
+            rf.Network(f=[1], s=[[0.5, 0.5], [0.5, 0.5]], z0=[50]),
+            rf.Network(f=[1], s=[[-0.5, -0.5], [-0.5, -0.5]], z0=[50]),
         ]
         # These conversion can be very inaccurate since results are very close
         # to singular.
@@ -1529,7 +1530,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue((abs(z2s(ntwk.z, ntwk.z0)-ntwk.s) < tinyfloat).all())
 
     def test_mul(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a = rf.Network(f=[1,2],s=[1+2j, 3+4j],z0=1)
         # operating on  networks
         self.assertTrue( ((a*a).s == np.array([[[-3+4j]],[[-7+24j]]])).all())
         # operating on numbers
@@ -1539,7 +1540,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue( (([1,2]*a).s == np.array([[[1+2j]],[[6+8j]]])).all())
 
     def test_sub(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a = rf.Network(f=[1,2],s=[1+2j, 3+4j],z0=1)
         # operating on  networks
         self.assertTrue( ((a-a).s == np.array([[[0+0j]],[[0+0j]]])).all())
         # operating on numbers
@@ -1548,7 +1549,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue( ((a-[1+1j,2+2j]).s == np.array([[[0+1j]],[[1+2j]]])).all())
 
     def test_div(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a = rf.Network(f=[1,2],s=[1+2j, 3+4j],z0=1)
         # operating on  networks
         self.assertTrue( ((a/a).s == np.array([[[1+0j]],[[1+0j]]])).all())
         # operating on numbers
@@ -1557,7 +1558,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue( ((a/[1,2]).s == np.array([[[1+2j]],[[3/2.+2j]]])).all())
 
     def test_add(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a = rf.Network(f=[1,2],s=[1+2j, 3+4j],z0=1)
         # operating on  networks
         self.assertTrue( ((a+a).s == np.array([[[2+4j]],[[6+8j]]])).all())
         # operating on numbers
@@ -1579,8 +1580,8 @@ class NetworkTestCase(unittest.TestCase):
         assert np.allclose(interp.s[2], 4.0)
 
     def test_interpolate_rational(self):
-        a = rf.N(f=np.linspace(1,2,5),s=np.linspace(0,1,5)*(1+1j),z0=1, f_unit="ghz")
-        freq = rf.F.from_f(np.linspace(1,2,6,endpoint=True), unit='GHz')
+        a = rf.Network(f=np.linspace(1,2,5),s=np.linspace(0,1,5)*(1+1j),z0=1, f_unit="ghz")
+        freq = rf.Frequency.from_f(np.linspace(1,2,6,endpoint=True), unit='GHz')
         b = a.interpolate(freq, kind='rational')
         self.assertFalse(any(np.isnan(b.s)))
         # Test that the endpoints are the equal
@@ -1591,8 +1592,8 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(b.z0[0] == a.z0[0])
 
     def test_interpolate_freq_cropped(self):
-        a = rf.N(f=np.arange(20), s=np.arange(20)*(1+1j),z0=1, f_unit="ghz")
-        freq = rf.F.from_f(np.linspace(1,2,3,endpoint=True), unit='GHz')
+        a = rf.Network(f=np.arange(20), s=np.arange(20)*(1+1j),z0=1, f_unit="ghz")
+        freq = rf.Frequency.from_f(np.linspace(1,2,3,endpoint=True), unit='GHz')
         for method in ('linear', 'cubic', 'quadratic', 'rational'):
             b = a.interpolate(freq, freq_cropped=False, kind=method)
             c = a.interpolate(freq, kind=method)
@@ -1600,7 +1601,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_interpolate_self(self):
         """Test resample."""
-        a = rf.N(f=[1,2], s=[1+2j, 3+4j], z0=1)
+        a = rf.Network(f=[1,2], s=[1+2j, 3+4j], z0=1)
         a.interpolate_self(4)
         self.assertEqual(len(a), 4)
         # also test the alias name
@@ -2037,7 +2038,7 @@ class NetworkTestCase(unittest.TestCase):
         fpoints = 2
         nports = 4
         s = np.ones((fpoints, 2, 2), dtype=complex)
-        f = rf.F(1, 10, fpoints, unit='GHz')
+        f = rf.Frequency(1, 10, fpoints, unit='GHz')
         twoport = rf.Network(s=s, frequency=f)
         nport = twoport_to_nport(twoport, 0, 1, nports)
         zeros = np.zeros(fpoints, dtype=complex)

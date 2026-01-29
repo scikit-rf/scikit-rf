@@ -46,7 +46,7 @@ class CitiTestCase(unittest.TestCase):
     def test_to_networkset(self):
         """ Test if CITI data are correctly converted into NetworkSet """
         for example in self.examples:
-            self.assertIsInstance(example.to_networkset(), rf.NetworkSet)
+            self.assertIsInstance(example.to_networkset(), rf.networkSet.NetworkSet)
 
     def test_params(self):
         """ Test if the params are correctly parsed from the CITI files """

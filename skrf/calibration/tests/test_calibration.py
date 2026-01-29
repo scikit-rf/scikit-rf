@@ -48,9 +48,9 @@ NPTS = 1
 
 # WR10/WG27/R900 75 to 110 GHz, 0.1x0.05 inch (2.54x1.27 mm)
 # z0 from 610 to 446 ohm
-WG_lossless = RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'),
+WG_lossless = RectangularWaveguide(rf.Frequency(75, 100, NPTS, unit='GHz'),
                                       a=100*mil, z0_override=50)
-WG = RectangularWaveguide(rf.F(75, 100, NPTS, unit='GHz'), a=100*mil,
+WG = RectangularWaveguide(rf.Frequency(75, 100, NPTS, unit='GHz'), a=100*mil,
                                       rho='gold', z0_override=50)
 
 def _compare_dicts_allclose(first: dict, second: dict) -> None:
@@ -104,7 +104,7 @@ class DetermineTest(unittest.TestCase):
         [ self.assertEqual(k,l) for k,l in zip(self.r, r_found)]
 
     def test_determine_reflect_matched_thru_and_line_ideal_reflect(self):
-        freq = rf.F(.25, .7, 21, unit = 'GHz')
+        freq = rf.Frequency(.25, .7, 21, unit = 'GHz')
         medium = Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
 
         thru = medium.line(0, 'm')
@@ -119,7 +119,7 @@ class DetermineTest(unittest.TestCase):
         np.testing.assert_array_almost_equal(r.s, np.ones_like(r.s))
 
     def test_determine_reflect_matched_thru_and_line(self):
-        freq = rf.F(.25, .7, 40, unit = 'GHz')
+        freq = rf.Frequency(.25, .7, 40, unit = 'GHz')
         medium = Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
 
         thru = medium.line(0, 'm')
@@ -135,7 +135,7 @@ class DetermineTest(unittest.TestCase):
 
     def test_determine_reflect_regression(self):
         # this test case fails with only regularization on the t-parameters of thru ** line.inv, see gh-870
-        freq = rf.F(434615384.6153846e-9, .7, 1, unit = 'GHz')
+        freq = rf.Frequency(434615384.6153846e-9, .7, 1, unit = 'GHz')
         medium = Coaxial.from_attenuation_VF(freq, att = 3.0, VF = .69)
         thru= medium.line(0, 'm')
         line = medium.line(0.12, 'm')
@@ -254,13 +254,13 @@ class CalibrationInputsTest(unittest.TestCase):
             self.init()
 
     def test_ideals_frequency(self):
-        freqs = rf.F(1, 10, NPTS+1, unit="GHz")
+        freqs = rf.Frequency(1, 10, NPTS+1, unit="GHz")
         self.ideals[-1] = rf.Network(s=np.zeros([NPTS + 1, 2, 2]), frequency=freqs)
         with pytest.raises(IndexError):
             self.init()
 
     def test_measured_frequency(self):
-        freqs = rf.F(1, 10, NPTS+1, unit="GHz")
+        freqs = rf.Frequency(1, 10, NPTS+1, unit="GHz")
         self.measured[-1] = rf.Network(s=np.zeros([NPTS + 1, 2, 2]), frequency=freqs)
         with pytest.raises(ValueError):
             self.init()
@@ -383,7 +383,7 @@ class SDDLTest(OnePortTest):
 
     def test_init_with_nones(self):
         wg=self.wg
-        wg.frequency = rf.F.from_f([100], unit='GHz')
+        wg.frequency = rf.Frequency.from_f([100], unit='GHz')
 
         self.E = wg.random(n_ports =2, name = 'E')
 
@@ -1761,7 +1761,7 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.n_ports = 2
         wg= rf.instances.wr10
-        wg.frequency = rf.F.from_f([100], unit='GHz')
+        wg.frequency = rf.Frequency.from_f([100], unit='GHz')
         self.wg = wg
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
