@@ -142,7 +142,7 @@ class VectorFitting:
 
         Returns
         -------
-        ndarray, bool, shape (M)
+        ndarray, bool, shape (N)
             Boolean array having the same shape as :attr:`poles`. `True` marks the respective pole as spurious.
 
         References
