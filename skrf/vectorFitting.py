@@ -152,11 +152,14 @@ class VectorFitting:
             Compatibility, vol. 48, no. 1, pp. 104-120, Feb. 2006, DOI: https://doi.org/10.1109/TEMC.2006.870814
         """
 
-        omega_eval = np.linspace(np.min(poles.imag) / 3, np.max(poles.imag) * 3, n_freqs)
-        h = (residues[:, None, :] / (1j * omega_eval[:, None] - poles)
-             + np.conj(residues[:, None, :]) / (1j * omega_eval[:, None] - np.conj(poles)))
-        norm2 = np.sqrt(trapezoid(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
-        spurious = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
+        if np.min(poles.imag) > 0:
+            omega_eval = np.linspace(np.min(poles.imag) / 3, np.max(poles.imag) * 3, n_freqs)
+            h = (residues[:, None, :] / (1j * omega_eval[:, None] - poles)
+                 + np.conj(residues[:, None, :]) / (1j * omega_eval[:, None] - np.conj(poles)))
+            norm2 = np.sqrt(trapezoid(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
+            spurious = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
+        else:
+            spurious = np.full(np.shape(poles), False, dtype=bool)
         return spurious
 
     @staticmethod
