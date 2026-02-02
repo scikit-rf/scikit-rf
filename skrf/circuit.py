@@ -424,7 +424,7 @@ class Circuit:
         ...     [(ntwk2, 1), (ntwk3, 0)],
         ...     ...
         ... ]
-        >>> circuit = rf.Circuit(connections, dynamic_networks=[ntwk2])
+        >>> circuit = rf.circuit.Circuit(connections, dynamic_networks=[ntwk2])
         >>>
         >>> # Update the networks' S-parameters
         >>> ntwk2.s = ntwk2.s @ ntwk2.s
@@ -437,7 +437,7 @@ class Circuit:
         ...     ...
         ... ]
         >>>
-        >>> circuit_updated_a = rf.Circuit(connections_updated)
+        >>> circuit_updated_a = rf.circuit.Circuit(connections_updated)
         >>>
         >>> # Update the circuit by dynamic networks
         >>> circuit_updated_b = circuit.update_networks(networks=[ntwk2])
@@ -542,7 +542,7 @@ class Circuit:
 
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
 
-            In [18]: port1 = rf.Circuit.Port(freq, name='Port1')
+            In [18]: port1 = rf.circuit.Circuit.Port(freq, name='Port1')
         """
         _media = media.DefinedGammaZ0(frequency, z0=z0)
         port = _media.match(name=name)
@@ -581,7 +581,7 @@ class Circuit:
 
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
 
-            In [18]: open = rf.Circuit.SeriesImpedance(freq, rf.INF, name='series_impedance')
+            In [18]: open = rf.circuit.Circuit.SeriesImpedance(freq, rf.INF, name='series_impedance')
 
         """
         A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
@@ -624,7 +624,7 @@ class Circuit:
 
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
 
-            In [18]: short = rf.Circuit.ShuntAdmittance(freq, rf.INF, name='shunt_admittance')
+            In [18]: short = rf.circuit.Circuit.ShuntAdmittance(freq, rf.INF, name='shunt_admittance')
 
         """
         A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
@@ -667,7 +667,7 @@ class Circuit:
 
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
 
-            In [18]: ground = rf.Circuit.Ground(freq, name='GND')
+            In [18]: ground = rf.circuit.Circuit.Ground(freq, name='GND')
 
         """
         _media = media.DefinedGammaZ0(frequency, z0=z0)
@@ -707,7 +707,7 @@ class Circuit:
 
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
 
-            In [18]: open = rf.Circuit.Open(freq, name='open')
+            In [18]: open = rf.circuit.Circuit.Open(freq, name='open')
 
         """
         _media = media.DefinedGammaZ0(frequency, z0=z0)
@@ -1923,9 +1923,9 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     --------
     >>> import skrf as rf
     >>> import numpy as np
-    >>> circuit = rf.Circuit(connections)
+    >>> circuit = rf.circuit.Circuit(connections)
     >>> reduced_cnxs = rf.reduce_circuit(connections)
-    >>> reduced_circuit = rf.Circuit(reduced_cnxs)
+    >>> reduced_circuit = rf.circuit.Circuit(reduced_cnxs)
     >>> ntwkA = circuit.network
     >>> ntwkB = reduced_circuit.network
     >>> np.allclose(ntwkA.s, ntwkB.s)

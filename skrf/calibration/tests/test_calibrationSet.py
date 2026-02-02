@@ -3,6 +3,7 @@ import unittest
 import skrf as rf
 from skrf.calibration import EightTerm, OnePort
 from skrf.calibration.calibrationSet import Dot
+from skrf.networkSet import NetworkSet
 from skrf.util import suppress_warning_decorator
 
 
@@ -28,8 +29,8 @@ class DotOneport(unittest.TestCase,CalsetTest):
 
     """
     def setUp(self):
-        self.wg = rf.RectangularWaveguide(rf.F(75, 100, 11, unit='GHz'),
-                                          a = 100*rf.mil, z0_override = 50)
+        self.wg = rf.media.RectangularWaveguide(rf.Frequency(75, 100, 11, unit='GHz'),
+                                          a = 100*rf.constants.mil, z0_override = 50)
         wg = self.wg
         self.n_ports = 1
         self.E = wg.random(n_ports =2, name = 'E')
@@ -43,7 +44,7 @@ class DotOneport(unittest.TestCase,CalsetTest):
                 ]
         measured_sets = []
         for ideal in ideals:
-            ns = rf.NetworkSet([self.measure(ideal) for k in range(3)])
+            ns = NetworkSet([self.measure(ideal) for k in range(3)])
             measured_sets.append(ns)
 
 
@@ -62,10 +63,10 @@ class DotEightTerm(unittest.TestCase, CalsetTest):
     @suppress_warning_decorator("divide by zero encountered in true_divide")
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75, 100, 3, unit='GHz'),
-                                          a = 100*rf.mil, z0_override = 50)
+        self.wg = rf.media.RectangularWaveguide(rf.Frequency(75, 100, 3, unit='GHz'),
+                                          a = 100*rf.constants.mil, z0_override = 50)
         wg= self.wg
-        wg.frequency = rf.F.from_f([100], unit='GHz')
+        wg.frequency = rf.Frequency.from_f([100], unit='GHz')
 
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
@@ -82,7 +83,7 @@ class DotEightTerm(unittest.TestCase, CalsetTest):
 
         measured_sets = []
         for ideal in ideals:
-            ns = rf.NetworkSet([self.measure(ideal) for k in range(3)])
+            ns = NetworkSet([self.measure(ideal) for k in range(3)])
             measured_sets.append(ns)
 
         self.calset = Dot(  cal_class = EightTerm,

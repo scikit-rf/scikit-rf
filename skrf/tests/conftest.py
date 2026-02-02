@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 import skrf as rf
+from skrf.networkSet import NetworkSet
 
 testdir = Path(__file__).parent
 
@@ -15,5 +16,5 @@ def ntwk1_dc(ntwk1: rf.Network) -> rf.Network:
     return ntwk1.extrapolate_to_dc()
 
 @pytest.fixture()
-def ntwk_set_zip() -> rf.NetworkSet:
-    return rf.NetworkSet.from_zip(testdir / "ntwks.zip")
+def ntwk_set_zip() -> NetworkSet:
+    return NetworkSet.from_zip(testdir / "ntwks.zip")

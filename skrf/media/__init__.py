@@ -35,12 +35,73 @@ Media base-class
 
 """
 
+from warnings import warn as _warn
+
+from . import (
+    circularWaveguide,
+    coaxial,
+    cpw,
+    definedAEpTandZ0,
+    device,
+    distributedCircuit,
+    freespace,
+    media,
+    mline,
+    rectangularWaveguide,
+)
 from .circularWaveguide import CircularWaveguide
 from .coaxial import Coaxial
 from .cpw import CPW
 from .definedAEpTandZ0 import DefinedAEpTandZ0
+from .device import (
+    Device,
+    DualCoupler,
+    Hybrid,
+    Hybrid180,
+    MatchedSymmetricCoupler,
+    QuadratureHybrid,
+)
 from .distributedCircuit import DistributedCircuit
 from .freespace import Freespace
-from .media import *
+from .media import (
+    DefinedGammaZ0,
+    Media,
+    get_z0_load,
+    has_len,
+    parse_z0,
+    splitter_s,
+)
 from .mline import MLine
 from .rectangularWaveguide import RectangularWaveguide
+
+__all__ = [
+      "CPW",
+      "CircularWaveguide",
+      "Coaxial",
+      "DefinedAEpTandZ0",
+      "DefinedGammaZ0",
+      "Device",
+      "DistributedCircuit",
+      "DualCoupler",
+      "Freespace",
+      "Hybrid",
+      "Hybrid180",
+      "MLine",
+      "MatchedSymmetricCoupler",
+      "Media",
+      "QuadratureHybrid",
+      "RectangularWaveguide",
+      "get_z0_load",
+      "has_len",
+      "parse_z0",
+      "splitter_s",
+]
+
+
+def __getattr__(name: str):
+    result = getattr(media, name, None)
+    if result is not None:
+        _warn(f"skrf.media.{name} is deprecated. Please import {name} from skrf.media.media instead.",
+             FutureWarning, stacklevel=2)
+        return result
+    raise AttributeError(f"module 'skrf.media' has no attribute '{name}'")
