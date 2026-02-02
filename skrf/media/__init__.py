@@ -35,6 +35,8 @@ Media base-class
 
 """
 
+from warnings import warn as _warn
+
 from . import (
     circularWaveguide,
     coaxial,
@@ -94,3 +96,12 @@ __all__ = [
       "parse_z0",
       "splitter_s",
 ]
+
+
+def __getattr__(name: str):
+    result = getattr(media, name, None)
+    if result is not None:
+        _warn(f"skrf.media.{name} is deprecated. Please import {name} from skrf.media.media instead.",
+             FutureWarning, stacklevel=2)
+        return result
+    raise AttributeError(f"module 'skrf.media' has no attribute '{name}'")

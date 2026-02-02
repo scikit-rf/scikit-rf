@@ -5,6 +5,7 @@ import numpy as np
 
 import skrf as rf
 from skrf.io.mdif import Mdif
+from skrf.networkSet import NetworkSet
 
 
 class MdifTestCase(unittest.TestCase):
@@ -46,7 +47,7 @@ class MdifTestCase(unittest.TestCase):
     def test_to_networkset(self):
         """ Test if MDIF are correctly converted into NetworkSet """
         for example in self.examples:
-            self.assertIsInstance(example.to_networkset(), rf.NetworkSet)
+            self.assertIsInstance(example.to_networkset(), NetworkSet)
 
     def test_params(self):
         """ Test if the params are correctly parsed from the MDIF files """
@@ -91,19 +92,19 @@ class MdifTestCase(unittest.TestCase):
         # Mdif Object Init
         mdif = Mdif(file)
         # to Networkset Init
-        ns = rf.NetworkSet.from_mdif(file)
+        ns = NetworkSet.from_mdif(file)
 
     def test_read_and_write_back_noise(self):
         net = rf.Network("skrf/io/tests/ts/ex_18.s2p")
-        nset1 = rf.NetworkSet([net.copy() for _i in range(4)])
+        nset1 = NetworkSet([net.copy() for _i in range(4)])
 
-        #nset1 = rf.NetworkSet.from_mdif("amplifier.mdf")
+        #nset1 = NetworkSet.from_mdif("amplifier.mdf")
         nset1.write_mdif("out1.mdf")
-        nset2 = rf.NetworkSet.from_mdif("out1.mdf")
+        nset2 = NetworkSet.from_mdif("out1.mdf")
         nset2.write_mdif("out2.mdf")
-        nset3 = rf.NetworkSet.from_mdif("out2.mdf")
+        nset3 = NetworkSet.from_mdif("out2.mdf")
         nset3.write_mdif("out3.mdf")
-        nset4 = rf.NetworkSet.from_mdif("out3.mdf")
+        nset4 = NetworkSet.from_mdif("out3.mdf")
         assert nset1 == nset4
 
         for n1, n2 in zip(nset1, nset4):

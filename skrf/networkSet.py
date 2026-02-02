@@ -238,7 +238,7 @@ class NetworkSet:
         Examples
         --------
         >>> import skrf as rf
-        >>> my_set = rf.NetworkSet.from_zip('myzip.zip')
+        >>> my_set = rf.networkSet.NetworkSet.from_zip('myzip.zip')
 
         """
         z = zipfile.ZipFile(zip_file_name)
@@ -275,7 +275,7 @@ class NetworkSet:
 
         This just calls ::
 
-            rf.NetworkSet(rf.read_all_networks(dir), *args, **kwargs)
+            rf.networkSet.NetworkSet(rf.read_all_networks(dir), *args, **kwargs)
 
         Parameters
         ----------
@@ -287,7 +287,7 @@ class NetworkSet:
 
         Examples
         --------
-        >>> my_set = rf.NetworkSet.from_dir('./data/')
+        >>> my_set = rf.networkSet.NetworkSet.from_dir('./data/')
 
         """
         from .io.general import read_all_networks
@@ -620,7 +620,7 @@ class NetworkSet:
 
         Examples
         --------
-        >>> ns = rf.NetworkSet.from_dir('mydir')
+        >>> ns = rf.networkSet.NetworkSet.from_dir('mydir')
         >>> ns.sort()
 
         Sort by other property:
@@ -680,7 +680,7 @@ class NetworkSet:
 
         Returns
         --------
-        ns : :class: `skrf.NetworkSet`
+        ns : :class: `skrf.networkSet.NetworkSet`
 
 
         Examples
@@ -1297,7 +1297,7 @@ class NetworkSet:
                                        comment=f'ntwk_{m}',
                                        params=params) \
                                     for (m, params) in enumerate(params) ]
-        >>> ns = rf.NetworkSet(ntwks_params)
+        >>> ns = rf.networkSet.NetworkSet(ntwks_params)
 
         Selecting the sub-NetworkSet matching scalar parameters:
 
@@ -1391,7 +1391,7 @@ class NetworkSet:
                                        comment=f'ntwk_{m}',
                                        params=params) \
                                     for (m, params) in enumerate(params) ]
-        >>> ns = rf.NetworkSet(ntwks_params)
+        >>> ns = rf.networkSet.NetworkSet(ntwks_params)
 
         Interpolated Network for a=1.2 within X=10 Networks:
 

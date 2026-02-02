@@ -27,7 +27,7 @@ class IOTestCase(unittest.TestCase):
         self.ntwk_comments_file = os.path.join(self.test_dir, 'comments.s3p')
         self.test_files = [os.path.join(self.test_dir, test_file) for test_file in ['ntwk1.s2p', 'ntwk2.s2p']]
         self.embeding_network= rf.Network(os.path.join(self.test_dir, 'embedingNetwork.s2p'))
-        self.freq = rf.F(75, 110, 101, unit='GHz')
+        self.freq = rf.Frequency(75, 110, 101, unit='GHz')
 
     def read_write(self,obj):
         """
@@ -73,9 +73,9 @@ class IOTestCase(unittest.TestCase):
         This doesn't test equality between  read/write, because there is no
         __eq__ test for NetworkSet. it only tests for other errors
         """
-        rf.io.write(self.pickle_file,rf.NS([self.ntwk1, self.ntwk2]))
+        rf.io.write(self.pickle_file,rf.networkSet.NetworkSet([self.ntwk1, self.ntwk2]))
         rf.io.read(self.pickle_file)
-        #self.assertEqual(rf.io.read(self.pickle_file), rf.NS([self.ntwk1, self.ntwk2])
+        #self.assertEqual(rf.io.read(self.pickle_file), rf.networkSet.NetworkSet([self.ntwk1, self.ntwk2])
         #os.remove(self.pickle_file)
 
     def test_readwrite_frequency(self):

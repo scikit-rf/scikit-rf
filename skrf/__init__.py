@@ -3,16 +3,17 @@ skrf is an object-oriented approach to microwave engineering,
 implemented in Python.
 """
 
-__version__ = '1.9.0'
-
-## Import all  module names for coherent reference of name-space
-#import io
-import os as os_
+__version__ = '1.10.0'
+# Import all  module names for coherent reference of name-space
+import os as _os
+from typing import Any as _Any
+from warnings import warn as _warn
 
 from . import (
     calibration,
     circuit,
     constants,
+    data,
     frequency,
     instances,
     io,
@@ -26,52 +27,60 @@ from . import (
     tlineFunctions,
     util,
     vectorFitting,
+    vi,
 )
-
-# from .calibration.calibration import Calibration
 from .calibration import calibrationSet, deembedding
-from .circuit import Circuit
 from .frequency import Frequency
 from .network import Network
-from .networkSet import NetworkSet
 
-# from .qfactor import Qfactor
-# from .vectorFitting import VectorFitting
-# from .io.general import load_all_touchstones
-# from .io.touchstone import Touchstone
-# from .taper import *
-# from .tlineFunctions import *
-# from .util import *
-# from .instances import *
-# from .io import *
-# from .mathFunctions import *
-# from .constants import *
 
-# Try to import vi, but if except if pyvisa not installed
-try:
-    from . import vi
-    # from vi import *
-except ImportError:
-    pass
+# Defer imports for deprecated names and issue warnings
+def __getattr__(name: str):
+    result: _Any = None
+    if name == 'N':
+        from .network import Network as result
+    elif name == 'F':
+        from .frequency import Frequency as result
+    elif name == 'NS':
+        from .networkSet import NetworkSet as result
+    elif name == 'C':
+        from .circuit import Circuit as result
+    elif name == 'saf':
+        from .plotting import save_all_figs as result
+    elif name == 'lat':
+        from .io import load_all_touchstones as result
+    if result is not None:
+        _warn(f"Shorthand skrf.{name} is deprecated. Please use the full name instead.", FutureWarning, stacklevel=2)
+        return result
+    if name not in ['__warningregistry__']:
+        for module in [
+            vi,
+            vectorFitting,
+            util,
+            tlineFunctions,
+            taper,
+            qfactor,
+            networkSet,
+            network,
+            mathFunctions,
+            io,
+            instances,
+            frequency,
+            constants,
+            circuit,
+            calibration,
+            calibrationSet,
+            deembedding,
+        ]:
+            result = getattr(module, name, None)
+            if result is not None:
+                _warn(f"skrf.{name} is deprecated. Please import {name} from "
+                     f"skrf.{module.__name__.split('.')[-1]} instead.", FutureWarning, stacklevel=2)
+                return result
+    raise AttributeError(f"module 'skrf' has no attribute '{name}'")
 
-# try to import data but if it fails whatever. it fails if some pickles
-# dont unpickle. but its not important
-try:
-    from . import data
-except Exception:
-    pass
 
-## built-in imports
-# from copy import deepcopy as copy
-
-## Shorthand Names
-F = Frequency
-N = Network
-NS = NetworkSet
-C = Circuit
-# lat = load_all_touchstones
-# saf  = save_all_figs
-saf = None
+# Shorthand Names
 stylely = None
 
 
@@ -82,15 +91,13 @@ def setup_pylab() -> bool:
         print("matplotlib not found while setting up plotting")
         return False
 
-
-    global saf, stylely
-    saf = plotting.save_all_figs
+    global stylely
     stylely = plotting.stylely
     return True
 
 
 def setup_plotting():
-    plotting_environment = os_.environ.get('SKRF_PLOT_ENV', "pylab").lower()
+    plotting_environment = _os.environ.get('SKRF_PLOT_ENV', "pylab").lower()
 
     if plotting_environment == "pylab":
         setup_pylab()
