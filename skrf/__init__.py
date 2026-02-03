@@ -107,5 +107,4 @@ def setup_plotting():
     # elif some different plotting environment
         # set that up
 
-
 plotting_available = setup_plotting()

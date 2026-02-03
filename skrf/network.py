@@ -188,6 +188,8 @@ from typing import TYPE_CHECKING, Any, Literal, NoReturn, TextIO, get_args
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence, Sized
 
+    from .plotting import Axes
+
 import io
 import os
 import re
@@ -225,7 +227,7 @@ from .constants import (
     SparamFormatT,
 )
 from .frequency import Frequency
-from .plotting import Axes, axes_kwarg
+from .plotting import axes_kwarg
 from .time import get_window, time_gate
 from .util import copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
 
