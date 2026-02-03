@@ -44,7 +44,6 @@ multiline-trl # Run the multiline-trl application
 
 ## Questions or comments? Ask the Community
 
-[![Slack](https://img.shields.io/badge/Slack-join%20chat-blueviolet?style=flat&logo=slack)](https://join.slack.com/t/scikit-rf/shared_invite/zt-d82b62wg-0bdSJjZVhHBKf6687V80Jg)
 [![Matrix](https://img.shields.io/badge/Matrix-join%20chat-blueviolet?style=flat&logo=matrix)](https://app.element.io/#/room/#scikit-rf:matrix.org)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn_scikit_rf_group-orange?style=flat)](https://www.linkedin.com/groups/12462155/)
 

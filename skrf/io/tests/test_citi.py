@@ -4,6 +4,8 @@ import unittest
 import numpy as np
 
 import skrf as rf
+from skrf.io.citi import Citi
+from skrf.mathFunctions import magdeg_2_reim
 
 
 class CitiTestCase(unittest.TestCase):
@@ -17,14 +19,14 @@ class CitiTestCase(unittest.TestCase):
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/MDIF_CITI_MDL/'
 
         # constructor from filename
-        self.oneport_example1 = rf.Citi(self.test_dir + 'test_1p_citi.cti')
-        self.oneport_example2 = rf.Citi(self.test_dir + 'test_1p_citi_2_ri.cti')
-        self.twoport_example1 = rf.Citi(self.test_dir + 'test_2p_citi.cti')
-        self.twoport_example2 = rf.Citi(self.test_dir + 'test_2p_citi_2.cti')
-        self.twoport_example3 = rf.Citi(self.test_dir + 'test_2p_citi_2params.cti')
-        self.twoport_example4 = rf.Citi(self.test_dir + 'test_2p_citi_2params_db.cti')
-        self.twoport_example5 = rf.Citi(self.test_dir + 'test_2p_citi_3_ri.cti')
-        self.fourport_example1 = rf.Citi(self.test_dir + 'test_4p_citi.cti')
+        self.oneport_example1 = Citi(self.test_dir + 'test_1p_citi.cti')
+        self.oneport_example2 = Citi(self.test_dir + 'test_1p_citi_2_ri.cti')
+        self.twoport_example1 = Citi(self.test_dir + 'test_2p_citi.cti')
+        self.twoport_example2 = Citi(self.test_dir + 'test_2p_citi_2.cti')
+        self.twoport_example3 = Citi(self.test_dir + 'test_2p_citi_2params.cti')
+        self.twoport_example4 = Citi(self.test_dir + 'test_2p_citi_2params_db.cti')
+        self.twoport_example5 = Citi(self.test_dir + 'test_2p_citi_3_ri.cti')
+        self.fourport_example1 = Citi(self.test_dir + 'test_4p_citi.cti')
 
         self.examples = [self.oneport_example1, self.oneport_example2,
                           self.twoport_example1, self.twoport_example2,
@@ -33,7 +35,7 @@ class CitiTestCase(unittest.TestCase):
 
         # constructor from file-object
         file = open(self.test_dir + 'test_1p_citi.cti')
-        self.oneport_example1_from_fo = rf.Citi(file)
+        self.oneport_example1_from_fo = Citi(file)
 
     def test_to_networks(self):
         """ Test if CITI data are correctly converted into Networks """
@@ -44,7 +46,7 @@ class CitiTestCase(unittest.TestCase):
     def test_to_networkset(self):
         """ Test if CITI data are correctly converted into NetworkSet """
         for example in self.examples:
-            self.assertIsInstance(example.to_networkset(), rf.NetworkSet)
+            self.assertIsInstance(example.to_networkset(), rf.networkSet.NetworkSet)
 
     def test_params(self):
         """ Test if the params are correctly parsed from the CITI files """
@@ -55,7 +57,7 @@ class CitiTestCase(unittest.TestCase):
     def test_only_freq_in_var(self):
         """ File without any VAR except for freq should return non empty NetworkSet. """
         file = self.test_dir + 'test_2p_only_freq_VAR.cti'
-        cti = rf.Citi(file)
+        cti = Citi(file)
         ns = cti.to_networkset()
         self.assertTrue(ns)  # not empty
         self.assertEqual(len(ns), 1)
@@ -78,7 +80,7 @@ class CitiTestCase(unittest.TestCase):
                 750000000,
         ])
         mag = np.ones(len(deg))
-        s1p_1 = rf.magdeg_2_reim(mag, deg)
+        s1p_1 = magdeg_2_reim(mag, deg)
         ns_1p_1 = self.oneport_example1.to_networkset()
         self.assertEqual(len(ns_1p_1), 4)
         self.assertEqual(len(ns_1p_1[0]), 9)
@@ -104,7 +106,7 @@ class CitiTestCase(unittest.TestCase):
         """ Test if the values are correctly parsed from the CITI files """
         mag = np.array([[[0.999999951, 0.000312274295], [0.000312274295, 0.999999951]]])
         deg = np.array([[[-0.0178919994, 89.982108], [89.982108, -0.0178919994]]])
-        s_2p_1 = rf.magdeg_2_reim(mag, deg)
+        s_2p_1 = magdeg_2_reim(mag, deg)
         f = np.array([
                 710000000, 715000000, 720000000, 725000000,
                 730000000, 735000000, 740000000, 745000000,
@@ -132,7 +134,7 @@ class CitiTestCase(unittest.TestCase):
             [[3, 5],
              [7, 9]]
             ])
-        s2p_2 = rf.magdeg_2_reim(mag, deg)
+        s2p_2 = magdeg_2_reim(mag, deg)
         ns_2p_2 = self.twoport_example2.to_networkset()
         self.assertEqual(len(ns_2p_2), 1)
         self.assertEqual(len(ns_2p_2[0]), 2)

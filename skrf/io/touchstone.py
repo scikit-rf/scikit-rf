@@ -31,10 +31,11 @@ import re
 import typing
 import warnings
 import zipfile
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
-from typing import Callable, Literal
+from typing import Literal
 
 import numpy as np
 

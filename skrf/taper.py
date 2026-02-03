@@ -26,8 +26,8 @@ References
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from numbers import Number
-from typing import Callable
 
 from numpy import exp, linspace, log
 

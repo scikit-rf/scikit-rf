@@ -116,12 +116,12 @@ def test_static_data(name):
 
 @pytest.mark.parametrize("name", airs)
 def test_static_airs(name):
-    getattr(rf, name)
+    getattr(rf.instances, name)
 
 @pytest.mark.parametrize("name", frequencies)
 def test_static_frequencies(name):
-    getattr(rf, name)
+    getattr(rf.instances, name)
 
 @pytest.mark.parametrize("name", waveguides)
 def test_static_waveguides(name):
-    getattr(rf, name)
+    getattr(rf.instances, name)

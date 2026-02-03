@@ -60,11 +60,12 @@ import pprint
 import re
 import sys
 import warnings
+from collections.abc import Callable, Iterable
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
 from subprocess import PIPE, Popen
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, TypeVar
 
 import numpy as np
 

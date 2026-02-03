@@ -58,7 +58,8 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Literal, Sequence
+from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 from numpy import angle, concatenate, conj, exp, flip, imag, ndarray, real, unwrap, zeros

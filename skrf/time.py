@@ -20,9 +20,10 @@ Time domain functions
 from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
 
 # imports for type hinting
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 from numpy.fft import fft, fftshift, ifft, ifftshift, irfft, rfft

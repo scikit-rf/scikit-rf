@@ -35,6 +35,7 @@ depending on the capabilities of the instrument.
 
 When writing a new instrument driver, the following minimum questions should be
 considered:
+
     * Does the instrument use SCPI?
     * Does the instrument support multiple channels?
 

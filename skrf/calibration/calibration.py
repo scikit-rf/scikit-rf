@@ -67,15 +67,30 @@ Three Receiver (1.5 port)
    TwoPortOnePath
    EnhancedResponse
 
+Switch Terms
+------------
+
+.. autosummary::
+   :toctree: generated/
+
+   compute_switch_terms
 
 Generic Methods
 ---------------
 .. autosummary::
    :toctree: generated/
 
+   ideal_coefs_12term
    terminate
+   terminate_nport
    unterminate
    determine_line
+   determine_reflect
+   convert_12term_2_8term
+   convert_8term_2_12term
+   align_measured_ideals
+   two_port_error_vector_2_Ts
+   error_dict_2_network
 
 PNA interaction
 ---------------
@@ -141,8 +156,6 @@ coefs_list_12term =[
     'reverse isolation'
     ]
 
-
-
 global coefs_list_8term
 """
 There are various notations used for this same model. Given that all
@@ -166,6 +179,7 @@ coefs_list_8term = [
     'forward isolation',
     'reverse isolation'
     ]
+
 global coefs_list_3term
 coefs_list_3term = [
     'directivity',

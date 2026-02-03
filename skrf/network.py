@@ -4,7 +4,6 @@
 network (:mod:`skrf.network`)
 ========================================
 
-
 Provide an n-port network class and associated functions.
 
 Much of the functionality in this module is provided as methods and
@@ -51,6 +50,7 @@ Connecting Networks
     cascade_list
     de_embed
     flip
+    inv
     parallelconnect
 
 
@@ -63,6 +63,7 @@ Interpolation and Concatenation Along Frequency Axis
 
     stitch
     overlap
+    overlap_multi
     Network.resample
     Network.interpolate
     Network.interpolate_self
@@ -77,8 +78,9 @@ Combining and Splitting Networks
     subnetwork
 
     one_port_2_two_port
-    n_oneports_2_nport
+    twoport_to_nport
     four_oneports_2_twoport
+    n_oneports_2_nport
     n_twoports_2_nport
     concat_ports
 
@@ -117,6 +119,7 @@ Supporting Functions
     connect_s
     innerconnect_s
     innerconnect_s_lstsq
+    s2s
     s2z
     s2y
     s2t
@@ -135,6 +138,10 @@ Supporting Functions
     t2y
     h2s
     h2z
+    s2s_active
+    s2z_active
+    s2y_active
+    s2vswr_active
     fix_z0_shape
     renormalize_s
     passivity
@@ -146,11 +153,32 @@ Misc Functions
     :toctree: generated/
 
     average
+    stdev
+    s_error
+    impedance_mismatch
     two_port_reflect
     chopinhalf
     Network.nudge
     Network.renormalize
     Network.drop_non_monotonic_increasing
+    evenodd2delta
+
+Network utilities
+=====================
+.. autosummary::
+    :toctree: generated/
+
+    fix_param_shape
+    fix_z0_shape
+    check_frequency_exist
+    check_nports_equal
+    check_frequency_equal
+    check_z0_equal
+    assert_frequency_equal
+    assert_nports_equal
+    assert_frequency_exist
+    assert_z0_equal
+    assert_z0_at_ports_equal
 
 """
 from __future__ import annotations
@@ -160,13 +188,14 @@ import os
 import re
 import warnings
 import zipfile
+from collections.abc import Callable, Sequence, Sized
 from copy import deepcopy as copy
 from functools import reduce
 from itertools import product
 from numbers import Number
 from pathlib import Path
 from pickle import UnpicklingError
-from typing import Any, Callable, Literal, NoReturn, Sequence, Sized, TextIO, get_args
+from typing import Any, Literal, NoReturn, TextIO, get_args
 
 import numpy as np
 from numpy import gradient, ndarray, shape
@@ -516,9 +545,9 @@ class Network:
 
         Examples
         --------
-        >>> f = rf.Frequency(start=1, stop=2, npoints=4)  # 4 frequency points
+        >>> f = rf.Frequency(start=1, stop=2, npoints=4, unit="GHz")  # 4 frequency points
         >>> z = np.random.rand(len(f),2,2) + np.random.rand(len(f),2,2)*1j  # 2-port z-matrix: shape=(4,2,2)
-        >>> ntw = rf.Network.from_z(z, f=f)
+        >>> ntw = rf.Network.from_z(z, frequency=f)
 
         """
         s = np.zeros(shape=z.shape)
@@ -614,7 +643,7 @@ class Network:
         inv : inverse s-parameters
         """
 
-        if isinstance(other, (list, tuple)):
+        if isinstance(other, list | tuple):
             if len(other) >= 3:
                 raise ValueError('Incorrect number of networks.')
             other_tpl = other[:2]
@@ -1591,7 +1620,7 @@ class Network:
       g = self.copy().s11
       nfreq = self.noise_freq.npoints
 
-      if isinstance(gs, (int, float, complex)) :
+      if isinstance(gs, int | float | complex):
           g.s[:,0,0] = gs
           nfdb = 10.*np.log10(self.nf( g.z[:,0,0]))
       elif isinstance(gs, np.ndarray) :
@@ -2513,23 +2542,47 @@ class Network:
         if dir is not None:
             filename = os.path.join(dir, filename)
 
-        a_func = np.vectorize(lambda x: format_spec_A.format(x) + " ")
-        b_func = np.vectorize(lambda x: format_spec_B.format(x))
-        f_func = np.vectorize(lambda x: format_spec_freq.format(x))
-        f_data = f_func(ntwk.frequency.f_scaled)
+        # Create format string for full frequency block
+        # Build according to touchstone specs:
+        # - One line for each matrix row with 4 format_spec_A / format_spec_B pairs max.
+        # - Frequency with format_spec_freq on the first line
+        # - continuation lines (anything except first) go with indent
+        #   this is not part of the spec, but many tools handle it this way
+        #   -> allows to parse without knowledge of number of ports
+        # Special case for 2-port networks:
+        # single line, and S21, S12 in reverse order by transposing matrix
+        fmt_str = format_spec_freq
+        for _ in range(ntwk.number_of_ports if ntwk.number_of_ports > 2 else 1):
+            for n in range(ntwk.number_of_ports if ntwk.number_of_ports != 2 else 4):
+                if (n > 0 and (n % 4) == 0):
+                    fmt_str += '\n'
+                fmt_str += f' {format_spec_A} {format_spec_B}'
+            fmt_str += '\n'
+        if ntwk.number_of_ports == 2:
+            # transpose matrix:
+            pdata = np.transpose(pdata, (0, 2, 1))
 
+        # expand complex numbers into real parts according to form
+        # creating a new array with shape (nfreqs, nports, nports*2)
         if form == "ri":
             formatDic = {"labelA": "Re", "labelB": "Im", "param": parameter}
-            data = np.char.add(a_func(np.real(pdata)), b_func(np.imag(pdata)))
+            data = np.ascontiguousarray(pdata).view(float)
         elif form == "db":
             formatDic = {"labelA": "dB", "labelB": "ang", "param": parameter}
-            data = np.char.add(a_func(mf.complex_2_db(pdata)), b_func(mf.complex_2_degree(pdata)))
+            data = np.empty((pdata.shape[0], pdata.shape[1], pdata.shape[2] * 2), dtype='float64')
+            data[:, :, 0::2] = mf.complex_2_db(pdata)
+            data[:, :, 1::2] = mf.complex_2_degree(pdata)
         elif form == "ma":
             formatDic = {"labelA": "mag", "labelB": "ang", "param": parameter}
-            data = np.char.add(a_func(mf.complex_2_magnitude(pdata)), b_func(mf.complex_2_degree(pdata)))
+            data = np.empty((pdata.shape[0], pdata.shape[1], pdata.shape[2] * 2), dtype='float64')
+            data[:, :, 0::2] = mf.complex_2_magnitude(pdata)
+            data[:, :, 1::2] = mf.complex_2_degree(pdata)
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
 
+        # flatten inner two dimensions and combining with frequency column:
+        # array with one line per frequency point
+        data = np.column_stack([ntwk.frequency.f_scaled, data.reshape((data.shape[0],-1))])
 
         def get_buffer() -> io.StringIO:
             if return_string is True or type(to_archive) is zipfile.ZipFile:
@@ -2581,20 +2634,7 @@ class Network:
             except AttributeError:
                 pass
 
-            if ntwk.number_of_ports == 1:
-                # write comment line for users (optional)
-                output.write('!freq {labelA}{param}11 {labelB}{param}11\n'.format(**formatDic))
-                # write out data
-
-                for f in range(len(ntwk.f)):
-                    output.write(f"{f_data[f]} {data[f,0,0]}\n")
-                    if write_z0:
-                        output.write('! Port Impedance ')
-                        for n in range(ntwk.number_of_ports):
-                            output.write(f'{ntwk.z0[f, n].real:.14f} {ntwk.z0[f, n].imag:.14f} ')
-                        output.write('\n')
-
-            elif ntwk.number_of_ports == 2:
+            if ntwk.number_of_ports == 2:
                 # 2-port is a special case with
                 # - single line, and
                 # - S21,S12 in reverse order: legacy ?
@@ -2604,46 +2644,7 @@ class Network:
                     ("!freq {labelA}{param}11 {labelB}{param}11 {labelA}{param}21 {labelB}{param}21 "
                            "{labelA}{param}12 {labelB}{param}12 {labelA}{param}22 {labelB}{param}22\n").format(
                         **formatDic))
-                # write out data
-                for f in range(len(ntwk.f)):
-                    output.write(f"{f_data[f]} {data[f,0,0]} {data[f,1,0]} {data[f,0,1]} {data[f,1,1]}\n")
-                    if write_z0:
-                        output.write('! Port Impedance')
-                        for n in range(2):
-                            output.write(f' {ntwk.z0[f, n].real:.14f} {ntwk.z0[f, n].imag:.14f}')
-                        output.write('\n')
-
-                # write noise data if it exists
-                if ntwk.noisy and write_noise:
-                    self._write_noisedata(output, format_spec_nf_freq, format_spec_nf_min,
-                                          format_spec_g_opt_mag, format_spec_g_opt_phase,
-                                          format_spec_rn)
-
-            elif ntwk.number_of_ports == 3:
-                # 3-port is written over 3 lines / matrix order
-
-                # write comment line for users (optional)
-                output.write('!freq')
-                for m in range(1, 4):
-                    for n in range(1, 4):
-                        output.write(" {labelA}{param}{m}{n} {labelB}{param}{m}{n}".format(m=m, n=n, **formatDic))
-                    output.write('\n!')
-                output.write('\n')
-                # write out data
-                for f in range(len(ntwk.f)):
-                    output.write(f_data[f])
-                    for m in range(3):
-                        for n in range(3):
-                            output.write(f" {data[f,m,n]}")
-                        output.write('\n')
-                    # write out the z0 following hfss's convention if desired
-                    if write_z0:
-                        output.write('! Port Impedance')
-                        for n in range(3):
-                            output.write(f' {ntwk.z0[f, n].real:.14f} {ntwk.z0[f, n].imag:.14f}')
-                        output.write('\n')
-
-            elif ntwk.number_of_ports >= 4:
+            else:
                 # general n-port
                 # - matrix is written line by line
                 # - 4 complex numbers / 8 real numbers max. for a single line
@@ -2660,27 +2661,28 @@ class Network:
                         output.write(" {labelA}{param}{m}{n} {labelB}{param}{m}{n}".format(m=m, n=n, **formatDic))
                     output.write('\n!')
                 output.write('\n')
-                # write out data
-                for f in range(len(ntwk.f)):
-                    output.write(f_data[f])
-                    for m in range(ntwk.number_of_ports):
-                        for n in range(ntwk.number_of_ports):
-                            if (n > 0 and (n % 4) == 0):
-                                output.write('\n')
-                            output.write(f" {data[f,m,n]}")
-                        output.write('\n')
 
-                    # write out the z0 following hfss's convention if desired
-                    if write_z0:
-                        output.write('! Port Impedance')
-                        for n in range(ntwk.number_of_ports):
-                            output.write(f' {ntwk.z0[f, n].real:.14f} {ntwk.z0[f, n].imag:.14f}')
-                        output.write('\n')
+            # write out data one frequency at a time
+            for f in range(len(ntwk.f)):
+                output.write(fmt_str.format(*data[f]))
+                if write_z0:
+                    output.write('! Port Impedance')
+                    for n in range(ntwk.number_of_ports):
+                        output.write(f' {ntwk.z0[f, n].real:.14f} {ntwk.z0[f, n].imag:.14f}')
+                    output.write('\n')
+
+            if ntwk.number_of_ports == 2:
+                # write noise data if it exists
+                if ntwk.noisy and write_noise:
+                    self._write_noisedata(output, format_spec_nf_freq, format_spec_nf_min,
+                                          format_spec_g_opt_mag, format_spec_g_opt_phase,
+                                          format_spec_rn)
 
             if type(to_archive) is zipfile.ZipFile:
                 to_archive.writestr(filename, output.getvalue())
             elif return_string is True:
                 return output.getvalue()
+            return None
 
     def _write_noisedata(self, output, format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
                          format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
@@ -3897,7 +3899,7 @@ class Network:
 
         >>> ntwk.renumber([0,1,2], [2,1,0])
         >>> ntwk.se2gmm(p=1)
-        >>> ntwk.renumber([2,1,0], [0,1,2])
+        >>> ntwk.renumber([0,1,2], [1,2,0])
 
         In the resulting network, port 0 is single-ended, port 1 is
         differential mode, and port 2 is common mode.
@@ -6136,7 +6138,7 @@ def evenodd2delta(n: Network, z0: NumberLike = 50, renormalize: bool = True,
     return n_delta
 
 
-def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
+def subnetwork(ntwk: Network, ports: Sequence[int], offby:int = 1) -> Network:
     """
     Return a subnetwork of a given Network from a list of port numbers.
 

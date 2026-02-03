@@ -18,7 +18,7 @@ behaviour is frequency invariant.
 from __future__ import annotations
 
 import warnings
-from typing import Sequence
+from collections.abc import Sequence
 
 from numpy import imag, log, ndarray, ones, pi, real, sqrt
 from scipy.constants import c
