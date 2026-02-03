@@ -54,6 +54,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable
+from contextlib import suppress
 from functools import wraps
 from numbers import Number
 from typing import TYPE_CHECKING
@@ -64,7 +65,8 @@ if TYPE_CHECKING:
 
     from .constants import NumberLike, PrimaryPropertiesT
     from .frequency import Frequency
-    from .network import Network, NetworkSet
+    from .network import Network
+    from .networkSet import NetworkSet
 
 import warnings
 
@@ -75,6 +77,15 @@ from .util import now_string_2_dt
 
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
 SI_CONVERSION = {key: 10**((8-i)*3) for i, key in enumerate(SI_PREFIXES_ASCII)}
+
+
+def plotting_available() -> bool:
+    result = False
+    with suppress(ImportError):
+        import matplotlib  # noqa: F401
+        result = True
+    return result
+
 
 def axes_kwarg(func):
     """
@@ -1221,15 +1232,18 @@ def stylely(rc_dict: dict = None, style_file: str = 'skrf.mplstyle'):
     style_file : str, optional
         style file, by default 'skrf.mplstyle'
     """
-    import matplotlib.pyplot as plt
+    try:
+        import matplotlib.pyplot as plt
 
-    from .data import pwd  # delayed to solve circular import
+        from .data import pwd  # delayed to solve circular import
 
-    rc_dict = rc_dict if rc_dict else {}
+        rc_dict = rc_dict if rc_dict else {}
 
 
-    plt.style.use(os.path.join(pwd, style_file))
-    plt.rc(rc_dict)
+        plt.style.use(os.path.join(pwd, style_file))
+        plt.rc(rc_dict)
+    except ImportError as e:
+        warnings.warn(f"Could not import matplotlib: {e}", ImportWarning, stacklevel=2)
 
 
 # Network Set Plotting Commands
