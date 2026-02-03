@@ -181,7 +181,8 @@ class VectorFitting:
         return np.sum((poles.imag != 0) + 1)
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
-                   parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
+                   parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False,
+                   enforce_dc: bool = True) -> None:
         """
         Main work routine performing the vector fit. The results will be stored in the class variables
         :attr:`poles`, :attr:`residues`, :attr:`proportional_coeff` and :attr:`constant_coeff`.
@@ -211,6 +212,11 @@ class VectorFitting:
 
         fit_proportional : bool, optional
             Include a proportional term **e** in the fit.
+
+        enforce_dc : bool, optional
+            Enforces/Preserves the dc point given in the original network data in the vector fitted model. If the
+            constant term **d** is enabled with `fit_constant=True`, the dc point will be enforced on **d** (preferred
+            method). Otherwise, it will be enforced on the first residue in `self.residues`.
 
         Returns
         -------
@@ -371,7 +377,7 @@ class VectorFitting:
 
         # finally, solve for the residues with the previously calculated poles
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
-            poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc)
 
         # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
@@ -394,7 +400,7 @@ class VectorFitting:
     def auto_fit(self, n_poles_init_real: int = 3, n_poles_init_cmplx: int = 3, n_poles_add: int = 3,
                  model_order_max: int = 100, iters_start: int = 3, iters_inter: int = 3, iters_final: int = 5,
                  target_error: float = 1e-2, alpha: float = 0.03, gamma: float = 0.03, nu_samples: float = 1.0,
-                 parameter_type: str = 's') -> (np.ndarray, np.ndarray):
+                 parameter_type: str = 's', enforce_dc: bool = True) -> (np.ndarray, np.ndarray):
         """
         Automatic fitting routine implementing the "vector fitting with adding and skimming" algorithm as proposed in
         [#Grivet-Talocia]_. This algorithm is able to provide high quality macromodels with automatic model order
@@ -451,6 +457,11 @@ class VectorFitting:
             *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). It's recommended to perform the fit on the
             original S parameters. Otherwise, scikit-rf will convert the responses from S to Z or Y, which might work
             for the fit but can cause other issues.
+
+        enforce_dc : bool, optional
+            Enforces/Preserves the dc point given in the original network data in the vector fitted model. If the
+            constant term **d** is enabled with `fit_constant=True`, the dc point will be enforced on **d** (preferred
+            method). Otherwise, it will be enforced on the first residue in `self.residues`.
 
         Returns
         -------
@@ -666,7 +677,7 @@ class VectorFitting:
 
         # FINAL RESIDUE FITTING
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
-            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=True)
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=enforce_dc)
 
         # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
@@ -923,7 +934,7 @@ class VectorFitting:
         return poles, d_res, cond, rank_deficiency, residuals, singular_vals
 
     @staticmethod
-    def _fit_residues(poles, freqs, freq_responses, fit_constant, fit_proportional, enforce_dc=True):
+    def _fit_residues(poles, freqs, freq_responses, fit_constant, fit_proportional, enforce_dc):
         n_responses, n_freqs = np.shape(freq_responses)
         omega = 2 * np.pi * freqs
         s = 1j * omega
