@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from numpy import pi, sqrt, where
 
-from .. import constants as const_
+from .. import constants as _const
 from ..data import materials
 from .freespace import Freespace
 from .media import Media
@@ -163,8 +163,8 @@ class CircularWaveguide(Media):
         """
         from scipy.special import jnp_zeros
 
-        mu = const_.mu_0*mu_r
-        ep = const_.epsilon_0*ep_r
+        mu = _const.mu_0*mu_r
+        ep = _const.epsilon_0*ep_r
         w = 2*pi*f
         # if self.mode_type =="te":
         u = jnp_zeros(1, 1)[-1]
@@ -184,7 +184,7 @@ class CircularWaveguide(Media):
         ep : number
             filling material's relative permittivity
         """
-        return self.ep_r * const_.epsilon_0
+        return self.ep_r * _const.epsilon_0
 
     @property
     def mu(self) -> NumberLike:
@@ -197,7 +197,7 @@ class CircularWaveguide(Media):
             filling material's relative permeability
 
         """
-        return self.mu_r * const_.mu_0
+        return self.mu_r * _const.mu_0
 
     @property
     def k0(self) -> NumberLike:

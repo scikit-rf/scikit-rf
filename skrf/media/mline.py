@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from numpy import arctan, cosh, exp, imag, log, log10, ones, pi, real, sqrt, tanh, zeros
 
-from .. import constants as const_
+from .. import constants as _const
 from ..tlineFunctions import skin_depth, surface_resistivity
 from .media import Media
 
@@ -305,7 +305,7 @@ class MLine(Media):
         if self.rho is not None:
             alpha += self.alpha_conductor
 
-        beta  = 2 * pi * f* sqrt(ep_reff) / const_.c
+        beta  = 2 * pi * f* sqrt(ep_reff) / _const.c
 
         return alpha + 1j*beta
 
@@ -409,7 +409,7 @@ class MLine(Media):
         zl_eff : :class:`numpy.ndarray`
         ep_reff : :class:`numpy.ndarray`
         """
-        Z0 = sqrt(const_.mu_0 / const_.epsilon_0)
+        Z0 = sqrt(_const.mu_0 / _const.epsilon_0)
         zl_eff = Z0
         ep_reff = ep_r
         w_eff = w
@@ -556,14 +556,14 @@ class MLine(Media):
          u = wr/h
          if disp == 'schneider':
              k = sqrt(ep_reff / ep_r)
-             fn = 4. * h * f / const_.c * sqrt(ep_r - 1.)
+             fn = 4. * h * f / _const.c * sqrt(ep_r - 1.)
              fn2 = fn**2
              e = ep_reff * ((1. + fn2) / (1. + k * fn2))**2
              z = zl_eff * sqrt(ep_reff / e)
          elif disp == 'hammerstadjensen':
-             Z0 = sqrt(const_.mu_0 / const_.epsilon_0)
+             Z0 = sqrt(_const.mu_0 / _const.epsilon_0)
              g = pi**2 / 12 * (ep_r - 1) / ep_reff * sqrt(2 * pi * zl_eff / Z0)
-             fp = (2 * const_.mu_0 * h * f) / zl_eff
+             fp = (2 * _const.mu_0 * h * f) / zl_eff
              e = ep_r - (ep_r - ep_reff) / (1 + g * fp**2)
              z =  zl_eff * sqrt(ep_reff / e) * (e - 1) / (ep_reff - 1)
          elif disp == 'kirschningjansen':
@@ -572,7 +572,7 @@ class MLine(Media):
              z, _ = kirsching_zl(u, fn, ep_r, ep_reff, e, zl_eff)
          elif disp == 'yamashita':
              k = sqrt(ep_r / ep_reff)
-             fp = 4 * h * f / const_.c * sqrt(ep_r - 1) * \
+             fp = 4 * h * f / _const.c * sqrt(ep_r - 1) * \
                  (0.5 + (1 + 2 * log10(1 + u))**2)
              e = ep_reff * ((1 + k * fp**1.5 / 4) / (1 + fp**1.5 / 4))**2
              # qucs keep quasi-static impedance here
@@ -583,7 +583,7 @@ class MLine(Media):
                  fn = f * h * 1e-6
                  z, _ = kirsching_zl(wr / h, fn, ep_r, ep_reff, e, zl_eff)
          elif disp == 'kobayashi':
-             fk = const_.c * arctan(ep_r * sqrt((ep_reff - 1) / (ep_r - ep_reff)))/ \
+             fk = _const.c * arctan(ep_r * sqrt((ep_reff - 1) / (ep_r - ep_reff)))/ \
                  (2 * pi * h * sqrt(ep_r - ep_reff))
              fh = fk / (0.75 + (0.75 - 0.332 / (ep_r**1.73)) * u)
              no = 1 + 1 / (1 + sqrt(u)) + 0.32 * (1 / (1 + sqrt(u)))**3
@@ -628,7 +628,7 @@ class MLine(Media):
         a_dielectric : :class:`numpy.ndarray`
         """
         # limited to only Hammerstad and Jensen model
-        Z0 = np.sqrt(const_.mu_0/const_.epsilon_0)
+        Z0 = np.sqrt(_const.mu_0/_const.epsilon_0)
 
         # conductor losses
         if t is not None and  t > 0:
@@ -653,7 +653,7 @@ class MLine(Media):
             a_conductor = zeros(f.shape)
 
         # dielectric losses
-        l0 = const_.c / f
+        l0 = _const.c / f
         a_dielectric =  pi * ep_r / (ep_r - 1) * (ep_reff - 1) / \
             sqrt(ep_reff) * tand / l0
 
@@ -675,7 +675,7 @@ def hammerstad_zl(u: NumberLike) -> NumberLike:
     Hammerstad quasi-static impedance.
     """
     fu = 6 + (2 * pi - 6) * exp(-(30.666 / u)**0.7528)
-    Z0 = sqrt(const_.mu_0/const_.epsilon_0)
+    Z0 = sqrt(_const.mu_0/_const.epsilon_0)
     return Z0 / 2. / pi * log(fu / u + sqrt(1. + (2. / u)**2))
 
 def hammerstad_er(u: NumberLike, ep_r: NumberLike, a: NumberLike,

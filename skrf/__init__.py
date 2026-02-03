@@ -105,7 +105,7 @@ def setup_plotting():
         if setup_pylab():
             stylely()
     # elif some different plotting environment
-    # set that up
+        # set that up
 
 
 plotting_available = setup_plotting()

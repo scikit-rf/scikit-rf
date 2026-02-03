@@ -183,27 +183,22 @@ Network utilities
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, NoReturn, TextIO, get_args
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence, Sized
-    from typing import Any, Literal, NoReturn, TextIO
-
-    from .plotting import Axes
 
 import io
 import os
 import re
 import warnings
 import zipfile
-from collections.abc import Callable, Sequence, Sized
 from copy import deepcopy as copy
 from functools import reduce
 from itertools import product
 from numbers import Number
 from pathlib import Path
 from pickle import UnpicklingError
-from typing import get_args
 
 import numpy as np
 from numpy import gradient, ndarray, shape
@@ -230,7 +225,7 @@ from .constants import (
     SparamFormatT,
 )
 from .frequency import Frequency
-from .plotting import axes_kwarg
+from .plotting import Axes, axes_kwarg
 from .time import get_window, time_gate
 from .util import copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
 
