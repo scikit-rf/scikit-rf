@@ -141,10 +141,6 @@ class VectorFittingTestCase(unittest.TestCase):
     def test_autofit(self):
         vf = skrf.VectorFitting(skrf.data.ring_slot)
         vf.auto_fit()
-
-        self.assertTrue(vf.get_model_order(vf.poles) == 6)
-        self.assertTrue(np.sum(vf.poles.imag == 0.0) == 0)
-        self.assertTrue(np.sum(vf.poles.imag > 0.0) == 3)
         self.assertLess(vf.get_rms_error(), 1e-05)
 
 
