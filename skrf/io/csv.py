@@ -50,6 +50,7 @@ Reading/Writing Anritsu VectorStar
 from __future__ import annotations
 
 import os
+from logging import getLogger
 from warnings import warn
 
 import numpy as np
@@ -59,6 +60,9 @@ from .. import util
 from ..constants import FREQ_UNITS, FrequencyUnitT
 from ..frequency import Frequency
 from ..network import Network
+
+logger = getLogger(__name__)
+
 
 # delayed imports
 # from pandas import Series, Index, DataFrame
@@ -644,13 +648,12 @@ def pna_csv_2_ntwks(filename):
         for k in range(int((d.shape[1]-1)/2)):
             f = d[:,0]
             name = names[k]
-            print((names[k], names[k+1]))
             if 'db' in names[k].lower() and 'deg' in names[k+1].lower():
                 s = mf.dbdeg_2_reim(d[:,k*2+1], d[:,k*2+2])
             elif 'real' in names[k].lower() and 'imag' in names[k+1].lower():
                 s = d[:,k*2+1]+1j*d[:,k*2+2]
             else:
-                print('WARNING: csv format unrecognized. ts up to you to  interpret the resultant network correctly.')
+                logger.warning('csv format unrecognized. ts up to you to  interpret the resultant network correctly.')
                 s = d[:,k*2+1]+1j*d[:,k*2+2]
 
             ntwk_list.append(

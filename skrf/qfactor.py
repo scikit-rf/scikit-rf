@@ -130,6 +130,7 @@ References
 """
 from __future__ import annotations
 
+from logging import getLogger
 from warnings import warn
 
 import numpy as np
@@ -137,6 +138,8 @@ import numpy as np
 from .constants import NumberLike
 from .frequency import Frequency
 from .network import Network
+
+logger = getLogger(__name__)
 
 # Available resonance types
 RESONANCE_TYPES = ['reflection', 'reflection_method2',
@@ -243,8 +246,12 @@ class Qfactor:
                  res_type: str,
                  Q_L0: None | float = None,
                  f_L0: None | float = None,
-                 verbose: bool = False):
+                 verbose: bool | None = None):
         """Q-factor initializer."""
+        if verbose is not None:
+            logger.warning('The "verbose" parameter is deprecated and will be removed in a future release. '
+                           'Use logging configuration instead.')
+
         # check ntwk is a 1-port
         if ntwk.nports != 1:
             raise ValueError('The Network is not a 1-port Network.')
@@ -259,7 +266,6 @@ class Qfactor:
         self._ntwk = ntwk
         self.res_type = res_type
         self.tol = 1.0e-5
-        self.verbose = verbose
         self.fitted = False
         self.opt_res = None
 
@@ -451,8 +457,7 @@ class Qfactor:
             mult = 5.0
             Q_L0 = mult * f_L0/(self.f[-1] - self.f[0])
 
-        if self.verbose:
-            print(f'Initial estimation: Q_L0={Q_L0}, f_L0={f_L0}')
+        logger.debug(f"Initial estimation: Q_L0={Q_L0}, f_L0={f_L0}")
 
         N2 = 2 * N
         M = np.zeros([N2, 5])
@@ -481,8 +486,7 @@ class Qfactor:
         self.Q_L = Q_L[0]
         self.f_L = f_L0
 
-        if self.verbose:
-            print(f'Preliminary estimation: Q_L={self.Q_L}, f_L={self.f_L}')
+        logger.debug(f"Preliminary estimation: Q_L={self.Q_L}, f_L={self.f_L}")
 
 
     def _optimise_fit6(self, N: int):
@@ -532,8 +536,7 @@ class Qfactor:
                 # PV = self.angular_weights(m5)
                 weighting_ratio = max(PV) / min(PV)
                 PV2 = np.concatenate((PV, PV))
-                if self.verbose:
-                    print("Op w, Calculate weights")
+                logger.debug("Op w, Calculate weights")
                 last_op = "n"
             elif op == "c":
                 seek_convergence = True
@@ -586,11 +589,10 @@ class Qfactor:
                     SumNum = SumNum + ip * (E.real * E.real + E.imag * E.imag)
                     SumDen = SumDen + ip
                 RMS_Error = np.sqrt(SumNum / SumDen)
-                if self.verbose:
-                    if last_op == "c":
-                        print(f"Iteration {iterations}, RMS Error: {RMS_Error}")
-                    else:
-                        print(f"op {op}, Iteration {iterations}, RMS Error: {RMS_Error}")
+                if last_op == "c":
+                    logger.debug(f"Iteration {iterations}, RMS Error: {RMS_Error}")
+                else:
+                    logger.debug(f"op {op}, Iteration {iterations}, RMS Error: {RMS_Error}")
                 last_op = op
 
                 if seek_convergence:
@@ -600,8 +602,7 @@ class Qfactor:
                 else:
                     TerminationConditionMet = True
             # After last operation, we end up here ...
-            if self.verbose:
-                print("Optimization done.")
+            logger.debug("Optimization done.")
 
 
         return OptimizedResult({
@@ -687,8 +688,7 @@ class Qfactor:
                 PV = self.angular_weights(self.f, Flwst * m5 / m6, m5)
                 weighting_ratio = max(PV) / min(PV)
                 PV2 = np.concatenate((PV, PV))
-                if self.verbose:
-                    print("Op w, Calculate weights")
+                logger.debug("Op w, Calculate weights")
                 last_op = "n"
                 continue
             if op == "c":
@@ -769,11 +769,10 @@ class Qfactor:
                     SumNum = SumNum + ip * (E.real * E.real + E.imag * E.imag)
                     SumDen = SumDen + ip
                 RMS_Error = np.sqrt(SumNum / SumDen)
-                if self.verbose:
-                    if last_op == "c":
-                        print(f"Iteration {iterations}, RMS Error: {RMS_Error}")
-                    else:
-                        print(f"op {op}, Iteration {iterations}, RMS Error: {RMS_Error}")
+                if last_op == "c":
+                    logger.debug(f"Iteration {iterations}, RMS Error: {RMS_Error}")
+                else:
+                    logger.debug(f"op {op}, Iteration {iterations}, RMS Error: {RMS_Error}")
 
                 last_op = op
 
@@ -784,8 +783,7 @@ class Qfactor:
                 else:
                     TerminationConditionMet = True
             # After last operation, we end up here ...
-            if self.verbose:
-                print("Optimization done.")
+            logger.debug("Optimization done.")
 
         return OptimizedResult({
             'success': TerminationConditionMet,
@@ -871,8 +869,7 @@ class Qfactor:
                 PV = self.angular_weights(self.f, Flwst * float(m5) / float(m6), float(m5))
                 weighting_ratio = max(PV) / min(PV)
                 PV2 = np.concatenate((PV, PV))
-                if self.verbose:
-                    print("Op w, Calculate weights")
+                logger.debug("Op w, Calculate weights")
                 last_op = "n"
                 continue
             if op == "c":
@@ -940,11 +937,10 @@ class Qfactor:
                     SumNum = SumNum + ip * (E.real * E.real + E.imag * E.imag)
                     SumDen = SumDen + ip
                 RMS_Error = np.sqrt(SumNum / SumDen)
-                if self.verbose:
-                    if last_op == "c":
-                        print(f"Iteration {iterations}, RMS Error: {RMS_Error}")
-                    else:
-                        print(f"{op}, Iteration {iterations}, RMS Error: {RMS_Error}")
+                if last_op == "c":
+                    logger.debug(f"Iteration {iterations}, RMS Error: {RMS_Error}")
+                else:
+                    logger.debug(f"{op}, Iteration {iterations}, RMS Error: {RMS_Error}")
 
                 last_op = op
 
@@ -955,8 +951,7 @@ class Qfactor:
                 else:
                     TerminationConditionMet = True
             # After last operation, we end up here ...
-            if self.verbose:
-                print("Optimization done.")
+            logger.debug("Optimization done.")
 
         return OptimizedResult({
             'success': TerminationConditionMet,
@@ -1088,13 +1083,11 @@ class Qfactor:
 
         elif self.res_type == "reflection":
             if auto_flag:
-                if self.verbose:
-                    print('A is undefined: using fitted data to estimate it')
+                logger.debug("A is undefined: using fitted data to estimate it")
                 A = 1.0 / abs(complex(m1, m2))  # scale to S_V if A not defined
             cal_diam, S_V, S_T = self.Q_circle(opt_res, A)
             cal_touching_circle_diam = 2.0
-            if self.verbose:
-                print(f"Q-circle diam = {cal_diam}, touching_circle_diam = {cal_touching_circle_diam}")
+            logger.debug(f"Q-circle diam = {cal_diam}, touching_circle_diam = {cal_touching_circle_diam}")
             den = cal_touching_circle_diam / cal_diam - 1.0
             Q0 = m5 * (1.0 + 1.0 / den)
 
@@ -1109,22 +1102,19 @@ class Qfactor:
                 2.0 * gv * cal_diam
             )  # Cosine rule
             cal_touching_circle_diam = (1.0 - gv2) / (1.0 - gv * cosphi)
-            if self.verbose:
-                print(f"Q-circle diam = {cal_diam}, touching_circle_diam = {cal_touching_circle_diam}")
+            logger.debug(f"Q-circle diam = {cal_diam}, touching_circle_diam = {cal_touching_circle_diam}")
             den = cal_touching_circle_diam / cal_diam - 1.0
             Q0 = m5 * (1.0 + 1.0 / den)
 
         elif self.res_type == "notch" or self.res_type == "absorption":  # By transmission
             if auto_flag:
-                if self.verbose:
-                    print(
-                        'Notch/absorption Qo calculation: using fitted data to estimate scaling factor'
-                    )
+                logger.debug(
+                    "Notch/absorption Qo calculation: using fitted data to estimate scaling factor"
+                )
                 # scale to S_V if A is undefined
                 A = 1.0 / abs(complex(m1, m2))
             cal_diam, S_V, S_T = self.Q_circle(opt_res, A)
-            if self.verbose:
-                print(f"Q-circle diam = {cal_diam}")
+            logger.debug(f"Q-circle diam = {cal_diam}")
             if cal_diam == 1.0:
                 raise ZeroDivisionError("Divide by zero forestalled in calculation of Qo")
             den = 1.0 / cal_diam - 1.0  # Gao thesis (2008) 4.35 and 4.40

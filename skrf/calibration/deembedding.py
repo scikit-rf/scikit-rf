@@ -2060,15 +2060,15 @@ class IEEEP370_FD_QM:
             Dictionary with quality metrics to print
         """
         if 'dd' in QM:
-            print('Differential mode')
+            print('Differential mode') # noqa: T201
             for k in QM['dd'].keys():
-                print(f"{k} is {QM['dd'][k]['evaluation']} ({QM['dd'][k]['value']:.2f}%)")
-            print('Common mode')
+                print(f"{k} is {QM['dd'][k]['evaluation']} ({QM['dd'][k]['value']:.2f}%)") # noqa: T201
+            print('Common mode') # noqa: T201
             for k in QM['cc'].keys():
-                print(f"{k} is {QM['cc'][k]['evaluation']} ({QM['cc'][k]['value']:.2f}%)")
+                print(f"{k} is {QM['cc'][k]['evaluation']} ({QM['cc'][k]['value']:.2f}%)") # noqa: T201
         else:
             for k in QM.keys():
-                print(f"{k} is {QM[k]['evaluation']} ({QM[k]['value']:.2f}%)")
+                print(f"{k} is {QM[k]['evaluation']} ({QM[k]['value']:.2f}%)") # noqa: T201
 
 class IEEEP370_TD_QM:
     def __init__(self, data_rate: float, sample_per_UI: int,
@@ -2999,17 +2999,17 @@ class IEEEP370_TD_QM:
             Dictionary with quality metrics to print
         """
         if 'dd' in QM:
-            print('Differential mode')
+            print('Differential mode') # noqa: T201
             for k in QM['dd'].keys():
-                print(f"{k} in the time domain is {QM['dd'][k]['evaluation']} "
+                print(f"{k} in the time domain is {QM['dd'][k]['evaluation']} " # noqa: T201
                        f"({QM['dd'][k]['value']} {QM['dd'][k]['unit']})")
-            print('Common mode')
+            print('Common mode') # noqa: T201
             for k in QM['cc'].keys():
-                print(f"{k} in the time domain is {QM['cc'][k]['evaluation']} "
+                print(f"{k} in the time domain is {QM['cc'][k]['evaluation']} " # noqa: T201
                        f"({QM['cc'][k]['value']} {QM['cc'][k]['unit']})")
         else:
             for k in QM.keys():
-                print(f"{k} in the time domain is {QM[k]['evaluation']} "
+                print(f"{k} in the time domain is {QM[k]['evaluation']} " # noqa: T201
                        f"({QM[k]['value']} {QM[k]['unit']})")
 
 class IEEEP370_SE_NZC_2xThru(IEEEP370):
