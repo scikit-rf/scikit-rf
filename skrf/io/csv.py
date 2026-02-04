@@ -653,7 +653,7 @@ def pna_csv_2_ntwks(filename):
             elif 'real' in names[k].lower() and 'imag' in names[k+1].lower():
                 s = d[:,k*2+1]+1j*d[:,k*2+2]
             else:
-                logger.warning('csv format unrecognized. ts up to you to  interpret the resultant network correctly.')
+                logger.warning("csv format unrecognized. It's up to you to interpret the resultant network correctly.")
                 s = d[:,k*2+1]+1j*d[:,k*2+2]
 
             ntwk_list.append(
