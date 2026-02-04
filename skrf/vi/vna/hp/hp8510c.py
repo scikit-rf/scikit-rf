@@ -252,8 +252,8 @@ class HP8510C(VNA):
 
     def set_frequency_ramp(self, hz_start, hz_stop, npoint=801):
         ''' Ramp (fast, not synthesized) sweep. Must have standard npoint. '''
-        if npoint not in (l := [51,101,201,401,801]):
-            logger.warning(f"8510C only supports NPOINT in {l}")
+        if npoint not in (valid_npoints := [51,101,201,401,801]):
+            logger.warning(f"8510C only supports NPOINT in {valid_npoints}")
         self._resource.clear()
         self.write('RAMP; STAR %f; STOP %f; POIN%i;'%(hz_start,hz_stop,npoint))
 
