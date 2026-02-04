@@ -560,7 +560,7 @@ class VectorFitting:
 
         # RESIDUE FITTING FOR ERROR COMPUTATION
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
-            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=False)
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=enforce_dc)
         delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                 weights_responses)
         error_peak = np.max(delta)
@@ -640,7 +640,7 @@ class VectorFitting:
 
             # RESIDUE FITTING FOR ERROR COMPUTATION
             residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
-                poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=False)
+                poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=enforce_dc)
             delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                     weights_responses)
             error_peak_history.append(np.max(delta))
