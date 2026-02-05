@@ -68,7 +68,7 @@ class VectorFittingTestCase(unittest.TestCase):
         # perform the fit on data including a dc sample (0 Hz)
         s4p_file = Path(__file__).parent / 'cst_example_4ports.s4p'
         nw = skrf.Network(s4p_file)
-        vf = skrf.VectorFitting(nw)
+        vf = skrf.vectorFitting.VectorFitting(nw)
         vf.auto_fit()
 
         # rough check on fit quality
@@ -119,7 +119,7 @@ class VectorFittingTestCase(unittest.TestCase):
             vf.plot_convergence()
 
     def test_passivity_enforcement(self):
-        vf = skrf.VectorFitting(None)
+        vf = skrf.vectorFitting.VectorFitting(None)
 
         # non-passive example parameters from Gustavsen's passivity assessment paper:
         vf.poles = np.array([-1, -5 + 6j])
@@ -139,7 +139,7 @@ class VectorFittingTestCase(unittest.TestCase):
         self.assertTrue(vf.is_passive())
 
     def test_autofit(self):
-        vf = skrf.VectorFitting(skrf.data.ring_slot)
+        vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
         vf.auto_fit()
         self.assertLess(vf.get_rms_error(), 1e-05)
 

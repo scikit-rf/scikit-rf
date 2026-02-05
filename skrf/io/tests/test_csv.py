@@ -21,7 +21,7 @@ class AgilentCSVTestCase(unittest.TestCase):
         """
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         self.filename = os.path.join(self.test_dir, 'pna_csv_reim.csv')
-        self.acsv = rf.AgilentCSV(self.filename)
+        self.acsv = rf.io.csv.AgilentCSV(self.filename)
 
     def test_columns(self):
         """
@@ -51,7 +51,7 @@ class AgilentCSVTestCase(unittest.TestCase):
         """
         This tests the reading of frequency from the test file
         """
-        self.assertEqual(self.acsv.frequency, rf.F(750e9, 1100e9, 2, 'hz'))
+        self.assertEqual(self.acsv.frequency, rf.Frequency(750e9, 1100e9, 2, 'hz'))
 
     @suppress_warning_decorator("CSV format unrecognized")
     def test_networks(self):
@@ -72,7 +72,7 @@ class AgilentCSVTestCase(unittest.TestCase):
         """
         with warnings.catch_warnings(record=True) as w:
             with self.assertWarns(DeprecationWarning):
-                header, comment, data = rf.read_pna_csv(self.filename)
+                header, comment, data = rf.io.csv.read_pna_csv(self.filename)
 
         self.assertEqual(header, 'Freq(Hz),"A,1"(REAL),"A,1"(IMAG),"R1,1"(REAL),"R1,1"(IMAG)')
         self.assertEqual(comment, 'this is a comment\nline\n')
