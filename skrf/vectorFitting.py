@@ -141,7 +141,7 @@ class VectorFitting:
 
         Returns
         -------
-        ndarray, bool, shape (M)
+        ndarray, bool, shape (N)
             Boolean array having the same shape as :attr:`poles`. `True` marks the respective pole as spurious.
 
         References
@@ -150,13 +150,18 @@ class VectorFitting:
             equivalent circuit extraction from noisy frequency responses," in IEEE Transactions on Electromagnetic
             Compatibility, vol. 48, no. 1, pp. 104-120, Feb. 2006, DOI: https://doi.org/10.1109/TEMC.2006.870814
         """
-
         from scipy.integrate import trapezoid
-        omega_eval = np.linspace(np.min(poles.imag) / 3, np.max(poles.imag) * 3, n_freqs)
-        h = (residues[:, None, :] / (1j * omega_eval[:, None] - poles)
-             + np.conj(residues[:, None, :]) / (1j * omega_eval[:, None] - np.conj(poles)))
-        norm2 = np.sqrt(trapezoid(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
-        spurious = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
+
+        # only complex-conjugate pole/residue pairs can be spurious and should be skimmed and relocated;
+        # skip real pole/residue
+        idx_cmplx = poles.imag > 0
+        spurious = np.full(np.shape(poles), False, dtype=bool)
+        if np.any(idx_cmplx):
+            omega_eval = np.linspace(np.min(poles[idx_cmplx].imag) / 3, np.max(poles[idx_cmplx].imag) * 3, n_freqs)
+            h = (residues[:, None, idx_cmplx] / (1j * omega_eval[:, None] - poles[idx_cmplx])
+                 + np.conj(residues[:, None, idx_cmplx]) / (1j * omega_eval[:, None] - np.conj(poles[idx_cmplx])))
+            norm2 = np.sqrt(trapezoid(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
+            spurious[idx_cmplx] = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
         return spurious
 
     @staticmethod
