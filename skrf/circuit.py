@@ -102,12 +102,13 @@ from typing import TYPE_CHECKING, TypedDict
 import numpy as np
 from typing_extensions import NotRequired, Unpack
 
-from .constants import S_DEF_DEFAULT, MemoryLayoutT, NumberLike
+from .constants import S_DEF_DEFAULT
 from .media import media
 from .network import Network, connect, innerconnect, s2s
-from .util import subplots
+from .plotting import subplots
 
 if TYPE_CHECKING:
+    from .constants import MemoryLayoutT, NumberLike
     from .frequency import Frequency
 
 
@@ -544,7 +545,8 @@ class Circuit:
 
             In [18]: port1 = rf.circuit.Circuit.Port(freq, name='Port1')
         """
-        _media = media.DefinedGammaZ0(frequency, z0=z0)
+        from .media import DefinedGammaZ0
+        _media = DefinedGammaZ0(frequency, z0=z0)
         port = _media.match(name=name)
         port._ext_attrs['_is_circuit_port'] = True
         return port
@@ -1793,7 +1795,6 @@ class Circuit:
             'label_shift_y': 0
 
         """
-
         nx = self._get_nx()
         G = self.G
 

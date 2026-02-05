@@ -60,8 +60,6 @@ from ..constants import FREQ_UNITS, FrequencyUnitT
 from ..frequency import Frequency
 from ..network import Network
 
-# delayed imports
-# from pandas import Series, Index, DataFrame
 
 def read_pna_csv(filename, *args, **kwargs) -> tuple[str, str, np.ndarray]:
     r"""
