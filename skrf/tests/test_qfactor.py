@@ -85,7 +85,7 @@ class QfactorTests(unittest.TestCase):
         # File 'Figure6b.txt' contains S21 data for Fig. 6(b) in MAT 58
         ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Figure6b.txt")
 
-        with self.assertWarns(DeprecationWarning) as context:
+        with self.assertWarns(FutureWarning) as context:
             Q = Qfactor(ntwk, res_type='transmission', verbose=True)
 
         # Test against expected solutions
@@ -130,7 +130,7 @@ class QfactorTests(unittest.TestCase):
         """
         ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Figure27.txt")
 
-        with self.assertWarns(DeprecationWarning) as context:
+        with self.assertWarns(FutureWarning) as context:
             Q = Qfactor(ntwk, res_type='absorption', verbose=True)
 
         # Test against expected solutions
@@ -170,7 +170,7 @@ class QfactorTests(unittest.TestCase):
         """
         ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Table6c27.txt")
 
-        with self.assertWarns(DeprecationWarning) as context:
+        with self.assertWarns(FutureWarning) as context:
             Q = Qfactor(ntwk, res_type='reflection', verbose=True)
         # Expected results after initial fit
         assert_almost_equal(Q._a, 760.9731 + 67.7804j, decimal=4)
@@ -198,7 +198,7 @@ class QfactorTests(unittest.TestCase):
 
         print("Q-factor of unloaded one-port resonator by Method 2:")
         print("Scaling factor A = 1.0 (assume no attenuation in uncalibrated line)")
-        with self.assertWarns(DeprecationWarning) as context:
+        with self.assertWarns(FutureWarning) as context:
             Q2 = Qfactor(ntwk, res_type='reflection_method2', verbose=True)
         res2 = Q2.fit(method='NLQFIT7')
 
