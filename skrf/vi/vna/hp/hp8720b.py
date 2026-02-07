@@ -12,12 +12,14 @@ HP8720B Class
     :toctree: generated/
 """
 
+from logging import getLogger
+
 import numpy as np
 
 import skrf
-import skrf.network
 from skrf.vi.vna import VNA
 
+logger = getLogger(__name__)
 
 class HP8720B(VNA):
     '''
@@ -199,8 +201,8 @@ class HP8720B(VNA):
         hz = frequency_obj.f
         valid = (self.min_hz<=hz) & (hz<=self.max_hz)
         if not np.all(valid):
-            print("set_frequency called with %i/%i points out of VNA frequency range. Dropping them."
-                  %(np.sum(valid),len(valid)))
+            logger.warning(f"set_frequency called with {np.sum(valid)}/{len(valid)} points out of VNA frequency range. "
+                           "Dropping them.")
             hz = hz[valid]
 
     def set_frequency_sweep(self, f_start, f_stop, f_npoints, **kwargs):
@@ -302,8 +304,7 @@ class HP8720B(VNA):
         try:
             floats = np.frombuffer(float_bin, dtype='>f4').reshape((-1,2))
         except ValueError as e:
-            print(buf)
-            print("len(buf): %i"%(len(buf),))
+            logger.debug(f"Buffer {str(buf)}, len: {len(buf)}")
             raise(e)
         cmplxs = (floats[:,0] + 1j*floats[:,1]).flatten()
         self._resource.read_termination = '\n' # Switching back for other outputs
@@ -361,12 +362,12 @@ class HP8720B(VNA):
         These measure how much signal is reflected from the imperfect switched
         termination on the non-stimulated port.
         '''
-        print('forward')
+        logger.debug('forward')
         self.write('USER2;DRIVPORT1;LOCKA1;NUMEB2;DENOA2;CONV1S;')
         forward = self.one_port()
         forward.name = 'forward switch term'
 
-        print ('reverse')
+        logger.debug('reverse')
         self.write('USER1;DRIVPORT2;LOCKA2;NUMEB1;DENOA1;CONV1S;')
         reverse = self.one_port()
         reverse.name = 'reverse switch term'

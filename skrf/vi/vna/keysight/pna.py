@@ -6,8 +6,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 import itertools
-import sys
 from enum import Enum
+from logging import getLogger
 
 import numpy as np
 
@@ -23,6 +23,7 @@ from skrf.vi.validators import (
 )
 from skrf.vi.vna import VNA, ValuesFormat
 
+logger = getLogger(__name__)
 
 class SweepType(Enum):
     LINEAR = "LIN"
@@ -451,14 +452,11 @@ class PNA(VNA):
 
         self.model = self.id.split(",")[1]
         if self.model not in self._models:
-            print(
-                f"WARNING: This model ({self.model}) has not been tested with "
+            logger.warning(f"This model ({self.model}) has not been tested with "
                 "scikit-rf. By default, all features are turned on but older "
                 "instruments might be missing SCPI support for some commands "
                 "which will cause errors. Consider submitting an issue on GitHub to "
-                "help testing and adding support.",
-                file=sys.stderr,
-            )
+                "help testing and adding support.")
 
     def _supports(self, feature: str) -> bool:
         model_config = self._models.get(self.model, self._models["default"])
