@@ -254,7 +254,7 @@ class VNA:
         pass
 
     def write(self, cmd, **kwargs) -> None:
-        logger.debug(f"Querying values with command: {cmd}")
+        logger.debug(f"Write with command: {cmd}")
 
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             fn = self._resource.write
@@ -266,7 +266,7 @@ class VNA:
         fn(cmd, **kwargs)
 
     def write_values(self, cmd, values, complex_values: bool = False, **kwargs) -> None:
-        logger.debug(f"Querying values with command: {cmd}")
+        logger.debug(f"Write values with command: {cmd}")
 
         if complex_values:
             values = np.array([(x.real, x.imag) for x in values]).flatten()
@@ -287,8 +287,7 @@ class VNA:
         return fn(cmd, values, **kwargs)
 
     def query(self, cmd, **kwargs) -> None:
-        logger.debug(f"Querying values with command: {cmd}")
-
+        logger.debug(f"Query with command: {cmd}")
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             fn = self._resource.query
         elif isinstance(self._resource, pyvisa.resources.RegisterBasedResource):
@@ -299,7 +298,7 @@ class VNA:
         return fn(cmd, **kwargs)
 
     def query_values(self, cmd, complex_values: bool = False, **kwargs) -> None:
-        logger.debug(f"Querying values with command: {cmd}")
+        logger.debug(f"Query values with command: {cmd}")
 
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             if self._values_fmt == ValuesFormat.ASCII:
