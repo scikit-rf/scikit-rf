@@ -249,8 +249,8 @@ class Qfactor:
                  verbose: bool | None = None):
         """Q-factor initializer."""
         if verbose is not None:
-            logger.warning('The "verbose" parameter is deprecated and will be removed in a future release. '
-                           'Use logging configuration instead.')
+            warn('The "verbose" parameter is deprecated and will be removed in a future release. '
+                          'Use logging configuration instead.', FutureWarning, stacklevel=2)
 
         # check ntwk is a 1-port
         if ntwk.nports != 1:

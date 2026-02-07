@@ -740,7 +740,8 @@ def save_all_figs(dir: str = './', format: None | list[str] = None,
         True prints filenames as they are saved. Default is True.
     """
     if echo is not None:
-        logger.warning("`echo` parameter is deprecated and will be removed in future versions. Use logging instead.")
+        warnings.warn("`echo` parameter is deprecated and will be removed in future versions. "
+                      "Use logging instead.", FutureWarning, stacklevel=2)
 
     if dir[-1] != '/':
         dir = dir + '/'
