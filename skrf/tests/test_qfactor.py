@@ -85,7 +85,8 @@ class QfactorTests(unittest.TestCase):
         # File 'Figure6b.txt' contains S21 data for Fig. 6(b) in MAT 58
         ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Figure6b.txt")
 
-        Q = Qfactor(ntwk, res_type='transmission', verbose=True)
+        with self.assertWarns(DeprecationWarning) as context:
+            Q = Qfactor(ntwk, res_type='transmission', verbose=True)
 
         # Test against expected solutions
         assert_almost_equal(Q._a, 0.8104 - 1.6928j, decimal=4)
@@ -129,7 +130,8 @@ class QfactorTests(unittest.TestCase):
         """
         ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Figure27.txt")
 
-        Q = Qfactor(ntwk, res_type='absorption', verbose=True)
+        with self.assertWarns(DeprecationWarning) as context:
+            Q = Qfactor(ntwk, res_type='absorption', verbose=True)
 
         # Test against expected solutions
         assert_almost_equal(Q._a, -17072.3098 + 9047.0761j, decimal=4)
@@ -168,7 +170,8 @@ class QfactorTests(unittest.TestCase):
         """
         ntwk = self.csv_file_example_to_network(self.test_dir + "qfactor_data/Table6c27.txt")
 
-        Q = Qfactor(ntwk, res_type='reflection', verbose=True)
+        with self.assertWarns(DeprecationWarning) as context:
+            Q = Qfactor(ntwk, res_type='reflection', verbose=True)
         # Expected results after initial fit
         assert_almost_equal(Q._a, 760.9731 + 67.7804j, decimal=4)
         assert_almost_equal(Q._b, 0.0609 - 0.6432j, decimal=4)
@@ -195,7 +198,8 @@ class QfactorTests(unittest.TestCase):
 
         print("Q-factor of unloaded one-port resonator by Method 2:")
         print("Scaling factor A = 1.0 (assume no attenuation in uncalibrated line)")
-        Q2 = Qfactor(ntwk, res_type='reflection_method2', verbose=True)
+        with self.assertWarns(DeprecationWarning) as context:
+            Q2 = Qfactor(ntwk, res_type='reflection_method2', verbose=True)
         res2 = Q2.fit(method='NLQFIT7')
 
         Q0_2 = Q.Q_unloaded(res2, A=1)
