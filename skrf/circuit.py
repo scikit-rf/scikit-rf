@@ -1650,8 +1650,8 @@ class Circuit:
             # The current of each port is different in the same node
             # The ports' current should take into account the output current of each port in the node
             if cnx_len == 1:
-                # Single port: use simplified formula to avoid division by zero
-                Ij[:, 0] = 2 * b[:, i] / np.sqrt(z0_segment[:, 0])
+                # Single port: single-port current must be zero
+                pass
             else:
                 # Calculate the ports' output current through the output wave
                 for j in range(cnx_len):
