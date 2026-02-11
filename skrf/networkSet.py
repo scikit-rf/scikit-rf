@@ -52,6 +52,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, TextIO
 
 import numpy as np
+import scipy
 
 from . import mathFunctions as mf
 from .network import COMPONENT_FUNC_DICT, PRIMARY_PROPERTIES, Frequency, Network
@@ -802,10 +803,9 @@ class NetworkSet:
 
         """
         from numpy import frompyfunc
-        from scipy import stats
 
         def gimme_norm(x):
-            return stats.norm(loc=0, scale=x).rvs(1)[0]
+            return scipy.stats.norm(loc=0, scale=x).rvs(1)[0]
         ugimme_norm = frompyfunc(gimme_norm,1,1)
 
         s_deg_rv = np.array(map(ugimme_norm, self.std_s_deg.s_re), dtype=float)
@@ -1051,12 +1051,10 @@ class NetworkSet:
 
 
         """
-        from scipy.interpolate import interp1d
-
         ntw = self[0].copy()
         # Interpolating the scattering parameters
         s = np.array([self[idx].s for idx in range(len(self))])
-        f = interp1d(ntw_param, s, axis=0, kind=interp_kind)
+        f = scipy.interpolate.interp1d(ntw_param, s, axis=0, kind=interp_kind)
         ntw.s = f(x)
 
         return ntw

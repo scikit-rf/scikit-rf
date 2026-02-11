@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+import scipy
 from numpy import pi, sqrt, where
 
 from .. import constants as _const
@@ -161,13 +162,11 @@ class CircularWaveguide(Media):
             passed to :class:`~skrf.media.media.Media`'s constructor
             (:func:`~skrf.media.media.Media.__init__`
         """
-        from scipy.special import jnp_zeros
-
         mu = _const.mu_0*mu_r
         ep = _const.epsilon_0*ep_r
         w = 2*pi*f
         # if self.mode_type =="te":
-        u = jnp_zeros(1, 1)[-1]
+        u = scipy.special.jnp_zeros(1, 1)[-1]
         r =u/(w*mu) * 1./sqrt(1/(z0*1j)**2+ep/mu)
 
         kwargs.update(dict(frequency=frequency, r=r, m=1, n=1, ep_r=ep_r, mu_r=mu_r))
@@ -236,12 +235,10 @@ class CircularWaveguide(Media):
         kc : number
             cut-off wavenumber
         """
-        from scipy.special import jn_zeros, jnp_zeros
-
         if self.mode_type =="te":
-            u = jnp_zeros(self.m, self.n)[-1]
+            u = scipy.special.jnp_zeros(self.m, self.n)[-1]
         elif self.mode_type =="tm":
-            u = jn_zeros(self.m,self.n)[-1]
+            u = scipy.special.jn_zeros(self.m,self.n)[-1]
         return u/self.r
 
     @property

@@ -62,6 +62,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
+import scipy
 from numpy import angle, concatenate, conj, exp, flip, imag, ndarray, real, unwrap, zeros
 from numpy.fft import fft, fftshift, ifftshift, irfft
 from numpy.linalg import norm
@@ -1086,8 +1087,7 @@ class IEEEP370(Deembedding):
         snp = concatenate((conj(flip(sp)), sp))
         fnp = concatenate((-1*flip(fp), fp))
         # mhuser : used cubic instead spline (not implemented)
-        from scipy.interpolate import interp1d
-        snew = interp1d(fnp, snp, axis=0, kind = 'cubic')
+        snew = scipy.interpolate.interp1d(fnp, snp, axis=0, kind = 'cubic')
         return real(snew(0))
 
     @staticmethod
@@ -2587,8 +2587,7 @@ class IEEEP370_TD_QM:
         self.t_ref = dt * (k_offset + k_ref)
         self.v_ref = np.array([0, 0, 1, 1, 0, 0])
 
-        from scipy.interpolate import interp1d
-        interp = interp1d(self.t_ref, self.v_ref)
+        interp = scipy.interpolate.interp1d(self.t_ref, self.v_ref)
         self.v_pulse = interp(self.t_pulse)
 
         if verbose:
@@ -2742,8 +2741,7 @@ class IEEEP370_TD_QM:
         # extract delay to smooth original function
         s_ij = s_ij * np.exp(1j * 2 * np.pi * f * delay)
         # interpolate
-        from scipy.interpolate import interp1d
-        interp = interp1d(f, s_ij)
+        interp = scipy.interpolate.interp1d(f, s_ij)
         s_ij_interp = interp(f_new)
         # return delay
         s_ij_interp = s_ij_interp * \
@@ -3328,7 +3326,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
             # revert to initial freq axis
             if flag_df:
-                from scipy.interpolate import interp1d
+                interp1d = scipy.interpolate.interp1d
                 interp_e001 = interp1d(f, e001, kind = 'cubic',
                                 fill_value = 'extrapolate',
                                 assume_sorted = True)

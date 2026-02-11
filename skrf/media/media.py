@@ -21,6 +21,7 @@ from numbers import Number
 from pathlib import Path
 
 import numpy as np
+import scipy
 from numpy import any, array, gradient, imag, ones, real
 
 from .. import constants as _const
@@ -1664,11 +1665,9 @@ class Media(ABC):
         result : :class:`~skrf.network.Network` object
             a noise network
         """
-        from scipy import stats
-
         shape = (self.frequency.npoints, n_ports,n_ports)
-        phase_rv= stats.norm(loc=0, scale=phase_dev).rvs(size = shape)
-        mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size = shape)
+        phase_rv = scipy.stats.norm(loc=0, scale=phase_dev).rvs(size = shape)
+        mag_rv = scipy.stats.norm(loc=0, scale=mag_dev).rvs(size = shape)
 
         result = Network(**kwargs)
         result.frequency = self.frequency

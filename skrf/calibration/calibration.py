@@ -119,6 +119,7 @@ from typing import Literal
 from warnings import warn
 
 import numpy as np
+import scipy
 from numpy import angle, einsum, exp, imag, invert, linalg, ones, poly1d, real, sqrt, zeros
 from numpy.linalg import det
 
@@ -4543,8 +4544,6 @@ class LRRM(EightTerm):
             **kwargs)
 
     def run(self):
-        from scipy.optimize import least_squares
-
         mList = [k for k in self.measured_unterminated]
         lm = mList[0]
         r1m = mList[1]
@@ -4722,7 +4721,9 @@ class LRRM(EightTerm):
             if init_guess[li] < np.mean(min_l(l0)**2):
                 l0 = best_guess
 
-            sol = least_squares(min_l, l0, method="lm", diff_step=np.sqrt(np.finfo(np.float64).resolution))
+            sol = scipy.optimize.least_squares(
+                min_l, l0, method="lm", diff_step=np.sqrt(np.finfo(np.float64).resolution)
+            )
             match_l = sol.x * np.ones(match_l.shape)
             match_c = zeros
 
@@ -4775,7 +4776,7 @@ class LRRM(EightTerm):
             l0 = best_guess[0]
             c0 = best_guess[1]
 
-            sol = least_squares(min_lc, [l0, c0], method='lm')
+            sol = scipy.optimize.least_squares(min_lc, [l0, c0], method='lm')
             match_l = sol.x[0] * np.ones(match_l.shape)
             match_c = sol.x[1] * np.ones(match_l.shape)
 

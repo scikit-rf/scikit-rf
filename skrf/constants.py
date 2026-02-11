@@ -65,7 +65,7 @@ from numbers import Number
 from typing import Any, Literal, get_args
 
 import numpy as np
-import scipy as _scipy
+import scipy
 
 scipy_consts = ["c", "inch", "mil", "mu_0", "epsilon_0"]
 
@@ -161,12 +161,12 @@ def get_distance_dict() -> dict[str, float]:
         'cm': 1e-2,
         'mm': 1e-3,
         'um': 1e-6,
-        'in': _scipy.constants.inch,
-        'mil': _scipy.constants.mil,
-        's': _scipy.constants.c,
-        'us': 1e-6 * _scipy.constants.c,
-        'ns': 1e-9 * _scipy.constants.c,
-        'ps': 1e-12 * _scipy.constants.c,
+        'in': scipy.constants.inch,
+        'mil': scipy.constants.mil,
+        's': scipy.constants.c,
+        'us': 1e-6 * scipy.constants.c,
+        'ns': 1e-9 * scipy.constants.c,
+        'ps': 1e-12 * scipy.constants.c,
     }
     return distance_dict
 
@@ -191,15 +191,15 @@ def to_meters(d: NumberLike, unit: str = 'm', v_g: float | None = None) -> Numbe
         distance in meters
     """
     if v_g is None:
-        v_g = _scipy.constants.c
+        v_g = scipy.constants.c
 
     _distance_dict = {
         'm': 1.,
         'cm': 1e-2,
         'mm': 1e-3,
         'um': 1e-6,
-        'in': _scipy.constants.inch,
-        'mil': _scipy.constants.mil,
+        'in': scipy.constants.inch,
+        'mil': scipy.constants.mil,
         's': v_g,
         'us': 1e-6*v_g,
         'ns': 1e-9*v_g,
@@ -215,7 +215,7 @@ def to_meters(d: NumberLike, unit: str = 'm', v_g: float | None = None) -> Numbe
 
 def __getattr__(name: str) -> Any:
     if name in scipy_consts:
-        return getattr(_scipy.constants, name)
+        return getattr(scipy.constants, name)
     if name == "distance_dict":
         return get_distance_dict()
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

@@ -203,6 +203,7 @@ from pathlib import Path
 from pickle import UnpicklingError
 
 import numpy as np
+import scipy
 from numpy import gradient, ndarray, shape
 from numpy.linalg import inv as npy_inv
 
@@ -1535,8 +1536,7 @@ class Network:
             raise ValueError('network does not have noise')
 
         if self.noise_freq.f.size > 1:
-            from scipy.interpolate import interp1d
-            noise_real = interp1d(
+            noise_real = scipy.interpolate.interp1d(
                 self.noise_freq.f,
                 self.noise.real,
                 axis=0,
@@ -1544,7 +1544,7 @@ class Network:
                 bounds_error=False,
                 fill_value=complex(self.noise_fill_value).real
             )
-            noise_imag = interp1d(
+            noise_imag = scipy.interpolate.interp1d(
                 self.noise_freq.f,
                 self.noise.imag,
                 axis=0,
@@ -2962,8 +2962,7 @@ class Network:
             is_rational = True
         else:
             kwargs["kind"] = kind if kind is not None else "linear"
-            from scipy.interpolate import interp1d
-            f_interp = interp1d
+            f_interp = scipy.interpolate.interp1d
 
         # interpret input
         if isinstance(freq_or_n, Frequency):
@@ -3138,15 +3137,12 @@ class Network:
             #Interpolate DC point alone first using linear interpolation, because
             #interp1d can't extrapolate with other methods.
             #TODO: Option to enforce passivity
-
-            from scipy.interpolate import interp1d
-
             x = result.s[:2]
             f = result.frequency.f[:2]
             rad = np.unwrap(np.angle(x), axis=0)
             mag = np.abs(x)
-            interp_rad = interp1d(f, rad, axis=0, fill_value='extrapolate')
-            interp_mag = interp1d(f, mag, axis=0, fill_value='extrapolate')
+            interp_rad = scipy.interpolate.interp1d(f, rad, axis=0, fill_value='extrapolate')
+            interp_mag = scipy.interpolate.interp1d(f, mag, axis=0, fill_value='extrapolate')
             dc_sparam = interp_mag(0) * np.exp(1j * interp_rad(0))
             # Extrapolate other points and insert
             fstep = self.frequency.f[-1]/(points-1)
@@ -3711,10 +3707,8 @@ class Network:
                 standard deviation of phase [in degrees]
 
         """
-        from scipy import stats
-
-        phase_rv = stats.norm(loc=0, scale=phase_dev).rvs(size=self.s.shape)
-        mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size=self.s.shape)
+        phase_rv = scipy.stats.norm(loc=0, scale=phase_dev).rvs(size=self.s.shape)
+        mag_rv = scipy.stats.norm(loc=0, scale=mag_dev).rvs(size=self.s.shape)
 
         phase = (self.s_deg + phase_rv)
         mag = self.s_mag + mag_rv
@@ -3733,10 +3727,8 @@ class Network:
                 standard deviation of phase [in degrees]
 
         """
-        from scipy import stats
-
-        phase_rv = stats.norm(loc=0, scale=phase_dev).rvs(size=self.s[0].shape)
-        mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size=self.s[0].shape)
+        phase_rv = scipy.stats.norm(loc=0, scale=phase_dev).rvs(size=self.s[0].shape)
+        mag_rv = scipy.stats.norm(loc=0, scale=mag_dev).rvs(size=self.s[0].shape)
 
         phase = (self.s_deg + phase_rv)
         mag = self.s_mag + mag_rv
@@ -3757,11 +3749,9 @@ class Network:
 
 
         """
-        from scipy import stats
-
-        phase_rv = stats.norm(loc=0, scale=phase_dev).rvs( \
+        phase_rv = scipy.stats.norm(loc=0, scale=phase_dev).rvs( \
             size=self.s.shape)
-        mag_rv = stats.norm(loc=1, scale=mag_dev).rvs( \
+        mag_rv = scipy.stats.norm(loc=1, scale=mag_dev).rvs( \
             size=self.s.shape)
         self.s = mag_rv * np.exp(1j * np.pi / 180. * phase_rv) * self.s
 
@@ -4399,8 +4389,7 @@ class Network:
             )
 
         t, y = self.impulse_response(window=window, n=n, pad=pad, bandpass=False, squeeze=squeeze)
-        from scipy.integrate import cumulative_trapezoid
-        return t, cumulative_trapezoid(y, initial=0, axis=0)
+        return t, scipy.integrate.cumulative_trapezoid(y, initial=0, axis=0)
 
     # Network Active s/z/y/vswr parameters
     def s_active(self, a: np.ndarray) -> np.ndarray:
@@ -5131,8 +5120,6 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     >>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
 
     """
-    from scipy.interpolate import interp1d
-
     # some checking
     try:
         check_frequency_equal(ntwkA, ntwkB)
@@ -5269,14 +5256,14 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
       # interpolate abcd into the set of noise frequencies
       if ntwkA.deembed:
           if ntwkA.frequency.f.size > 1:
-              a_real = interp1d(
+              a_real = scipy.interpolate.interp1d(
                   ntwkA.frequency.f,
                   ntwkA.inv.a.real,
                   axis=0,
                   bounds_error=False,
                   kind=ntwkA.noise_interp_kind
               )
-              a_imag = interp1d(
+              a_imag = scipy.interpolate.interp1d(
                   ntwkA.frequency.f,
                   ntwkA.inv.a.imag,
                   axis=0,
@@ -5294,14 +5281,14 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
           cC = np.matmul(a, np.matmul(cB -cA, a_H))
       else:
           if ntwkA.frequency.f.size > 1:
-              a_real = interp1d(
+              a_real = scipy.interpolate.interp1d(
                   ntwkA.frequency.f,
                   ntwkA.a.real,
                   axis=0,
                   bounds_error=False,
                   kind=ntwkA.noise_interp_kind
               )
-              a_imag = interp1d(
+              a_imag = scipy.interpolate.interp1d(
                   ntwkA.frequency.f,
                   ntwkA.a.imag,
                   axis=0,

@@ -7,6 +7,7 @@ from timeit import default_timer as timer
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import scipy
 
 # imports for type hinting
 if TYPE_CHECKING:
@@ -150,8 +151,6 @@ class VectorFitting:
             equivalent circuit extraction from noisy frequency responses," in IEEE Transactions on Electromagnetic
             Compatibility, vol. 48, no. 1, pp. 104-120, Feb. 2006, DOI: https://doi.org/10.1109/TEMC.2006.870814
         """
-        from scipy.integrate import trapezoid
-
         # only complex-conjugate pole/residue pairs can be spurious and should be skimmed and relocated;
         # skip real pole/residue
         idx_cmplx = poles.imag > 0
@@ -160,7 +159,7 @@ class VectorFitting:
             omega_eval = np.linspace(np.min(poles[idx_cmplx].imag) / 3, np.max(poles[idx_cmplx].imag) * 3, n_freqs)
             h = (residues[:, None, idx_cmplx] / (1j * omega_eval[:, None] - poles[idx_cmplx])
                  + np.conj(residues[:, None, idx_cmplx]) / (1j * omega_eval[:, None] - np.conj(poles[idx_cmplx])))
-            norm2 = np.sqrt(trapezoid(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
+            norm2 = np.sqrt(scipy.integrate.trapezoid(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
             spurious[idx_cmplx] = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
         return spurious
 

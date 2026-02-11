@@ -13,6 +13,7 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING
 
+import scipy
 from numpy import any, exp, imag, log, pi, real, sinh, sqrt, tanh, zeros
 
 from .. import constants as _const
@@ -358,7 +359,7 @@ class CPW(Media):
         zl_eff : :class:`numpy.ndarray`
         ep_reff : :class:`numpy.ndarray`
         """
-        from scipy.special import ellipk
+        ellipk = scipy.special.ellipk
         Z0 = sqrt(_const.mu_0 / _const.epsilon_0)
         a = w
         b = w + 2. * s
