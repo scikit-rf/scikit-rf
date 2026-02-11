@@ -38,7 +38,6 @@ dependencies = [
     "scipy >=1.7",
     "pandas >=1.1",
     "typing-extensions",
-    "pre-commit>=3.5.0",
 ]
 
 [project.optional-dependencies]
