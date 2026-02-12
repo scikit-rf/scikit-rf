@@ -1711,8 +1711,8 @@ class Circuit:
             for j in range(cnx_len):
                 in_z0 = z0_segment[:, j]
                 out_z0 = np.inf if cnx_len == 1 else 1 / (tot_shunt_z0 - 1 / in_z0)
-                tau = 2.0 if np.isinf(out_z0) else (2 * out_z0) / (out_z0 + in_z0)
-                Vk += b[:, i + j] * np.sqrt(in_z0) * tau
+                tau = 2.0 if cnx_len == 1 else (2 * out_z0) / (out_z0 + in_z0)
+                Vk += (b[:, i + j] * np.sqrt(in_z0)) * tau
 
             Vs[:, i : i + cnx_len] = Vk[:, None]
             i += cnx_len
