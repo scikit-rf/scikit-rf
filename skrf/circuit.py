@@ -1708,15 +1708,11 @@ class Circuit:
 
             # Node voltage is the summation of each ports' outwave voltage
             # The voltage of each port in the same node is consistent
-            if cnx_len == 1:
-                # Single port: use simplified formula to avoid division by zero
-                Vk += 2 * b[:, i] * np.sqrt(z0_segment[:, 0])
-            else:
-                for j in range(cnx_len):
-                    in_z0 = z0_segment[:, j]
-                    out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
-                    tau = (2 * out_z0) / (out_z0 + in_z0)
-                    Vk += (b[:, i + j] * np.sqrt(in_z0)) * tau
+            for j in range(cnx_len):
+                in_z0 = z0_segment[:, j]
+                out_z0 = np.inf if cnx_len == 1 else 1 / (tot_shunt_z0 - 1 / in_z0)
+                tau = 2.0 if np.isinf(out_z0) else (2 * out_z0) / (out_z0 + in_z0)
+                Vk += b[:, i + j] * np.sqrt(in_z0) * tau
 
             Vs[:, i : i + cnx_len] = Vk[:, None]
             i += cnx_len
