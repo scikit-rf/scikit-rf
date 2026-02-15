@@ -28,7 +28,7 @@ Example Devices
 """
 
 
-from abc import ABCMeta, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from numpy import exp, sqrt
@@ -50,7 +50,8 @@ class Device:
     def __init__(self, media):
         self.media = media
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def ntwk(self):
         """
         the network representation of a given device

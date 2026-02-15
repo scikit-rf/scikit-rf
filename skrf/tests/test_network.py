@@ -15,7 +15,6 @@ import pytest
 from scipy import signal
 
 import skrf as rf
-from skrf import setup_pylab
 from skrf.circuit import Circuit
 from skrf.constants import S_DEF_HFSS_DEFAULT, S_DEFINITIONS
 from skrf.frequency import Frequency, InvalidFrequencyWarning
@@ -83,7 +82,6 @@ class NetworkTestCase(unittest.TestCase):
         this also tests the ability to read touchstone files
         without an error
         """
-        setup_pylab()
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
         self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))

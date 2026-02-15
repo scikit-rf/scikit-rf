@@ -15,9 +15,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from numpy import array, exp, expm1, imag, log, size, sqrt
-from scipy.constants import c, epsilon_0, mu_0, pi
+from numpy import array, exp, expm1, imag, log, pi, size, sqrt
 
+from .. import constants as _const
 from ..constants import INF, NumberLike
 from ..mathFunctions import db_2_np, db_per_100feet_2_db_per_100meter, feet_2_meter
 from ..tlineFunctions import skin_depth, surface_resistivity
@@ -94,8 +94,8 @@ class Coaxial(DistributedCircuit, Media):
 
         self.Dint, self.Dout = Dint,Dout
         self.epsilon_r, self.tan_delta, self.sigma = epsilon_r, tan_delta, sigma
-        self.epsilon_prime = epsilon_0*self.epsilon_r
-        self.epsilon_second = epsilon_0*self.epsilon_r*self.tan_delta
+        self.epsilon_prime = _const.epsilon_0*self.epsilon_r
+        self.epsilon_second = _const.epsilon_0*self.epsilon_r*self.tan_delta
 
     @classmethod
     def from_attenuation_VF(cls, frequency: Frequency | None = None,
@@ -163,7 +163,7 @@ class Coaxial(DistributedCircuit, Media):
         else:
             raise ValueError('Incorrect attenuation unit. Please see documentation. ', unit)
 
-        beta = 2 * pi * frequency.f / c / VF
+        beta = 2 * pi * frequency.f / _const.c / VF
 
         gamma = alpha + 1j*beta
 
@@ -204,13 +204,13 @@ class Coaxial(DistributedCircuit, Media):
         -------
         media : :class:`~skrf.media.media.Media`
         """
-        ep= epsilon_0*epsilon_r
+        ep= _const.epsilon_0*epsilon_r
 
         if imag(z0) !=0:
             raise NotImplementedError()
 
         b = Dout/2.
-        b_over_a = exp(2*pi*z0*sqrt(ep/mu_0))
+        b_over_a = exp(2*pi*z0*sqrt(ep/_const.mu_0))
         a = b/b_over_a
         Dint = 2*a
         return cls(frequency=frequency, z0_port = z0_port, Dint=Dint, Dout=Dout,
@@ -297,7 +297,7 @@ class Coaxial(DistributedCircuit, Media):
             distributed inductance, in  H/m
 
         """
-        return mu_0/(2.*pi)*log(self.b/self.a)
+        return _const.mu_0/(2.*pi)*log(self.b/self.a)
 
     @property
     def C(self) -> NumberLike:

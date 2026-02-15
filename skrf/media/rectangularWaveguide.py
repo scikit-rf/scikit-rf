@@ -30,16 +30,16 @@ from numbers import Number
 from typing import TYPE_CHECKING
 
 import numpy as np
-from numpy import exp, sqrt, where
-from scipy.constants import epsilon_0, mu_0, pi
+from numpy import exp, pi, sqrt, where
 
-from ..constants import NumberLike
+from .. import constants as _const
 from ..data import materials
 from ..tlineFunctions import skin_depth
 from .freespace import Freespace
 from .media import Media
 
 if TYPE_CHECKING:
+    from ..constants import NumberLike
     from ..frequency import Frequency
 
 
@@ -168,8 +168,8 @@ class RectangularWaveguide(Media):
             filling material's relative permeability
         """
 
-        mu = mu_0*mu_r
-        ep = epsilon_0*ep_r
+        mu = _const.mu_0*mu_r
+        ep = _const.epsilon_0*ep_r
         w = 2*pi*f
         a =pi/(w*mu) * 1./sqrt(1/(z0*1j)**2+ep/mu)
 
@@ -191,7 +191,7 @@ class RectangularWaveguide(Media):
         ep : number
             filling material's permittivity in F/m.
         """
-        return self.ep_r * epsilon_0
+        return self.ep_r * _const.epsilon_0
 
     @property
     def mu(self) -> NumberLike:
@@ -208,7 +208,7 @@ class RectangularWaveguide(Media):
             filling material's permeability in H/m.
 
         """
-        return self.mu_r * mu_0
+        return self.mu_r * _const.mu_0
 
     @property
     def k0(self) -> NumberLike:

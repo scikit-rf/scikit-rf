@@ -13,16 +13,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-from numpy import sqrt, where
-from scipy.constants import epsilon_0, mu_0, pi
-from scipy.special import jn_zeros, jnp_zeros
+import scipy
+from numpy import pi, sqrt, where
 
-from ..constants import NumberLike
+from .. import constants as _const
 from ..data import materials
 from .freespace import Freespace
 from .media import Media
 
 if TYPE_CHECKING:
+    from ..constants import NumberLike
     from ..frequency import Frequency
 
 
@@ -162,12 +162,11 @@ class CircularWaveguide(Media):
             passed to :class:`~skrf.media.media.Media`'s constructor
             (:func:`~skrf.media.media.Media.__init__`
         """
-
-        mu = mu_0*mu_r
-        ep = epsilon_0*ep_r
+        mu = _const.mu_0*mu_r
+        ep = _const.epsilon_0*ep_r
         w = 2*pi*f
         # if self.mode_type =="te":
-        u = jnp_zeros(1, 1)[-1]
+        u = scipy.special.jnp_zeros(1, 1)[-1]
         r =u/(w*mu) * 1./sqrt(1/(z0*1j)**2+ep/mu)
 
         kwargs.update(dict(frequency=frequency, r=r, m=1, n=1, ep_r=ep_r, mu_r=mu_r))
@@ -184,7 +183,7 @@ class CircularWaveguide(Media):
         ep : number
             filling material's relative permittivity
         """
-        return self.ep_r * epsilon_0
+        return self.ep_r * _const.epsilon_0
 
     @property
     def mu(self) -> NumberLike:
@@ -197,7 +196,7 @@ class CircularWaveguide(Media):
             filling material's relative permeability
 
         """
-        return self.mu_r * mu_0
+        return self.mu_r * _const.mu_0
 
     @property
     def k0(self) -> NumberLike:
@@ -237,9 +236,9 @@ class CircularWaveguide(Media):
             cut-off wavenumber
         """
         if self.mode_type =="te":
-            u = jnp_zeros(self.m, self.n)[-1]
+            u = scipy.special.jnp_zeros(self.m, self.n)[-1]
         elif self.mode_type =="tm":
-            u = jn_zeros(self.m,self.n)[-1]
+            u = scipy.special.jn_zeros(self.m,self.n)[-1]
         return u/self.r
 
     @property

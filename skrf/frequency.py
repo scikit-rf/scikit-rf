@@ -38,6 +38,12 @@ Misc
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .constants import FrequencyUnitT, NumberLike, SweepTypeT
+    from .plotting import Axes
+
 import re
 import warnings
 from numbers import Number
@@ -50,8 +56,9 @@ from numpy import (
     pi,
 )
 
-from .constants import FREQ_UNITS, ZERO, FrequencyUnitT, NumberLike, SweepTypeT
-from .util import Axes, axes_kwarg, find_nearest_index, slice_domain
+from .constants import FREQ_UNITS, ZERO
+from .plotting import axes_kwarg
+from .util import find_nearest_index, slice_domain
 
 
 class InvalidFrequencyWarning(UserWarning):
