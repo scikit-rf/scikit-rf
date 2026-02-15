@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import dataclasses
 from abc import ABC, abstractmethod
+from logging import getLogger
 
 import numpy as np
 
 import skrf
 
+logger = getLogger(__name__)
 
 class SweepSection(ABC):
     @abstractmethod
@@ -228,19 +230,19 @@ class SweepPlan:
         """
         plan_hz = np.array(sorted(self.get_hz()))
         if len(golden_hz) != len(plan_hz):
-            print("Planner output has different length.")
+            logger.debug("Planner output has different length.")
             return False
         good = True
         for h in golden_hz:
             if not np.any(np.isclose(h, plan_hz)):
-                print(f"In original list but not plan: {h}")
+                logger.debug(f"In original list but not plan: {h}")
                 good = False
         for ph in plan_hz:
             if not np.any(np.isclose(ph, golden_hz)):
-                print(f"In plan but not in original list: {h}")
+                logger.debug(f"In plan but not in original list: {h}")
                 good = False
         if not np.allclose(golden_hz, plan_hz):
-            print("All were not close.")
+            logger.debug("All were not close.")
             good = False
         return good
 
