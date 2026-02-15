@@ -13,6 +13,7 @@ HP8510C Class
 """
 
 import time
+from logging import getLogger
 
 import numpy as np
 import pyvisa
@@ -23,6 +24,7 @@ from skrf.vi.vna import VNA
 
 from .hp8510c_sweep_plan import SweepPlan
 
+logger = getLogger(__name__)
 
 class HP8510C(VNA):
     '''
@@ -210,8 +212,8 @@ class HP8510C(VNA):
         hz = frequency_obj.f
         valid = (self.min_hz<=hz) & (hz<=self.max_hz)
         if not np.all(valid):
-            print("set_frequency called with %i/%i points out of VNA frequency range. Dropping them."
-                  %(np.sum(valid),len(valid)))
+            logger.warning(f"set_frequency called with {np.sum(valid)}/{len(valid)} points out of VNA frequency range. "
+                           "Dropping them.")
             hz = hz[valid]
         self.compound_sweep_plan = SweepPlan.from_hz(hz)
 
@@ -250,8 +252,8 @@ class HP8510C(VNA):
 
     def set_frequency_ramp(self, hz_start, hz_stop, npoint=801):
         ''' Ramp (fast, not synthesized) sweep. Must have standard npoint. '''
-        if npoint not in [51,101,201,401,801]:
-            print("Warning: 8510C only supports NPOINT in [51,101,201,401,801]")
+        if npoint not in (valid_npoints := [51,101,201,401,801]):
+            logger.warning(f"8510C only supports NPOINT in {valid_npoints}")
         self._resource.clear()
         self.write('RAMP; STAR %f; STOP %f; POIN%i;'%(hz_start,hz_stop,npoint))
 
@@ -345,8 +347,7 @@ class HP8510C(VNA):
         try:
             floats = np.frombuffer(float_bin, dtype='>f4').reshape((-1,2))
         except ValueError as e:
-            print(buf)
-            print("len(buf): %i"%(len(buf),))
+            logger.debug(f"Buffer {str(buf)}, len: {len(buf)}")
             raise(e)
         cmplxs = (floats[:,0] + 1j*floats[:,1]).flatten()
         return cmplxs
@@ -459,12 +460,12 @@ class HP8510C(VNA):
         These measure how much signal is reflected from the imperfect switched
         termination on the non-stimulated port.
         '''
-        print('forward')
+        logger.debug('forward')
         self.write('USER2;DRIVPORT1;LOCKA1;NUMEB2;DENOA2;CONV1S;')
         forward = self.one_port()
         forward.name = 'forward switch term'
 
-        print ('reverse')
+        logger.debug('reverse')
         self.write('USER1;DRIVPORT2;LOCKA2;NUMEB1;DENOA1;CONV1S;')
         reverse = self.one_port()
         reverse.name = 'reverse switch term'

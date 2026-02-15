@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 import optparse
 
-import pylab as plb
+import matplotlib.pyplot as plt
 
-try:
-    import skrf as rf
-except (ImportError):
-    print('IMPORT ERROR: skrf is not installed correctly. Check you path.')
+import skrf as rf
 
 
 def main():
@@ -31,21 +28,19 @@ def main():
     if options.n is not None:
         options.n -=1
 
-    plb.figure(figsize=(8,6))
-    ax_1 = plb.subplot(221)
-    ax_2 = plb.subplot(222)
-    ax_3 = plb.subplot(223)
-    ax_4 = plb.subplot(224)  # noqa: F841
-
+    plt.figure(figsize=(8,6))
+    ax_1 = plt.subplot(221)
+    ax_2 = plt.subplot(222)
+    ax_3 = plt.subplot(223)
+    ax_4 = plt.subplot(224)  # noqa: F841
     for touchstone_filename in args:
-        print(touchstone_filename)
         ntwk = rf.Network(touchstone_filename)
         ntwk.plot_s_db(ax = ax_1, m=options.m,n=options.n)
         ntwk.plot_s_deg(ax = ax_2, m=options.m,n=options.n)
         ntwk.plot_s_smith(ax = ax_3,m=options.m,n=options.n )
 
 
-    plb.show()
+    plt.savefig("test.png")
     return (1)
 
 if __name__ == "__main__":
