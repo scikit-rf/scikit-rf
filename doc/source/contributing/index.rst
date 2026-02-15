@@ -37,30 +37,29 @@ Basically, you will:
 
 .. tip:: When making your modification locally, you may need to work into a dedicated development environment in order to not interfere with the scikit-rf package that you have `already installed <../tutorials/Installation.html>`_. You can use for example `anaconda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_. In order for the anaconda environment to find your local scikit-rf repo, use the convenient `conda-develop <https://docs.conda.io/projects/conda-build/en/latest/resources/commands/conda-develop.html>`_ command.
 
-Pre-commit
-++++++++++
+Prek
+++++
 
-You can use pre-commit_ to automate your code quality checks and perform
-automated fixes in **scikit-rf**.
+You can use prek_ to automate your code quality checks and perform automated fixes in **scikit-rf**.
 
-To enable pre-commit on your computer (make sure it is installed first), open a terminal and Navigate to
+To enable prek on your computer (make sure it is installed first), open a terminal and Navigate to
 the :file:`scikit-rf/` directory that contains your clone of scikit-rf's repository, then run:
 
 .. code-block:: bash
 
-    pre-commit install
+    prek install
 
 .. note::
 
-   Once pre-commit has been installed for a repository, pre-commit will
-   run every time you try to commit a change. If any pre-commit checks
-   fail, or if pre-commit changes any files, it will be necessary to
+   Once prek has been installed for a repository, prek will
+   run every time you try to commit a change. If any prek checks
+   fail, or if prek changes any files, it will be necessary to
    redo `git add` on the changed files and `git commit` once
    again.
 
 .. tip::
 
-   To commit a change without running pre-commit, use the `-n` or
+   To commit a change without running prek, use the `-n` or
    `--no-verify` flag with git.
 
 
