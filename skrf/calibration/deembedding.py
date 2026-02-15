@@ -2059,6 +2059,7 @@ class IEEEP370_FD_QM:
         QM: :class:`dict` object
             Dictionary with quality metrics to print
         """
+        # Ignoring T201 for QM printout as it's not a user-facing print statement
         if 'dd' in QM:
             print('Differential mode') # noqa: T201
             for k in QM['dd'].keys():
@@ -2998,6 +2999,7 @@ class IEEEP370_TD_QM:
         QM: :class:`dict` object
             Dictionary with quality metrics to print
         """
+        # Ignoring T201 for QM printout as it's not a user-facing print statement
         if 'dd' in QM:
             print('Differential mode') # noqa: T201
             for k in QM['dd'].keys():

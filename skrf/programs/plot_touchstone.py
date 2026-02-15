@@ -34,7 +34,6 @@ def main():
     ax_3 = plt.subplot(223)
     ax_4 = plt.subplot(224)  # noqa: F841
     for touchstone_filename in args:
-        print(touchstone_filename)  # noqa: T201
         ntwk = rf.Network(touchstone_filename)
         ntwk.plot_s_db(ax = ax_1, m=options.m,n=options.n)
         ntwk.plot_s_deg(ax = ax_2, m=options.m,n=options.n)
