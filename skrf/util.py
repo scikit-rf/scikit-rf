@@ -716,7 +716,8 @@ def has_duplicate_value(value: Any, values: Iterable, index: int) -> bool | int:
     >>> rf.has_duplicate_value(3, [1, 2, 0, 3, 0], 0)  # -> 3
     >>> rf.has_duplicate_value(3, [1, 2, 0, 3, 0], 3)  # -> False
     """
-    warnings.warn("has_duplicate_value is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
+    warnings.warn("has_duplicate_value is deprecated and will be removed in a future version.",
+                  FutureWarning, stacklevel=2)
 
     for i, val in enumerate(values):
         if i == index:
