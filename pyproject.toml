@@ -42,7 +42,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "prek==0.3.2",
+  "prek >= 0.3.2",
   { include-group = "docs" },
   { include-group = "test" },
   { include-group = "testspice" },
