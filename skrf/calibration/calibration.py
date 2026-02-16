@@ -113,6 +113,7 @@ import warnings
 from collections import OrderedDict, defaultdict
 from copy import copy
 from itertools import combinations
+from logging import getLogger
 from numbers import Number
 from textwrap import dedent
 from typing import Literal
@@ -142,6 +143,8 @@ from ..network import (
 )
 from ..networkSet import NetworkSet
 from ..plotting import axes_kwarg
+
+logger = getLogger(__name__)
 
 ComplexArray = np.typing.NDArray[complex]
 
@@ -310,15 +313,14 @@ class Calibration:
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
             if self.ideals[k].frequency != self.measured[0].frequency:
-                print(dedent(
-                    f"""Warning: Frequency information doesn't match on ideals[{k}],
-                    attempting to interpolate the ideal[{k}] Network .."""))
+                logger.warning(
+                    f"Frequency information doesn't match on ideals[{k}], "
+                    f"attempting to interpolate the ideal[{k}] Network.")
                 try:
                     # try to resample our ideals network to match
                     # the measurement frequency
                     self.ideals[k].interpolate_self(\
                         self.measured[0].frequency)
-                    print('Success')
 
                 except Exception as err:
                     raise(IndexError(f'Failed to interpolate. Check frequency of ideals[{k}].')) from err

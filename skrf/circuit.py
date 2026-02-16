@@ -1652,15 +1652,15 @@ class Circuit:
             # Calculate the ports' output current through the output wave
             for j in range(cnx_len):
                 in_z0 = z0_segment[:, j]
-                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
-                tau = (2 * out_z0) / (out_z0 + in_z0)
+                out_z0 = np.inf if cnx_len == 1 else 1 / (tot_shunt_z0 - 1 / in_z0)
+                tau = 2.0 if cnx_len == 1 else (2 * out_z0) / (out_z0 + in_z0)
                 Ij[:, j] = (b[:, i + j] / np.sqrt(in_z0)) * tau
 
             # The current of each port is different in the same node
             # The ports' current should take into account the output current of each port in the node
             for j in range(cnx_len):
                 in_z0 = z0_segment[:, j]
-                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                out_z0 = np.inf if cnx_len == 1 else  1 / (tot_shunt_z0 - 1 / in_z0)
                 Itmp = np.zeros_like(Is[:, i + j])
                 for k in range(cnx_len):
                     tmp_z0 = z0_segment[:, k]
@@ -1708,8 +1708,8 @@ class Circuit:
             # The voltage of each port in the same node is consistent
             for j in range(cnx_len):
                 in_z0 = z0_segment[:, j]
-                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
-                tau = (2 * out_z0) / (out_z0 + in_z0)
+                out_z0 = np.inf if cnx_len == 1 else 1 / (tot_shunt_z0 - 1 / in_z0)
+                tau = 2.0 if cnx_len == 1 else (2 * out_z0) / (out_z0 + in_z0)
                 Vk += (b[:, i + j] * np.sqrt(in_z0)) * tau
 
             Vs[:, i : i + cnx_len] = Vk[:, None]

@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import zipfile
 from io import BytesIO
+from logging import getLogger
 from numbers import Number
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TextIO
@@ -66,6 +67,8 @@ if TYPE_CHECKING:
     from .constants import NumberLike, PrimaryPropertiesT
 
 from . import plotting as skrf_plt
+
+logger = getLogger(__name__)
 
 
 class NetworkSet:
@@ -1560,7 +1563,7 @@ def getset(ntwk_dict, s, *args, **kwargs):
     if len(ntwk_list) > 0:
         return NetworkSet( ntwk_list,*args, **kwargs)
     else:
-        print(f'Warning: No keys in ntwk_dict contain \'{s}\'')
+        logger.warning(f"No keys in ntwk_dict contain '{s}'")
         return None
 
 

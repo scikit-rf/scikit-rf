@@ -56,6 +56,7 @@ import os
 from collections.abc import Callable
 from contextlib import suppress
 from functools import wraps
+from logging import getLogger
 from numbers import Number
 from typing import TYPE_CHECKING
 
@@ -74,6 +75,8 @@ import numpy as np
 
 from . import mathFunctions as mf
 from .util import now_string_2_dt
+
+logger = getLogger(__name__)
 
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
 SI_CONVERSION = {key: 10**((8-i)*3) for i, key in enumerate(SI_PREFIXES_ASCII)}
@@ -798,7 +801,7 @@ def shade_bands(edges: NumberLike, y_range: tuple | None = None,
 
 
 def save_all_figs(dir: str = './', format: None | list[str] = None,
-                  replace_spaces: bool = True, echo: bool = True):
+                  replace_spaces: bool = True, echo: bool| None = None):
     """
     Save all open Figures to disk.
 
@@ -817,6 +820,10 @@ def save_all_figs(dir: str = './', format: None | list[str] = None,
     """
     import matplotlib.pyplot as plt
 
+    if echo is not None:
+        warnings.warn("`echo` parameter is deprecated and will be removed in future versions. "
+                      "Use logging instead.", FutureWarning, stacklevel=2)
+
     if dir[-1] != '/':
         dir = dir + '/'
     for fignum in plt.get_fignums():
@@ -827,13 +834,13 @@ def save_all_figs(dir: str = './', format: None | list[str] = None,
             fileName = 'unnamedPlot'
         if format is None:
             plt.savefig(dir+fileName)
-            if echo:
-                print(dir+fileName)
+            logger.debug(f"Saved figure {dir+fileName}")
         else:
             for fmt in format:
-                plt.savefig(dir+fileName+'.'+fmt, format=fmt)
-                if echo:
-                    print(dir+fileName+'.'+fmt)
+                path = dir+fileName+'.'+fmt
+                plt.savefig(path, format=fmt)
+                logger.debug(f"Saved figure {path}")
+
 saf = save_all_figs
 
 @axes_kwarg
@@ -1317,8 +1324,6 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
             fname = os.path.join(dir_, 'out_%.5i' % idx + '.png')
             plt.savefig(fname)
 
-    if savefigs:
-        print('\n\n')
     if was_interactive:
         plt.ion()
 
