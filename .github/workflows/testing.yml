@@ -32,7 +32,7 @@ jobs:
     - name: Test the code, tutorials and examples
       if: ${{ always() }}
       run: |
-        uv pip install -e .[test,visa,netw,xlsx,plot,docs,testspice] --compile -vvv
+        uv pip install -e .[visa,netw,xlsx,plot] --group dev --compile -vvv
         echo "Finished installing dependencies, now running tests"
         . .venv/bin/activate
         echo "Running tests with Python ${{ matrix.python-version }}"
