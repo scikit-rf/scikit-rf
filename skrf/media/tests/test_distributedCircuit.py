@@ -1,4 +1,5 @@
 import os
+import tempfile
 import unittest
 
 import numpy as np
@@ -60,16 +61,8 @@ class MediaTestCase(unittest.TestCase):
 
 
     def test_write_csv(self):
-        fname = os.path.join(self.files_dir,\
-                'out.csv')
-        self.a_media.write_csv(fname)
-        os.remove(fname)
-
-
-    def test_from_csv(self):
-        fname = os.path.join(self.files_dir,\
-                'out.csv')
-        self.a_media.write_csv(fname)
-        a_media = DistributedCircuit.from_csv(fname)
-        self.assertEqual(a_media,self.a_media)
-        os.remove(fname)
+        with tempfile.TemporaryDirectory() as tempdir:
+             fname = os.path.join(tempdir, 'out.csv')
+             self.a_media.write_csv(fname)
+             a_media = DistributedCircuit.from_csv(fname)
+             self.assertEqual(a_media,self.a_media)

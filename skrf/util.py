@@ -293,6 +293,7 @@ def git_version(modname: str) -> str:
         output of 'git describe'
 
     """
+    warnings.warn("git_version is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
     mod = __import__(modname)
     mod_dir = os.path.split(mod.__file__)[0]
     p = Popen(['git', 'describe'], stdout=PIPE, stderr=PIPE, cwd=mod_dir)
@@ -351,7 +352,7 @@ def dict_2_recarray(d: dict, delim: str, dtype: list[tuple]) -> np.ndarray:
            1-Port Network: 'b1,0.0,3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
            1-Port Network: 'a1,0.0,-3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
     """
-
+    warnings.warn("dict_2_recarray is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
     split_keys = [tuple(k.split(delim)+[d[k]]) for k in d.keys()]
     x = np.array(split_keys, dtype=dtype+[('values',object)])
     return x
@@ -382,6 +383,7 @@ def findReplace(directory: str, find: str, replace: str, file_pattern: str):
     ----------
     .. [1] http://stackoverflow.com/questions/4205854/python-way-to-recursively-find-and-replace-string-in-text-files
     """
+    warnings.warn("findReplace is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
     for path, _dirs, files in os.walk(os.path.abspath(directory)):
         for filename in fnmatch.filter(files, file_pattern):
             filepath = os.path.join(path, filename)
@@ -437,6 +439,7 @@ class HomoList(collections.abc.Sequence):
 
 
     def __init__(self, list_):
+        warnings.warn("HomoList is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
         self.store = list(list_)
 
     def __eq__(self, value):
@@ -532,6 +535,7 @@ class HomoDict(collections.abc.MutableMapping):
     >>> h[h.prop==value].func()
     """
     def __init__(self, dict_):
+        warnings.warn("HomoDict is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
         self.store = dict(dict_)
 
     def __eq__(self, value):
@@ -651,6 +655,8 @@ def has_duplicate_value(value: Any, values: Iterable, index: int) -> bool | int:
     >>> rf.has_duplicate_value(3, [1, 2, 0, 3, 0], 0)  # -> 3
     >>> rf.has_duplicate_value(3, [1, 2, 0, 3, 0], 3)  # -> False
     """
+    warnings.warn("has_duplicate_value is deprecated and will be removed in a future version.",
+                  FutureWarning, stacklevel=2)
 
     for i, val in enumerate(values):
         if i == index:
@@ -792,6 +798,8 @@ class ProgressBar:
         label : str, optional
             Progress bar label, by default "iterations"
         """
+
+        warnings.warn("ProgressBar is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
         self.iterations = iterations
         self.label = label
         self.prog_bar = '[]'
