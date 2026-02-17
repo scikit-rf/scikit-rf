@@ -15,7 +15,6 @@ import pytest
 from scipy import signal
 
 import skrf as rf
-from skrf import setup_pylab
 from skrf.circuit import Circuit
 from skrf.constants import S_DEF_HFSS_DEFAULT, S_DEFINITIONS
 from skrf.frequency import Frequency, InvalidFrequencyWarning
@@ -83,7 +82,6 @@ class NetworkTestCase(unittest.TestCase):
         this also tests the ability to read touchstone files
         without an error
         """
-        setup_pylab()
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
         self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
@@ -452,16 +450,15 @@ class NetworkTestCase(unittest.TestCase):
         rf.Network.zipped_touchstone(fname, zipfile.ZipFile(zippath))
 
     def test_open_saved_touchstone(self):
-        self.ntwk1.write_touchstone('ntwk1Saved',dir=self.test_dir)
-        ntwk1Saved = rf.Network(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
-        self.assertEqual(self.ntwk1, ntwk1Saved)
+        with tempfile.TemporaryDirectory() as tempdir:
+            self.ntwk1.write_touchstone('ntwk1Saved1',dir=tempdir)
+            ntwk1Saved = rf.Network(os.path.join(tempdir, 'ntwk1Saved1.s2p'))
+            self.assertEqual(self.ntwk1, ntwk1Saved)
 
-        # Test that it still works with Pathlib objects
-        self.ntwk1.write_touchstone(Path('ntwk1Saved'),dir=Path(self.test_dir))
-        ntwk1Saved = rf.Network(Path(os.path.join(self.test_dir, 'ntwk1Saved.s2p')))
-        self.assertEqual(self.ntwk1, ntwk1Saved)
-
-        os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
+            # Test that it still works with Pathlib objects
+            self.ntwk1.write_touchstone(Path(tempdir) / 'ntwk1Saved2')
+            ntwk1Saved = rf.Network(Path(tempdir) / 'ntwk1Saved2.s2p')
+            self.assertEqual(self.ntwk1, ntwk1Saved)
 
     def test_write_touchstone(self):
         ports = 2

@@ -183,26 +183,29 @@ Network utilities
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any, Literal, NoReturn, TextIO, get_args
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence, Sized
+
+    from .plotting import Axes
+
 import io
 import os
 import re
 import warnings
 import zipfile
-from collections.abc import Callable, Sequence, Sized
 from copy import deepcopy as copy
 from functools import reduce
 from itertools import product
 from numbers import Number
 from pathlib import Path
 from pickle import UnpicklingError
-from typing import Any, Literal, NoReturn, TextIO, get_args
 
 import numpy as np
+import scipy
 from numpy import gradient, ndarray, shape
 from numpy.linalg import inv as npy_inv
-from scipy import stats  # for Network.add_noise_*, and Network.windowed
-from scipy.integrate import cumulative_trapezoid
-from scipy.interpolate import interp1d  # for Network.interpolate()
 
 from . import __version__
 from . import mathFunctions as mf
@@ -225,8 +228,9 @@ from .constants import (
     SparamFormatT,
 )
 from .frequency import Frequency
+from .plotting import axes_kwarg
 from .time import get_window, time_gate
-from .util import Axes, axes_kwarg, copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
+from .util import copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
 
 
 class Network:
@@ -1532,7 +1536,7 @@ class Network:
             raise ValueError('network does not have noise')
 
         if self.noise_freq.f.size > 1:
-            noise_real = interp1d(
+            noise_real = scipy.interpolate.interp1d(
                 self.noise_freq.f,
                 self.noise.real,
                 axis=0,
@@ -1540,7 +1544,7 @@ class Network:
                 bounds_error=False,
                 fill_value=complex(self.noise_fill_value).real
             )
-            noise_imag = interp1d(
+            noise_imag = scipy.interpolate.interp1d(
                 self.noise_freq.f,
                 self.noise.imag,
                 axis=0,
@@ -2958,7 +2962,7 @@ class Network:
             is_rational = True
         else:
             kwargs["kind"] = kind if kind is not None else "linear"
-            f_interp = interp1d
+            f_interp = scipy.interpolate.interp1d
 
         # interpret input
         if isinstance(freq_or_n, Frequency):
@@ -3137,8 +3141,8 @@ class Network:
             f = result.frequency.f[:2]
             rad = np.unwrap(np.angle(x), axis=0)
             mag = np.abs(x)
-            interp_rad = interp1d(f, rad, axis=0, fill_value='extrapolate')
-            interp_mag = interp1d(f, mag, axis=0, fill_value='extrapolate')
+            interp_rad = scipy.interpolate.interp1d(f, rad, axis=0, fill_value='extrapolate')
+            interp_mag = scipy.interpolate.interp1d(f, mag, axis=0, fill_value='extrapolate')
             dc_sparam = interp_mag(0) * np.exp(1j * interp_rad(0))
             # Extrapolate other points and insert
             fstep = self.frequency.f[-1]/(points-1)
@@ -3703,9 +3707,8 @@ class Network:
                 standard deviation of phase [in degrees]
 
         """
-
-        phase_rv = stats.norm(loc=0, scale=phase_dev).rvs(size=self.s.shape)
-        mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size=self.s.shape)
+        phase_rv = scipy.stats.norm(loc=0, scale=phase_dev).rvs(size=self.s.shape)
+        mag_rv = scipy.stats.norm(loc=0, scale=mag_dev).rvs(size=self.s.shape)
 
         phase = (self.s_deg + phase_rv)
         mag = self.s_mag + mag_rv
@@ -3724,8 +3727,8 @@ class Network:
                 standard deviation of phase [in degrees]
 
         """
-        phase_rv = stats.norm(loc=0, scale=phase_dev).rvs(size=self.s[0].shape)
-        mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size=self.s[0].shape)
+        phase_rv = scipy.stats.norm(loc=0, scale=phase_dev).rvs(size=self.s[0].shape)
+        mag_rv = scipy.stats.norm(loc=0, scale=mag_dev).rvs(size=self.s[0].shape)
 
         phase = (self.s_deg + phase_rv)
         mag = self.s_mag + mag_rv
@@ -3746,9 +3749,9 @@ class Network:
 
 
         """
-        phase_rv = stats.norm(loc=0, scale=phase_dev).rvs( \
+        phase_rv = scipy.stats.norm(loc=0, scale=phase_dev).rvs( \
             size=self.s.shape)
-        mag_rv = stats.norm(loc=1, scale=mag_dev).rvs( \
+        mag_rv = scipy.stats.norm(loc=1, scale=mag_dev).rvs( \
             size=self.s.shape)
         self.s = mag_rv * np.exp(1j * np.pi / 180. * phase_rv) * self.s
 
@@ -4386,7 +4389,7 @@ class Network:
             )
 
         t, y = self.impulse_response(window=window, n=n, pad=pad, bandpass=False, squeeze=squeeze)
-        return t, cumulative_trapezoid(y, initial=0, axis=0)
+        return t, scipy.integrate.cumulative_trapezoid(y, initial=0, axis=0)
 
     # Network Active s/z/y/vswr parameters
     def s_active(self, a: np.ndarray) -> np.ndarray:
@@ -5042,19 +5045,19 @@ for func_name, (_func, prop_name, conversion) in Network._generated_functions().
 
             self.attribute(prop_name, conversion), doc=doc))
 
-    for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
-        plotfunc = partial_with_docs(Network.plot_attribute, prop_name, conversion)
-        plotfunc.__doc__ = Network._plot_attribute_doc.format(
-            attribute=prop_name,
-            conversion=conversion,
-            x_axis="time" if "time" in conversion else "frequency")
+for func_name, (_func, prop_name, conversion) in Network._generated_functions().items():
+    plotfunc = partial_with_docs(Network.plot_attribute, prop_name, conversion)
+    plotfunc.__doc__ = Network._plot_attribute_doc.format(
+        attribute=prop_name,
+        conversion=conversion,
+        x_axis="time" if "time" in conversion else "frequency")
 
-        setattr(Network, f"plot_{func_name}", plotfunc)
+    setattr(Network, f"plot_{func_name}", plotfunc)
 
 
-    for prop_name in Network.PRIMARY_PROPERTIES:
-        setattr(Network, f"plot_{prop_name}_polar", partial_with_docs(Network.plot_prop_polar, prop_name))
-        setattr(Network, f"plot_{prop_name}_complex", partial_with_docs(Network.plot_prop_complex, prop_name))
+for prop_name in Network.PRIMARY_PROPERTIES:
+    setattr(Network, f"plot_{prop_name}_polar", partial_with_docs(Network.plot_prop_polar, prop_name))
+    setattr(Network, f"plot_{prop_name}_complex", partial_with_docs(Network.plot_prop_complex, prop_name))
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
 PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
@@ -5253,14 +5256,14 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
       # interpolate abcd into the set of noise frequencies
       if ntwkA.deembed:
           if ntwkA.frequency.f.size > 1:
-              a_real = interp1d(
+              a_real = scipy.interpolate.interp1d(
                   ntwkA.frequency.f,
                   ntwkA.inv.a.real,
                   axis=0,
                   bounds_error=False,
                   kind=ntwkA.noise_interp_kind
               )
-              a_imag = interp1d(
+              a_imag = scipy.interpolate.interp1d(
                   ntwkA.frequency.f,
                   ntwkA.inv.a.imag,
                   axis=0,
@@ -5278,14 +5281,14 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
           cC = np.matmul(a, np.matmul(cB -cA, a_H))
       else:
           if ntwkA.frequency.f.size > 1:
-              a_real = interp1d(
+              a_real = scipy.interpolate.interp1d(
                   ntwkA.frequency.f,
                   ntwkA.a.real,
                   axis=0,
                   bounds_error=False,
                   kind=ntwkA.noise_interp_kind
               )
-              a_imag = interp1d(
+              a_imag = scipy.interpolate.interp1d(
                   ntwkA.frequency.f,
                   ntwkA.a.imag,
                   axis=0,

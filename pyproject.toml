@@ -66,6 +66,7 @@ test = [
     "pytest-xdist >= 3.5.0",
     "coverage >=6.0",
     "pytest-cov >=4.0",
+    "pytest-timeout"
 ]
 testspice = [
     "pyspice >= 1.5",

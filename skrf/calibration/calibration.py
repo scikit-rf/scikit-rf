@@ -101,8 +101,12 @@ PNA interaction
    convert_pnacoefs_2_skrf
 
 """
-
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .plotting import Axes
 
 import json
 import warnings
@@ -116,9 +120,9 @@ from typing import Literal
 from warnings import warn
 
 import numpy as np
+import scipy
 from numpy import angle, einsum, exp, imag, invert, linalg, ones, poly1d, real, sqrt, zeros
 from numpy.linalg import det
-from scipy.optimize import least_squares
 
 from .. import __version__ as skrf__version__
 from .. import util
@@ -138,6 +142,7 @@ from ..network import (
     zipfile,
 )
 from ..networkSet import NetworkSet
+from ..plotting import axes_kwarg
 
 logger = getLogger(__name__)
 
@@ -1000,8 +1005,8 @@ class Calibration:
 
         write(file,self, *args, **kwargs)
 
-    @util.axes_kwarg
-    def plot_calibration_errors(self, *args, ax: util.Axes = None, **kwargs):
+    @axes_kwarg
+    def plot_calibration_errors(self, *args, ax: Axes = None, **kwargs):
         """
         Plot biased, unbiased and total error in dB scaled.
 
@@ -4718,7 +4723,9 @@ class LRRM(EightTerm):
             if init_guess[li] < np.mean(min_l(l0)**2):
                 l0 = best_guess
 
-            sol = least_squares(min_l, l0, method="lm", diff_step=np.sqrt(np.finfo(np.float64).resolution))
+            sol = scipy.optimize.least_squares(
+                min_l, l0, method="lm", diff_step=np.sqrt(np.finfo(np.float64).resolution)
+            )
             match_l = sol.x * np.ones(match_l.shape)
             match_c = zeros
 
@@ -4771,7 +4778,7 @@ class LRRM(EightTerm):
             l0 = best_guess[0]
             c0 = best_guess[1]
 
-            sol = least_squares(min_lc, [l0, c0], method='lm')
+            sol = scipy.optimize.least_squares(min_lc, [l0, c0], method='lm')
             match_l = sol.x[0] * np.ones(match_l.shape)
             match_c = sol.x[1] * np.ones(match_l.shape)
 

@@ -32,9 +32,11 @@ jobs:
     - name: Test the code, tutorials and examples
       if: ${{ always() }}
       run: |
-        uv pip install -e .[visa,netw,xlsx,plot] --group dev --compile
+        uv pip install -e .[visa,netw,xlsx,plot] --group dev --compile -vvv
+        echo "Finished installing dependencies, now running tests"
         . .venv/bin/activate
-        python -m pytest -n auto --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }}
+        echo "Running tests with Python ${{ matrix.python-version }}"
+        python -m pytest -n auto --timeout=60 -v --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }} --dist loadscope
 
     - name: Upload Test Results
       if: always()

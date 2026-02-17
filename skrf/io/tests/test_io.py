@@ -1,4 +1,5 @@
 import os
+import tempfile
 import unittest
 
 import numpy as np
@@ -15,7 +16,6 @@ class IOTestCase(unittest.TestCase):
         """
         """
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
-        self.pickle_file = os.path.join(self.test_dir, 'pickled.p')
         self.hfss_oneport_file = os.path.join(self.test_dir, 'hfss_oneport.s1p')
         self.hfss_twoport_file = os.path.join(self.test_dir, 'hfss_twoport.s2p')
         self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
@@ -34,10 +34,9 @@ class IOTestCase(unittest.TestCase):
         function to test write/read equivalence for an obj which has
         __eq__ defined
         """
-        rf.io.write(self.pickle_file,obj)
-        self.assertEqual(rf.io.read(self.pickle_file), obj)
-       # os.remove(self.pickle_file)
-
+        with tempfile.TemporaryDirectory() as tempdir:
+             rf.io.write(os.path.join(tempdir, 'pickle.p'), obj)
+             self.assertEqual(rf.io.read(os.path.join(tempdir, 'pickle.p')), obj)
 
 
     def test_read_all(self):
@@ -50,15 +49,14 @@ class IOTestCase(unittest.TestCase):
         a=self.ntwk1
         b=self.ntwk2
         c=self.ntwk3
-        rf.io.general.save_sesh(locals(),self.pickle_file )
-        #os.remove(self.pickle_file)
+        with tempfile.TemporaryDirectory() as tempdir:
+            rf.io.general.save_sesh(locals(), os.path.join(tempdir, 'pickle.p'))
 
     def test_write_all_dict(self):
         d = dict(a=self.ntwk1, b=self.ntwk2,   c=self.ntwk3)
-        rf.io.write_all(d, dir =self.test_dir )
-        os.remove(os.path.join(self.test_dir, 'a.ntwk'))
-        os.remove(os.path.join(self.test_dir, 'b.ntwk'))
-        os.remove(os.path.join(self.test_dir, 'c.ntwk'))
+        with tempfile.TemporaryDirectory() as tempdir:
+            rf.io.write_all(d, dir=tempdir)
+
 
     def test_readwrite_network(self):
         self.read_write(self.ntwk1)
@@ -73,10 +71,10 @@ class IOTestCase(unittest.TestCase):
         This doesn't test equality between  read/write, because there is no
         __eq__ test for NetworkSet. it only tests for other errors
         """
-        rf.io.write(self.pickle_file,rf.networkSet.NetworkSet([self.ntwk1, self.ntwk2]))
-        rf.io.read(self.pickle_file)
+        with tempfile.TemporaryDirectory() as tempdir:
+            rf.io.write(os.path.join(tempdir, 'pickle.p'), rf.networkSet.NetworkSet([self.ntwk1, self.ntwk2]))
+            rf.io.read(os.path.join(tempdir, 'pickle.p'))
         #self.assertEqual(rf.io.read(self.pickle_file), rf.networkSet.NetworkSet([self.ntwk1, self.ntwk2])
-        #os.remove(self.pickle_file)
 
     def test_readwrite_frequency(self):
         freq = rf.Frequency(1,10,10,'ghz')
@@ -98,13 +96,12 @@ class IOTestCase(unittest.TestCase):
                 )
 
         original = cal
-        rf.io.write(self.pickle_file, original)
-        unpickled = rf.io.read(self.pickle_file)
+        with tempfile.TemporaryDirectory() as tempdir:
+            rf.io.write(os.path.join(tempdir, 'pickle.p'), original)
+            unpickled = rf.io.read(os.path.join(tempdir, 'pickle.p'))
         # TODO: this test should be more extensive
         self.assertEqual(original.ideals, unpickled.ideals)
         self.assertEqual(original.measured, unpickled.measured)
-
-        os.remove(self.pickle_file)
 
     def test_readwrite_media(self):
         a_media = rf.media.DefinedGammaZ0(

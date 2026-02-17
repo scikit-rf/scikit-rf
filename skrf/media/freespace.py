@@ -19,8 +19,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from numpy import ones, real, sqrt
-from scipy.constants import epsilon_0, mu_0
 
+from .. import constants as _const
 from ..constants import NumberLike
 from ..data import materials
 from .media import Media
@@ -150,7 +150,7 @@ class Freespace(Media):
             ep_r = real(self.ep_r)*(1 - 1j*self.ep_loss_tan)
         else:
             ep_r = self.ep_r
-        return ep_r*epsilon_0
+        return ep_r*_const.epsilon_0
 
     @property
     def mu(self) -> NumberLike:
@@ -180,7 +180,7 @@ class Freespace(Media):
             mu_r = real(self.mu_r)*(1 -1j*self.mu_loss_tan)
         else:
             mu_r = self.mu_r
-        return mu_r*mu_0
+        return mu_r*_const.mu_0
 
 
     @classmethod
@@ -211,8 +211,8 @@ class Freespace(Media):
 
         """
         w = dc.frequency.w
-        z= dc.Z/(w*mu_0)
-        y= dc.Y/(w*epsilon_0)
+        z= dc.Z/(w*_const.mu_0)
+        y= dc.Y/(w*_const.epsilon_0)
 
 
         kw={}

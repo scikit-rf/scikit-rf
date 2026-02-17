@@ -65,23 +65,13 @@ from datetime import datetime
 from functools import wraps
 from pathlib import Path
 from subprocess import PIPE, Popen
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from .constants import Number
+if TYPE_CHECKING:
+    from .constants import Number
 
-try:
-    import matplotlib.pyplot as plt
-    from matplotlib.axes import Axes
-    from matplotlib.figure import Figure
-except ImportError:
-    Figure = TypeVar("Figure")
-    Axes = TypeVar("Axes")
-    pass
-
-def plotting_available() -> bool:
-    return "matplotlib" in sys.modules
 
 def partial_with_docs(func, *args1, **kwargs1):
     @wraps(func)
@@ -89,28 +79,6 @@ def partial_with_docs(func, *args1, **kwargs1):
         return func(self, *args1, *args2, **kwargs1, **kwargs2)
     return method
 
-def axes_kwarg(func):
-    """
-    This decorator checks if a :class:`matplotlib.axes.Axes` object is passed,
-    if not the current axis will be gathered through :func:`plt.gca`.
-
-    Raises
-    ------
-    RuntimeError
-        When trying to run the decorated function without matplotlib
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        ax = kwargs.pop('ax', None)
-        try:
-            if ax is None:
-                ax = plt.gca()
-        except NameError as err:
-            raise RuntimeError("Plotting is not available") from err
-        func(*args, ax=ax, **kwargs)
-
-    return wrapper
 
 def copy_doc(copy_func: Callable) -> Callable:
     """Use Example: copy_doc(self.copy_func)(self.func) or used as deco"""
@@ -119,35 +87,6 @@ def copy_doc(copy_func: Callable) -> Callable:
         return func
     return wrapper
 
-def figure(*args, **kwargs) -> Figure:
-    """
-    Wraps the matplotlib figure call and raises if not available.
-
-    Raises
-    ------
-    RuntimeError
-        When trying to get subplots without matplotlib installed.
-    """
-
-    try:
-        return plt.figure(*args, **kwargs)
-    except NameError as err:
-        raise RuntimeError("Plotting is not available") from err
-
-def subplots(*args, **kwargs) -> tuple[Figure, np.ndarray]:
-    """
-    Wraps the matplotlib subplots call and raises if not available.
-
-    Raises
-    ------
-    RuntimeError
-        When trying to get subplots without matplotlib installed.
-    """
-
-    try:
-        return plt.subplots(*args, **kwargs)
-    except NameError as err:
-        raise RuntimeError("Plotting is not available") from err
 
 def now_string() -> str:
     """
@@ -284,7 +223,7 @@ def get_fid(file, *args, **kwargs):
     fid : file object
 
     """
-    if isinstance(file, (str, Path)):
+    if isinstance(file, str | Path):
         return open(file, *args, **kwargs)
     else:
         return file
@@ -354,6 +293,7 @@ def git_version(modname: str) -> str:
         output of 'git describe'
 
     """
+    warnings.warn("git_version is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
     mod = __import__(modname)
     mod_dir = os.path.split(mod.__file__)[0]
     p = Popen(['git', 'describe'], stdout=PIPE, stderr=PIPE, cwd=mod_dir)
@@ -412,7 +352,7 @@ def dict_2_recarray(d: dict, delim: str, dtype: list[tuple]) -> np.ndarray:
            1-Port Network: 'b1,0.0,3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
            1-Port Network: 'a1,0.0,-3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
     """
-
+    warnings.warn("dict_2_recarray is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
     split_keys = [tuple(k.split(delim)+[d[k]]) for k in d.keys()]
     x = np.array(split_keys, dtype=dtype+[('values',object)])
     return x
@@ -443,6 +383,7 @@ def findReplace(directory: str, find: str, replace: str, file_pattern: str):
     ----------
     .. [1] http://stackoverflow.com/questions/4205854/python-way-to-recursively-find-and-replace-string-in-text-files
     """
+    warnings.warn("findReplace is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
     for path, _dirs, files in os.walk(os.path.abspath(directory)):
         for filename in fnmatch.filter(files, file_pattern):
             filepath = os.path.join(path, filename)
@@ -498,6 +439,7 @@ class HomoList(collections.abc.Sequence):
 
 
     def __init__(self, list_):
+        warnings.warn("HomoList is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
         self.store = list(list_)
 
     def __eq__(self, value):
@@ -593,6 +535,7 @@ class HomoDict(collections.abc.MutableMapping):
     >>> h[h.prop==value].func()
     """
     def __init__(self, dict_):
+        warnings.warn("HomoDict is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
         self.store = dict(dict_)
 
     def __eq__(self, value):
@@ -712,6 +655,8 @@ def has_duplicate_value(value: Any, values: Iterable, index: int) -> bool | int:
     >>> rf.has_duplicate_value(3, [1, 2, 0, 3, 0], 0)  # -> 3
     >>> rf.has_duplicate_value(3, [1, 2, 0, 3, 0], 3)  # -> False
     """
+    warnings.warn("has_duplicate_value is deprecated and will be removed in a future version.",
+                  FutureWarning, stacklevel=2)
 
     for i, val in enumerate(values):
         if i == index:
@@ -853,6 +798,8 @@ class ProgressBar:
         label : str, optional
             Progress bar label, by default "iterations"
         """
+
+        warnings.warn("ProgressBar is deprecated and will be removed in a future version.", FutureWarning, stacklevel=2)
         self.iterations = iterations
         self.label = label
         self.prog_bar = '[]'

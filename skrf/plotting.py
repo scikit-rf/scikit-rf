@@ -53,38 +53,105 @@ Convenience plotting functions
 from __future__ import annotations
 
 import os
-import warnings
 from collections.abc import Callable
+from contextlib import suppress
+from functools import wraps
 from logging import getLogger
 from numbers import Number
 from typing import TYPE_CHECKING
 
-try:
-    import matplotlib as mpl
-    import matplotlib.pyplot as plt
-    import matplotlib.tri as tri
-    from matplotlib import rcParams, ticker
-    from matplotlib.dates import date2num
-    from matplotlib.patches import Circle  # for drawing smith chart
-    from matplotlib.pyplot import quiver
-except ImportError:
-    pass
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+
+    from .constants import NumberLike, PrimaryPropertiesT
+    from .frequency import Frequency
+    from .network import Network
+    from .networkSet import NetworkSet
+
+import warnings
 
 import numpy as np
 
 from . import mathFunctions as mf
-from .constants import NumberLike, PrimaryPropertiesT
-from .frequency import Frequency
-from .util import axes_kwarg, now_string_2_dt
+from .util import now_string_2_dt
 
 logger = getLogger(__name__)
-if TYPE_CHECKING:
-    from . import Network, NetworkSet
 
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
 SI_CONVERSION = {key: 10**((8-i)*3) for i, key in enumerate(SI_PREFIXES_ASCII)}
 
+
+def plotting_available() -> bool:
+    result = False
+    with suppress(ImportError):
+        import matplotlib  # noqa: F401
+        result = True
+    return result
+
+
+def axes_kwarg(func):
+    """
+    This decorator checks if a :class:`matplotlib.axes.Axes` object is passed,
+    if not the current axis will be gathered through :func:`plt.gca`.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to run the decorated function without matplotlib
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            import matplotlib.pyplot as plt
+            ax = kwargs.pop('ax', None)
+            if ax is None:
+                ax = plt.gca()
+        except ImportError as err:
+            raise RuntimeError("Plotting is not available") from err
+        func(*args, ax=ax, **kwargs)
+
+    return wrapper
+
+
+def figure(*args, **kwargs) -> Figure:
+    """
+    Wraps the matplotlib figure call and raises if not available.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to get subplots without matplotlib installed.
+    """
+
+    try:
+        import matplotlib.pyplot as plt
+        return plt.figure(*args, **kwargs)
+    except ImportError as err:
+        raise RuntimeError("Plotting is not available") from err
+
+
+def subplots(*args, **kwargs) -> tuple[Figure, np.ndarray]:
+    """
+    Wraps the matplotlib subplots call and raises if not available.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to get subplots without matplotlib installed.
+    """
+
+    try:
+        import matplotlib.pyplot as plt
+        return plt.subplots(*args, **kwargs)
+    except ImportError as err:
+        raise RuntimeError("Plotting is not available") from err
+
+
 def _get_label_str(netw: Network, param: str, m: int, n: int) -> str:
+    import matplotlib.pyplot as plt
+
     label_string = ""
     if netw.name is not None:
         label_string += f"{netw.name}, "
@@ -96,7 +163,7 @@ def _get_label_str(netw: Network, param: str, m: int, n: int) -> str:
     return label_string
 
 
-def scale_frequency_ticks(ax: plt.Axes, funit: str):
+def scale_frequency_ticks(ax: Axes, funit: str):
     """
     Scale frequency axis ticks.
 
@@ -112,6 +179,8 @@ def scale_frequency_ticks(ax: plt.Axes, funit: str):
     ValueError
         if invalid unit is passed
     """
+    from matplotlib import ticker
+
     if funit.lower() == "hz":
         prefix = " "
         scale = 1
@@ -125,7 +194,7 @@ def scale_frequency_ticks(ax: plt.Axes, funit: str):
 
 @axes_kwarg
 def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
-          border: bool = False, ax: plt.Axes | None = None, ref_imm: float = 1.0,
+          border: bool = False, ax: Axes | None = None, ref_imm: float = 1.0,
           draw_vswr: list | bool | None = None):
     """
     Plot the Smith chart of a given radius.
@@ -170,6 +239,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     .. [#] https://en.wikipedia.org/wiki/Smith_chart
 
     """
+    from matplotlib.patches import Circle
 
     # contour holds matplotlib instances of: pathes.Circle, and lines.Line2D, which
     # are the contours on the smith chart
@@ -189,7 +259,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
         xLightList = np.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
 
     # vswr lines
-    if isinstance(draw_vswr, (tuple,list)):
+    if isinstance(draw_vswr, tuple | list):
         vswrVeryLightList = draw_vswr
     elif draw_vswr is True:
         # use the default I like
@@ -351,7 +421,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
 def plot_rectangular(x: NumberLike, y: NumberLike,
                      x_label: str | None = None, y_label: str | None = None,
                      title: str | None = None, show_legend: bool = True,
-                     axis: str = 'tight', ax: plt.Axes | None = None,
+                     axis: str = 'tight', ax: Axes | None = None,
                      *args, **kwargs):
     r"""
     Plot rectangular data and optionally label axes.
@@ -377,6 +447,8 @@ def plot_rectangular(x: NumberLike, y: NumberLike,
     \*args, \*\*kwargs : passed to pylab.plot
 
     """
+    import matplotlib.pyplot as plt
+
     if ax is None:
         ax = plt.gca()
 
@@ -409,7 +481,7 @@ def plot_rectangular(x: NumberLike, y: NumberLike,
 def plot_polar(theta: NumberLike, r: NumberLike,
                x_label: str | None = None, y_label: str | None = None,
                title: str | None = None, show_legend: bool = True,
-               axis_equal: bool = False, ax: plt.Axes | None = None,
+               axis_equal: bool = False, ax: Axes | None = None,
                *args, **kwargs):
     r"""
     Plot polar data on a polar plot and optionally label axes.
@@ -441,6 +513,8 @@ def plot_polar(theta: NumberLike, r: NumberLike,
     plot_smith : plot complex data on smith chart
 
     """
+    import matplotlib.pyplot as plt
+
     if ax is None:
         # no Axes passed
         # if an existing (polar) plot is already present, grab and use its Axes
@@ -487,7 +561,7 @@ def plot_polar(theta: NumberLike, r: NumberLike,
 def plot_complex_rectangular(z: NumberLike,
                              x_label: str = 'Real', y_label: str = 'Imag',
                              title: str = 'Complex Plane', show_legend: bool = True,
-                             axis: str = 'equal', ax: plt.Axes | None = None,
+                             axis: str = 'equal', ax: Axes | None = None,
                              **kwargs):
     r"""
     Plot complex data on the complex plane.
@@ -527,7 +601,7 @@ def plot_complex_rectangular(z: NumberLike,
 def plot_complex_polar(z: NumberLike,
                        x_label: str | None = None, y_label: str | None = None,
                        title: str | None = None, show_legend: bool = True,
-                       axis_equal: bool = False, ax: plt.Axes | None = None,
+                       axis_equal: bool = False, ax: Axes | None = None,
                        **kwargs):
     r"""
     Plot complex data in polar format.
@@ -565,7 +639,7 @@ def plot_complex_polar(z: NumberLike,
 
 def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
                x_label: str = 'Real', y_label: str = 'Imaginary', title: str = 'Complex Plane',
-               show_legend: bool = True, axis: str = 'equal', ax: plt.Axes | None = None,
+               show_legend: bool = True, axis: str = 'equal', ax: Axes | None = None,
                force_chart: bool = False, draw_vswr: list | bool | None = None, draw_labels: bool = False,
                **kwargs):
     r"""
@@ -610,6 +684,7 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
     plot_complex_polar : plot complex data on polar plane
     plot_smith : plot complex data on smith chart
     """
+    import matplotlib.pyplot as plt
 
     if ax is None:
         ax = plt.gca()
@@ -663,6 +738,8 @@ def subplot_params(ntwk: Network, param: str = 's', proj: str = 'db',
         Matplotlib Axes
 
     """
+    import matplotlib.pyplot as plt
+
     subplot_kw = subplot_kw if subplot_kw else {}
     if newfig:
         f,axs= plt.subplots(ntwk.nports,ntwk.nports,
@@ -708,8 +785,10 @@ def shade_bands(edges: NumberLike, y_range: tuple | None = None,
     --------
     >>> rf.shade_bands([325,500,750,1100], alpha=.2)
     """
+    import matplotlib.pyplot as plt
+
     cmap = plt.cm.get_cmap(cmap)
-    if not isinstance(y_range, (tuple, list)) or (len(y_range) != 2):
+    if not isinstance(y_range, tuple | list) or (len(y_range) != 2):
         y_range=plt.gca().get_ylim()
     axis = plt.axis()
     for k in range(len(edges)-1):
@@ -739,6 +818,8 @@ def save_all_figs(dir: str = './', format: None | list[str] = None,
     echo : bool, optional.
         True prints filenames as they are saved. Default is True.
     """
+    import matplotlib.pyplot as plt
+
     if echo is not None:
         warnings.warn("`echo` parameter is deprecated and will be removed in future versions. "
                       "Use logging instead.", FutureWarning, stacklevel=2)
@@ -763,7 +844,7 @@ def save_all_figs(dir: str = './', format: None | list[str] = None,
 saf = save_all_figs
 
 @axes_kwarg
-def add_markers_to_lines(ax: plt.Axes = None,
+def add_markers_to_lines(ax: Axes = None,
                          marker_list: list = None,
                          markevery: int = 10):
     """
@@ -796,7 +877,7 @@ def add_markers_to_lines(ax: plt.Axes = None,
     [line.set_markevery(markevery) for line in lines]
 
 @axes_kwarg
-def legend_off(ax: plt.Axes = None):
+def legend_off(ax: Axes = None):
     """
     Turn off the legend for a given axes.
 
@@ -812,7 +893,7 @@ def legend_off(ax: plt.Axes = None):
 
 @axes_kwarg
 def scrape_legend(n: int | None = None,
-                  ax:plt.Axes = None):
+                  ax: Axes = None):
     """
     Scrape a legend with redundant labels.
 
@@ -859,6 +940,8 @@ def func_on_all_figs(func: Callable, *args, **kwargs):
     --------
     >>> rf.func_on_all_figs(grid, alpha=.3)
     """
+    import matplotlib.pyplot as plt
+
     for fig_n in plt.get_fignums():
         fig = plt.figure(fig_n)
         for ax_n in fig.axes:
@@ -885,7 +968,9 @@ def plot_vector(a: complex, off: complex = 0+0j, **kwargs):
     -------
     quiver : matplotlib.pyplot.quiver
     """
-    return quiver(off.real, off.imag, a.real, a.imag, scale_units='xy',
+    import matplotlib.pyplot as plt
+
+    return plt.quiver(off.real, off.imag, a.real, a.imag, scale_units='xy',
            angles='xy', scale=1, **kwargs)
 
 
@@ -897,7 +982,9 @@ def colors() -> list[str]:
     -------
     colors : List[str]
     """
-    return [c['color'] for c in rcParams['axes.prop_cycle']]
+    import matplotlib.pyplot as plt
+
+    return [c['color'] for c in plt.rcParams['axes.prop_cycle']]
 
 
 ## specific plotting functions
@@ -922,6 +1009,8 @@ def plot_passivity(netw: Network, port=None, label_prefix=None, **kwargs):
     --------
     passivity
     """
+    import matplotlib.pyplot as plt
+
     name = '' if netw.name is None else netw.name
 
     if port is None:
@@ -950,6 +1039,8 @@ def plot_reciprocity(netw: Network, db=False, *args, **kwargs):
     --------
     reciprocity
     """
+    import matplotlib.pyplot as plt
+
     for m in range(netw.nports):
         for n in range(netw.nports):
             if m > n:
@@ -981,6 +1072,8 @@ def plot_reciprocity2(netw: Network, db=False, *args, **kwargs):
     --------
     reciprocity
     """
+    import matplotlib.pyplot as plt
+
     for m in range(netw.nports):
         for n in range(netw.nports):
             if m > n:
@@ -1053,6 +1146,8 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
     # exists on current set of axes
 
     # get current axis if user doesn't supply and axis
+    import matplotlib.pyplot as plt
+
     if ax is None:
         ax = plt.gca()
 
@@ -1120,6 +1215,8 @@ def plot_it_all(netw: Network, *args, **kwargs):
     >>> from skrf.data import ring_slot
     >>> ring_slot.plot_it_all()
     """
+    import matplotlib.pyplot as plt
+
     plt.clf()
     plt.subplot(221)
     netw.plot_s_db(*args, **kwargs)
@@ -1142,11 +1239,18 @@ def stylely(rc_dict: dict = None, style_file: str = 'skrf.mplstyle'):
     style_file : str, optional
         style file, by default 'skrf.mplstyle'
     """
-    from .data import pwd  # delayed to solve circular import
-    rc_dict = rc_dict if rc_dict else {}
+    try:
+        import matplotlib.pyplot as plt
 
-    mpl.style.use(os.path.join(pwd, style_file))
-    mpl.rc(rc_dict)
+        from .data import pwd  # delayed to solve circular import
+
+        rc_dict = rc_dict if rc_dict else {}
+
+
+        plt.style.use(os.path.join(pwd, style_file))
+        plt.rc(rc_dict)
+    except ImportError as e:
+        warnings.warn(f"Could not import matplotlib: {e}", ImportWarning, stacklevel=2)
 
 
 # Network Set Plotting Commands
@@ -1196,6 +1300,8 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
     >>> ns.animate('s_deg', ylims=(-5,5), label=None)
 
     """
+    import matplotlib.pyplot as plt
+
     was_interactive = plt.isinteractive()
     plt.ioff()
 
@@ -1234,7 +1340,7 @@ def plot_uncertainty_bounds_component(
         m: int | None = None, n: int | None = None, *,
         type: str = 'shade', n_deviations: int = 3,
         alpha: float = .3, color_error: str | None = None,
-        markevery_error: int = 20, ax: plt.Axes = None,
+        markevery_error: int = 20, ax: Axes = None,
         ppf: bool = None, kwargs_error: dict = None,
         **kwargs):
     r"""
@@ -1353,7 +1459,7 @@ def plot_uncertainty_bounds_component(
 def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: int = 0,
                                  *, type: str = 'shade',
                                  alpha: float = .3, color_error: str | None = None,
-                                 markevery_error: int = 20, ax: plt.Axes = None,
+                                 markevery_error: int = 20, ax: Axes = None,
                                  ppf: bool = None, kwargs_error: dict = None,
                                  **kwargs):
     r"""
@@ -1459,7 +1565,7 @@ def plot_violin(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: 
                          *, widths: float = None, showmeans: bool = True,
                          showextrema: bool = True, showmedians: bool = False,
                          quantiles = None, points: int = 100, bw_method = None,
-                         ax: plt.Axes = None, **kwargs
+                         ax: Axes = None, **kwargs
     ):
     r"""Plots the violin plot of the network set for the desired attribute.
 
@@ -1582,6 +1688,7 @@ def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0):
         second s-parameter index
 
     """
+    import matplotlib.pyplot as plt
     if self.name is not None:
         plt.title(f"Uncertainty Decomposition: {self.name} $S_{{{self.ntwk_set[0]._fmt.trace_name(m,n)}}}$")
     self.std_s.plot_s_mag(label='Distance', m=m,n=n)
@@ -1604,6 +1711,8 @@ def plot_logsigma(self: NetworkSet, label_axis: bool = True, *args,**kwargs):
     \*args, \*\*kwargs : arguments
         passed to self.std_s.plot_s_db()
     """
+    import matplotlib.pyplot as plt
+
     self.std_s.plot_s_db(*args,**kwargs)
     if label_axis:
         plt.ylabel('Standard Deviation(dB)')
@@ -1641,6 +1750,8 @@ def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag'
     \*args,\*\*kw : arguments, keyword arguments
         passed to :func:`~pylab.imshow`
     """
+    import matplotlib.pyplot as plt
+    from matplotlib.dates import date2num
 
     mat = np.array([self[k].__getattribute__(component)[:, m, n] \
                      for k in range(len(self))])
@@ -1726,6 +1837,9 @@ def plot_contour(freq: Frequency,
         min or max.
 
     """
+    import matplotlib.pyplot as plt
+    from matplotlib import tri
+
     from . import Network
 
     ri =  np.linspace(0,1, 50)
