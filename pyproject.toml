@@ -38,10 +38,28 @@ dependencies = [
     "scipy >=1.7",
     "pandas >=1.1",
     "typing-extensions",
-    "pre-commit>=3.5.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
+dev = [
+  "prek >= 0.3.2",
+  { include-group = "docs" },
+  { include-group = "test" },
+  { include-group = "testspice" },
+]
+docs = [
+    "ipython >=7",
+    "ipykernel >=6.15",
+    "ipywidgets >=8.0.2",
+    "python-ivi >=0.14.9",
+    "nbval >=0.9",
+    "jupyter-client >=7.3.5",
+    "sphinx-rtd-theme >=1.0",
+    "sphinx >=4",
+    "nbsphinx >= 0.8.9",
+    "openpyxl >= 3",
+    "typing-extensions>=4.15.0",
+]
 test = [
     "pytest <9.0",
     "pytest-mock >= 3.10",
@@ -50,11 +68,12 @@ test = [
     "pytest-cov >=4.0",
     "pytest-timeout"
 ]
-
 testspice = [
     "pyspice >= 1.5",
 ]
 
+
+[project.optional-dependencies]
 plot = [
     "matplotlib >=3.5"
 ]
@@ -70,20 +89,6 @@ netw = [
 visa = [
     "PyVISA >= 1.12",
     "pyvisa-py >= 0.6"
-]
-
-docs = [
-    "ipython >=7",
-    "ipykernel >=6.15",
-    "ipywidgets >=8.0.2",
-    "python-ivi >=0.14.9",
-    "nbval >=0.9",
-    "jupyter-client >=7.3.5",
-    "sphinx-rtd-theme >=1.0",
-    "sphinx >=4",
-    "nbsphinx >= 0.8.9",
-    "openpyxl >= 3",
-    "typing-extensions>=4.15.0",
 ]
 
 [project.urls]
@@ -132,7 +137,7 @@ filterwarnings = [
 line-length = 120
 
 [tool.ruff.lint]
-select = ["B", "E", "F", "FA", "I", "NPY", "UP", "W"]
+select = ["B", "E", "F", "FA", "I", "NPY", "T", "UP", "W"]
 
 # Ignore some rules for all files
 # E741: ambiguous-variable-name
@@ -147,6 +152,7 @@ ignore = ["E741", "UP031", "B905"]
 # F841: unused-variable
 "__init__.py" = ["E402", "F401", "F403", "F405"]
 "apps/*" = ["F403", "F405"]
+"doc/*" = ["T201"]
 "doc/source/conf.py" = ["E402"]
 "doc/sphinxext/tests/test_docscrape.py" = ["E402", "F403", "F405"]
-"*/tests/*.py"=["B018", "F841"]
+"*/tests/*.py"=["B018", "F841", "T201"]

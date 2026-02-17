@@ -877,7 +877,7 @@ class ProgressBar:
         iteration : int
             current iteration
         """
-        print('\r', self, end='')
+        print('\r', self, end='')  # noqa: T201
         sys.stdout.flush()
         self.update_iteration(iteration + 1)
 

@@ -1317,6 +1317,42 @@ class CircuitTestVoltagesCurrents(unittest.TestCase):
         np.testing.assert_allclose(I_ports_uni_z, I_ports_dif_z)
         np.testing.assert_allclose(V_ports_uni_z, V_ports_dif_z)
 
+    def test_open_ports(self):
+        ' Test voltages and currents for a connection with open ports '
+        # Create a circuit build with open
+        cnx_with_open = [
+            [(self.port1, 0), (self.line, 0)],
+            [(self.port2, 0), (self.line, 1), (self.resistor, 0)],
+            [(self.resistor, 1)],
+        ]
+
+        # Create a circuit build without open
+        cnx = [
+            [(self.port1, 0), (self.line, 0)],
+            [(self.port2, 0), (self.line, 1)],
+        ]
+
+        # Create the two circuits
+        crt_with_open = Circuit(cnx_with_open)
+        crt = Circuit(cnx)
+
+        # Get voltages and currents for both circuits
+        V_with_open = crt_with_open.voltages(self.power, self.phase)
+        I_with_open = crt_with_open.currents(self.power, self.phase)
+
+        V = crt.voltages(self.power, self.phase)
+        I = crt.currents(self.power, self.phase)
+
+        # Compare the voltages
+        port_order_with_open = (0, 1, 2, 3, 4, 5)
+        port_order = (0, 1, 2, 3, 3, 3)
+        np.testing.assert_allclose(V_with_open[:, port_order_with_open], V[:, port_order])
+
+        # Compare the currents
+        I_extended = np.zeros(shape=I_with_open.shape, dtype=complex)
+        I_extended[:, :I.shape[1]] = I
+        np.testing.assert_allclose(I_with_open, I_extended, atol=1e-8)
+
 class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
     def test_isolator(self):
         # Isolator that passes from port 1 to 2

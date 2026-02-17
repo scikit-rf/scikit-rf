@@ -88,7 +88,6 @@ def setup_pylab() -> bool:
     try:
         import matplotlib
     except ImportError:
-        print("matplotlib not found while setting up plotting")
         return False
 
     global stylely
