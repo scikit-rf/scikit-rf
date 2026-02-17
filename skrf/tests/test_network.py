@@ -452,16 +452,15 @@ class NetworkTestCase(unittest.TestCase):
         rf.Network.zipped_touchstone(fname, zipfile.ZipFile(zippath))
 
     def test_open_saved_touchstone(self):
-        self.ntwk1.write_touchstone('ntwk1Saved',dir=self.test_dir)
-        ntwk1Saved = rf.Network(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
-        self.assertEqual(self.ntwk1, ntwk1Saved)
+        with tempfile.TemporaryDirectory() as tempdir:
+            self.ntwk1.write_touchstone('ntwk1Saved1',dir=tempdir)
+            ntwk1Saved = rf.Network(os.path.join(tempdir, 'ntwk1Saved1.s2p'))
+            self.assertEqual(self.ntwk1, ntwk1Saved)
 
-        # Test that it still works with Pathlib objects
-        self.ntwk1.write_touchstone(Path('ntwk1Saved'),dir=Path(self.test_dir))
-        ntwk1Saved = rf.Network(Path(os.path.join(self.test_dir, 'ntwk1Saved.s2p')))
-        self.assertEqual(self.ntwk1, ntwk1Saved)
-
-        os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
+            # Test that it still works with Pathlib objects
+            self.ntwk1.write_touchstone(Path(tempdir) / 'ntwk1Saved2')
+            ntwk1Saved = rf.Network(Path(tempdir) / 'ntwk1Saved2.s2p')
+            self.assertEqual(self.ntwk1, ntwk1Saved)
 
     def test_write_touchstone(self):
         ports = 2

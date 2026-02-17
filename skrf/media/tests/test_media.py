@@ -1,4 +1,5 @@
 import os
+import tempfile
 import unittest
 
 import numpy as np
@@ -639,20 +640,13 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.assertEqual(len(freq), len(a.gamma))
         self.assertEqual(len(freq), len(a.z0))
 
+
     def test_write_csv(self):
-        fname = os.path.join(self.files_dir,\
-                'out.csv')
-        self.dummy_media.write_csv(fname)
-        os.remove(fname)
-
-
-    def test_from_csv(self):
-        fname = os.path.join(self.files_dir,\
-                'out.csv')
-        self.dummy_media.write_csv(fname)
-        a_media = DefinedGammaZ0.from_csv(fname)
-        self.assertEqual(a_media,self.dummy_media)
-        os.remove(fname)
+        with tempfile.TemporaryDirectory() as tempdir:
+            fname = os.path.join(tempdir, 'out.csv')
+            self.dummy_media.write_csv(fname)
+            a_media = DefinedGammaZ0.from_csv(fname)
+            self.assertEqual(a_media,self.dummy_media)
 
 
 class STwoPortsNetworkTestCase(unittest.TestCase):
