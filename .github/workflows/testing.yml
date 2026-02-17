@@ -32,8 +32,10 @@ jobs:
     - name: Test the code, tutorials and examples
       if: ${{ always() }}
       run: |
-        uv pip install -e .[test,visa,netw,xlsx,plot,docs,testspice] --compile
+        uv pip install -e .[test,visa,netw,xlsx,plot,docs,testspice] --compile -vvv
+        echo "Finished installing dependencies, now running tests"
         . .venv/bin/activate
+        echo "Running tests with Python ${{ matrix.python-version }}"
         python -m pytest -n auto --timeout=60 -v --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }}
 
     - name: Upload Test Results
