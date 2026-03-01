@@ -6,8 +6,8 @@ from numpy.testing import assert_array_almost_equal
 
 import skrf as rf
 from skrf.circuit import Circuit
-from skrf.constants import INF
-from skrf.network import connect, innerconnect, renormalize_s
+from skrf.constants import INF, S_DEF_DEFAULT
+from skrf.network import connect, innerconnect, renormalize_s, s2s
 
 
 class CircuitTestConstructor(unittest.TestCase):
@@ -1199,6 +1199,35 @@ class CircuitTestComplexCharacteristicImpedance(unittest.TestCase):
     def test_complexz0_s_vs_pseudo(self):
         ' Check complex z0 circuit vs pseudo-waves renormalization '
         np.testing.assert_allclose(self.cir_complex.network.s, self.s_pseudo, atol=1e-4)
+
+    def test_s_external_via_port_indexes(self):
+        """
+        Test that s_external can be obtained by indexing s with port_indexes.
+        This test uses complex characteristic impedance circuits.
+        """
+        # Test with z0=[50, 50] (real)
+        port_indexes = self.cir.port_indexes
+        a_idx, b_idx = np.meshgrid(port_indexes, port_indexes, indexing='ij')
+        s_extracted = self.cir.s[:, a_idx, b_idx]
+        # Apply s2s conversion to match s_external
+        s_extracted = s2s(s_extracted, self.cir.port_z0, S_DEF_DEFAULT, 'traveling')
+        np.testing.assert_allclose(s_extracted, self.cir.s_external)
+
+        # Test with z0=[50, 100] (real but different)
+        port_indexes = self.cir_real.port_indexes
+        a_idx, b_idx = np.meshgrid(port_indexes, port_indexes, indexing='ij')
+        s_extracted = self.cir_real.s[:, a_idx, b_idx]
+        # Apply s2s conversion to match s_external
+        s_extracted = s2s(s_extracted, self.cir_real.port_z0, S_DEF_DEFAULT, 'traveling')
+        np.testing.assert_allclose(s_extracted, self.cir_real.s_external)
+
+        # Test with z0=[50, zdut] (complex)
+        port_indexes = self.cir_complex.port_indexes
+        a_idx, b_idx = np.meshgrid(port_indexes, port_indexes, indexing='ij')
+        s_extracted = self.cir_complex.s[:, a_idx, b_idx]
+        # Apply s2s conversion to match s_external
+        s_extracted = s2s(s_extracted, self.cir_complex.port_z0, S_DEF_DEFAULT, 'traveling')
+        np.testing.assert_allclose(s_extracted, self.cir_complex.s_external)
 
 class CircuitTestVoltagesCurrents(unittest.TestCase):
     def setUp(self):

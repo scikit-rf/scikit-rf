@@ -922,9 +922,13 @@ class Circuit:
         The results in [#]_ do not agree due to an error in the formula (3)
         for mismatched intersections.
 
-        Due to the ideal power splitter is unitary, that is [X]_k^H * [X]_k = I, where [X]_k^H is
-        the conjugate transpose of [X]_k. And considers the reciprocity, the inverse of [X]_k could
-        be simplified as the conjugate of [X]_k, that is [X]_k^-1 = [X]_k^*.
+        When all ports have the same real impedance, [X]_k is unitary
+        (i.e., [X]_k^H @ [X]_k = I, where [X]_k^H is the conjugate transpose).
+        In this case, due to reciprocity, the inverse can be simplified as
+        the conjugate: [X]_k^-1 = [X]_k^*.
+
+        For mismatched or complex impedances, [X]_k is NOT unitary, so the
+        actual inverse must be computed using np.linalg.inv.
 
         Parameters
         ----------
@@ -955,7 +959,13 @@ class Circuit:
         Xs = 2 *np.sqrt(np.einsum('ij,ik->ijk', y0s, y0s)) / y_k[:, None, None]
         np.einsum('kii->ki', Xs)[:] -= 1  # Sii
 
-        return np.conjugate(Xs) if inverse else Xs
+        if inverse:
+            # Check if unitary: all ports have same real admittance
+            is_real = np.isreal(y0s).all()
+            is_unitary = is_real and np.isclose(y0s.max(), y0s.min()) if is_real else False
+            Xs = np.conjugate(Xs) if is_unitary else np.linalg.inv(Xs)
+
+        return np.asfortranarray(Xs) if order == 'F' else Xs
 
 
     def _X(self, order: MemoryLayoutT = 'C', inverse: bool = False) -> np.ndarray:
