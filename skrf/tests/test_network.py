@@ -2402,5 +2402,27 @@ class NetworkTestCase(unittest.TestCase):
             error_skrf_dB = 20*np.log10(ntwkA.s_error(ntwkB,error_function=skrf_error_fcn))
             np.testing.assert_almost_equal(error_awr_dB,error_skrf_dB,decimal=3)
 
+    def test_network_from_string(self):
+
+        # Test two files, one V1.x, and one V2.x
+        filepaths = [
+            os.path.join(self.test_dir, 'ntwk1.s2p'),
+            os.path.join(self.test_dir, 'helic_example_6ports_V2.ts'),
+        ]
+
+        for fp in filepaths:
+            with open(fp) as f:
+                content = f.read()
+
+            # Read one in from the string directly
+            n1 = rf.Network.from_string(content)
+
+            # Read one in from the file
+            n2 = rf.Network(fp)
+
+            # Ensure that the resulting networks are equal
+            self.assertEqual(n1, n2)
+
+
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
