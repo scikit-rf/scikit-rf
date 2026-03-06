@@ -2379,8 +2379,8 @@ class Network:
                 else:
                     break
 
-            # The number of ports is the square root of the number of entries in the dataset
-            num_ports = int(len(dataset1) ** 0.5)
+            # The number of ports is the square root of the number of entry pairs in the dataset
+            num_ports = int((len(dataset1) / 2) ** 0.5)
 
             buffer.name = f"Network.s{num_ports}p"
 
