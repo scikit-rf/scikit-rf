@@ -2404,24 +2404,35 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_network_from_string(self):
 
-        # Test two files, one V1.x, and one V2.x
-        filepaths = [
-            os.path.join(self.test_dir, 'ntwk1.s2p'),
-            os.path.join(self.test_dir, 'helic_example_6ports_V2.ts'),
-        ]
+        # Test every touchstone filetype
+        for file_type in ["*.s*p", "*.ts", "*.sp"]:
 
-        for fp in filepaths:
-            with open(fp) as f:
-                content = f.read()
+            # Flag to check that the file type is actually a touchstone file
+            check_extension = True if file_type == "*.s*p" else False
 
-            # Read one in from the string directly
-            n1 = rf.Network.from_string(content)
+            # Test every touchstone file found in the test directory.
+            for fp in Path(self.test_dir).rglob(file_type):
 
-            # Read one in from the file
-            n2 = rf.Network(fp)
+                # Check that the file extension is actually a touchstone file
+                if check_extension:
+                    try:
+                        # Ensure that the middle of the suffix is a number
+                        int(fp.suffix.strip('.sp'))
+                    except ValueError:
+                        # Not a touchstone file
+                        continue
 
-            # Ensure that the resulting networks are equal
-            self.assertEqual(n1, n2)
+                with open(fp) as f:
+                    content = f.read()
+
+                # Read one in from the string directly
+                n1 = rf.Network.from_string(content)
+
+                # Read one in from the file
+                n2 = rf.Network(fp)
+
+                # Ensure that the resulting networks are equal
+                self.assertEqual(n1, n2)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
