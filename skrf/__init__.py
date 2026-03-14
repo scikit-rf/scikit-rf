@@ -74,6 +74,10 @@ def __getattr__(name: str):
         ]:
             result = getattr(module, name, None)
             if result is not None:
+                # Do not expose external (numpy, scipy) imported stuffs as deprecated.
+                mod = getattr(result, '__module__', '')
+                if mod and mod.startswith(('numpy', 'scipy')):
+                    return result
                 _warn(f"skrf.{name} is deprecated. Please import {name} from "
                      f"skrf.{module.__name__.split('.')[-1]} instead.", FutureWarning, stacklevel=2)
                 return result
