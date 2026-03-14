@@ -142,7 +142,7 @@ class VectorFitting:
 
         Returns
         -------
-        ndarray, bool, shape (M)
+        ndarray, bool, shape (N)
             Boolean array having the same shape as :attr:`poles`. `True` marks the respective pole as spurious.
 
         References
@@ -152,11 +152,16 @@ class VectorFitting:
             Compatibility, vol. 48, no. 1, pp. 104-120, Feb. 2006, DOI: https://doi.org/10.1109/TEMC.2006.870814
         """
 
-        omega_eval = np.linspace(np.min(poles.imag) / 3, np.max(poles.imag) * 3, n_freqs)
-        h = (residues[:, None, :] / (1j * omega_eval[:, None] - poles)
-             + np.conj(residues[:, None, :]) / (1j * omega_eval[:, None] - np.conj(poles)))
-        norm2 = np.sqrt(trapezoid(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
-        spurious = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
+        # only complex-conjugate pole/residue pairs can be spurious and should be skimmed and relocated;
+        # skip real pole/residue
+        idx_cmplx = poles.imag > 0
+        spurious = np.full(np.shape(poles), False, dtype=bool)
+        if np.any(idx_cmplx):
+            omega_eval = np.linspace(np.min(poles[idx_cmplx].imag) / 3, np.max(poles[idx_cmplx].imag) * 3, n_freqs)
+            h = (residues[:, None, idx_cmplx] / (1j * omega_eval[:, None] - poles[idx_cmplx])
+                 + np.conj(residues[:, None, idx_cmplx]) / (1j * omega_eval[:, None] - np.conj(poles[idx_cmplx])))
+            norm2 = np.sqrt(trapezoid(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
+            spurious[idx_cmplx] = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
         return spurious
 
     @staticmethod
@@ -178,7 +183,8 @@ class VectorFitting:
         return np.sum((poles.imag != 0) + 1)
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
-                   parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
+                   parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False,
+                   enforce_dc: bool = True) -> None:
         """
         Main work routine performing the vector fit. The results will be stored in the class variables
         :attr:`poles`, :attr:`residues`, :attr:`proportional_coeff` and :attr:`constant_coeff`.
@@ -208,6 +214,11 @@ class VectorFitting:
 
         fit_proportional : bool, optional
             Include a proportional term **e** in the fit.
+
+        enforce_dc : bool, optional
+            Enforces/Preserves the dc point given in the original network data in the vector fitted model. If the
+            constant term **d** is enabled with `fit_constant=True`, the dc point will be enforced on **d** (preferred
+            method). Otherwise, it will be enforced on the first residue in `self.residues`.
 
         Returns
         -------
@@ -368,7 +379,7 @@ class VectorFitting:
 
         # finally, solve for the residues with the previously calculated poles
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
-            poles, freqs_norm, freq_responses, fit_constant, fit_proportional)
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc)
 
         # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
@@ -391,7 +402,7 @@ class VectorFitting:
     def auto_fit(self, n_poles_init_real: int = 3, n_poles_init_cmplx: int = 3, n_poles_add: int = 3,
                  model_order_max: int = 100, iters_start: int = 3, iters_inter: int = 3, iters_final: int = 5,
                  target_error: float = 1e-2, alpha: float = 0.03, gamma: float = 0.03, nu_samples: float = 1.0,
-                 parameter_type: str = 's') -> (np.ndarray, np.ndarray):
+                 parameter_type: str = 's', enforce_dc: bool = True) -> (np.ndarray, np.ndarray):
         """
         Automatic fitting routine implementing the "vector fitting with adding and skimming" algorithm as proposed in
         [#Grivet-Talocia]_. This algorithm is able to provide high quality macromodels with automatic model order
@@ -448,6 +459,11 @@ class VectorFitting:
             *impedance* (`'z'` or `'Z'`) or *admittance* (`'y'` or `'Y'`). It's recommended to perform the fit on the
             original S parameters. Otherwise, scikit-rf will convert the responses from S to Z or Y, which might work
             for the fit but can cause other issues.
+
+        enforce_dc : bool, optional
+            Enforces/Preserves the dc point given in the original network data in the vector fitted model. If the
+            constant term **d** is enabled with `fit_constant=True`, the dc point will be enforced on **d** (preferred
+            method). Otherwise, it will be enforced on the first residue in `self.residues`.
 
         Returns
         -------
@@ -544,7 +560,7 @@ class VectorFitting:
 
         # RESIDUE FITTING FOR ERROR COMPUTATION
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
-            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=False)
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=enforce_dc)
         delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                 weights_responses)
         error_peak = np.max(delta)
@@ -624,7 +640,7 @@ class VectorFitting:
 
             # RESIDUE FITTING FOR ERROR COMPUTATION
             residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
-                poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=False)
+                poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=enforce_dc)
             delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                     weights_responses)
             error_peak_history.append(np.max(delta))
@@ -663,7 +679,7 @@ class VectorFitting:
 
         # FINAL RESIDUE FITTING
         residues, constant_coeff, proportional_coeff, residuals, rank, singular_vals = self._fit_residues(
-            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=True)
+            poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=enforce_dc)
 
         # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
@@ -920,7 +936,7 @@ class VectorFitting:
         return poles, d_res, cond, rank_deficiency, residuals, singular_vals
 
     @staticmethod
-    def _fit_residues(poles, freqs, freq_responses, fit_constant, fit_proportional, enforce_dc=True):
+    def _fit_residues(poles, freqs, freq_responses, fit_constant, fit_proportional, enforce_dc):
         n_responses, n_freqs = np.shape(freq_responses)
         omega = 2 * np.pi * freqs
         s = 1j * omega

@@ -72,6 +72,7 @@ import pickle
 import sys
 import warnings
 from io import StringIO
+from logging import getLogger
 from pathlib import Path
 from pickle import UnpicklingError
 from typing import Any
@@ -83,6 +84,8 @@ from ..frequency import Frequency
 from ..network import Network
 from ..networkSet import NetworkSet
 from ..util import get_extn, get_fid
+
+logger = getLogger(__name__)
 
 
 def _get_extension(inst: Any) -> str:
@@ -100,7 +103,6 @@ def _get_extension(inst: Any) -> str:
     ]
 
     for cls, ext in extensions:
-        print(cls, ext)
         if isinstance(inst, cls):
             return ext
     return "p"
@@ -437,7 +439,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
             with open(os.path.join(dir+'/', filename), 'wb') as fid:
                 write(fid, obj,*args, **kwargs)
         except Exception as inst:
-            print(inst)
+            logger.warning(f'couldnt write {k}: {inst}')
             warnings.warn(f'couldnt write {k}: {inst}', stacklevel=2)
 
             pass
@@ -478,7 +480,7 @@ def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
 
     """
     objects = {}
-    print('pickling: ')
+    logger.debug('pickling: ')
     for k in dict_objs:
         try:
             if module  in inspect.getmodule(dict_objs[k]).__name__:
@@ -486,14 +488,14 @@ def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
                     pickle.dumps(dict_objs[k])
                     if k[0] != '_':
                         objects[k] = dict_objs[k]
-                        print(k+', ')
+                        logger.debug(k+', ')
                 finally:
                     pass
 
         except(AttributeError, TypeError):
             pass
     if len (objects ) == 0:
-        print('nothing')
+        logger.debug('nothing')
 
     write(file, objects)
 

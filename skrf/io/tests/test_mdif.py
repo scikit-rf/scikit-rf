@@ -1,4 +1,5 @@
 import os
+import tempfile
 import unittest
 
 import numpy as np
@@ -99,20 +100,17 @@ class MdifTestCase(unittest.TestCase):
         nset1 = NetworkSet([net.copy() for _i in range(4)])
 
         #nset1 = NetworkSet.from_mdif("amplifier.mdf")
-        nset1.write_mdif("out1.mdf")
-        nset2 = NetworkSet.from_mdif("out1.mdf")
-        nset2.write_mdif("out2.mdf")
-        nset3 = NetworkSet.from_mdif("out2.mdf")
-        nset3.write_mdif("out3.mdf")
-        nset4 = NetworkSet.from_mdif("out3.mdf")
-        assert nset1 == nset4
+        with tempfile.TemporaryDirectory() as tempdir:
+            nset1.write_mdif(os.path.join(tempdir, "out1.mdf"))
+            nset2 = NetworkSet.from_mdif(os.path.join(tempdir, "out1.mdf"))
+            nset2.write_mdif(os.path.join(tempdir, "out2.mdf"))
+            nset3 = NetworkSet.from_mdif(os.path.join(tempdir, "out2.mdf"))
+            nset3.write_mdif(os.path.join(tempdir, "out3.mdf"))
+            nset4 = NetworkSet.from_mdif(os.path.join(tempdir, "out3.mdf"))
+            assert nset1 == nset4
 
-        for n1, n2 in zip(nset1, nset4):
-            np.testing.assert_allclose(n1.noise, n2.noise)
-
-        os.remove("out1.mdf")
-        os.remove("out2.mdf")
-        os.remove("out3.mdf")
+            for n1, n2 in zip(nset1, nset4):
+                np.testing.assert_allclose(n1.noise, n2.noise)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(MdifTestCase)

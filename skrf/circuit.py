@@ -922,9 +922,13 @@ class Circuit:
         The results in [#]_ do not agree due to an error in the formula (3)
         for mismatched intersections.
 
-        Due to the ideal power splitter is unitary, that is [X]_k^H * [X]_k = I, where [X]_k^H is
-        the conjugate transpose of [X]_k. And considers the reciprocity, the inverse of [X]_k could
-        be simplified as the conjugate of [X]_k, that is [X]_k^-1 = [X]_k^*.
+        When all ports have the same real impedance, [X]_k is unitary
+        (i.e., [X]_k^H @ [X]_k = I, where [X]_k^H is the conjugate transpose).
+        In this case, due to reciprocity, the inverse can be simplified as
+        the conjugate: [X]_k^-1 = [X]_k^*.
+
+        For mismatched or complex impedances, [X]_k is NOT unitary, so the
+        actual inverse must be computed using np.linalg.inv.
 
         Parameters
         ----------
@@ -955,7 +959,13 @@ class Circuit:
         Xs = 2 *np.sqrt(np.einsum('ij,ik->ijk', y0s, y0s)) / y_k[:, None, None]
         np.einsum('kii->ki', Xs)[:] -= 1  # Sii
 
-        return np.conjugate(Xs) if inverse else Xs
+        if inverse:
+            # Check if unitary: all ports have same real admittance
+            is_real = np.isreal(y0s).all()
+            is_unitary = is_real and np.isclose(y0s.max(), y0s.min()) if is_real else False
+            Xs = np.conjugate(Xs) if is_unitary else np.linalg.inv(Xs)
+
+        return np.asfortranarray(Xs) if order == 'F' else Xs
 
 
     def _X(self, order: MemoryLayoutT = 'C', inverse: bool = False) -> np.ndarray:
@@ -1650,15 +1660,15 @@ class Circuit:
             # Calculate the ports' output current through the output wave
             for j in range(cnx_len):
                 in_z0 = z0_segment[:, j]
-                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
-                tau = (2 * out_z0) / (out_z0 + in_z0)
+                out_z0 = np.inf if cnx_len == 1 else 1 / (tot_shunt_z0 - 1 / in_z0)
+                tau = 2.0 if cnx_len == 1 else (2 * out_z0) / (out_z0 + in_z0)
                 Ij[:, j] = (b[:, i + j] / np.sqrt(in_z0)) * tau
 
             # The current of each port is different in the same node
             # The ports' current should take into account the output current of each port in the node
             for j in range(cnx_len):
                 in_z0 = z0_segment[:, j]
-                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
+                out_z0 = np.inf if cnx_len == 1 else  1 / (tot_shunt_z0 - 1 / in_z0)
                 Itmp = np.zeros_like(Is[:, i + j])
                 for k in range(cnx_len):
                     tmp_z0 = z0_segment[:, k]
@@ -1706,8 +1716,8 @@ class Circuit:
             # The voltage of each port in the same node is consistent
             for j in range(cnx_len):
                 in_z0 = z0_segment[:, j]
-                out_z0 = 1 / (tot_shunt_z0 - 1 / in_z0)
-                tau = (2 * out_z0) / (out_z0 + in_z0)
+                out_z0 = np.inf if cnx_len == 1 else 1 / (tot_shunt_z0 - 1 / in_z0)
+                tau = 2.0 if cnx_len == 1 else (2 * out_z0) / (out_z0 + in_z0)
                 Vk += (b[:, i + j] * np.sqrt(in_z0)) * tau
 
             Vs[:, i : i + cnx_len] = Vk[:, None]
