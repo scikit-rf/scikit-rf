@@ -355,7 +355,6 @@ class Touchstone:
             self._parse_dict.update(self._parse_dict_v2)
 
     def _parse_port(self, fid: typing.TextIO) -> list[str]:
-        
         #* reset file pointer
         fid.seek(0)
         port_style = None
@@ -369,7 +368,7 @@ class Touchstone:
             #* only find comments before first data point
             if re.search(r'^\s*\d', line): 
                 break
-            
+
         #* reset file pointer again
         fid.seek(0)
         port_names: list[str] = []
@@ -380,7 +379,7 @@ class Touchstone:
             #* only find comments before first data point
             if re.search(r'^\s*\d', line): 
                 break
-        
+
         return port_names
         
 
