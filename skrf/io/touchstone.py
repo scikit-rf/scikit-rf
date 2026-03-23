@@ -383,7 +383,6 @@ class Touchstone:
                 break
 
         return port_names
-        
 
     def _parse_file(self, fid: typing.TextIO) -> ParserState:
         """
