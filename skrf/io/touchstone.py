@@ -359,10 +359,12 @@ class Touchstone:
         fid.seek(0)
         port_style = None
         for line in fid:
-            if re.search(r'!\s*Port\s*[ \[]\d+[ \]]\s*[\=\:]\s*.+', line.strip()): #* ex: Port [1] = MyPort_VDD,  Port 60 : P060
+            #* ex: Port [1] = MyPort_VDD,  Port 60 : P060
+            if re.search(r'!\s*Port\s*[ \[]\d+[ \]]\s*[\=\:]\s*.+', line.strip()): 
                 port_style = 'standard'
                 break
-            if re.search(r'!\s*\S+::[^:]+', line.strip()): #* ex: ! MyPort::VDD
+            #* ex: ! MyPort::VDD
+            if re.search(r'!\s*\S+::[^:]+', line.strip()): 
                 port_style = 'sigrity'
                 break
             #* only find comments before first data point
