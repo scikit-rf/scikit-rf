@@ -379,7 +379,7 @@ class Touchstone:
             if m0 := re.search(port_pattern, line.strip()):
                 port_names.append(m0.group(1))
             # only find comments before first data point
-            if re.search(r'^\s*\d', line): 
+            if re.search(r'^\s*\d', line):
                 break
 
         return port_names
