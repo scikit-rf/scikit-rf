@@ -370,7 +370,6 @@ class Touchstone:
             # only find comments before first data point
             if re.search(r'^\s*\d', line):
                 break
-
         # reset file pointer again
         fid.seek(0)
         port_names: list[str] = []
