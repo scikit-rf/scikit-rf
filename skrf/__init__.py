@@ -76,10 +76,10 @@ def __getattr__(name: str):
             if result is not None:
                 # Do not expose external (numpy, scipy) imported stuffs as deprecated.
                 mod = getattr(result, '__module__', '')
-                if mod and mod.startswith(('numpy', 'scipy')):
-                    return result
-                _warn(f"skrf.{name} is deprecated. Please import {name} from "
-                     f"skrf.{module.__name__.split('.')[-1]} instead.", FutureWarning, stacklevel=2)
+                if not (mod and mod.startswith(('numpy', 'scipy'))):
+                    mod = f"skrf.{module.__name__.split('.')[-1]}"
+                    _warn(f"skrf.{name} is deprecated. Please import {name} from "
+                          f"{mod} instead.", FutureWarning, stacklevel=2)
                 return result
     raise AttributeError(f"module 'skrf' has no attribute '{name}'")
 
