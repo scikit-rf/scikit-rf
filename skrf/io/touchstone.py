@@ -359,10 +359,10 @@ class Touchstone:
         Reset file pointer and parse port names for more relaxed patterns.
 
         Supported port-naming patterns include:
-        - Standard Touchstone pattern: 
+        - Standard Touchstone pattern:
             - ! Port [1] = MyPort_VDD
             - ! Port 60 : P060
-        - Sigrity pattern: 
+        - Sigrity pattern:
             - ! MyPort::VDD
         """
         # reset file pointer
