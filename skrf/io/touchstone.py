@@ -355,11 +355,21 @@ class Touchstone:
             self._parse_dict.update(self._parse_dict_v2)
 
     def _parse_port(self, fid: typing.TextIO) -> list[str]:
+        """
+        Reset file pointer and parse port names for more relaxed patterns.
+
+        Supported port-naming patterns include:
+        - Standard Touchstone pattern: 
+            - ! Port [1] = MyPort_VDD
+            - ! Port 60 : P060
+        - Sigrity pattern: 
+            - ! MyPort::VDD
+        """
         # reset file pointer
         fid.seek(0)
         port_style = None
         for line in fid:
-            # ex: Port [1] = MyPort_VDD,  Port 60 : P060
+            # ex: ! Port [1] = MyPort_VDD; ! Port 60 : P060
             if re.search(r'!\s*Port\s*[ \[]\d+[ \]]\s*[\=\:]\s*.+', line.strip()):
                 port_style = 'standard'
                 break
