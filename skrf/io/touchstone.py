@@ -357,7 +357,7 @@ class Touchstone:
     def _parse_port(self, fid: typing.TextIO) -> list[str]:
         """
         Reset file pointer and parse port names for more relaxed patterns.
-        
+
         Supported port-naming patterns include:
         1. Standard Touchstone pattern:
             - ! Port [1] = MyPort_VDD
