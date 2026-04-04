@@ -6452,9 +6452,21 @@ def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
     for subntwk in ntwk_list:
         for m, n in nport.port_tuples:
             if m != n and m > n:
-                if f"{m + offby}{port_sep}{n + offby}" in subntwk.name:
+                if port_sep == "":
+                    # If we have no separator, assume the first two digits we find are the port numbers
+                    re_digits = re.findall(r'\d', subntwk.name)
+                    p1 = int(re_digits[0])
+                    p2 = int(re_digits[1])
+                else:
+                    # If we have a separator, use split/regex match
+                    # This ensures there is no string ambiguity for networks with > 10 ports
+                    split_name = subntwk.name.split(port_sep)
+                    p1 = int(re.search(r'\d+', split_name[0]).group(0))
+                    p2 = int(re.search(r'\d+', split_name[1]).group(0))
+
+                if (p1 == m + offby) and (p2 == n + offby):
                     pass
-                elif f"{n + offby}{port_sep}{m + offby}" in subntwk.name:
+                elif (p1 == n + offby) and (p2 == m + offby):
                     subntwk = subntwk.flipped()
                 else:
                     continue
