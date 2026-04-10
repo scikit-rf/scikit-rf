@@ -1,4 +1,5 @@
 import io
+import itertools
 import os
 import pickle
 import sys
@@ -2120,6 +2121,25 @@ class NetworkTestCase(unittest.TestCase):
         ntw_list = [tee12, tee23, tee13]
         tee2 = n_twoports_2_nport(ntw_list, nports=3)
         self.assertTrue(tee2 == tee)
+
+    def test_n_twoports_2_nport_large_network(self):
+        """
+        Test that n_twoports_2_nport() can combine large networks with > 10 ports (Issue #1217)
+        Import an .s32p, split it into 2 port networks, then recombine
+        """
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
+
+        subnetwork_ports = list(itertools.combinations(list(range(ntwk.nports)), 2))
+        subnetworks = []
+
+        for pair in subnetwork_ports:
+            subnetworks.append(ntwk.subnetwork(pair))
+            subnetworks[-1].name = f"p{pair[0]+1}_{pair[1]+1}"
+
+        combined_ntwk = n_twoports_2_nport(subnetworks, ntwk.nports, port_sep="_")
+
+        self.assertTrue(np.allclose(ntwk.s, combined_ntwk.s))
+        self.assertTrue(np.allclose(ntwk.z0, combined_ntwk.z0))
 
     def test_subnetwork_port_names(self):
         """ Test that subnetwork keeps port_names property. Issue #429 """
