@@ -499,6 +499,14 @@ class VectorFitting:
         nu = (omega_norm[1] - omega_norm[0]) * nu_samples
 
         # get initial poles
+        if n_poles_init_real + 2 * n_poles_init_cmplx > model_order_max:
+            # reduction of initial model order required
+            n_poles_init_real = model_order_max % 2
+            n_poles_init_cmplx = int(0.5 * model_order_max)
+            warnings.warn('The number of initial poles is too large for the specified maximum model order of '
+                          f'{model_order_max}. Falling back to `{n_poles_init_real=}` and `{n_poles_init_cmplx=}`.',
+                          UserWarning, stacklevel=2)
+
         poles = self._init_poles(freqs_norm, n_poles_init_real, n_poles_init_cmplx, 'lin')
 
         logger.info('### Starting pole relocation process.\n')
@@ -578,6 +586,7 @@ class VectorFitting:
             spurious = self.get_spurious(poles, residues, gamma=gamma)
             n_skim = np.sum(spurious)
             poles = poles[~spurious]
+            model_order -= n_skim
 
             # REPLACING SPURIOUS POLE AND ADDING NEW POLES
             idx_freqs_start, idx_freqs_stop, idx_freqs_max, delta_mean_bands = self._find_error_bands(freqs_norm, delta)
@@ -589,6 +598,10 @@ class VectorFitting:
                 n_add = n_bands
             else:
                 n_add = n_skim + n_poles_add
+
+            # only complex-conjugate pole pairs are added, each pair increases the model order by 2
+            if 2 * n_add > model_order_max - model_order:
+                n_add = int(0.5 * (model_order_max - model_order))
 
             for i in range(n_add):
                 omega_add = omega_norm[idx_freqs_max[i]]
