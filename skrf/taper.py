@@ -24,12 +24,15 @@ References
     Klopfenstein
 
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
 from numbers import Number
 
-from numpy import exp, linspace, log
+from numpy import arccosh, array, cosh, exp, heaviside, linspace, log, sqrt
+from scipy.integrate import quad
+from scipy.special import iv
 
 from .network import cascade_list
 
@@ -38,9 +41,21 @@ class Taper1D:
     """
     Generic 1D Taper Object
     """
-    def __init__(self, med, start: Number, stop: Number, n_sections: int, f: Callable,
-                 length: Number, length_unit: str = 'm', param: str = 'z0', f_is_normed: bool = True,
-                 med_kw: dict = None, f_kw: dict = None):
+
+    def __init__(
+        self,
+        med,
+        start: Number,
+        stop: Number,
+        n_sections: int,
+        f: Callable,
+        length: Number,
+        length_unit: str = "m",
+        param: str = "z0",
+        f_is_normed: bool = True,
+        med_kw: dict = None,
+        f_kw: dict = None,
+    ):
         """
         Generic 1D Taper Constructor.
 
@@ -126,13 +141,12 @@ class Taper1D:
         # init method, and if it exists, we assign it to `med` attribute
         # admittedly having `med` be a class or a method is abuse,
         # it makes for a intuitive operation
-        if param == 'z0':
-            if hasattr(self.med, 'from_z0'):
+        if param == "z0":
+            if hasattr(self.med, "from_z0"):
                 self.med = self.med.from_z0
 
     def __str__(self) -> str:
-        return 'Taper: {classname}: {param} from {start}-{stop}'
-
+        return "Taper: {classname}: {param} from {start}-{stop}"
 
     @property
     def section_length(self) -> Number:
@@ -143,16 +157,16 @@ class Taper1D:
         -------
         l : number
         """
-        return  1.0*self.length/self.n_sections
+        return 1.0 * self.length / self.n_sections
 
     @property
     def value_vector(self):
         if self.f_is_normed:
-            x = linspace(0,1,self.n_sections)
-            y = self.f(x, **self.f_kw)*(self.stop-self.start) + self.start
+            x = linspace(0, 1, self.n_sections)
+            y = self.f(x, **self.f_kw) * (self.stop - self.start) + self.start
         else:
-            x = linspace(0,self.length,self.n_sections)
-            y = self.f(x,self.length, self.start, self.stop, **self.f_kw)
+            x = linspace(0, self.length, self.n_sections)
+            y = self.f(x, self.length, self.start, self.stop, **self.f_kw)
         return y
 
     def media_at(self, val: Number):
@@ -188,8 +202,7 @@ class Taper1D:
             Network instance for the section of the taper
             for the given parameter value
         """
-        return self.media_at(val).line(self.section_length,
-                                       unit=self.length_unit)
+        return self.media_at(val).line(self.section_length, unit=self.length_unit)
 
     @property
     def medias(self) -> list:
@@ -225,7 +238,6 @@ class Taper1D:
         return cascade_list(self.sections)
 
 
-
 class Linear(Taper1D):
     """
     A linear Taper.
@@ -233,8 +245,9 @@ class Linear(Taper1D):
     Defined by :math:`f(x)=x`
 
     """
+
     def __init__(self, **kw):
-        opts = dict(f=lambda x:x, f_is_normed=True)
+        opts = dict(f=lambda x: x, f_is_normed=True)
         kw.update(opts)
         super().__init__(**kw)
 
@@ -253,13 +266,14 @@ class Exponential(Taper1D):
     *    :math:`x_1`: length of taper
 
     """
+
     def __init__(self, **kw):
         """
         Exponential Taper Constructor
         """
 
         def f(x, length, start, stop):
-            return start*exp(x/length*(log(stop/start)))
+            return start * exp(x / length * (log(stop / start)))
 
         opts = dict(f=f, f_is_normed=False)
         kw.update(opts)
@@ -280,13 +294,15 @@ class SmoothStep(Taper1D):
     https://en.wikipedia.org/wiki/Smoothstep
 
     """
+
     def __init__(self, **kw):
         """
         Smoothstep Taper Constructor.
         """
 
         def f(x):
-            return 3 * x ** 2 - 2 * x ** 3
+            return 3 * x**2 - 2 * x**3
+
         opts = dict(f=f, f_is_normed=True)
         kw.update(opts)
         super().__init__(**kw)
@@ -300,6 +316,10 @@ class Klopfenstein(Taper1D):
     "A Transmission Line Taper of Improved Design", published in 1956 [#Klopfenstein]_ .
     A correction to Klopfenstein's math was published by in May 1973 by Darko Kajfez and Jame Prewit [#Kajfez]_ .
 
+    Parameters
+    ----------
+    * rmax: maximum reflection coefficient in the pass band in percentage of :math:`\rho_0`
+
     References
     ----------
     .. [#microwaves101] https://www.microwaves101.com/encyclopedias/klopfenstein-taper
@@ -311,5 +331,30 @@ class Klopfenstein(Taper1D):
         doi: 10.1109/TMTT.1973.1128003.
         https://ieeexplore.ieee.org/document/1128003
     """
+
+    def _phi(self, z: list[Number], a: Number):
+        r"""
+        :math:`\phi` function
+        """
+
+        return array([quad(lambda y: iv(1, a * sqrt(1 - y**2)) / a / sqrt(1 - y**2), 0, zi)[0] for zi in z])
+
     def __init__(self, **kw):
-        raise NotImplementedError('Not Yet Implemented')
+        """
+        Klopfenstein Taper Constructor.
+        """
+
+        def f(x, length, start, stop, **kwargs):
+            rmax = kwargs.get("rmax", 0.05)
+
+            z = x - length / 2
+            log_ratio = log(stop / start) / 2
+            a = arccosh(1 / rmax)
+            log_value = log(start * stop) / 2 + log_ratio / cosh(a) * (
+                a * a * self._phi(2 * z / length, a) + heaviside(z - length / 2, 1) + heaviside(z + length / 2, 1) - 1
+            )
+            return exp(log_value)
+
+        opts = dict(f=f, f_is_normed=False)
+        kw.update(opts)
+        super().__init__(**kw)
