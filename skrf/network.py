@@ -2291,7 +2291,100 @@ class Network:
           self.noise = noise.swapaxes(0, 2).swapaxes(1, 2)
           self.noise_freq = noise_freq
 
+    @classmethod
+    def from_string(cls, data: str, **kwargs) -> Network:
+        r"""Create a Network object from a text string
 
+        Parameters
+        ----------
+
+        data : str
+            Touchstone file contents. Supported formats are
+             * touchstone file (.s?p) (or .ts)
+
+        \*\*kwargs :
+            key word arguments can be used to assign properties of the
+            Network, such as `s`, `f` and `z0`.
+            keyword `name` can be used to name the Network.
+            keyword `params` is used to assign parameters to the Network.
+            keyword `comments` associates comments with the Network.
+            keyword `s_def` sets the scattering parameter definition. Can be 'power',
+                    'pseudo', or 'traveling'. 'power' for power-wave definition,
+                    'pseudo' for pseudo-waves definition.
+                    'traveling' corresponds to the initial implementation.
+                    Default is 'power'.
+                    NB: results are the same for real-valued characteristic impedances.
+            keyword `encoding` can be used to define the Touchstone file encoding.
+            keyword `noise_interp_kind` used to change the default interpolation
+                     method for noisy networks. Options are 'linear', 'nearest',
+                     'nearest-up', 'zero', 'slinear', 'quadratic', 'cubic',
+                     'previous', or 'next'. Review `scipy.interpolate.interp_1d`
+                     for details on each interpolation style. Defaults to 'linear'.
+            keyword `noise_fill_value` used to change the default interpolation
+                     fill value for noisy networks. Defaults to np.nan.
+
+        Examples
+        --------
+
+        From file contents
+
+        >>> filepath = 'ntwk1.s2p'
+        >>> with open(filepath, 'r') as f:
+        >>>     content = f.read()
+        >>> n = rf.Network.from_string(content)
+        """
+
+        # Write the data to a string buffer
+        buffer = io.StringIO()
+        buffer.write(data)
+        buffer.seek(0)
+
+        # Determine if the data is a Touchstone V2.X file
+        v2_data = re.search(r"^\s*\[\s?version\s?\]", data, re.I | re.M)
+
+        if v2_data:
+            buffer.name = "Network.ts"
+
+        # Attempt to figure out how many ports the data has
+        else:
+
+            # Pull out only the data lines, we're not interested in headers or comments for this
+            # Strip the whitespace and split on any comments, we only need the data
+            data_lines = [
+                l.strip().split('!')[0] for l in data.splitlines()
+                if not any([l.strip().startswith(prefix) for prefix in '#!'])
+            ]
+
+            # The first line should have a different number of entries than other lines.
+            # It should also always have an odd number of entries while the other lines
+            # should have an even number of entries
+
+            # Split the first line on whitespace to get each entry
+            line1_entries = data_lines[0].split()
+            start_line_count = len(line1_entries)
+
+            # Build up the dataset for the first frequency point
+            dataset1 = line1_entries[1:]
+            for line in data_lines[1:]:
+
+                # Split the line on whitespace to get each entry
+                entries = line.strip().split()
+                line_count = len(entries)
+
+                # Line is part of the same dataset
+                if line_count != start_line_count:
+                    dataset1.extend(entries)
+
+                # Line is the start of a new dataset
+                else:
+                    break
+
+            # The number of ports is the square root of the number of entry pairs in the dataset
+            num_ports = int((len(dataset1) / 2) ** 0.5)
+
+            buffer.name = f"Network.s{num_ports}p"
+
+        return cls(buffer, **kwargs)
 
 
     # touchstone file IO
@@ -6359,9 +6452,21 @@ def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
     for subntwk in ntwk_list:
         for m, n in nport.port_tuples:
             if m != n and m > n:
-                if f"{m + offby}{port_sep}{n + offby}" in subntwk.name:
+                if port_sep == "":
+                    # If we have no separator, assume the first two digits we find are the port numbers
+                    re_digits = re.findall(r'\d', subntwk.name)
+                    p1 = int(re_digits[0])
+                    p2 = int(re_digits[1])
+                else:
+                    # If we have a separator, use split/regex match
+                    # This ensures there is no string ambiguity for networks with > 10 ports
+                    split_name = subntwk.name.split(port_sep)
+                    p1 = int(re.search(r'\d+', split_name[0]).group(0))
+                    p2 = int(re.search(r'\d+', split_name[1]).group(0))
+
+                if (p1 == m + offby) and (p2 == n + offby):
                     pass
-                elif f"{n + offby}{port_sep}{m + offby}" in subntwk.name:
+                elif (p1 == n + offby) and (p2 == m + offby):
                     subntwk = subntwk.flipped()
                 else:
                     continue

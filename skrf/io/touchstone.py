@@ -354,6 +354,45 @@ class Touchstone:
         if x == "2.0":
             self._parse_dict.update(self._parse_dict_v2)
 
+    def _parse_port(self, fid: typing.TextIO) -> list[str]:
+        """
+        Reset file pointer and parse port names for more relaxed patterns.
+
+        Supported port-naming patterns include:
+        1. Standard Touchstone pattern:
+            - ! Port [1] = MyPort_VDD
+            - ! Port 60 : P060
+        2. Sigrity pattern:
+            - ! MyPort::VDD
+        """
+        # reset file pointer
+        fid.seek(0)
+        port_style = None
+        for line in fid:
+            # ex: ! Port [1] = MyPort_VDD; ! Port 60 : P060
+            if re.search(r'!\s*Port\s*[ \[]\d+[ \]]\s*[\=\:]\s*.+', line.strip()):
+                port_style = 'standard'
+                break
+            # ex: ! MyPort::VDD
+            if re.search(r'!\s*\S+::[^:]+', line.strip()):
+                port_style = 'sigrity'
+                break
+            # only find comments before first data point
+            if re.search(r'^\s*\d', line):
+                break
+        # reset file pointer again
+        fid.seek(0)
+        port_names: list[str] = []
+        port_pattern = r'!\s*Port\s*[ \[]\d+[ \]]\s*[\=\:]\s*(.+)' if port_style == 'standard' else r'!\s*(\S+::[^:]+)'
+        for line in fid:
+            if m0 := re.search(port_pattern, line.strip()):
+                port_names.append(m0.group(1))
+            # only find comments before first data point
+            if re.search(r'^\s*\d', line):
+                break
+
+        return port_names
+
     def _parse_file(self, fid: typing.TextIO) -> ParserState:
         """
         Parse the raw file and generate an structured view.
@@ -475,6 +514,12 @@ class Touchstone:
 
                 elif state.parse_noise:
                     state.noise.append(values)
+
+        # To prevent that port names are not correctly parsed
+        if not state.port_names or len(state.port_names) != state.rank:
+            port_names = self._parse_port(fid)
+            if len(port_names) == state.rank:
+                state.port_names = {i: name for i, name in enumerate(port_names)}
 
         return state
 

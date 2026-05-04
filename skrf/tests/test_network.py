@@ -1,4 +1,5 @@
 import io
+import itertools
 import os
 import pickle
 import sys
@@ -2121,6 +2122,25 @@ class NetworkTestCase(unittest.TestCase):
         tee2 = n_twoports_2_nport(ntw_list, nports=3)
         self.assertTrue(tee2 == tee)
 
+    def test_n_twoports_2_nport_large_network(self):
+        """
+        Test that n_twoports_2_nport() can combine large networks with > 10 ports (Issue #1217)
+        Import an .s32p, split it into 2 port networks, then recombine
+        """
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
+
+        subnetwork_ports = list(itertools.combinations(list(range(ntwk.nports)), 2))
+        subnetworks = []
+
+        for pair in subnetwork_ports:
+            subnetworks.append(ntwk.subnetwork(pair))
+            subnetworks[-1].name = f"p{pair[0]+1}_{pair[1]+1}"
+
+        combined_ntwk = n_twoports_2_nport(subnetworks, ntwk.nports, port_sep="_")
+
+        self.assertTrue(np.allclose(ntwk.s, combined_ntwk.s))
+        self.assertTrue(np.allclose(ntwk.z0, combined_ntwk.z0))
+
     def test_subnetwork_port_names(self):
         """ Test that subnetwork keeps port_names property. Issue #429 """
         self.ntwk1.port_names = ['A', 'B']
@@ -2401,6 +2421,39 @@ class NetworkTestCase(unittest.TestCase):
             error_awr_dB = awr_data[awr_error_fcn].values
             error_skrf_dB = 20*np.log10(ntwkA.s_error(ntwkB,error_function=skrf_error_fcn))
             np.testing.assert_almost_equal(error_awr_dB,error_skrf_dB,decimal=3)
+
+    def test_network_from_string(self):
+
+        # Test every touchstone filetype
+        for file_type in ["*.s*p", "*.ts", "*.sp"]:
+
+            # Flag to check that the file type is actually a touchstone file
+            check_extension = True if file_type == "*.s*p" else False
+
+            # Test every touchstone file found in the test directory.
+            for fp in Path(self.test_dir).rglob(file_type):
+
+                # Check that the file extension is actually a touchstone file
+                if check_extension:
+                    try:
+                        # Ensure that the middle of the suffix is a number
+                        int(fp.suffix.strip('.sp'))
+                    except ValueError:
+                        # Not a touchstone file
+                        continue
+
+                with open(fp) as f:
+                    content = f.read()
+
+                # Read one in from the string directly
+                n1 = rf.Network.from_string(content)
+
+                # Read one in from the file
+                n2 = rf.Network(fp)
+
+                # Ensure that the resulting networks are equal
+                self.assertEqual(n1, n2)
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
