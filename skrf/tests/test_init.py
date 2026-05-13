@@ -23,14 +23,27 @@ def _modules_loaded_by(import_statement: str) -> set[str]:
 # scipy is not included here because it loads submodules lazily. So we need
 # to check for any new scipy submodules dynamically instead of maintaining a static list.
 UNWANTED_MODULE_PREFIXES = [
-    "matplotlib",
+    # Required dependency — should not be eagerly imported
     "pandas",
+    # Optional dependencies (declared in [project.optional-dependencies])
+    "matplotlib",   # plot extra — plotting features
+    "networkx",     # netw extra — circuit graph drawing (circuit.py)
+    "openpyxl",     # xlsx extra — Excel I/O
+    "pyvisa",       # visa extra — instrument control (vi/)
+    # Dev/docs-only dependencies
     "IPython",
-    "bokeh",
-    "PIL",       # Pillow — image processing
-    "cv2",       # OpenCV
-    "tensorflow",
-    "torch",
+    "bokeh",        # notebook interactive plotting (notebook/bokeh_.py)
+    "pyspice",      # testspice dev dep — must not leak into core
+    # Not yet used, but plausible additions in future PRs — guard proactively
+    "numba",        # JIT acceleration
+    "plotly",       # interactive plotting
+    "sympy",        # symbolic math
+    "h5py",         # HDF5 file I/O
+    "xarray",       # N-D labeled arrays
+    "PIL",          # Pillow — image processing / plot export
+    "cv2",          # OpenCV — image/signal processing
+    "torch",        # PyTorch — ML-based modelling/calibration
+    "tensorflow",   # TensorFlow — ML-based modelling/calibration
 ]
 
 
