@@ -30,9 +30,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from numbers import Number
 
+import scipy
 from numpy import arccosh, array, cosh, exp, heaviside, linspace, log, sqrt
-from scipy.integrate import quad
-from scipy.special import iv
 
 from .network import cascade_list
 
@@ -336,7 +335,8 @@ class Klopfenstein(Taper1D):
         r"""
         :math:`\phi` function
         """
-
+        quad = scipy.integrate.quad
+        iv = scipy.special.iv
         return array([quad(lambda y: iv(1, a * sqrt(1 - y**2)) / a / sqrt(1 - y**2), 0, zi)[0] for zi in z])
 
     def __init__(self, **kw):
