@@ -1048,6 +1048,10 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
         cal.apply_cal(self.measured[0])
 
 class TUGMultilineTest(EightTermTest):
+    thru_length = 0
+    line_offsets = [100e-6, 200e-6, 900e-6]  # line lengths relative to the thru
+    cal_kwargs = {}
+
     def setUp(self):
         self.n_ports = 2
         self.wg = WG
@@ -1061,31 +1065,89 @@ class TUGMultilineTest(EightTermTest):
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
 
-        actuals = [
-            wg.thru(),
-            two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
-            two_port_reflect(wg.load(.99+0.05j),wg.load(.99+0.05j)),
-            wg.line(100,'um'),
-            wg.line(200,'um'),
-            wg.line(900,'um'),
+        line_lengths = [self.thru_length] + [self.thru_length + d for d in self.line_offsets]
+        lines = [wg.line(length, 'm') for length in line_lengths]
+        reflects = [
+            two_port_reflect(wg.load(-.98-.1j), wg.load(-.98-.1j)),
+            two_port_reflect(wg.load(.99+0.05j), wg.load(.99+0.05j)),
             ]
+        self.actuals = lines + reflects
 
-        self.actuals=actuals
-
-        measured = [self.measure(k) for k in actuals]
+        line_meas = [self.measure(k) for k in lines]
+        reflect_meas = [self.measure(k) for k in reflects]
 
         self.cal = TUGMultilineTRL(
-            line_meas = [measured[0]] + measured[3:],
-            line_lengths = [0, 100e-6, 200e-6, 900e-6],
+            line_meas = line_meas,
+            line_lengths = line_lengths,
             er_est = 1,
-            reflect_meas = measured[1:3],
+            reflect_meas = reflect_meas,
             reflect_est = [-1, 1],
-            isolation = measured[1],
-            switch_terms = (self.gamma_f, self.gamma_r)
+            isolation = reflect_meas[0],
+            switch_terms = (self.gamma_f, self.gamma_r),
+            **self.cal_kwargs,
             )
 
     def test_gamma(self):
         self.assertTrue(max(np.abs(self.wg.gamma-self.cal.gamma)) < 1e-3)
+
+    def test_quality_metrics(self):
+        # lambd, kappa and effective_phase_deg are computed and well-formed.
+        npts = len(self.wg.frequency.f)
+        self.assertEqual(self.cal.lambd.shape, (npts,))
+        self.assertEqual(self.cal.kappa.shape, (npts,))
+        ep = self.cal.effective_phase_deg
+        self.assertTrue(np.all(ep >= 0) and np.all(ep <= 90))
+
+
+class TUGMultilineNonzeroThruTest(TUGMultilineTest):
+    """Non-zero length thru: the reference plane is shifted to the thru edges"""
+    thru_length = 50e-6
+
+
+class TUGMultilineLnorm2Test(TUGMultilineTest):
+    """L2-norm weighting of the eigenvalue problem."""
+    cal_kwargs = {'lnorm': 2}
+
+
+class TUGMultilineRepeatedLinesTest(TUGMultilineTest):
+    """Repeated line length, handled via compensate_repeated_lines."""
+    line_offsets = [100e-6, 100e-6, 200e-6, 900e-6]  # 100 um line repeated
+    cal_kwargs = {'compensate_repeated_lines': True}
+
+
+class TUGMultilineNoReflectTest(unittest.TestCase):
+    """Without a reflect standard, gamma and the transmission (S21/S12) of a DUT
+    are still recovered (S11/S22 are not tested)."""
+    def setUp(self):
+        self.wg = WG
+        wg = self.wg
+        self.X = wg.random(n_ports=2, name='X')
+        self.Y = wg.random(n_ports=2, name='Y')
+        self.gamma_f = wg.random(n_ports=1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports=1, name='gamma_r')
+
+        line_lengths = [0, 100e-6, 200e-6, 900e-6]
+        lines = [wg.line(length, 'm') for length in line_lengths]
+        line_meas = [self.measure(k) for k in lines]
+
+        self.cal = TUGMultilineTRL(
+            line_meas = line_meas,
+            line_lengths = line_lengths,
+            er_est = 1,
+            switch_terms = (self.gamma_f, self.gamma_r),
+            )
+
+    def measure(self, ntwk):
+        return terminate(self.X ** ntwk ** self.Y, self.gamma_f, self.gamma_r)
+
+    def test_gamma(self):
+        self.assertTrue(max(np.abs(self.wg.gamma - self.cal.gamma)) < 1e-3)
+
+    def test_transmission_correction(self):
+        dut = self.wg.random(n_ports=2, name='dut')
+        dut_cal = self.cal.apply_cal(self.measure(dut))
+        np.testing.assert_allclose(dut_cal.s[:, 1, 0], dut.s[:, 1, 0], atol=1e-6)
+        np.testing.assert_allclose(dut_cal.s[:, 0, 1], dut.s[:, 0, 1], atol=1e-6)
 
 @pytest.mark.skip()
 class TREightTermTest(unittest.TestCase, CalibrationTest):
