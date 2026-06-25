@@ -14,12 +14,12 @@ jobs:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
-    - uses: astral-sh/setup-uv@v7
+    - uses: astral-sh/setup-uv@v8.2.0
 
     - name: Install minimal dependencies
       run: |
@@ -88,7 +88,7 @@ jobs:
 
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
