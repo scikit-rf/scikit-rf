@@ -10,7 +10,7 @@ try:
     from skrf.vi.vna import ValuesFormat, keysight
     from skrf.vi.vna.keysight.pna import SweepMode, SweepType
 except ImportError:
-    pass
+    pytest.skip("pyvisa not installed", allow_module_level=True)
 
 if "matplotlib" not in sys.modules:
     pytest.skip(allow_module_level=True)
