@@ -1412,6 +1412,6 @@ def nudge_eig(mat: np.ndarray,
     eigw[mask] = np.maximum(mask_cond, mask_min)
 
     # Now assemble the eigendecomposited matrices back
-    e = np.zeros_like(mat)
+    e = np.zeros_like(mat, dtype=np.complex128)
     np.einsum('ijj->ij', e)[...] = eigw
     return rsolve(eigv, eigv @ e)
