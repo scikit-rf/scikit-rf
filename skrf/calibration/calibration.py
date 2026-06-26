@@ -3668,6 +3668,10 @@ class TUGMultilineTRL(EightTerm):
     The overall algorithm is based on [1]_, but the weighting matrix calculation is based on [2]_.
     You can read the mathematical details online at [3]_.
 
+    The thru normalization uses the S-parameter formulation from [4]_. Optionally, the weighting
+    matrix can be scaled to compensate for repeated line lengths and to change the L-norm weighting
+    of the eigenvalue problem, as described in [5]_ (see ``compensate_repeated_lines`` and ``lnorm``).
+
     The calibration reference plane is at the edges of the first line.
     By default, the reference impedance of the calibration is the characteristic impedance
     of the transmission lines. If the characteristic impedance is known,
@@ -3705,6 +3709,13 @@ class TUGMultilineTRL(EightTerm):
 
     .. [3] https://ziadhatab.github.io/posts/multiline-trl-calibration/
 
+    .. [4] Z. Hatab, M. E. Gadringer and W. Bösch, "A Thru-Free Multiline Calibration,"
+        in IEEE Transactions on Instrumentation and Measurement, vol. 72, pp. 1-9, 2023,
+        Art no. 1008709, doi: https://doi.org/10.1109/TIM.2023.3308226
+
+    .. [5] Z. Hatab, M. E. Gadringer, and W. Bösch, "The Choice of Line Lengths in
+        Multiline Thru-Reflect-Line Calibration," arXiv: https://arxiv.org/abs/2512.18641
+
     See Also
     --------
     NISTMultilineTRL
@@ -3713,6 +3724,7 @@ class TUGMultilineTRL(EightTerm):
     family = 'TRL'
     def __init__(self, line_meas, line_lengths, er_est=1-.0j,
                 reflect_meas=None, reflect_est=None, reflect_offset=0, ref_plane=0,
+                compensate_repeated_lines=False, lnorm=1,
                 *args, **kwargs):
         r"""
         TUGMultilineTRL initializer.
@@ -3765,6 +3777,13 @@ class TUGMultilineTRL(EightTerm):
             Different shifts can be given to different ports by giving a two element list.
             First element is shift of port 1 and second is shift of port 2.
 
+        compensate_repeated_lines : bool
+            If True, scale the weighting matrix to compensate for line
+            measurements that share the same length (repeated lines). Default is False.
+
+        lnorm : int
+            Norm-weighting used in the eigenvalue problem (e.g. 1 for L1, 2 for L2). Default is 1.
+
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
 
@@ -3808,11 +3827,15 @@ class TUGMultilineTRL(EightTerm):
 
         self.ref_plane = np.atleast_1d(ref_plane)*np.ones(2)
 
+        self.compensate_repeated_lines = compensate_repeated_lines
+        self.lnorm = lnorm
+
     def run(self):
         # Constants
         c0 = 299792458  # speed of light in vacuum (m/s)
         Q  = np.array([[0,0,0,1], [0,-1,0,0], [0,0,-1,0], [1,0,0,0]])
         P  = np.array([[1,0,0,0], [0, 0,1,0], [0,1, 0,0], [0,0,0,1]])
+        P2 = np.array([[0,1],[1,0]])  # 2x2 permutation matrix
 
         # Functions used throughout the calibration
         def gamma2ereff(x, f):
@@ -3828,13 +3851,13 @@ class TUGMultilineTRL(EightTerm):
             T[1,1] = 1
             return T if pseudo else T/S[1,0]
 
-        def t2s_single(T, pseudo=False):
-            S = T.copy()
-            S[0,0] = T[0,1]
-            S[0,1] = T[0,0]*T[1,1]-T[0,1]*T[1,0]
-            S[1,0] = 1
-            S[1,1] = -T[1,0]
-            return S if pseudo else S/T[1,1]
+        def LFTinv(E, S):
+            # inverse linear fractional transformation (measured -> de-embedded S)
+            # R. A. Speciale, "Projective Matrix Transformations in Microwave Network Theory,"
+            #     1981 IEEE MTT-S International Microwave Symposium Digest.
+            N = S.shape[0]
+            E11, E12, E21, E22 = E[:N,:N], E[:N,N:], E[N:,:N], E[N:,N:]
+            return np.linalg.inv(S@E21 - E11)@(E12 - S@E22)
 
         def compute_G_with_takagi(A):
             '''
@@ -3861,26 +3884,22 @@ class TUGMultilineTRL(EightTerm):
             # inverse covariance matrix for propagation constant computation
             return np.eye(N-1, dtype=complex) - (1/N)*np.ones(shape=(N-1, N-1), dtype=complex)
 
-        def compute_gamma(X_inv, M, lengths, gamma_est, inx=0):
-            # gamma = alpha + 1j*beta is determined through linear weighted least-squares
-            # with inx you can choose the reference line. doesn't make any difference.
+        def compute_gamma(z, y, lengths, gamma_est, inx=0):
+            # gamma = alpha + 1j*beta is determined through linear weighted least-squares.
+            # z = exp(-gamma*length) and y = 1/z are passed directly; `inx` selects the
+            # reference line (the choice does not affect the result).
             lengths = lengths - lengths[inx]
-            EX = (X_inv@M)[[0,-1],:]             # extract z and y columns
-            EX = np.diag(1/EX[:,inx])@EX        # normalize to a reference line based on index `inx` (can be any)
-            del_inx = np.arange(len(lengths)) != inx  # get rid of the reference line
+            z = z/z[inx]
+            y = y/y[inx]
+            del_inx = np.arange(len(lengths)) != inx  # get rid of the reference line (i.e., thru)
 
-            # solve for alpha
-            l = -2*lengths[del_inx]
-            gamma_l = np.log(EX[0,:]/EX[-1,:])[del_inx]
-            alpha =  WLS(l, gamma_l.real, Vgl(len(l)+1))
-
-            # solve for beta
             l = -lengths[del_inx]
-            gamma_l = np.log((EX[0,:] + 1/EX[-1,:])/2)[del_inx]
+            gamma_l = np.log((z + 1/y)/2)[del_inx]
             n = np.round( (gamma_l - gamma_est*l).imag/np.pi/2 )
             gamma_l = gamma_l - 1j*2*np.pi*n # unwrap
-            beta = WLS(l, gamma_l.imag, Vgl(len(l)+1))
-            return alpha + 1j*beta
+            gamma = WLS(l, gamma_l, Vgl(len(l)+1))
+            # ensure positive imaginary part (delay/causality) in case unwrapping is imperfect.
+            return gamma.real + 1j*abs(gamma.imag)
 
         def solve_quadratic(v1, v2, inx, x_est):
             # This is related to solving the normalized error terms using nullspace approach.
@@ -3913,16 +3932,24 @@ class TUGMultilineTRL(EightTerm):
         er_est = self.er_est
         reflect_est = self.reflect_est
         reflect_offset = self.reflect_offset
+        compensate_repeated_lines = self.compensate_repeated_lines
+        lnorm = self.lnorm
 
-        fpoints = len(self.freq.f)
+        freqs   = self.freq.f
+        fpoints = len(freqs)
         Xs = np.zeros(shape=(fpoints, 4, 4), dtype=complex)  # to store the combined error boxes (6 error terms)
         ks = np.zeros(shape=(fpoints,), dtype=complex)  # to store the 7th transmission error terms
         er_effs = np.zeros(shape=(fpoints,), dtype=complex)
         gammas = np.zeros(shape=(fpoints,), dtype=complex)
-        lambds = np.zeros(shape=(fpoints,), dtype=float)  # to store the eigenvalue of the weighted eigendecomposition
+        lambds = np.zeros(shape=(fpoints,), dtype=float)  # eigenvalue of the (scaled) weighted eigendecomposition
+        kappas = np.zeros(shape=(fpoints,), dtype=float)  # normalized eigenvalue (scaled)
+
+        # initial propagation constant estimate (carried forward across frequency)
+        gamma_est = ereff2gamma(er_est, freqs[0])
+        gamma_est = abs(gamma_est.real) + 1j*abs(gamma_est.imag)  # this to avoid sign inconsistencies
 
         # compute the calibration at each frequency point
-        for m, f in enumerate(self.freq.f):
+        for m, f in enumerate(freqs):
             # measurements
             Mi   = np.array([s2t_single(x) for x in line_meas_S[:,m,:,:]]) # convert to T-parameters
             M    = np.array([x.flatten('F') for x in Mi]).T
@@ -3932,22 +3959,42 @@ class TUGMultilineTRL(EightTerm):
             G, lambd = compute_G_with_takagi(Dinv@M.T@P@Q@M)
             W = (G@np.array([[0,1j],[-1j,0]])@G.T).conj()
 
-            gamma_est = ereff2gamma(er_est, f)
-            gamma_est = abs(gamma_est.real) + 1j*abs(gamma_est.imag)  # this to avoid sign inconsistencies
+            ## recover z = exp(-gamma*length) and y = 1/z from the matrix G (rank-1 recovery)
+            zy = G@np.array([[1,-1j],[1j,1]])@G.T  # outer product of z and y (up to sign of W)
+            u,_,vh = np.linalg.svd(zy)
+            z = u[:,0]
+            y = vh[0,:]
 
+            ## resolve the sign of W and swap z and y if needed
             z_est = np.exp(-gamma_est*lengths)
             y_est = 1/z_est
-            W_est = (np.outer(y_est,z_est) - np.outer(z_est,y_est)).conj()
-            W = -W if abs(W-W_est).sum() > abs(W+W_est).sum() else W # resolve the sign ambiguity
+            lambd_est = y_est.dot(W).dot(z_est)  # projection of the estimate onto W (defines lambda's sign)
+            if abs(lambd_est - lambd) > abs(lambd_est + lambd):
+                W = -W
+                y, z = z, y
+
+            ## scale the weighting matrix to handle repeated lengths and/or the L-norm weighting
+            _, inv, counts = np.unique(lengths, return_inverse=True, return_counts=True)
+            q  = 1/counts[inv]
+            S1 = np.outer(q, q) if compensate_repeated_lines else 1  # compensate repeated lengths
+            S2 = abs(W)**(lnorm-1)                                   # change the L-norm weighting
+            WS = W*(S1*S2)
+            lambd_S = 0.5*abs(WS.conj()*W).sum()  # scaled eigenvalue
+            kappa_S = 2*lambd_S/abs(WS).sum()     # normalized scaled eigenvalue
 
             ## weighted eigenvalue problem
-            F = M@W@Dinv@M.T@P@Q
-            eigval, eigvec = np.linalg.eig(F+lambd*np.eye(4))
+            F = M@WS@Dinv@M.T@P@Q
+            eigval, eigvec = np.linalg.eig(F)
             inx = np.argsort(abs(eigval))
-            v1 = eigvec[:,inx[0]]
-            v2 = eigvec[:,inx[1]]
-            v3 = eigvec[:,inx[2]]
-            v4 = eigvec[:,inx[3]]
+            v2 = eigvec[:,inx[0]]  # null space
+            v3 = eigvec[:,inx[1]]  # null space
+            v1 = eigvec[:,inx[2]]  # range space
+            v4 = eigvec[:,inx[3]]  # range space
+            # the eigenvalue from the eigenproblem should match the one from Takagi decomposition.
+            lambd_eigval = (eigval[inx[3]] - eigval[inx[2]])/2
+            if abs(lambd_eigval - lambd_S) > abs(lambd_eigval + lambd_S):
+                v1, v4 = v4, v1  # swap if the assumed order is wrong
+
             x1__est = v1/v1[0]
             x1__est[-1] = x1__est[1]*x1__est[2]
             x4_est = v4/v4[-1]
@@ -3966,18 +4013,31 @@ class TUGMultilineTRL(EightTerm):
             b21 = (x3_[0] + x4[1])/2
             a21_a11 = (x1_[1] + x3_[3])/2
             b12_b11 = (x1_[2] + x2_[3])/2
-            X_ = np.kron([[1,b21],[b12_b11,1]], [[1,a12],[a21_a11,1]]) # normalized cal coefficients
+            A_ = np.array([[1,a12],[a21_a11,1]])
+            B_ = np.array([[1,b12_b11],[b21,1]])
+            X_ = np.kron(B_.T, A_)  # normalized cal coefficients
+            Zero = np.zeros_like(A_)
+            E_ = P.T@np.block([[A_, Zero],[Zero, P2@np.linalg.inv(B_)@P2]])@P  # 16-term error-box
 
-            X_inv = np.linalg.inv(X_)
+            ## de-embed the lines and recover s21 = exp(-gamma*length) (rank-1 recovery)
+            Slines_cal = np.array([LFTinv(E_, s) for s in line_meas_S[:,m,:,:]])
+            R = np.vstack(( Slines_cal[:, 1, 0], Slines_cal[:, 0, 1] ))
+            _,_,vh = np.linalg.svd(R)
+            s21 = vh[0,:]/vh[0,0]  # normalized to the thru
 
-            ## compute propagation constant
-            gamma = compute_gamma(X_inv, M, lengths, gamma_est)
-            er_eff = gamma2ereff(gamma, f) # new estimate of er_eff
-            er_est = er_eff
+            ## compute propagation constant two ways and pick the one consistent with lambda
+            gamma1 = compute_gamma(z, y, lengths, gamma_est)        # from the Takagi matrix G
+            gamma2 = compute_gamma(s21, 1/s21, lengths, gamma_est)  # from the de-embedded lines
+            z1 = np.exp(-gamma1*lengths)
+            z2 = np.exp(-gamma2*lengths)
+            lambd1 = (1/z1).dot(W).dot(z1)
+            lambd2 = (1/z2).dot(W).dot(z2)
+            gamma = gamma1 if abs(lambd1 - lambd) < abs(lambd2 - lambd) else gamma2
+            er_eff = gamma2ereff(gamma, f)
 
-            ## solve a11b11 and k from thru measurement (first line in the list)
-            ka11b11,_,_,k = X_inv@M[:,0]
-            a11b11 = ka11b11/k
+            ## solve a11b11 and k from the thru measurement (S-parameter formulation; forces thru S21=S12=1)
+            k = 1/Slines_cal[0,1,0]
+            a11b11 = Slines_cal[0,0,1]/k
             # shift plane to edges of the thru standard plus defined reference plane
             a11b11 = a11b11*np.exp(2*gamma*(lengths[0] - self.ref_plane.sum()))
             k = k*np.exp(-gamma*(lengths[0] - self.ref_plane.sum()))
@@ -3989,22 +4049,16 @@ class TUGMultilineTRL(EightTerm):
             else:
                 # solve for a11/b11, a11 and b11 (use redundant reflect measurement, if available)
                 reflect_est_offset = reflect_est*np.exp(-2*gamma*reflect_offset) # shift estimated reflect
-                Mr = np.array([s2t_single(x, pseudo=True).flatten('F') for x in reflect_meas_S[:,m,:,:]]).T
-                T  = X_inv@Mr
-                a11_b11 = -T[2,:]/T[1,:]
+                Sreflect_cal = np.array([LFTinv(E_, s) for s in reflect_meas_S[:,m,:,:]])
+                R = np.vstack(( Sreflect_cal[:, 0, 0], Sreflect_cal[:, 1, 1] ))
+                u,_,_ = np.linalg.svd(R)  # rank-1 recovery across all reflect measurements
+                a11_b11 = u[0,0]/u[1,0]   # this is a11/b11
                 a11 = np.sqrt(a11_b11*a11b11)
                 b11 = a11b11/a11
-                G_cal = (
-                    (reflect_meas_S[:,m,0,0] - a12) / (1 - reflect_meas_S[:,m,0,0]*a21_a11)/a11
-                    + (reflect_meas_S[:,m,1,1]
-                    + b21)/(1 + reflect_meas_S[:,m,1,1]*b12_b11)/b11 )/2  # average
-                for inx,(Gcal,Gest) in enumerate(zip(G_cal, reflect_est_offset)):
-                    if abs(Gcal - Gest) > abs(Gcal + Gest):
-                        a11[inx]   = -a11[inx]
-                        b11[inx]   = -b11[inx]
-                        G_cal[inx] = -G_cal[inx]
-                a11 = a11.mean()
-                b11 = b11.mean()
+                G_cal = (Sreflect_cal[:,0,0]/a11 + Sreflect_cal[:,1,1]/b11)/2  # average
+                if np.abs(G_cal + reflect_est_offset).sum() < np.abs(G_cal - reflect_est_offset).sum():
+                    a11 = -a11
+                    b11 = -b11
 
             X  = X_@np.diag([a11b11, b11, a11, 1]) # build the calibration matrix (de-normalize)
 
@@ -4012,11 +4066,17 @@ class TUGMultilineTRL(EightTerm):
             ks[m] = k
             gammas[m]  = gamma
             er_effs[m] = er_eff
-            lambds[m]  = lambd
+            lambds[m]  = lambd_S
+            kappas[m]  = kappa_S
+
+            # carry the propagation constant forward as the estimate for the next frequency
+            if m+1 < fpoints:
+                gamma_est = (gamma/f)*freqs[m+1]
 
         self._er_eff = er_effs
         self._gamma  = gammas
         self._lambd  = lambds
+        self._kappa  = kappas
 
         e = np.zeros(shape=(len(self.freq.f), 7), dtype=complex)
         e[:,0] =  Xs[:,2,3]
@@ -4083,7 +4143,7 @@ class TUGMultilineTRL(EightTerm):
         """
         Eigenvalue of the weighted eigendecomposition.
         The closer the eigenvalue to zero, the more sensitive the calibration to error.
-        Similar to the normalized standard deviation of NIST multiline TRL, but reversed.
+        Inversely proportional to the normalized standard deviation of NIST multiline TRL.
 
         """
         try:
@@ -4091,6 +4151,33 @@ class TUGMultilineTRL(EightTerm):
         except(AttributeError):
             self.run()
             return self._lambd
+
+    @property
+    def kappa(self):
+        """
+        Normalized eigenvalue of the weighted eigendecomposition.
+
+        It is the eigenvalue divided by the mean magnitude of the weighting matrix, providing
+        a scale-independent measure of how well-conditioned the calibration is. See [5]_.
+
+        """
+        try:
+            return self._kappa
+        except(AttributeError):
+            self.run()
+            return self._kappa
+
+    @property
+    def effective_phase_deg(self):
+        """
+        Effective phase of the calibration, ``arcsin(kappa/2)``, in degrees.
+
+        A quality metric derived from the normalized eigenvalue :attr:`kappa`:
+        values approaching 90 degrees indicate a well-conditioned calibration.
+        ``kappa/2`` is clipped to 1, so the result is capped at 90 degrees. See [5]_.
+
+        """
+        return np.degrees(np.arcsin(np.clip(self.kappa/2, -1, 1)))
 
 
 class UnknownThru(EightTerm):
