@@ -63,10 +63,6 @@ from ..network import Network
 
 logger = getLogger(__name__)
 
-
-# delayed imports
-# from pandas import Series, Index, DataFrame
-
 def read_pna_csv(filename, *args, **kwargs) -> tuple[str, str, np.ndarray]:
     r"""
     Reads data from a csv file written by an Agilient PNA.

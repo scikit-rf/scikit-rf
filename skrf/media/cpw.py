@@ -13,10 +13,10 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING
 
-from numpy import any, exp, imag, log, real, sinh, sqrt, tanh, zeros
-from scipy.constants import c, epsilon_0, mu_0, pi
-from scipy.special import ellipk
+import scipy
+from numpy import any, exp, imag, log, pi, real, sinh, sqrt, tanh, zeros
 
+from .. import constants as _const
 from ..constants import NumberLike
 from ..tlineFunctions import skin_depth, surface_resistivity
 from .media import Media
@@ -278,7 +278,7 @@ class CPW(Media):
         if self.rho is not None:
             alpha += self.alpha_conductor
 
-        beta = 2. * pi * f * sqrt(ep_reff) / c
+        beta = 2. * pi * f * sqrt(ep_reff) / _const.c
 
         return alpha + 1j * beta
 
@@ -359,7 +359,8 @@ class CPW(Media):
         zl_eff : :class:`numpy.ndarray`
         ep_reff : :class:`numpy.ndarray`
         """
-        Z0 = sqrt(mu_0 / epsilon_0)
+        ellipk = scipy.special.ellipk
+        Z0 = sqrt(_const.mu_0 / _const.epsilon_0)
         a = w
         b = w + 2. * s
 
@@ -448,7 +449,7 @@ class CPW(Media):
          e : :class:`numpy.ndarray`
          """
          # cut-off frequency of the TE0 mode
-         fte = ((c / 4.) / (h * sqrt(ep_r - 1.)))
+         fte = ((_const.c / 4.) / (h * sqrt(ep_r - 1.)))
 
          # dispersion factor G
          p = log(w / h)
@@ -494,7 +495,7 @@ class CPW(Media):
         a_conductor : :class:`numpy.ndarray`
         a_dielectric : :class:`numpy.ndarray`
         """
-        Z0 = sqrt(mu_0 / epsilon_0)
+        Z0 = sqrt(_const.mu_0 / _const.epsilon_0)
         if t is not None and t > 0.:
             if rho is None:
                 raise(AttributeError("must provide values conductivity and conductor thickness to calculate this. "
@@ -517,7 +518,7 @@ class CPW(Media):
         else:
             a_conductor = zeros(f.shape)
 
-        l0 = c / f
+        l0 = _const.c / f
         a_dielectric =  pi * ep_r / (ep_r - 1) * (ep_reff - 1) / \
             sqrt(ep_reff) * tand / l0
 

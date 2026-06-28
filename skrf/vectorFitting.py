@@ -7,14 +7,14 @@ from timeit import default_timer as timer
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from scipy.integrate import trapezoid
-
-from .util import Axes, axes_kwarg
+import scipy
 
 # imports for type hinting
 if TYPE_CHECKING:
     from .network import Network
+    from .plotting import Axes
 
+from .plotting import axes_kwarg
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +160,7 @@ class VectorFitting:
             omega_eval = np.linspace(np.min(poles[idx_cmplx].imag) / 3, np.max(poles[idx_cmplx].imag) * 3, n_freqs)
             h = (residues[:, None, idx_cmplx] / (1j * omega_eval[:, None] - poles[idx_cmplx])
                  + np.conj(residues[:, None, idx_cmplx]) / (1j * omega_eval[:, None] - np.conj(poles[idx_cmplx])))
-            norm2 = np.sqrt(trapezoid(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
+            norm2 = np.sqrt(scipy.integrate.trapezoid(h.real ** 2 + h.imag ** 2, omega_eval, axis=1))
             spurious[idx_cmplx] = np.all(norm2 / np.mean(norm2) < gamma, axis=0)
         return spurious
 

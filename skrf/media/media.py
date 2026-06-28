@@ -21,10 +21,10 @@ from numbers import Number
 from pathlib import Path
 
 import numpy as np
+import scipy
 from numpy import any, array, gradient, imag, ones, real
-from scipy import stats
-from scipy.constants import c
 
+from .. import constants as _const
 from .. import mathFunctions as mf
 from ..constants import INF, S_DEF_DEFAULT, ZERO, NumberLike, to_meters
 from ..frequency import Frequency
@@ -945,7 +945,7 @@ class Media(ABC):
                 # too little points, as it uses gradient)
                 v_g = -self.v_g.imag.mean()
             else:
-                v_g = c
+                v_g = _const.c
             return to_meters(d=d,unit=unit, v_g=v_g)
 
     def thru(self,
@@ -1666,8 +1666,8 @@ class Media(ABC):
             a noise network
         """
         shape = (self.frequency.npoints, n_ports,n_ports)
-        phase_rv= stats.norm(loc=0, scale=phase_dev).rvs(size = shape)
-        mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size = shape)
+        phase_rv = scipy.stats.norm(loc=0, scale=phase_dev).rvs(size = shape)
+        mag_rv = scipy.stats.norm(loc=0, scale=mag_dev).rvs(size = shape)
 
         result = Network(**kwargs)
         result.frequency = self.frequency
@@ -1880,7 +1880,7 @@ class DefinedGammaZ0(Media):
         f,z_re,z_im,g_re,g_im,pz_re,pz_im = \
                 np.loadtxt(fid,  delimiter=',').T
 
-        if isinstance(filename, (str, Path)):
+        if isinstance(filename, str | Path):
             fid.close()
 
         return cls(

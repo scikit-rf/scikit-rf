@@ -26,9 +26,8 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
+import scipy
 from numpy.fft import fft, fftshift, ifft, ifftshift, irfft, rfft
-from scipy import signal
-from scipy.ndimage import convolve1d
 
 from .util import find_nearest_index
 
@@ -248,7 +247,7 @@ def get_window(window: str | tuple | Callable, Nx: int, **kwargs) -> np.ndarray:
     if callable(window):
         return window(Nx, **kwargs)
     else:
-        return signal.get_window(window, Nx=Nx, **kwargs)
+        return scipy.signal.get_window(window, Nx=Nx, **kwargs)
 
 def time_gate(ntwk: Network, start: float = None, stop: float = None, center: float = None, span: float = None,
               mode: str = 'bandpass', window=('kaiser', 6),
@@ -443,7 +442,7 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
     if method == 'convolution':
         # frequency-domain gating
         kernel = fftshift(fft(ifftshift(gate), norm='forward'))
-        ntwk_gated.s[:, 0, 0] = convolve1d(ntwk_gated.s[:, 0, 0], kernel, mode=conv_mode)
+        ntwk_gated.s[:, 0, 0] = scipy.ndimage.convolve1d(ntwk_gated.s[:, 0, 0], kernel, mode=conv_mode)
     elif method == 'fft':
         # time-domain band-pass mode
         s_td = fftshift(ifft(ntwk_gated.s[:, 0, 0]))

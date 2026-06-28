@@ -56,7 +56,7 @@ References
 .. [#] Spinner Technical Information: Cross Reference For Hollow Metallic Waveguides (TD-00036) https://www.spinner-group.com/images/download/technical_documents/SPINNER_TD00036.pdf
 """
 
-from .constants import mil
+from . import constants as _const
 from .frequency import Frequency
 from .media import Freespace, RectangularWaveguide
 
@@ -220,95 +220,95 @@ class StaticInstances:
 
     @property
     def wr51(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr51.copy(),a=510*mil,b=255*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr51.copy(),a=510*_const.mil,b=255*_const.mil,z0_override=50)
 
     @property
     def wr42(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr42.copy(),a=420*mil,b=170*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr42.copy(),a=420*_const.mil,b=170*_const.mil,z0_override=50)
 
     @property
     def wr34(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr34.copy(),a=340*mil,b=170*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr34.copy(),a=340*_const.mil,b=170*_const.mil,z0_override=50)
 
     @property
     def wr28(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr28.copy(),a=280*mil,b=140*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr28.copy(),a=280*_const.mil,b=140*_const.mil,z0_override=50)
 
     @property
     def wr22p4(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr22p4.copy(),a=224*mil,b=112*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr22p4.copy(),a=224*_const.mil,b=112*_const.mil,z0_override=50)
 
     @property
     def wr18p8(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr18p8.copy(),a=188*mil,b=94*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr18p8.copy(),a=188*_const.mil,b=94*_const.mil,z0_override=50)
 
     @property
     def wr14p8(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr14p8.copy(),a=148*mil,b=74*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr14p8.copy(),a=148*_const.mil,b=74*_const.mil,z0_override=50)
 
     @property
     def wr12p2(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr12p2.copy(),a=122*mil,b=61*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr12p2.copy(),a=122*_const.mil,b=61*_const.mil,z0_override=50)
 
     @property
     def wr10(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr10.copy(),a=100*mil,b=50*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr10.copy(),a=100*_const.mil,b=50*_const.mil,z0_override=50)
 
     @property
     def wr8(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr8.copy(),a=80*mil,b=40*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr8.copy(),a=80*_const.mil,b=40*_const.mil,z0_override=50)
 
     @property
     def wr6p5(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr6p5.copy(),a=65*mil,b=32.5*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr6p5.copy(),a=65*_const.mil,b=32.5*_const.mil,z0_override=50)
 
     @property
     def wr5p1(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr5p1.copy(),a=51*mil,b=25.5*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr5p1.copy(),a=51*_const.mil,b=25.5*_const.mil,z0_override=50)
 
     @property
     def wr4p3(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr4p3.copy(),a=43*mil,b=21.5*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr4p3.copy(),a=43*_const.mil,b=21.5*_const.mil,z0_override=50)
 
     @property
     def wr3p4(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr3p4.copy(),a=34*mil,b=17*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr3p4.copy(),a=34*_const.mil,b=17*_const.mil,z0_override=50)
 
     @property
     def wr2p8(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr2p8.copy(),a=28*mil,b=14*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr2p8.copy(),a=28*_const.mil,b=14*_const.mil,z0_override=50)
 
     @property
     def wr2p2(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr2p2.copy(),a=22*mil,b=11*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr2p2.copy(),a=22*_const.mil,b=11*_const.mil,z0_override=50)
 
     @property
     def wr1p9(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr1p9.copy(),a=19*mil,b=9.5*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr1p9.copy(),a=19*_const.mil,b=9.5*_const.mil,z0_override=50)
 
     @property
     def wr1p5(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr1p5.copy(),a=15*mil,b=7.5*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr1p5.copy(),a=15*_const.mil,b=7.5*_const.mil,z0_override=50)
 
     @property
     def wr1p2(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr1p2.copy(),a=12*mil,b=6*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr1p2.copy(),a=12*_const.mil,b=6*_const.mil,z0_override=50)
 
     @property
     def wr1(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr1.copy(),a=10*mil,b=5*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr1.copy(),a=10*_const.mil,b=5*_const.mil,z0_override=50)
 
     @property
     def wr0p8(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr0p8.copy(),a=8*mil,b=4*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr0p8.copy(),a=8*_const.mil,b=4*_const.mil,z0_override=50)
 
     @property
     def wr0p65(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr0p65.copy(),a=6.5*mil,b=3.25*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr0p65.copy(),a=6.5*_const.mil,b=3.25*_const.mil,z0_override=50)
 
     @property
     def wr0p51(self) -> RectangularWaveguide:
-        return RectangularWaveguide(self.f_wr0p51.copy(),a=5.1*mil,b=2.55*mil,z0_override=50)
+        return RectangularWaveguide(self.f_wr0p51.copy(),a=5.1*_const.mil,b=2.55*_const.mil,z0_override=50)
 
     @property
     def wm1295(self) -> RectangularWaveguide:
