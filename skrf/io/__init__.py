@@ -25,8 +25,6 @@ through the Network constructor, :func:`~skrf.network.Network.__init__`
 
 
 """
-from warnings import warn as _warn
-
 from . import citi, csv, general, mdif, metas, touchstone
 from .citi import Citi
 from .general import load_all_touchstones, read, read_all, write, write_all
@@ -39,20 +37,3 @@ from .touchstone import (
     hfss_touchstone_2_network,
     read_zipped_touchstones,
 )
-
-
-def __getattr__(name: str):
-    if name not in ['__warningregistry__']:
-        for module in [
-            touchstone,
-            mdif,
-            general,
-            csv,
-            citi,
-        ]:
-            result = getattr(module, name, None)
-            if result is not None:
-                _warn(f"skrf.io.{name} is deprecated. Please import {name} from "
-                     f"skrf.io.{module.__name__.split('.')[-1]} instead.", FutureWarning, stacklevel=2)
-                return result
-    raise AttributeError(f"module 'skrf.io' has no attribute '{name}'")
