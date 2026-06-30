@@ -583,7 +583,7 @@ class Circuit:
 
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
 
-            In [18]: open = rf.circuit.Circuit.SeriesImpedance(freq, rf.INF, name='series_impedance')
+            In [18]: open = rf.circuit.Circuit.SeriesImpedance(freq, rf.constants.INF, name='series_impedance')
 
         """
         A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
@@ -626,7 +626,7 @@ class Circuit:
 
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
 
-            In [18]: short = rf.circuit.Circuit.ShuntAdmittance(freq, rf.INF, name='shunt_admittance')
+            In [18]: short = rf.circuit.Circuit.ShuntAdmittance(freq, rf.constants.INF, name='shunt_admittance')
 
         """
         A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
@@ -1935,7 +1935,7 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
     >>> import skrf as rf
     >>> import numpy as np
     >>> circuit = rf.circuit.Circuit(connections)
-    >>> reduced_cnxs = rf.reduce_circuit(connections)
+    >>> reduced_cnxs = rf.circuit.reduce_circuit(connections)
     >>> reduced_circuit = rf.circuit.Circuit(reduced_cnxs)
     >>> ntwkA = circuit.network
     >>> ntwkB = reduced_circuit.network
