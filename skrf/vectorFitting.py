@@ -11,9 +11,10 @@ import scipy
 
 # imports for type hinting
 if TYPE_CHECKING:
-    from .network import Network
     from .plotting import Axes
 
+from .network import Network
+from .networkSet import NetworkSet
 from .plotting import axes_kwarg
 
 logger = logging.getLogger(__name__)
@@ -2663,3 +2664,52 @@ class VectorFitting:
                     f.write(f'Fe{i + 1} 0 e{i + 1} V{i + 1} {gain_cccs_a_i}\n')
 
             f.write(f'.ENDS {fitted_model_name}\n')
+
+
+class VectorFittingParametric:
+    def __init__(self, networkset: NetworkSet = None):
+        self.networkset = networkset
+
+        print('The following parameters are available:')
+        print(f'{self.networkset.dims = }')
+        print(f'{self.networkset.coords = }')
+
+        if networkset is not None:
+            self.parameters = networkset.coords
+            grid_coords = []
+            for param in self.parameters:
+                grid_coords.append(sorted(self.parameters[param]))
+            self.meshgrid = np.meshgrid(*grid_coords)
+        else:
+            self.parameters = None
+            self.meshgrid = None
+
+    def auto_fit(self):
+        print(self.meshgrid)
+        for i_axis in self.meshgrid:
+            for value in self.meshgrid[i_axis]:
+                print(f'gridpoint {i_axis} has values {value}')
+
+
+    @staticmethod
+    def generate_networkset(path: str, filename_prefix: str, param_names: list) -> NetworkSet:
+        """
+        Reads parametric Touchstone files in `path` that match the `filename_prefix`. Parameter names are defined
+        with `param_names`, which are searched for in the file comments. Example: Specify `param_names=['myparam']` to
+        extract the value 12 from the comment line `! myparam = 12`. This also works for multiple parameters:
+        `param_names=['myparam1', 'myparam2']`.
+        """
+        networks = []
+        for filename in os.listdir(path):
+            if filename.startswith(filename_prefix):
+                file = os.path.join(path, filename)
+                nw = Network(file)
+                params = {}
+                for comment in nw.comments.splitlines():
+                    for name in param_names:
+                        if name in comment:
+                            val = float(comment.split()[-1])
+                            params.update({name: val})
+                nw.params = params
+                networks.append(nw)
+        return NetworkSet(networks)
