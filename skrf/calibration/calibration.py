@@ -2529,6 +2529,19 @@ class TRL(EightTerm):
     transmission lines. If the characteristic impedance is known, reference
     impedance can be renormalized using `EightTerm.renormalize` function.
 
+    .. note::
+
+       ``MultilineTRL`` is an alias for this class. When multiple lines are
+       supplied, :class:`TRL` solves each line independently against the thru
+       and includes all solved standards in the :class:`EightTerm`
+       least-squares fit. It does not combine multiple line measurements to
+       extend the usable bandwidth as :class:`TUGMultilineTRL` and
+       :class:`NISTMultilineTRL` do. The complete set of supplied standards
+       must therefore remain well-conditioned over the calibration band;
+       overlapping line phase responses can make the calibration unstable.
+       For wideband multiline calibration, prefer
+       :class:`TUGMultilineTRL` (or :class:`NISTMultilineTRL`).
+
     See Also
     --------
     determine_line function which actually determines the line s-parameters
@@ -2554,9 +2567,11 @@ class TRL(EightTerm):
         Initialize a TRL calibration.
 
         Note that the order of `measured` and `ideals` is strict.
-        It must be [Thru, Reflect, Line]. A multiline algorithms is
-        used if more than one line is passed. A multi-reflect algorithm
-        is used if multiple reflects are passed, see `n_reflects` argument.
+        It must be [Thru, Reflect, Line]. Additional lines are accepted and
+        included in the :class:`EightTerm` least-squares fit; see the
+        class-level note for the limitations of this mode. A multi-reflect
+        algorithm is used if multiple reflects are passed; see the
+        `n_reflects` argument.
 
         All of the `ideals` can be individually set to `None`, or the entire
         list set to `None` (`ideals=None`). For each ideal set to `None`,
