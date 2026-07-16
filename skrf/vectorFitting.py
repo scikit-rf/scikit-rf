@@ -2667,28 +2667,100 @@ class VectorFitting:
 
 
 class VectorFittingParametric:
-    def __init__(self, networkset: NetworkSet = None):
+    def __init__(self, networkset: NetworkSet = None, n_poles_global: int = -1):
         self.networkset = networkset
+        self.n_poles_global = n_poles_global
 
-        print('The following parameters are available:')
-        print(f'{self.networkset.dims = }')
-        print(f'{self.networkset.coords = }')
+        if self.n_poles_global == -1:
+            # automatic model order estimation based on model order of the first network in the set
+            vf = VectorFitting(self.networkset[0])
+            vf.auto_fit()
+            self.n_poles_global = len(vf.poles)
+            print(f'automatic model order estimation; using {self.n_poles_global = }.')
 
-        if networkset is not None:
-            self.parameters = networkset.coords
-            grid_coords = []
-            for param in self.parameters:
-                grid_coords.append(sorted(self.parameters[param]))
-            self.meshgrid = np.meshgrid(*grid_coords)
-        else:
-            self.parameters = None
-            self.meshgrid = None
+        # init global poles
+        freqs_global = self.networkset[0].f
+        polefreqs_global = np.linspace(freqs_global[0], freqs_global[-1], self.n_poles_global)
+        if polefreqs_global[0] == 0.0:
+            polefreqs_global[0] = 0.1 * polefreqs_global[1]
+        self.poles_global = (-0.01 + 1j) * 2 * np.pi * polefreqs_global
+
+        #print('The following parameters are available:')
+        #print(f'{self.networkset.dims = }')
+        #print(f'{self.networkset.coords = }')
+
+        print()
+
+        # if networkset is not None:
+        #     self.parameters = networkset.coords
+        #     grid_coords = []
+        #     for param in self.parameters:
+        #         grid_coords.append(sorted(self.parameters[param]))
+        #     self.meshgrid = np.meshgrid(*grid_coords)
+        # else:
+        #     self.parameters = None
+        #     self.meshgrid = None
 
     def auto_fit(self):
-        print(self.meshgrid)
-        for i_axis in self.meshgrid:
-            for value in self.meshgrid[i_axis]:
-                print(f'gridpoint {i_axis} has values {value}')
+        for nw in self.networkset:
+            print(nw)
+            print(nw.params)
+            print(list(nw.params.values()))
+            nw = nw.s11
+            print(nw)
+
+            vf = VectorFitting(nw)
+            vf.auto_fit()
+
+            n_poles_local = len(vf.poles)
+
+            # preparing linear system (a * r = b)
+            a = np.empty((n_poles_local, self.n_poles_global), dtype=complex)
+            #mask = ~np.eye(self.n_poles_global, self.n_poles_global, dtype=bool)
+
+            for i_col in range(self.n_poles_global):
+                mask = np.ones(self.n_poles_global, dtype=bool)
+                mask[i_col] = False
+                a[:, i_col] = np.prod(vf.poles[:, None] - self.poles_global[None, :], axis=1, where=mask)
+
+            #r0 = 1 / vf.constant_coeff
+            #b = -1 * r0[None, :] * np.prod(vf.poles[:, None] - self.poles_global[None, :], axis=1, keepdims=True)
+
+            r0 = 1 * np.ones(len(vf.constant_coeff))
+            print(f'{np.shape(r0) = }')
+            print(f'{r0 = }')
+
+            b = -1 * r0 * np.prod(vf.poles[:, None] - self.poles_global[None, :], axis=1, keepdims=True)
+            print(f'{np.shape(a) = }')
+            print(f'{np.shape(b) = }')
+
+            r, residuals, rank, singulars = np.linalg.lstsq(a, b)
+            print(f'{np.shape(r) = }')
+
+            q0 = r0 * vf.constant_coeff     # q0 == vf.constant_coeff if r0 = 1
+            print(f'{np.shape(q0) = }')
+
+            q = r * (vf.constant_coeff + np.sum(vf.residues / (self.poles_global[:, None] - vf.poles[None, :]), axis=1, keepdims=True))
+            print(f'{np.shape(q) = }')
+
+            s = 1j * 2 * np.pi * nw.f
+            vf_global = ((q0 + np.sum(q[:, :, None] / (s[None, None, :] - self.poles_global[:, None, None]), axis=0))
+                         / (r0 + np.sum(r[:, :, None] / (s[None, None, :] - self.poles_global[:, None, None]), axis=0)))
+
+            print(f'{np.shape(vf_global) = }')
+
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(nw.nports, nw.nports)
+            for i in range(nw.nports):
+                for j in range(nw.nports):
+                    ax.plot(nw.f, np.abs(nw.s[:, i, j]))
+                    ax.plot(nw.f, np.abs(vf.get_model_response(i, j, nw.f)))
+                    ax.plot(nw.f, np.abs(vf_global[i * nw.nports + j, :]))
+            fig.tight_layout()
+            plt.show()
+
+            print()
+            quit()
 
 
     @staticmethod
@@ -2707,7 +2779,7 @@ class VectorFittingParametric:
                 params = {}
                 for comment in nw.comments.splitlines():
                     for name in param_names:
-                        if name in comment:
+                        if name in comment.split()[0]:
                             val = float(comment.split()[-1])
                             params.update({name: val})
                 nw.params = params
