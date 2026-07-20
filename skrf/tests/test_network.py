@@ -39,6 +39,7 @@ from skrf.network import (
     s2vswr_active,
     s2y,
     s2z,
+    stitch,
     subnetwork,
     t2s,
     two_port_reflect,
@@ -733,6 +734,51 @@ class NetworkTestCase(unittest.TestCase):
             expected = [f'a{i}' for i in range(4)]
             expected[port] = 'b1'
             self.assertEqual(ntwk_c.port_names, expected)
+
+    def test_port_names_are_kept(self):
+        """Operations which don't change the ports must keep their names."""
+        freq = rf.Frequency(1, 3, 5, unit='GHz')
+
+        def ntwk(nports, prefix, port_names=True, frequency=freq):
+            n = rf.Network(frequency=frequency, name=prefix, z0=50,
+                           s=self.rng.random((frequency.npoints, nports, nports)))
+            if port_names:
+                n.port_names = [f'{prefix}{i}' for i in range(nports)]
+            return n
+
+        # stitch only concatenates the frequency axis, the ports stay the same
+        two_port = ntwk(2, 'a')
+        stitched = stitch(two_port, ntwk(2, 'a', frequency=rf.Frequency(4, 6, 5, unit='GHz')))
+        self.assertEqual(stitched.port_names, ['a0', 'a1'])
+        self.assertIsNone(stitch(ntwk(2, 'u', port_names=False),
+                                 ntwk(2, 'v', port_names=False,
+                                      frequency=rf.Frequency(4, 6, 5, unit='GHz'))).port_names)
+
+        # two_port_reflect used to keep the single name of the first one-port,
+        # which left a two-port with one port name
+        short, open_ = ntwk(1, 'short'), ntwk(1, 'open')
+        reflect = two_port_reflect(short, open_)
+        self.assertEqual(reflect.port_names, ['short0', 'open0'])
+        reflect['short0', 'open0']  # name based indexing must work
+        # a name is created for the one-port which doesn't have one
+        self.assertEqual(two_port_reflect(short, ntwk(1, 'x', port_names=False)).port_names,
+                         ['short0', '1'])
+        self.assertEqual(two_port_reflect(ntwk(1, 'x', port_names=False), open_).port_names,
+                         ['0', 'open0'])
+        self.assertIsNone(two_port_reflect(ntwk(1, 'x', port_names=False),
+                                           ntwk(1, 'y', port_names=False)).port_names)
+
+        # twoport_to_nport keeps track of where the two-port's ports ended up
+        dut = rf.Network(frequency=freq, name='dut', z0=[10, 20],
+                         s=self.rng.random((freq.npoints, 2, 2)))
+        dut.port_names = ['in', 'out']
+        nport = twoport_to_nport(dut, 3, 1, nports=4)
+        self.assertEqual(nport.port_names, ['0', 'out', '2', 'in'])
+        # the names follow the ports, ie. the z0 of the two-port
+        np.testing.assert_allclose(nport.z0[:, 3], dut.z0[:, 0])
+        np.testing.assert_allclose(nport.z0[:, 1], dut.z0[:, 1])
+        self.assertIsNone(twoport_to_nport(ntwk(2, 'u', port_names=False),
+                                           0, 1, nports=3).port_names)
 
     def test_connect_no_frequency(self):
         """ Connecting 2 networks defined without frequency returns Error

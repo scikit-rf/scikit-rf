@@ -5906,6 +5906,8 @@ def stitch(ntwkA: Network, ntwkB: Network, **kwargs) -> Network:
         **kwargs
     )
     C.frequency.unit = A.frequency.unit
+    # the ports are the same ones, only the frequency axis is stitched
+    C.port_names = A.port_names
     return C
 
 
@@ -8640,6 +8642,9 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network | None = None, name : str | 
          [s21, s22]]). \
         transpose().reshape(-1, 2, 2)
     result.z0 = np.hstack([ntwk1.z0, ntwk2.z0])
+    # port_names was copied from ntwk1 and would be too short for a two-port
+    if ntwk1.port_names is not None or ntwk2.port_names is not None:
+        result.port_names = list(ntwk1.port_names or ['0']) + list(ntwk2.port_names or ['1'])
 
     if name is None:
         try:
@@ -8848,4 +8853,9 @@ def twoport_to_nport(ntwk: Network, port1: int, port2: int, nports: int, **kwarg
     nport.s[:,port2,port2] = ntwk.s[:,1,1]
     nport.z0[:,port1] = ntwk.z0[:,0]
     nport.z0[:,port2] = ntwk.z0[:,1]
+    # keep track of where the two-port's ports ended up, the added ports are new
+    if ntwk.port_names is not None:
+        port_names = [str(x) for x in range(nports)]
+        port_names[port1], port_names[port2] = ntwk.port_names
+        nport.port_names = port_names
     return nport
