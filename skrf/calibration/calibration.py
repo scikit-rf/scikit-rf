@@ -123,6 +123,7 @@ import numpy as np
 import scipy
 from numpy import angle, einsum, exp, imag, invert, linalg, ones, poly1d, real, sqrt, zeros
 from numpy.linalg import det
+from numpy.typing import NDArray
 
 from .. import __version__ as skrf__version__
 from .. import util
@@ -146,7 +147,7 @@ from ..plotting import axes_kwarg
 
 logger = getLogger(__name__)
 
-ComplexArray = np.typing.NDArray[complex]
+ComplexArray = NDArray[complex]
 
 global coefs_list_12term
 coefs_list_12term =[
