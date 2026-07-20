@@ -4085,6 +4085,8 @@ class Network:
 
         self.port_modes[:p] = "D"
         self.port_modes[p:2 * p] = "C"
+        # the single ended names don't describe the mixed mode ports anymore
+        self.port_names = _mixed_mode_port_names(self.port_names, p)
         if s_def is None:
             s_def = self.s_def
         if s_def != self.s_def:
@@ -4219,6 +4221,8 @@ class Network:
             raise ValueError('Invalid number of differential ports')
 
         self.port_modes[:2*p] = "S"
+        # restore the single ended names, if se2gmm created the mixed mode ones
+        self.port_names = _single_ended_port_names(self.port_names, p)
         if s_def is None:
             s_def = self.s_def
         if s_def != self.s_def:
@@ -5157,6 +5161,45 @@ PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
 Y_LABEL_DICT = Network.Y_LABEL_DICT
 
 ## Functions operating on Network[s]
+def _mixed_mode_port_names(port_names: list[str] | None, p: int) -> list[str] | None:
+    """
+    Port names of a network converted to mixed mode with :func:`Network.se2gmm`.
+
+    The differential and common mode ports of a pair are named after the two
+    single ended ports they are made of, which keeps the names unique and lets
+    :func:`Network.gmm2se` restore the original ones.
+
+    Returns None if there is nothing to convert.
+    """
+    if port_names is None or len(port_names) < 2 * p:
+        return None
+    pairs = [f'({port_names[2 * i]},{port_names[2 * i + 1]})' for i in range(p)]
+    return [f'd{pair}' for pair in pairs] + [f'c{pair}' for pair in pairs] \
+            + list(port_names[2 * p:])
+
+
+def _single_ended_port_names(port_names: list[str] | None, p: int) -> list[str] | None:
+    """
+    Inverse of :func:`_mixed_mode_port_names`, used by :func:`Network.gmm2se`.
+
+    Returns None if the names were not created by :func:`_mixed_mode_port_names`,
+    in which case the names of the single ended ports are unknown.
+    """
+    if port_names is None or len(port_names) < 2 * p:
+        return None
+    se_names = []
+    for i in range(p):
+        diff, comm = port_names[i], port_names[p + i]
+        if not (diff.startswith('d(') and comm.startswith('c(')
+                and diff.endswith(')') and diff[1:] == comm[1:]):
+            return None
+        pair = diff[2:-1].split(',')
+        if len(pair) != 2:
+            return None
+        se_names += pair
+    return se_names + list(port_names[2 * p:])
+
+
 def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Network:
     """
     Connect two n-port networks together.

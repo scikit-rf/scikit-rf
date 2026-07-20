@@ -2037,6 +2037,47 @@ class NetworkTestCase(unittest.TestCase):
             self.assertTrue(np.allclose(ntwk4.s, ntwk4t.s))
             self.assertTrue(np.allclose(ntwk4.z0, ntwk4t.z0))
 
+    def test_se2gmm2se_port_names(self):
+        """The mixed mode ports are named after the pair they are made of.
+
+        The single ended names do not describe the mixed mode ports, so se2gmm
+        renames them, keeping them unique, and gmm2se restores the original ones.
+        """
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+
+        def ntwk(nports, port_names):
+            n = rf.Network(frequency=freq, s=self.rng.random((1, nports, nports)))
+            n.port_names = port_names
+            return n
+
+        # 2 differential pairs
+        n = ntwk(4, ['in_p', 'in_n', 'out_p', 'out_n'])
+        n.se2gmm(p=2)
+        self.assertEqual(n.port_names, ['d(in_p,in_n)', 'd(out_p,out_n)',
+                                        'c(in_p,in_n)', 'c(out_p,out_n)'])
+        n['d(in_p,in_n)', 'c(out_p,out_n)']  # names stay unique and usable
+        n.gmm2se(p=2)
+        self.assertEqual(n.port_names, ['in_p', 'in_n', 'out_p', 'out_n'])
+
+        # ports which stay single ended keep their name
+        n = ntwk(5, ['a_p', 'a_n', 'b_p', 'b_n', 'gnd'])
+        n.se2gmm(p=2)
+        self.assertEqual(n.port_names, ['d(a_p,a_n)', 'd(b_p,b_n)',
+                                        'c(a_p,a_n)', 'c(b_p,b_n)', 'gnd'])
+        n.gmm2se(p=2)
+        self.assertEqual(n.port_names, ['a_p', 'a_n', 'b_p', 'b_n', 'gnd'])
+
+        # a network without names stays without names
+        n = rf.Network(frequency=freq, s=self.rng.random((1, 4, 4)))
+        n.se2gmm(p=2)
+        self.assertIsNone(n.port_names)
+
+        # names which cannot be restored are dropped instead of being wrong
+        n = ntwk(4, ['a,b', 'c', 'd', 'e'])
+        n.se2gmm(p=2)
+        n.gmm2se(p=2)
+        self.assertIsNone(n.port_names)
+
     def test_se2gmm(self):
         # Test mixed mode conversion of two parallel thrus
         se = np.zeros((1,4,4), dtype=complex)
