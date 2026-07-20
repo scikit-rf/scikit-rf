@@ -5294,7 +5294,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         (np.delete(ntwkA.z0, range(k, k + 1), 1), np.delete(ntwkB.z0, range(l, l + 1), 1)))
     if ntwkA.port_names is not None:
         ntwkC.port_names = np.concatenate(
-            (np.delete(ntwkA.port_names, k), np.delete(ntwkB.port_names, l)))
+            (np.delete(ntwkA.port_names, k), np.delete(ntwkB.port_names, l))).tolist()
 
     # if we're connecting more than one port, call innerconnect recursively
     # until all connections are made to finish the job
@@ -5302,7 +5302,9 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         ntwkC = innerconnect(ntwkC, k, ntwkA.nports - 1 + l, num - 1)
 
     # if ntwkB is a 2port, then keep port indices where you expect.
-    if ntwkB.nports == 2 and ntwkA.nports >= 2 and num == 1:
+    # This must match logic in connect_s(), which only reorders the s-parameters
+    # when ntwkA has more than two ports.
+    if ntwkB.nports == 2 and ntwkA.nports > 2 and num == 1:
         from_ports = list(range(ntwkC.nports))
         to_ports = list(range(ntwkC.nports))
         to_ports.pop(k)
