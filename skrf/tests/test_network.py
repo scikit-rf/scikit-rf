@@ -948,6 +948,41 @@ class NetworkTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             parallelconnect([ntwk_a, ntwk_b], ['nope', 0])
 
+    def test_subnetwork_renumber_by_port_name(self):
+        """subnetwork and renumber take port names too."""
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+
+        base = rf.Network(frequency=freq, name='n', z0=[1, 2, 3, 4],
+                          s=self.rng.random((1, 4, 4)))
+        base.port_names = ['in', 'out', 'cpl', 'iso']
+
+        def nport():
+            return base.copy()
+
+        ntwk = nport()
+        self.assertEqual(ntwk.subnetwork(['cpl', 'in']), ntwk.subnetwork([2, 0]))
+        self.assertEqual(ntwk.subnetwork(['cpl', 'in']).port_names, ['cpl', 'in'])
+        self.assertEqual(ntwk.subnetwork(['cpl', 0]).port_names, ['cpl', 'in'])  # mixed
+        np.testing.assert_allclose(ntwk.subnetwork(['cpl', 'in']).z0, [[3, 1]])
+
+        # a name in to_ports refers to the port which currently has that name,
+        # so this swaps the two ports
+        by_name, by_index = nport(), nport()
+        by_name.renumber(['in', 'out'], ['out', 'in'])
+        by_index.renumber([0, 1], [1, 0])
+        self.assertEqual(by_name, by_index)
+        self.assertEqual(by_name.port_names, by_index.port_names)
+        self.assertEqual(by_name.port_names, ['out', 'in', 'cpl', 'iso'])
+        np.testing.assert_allclose(by_name.z0, [[2, 1, 3, 4]])
+
+        self.assertEqual(nport().renumbered(['iso', 'in'], ['in', 'iso']).port_names,
+                         nport().renumbered([3, 0], [0, 3]).port_names)
+
+        with self.assertRaises(ValueError):
+            nport().renumber(['in', 'nope'], [1, 0])
+        with self.assertRaises(ValueError):
+            nport().subnetwork(['nope'])
+
     def test_connect_no_frequency(self):
         """ Connecting 2 networks defined without frequency returns Error
         """

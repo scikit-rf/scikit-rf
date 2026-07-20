@@ -3447,7 +3447,7 @@ class Network:
         return result
 
 
-    def subnetwork(self, ports: Sequence[int], offby: int = 1) -> Network:
+    def subnetwork(self, ports: Sequence[int | str], offby: int = 1) -> Network:
         """
         Return a subnetwork of a the Network from a list of port numbers.
 
@@ -3461,8 +3461,9 @@ class Network:
 
         Parameters
         ----------
-        ports : list of int
-            List of ports to keep in the resultant Network.
+        ports : list of int or str
+            List of ports to keep in the resultant Network. Ports can be given
+            by name if the Network has named ports (:attr:`Network.port_names`).
             Indices are the Python indices (starts at 0)
         offby : int
             starting value for s-parameters indexes in the sub-Network name parameter.
@@ -3673,7 +3674,8 @@ class Network:
         self.s_def = s_def
         self.z0 = z_new
 
-    def renumber(self, from_ports: Sequence[int], to_ports: Sequence[int], only_z0: bool = False) -> None:
+    def renumber(self, from_ports: Sequence[int | str], to_ports: Sequence[int | str],
+                 only_z0: bool = False) -> None:
         """
         Renumber ports of a Network (inplace).
 
@@ -3681,8 +3683,12 @@ class Network:
         ----------
         from_ports : list-like
             List of port indices to change. Size between 1 and N_ports.
+            Ports can be given by name if the Network has named ports
+            (:attr:`Network.port_names`).
         to_ports : list-like
             List of desired port indices. Size between 1 and N_ports.
+            A port name refers to the port which currently has that name, so
+            renumber(['a', 'b'], ['b', 'a']) swaps the ports named 'a' and 'b'.
         only_z0 : bool
             If true only z0 is renumbered, s-parameters are not affected.
             This should only be used after executing the "connect_s" method
@@ -3790,8 +3796,8 @@ class Network:
         flipped
 
         """
-        from_ports = np.array(from_ports)
-        to_ports = np.array(to_ports)
+        from_ports = np.array([_port_index(self, port) for port in from_ports])
+        to_ports = np.array([_port_index(self, port) for port in to_ports])
         if len(np.unique(from_ports)) != len(from_ports):
             raise ValueError('an index can appear at most once in from_ports or to_ports')
         if any(np.unique(from_ports) != np.unique(to_ports)):
@@ -3806,7 +3812,7 @@ class Network:
             _port_names[to_ports] = _port_names[from_ports]
             self.port_names = _port_names.tolist()
 
-    def renumbered(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> Network:
+    def renumbered(self, from_ports: Sequence[int | str], to_ports: Sequence[int | str]) -> Network:
         """
         Return a renumbered Network, leave self alone.
 
@@ -3814,6 +3820,8 @@ class Network:
         ----------
         from_ports : list-like
             List of port indices to change. Size between 1 and N_ports.
+            Ports can be given by name if the Network has named ports
+            (:attr:`Network.port_names`).
         to_ports : list-like
             List of desired port indices. Size between 1 and N_ports.
 
@@ -6543,7 +6551,7 @@ def evenodd2delta(n: Network, z0: NumberLike = 50, renormalize: bool = True,
     return n_delta
 
 
-def subnetwork(ntwk: Network, ports: Sequence[int], offby:int = 1) -> Network:
+def subnetwork(ntwk: Network, ports: Sequence[int | str], offby:int = 1) -> Network:
     """
     Return a subnetwork of a given Network from a list of port numbers.
 
@@ -6559,8 +6567,9 @@ def subnetwork(ntwk: Network, ports: Sequence[int], offby:int = 1) -> Network:
     ----------
     ntwk : :class:`Network` object
         Network to split into a subnetwork
-    ports : list of int
-        List of ports to keep in the resultant Network.
+    ports : list of int or str
+        List of ports to keep in the resultant Network. Ports can be given by
+        name if the Network has named ports (:attr:`Network.port_names`).
         Indices are the Python indices (starts at 0)
     offby : int
         starting value for s-parameters indexes in the sub-Network name parameter.
@@ -6584,6 +6593,7 @@ def subnetwork(ntwk: Network, ports: Sequence[int], offby:int = 1) -> Network:
     >>> tee13 = rf.subnetwork(tee, [0, 2])  # 2 port Network from ports 1 & 3, port 2 matched
 
     """
+    ports = [_port_index(ntwk, port) for port in ports]
     # forging subnetwork name
     subntwk_name = (ntwk.name or 'p') + ''.join([str(index+offby) for index in ports])
     # create a dummy Network with same frequency and z0 from the original
