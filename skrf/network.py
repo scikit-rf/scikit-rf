@@ -5230,11 +5230,14 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     if (l + num - 1 > ntwkB.nports - 1):
         raise IndexError('Port `l` out of range')
 
-    # create port_names if required
-    if ntwkB.port_names is None:
-        if ntwkA.port_names is not None:
-            ntwkB = ntwkB.copy()
-            ntwkB.port_names = [str(x) for x in range(ntwkB.nports)]
+    # port names of the result, created for the network which doesn't have them
+    # when only one of the two networks is named
+    port_names_a, port_names_b = ntwkA.port_names, ntwkB.port_names
+    if port_names_a is not None or port_names_b is not None:
+        if port_names_a is None:
+            port_names_a = [str(x) for x in range(ntwkA.nports)]
+        if port_names_b is None:
+            port_names_b = [str(x) for x in range(ntwkB.nports)]
 
     have_complex_ports = (ntwkA.z0.imag != 0).any() or (ntwkB.z0.imag != 0).any()
 
@@ -5292,9 +5295,9 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     # combine z0 and port_names arrays and remove ports which were `connected`
     ntwkC.z0 = np.hstack(
         (np.delete(ntwkA.z0, range(k, k + 1), 1), np.delete(ntwkB.z0, range(l, l + 1), 1)))
-    if ntwkA.port_names is not None:
+    if port_names_a is not None:
         ntwkC.port_names = np.concatenate(
-            (np.delete(ntwkA.port_names, k), np.delete(ntwkB.port_names, l))).tolist()
+            (np.delete(port_names_a, k), np.delete(port_names_b, l))).tolist()
 
     # if we're connecting more than one port, call innerconnect recursively
     # until all connections are made to finish the job
@@ -6015,6 +6018,14 @@ def concat_ports(ntwk_list: Sequence[Network], port_order: Literal["first", "sec
     ntwkC.s = C
     ntwkC.z0 = np.hstack([ntwkA.z0, ntwkB.z0])
     ntwkC.port_modes = np.hstack([ntwkA.port_modes, ntwkB.port_modes])
+    # port_names was copied from ntwkA and would be too short for ntwkC.
+    # Create names for the network which doesn't have them, like connect() does.
+    if ntwkA.port_names is not None or ntwkB.port_names is not None:
+        names_a = ntwkA.port_names if ntwkA.port_names is not None \
+                else [str(x) for x in range(nA)]
+        names_b = ntwkB.port_names if ntwkB.port_names is not None \
+                else [str(x) for x in range(nB)]
+        ntwkC.port_names = list(names_a) + list(names_b)
     if port_order == 'second':
         old_order = list(range(nC))
         new_order = list(range(0, nC, 2)) + list(range(1, nC, 2))

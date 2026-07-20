@@ -579,6 +579,38 @@ class NetworkTestCase(unittest.TestCase):
             self.assertTrue(np.allclose(self.DUT2.z0[:, i:j], self.l2.z0)) # check z0
         self.assertTrue(np.all(self.DUT2.port_modes == np.array(['S']*8))) # check port mode
 
+    def test_concat_ports_port_names(self):
+        """port_names must cover all ports of the concatenated network.
+
+        They used to be copied from the first network only, which raised an
+        IndexError for port_order='second' and gave a too short list otherwise.
+        """
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+
+        def two_port(prefix, named=True):
+            ntwk = rf.Network(frequency=freq, s=self.rng.random((1, 2, 2)), name=prefix)
+            if named:
+                ntwk.port_names = [f'{prefix}0', f'{prefix}1']
+            return ntwk
+
+        a, b = two_port('a'), two_port('b')
+        # 'first' is front-to-back, 'second' left-to-right, see the diagrams in
+        # concat_ports. The names must follow the s-parameters either way.
+        self.assertEqual(concat_ports([a, b], port_order='first').port_names,
+                         ['a0', 'a1', 'b0', 'b1'])
+        self.assertEqual(concat_ports([a, b], port_order='second').port_names,
+                         ['a0', 'b0', 'a1', 'b1'])
+        self.assertEqual(concat_ports([a, b, two_port('c'), two_port('d')],
+                                      port_order='first').port_names,
+                         ['a0', 'a1', 'b0', 'b1', 'c0', 'c1', 'd0', 'd1'])
+
+        # names are created for the network which doesn't have them
+        self.assertEqual(concat_ports([a, two_port('b', named=False)],
+                                      port_order='first').port_names,
+                         ['a0', 'a1', '0', '1'])
+        self.assertIsNone(concat_ports([two_port('a', named=False),
+                                        two_port('b', named=False)]).port_names)
+
     def test_connect(self):
         self.assertEqual(connect(self.ntwk1, 1, self.ntwk2, 0) , \
             self.ntwk3)
@@ -831,10 +863,11 @@ class NetworkTestCase(unittest.TestCase):
         np.testing.assert_almost_equal(ntwk1.z0[0], [10, 3, 4])
         self.assertTrue(ntwk1.port_names == ["a", "2", "3"])
 
-        # this removes port_names from splitter
+        # the other way around keeps port_names from splitter as well and
+        # provides port_names for thru
         ntwk2 = connect(self.thru, 2, self.splitter, 0, 2)
         np.testing.assert_almost_equal(ntwk2.z0[0], [1, 2, 30])
-        self.assertTrue(ntwk2.port_names is None)
+        self.assertTrue(ntwk2.port_names == ["0", "1", "c"])
 
     def test_interconnect_complex_ports(self):
         """ Test that connecting two complex ports in a network
