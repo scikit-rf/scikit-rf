@@ -878,6 +878,44 @@ class NetworkTestCase(unittest.TestCase):
         unnamed = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
         self.assertIsNone(unnamed.inv.port_names)
 
+    def test_duplicate_port_names(self):
+        """Duplicated port names are allowed, but can't be used to address a port.
+
+        Touchstone files may name several ports the same, and connect() creates
+        duplicates when it concatenates the names of two networks. Everything
+        which works on port indices must keep working, while looking a port up
+        by an ambiguous name raises instead of silently returning the first one.
+        """
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+        ntwk = rf.Network(frequency=freq, name='n', z0=[1, 2, 3],
+                          s=self.rng.random((1, 3, 3)))
+        ntwk.port_names = ['a', 'b', 'a']
+
+        # index based operations are unaffected
+        self.assertEqual(ntwk.subnetwork([2, 1]).port_names, ['a', 'b'])
+        self.assertEqual(ntwk.renumbered([0, 2], [2, 0]).port_names, ['a', 'b', 'a'])
+        np.testing.assert_allclose(ntwk[1, 3].s[:, 0, 0], ntwk.s[:, 0, 2])
+
+        # an unambiguous name still resolves
+        np.testing.assert_allclose(ntwk['b', 'b'].s[:, 0, 0], ntwk.s[:, 1, 1])
+
+        # an ambiguous one used to silently resolve to the first match
+        with self.assertRaises(ValueError):
+            ntwk['a', 'b']
+        with self.assertRaises(ValueError):
+            connect(ntwk, 'a', ntwk.copy(), 'b')
+        with self.assertRaises(ValueError):
+            ntwk.subnetwork(['a'])
+
+        # connect creates duplicates out of networks which have unique names
+        def two_port(name):
+            n = rf.Network(frequency=freq, name=name, z0=50,
+                           s=self.rng.random((1, 2, 2)))
+            n.port_names = ['in', 'out']
+            return n
+        self.assertEqual(connect(two_port('a'), 1, two_port('b'), 1).port_names,
+                         ['in', 'in'])
+
     def test_connect_by_port_name(self):
         """Ports can be given by name instead of by index."""
         freq = rf.Frequency(1, 1, 1, unit='GHz')
@@ -907,7 +945,7 @@ class NetworkTestCase(unittest.TestCase):
                          connect(ntwk_a, 1, ntwk_b, 0, num=2))
         self.assertEqual(innerconnect(ntwk_a, 'a0', 'a3').port_names, ['a1', 'a2'])
 
-        with self.assertRaises(ValueError):  # unknown name
+        with self.assertRaises(KeyError):  # unknown name
             connect(ntwk_a, 'nope', ntwk_b, 0)
         with self.assertRaises(ValueError):  # network without port names
             connect(rf.Network(frequency=freq, s=self.rng.random((1, 2, 2))), 'x', ntwk_b, 0)
@@ -945,7 +983,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertIsNone(parallelconnect([nport(2, 'a', named=False),
                                            nport(2, 'b', named=False)], [1, 0]).port_names)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(KeyError):
             parallelconnect([ntwk_a, ntwk_b], ['nope', 0])
 
     def test_subnetwork_renumber_by_port_name(self):
@@ -978,9 +1016,9 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(nport().renumbered(['iso', 'in'], ['in', 'iso']).port_names,
                          nport().renumbered([3, 0], [0, 3]).port_names)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(KeyError):
             nport().renumber(['in', 'nope'], [1, 0])
-        with self.assertRaises(ValueError):
+        with self.assertRaises(KeyError):
             nport().subnetwork(['nope'])
 
     def test_connect_no_frequency(self):

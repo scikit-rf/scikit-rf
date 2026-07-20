@@ -915,16 +915,10 @@ class Network:
                     p1_index = p1_name - 1
                     p2_index = p2_name - 1
                 else:
-                    if self.port_names is None:
-                        raise ValueError("Can't index without named ports")
-                    try:
-                        p1_index = self.port_names.index(p1_name)
-                    except ValueError as err:
-                        raise KeyError(f"Unknown port {p1_name}") from err
-                    try:
-                        p2_index = self.port_names.index(p2_name)
-                    except ValueError as err:
-                        raise KeyError(f"Unknown port {p2_name}") from err
+                    # a name shared by several ports can't be resolved, those
+                    # ports have to be indexed by their number
+                    p1_index = _port_index(self, p1_name)
+                    p2_index = _port_index(self, p2_name)
                 ntwk = self.copy()
                 # setting s drops the port names, the result is a one-port
                 ntwk.s = self.s[:, p1_index, p2_index]
@@ -5366,8 +5360,12 @@ def _port_index(ntwk: Network, port: int | str) -> int:
 
     Raises
     ------
+    KeyError
+        If the port name is unknown.
     ValueError
-        If the network has no port names, or the name is unknown or ambiguous.
+        If the network has no port names, or several ports share the name.
+        Duplicated port names are allowed, but a port can then only be
+        addressed by its index.
     """
     if not isinstance(port, str):
         return port
@@ -5376,11 +5374,12 @@ def _port_index(ntwk: Network, port: int | str) -> int:
             f"Network '{ntwk.name}' has no port names, port '{port}' can't be resolved")
     if ntwk.port_names.count(port) > 1:
         raise ValueError(
-            f"Port name '{port}' is ambiguous, network has ports {ntwk.port_names}")
+            f"Port name '{port}' is ambiguous, network has ports {ntwk.port_names}. "
+            "Use the port index instead")
     try:
         return ntwk.port_names.index(port)
     except ValueError:
-        raise ValueError(
+        raise KeyError(
             f"Unknown port '{port}', network has ports {ntwk.port_names}") from None
 
 
