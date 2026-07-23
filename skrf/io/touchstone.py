@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..media import DefinedGammaZ0
 
+import io
 import os
 import re
 import typing
@@ -187,12 +188,14 @@ class Touchstone:
 
     The reference for writing this class is the draft of the
     Touchstone(R) File Format Specification Rev 2.0 [#]_ and
-    Touchstone(R) File Format Specification Version 2.0 [#]_
+    Touchstone(R) File Format Specification Version 2.0 [#]_ and
+    Touchstone(R) File Format Specification Version 2.1 [#]_
 
     References
     ----------
     .. [#] https://ibis.org/interconnect_wip/touchstone_spec2_draft.pdf
     .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
+    .. [#] https://ibis.org/touchstone_ver2.1/touchstone_ver2_1.pdf
     """
 
     def __init__(self, file: str | Path | typing.TextIO, encoding: str | None = None):
@@ -266,38 +269,24 @@ class Touchstone:
         self.s_def = None
         self.port_modes = np.array([])
 
-        # open the file depending on encoding
-        # Guessing the encoding by trial-and-error, unless specified encoding
+        if isinstance(file, str | Path):
+            file_path = Path(file)
+            if encoding is None:
+                try:
+                    file_contents = file_path.read_text(encoding="utf-8-sig")
+                except UnicodeDecodeError:
+                    file_contents = file_path.read_text(encoding="ISO-8859-1")
+            else:
+                file_contents = file_path.read_text(encoding=encoding)
+
+            fid = io.StringIO(file_contents)
+            fid.name = str(file_path)
+        else:
+            fid = get_fid(file)
+
         try:
-            try:
-                if encoding is not None:
-                    fid = get_fid(file, encoding=encoding)
-                    self.filename = fid.name
-                    self.load_file(fid)
-                else:
-                    # Assume default encoding
-                    fid = get_fid(file)
-                    self.filename = fid.name
-                    self.load_file(fid)
-            except Exception as e:
-                fid.close()
-                raise e
-
-        except UnicodeDecodeError:
-            # Unicode fails -> Force Latin-1
-            fid = get_fid(file, encoding="ISO-8859-1")
             self.filename = fid.name
             self.load_file(fid)
-
-        except ValueError:
-            # Assume Microsoft UTF-8 variant encoding with BOM
-            fid = get_fid(file, encoding="utf-8-sig")
-            self.filename = fid.name
-            self.load_file(fid)
-
-        except Exception as e:
-            raise ValueError("Something went wrong by the file opening") from e
-
         finally:
             fid.close()
 
@@ -355,7 +344,7 @@ class Touchstone:
     @version.setter
     def version(self, x: str) -> None:
         self._version = x
-        if x == "2.0":
+        if x in {"2.0", "2.1"}:
             self._parse_dict.update(self._parse_dict_v2)
 
     def _parse_port(self, fid: typing.TextIO) -> list[str]:
@@ -932,7 +921,11 @@ def hfss_touchstone_2_network(filename: str) -> Network:
     return my_network
 
 
-def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> dict[str, Network]:
+def read_zipped_touchstones(
+    ziparchive: zipfile.ZipFile,
+    dir: str = "",
+    encoding: str | None = None,
+) -> dict[str, Network]:
     """
     similar to skrf.io.read_all_networks, which works for directories but only for Touchstones in ziparchives.
 
@@ -942,6 +935,9 @@ def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> dict[
         an zip archive file, containing Touchstone files and open for reading
     dir : str
         the directory of the ziparchive to read networks from, default is "" which reads only the root directory
+    encoding : str, optional
+        File encoding. Supported encodings are ISO-8859-1 and UTF-8.
+        If omitted, encoding is detected for each file.
 
     Returns
     -------
@@ -952,7 +948,7 @@ def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> dict[
     networks = dict()
     for fname in ziparchive.namelist():  # type: str
         directory = os.path.split(fname)[0]
-        if dir == directory and  re.search(r"s\d+p$", fname.lower()):
-            network = Network.zipped_touchstone(fname, ziparchive)
+        if dir == directory and re.search(r"\.(?:s\d+p|ts)$", fname.lower()):
+            network = Network.zipped_touchstone(fname, ziparchive, encoding=encoding)
             networks[network.name] = network
     return networks
