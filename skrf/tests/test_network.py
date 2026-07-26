@@ -587,8 +587,22 @@ class NetworkTestCase(unittest.TestCase):
         xformer.frequency=rf.Frequency(1, 1, 1, unit='GHz')
         xformer.s = ((0,1),(1,0))  # connects thru
         xformer.z0 = (50,25)  # transforms 50 ohm to 25 ohm
+        xformer.port_names = ['50ohm', '25ohm']
         c = connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
         self.assertTrue(np.all(np.abs(c.s-rf.network.impedance_mismatch(50, 25)) < 1e-6))
+        # the surviving ports are the 25 ohm port of the first xformer and the
+        # 50 ohm port of the second one, in that order.
+        np.testing.assert_allclose(c.z0, np.array([[25, 50]]))
+        self.assertEqual(c.port_names, ['25ohm', '50ohm'])
+
+        xformer_flip = xformer.copy()
+        xformer_flip.flip()
+
+        # Test that cascade and connect agree
+        c2 = xformer_flip ** xformer_flip
+        np.testing.assert_allclose(c.s, c2.s)
+        np.testing.assert_allclose(c.z0, c2.z0)
+        self.assertEqual(c.port_names, c2.port_names)
 
     def test_connect_nport_2port(self):
         freq = rf.Frequency(1, 10, npoints=10, unit='GHz')
@@ -609,12 +623,84 @@ class NetworkTestCase(unittest.TestCase):
             # Connect the line to each port and check for port impedance
             for port in range(nport_portnum):
                 nport_line = connect(nport, port, line, 0)
-                z0_expected = nport.z0
-                z0_expected[:,port] = line.z0[:,1]
+                if nport_portnum > 2:
+                    # the connected port keeps its index
+                    z0_expected = nport.z0.copy()
+                    z0_expected[:,port] = line.z0[:,1]
+                else:
+                    # for one- and two-port networks the s-parameters are not
+                    # reordered: the remaining ports of the first network come
+                    # first, followed by the remaining port of the line
+                    z0_expected = np.hstack(
+                        (np.delete(nport.z0, port, axis=1), line.z0[:, [1]]))
                 np.testing.assert_allclose(
                         nport_line.z0,
                         z0_expected
                     )
+
+    def test_connect_2port_2port_z0_and_port_names(self):
+        """Test correct ordering of z0 and port_names.
+
+        Check that connect matches Circuit.
+        """
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+        med = DefinedGammaZ0(freq, z0=50)
+
+        # Two passive asymmetric two-ports
+        ntwk_a = med.attenuator(-3) ** med.shunt_capacitor(1e-12) ** med.line(30, 'deg')
+        ntwk_b = med.line(10, 'deg') ** med.shunt_inductor(2e-9) ** med.attenuator(-6)
+        # Circuit requires named networks
+        ntwk_a.name, ntwk_b.name = 'A', 'B'
+        ntwk_a.port_names, ntwk_b.port_names = ['A0', 'A1'], ['B0', 'B1']
+
+        # Different reference impedances on the two outer ports
+        ntwk_a.renormalize([50, 20])
+        ntwk_b.renormalize([50, 30])
+
+        ntwk_c = connect(ntwk_a, 0, ntwk_b, 0)
+
+        port1 = Circuit.Port(freq, 'A1', z0=20)
+        port2 = Circuit.Port(freq, 'B1', z0=30)
+        reference = Circuit([[(port1, 0), (ntwk_a, 1)],
+                             [(ntwk_a, 0), (ntwk_b, 0)],
+                             [(ntwk_b, 1), (port2, 0)]]).network
+
+        np.testing.assert_allclose(ntwk_c.s, reference.s, atol=1e-12)
+        np.testing.assert_allclose(ntwk_c.z0, reference.z0, atol=1e-12)
+        self.assertEqual(ntwk_c.port_names, ['A1', 'B1'])
+
+        # Renormalize to get port z0 differences to S-parameters
+        renormalized, reference_renormalized = ntwk_c.copy(), reference.copy()
+        renormalized.renormalize(50)
+        reference_renormalized.renormalize(50)
+        np.testing.assert_allclose(renormalized.s, reference_renormalized.s, atol=1e-12)
+
+    def test_connect_port_names_follow_ports(self):
+        """port_names must stay a list and follow the ports through connect()."""
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+
+        def nport(nports, prefix, z0):
+            ntwk = rf.Network(frequency=freq, z0=z0, name=prefix,
+                              s=self.rng.random((1, nports, nports)))
+            ntwk.port_names = [f'{prefix}{i}' for i in range(nports)]
+            return ntwk
+
+        ntwk_a, ntwk_b = nport(3, 'a', 50), nport(3, 'b', 50)
+        ntwk_c = connect(ntwk_a, 1, ntwk_b, 0)
+        self.assertIsInstance(ntwk_c.port_names, list)
+        self.assertEqual(ntwk_c.port_names, ['a0', 'a2', 'b1', 'b2'])
+        # Name based indexing must work on the result
+        ntwk_c['a0', 'b2']
+        self.assertEqual(ntwk_c.subnetwork([0, 2]).port_names, ['a0', 'b1'])
+
+        # Connecting a 2-port to an N-port. The remaining port of the 2-port
+        # takes over the index of the connected port for every port index
+        for port in range(4):
+            ntwk_a, ntwk_b = nport(4, 'a', 50), nport(2, 'b', 50)
+            ntwk_c = connect(ntwk_a, ntwk_a.port_names.index(f'a{port}'), ntwk_b, 0)
+            expected = [f'a{i}' for i in range(4)]
+            expected[port] = 'b1'
+            self.assertEqual(ntwk_c.port_names, expected)
 
     def test_connect_no_frequency(self):
         """ Connecting 2 networks defined without frequency returns Error
