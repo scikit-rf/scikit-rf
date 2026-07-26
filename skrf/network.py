@@ -394,6 +394,8 @@ class Network:
         \*\*kwargs :
             key word arguments can be used to assign properties of the
             Network, such as `s`, `f` and `z0`.
+            keyword `port_names` can be used to name the ports, list with one
+                     name per port.
             keyword `encoding` can be used to define the Touchstone file encoding.
             keyword `noise_interp_kind` used to change the default interpolation
                      method for noisy networks. Options are 'linear', 'nearest',
@@ -447,7 +449,7 @@ class Network:
         self.name = name
         self.params = params
         self.comments = comments
-        self.port_names = None
+        self._port_names = None
         self.encoding = kwargs.pop('encoding', None)
 
         self.deembed = None
@@ -527,6 +529,11 @@ class Network:
         for attr in list(PRIMARY_PROPERTIES) + ['frequency', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
+
+        # Assign port_names after S-parameters so that the number of ports can
+        # be checked.
+        if 'port_names' in kwargs:
+            self.port_names = kwargs['port_names']
 
     @classmethod
     def from_z(cls, z: np.ndarray, *args, **kw) -> Network:
@@ -987,6 +994,13 @@ class Network:
 
         return ret + s_properties
 
+    def __setstate__(self, state: dict) -> None:
+        # port_names used to be a plain attribute, it is a property now and
+        # unpickling an old Network would leave it shadowed and lost
+        if 'port_names' in state:
+            state['_port_names'] = state.pop('port_names')
+        self.__dict__.update(state)
+
     def attribute(self, prop_name: PrimaryPropertiesT, conversion: ComponentFuncT) -> np.ndarray:
         prop = getattr(self, prop_name)
         return self.COMPONENT_FUNC_DICT[conversion](prop)
@@ -1043,6 +1057,11 @@ class Network:
 
         if len(self.port_modes) != self.nports:
             self.port_modes = np.array(["S"] * self.nports)
+
+        # the ports are not the same ones anymore, whoever changed the number
+        # of ports has to set the names of the new ports
+        if self._port_names is not None and len(self._port_names) != self.nports:
+            self._port_names = None
 
     @property
     def s_traveling(self) -> np.ndarray:
@@ -1699,6 +1718,44 @@ class Network:
         self._port_modes = port_modes
 
     @property
+    def port_names(self) -> list[str] | None:
+        """
+        Names of the ports, or None if the ports are not named.
+
+        Named ports can be indexed by name. The names are read from and written
+        to touchstone files.
+
+        Length of the port_names list should match the number of ports in the
+        network, this is checked on assigment. The names are dropped when an
+        operation changes the number of ports without being able to tell what
+        the new ports are.
+
+        Returns
+        -------
+        port_names : list of str, or None
+                names of the ports
+
+        Examples
+        --------
+        >>> ntwk = rf.Network(f=[1], s=np.zeros((1, 2, 2)), port_names=['in', 'out'])
+        >>> ntwk['in', 'out']  # same as ntwk.s21
+
+        """
+        return self._port_names
+
+    @port_names.setter
+    def port_names(self, port_names: Sequence[str] | None) -> None:
+        if port_names is None:
+            self._port_names = None
+            return
+        port_names = list(port_names)
+        if len(port_names) != self.nports:
+            raise ValueError(
+                f'Number of port names ({len(port_names)}) does not match the '
+                f'number of ports ({self.nports})')
+        self._port_names = port_names
+
+    @property
     def port_tuples(self) -> list[tuple[int, int]]:
         """
         Returns a list of tuples, for each port index pair.
@@ -2197,7 +2254,8 @@ class Network:
         >>> b = rf.N('my_file.s2p')
         >>> a.copy_from (b)
         """
-        for attr in ['_s', 'frequency', '_z0', 'name']:
+        # assigment order matters here since there are checks in some setters
+        for attr in ['_s', 'frequency', '_z0', 'name', 'port_names']:
             setattr(self, attr, copy(getattr(other, attr)))
 
     def copy_subset(self, key: np.ndarray) -> Network:
@@ -2423,9 +2481,10 @@ class Network:
 
         self.variables = touchstoneFile.get_comment_variables()
 
-        self.port_names = touchstoneFile.port_names
-
         f, self.s = touchstoneFile.get_sparameter_arrays()  # note: freq in Hz
+        # after the s-parameters, the number of ports has to be known to be
+        # able to check that there is a name for every port
+        self.port_names = touchstoneFile.port_names
         self.frequency = Frequency.from_f(f, unit='hz')
         self.frequency.unit = touchstoneFile.frequency_unit
 
@@ -6167,6 +6226,8 @@ def one_port_2_two_port(ntwk: Network) -> Network:
         the resultant two-port Network
     """
     result = ntwk.copy()
+    # setting s drops the port name of the one-port, the second port of the
+    # result is synthesized and there is no name to give to either of them
     result.s = np.zeros((result.frequency.npoints, 2, 2), dtype=complex)
     s11 = ntwk.s[:, 0, 0]
     result.s[:, 0, 0] = s11
