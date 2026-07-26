@@ -912,10 +912,14 @@ class Network:
                     except ValueError as err:
                         raise KeyError(f"Unknown port {p2_name}") from err
                 ntwk = self.copy()
+                # setting s drops the port names, the result is a one-port
                 ntwk.s = self.s[:, p1_index, p2_index]
                 ntwk.z0 = self.z0[:, p1_index]
                 ntwk.name = f"{self.name}({p1_name}, {p2_name})"
-                ntwk.port_names = None
+                # a reflection coefficient is the port it is measured at, a
+                # transmission one is not any single port of this network
+                ntwk.port_names = [self.port_names[p1_index]] \
+                        if p1_index == p2_index and self.port_names is not None else None
                 return ntwk
             else:
                 raise ValueError(f"Don't understand index: {key}")
@@ -981,8 +985,13 @@ class Network:
             t0 = int(m.group(1)) - 1
             t1 = int(m.group(2)) - 1
             ntwk = self.copy()
+            # setting s drops the port names, the result is a one-port
             ntwk.s = self.s[:, t0, t1]
             ntwk.z0 = self.z0[:, t0]
+            # a reflection coefficient is the port it is measured at, a
+            # transmission one is not any single port of this network
+            if t0 == t1 and self.port_names is not None:
+                ntwk.port_names = [self.port_names[t0]]
             return ntwk
         raise AttributeError(f'object does not have attribute {name}')
 
@@ -1508,6 +1517,12 @@ class Network:
         port_pairs: int = self.nports // 2
         out.z0[:, :port_pairs] = self.z0[:, port_pairs:]
         out.z0[:, port_pairs:] = self.z0[:, :port_pairs]
+        # flip the port names the same way
+        if self.port_names is not None:
+            port_names = self.port_names.copy()
+            port_names[:port_pairs] = self.port_names[port_pairs:]
+            port_names[port_pairs:] = self.port_names[:port_pairs]
+            out.port_names = port_names
         out.deembed = True
         return out
 
@@ -5783,9 +5798,12 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
 
     z0_equal = (ntwkC.z0[:, k] == ntwkC.z0[:, l]).all()
 
+    # port names of the result, the connected ports are removed from them at
+    # the end. The mismatch below shuffles the ports around without changing
+    # which port is where, and setting `s` drops the names.
+    port_names = ntwkC.port_names
+
     if not z0_equal:
-        if ntwkC.port_names is not None:
-            port_names = ntwkC.port_names.copy()
         # connect a impedance mismatch, which will takes into account the
         # effect of differing port impedances
         mismatch = impedance_mismatch(ntwkA.z0[:, k], ntwkA.z0[:, l], ntwkA.s_def)
@@ -5796,16 +5814,14 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
         ntwkC.z0[:, k:] = np.hstack((ntwkC.z0[:, k + 1:], ntwkC.z0[:, [l]]))
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
                        to_ports=list(range(k, ntwkC.nports)))
-        if ntwkC.port_names is not None:
-            ntwkC.port_names = port_names
 
     # call s-matrix connection function
     ntwkC.s = innerconnect_s(ntwkC.s if not z0_equal else ntwkA.s, k, l)
 
     # update the characteristic impedance matrix and port_names
     ntwkC.z0 = np.delete(ntwkC.z0, list(range(k, k + 1)) + list(range(l, l + 1)), 1)
-    if ntwkC.port_names is not None:
-        ntwkC.port_names = np.delete(ntwkC.port_names, [k] + [l]).tolist()
+    if port_names is not None:
+        ntwkC.port_names = np.delete(port_names, [k] + [l]).tolist()
 
     # recur if we're connecting more than one port
     if num > 1:
@@ -5966,7 +5982,7 @@ def stitch(ntwkA: Network, ntwkB: Network, **kwargs) -> Network:
     )
     C.frequency.unit = A.frequency.unit
     # the ports are the same ones, only the frequency axis is stitched
-    C.port_names = A.port_names
+    C.port_names = list(A.port_names) if A.port_names is not None else None
     return C
 
 

@@ -29,6 +29,7 @@ from skrf.network import (
     fix_z0_shape,
     h2s,
     n_twoports_2_nport,
+    one_port_2_two_port,
     parallelconnect,
     renormalize_s,
     s2a,
@@ -779,6 +780,102 @@ class NetworkTestCase(unittest.TestCase):
         np.testing.assert_allclose(nport.z0[:, 1], dut.z0[:, 1])
         self.assertIsNone(twoport_to_nport(ntwk(2, 'u', port_names=False),
                                            0, 1, nports=3).port_names)
+
+    def test_port_names_length_is_checked(self):
+        """There must be a name for every port, or no names at all."""
+        freq = rf.Frequency(1, 3, 5, unit='GHz')
+        two_port = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
+
+        # the constructor names the ports as well
+        named = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)),
+                           port_names=['in', 'out'])
+        self.assertEqual(named.port_names, ['in', 'out'])
+        with self.assertRaises(ValueError):
+            rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)),
+                       port_names=['in'])
+
+        with self.assertRaises(ValueError):
+            two_port.port_names = ['only_one']
+        with self.assertRaises(ValueError):
+            two_port.port_names = ['a', 'b', 'c']
+        self.assertIsNone(two_port.port_names)
+
+        # names are dropped when the ports they describe are gone
+        named.s = self.rng.random((5, 3, 3))
+        self.assertIsNone(named.port_names)
+
+        # copy_from sets the s-parameters directly, the names must follow the
+        # ports it copies instead of being left over from the previous ones
+        three_port = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 3, 3)),
+                                port_names=['a', 'b', 'c'])
+        target = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)),
+                            port_names=['in', 'out'])
+        target.copy_from(three_port)
+        self.assertEqual(target.port_names, ['a', 'b', 'c'])
+        target.copy_from(rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2))))
+        self.assertIsNone(target.port_names)
+
+    def test_port_names_pickle_roundtrip(self):
+        """Reading a pickled Network must keep the names of its ports."""
+        freq = rf.Frequency(1, 3, 5, unit='GHz')
+        ntwk = rf.Network(frequency=freq, name='p', z0=50,
+                          s=self.rng.random((5, 2, 2)), port_names=['in', 'out'])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, 'p.ntwk')
+            ntwk.write(path)
+            # rf.Network(file) goes through copy_from, which used to drop them
+            self.assertEqual(rf.Network(path).port_names, ['in', 'out'])
+
+    def test_port_names_are_dropped(self):
+        """Operations which leave different ports must not keep their names."""
+        freq = rf.Frequency(1, 3, 5, unit='GHz')
+        two_port = rf.Network(frequency=freq, name='a', z0=[10, 20],
+                              s=self.rng.random((5, 2, 2)), port_names=['in', 'out'])
+
+        # a transmission coefficient is a one-port which is neither of the
+        # ports it is measured between
+        self.assertIsNone(two_port.s21.port_names)
+        self.assertIsNone(two_port.s2_1.port_names)
+        self.assertIsNone(two_port.nonreciprocity(1, 2).port_names)
+        self.assertIsNone(two_port['in', 'out'].port_names)
+
+        # a reflection coefficient is the port it is measured at, it keeps
+        # the name of that port
+        self.assertEqual(two_port.s11.port_names, ['in'])
+        self.assertEqual(two_port.s22.port_names, ['out'])
+        self.assertEqual(two_port.s2_2.port_names, ['out'])
+        self.assertEqual(two_port['in', 'in'].port_names, ['in'])
+        # the name follows the port, ie. its z0
+        np.testing.assert_allclose(two_port.s22.z0[:, 0], two_port.z0[:, 1])
+        # a network without names stays without names
+        unnamed = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
+        self.assertIsNone(unnamed.s11.port_names)
+
+        # one_port_2_two_port synthesizes a second port there is no name for
+        one_port = rf.Network(frequency=freq, name='o', z0=50,
+                              s=self.rng.random((5, 1, 1)), port_names=['refl'])
+        self.assertIsNone(one_port_2_two_port(one_port).port_names)
+
+    def test_inv_port_names(self):
+        """inv flips the ports, the names must follow like z0 does."""
+        freq = rf.Frequency(1, 3, 5, unit='GHz')
+        two_port = rf.Network(frequency=freq, name='a', z0=[10, 20],
+                              s=self.rng.random((5, 2, 2)), port_names=['in', 'out'])
+
+        inverse = two_port.inv
+        self.assertEqual(inverse.port_names, ['out', 'in'])
+        # the names describe the same ports as z0 does
+        np.testing.assert_allclose(inverse.z0[:, 0], two_port.z0[:, 1])
+        np.testing.assert_allclose(inverse.z0[:, 1], two_port.z0[:, 0])
+
+        four_port = rf.Network(frequency=freq, name='b', z0=[10, 20, 30, 40],
+                               s=self.rng.random((5, 4, 4)),
+                               port_names=['a', 'b', 'c', 'd'])
+        self.assertEqual(four_port.inv.port_names, ['c', 'd', 'a', 'b'])
+
+        unnamed = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
+        self.assertIsNone(unnamed.inv.port_names)
 
     def test_connect_no_frequency(self):
         """ Connecting 2 networks defined without frequency returns Error
