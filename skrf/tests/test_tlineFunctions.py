@@ -2,7 +2,8 @@ import unittest
 
 import numpy as np
 from numpy import array, imag, linspace, pi, real
-from numpy.testing import assert_almost_equal, assert_equal
+from numpy.testing import assert_allclose, assert_almost_equal, assert_equal
+from scipy.constants import epsilon_0, mu_0
 
 import skrf.tlineFunctions as tlFuncs
 
@@ -178,3 +179,81 @@ class TestVoltageCurrentPropagation(unittest.TestCase):
 
         assert_almost_equal(v2, -v1)
         assert_almost_equal(i2, -i1)
+
+
+class SurfaceImpedanceTests(unittest.TestCase):
+    """
+    Test the rough surface impedance (transmission line taper method).
+
+    rtol=1e-5 is the tightest safe tolerance: surface_impedance refines only
+    until it converges to rtol=1e-6 (its default), and the actual deviations
+    are at the 1e-7 level.
+    """
+
+    def setUp(self):
+        self.f = np.array([1e9, 10e9, 100e9])
+        self.sigma_cu = 58e6
+
+    def test_smooth_limit(self):
+        """Zero roughness recovers the smooth surface impedance (1+j)*Rs."""
+        Zs = tlFuncs.surface_impedance(self.f, {'sigma': self.sigma_cu}, rms_roughness=0)
+        Rs = tlFuncs.surface_resistivity(self.f, rho=1/self.sigma_cu, mu_r=1)
+        assert_allclose(Zs, (1 + 1j)*Rs, rtol=1e-5)
+
+    def test_smooth_coated_stack(self):
+        """Zero roughness with a coating recovers the closed-form input impedance
+        of a nickel layer on copper (single impedance transformation)."""
+        thickness = 0.5e-6
+        sigma_ni, mu_r_ni = 14.5e6, 5
+        mats = [{}, {'sigma': sigma_ni, 'mu_r': mu_r_ni}, {'sigma': self.sigma_cu}]
+        Zs = tlFuncs.surface_impedance(self.f, mats, rms_roughness=0, boundary_loc=[0, thickness])
+
+        omega = 2*pi*self.f
+        ep_ni = epsilon_0 - 1j*sigma_ni/omega  # complex permittivity of the conductors
+        ep_cu = epsilon_0 - 1j*self.sigma_cu/omega
+        eta_ni = np.sqrt(mu_r_ni*mu_0/ep_ni)
+        eta_cu = np.sqrt(mu_0/ep_cu)
+        gamma_ni = 1j*omega*np.sqrt(mu_r_ni*mu_0*ep_ni)
+        tanh = np.tanh(gamma_ni*thickness)
+        expected = eta_ni*(eta_cu + eta_ni*tanh)/(eta_ni + eta_cu*tanh)
+        assert_allclose(Zs, expected, rtol=1e-5)
+
+    def test_rough_copper(self):
+        """Copper with 1 um rms roughness, against reference values computed with
+        the original implementation (https://github.com/ZiadHatab/rough-surface-impedance)."""
+        Zs = tlFuncs.surface_impedance(self.f, {'sigma': self.sigma_cu}, rms_roughness=1e-6)
+        expected = np.array([0.01075887 + 0.04411716j,
+                             0.06303392 + 0.33560499j,
+                             0.46406747 + 2.60106873j])
+        assert_allclose(Zs, expected, rtol=1e-5)
+
+    def test_copper_on_substrate(self):
+        """Bottom side of a microstrip trace: copper against the substrate, rough
+        at the copper-substrate boundary (reference values, see test_rough_copper)."""
+        Zs = tlFuncs.surface_impedance(self.f, [{'ep_r': 3.2}, {'sigma': self.sigma_cu}],
+                                       rms_roughness=0.5e-6)
+        expected = np.array([0.00902692 + 0.02705257j,
+                             0.04167908 + 0.19687927j,
+                             0.27426501 + 1.51542669j])
+        assert_allclose(Zs, expected, rtol=1e-5)
+
+    def test_enig_stack(self):
+        """Top side of a microstrip trace with ENIG finish: a nearly flat stack of
+        gold, nickel and copper (reference values, see test_rough_copper)."""
+        mats = [{}, {'sigma': 41.1e6}, {'sigma': 14.5e6, 'mu_r': 20}, {'sigma': self.sigma_cu}]
+        Zs = tlFuncs.surface_impedance(self.f, mats, rms_roughness=5e-9,
+                                       boundary_loc=[0, 0.05e-6, 4.05e-6])
+        expected = np.array([0.07131567 + 0.0552591j,
+                             0.18954272 + 0.10120029j,
+                             0.34927317 + 0.12440614j])
+        assert_allclose(Zs, expected, rtol=1e-5)
+
+    def test_invalid_inputs(self):
+        """Erroneous inputs raise ValueError."""
+        with self.assertRaises(ValueError):  # non-positive frequency
+            tlFuncs.surface_impedance(0, {'sigma': self.sigma_cu}, 1e-6)
+        with self.assertRaises(ValueError):  # unknown material key (typo)
+            tlFuncs.surface_impedance(1e9, {'sigma': self.sigma_cu, 'epr': 4}, 1e-6)
+        with self.assertRaises(ValueError):  # boundaries not in increasing depth order
+            tlFuncs.surface_impedance(1e9, [{}, {'sigma': 14.5e6}, {'sigma': self.sigma_cu}], 1e-6,
+                                      boundary_loc=[1e-6, 0])
