@@ -595,6 +595,15 @@ class NetworkTestCase(unittest.TestCase):
         np.testing.assert_allclose(c.z0, np.array([[25, 50]]))
         self.assertEqual(c.port_names, ['25ohm', '50ohm'])
 
+        xformer_flip = xformer.copy()
+        xformer_flip.flip()
+
+        # Test that cascade and connect agree
+        c2 = xformer_flip ** xformer_flip
+        np.testing.assert_allclose(c.s, c2.s)
+        np.testing.assert_allclose(c.z0, c2.z0)
+        self.assertEqual(c.port_names, c2.port_names)
+
     def test_connect_nport_2port(self):
         freq = rf.Frequency(1, 10, npoints=10, unit='GHz')
 
