@@ -82,21 +82,6 @@ class ParserState:
     format: str = "ma"
     resistance: complex = complex(50)
 
-    @property
-    def n_ansys_impedance_values(self) -> int:
-        """Returns the number of port impedances returned by Ansys HFSS.
-
-        Currently this function returns rank * 2.
-
-        Returns:
-            int: number of impedance values.
-        """
-        # See https://github.com/scikit-rf/scikit-rf/issues/354 for details.
-        #if self.ansys_data_type == "terminal":
-        #    return self.rank**2 * 2
-
-        return self.rank * 2
-
     @cached_property
     def numbers_per_line(self) -> int:
         """Returns data points per frequency point.
@@ -343,6 +328,66 @@ class Touchstone:
 
         return ret
 
+    @staticmethod
+    def _parse_float_block(*, line: str, fid: typing.TextIO) -> list[float]:
+        """Parse a whole HFSS comment block, however many values it holds.
+
+        HFSS writes one value per port or a full matrix, wrapped over continuation lines either
+        way, so the count is not known in advance. The block is delimited instead: it ends at
+        the first line that is not a comment holding only numbers.
+
+        Args:
+            line (str): The keyword line.
+            fid (typing.TextIO): File descriptor to read continuation lines from.
+
+        Returns:
+            list[float]: Every value of the block.
+        """
+        values = []
+        for token in line.rpartition("!")[2].split():
+            try:
+                values.append(float(token))
+            except ValueError:
+                pass
+
+        while True:
+            position = fid.tell()
+            continuation = fid.readline().strip()
+            more = None
+            if continuation.startswith("!"):
+                try:
+                    more = [float(token) for token in continuation[1:].split()]
+                except ValueError:
+                    more = None
+            if not more:
+                # the line belongs to the main parse loop, hand it back
+                fid.seek(position)
+                break
+            values.extend(more)
+
+        return values
+
+    def _hfss_port_values(self, blocks: list[list[float]]) -> np.ndarray:
+        """Reduce parsed HFSS comment blocks to one complex value per port and frequency.
+
+        Args:
+            blocks (list[list[float]]): One parsed block per frequency point.
+
+        Returns:
+            np.ndarray: Values of shape (frequencies, rank).
+        """
+        values = np.array(blocks).view(np.complex128)
+        if values.shape[-1] == self.rank**2 != self.rank:
+            # Driven Terminal exports the full matrix, only its diagonal is per port (#354)
+            return np.diagonal(values.reshape(-1, self.rank, self.rank), axis1=1, axis2=2)
+        if values.shape[-1] != self.rank:
+            warnings.warn(
+                f"Expected {self.rank} or {self.rank**2} values per frequency in the HFSS "
+                f"comments of {self.filename}, got {values.shape[-1]}.",
+                stacklevel=2,
+            )
+        return values
+
     @property
     def version(self) -> str:
         """The version string.
@@ -441,16 +486,9 @@ class Touchstone:
         self._parse_dict: dict[str, Callable[[str], None]] = {
             "[version]": lambda x: setattr(self, "version", x.split()[1]),
             "#": lambda x: state.parse_option_line(x),
-            "! gamma": lambda x: state.hfss_gamma.append(
-                self._parse_n_floats(line=x, fid=fid, n=state.rank * 2, before_comment=False)
-            ),
+            "! gamma": lambda x: state.hfss_gamma.append(self._parse_float_block(line=x, fid=fid)),
             "! port impedance": lambda x: state.hfss_impedance.append(
-                self._parse_n_floats(
-                    line=remove_prefix(x.lower(), "! port impedance"),
-                    fid=fid,
-                    n=state.n_ansys_impedance_values,
-                    before_comment=False,
-                )
+                self._parse_float_block(line=remove_prefix(x.lower(), "! port impedance"), fid=fid)
             ),
             "! port": state.parse_port,
             "! terminal data exported": lambda _: setattr(state, "ansys_data_type", "terminal"),
@@ -553,7 +591,7 @@ class Touchstone:
                 self.port_names[k] = v
 
         if state.hfss_gamma:
-            self.gamma = np.array(state.hfss_gamma).view(np.complex128)
+            self.gamma = self._hfss_port_values(state.hfss_gamma)
 
 
         # Impedance is parsed in the following order:
@@ -561,11 +599,7 @@ class Touchstone:
         # - TS v2 Reference keyword for each port.
         # - Reference impedance from option line.
         if state.hfss_impedance:
-            self.z0 = np.array(state.hfss_impedance).view(np.complex128)
-            # Comment the line in, when we need when to expect port impedances in NxN format.
-            # See https://github.com/scikit-rf/scikit-rf/issues/354 for details.
-            #if state.ansys_data_type == "terminal":
-            #    self.z0 = np.diagonal(self.z0.reshape(-1, self.rank, self.rank), axis1=1, axis2=2)
+            self.z0 = self._hfss_port_values(state.hfss_impedance)
 
             self.s_def = S_DEF_HFSS_DEFAULT
             self.has_hfss_port_impedances = True
