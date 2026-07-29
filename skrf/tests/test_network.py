@@ -167,10 +167,70 @@ class NetworkTestCase(unittest.TestCase):
         for window in ["hamming", ('kaiser', 6)]:
             gated1 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=window, fft_window=window)
 
-            get_window = partial(signal.get_window, window)
+            # the time-domain gate is symmetric, the frequency-domain window is periodic
+            gate_window = partial(signal.get_window, window, fftbins=False)
+            fft_window = partial(signal.get_window, window)
 
-            gated2 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=get_window, fft_window=get_window)
+            gated2 = self.ntwk1.s11.time_gate(0,.2, t_unit='ns', window=gate_window, fft_window=fft_window)
             assert gated1 == gated2
+
+    def test_time_gate_preserves_flat_response(self):
+        """A flat response gated around t=0 must come back unchanged.
+
+        The gate is a symmetric window whose peak sample sits on t = 0, so the zero-lag term
+        of the frequency-domain kernel is exactly one and a constant reflection coefficient is
+        passed through untouched. A periodic window is symmetric about sample `window_width / 2`
+        instead, which puts the peak half a sample late and scales the gated data by a constant
+        slightly below one.
+        """
+        s0 = 0.9 - 0.3j
+
+        # Sweep an even and an odd number of frequency points and an even and an odd
+        # half-width k. The resulting gate width 2 * k + 1 is always odd, which is
+        # intended: only an odd window has a single center sample on which
+        # gate(t = 0) = 1 can be imposed, so the invariant does not apply to even widths.
+        for npoints in (256, 257):
+            freq = Frequency(67, 110, npoints, unit='GHz')
+            ntwk = rf.Network(frequency=freq, s=np.full(npoints, s0))
+            dt = 1 / (npoints * freq.step)
+
+            for k in (20, 21):
+                # gate edges placed exactly on time samples, so that the gate covers
+                # the 2 * k + 1 samples centered on t = 0 without any rounding ambiguity
+                for method, kwargs in (('convolution', {'conv_mode': 'wrap'}),
+                                       ('convolution', {'conv_mode': 'reflect'}),
+                                       ('fft', {'fft_window': None})):
+                    gated = ntwk.time_gate(center=0, span=2 * k * dt, t_unit='s',
+                                           window=('kaiser', 10), method=method, **kwargs)
+                    np.testing.assert_allclose(
+                        gated.s.flatten(), s0, rtol=1e-12, atol=1e-12,
+                        err_msg=f'npoints={npoints}, k={k}, method={method}, {kwargs}')
+
+    def test_time_gate_spans_closed_interval(self):
+        """The gate covers the closed sample interval [start, stop], both edges included."""
+        npoints = 128
+        freq = Frequency(1, npoints, npoints, unit='GHz')
+        dt = 1 / (npoints * freq.step)
+        center_idx = npoints // 2
+        k = 10
+
+        # impulses on the two gate edge samples and on the first sample outside the gate
+        t_domain = np.zeros(npoints, dtype=complex)
+        t_domain[[center_idx - k, center_idx + k, center_idx + k + 1]] = 1
+        ntwk = rf.Network(frequency=freq, s=np.fft.fft(np.fft.ifftshift(t_domain)))
+
+        t_expected = t_domain.copy()
+        t_expected[center_idx + k + 1] = 0
+        expected = np.fft.fft(np.fft.ifftshift(t_expected))
+
+        # a boxcar gate keeps the samples it covers untouched, so this pins the gate
+        # support without depending on the shape of the window
+        for method, kwargs in (('fft', {'fft_window': None}),
+                               ('convolution', {'conv_mode': 'wrap'})):
+            gated = ntwk.time_gate(center=0, span=2 * k * dt, t_unit='s',
+                                   window='boxcar', method=method, **kwargs)
+            np.testing.assert_allclose(gated.s.flatten(), expected, rtol=1e-12, atol=1e-12,
+                                       err_msg=f'method={method}, {kwargs}')
 
     def test_time_gate_raises(self):
         ntwk = self.ntwk1
