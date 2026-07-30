@@ -28,6 +28,7 @@ from skrf.network import (
     connect,
     fix_z0_shape,
     h2s,
+    innerconnect,
     n_twoports_2_nport,
     one_port_2_two_port,
     parallelconnect,
@@ -876,6 +877,76 @@ class NetworkTestCase(unittest.TestCase):
 
         unnamed = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
         self.assertIsNone(unnamed.inv.port_names)
+
+    def test_connect_by_port_name(self):
+        """Ports can be given by name instead of by index."""
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+
+        def nport(nports, prefix):
+            ntwk = rf.Network(frequency=freq, name=prefix,
+                              z0=np.arange(start=1, stop=nports + 1),
+                              s=self.rng.random((1, nports, nports)))
+            ntwk.port_names = [f'{prefix}{i}' for i in range(nports)]
+            return ntwk
+
+        ntwk_a, ntwk_b = nport(4, 'a'), nport(3, 'b')
+
+        # a name is equivalent to the index of that port, for every port and
+        # not just the first one. Names and indices can be mixed.
+        for k in range(ntwk_a.nports):
+            for l in range(ntwk_b.nports):
+                by_index = connect(ntwk_a, k, ntwk_b, l)
+                for by_name in (connect(ntwk_a, f'a{k}', ntwk_b, f'b{l}'),
+                                connect(ntwk_a, f'a{k}', ntwk_b, l),
+                                connect(ntwk_a, k, ntwk_b, f'b{l}')):
+                    self.assertEqual(by_name, by_index)
+                    self.assertEqual(by_name.port_names, by_index.port_names)
+
+        # more than one port at a time, and innerconnect
+        self.assertEqual(connect(ntwk_a, 'a1', ntwk_b, 'b0', num=2),
+                         connect(ntwk_a, 1, ntwk_b, 0, num=2))
+        self.assertEqual(innerconnect(ntwk_a, 'a0', 'a3').port_names, ['a1', 'a2'])
+
+        with self.assertRaises(ValueError):  # unknown name
+            connect(ntwk_a, 'nope', ntwk_b, 0)
+        with self.assertRaises(ValueError):  # network without port names
+            connect(rf.Network(frequency=freq, s=self.rng.random((1, 2, 2))), 'x', ntwk_b, 0)
+        ambiguous = nport(3, 'c')
+        ambiguous.port_names = ['p', 'p', 'r']
+        with self.assertRaises(ValueError):  # the same name twice
+            connect(ambiguous, 'p', ntwk_b, 0)
+
+    def test_parallelconnect_by_port_name(self):
+        """parallelconnect takes port names too, and keeps the port names."""
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+
+        def nport(nports, prefix, named=True):
+            ntwk = rf.Network(frequency=freq, name=prefix, z0=50,
+                              s=self.rng.random((1, nports, nports)))
+            if named:
+                ntwk.port_names = [f'{prefix}{i}' for i in range(nports)]
+            return ntwk
+
+        ntwk_a, ntwk_b, ntwk_c = nport(2, 'a'), nport(2, 'b'), nport(4, 'c')
+
+        by_index = parallelconnect([ntwk_a, ntwk_b, ntwk_c], [1, 1, 0])
+        by_name = parallelconnect([ntwk_a, ntwk_b, ntwk_c], ['a1', 'b1', 'c0'])
+        self.assertEqual(by_name, by_index)
+        # the remaining ports keep their names, in the order of the inputs
+        self.assertEqual(by_index.port_names, ['a0', 'b0', 'c1', 'c2', 'c3'])
+        self.assertEqual(by_name.port_names, by_index.port_names)
+
+        # a sequence of ports of a single network, ie. an innerconnect
+        self.assertEqual(parallelconnect(ntwk_c, [['c1', 'c3']]).port_names, ['c0', 'c2'])
+
+        # names are created for networks which don't have any
+        self.assertEqual(parallelconnect([ntwk_a, nport(2, 'b', named=False)],
+                                         ['a1', 0]).port_names, ['a0', '1'])
+        self.assertIsNone(parallelconnect([nport(2, 'a', named=False),
+                                           nport(2, 'b', named=False)], [1, 0]).port_names)
+
+        with self.assertRaises(ValueError):
+            parallelconnect([ntwk_a, ntwk_b], ['nope', 0])
 
     def test_connect_no_frequency(self):
         """ Connecting 2 networks defined without frequency returns Error

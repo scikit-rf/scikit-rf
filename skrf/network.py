@@ -5337,6 +5337,45 @@ PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
 Y_LABEL_DICT = Network.Y_LABEL_DICT
 
 ## Functions operating on Network[s]
+def _port_index(ntwk: Network, port: int | str) -> int:
+    """
+    Index of a port given either as an index or as a port name.
+
+    Port indices are returned unchanged, names are looked up in
+    `ntwk.port_names`.
+
+    Parameters
+    ----------
+    ntwk : :class:`Network`
+        network the port belongs to
+    port : int or str
+        port index, or port name if the network has named ports
+
+    Returns
+    -------
+    index : int
+        index of the port
+
+    Raises
+    ------
+    ValueError
+        If the network has no port names, or the name is unknown or ambiguous.
+    """
+    if not isinstance(port, str):
+        return port
+    if ntwk.port_names is None:
+        raise ValueError(
+            f"Network '{ntwk.name}' has no port names, port '{port}' can't be resolved")
+    if ntwk.port_names.count(port) > 1:
+        raise ValueError(
+            f"Port name '{port}' is ambiguous, network has ports {ntwk.port_names}")
+    try:
+        return ntwk.port_names.index(port)
+    except ValueError:
+        raise ValueError(
+            f"Unknown port '{port}', network has ports {ntwk.port_names}") from None
+
+
 def _mixed_mode_port_names(port_names: list[str] | None, p: int) -> list[str] | None:
     """
     Port names of a network converted to mixed mode with :func:`Network.se2gmm`.
@@ -5376,14 +5415,16 @@ def _single_ended_port_names(port_names: list[str] | None, p: int) -> list[str] 
     return se_names + list(port_names[2 * p:])
 
 
-def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Network:
+def connect(ntwkA: Network, k: int | str, ntwkB: Network, l: int | str, num: int = 1) -> Network:
     """
     Connect two n-port networks together.
 
     Connect ports `k` thru `k+num-1` on `ntwkA` to ports
     `l` thru `l+num-1` on `ntwkB`. The resultant network has
     (ntwkA.nports+ntwkB.nports-2*num) ports. The port indices ('k','l')
-    start from 0. Port impedances **are** taken into account.
+    start from 0. Ports of networks which have named ports
+    (:attr:`Network.port_names`) can be given by name instead of by index.
+    Port impedances **are** taken into account.
     When the two networks have overlapping frequencies, the resulting
     network will contain only the overlapping frequencies.
 
@@ -5400,12 +5441,14 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     ----------
     ntwkA : :class:`Network`
             network 'A'
-    k : int
-            starting port index on `ntwkA` ( port indices start from 0 )
+    k : int or str
+            starting port index on `ntwkA` ( port indices start from 0 ),
+            or port name if `ntwkA` has named ports
     ntwkB : :class:`Network`
             network 'B'
-    l : int
-            starting port index on `ntwkB`
+    l : int or str
+            starting port index on `ntwkB`, or port name if `ntwkB` has
+            named ports
     num : int
             number of consecutive ports to connect (default 1)
 
@@ -5431,6 +5474,12 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     >>> ntwkB = rf.Network('ntwkB.s2p')
     >>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
 
+    Ports of networks with named ports can be given by name
+
+    >>> ntwkA.port_names
+    ['in', 'out']
+    >>> ntwkC = rf.connect(ntwkA, 'out', ntwkB, 0)
+
     """
     # some checking
     try:
@@ -5443,6 +5492,9 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
             ntwkA = ntwkA[common_freq[1]]
             ntwkB = ntwkB[common_freq[2]]
             warnings.warn("Using a frequency subset:\n" + str(ntwkA.frequency), stacklevel=2)
+
+    k = _port_index(ntwkA, k)
+    l = _port_index(ntwkB, l)
 
     if (k + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `k` out of range')
@@ -5665,11 +5717,13 @@ def parallelconnect(ntwks: Sequence[Network] | Network,
     ----------
     ntwks : :Sequence[`Network`] | `Network`
             A sequence of multi-port networks or a single network to be connected in parallel.
-    ports : Sequence[int  |  Sequence[int]]
+    ports : Sequence[int | str | Sequence[int | str]]
             A sequence of port indices, where each entry can be an int or a sequence of ints
             corresponding to the ports of the respective network. The length of `ports` should
             match the length of `networks`. Each specified port index is connect to the
             concatenated intersection, implying they are electrically common.
+            Ports of networks which have named ports (:attr:`Network.port_names`)
+            can be given by name instead of by index.
     name : str, optional
             define the connected network's name. Default is None.
 
@@ -5778,6 +5832,9 @@ def parallelconnect(ntwks: Sequence[Network] | Network,
     dim, off = sum(ntw.nports for ntw in ntwks), 0
     inter_indices, exter_indices =  [], []
     z0_in, z0_ext = [], []
+    # names of the ports which stay external, if any network has port names
+    named = any(ntw.port_names is not None for ntw in ntwks)
+    port_names_ext = [] if named else None
 
     # Assign the global scattering matrix [X] and concatenated intersection matrix [C]
     X = np.zeros((ntwks[0].frequency.npoints, dim, dim), dtype='complex')
@@ -5788,7 +5845,10 @@ def parallelconnect(ntwks: Sequence[Network] | Network,
         nports: int = ntw.nports
 
         # Convert the int port to list
-        port = [port] if isinstance(port, int) else port
+        port = [port] if isinstance(port, (int, str)) else port
+
+        # Resolve the ports given by name
+        port = [_port_index(ntw, p) for p in port]
 
         # Che the port indices valid or not
         if len(port) != len(set(port)):
@@ -5799,6 +5859,10 @@ def parallelconnect(ntwks: Sequence[Network] | Network,
         # Check the frequency equal or not
         check_frequency_equal(ntw, ntwks[0])
 
+        # Names of this network's ports, created if it doesn't have any
+        names = ntw.port_names if ntw.port_names is not None \
+                else [str(x) for x in range(nports)]
+
         # Append the port index with offset to indices list
         for p in range(nports):
             if p in port:
@@ -5807,6 +5871,8 @@ def parallelconnect(ntwks: Sequence[Network] | Network,
             else:
                 exter_indices.append(p + off)
                 z0_ext.append(ntw.z0[:, p])
+                if named:
+                    port_names_ext.append(names[p])
 
         # Assign the scattering matrix of each network to the global scattering matrix
         X[:, off:off+nports, off:off+nports] = ntw.s_traveling
@@ -5832,18 +5898,21 @@ def parallelconnect(ntwks: Sequence[Network] | Network,
     # Get the global scattering matrix
     s = X @ np.linalg.inv(np.identity(dim) - C @ X)
 
-    return Network(frequency = ntwks[0].frequency,
-                   s = s[:, out_ind[0], out_ind[1]],
-                   z0 = np.array(z0_ext).T,
-                   name = name)
+    connected = Network(frequency = ntwks[0].frequency,
+                        s = s[:, out_ind[0], out_ind[1]],
+                        z0 = np.array(z0_ext).T,
+                        name = name)
+    connected.port_names = port_names_ext
+    return connected
 
 
-def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
+def innerconnect(ntwkA: Network, k: int | str, l: int | str, num: int = 1) -> Network:
     """
     Connect ports of a single n-port network.
 
     this results in a (n-2)-port network. remember port indices start
-    from 0.
+    from 0. Ports of a network which has named ports
+    (:attr:`Network.port_names`) can be given by name instead of by index.
 
 
     Note
@@ -5856,8 +5925,9 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     ----------
     ntwkA : :class:`Network`
         network 'A'
-    k,l : int
-        starting port indices on ntwkA ( port indices start from 0 )
+    k,l : int or str
+        starting port indices on ntwkA ( port indices start from 0 ),
+        or port names if `ntwkA` has named ports
     num : int
         number of consecutive ports to connect
 
@@ -5881,6 +5951,8 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     >>> ntwkC = rf.innerconnect(ntwkA, 0,1)
 
     """
+    k = _port_index(ntwkA, k)
+    l = _port_index(ntwkA, l)
 
     if (k + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `k` out of range')
