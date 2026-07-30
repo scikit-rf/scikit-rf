@@ -250,6 +250,31 @@ class CircuitClassMethods(unittest.TestCase):
             self.media.short(nports=2).s
             )
 
+    def test_port_names(self):
+        """The ports of a Circuit are named, the resulting Network keeps them.
+
+        The ports come out in the order the port Networks appear in the
+        connection list, which is not necessarily the order they were created in.
+        """
+        tee = self.media.tee(name='tee')
+        line = self.media.line(1, 'm', name='line')
+        p_in = Circuit.Port(self.freq, 'input', z0=50)
+        p_thru = Circuit.Port(self.freq, 'thru', z0=50)
+        p_coupled = Circuit.Port(self.freq, 'coupled', z0=75)
+
+        cir = Circuit([[(p_coupled, 0), (tee, 2)],
+                       [(p_in, 0), (tee, 0)],
+                       [(tee, 1), (line, 0)],
+                       [(line, 1), (p_thru, 0)]])
+        ntwk = cir.network
+
+        self.assertEqual(cir.port_names, ['coupled', 'input', 'thru'])
+        self.assertEqual(ntwk.port_names, cir.port_names)
+        # the names must describe the ports of the network: the 75 ohm port is
+        # the one named 'coupled'
+        self.assertEqual(ntwk.z0[0, ntwk.port_names.index('coupled')].real, 75)
+        ntwk['input', 'thru']  # name based indexing works on the result
+
 class CircuitTestWilkinson(unittest.TestCase):
     """
     Create a Wilkinson power divider Circuit [#]_ and test the results

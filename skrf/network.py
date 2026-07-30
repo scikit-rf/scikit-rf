@@ -408,6 +408,8 @@ class Network:
         \*\*kwargs :
             key word arguments can be used to assign properties of the
             Network, such as `s`, `f` and `z0`.
+            keyword `port_names` can be used to name the ports, list with one
+                     name per port.
             keyword `encoding` can be used to define the Touchstone file encoding.
             keyword `noise_interp_kind` used to change the default interpolation
                      method for noisy networks. Options are 'linear', 'nearest',
@@ -461,7 +463,7 @@ class Network:
         self.name = name
         self.params = params
         self.comments = comments
-        self.port_names = None
+        self._port_names = None
         self.encoding = kwargs.pop('encoding', None)
 
         self.deembed = None
@@ -541,6 +543,11 @@ class Network:
         for attr in list(PRIMARY_PROPERTIES) + ['frequency', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
+
+        # Assign port_names after S-parameters so that the number of ports can
+        # be checked.
+        if 'port_names' in kwargs:
+            self.port_names = kwargs['port_names']
 
     @classmethod
     def from_z(cls, z: np.ndarray, *args, **kw) -> Network:
@@ -919,10 +926,14 @@ class Network:
                     except ValueError as err:
                         raise KeyError(f"Unknown port {p2_name}") from err
                 ntwk = self.copy()
+                # setting s drops the port names, the result is a one-port
                 ntwk.s = self.s[:, p1_index, p2_index]
                 ntwk.z0 = self.z0[:, p1_index]
                 ntwk.name = f"{self.name}({p1_name}, {p2_name})"
-                ntwk.port_names = None
+                # a reflection coefficient is the port it is measured at, a
+                # transmission one is not any single port of this network
+                ntwk.port_names = [self.port_names[p1_index]] \
+                        if p1_index == p2_index and self.port_names is not None else None
                 return ntwk
             else:
                 raise ValueError(f"Don't understand index: {key}")
@@ -988,8 +999,13 @@ class Network:
             t0 = int(m.group(1)) - 1
             t1 = int(m.group(2)) - 1
             ntwk = self.copy()
+            # setting s drops the port names, the result is a one-port
             ntwk.s = self.s[:, t0, t1]
             ntwk.z0 = self.z0[:, t0]
+            # a reflection coefficient is the port it is measured at, a
+            # transmission one is not any single port of this network
+            if t0 == t1 and self.port_names is not None:
+                ntwk.port_names = [self.port_names[t0]]
             return ntwk
         raise AttributeError(f'object does not have attribute {name}')
 
@@ -1000,6 +1016,13 @@ class Network:
         s_properties += [f"s{t1+1}{t2+1}" for t1 in range(min(self.nports, 10)) for t2 in range(min(self.nports, 10))]
 
         return ret + s_properties
+
+    def __setstate__(self, state: dict) -> None:
+        # port_names used to be a plain attribute, it is a property now and
+        # unpickling an old Network would leave it shadowed and lost
+        if 'port_names' in state:
+            state['_port_names'] = state.pop('port_names')
+        self.__dict__.update(state)
 
     def attribute(self, prop_name: PrimaryPropertiesT, conversion: ComponentFuncT) -> np.ndarray:
         prop = getattr(self, prop_name)
@@ -1057,6 +1080,11 @@ class Network:
 
         if len(self.port_modes) != self.nports:
             self.port_modes = np.array(["S"] * self.nports)
+
+        # the ports are not the same ones anymore, whoever changed the number
+        # of ports has to set the names of the new ports
+        if self._port_names is not None and len(self._port_names) != self.nports:
+            self._port_names = None
 
     @property
     def s_traveling(self) -> np.ndarray:
@@ -1503,6 +1531,12 @@ class Network:
         port_pairs: int = self.nports // 2
         out.z0[:, :port_pairs] = self.z0[:, port_pairs:]
         out.z0[:, port_pairs:] = self.z0[:, :port_pairs]
+        # flip the port names the same way
+        if self.port_names is not None:
+            port_names = self.port_names.copy()
+            port_names[:port_pairs] = self.port_names[port_pairs:]
+            port_names[port_pairs:] = self.port_names[:port_pairs]
+            out.port_names = port_names
         out.deembed = True
         return out
 
@@ -1711,6 +1745,44 @@ class Network:
     @port_modes.setter
     def port_modes(self, port_modes: np.ndarray) -> None:
         self._port_modes = port_modes
+
+    @property
+    def port_names(self) -> list[str] | None:
+        """
+        Names of the ports, or None if the ports are not named.
+
+        Named ports can be indexed by name. The names are read from and written
+        to touchstone files.
+
+        Length of the port_names list should match the number of ports in the
+        network, this is checked on assigment. The names are dropped when an
+        operation changes the number of ports without being able to tell what
+        the new ports are.
+
+        Returns
+        -------
+        port_names : list of str, or None
+                names of the ports
+
+        Examples
+        --------
+        >>> ntwk = rf.Network(f=[1], s=np.zeros((1, 2, 2)), port_names=['in', 'out'])
+        >>> ntwk['in', 'out']  # same as ntwk.s21
+
+        """
+        return self._port_names
+
+    @port_names.setter
+    def port_names(self, port_names: Sequence[str] | None) -> None:
+        if port_names is None:
+            self._port_names = None
+            return
+        port_names = list(port_names)
+        if len(port_names) != self.nports:
+            raise ValueError(
+                f'Number of port names ({len(port_names)}) does not match the '
+                f'number of ports ({self.nports})')
+        self._port_names = port_names
 
     @property
     def port_tuples(self) -> list[tuple[int, int]]:
@@ -2211,7 +2283,8 @@ class Network:
         >>> b = rf.N('my_file.s2p')
         >>> a.copy_from (b)
         """
-        for attr in ['_s', 'frequency', '_z0', 'name']:
+        # assigment order matters here since there are checks in some setters
+        for attr in ['_s', 'frequency', '_z0', 'name', 'port_names']:
             setattr(self, attr, copy(getattr(other, attr)))
 
     def copy_subset(self, key: np.ndarray) -> Network:
@@ -2437,9 +2510,10 @@ class Network:
 
         self.variables = touchstoneFile.get_comment_variables()
 
-        self.port_names = touchstoneFile.port_names
-
         f, self.s = touchstoneFile.get_sparameter_arrays()  # note: freq in Hz
+        # after the s-parameters, the number of ports has to be known to be
+        # able to check that there is a name for every port
+        self.port_names = touchstoneFile.port_names
         self.frequency = Frequency.from_f(f, unit='hz')
         self.frequency.unit = touchstoneFile.frequency_unit
 
@@ -4187,6 +4261,8 @@ class Network:
 
         self.port_modes[:p] = "D"
         self.port_modes[p:2 * p] = "C"
+        # the single ended names don't describe the mixed mode ports anymore
+        self.port_names = _mixed_mode_port_names(self.port_names, p)
         if s_def is None:
             s_def = self.s_def
         if s_def != self.s_def:
@@ -4321,6 +4397,8 @@ class Network:
             raise ValueError('Invalid number of differential ports')
 
         self.port_modes[:2*p] = "S"
+        # restore the single ended names, if se2gmm created the mixed mode ones
+        self.port_names = _single_ended_port_names(self.port_names, p)
         if s_def is None:
             s_def = self.s_def
         if s_def != self.s_def:
@@ -5259,6 +5337,45 @@ PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
 Y_LABEL_DICT = Network.Y_LABEL_DICT
 
 ## Functions operating on Network[s]
+def _mixed_mode_port_names(port_names: list[str] | None, p: int) -> list[str] | None:
+    """
+    Port names of a network converted to mixed mode with :func:`Network.se2gmm`.
+
+    The differential and common mode ports of a pair are named after the two
+    single ended ports they are made of, which keeps the names unique and lets
+    :func:`Network.gmm2se` restore the original ones.
+
+    Returns None if there is nothing to convert.
+    """
+    if port_names is None or len(port_names) < 2 * p:
+        return None
+    pairs = [f'({port_names[2 * i]},{port_names[2 * i + 1]})' for i in range(p)]
+    return [f'd{pair}' for pair in pairs] + [f'c{pair}' for pair in pairs] \
+            + list(port_names[2 * p:])
+
+
+def _single_ended_port_names(port_names: list[str] | None, p: int) -> list[str] | None:
+    """
+    Inverse of :func:`_mixed_mode_port_names`, used by :func:`Network.gmm2se`.
+
+    Returns None if the names were not created by :func:`_mixed_mode_port_names`,
+    in which case the names of the single ended ports are unknown.
+    """
+    if port_names is None or len(port_names) < 2 * p:
+        return None
+    se_names = []
+    for i in range(p):
+        diff, comm = port_names[i], port_names[p + i]
+        if not (diff.startswith('d(') and comm.startswith('c(')
+                and diff.endswith(')') and diff[1:] == comm[1:]):
+            return None
+        pair = diff[2:-1].split(',')
+        if len(pair) != 2:
+            return None
+        se_names += pair
+    return se_names + list(port_names[2 * p:])
+
+
 def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Network:
     """
     Connect two n-port networks together.
@@ -5332,11 +5449,14 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     if (l + num - 1 > ntwkB.nports - 1):
         raise IndexError('Port `l` out of range')
 
-    # create port_names if required
-    if ntwkB.port_names is None:
-        if ntwkA.port_names is not None:
-            ntwkB = ntwkB.copy()
-            ntwkB.port_names = [str(x) for x in range(ntwkB.nports)]
+    # port names of the result, created for the network which doesn't have them
+    # when only one of the two networks is named
+    port_names_a, port_names_b = ntwkA.port_names, ntwkB.port_names
+    if port_names_a is not None or port_names_b is not None:
+        if port_names_a is None:
+            port_names_a = [str(x) for x in range(ntwkA.nports)]
+        if port_names_b is None:
+            port_names_b = [str(x) for x in range(ntwkB.nports)]
 
     have_complex_ports = (ntwkA.z0.imag != 0).any() or (ntwkB.z0.imag != 0).any()
 
@@ -5394,9 +5514,9 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     # combine z0 and port_names arrays and remove ports which were `connected`
     ntwkC.z0 = np.hstack(
         (np.delete(ntwkA.z0, range(k, k + 1), 1), np.delete(ntwkB.z0, range(l, l + 1), 1)))
-    if ntwkA.port_names is not None:
+    if port_names_a is not None:
         ntwkC.port_names = np.concatenate(
-            (np.delete(ntwkA.port_names, k), np.delete(ntwkB.port_names, l))).tolist()
+            (np.delete(port_names_a, k), np.delete(port_names_b, l))).tolist()
 
     # if we're connecting more than one port, call innerconnect recursively
     # until all connections are made to finish the job
@@ -5780,9 +5900,12 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
 
     z0_equal = (ntwkC.z0[:, k] == ntwkC.z0[:, l]).all()
 
+    # port names of the result, the connected ports are removed from them at
+    # the end. The mismatch below shuffles the ports around without changing
+    # which port is where, and setting `s` drops the names.
+    port_names = ntwkC.port_names
+
     if not z0_equal:
-        if ntwkC.port_names is not None:
-            port_names = ntwkC.port_names.copy()
         # connect a impedance mismatch, which will takes into account the
         # effect of differing port impedances
         mismatch = impedance_mismatch(ntwkA.z0[:, k], ntwkA.z0[:, l], ntwkA.s_def)
@@ -5793,16 +5916,14 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
         ntwkC.z0[:, k:] = np.hstack((ntwkC.z0[:, k + 1:], ntwkC.z0[:, [l]]))
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
                        to_ports=list(range(k, ntwkC.nports)))
-        if ntwkC.port_names is not None:
-            ntwkC.port_names = port_names
 
     # call s-matrix connection function
     ntwkC.s = innerconnect_s(ntwkC.s if not z0_equal else ntwkA.s, k, l)
 
     # update the characteristic impedance matrix and port_names
     ntwkC.z0 = np.delete(ntwkC.z0, list(range(k, k + 1)) + list(range(l, l + 1)), 1)
-    if ntwkC.port_names is not None:
-        ntwkC.port_names = np.delete(ntwkC.port_names, [k] + [l]).tolist()
+    if port_names is not None:
+        ntwkC.port_names = np.delete(port_names, [k] + [l]).tolist()
 
     # recur if we're connecting more than one port
     if num > 1:
@@ -5962,6 +6083,8 @@ def stitch(ntwkA: Network, ntwkB: Network, **kwargs) -> Network:
         **kwargs
     )
     C.frequency.unit = A.frequency.unit
+    # the ports are the same ones, only the frequency axis is stitched
+    C.port_names = list(A.port_names) if A.port_names is not None else None
     return C
 
 
@@ -6117,6 +6240,14 @@ def concat_ports(ntwk_list: Sequence[Network], port_order: Literal["first", "sec
     ntwkC.s = C
     ntwkC.z0 = np.hstack([ntwkA.z0, ntwkB.z0])
     ntwkC.port_modes = np.hstack([ntwkA.port_modes, ntwkB.port_modes])
+    # port_names was copied from ntwkA and would be too short for ntwkC.
+    # Create names for the network which doesn't have them, like connect() does.
+    if ntwkA.port_names is not None or ntwkB.port_names is not None:
+        names_a = ntwkA.port_names if ntwkA.port_names is not None \
+                else [str(x) for x in range(nA)]
+        names_b = ntwkB.port_names if ntwkB.port_names is not None \
+                else [str(x) for x in range(nB)]
+        ntwkC.port_names = list(names_a) + list(names_b)
     if port_order == 'second':
         old_order = list(range(nC))
         new_order = list(range(0, nC, 2)) + list(range(1, nC, 2))
@@ -6213,6 +6344,8 @@ def one_port_2_two_port(ntwk: Network) -> Network:
         the resultant two-port Network
     """
     result = ntwk.copy()
+    # setting s drops the port name of the one-port, the second port of the
+    # result is synthesized and there is no name to give to either of them
     result.s = np.zeros((result.frequency.npoints, 2, 2), dtype=complex)
     s11 = ntwk.s[:, 0, 0]
     result.s[:, 0, 0] = s11
@@ -8688,6 +8821,9 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network | None = None, name : str | 
          [s21, s22]]). \
         transpose().reshape(-1, 2, 2)
     result.z0 = np.hstack([ntwk1.z0, ntwk2.z0])
+    # port_names was copied from ntwk1 and would be too short for a two-port
+    if ntwk1.port_names is not None or ntwk2.port_names is not None:
+        result.port_names = list(ntwk1.port_names or ['0']) + list(ntwk2.port_names or ['1'])
 
     if name is None:
         try:
@@ -8896,4 +9032,9 @@ def twoport_to_nport(ntwk: Network, port1: int, port2: int, nports: int, **kwarg
     nport.s[:,port2,port2] = ntwk.s[:,1,1]
     nport.z0[:,port1] = ntwk.z0[:,0]
     nport.z0[:,port2] = ntwk.z0[:,1]
+    # keep track of where the two-port's ports ended up, the added ports are new
+    if ntwk.port_names is not None:
+        port_names = [str(x) for x in range(nports)]
+        port_names[port1], port_names[port2] = ntwk.port_names
+        nport.port_names = port_names
     return nport
