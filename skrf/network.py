@@ -4095,7 +4095,7 @@ class Network:
                           for k in range(len(p))]]
         return ntwkB
 
-    def nonreciprocity(self, m: int, n: int, normalize: bool = False) -> Network:
+    def nonreciprocity(self, m: int | str, n: int | str, normalize: bool = False) -> Network:
         r"""
         Normalized non-reciprocity metric.
 
@@ -4108,10 +4108,14 @@ class Network:
 
         Parameters
         ----------
-        m : int
-            m index
-        n : int
-            n index
+        m : int or str
+            m index, or port name if the Network has named ports
+            (:attr:`Network.port_names`). Note that the indices are one-based,
+            like the :attr:`s` matrix element they name, and unlike the
+            zero-based port indices taken by :func:`connect` or
+            :func:`Network.renumber`. Port names are unaffected by this.
+        n : int or str
+            n index, one-based, or port name
         normalize : bool
             Normalize the result. Default is False.
 
@@ -4121,6 +4125,12 @@ class Network:
             Resulting renumbered Network
 
         """
+        # the s{m}_{n} attributes are one-based, port indices are not
+        if isinstance(m, str):
+            m = _port_index(self, m) + 1
+        if isinstance(n, str):
+            n = _port_index(self, n) + 1
+
         forward = getattr(self, f"s{m}_{n}")
         reverse = getattr(self, f"s{n}_{m}")
         if normalize:
@@ -5720,7 +5730,7 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
 
 
 def parallelconnect(ntwks: Sequence[Network] | Network,
-                    ports: Sequence[int | Sequence[int]],
+                    ports: Sequence[int | str | Sequence[int | str]],
                     name: str | None = None) -> Network:
     """
     Connects a series of multi-port networks in parallel, ensuring that the specified port

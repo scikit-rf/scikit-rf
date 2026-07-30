@@ -917,6 +917,29 @@ class NetworkTestCase(unittest.TestCase):
         # d == 0 is a no-op which returns the network itself
         self.assertIs(two_port.delay(0, 'ns'), two_port)
 
+    def test_nonreciprocity_by_port_name(self):
+        """nonreciprocity picks a pair of ports, which can be given by name."""
+        freq = rf.Frequency(1, 3, 5, unit='GHz')
+        three_port = rf.Network(frequency=freq, name='a', z0=[10, 20, 30],
+                                s=self.rng.random((5, 3, 3)),
+                                port_names=['in', 'out', 'iso'])
+
+        # the s{m}_{n} attributes are one-based, a name means the same port
+        self.assertEqual(three_port.nonreciprocity('in', 'out'),
+                         three_port.nonreciprocity(1, 2))
+        self.assertEqual(three_port.nonreciprocity('out', 'iso'),
+                         three_port.nonreciprocity(2, 3))
+        self.assertEqual(three_port.nonreciprocity('in', 'iso', normalize=True),
+                         three_port.nonreciprocity(1, 3, normalize=True))
+        # the result is a pair of ports, not any single one of them
+        self.assertIsNone(three_port.nonreciprocity('in', 'out').port_names)
+
+        with self.assertRaises(KeyError):
+            three_port.nonreciprocity('nope', 'out')
+        unnamed = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
+        with self.assertRaises(ValueError):
+            unnamed.nonreciprocity('a', 'b')
+
     def test_duplicate_port_names(self):
         """Duplicated port names are allowed, but can't be used to address a port.
 
