@@ -190,6 +190,7 @@ if TYPE_CHECKING:
 
     from .plotting import Axes
 
+import codecs
 import io
 import os
 import re
@@ -231,6 +232,19 @@ from .frequency import Frequency
 from .plotting import axes_kwarg
 from .time import get_window, time_gate
 from .util import copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
+
+
+def _normalize_touchstone_encoding(encoding: str) -> str:
+    """Return a supported Python codec name for a Touchstone file."""
+    try:
+        normalized_encoding = codecs.lookup(encoding).name
+    except LookupError as err:
+        raise ValueError(f"Unknown Touchstone encoding {encoding!r}") from err
+
+    if normalized_encoding not in {"iso8859-1", "utf-8"}:
+        raise ValueError("Touchstone encoding must be either ISO-8859-1 or UTF-8")
+
+    return normalized_encoding
 
 
 class Network:
@@ -2465,7 +2479,12 @@ class Network:
                 self.name = os.path.basename(os.path.splitext(touchstoneFile.filename)[0])
 
     @classmethod
-    def zipped_touchstone(cls, filename: str | Path, archive: zipfile.ZipFile) -> Network:
+    def zipped_touchstone(
+        cls,
+        filename: str | Path,
+        archive: zipfile.ZipFile,
+        encoding: str | None = None,
+    ) -> Network:
         """
         Read a Network from a Touchstone file in a ziparchive.
 
@@ -2475,6 +2494,9 @@ class Network:
             the full path filename of the touchstone file
         archive : zipfile.ZipFile
             the opened zip archive
+        encoding : str, optional
+            File encoding. Supported encodings are ISO-8859-1 and UTF-8.
+            If omitted, UTF-8 is attempted before ISO-8859-1.
 
         Returns
         -------
@@ -2486,10 +2508,19 @@ class Network:
         # Convert a path filename to a string
         filename = str(filename.resolve()) if isinstance(filename, Path) else filename
 
+        raw_data = archive.open(filename).read()
+        if encoding is None:
+            try:
+                data = raw_data.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                data = raw_data.decode("iso8859-1")
+        else:
+            data = raw_data.decode(_normalize_touchstone_encoding(encoding))
+
         # Touchstone requires file objects to be seekable (for get_gamma_z0_from_fid)
         # A ZipExtFile object is not seekable prior to Python 3.7, so use StringIO
         # and manually add a name attribute
-        fileobj = io.StringIO(archive.open(filename).read().decode('UTF-8'))
+        fileobj = io.StringIO(data)
         fileobj.name = filename
         ntwk = Network(fileobj)
         return ntwk
@@ -2502,7 +2533,9 @@ class Network:
                          format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
                          format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
                          format_spec_rn: str = '{}', write_noise: bool = True,
-                         parameter: Literal["S", "Y", "Z", "G", "H"] = "S") -> str | None:
+                         parameter: Literal["S", "Y", "Z", "G", "H"] = "S",
+                         version: Literal["1.0", "2.0", "2.1"] = "1.0",
+                         encoding: str = "ISO-8859-1") -> str | None:
 
         """
         Write a contents of the :class:`Network` to a touchstone file.
@@ -2572,6 +2605,11 @@ class Network:
         parameter : string
             Specify the network parameter ("S", "Y", "Z", "G", "H") to write, defaults to "S".
             "G" and "H" is only available for 2-port Networks.
+        version : string
+            Touchstone file format version. Supported versions are "1.0", "2.0", and "2.1".
+            Version "1.0" preserves the legacy output format.
+        encoding : string
+            File encoding. Supported encodings are ISO-8859-1 and UTF-8.
 
         Note
         ----
@@ -2585,32 +2623,63 @@ class Network:
         :class:`~skrf.io.touchstone.Touchstone` class.
 
         """
-        # according to Touchstone 2.0 spec
-        # [no tab, max. 4 coeffs per line, etc.]
+        if version not in {"1.0", "2.0", "2.1"}:
+            raise ValueError("`version` must be either '1.0', '2.0', or '2.1'")
+
+        normalized_encoding = _normalize_touchstone_encoding(encoding)
+        is_version_2 = version in {"2.0", "2.1"}
+
+        if is_version_2 and len(self.f) == 0:
+            raise ValueError("Touchstone 2.x requires at least one frequency point")
+        if is_version_2 and self.port_modes.size and np.any(self.port_modes != "S"):
+            raise NotImplementedError("Writing mixed-mode Touchstone 2.x data is not supported")
 
         have_complex_ports = np.any(self.z0.imag != 0)
         equal_z0 = np.all(self.z0 == self.z0[0, 0])
+        frequency_invariant_z0 = np.all(self.z0 == self.z0[0])
 
         ntwk = self.copy()
+        reference_impedances = None
 
-        if r_ref is None and not write_z0:
-            if not equal_z0:
-                raise ValueError(
-                    "Network has unequal port impedances but reference impedance for renormalization"
-                    " 'r_ref' is not specified."
-                    )
+        if is_version_2 and parameter != "S" and r_ref is None and not write_z0:
+            r_ref = 50
+        elif r_ref is None and not write_z0:
             if have_complex_ports:
                 raise ValueError(
                     "Network port impedances are complex but reference impedance for renormalization"
                      " 'r_ref' is not specified."
                     )
-            r_ref = ntwk.z0[0, 0]
+            if is_version_2:
+                if not frequency_invariant_z0:
+                    raise ValueError(
+                        "Network port impedances vary with frequency but Touchstone 2.x [Reference]"
+                        " impedances must be frequency invariant. Specify 'r_ref' to renormalize the network."
+                    )
+                reference_impedances = ntwk.z0[0].real
+                r_ref = reference_impedances[0]
+            else:
+                if not equal_z0:
+                    raise ValueError(
+                        "Network has unequal port impedances but reference impedance for renormalization"
+                        " 'r_ref' is not specified."
+                        )
+                r_ref = ntwk.z0[0, 0]
         elif r_ref is not None:
             if not np.isscalar(r_ref):
                 raise ValueError('r_ref must be scalar')
             if r_ref.imag != 0:
                 raise ValueError('r_ref must be real')
+            if is_version_2 and r_ref.real <= 0:
+                raise ValueError("Touchstone 2.x [Reference] impedances must be positive")
             ntwk.renormalize(r_ref)
+            if is_version_2:
+                reference_impedances = ntwk.z0[0].real
+        elif is_version_2 and frequency_invariant_z0 and not have_complex_ports:
+            reference_impedances = ntwk.z0[0].real
+            r_ref = reference_impedances[0]
+
+        if is_version_2 and reference_impedances is not None and np.any(reference_impedances <= 0):
+            raise ValueError("Touchstone 2.x [Reference] impedances must be positive")
 
         if filename is None:
             if ntwk.name is not None:
@@ -2628,13 +2697,17 @@ class Network:
 
         pdata = ntwk.s
         if parameter != "S":
-            pdata = globals()[f"s2{parameter.lower()}"](pdata, 1)
+            if is_version_2:
+                pdata = getattr(ntwk, parameter.lower())
+            else:
+                pdata = globals()[f"s2{parameter.lower()}"](pdata, 1)
 
         if get_extn(filename) is None:
             if isinstance(filename, Path):
                 filename = str(filename.resolve())
 
-            filename = f"{filename}.{parameter.lower()}{ntwk.nports}p"
+            extension = "ts" if is_version_2 else f"{parameter.lower()}{ntwk.nports}p"
+            filename = f"{filename}.{extension}"
 
         if dir is not None:
             filename = os.path.join(dir, filename)
@@ -2686,7 +2759,7 @@ class Network:
                 from .io.general import StringBuffer  # avoid circular import
                 buf = StringBuffer()
             else:
-                buf = open(filename, "w")
+                buf = open(filename, "w", encoding=normalized_encoding)
             return buf
 
         with get_buffer() as output:
@@ -2703,6 +2776,9 @@ class Network:
 
             output.write(commented_header)
 
+            if is_version_2:
+                output.write(f'[Version] {version}\n')
+
             # write header file.
             # the '#'  line is NOT a comment it is essential and it must be
             # exactly this format, to work
@@ -2710,7 +2786,11 @@ class Network:
             if write_z0:
                 output.write('! Data is not renormalized\n')
                 output.write(f'! S-parameter uses the {self.s_def} definition\n')
-                output.write(f'# {ntwk.frequency.unit} {parameter} {form.upper()} R\n')
+                if is_version_2:
+                    option_resistance = r_ref.real if r_ref is not None else 50
+                    output.write(f'# {ntwk.frequency.unit} {parameter} {form.upper()} R {option_resistance}\n')
+                else:
+                    output.write(f'# {ntwk.frequency.unit} {parameter} {form.upper()} R\n')
             else:
                 # Write "r_ref.real" instead of "r_ref", so we get a real number "a" instead
                 # of a complex number "(a+0j)", which is unsupported by the standard Touchstone
@@ -2721,6 +2801,17 @@ class Network:
                                         "should never happen in scikit-rf."
                 output.write(f'# {ntwk.frequency.unit} {parameter} {form.upper()} R {r_ref.real} \n')
 
+            if is_version_2:
+                output.write(f'[Number of Ports] {ntwk.number_of_ports}\n')
+                if ntwk.number_of_ports == 2:
+                    output.write('[Two-Port Data Order] 21_12\n')
+                output.write(f'[Number of Frequencies] {len(ntwk.f)}\n')
+                if ntwk.number_of_ports == 2 and ntwk.noisy and write_noise:
+                    output.write(f'[Number of Noise Frequencies] {ntwk.noise_freq.npoints}\n')
+                if parameter == "S" and reference_impedances is not None:
+                    references = " ".join(str(reference) for reference in reference_impedances)
+                    output.write(f'[Reference] {references}\n')
+
             # write ports
             try:
                 if ntwk.port_names and len(ntwk.port_names) == ntwk.number_of_ports:
@@ -2730,6 +2821,9 @@ class Network:
                     output.write(ports)
             except AttributeError:
                 pass
+
+            if is_version_2:
+                output.write('[Network Data]\n')
 
             if ntwk.number_of_ports == 2:
                 # 2-port is a special case with
@@ -2773,28 +2867,36 @@ class Network:
                 if ntwk.noisy and write_noise:
                     self._write_noisedata(output, format_spec_nf_freq, format_spec_nf_min,
                                           format_spec_g_opt_mag, format_spec_g_opt_phase,
-                                          format_spec_rn)
+                                          format_spec_rn, version)
+
+            if is_version_2:
+                output.write('[End]\n')
 
             if type(to_archive) is zipfile.ZipFile:
-                to_archive.writestr(filename, output.getvalue())
+                to_archive.writestr(filename, output.getvalue().encode(normalized_encoding))
             elif return_string is True:
                 return output.getvalue()
             return None
 
     def _write_noisedata(self, output, format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
                          format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
-                         format_spec_rn: str = '{}'):
+                         format_spec_rn: str = '{}', version: str = "1.0"):
         ntwk = self.copy()
 
-        output.write("! Noise Data\n! freq\tnf_min_db\tmagGOpt\tdegGOpt\tRn_eff\n")
+        if version in {"2.0", "2.1"}:
+            output.write("[Noise Data]\n")
+        else:
+            output.write("! Noise Data\n")
+        output.write("! freq\tnf_min_db\tmagGOpt\tdegGOpt\tRn_eff\n")
         new = ntwk.copy()
         new.resample(ntwk.f_noise) # only write data from original noise freqs
         for f, nf, g_opt, rn, z0 in zip(new.f_noise.f_scaled, new.nfmin_db, new.g_opt, new.rn, new.z0):
+            effective_rn = rn if version in {"2.0", "2.1"} else rn/z0[0].real
             output.write(format_spec_nf_freq.format(f) + ' ' \
                     + format_spec_nf_min.format(nf) + ' ' \
                     + format_spec_g_opt_mag.format(mf.complex_2_magnitude(g_opt)) + ' ' \
                     + format_spec_g_opt_phase.format(mf.complex_2_degree(g_opt)) + ' ' \
-                    + format_spec_rn.format(rn/z0[0].real) + ' ' "\n")
+                    + format_spec_rn.format(effective_rn) + ' ' "\n")
 
 
     def write(self, file: str | Path = None, *args, **kwargs) -> None:
