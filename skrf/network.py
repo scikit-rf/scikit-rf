@@ -3846,7 +3846,7 @@ class Network:
 
         self.s = self.s * np.exp(-1j*theta)
 
-    def delay(self, d: float, unit: str = 'deg', port: int = 0, media: Any = None, **kw) -> Network:
+    def delay(self, d: float, unit: str = 'deg', port: int | str = 0, media: Any = None, **kw) -> Network:
         """
         Add phase delay to a given port.
 
@@ -3860,8 +3860,10 @@ class Network:
             The angle/length/delay of the transmission line (see `unit` argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
             The units of d.  See :func:`Media.to_meters`, for details
-        port : int
-            Port to add the delay to.
+        port : int or str
+            Port to add the delay to, given by index or by name if the Network
+            has named ports (:attr:`Network.port_names`). The delayed port keeps
+            its name.
         media: skrf.media.Media
             Media object to use for generating the delay. If None, this will
             default to freespace.
@@ -3872,6 +3874,7 @@ class Network:
             A delayed copy of the `Network`.
 
         """
+        port = _port_index(self, port)
         if d ==0:
             return self
         d=d/2.
@@ -3881,6 +3884,9 @@ class Network:
                               z0_override = self.z0[:,port])
 
         l =media.line(d=d, unit=unit,**kw)
+        # the delayed port is still the same port of this network
+        if self.port_names is not None:
+            l.port_names = [self.port_names[port]] * 2
         return connect(self, port, l, 0)
 
     def windowed(self, window: str | float | tuple[str, float] | Callable =('kaiser', 6),

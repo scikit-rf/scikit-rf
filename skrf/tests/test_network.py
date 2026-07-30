@@ -878,6 +878,45 @@ class NetworkTestCase(unittest.TestCase):
         unnamed = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
         self.assertIsNone(unnamed.inv.port_names)
 
+    def test_delay_port_names(self):
+        """delay() extends a port, it stays the same port and keeps its name.
+        """
+        freq = rf.Frequency(1, 3, 5, unit='GHz')
+
+        def nport(nports):
+            z0 = [10 * (i + 1) for i in range(nports)]
+            return rf.Network(frequency=freq, name='a', z0=z0,
+                              s=self.rng.random((5, nports, nports)),
+                              port_names=[f'p{i}' for i in range(nports)])
+
+        # delaying any port of a network leaves the ports as they were
+        four_port = nport(4)
+        for port in range(4):
+            delayed = four_port.delay(1, 'ns', port=port)
+            self.assertEqual(delayed.port_names, ['p0', 'p1', 'p2', 'p3'])
+            np.testing.assert_allclose(delayed.z0, four_port.z0)
+
+        # a name may be used instead of the index, and picks the same port
+        self.assertEqual(four_port.delay(1, 'ns', port='p2'),
+                         four_port.delay(1, 'ns', port=2))
+        with self.assertRaises(KeyError):
+            four_port.delay(1, 'ns', port='nope')
+
+        # whichever way delay() orders the ports of a two-port, the names have
+        # to describe the same ports z0 does
+        two_port = nport(2)
+        for port in range(2):
+            delayed = two_port.delay(90, 'deg', port=port)
+            self.assertEqual([dict(zip(two_port.z0[0].real, two_port.port_names))[z]
+                              for z in delayed.z0[0].real],
+                             delayed.port_names)
+
+        # a network without names stays without names
+        unnamed = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
+        self.assertIsNone(unnamed.delay(1, 'ns').port_names)
+        # d == 0 is a no-op which returns the network itself
+        self.assertIs(two_port.delay(0, 'ns'), two_port)
+
     def test_duplicate_port_names(self):
         """Duplicated port names are allowed, but can't be used to address a port.
 
