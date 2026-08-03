@@ -414,6 +414,10 @@ class Coaxial(DistributedCircuit, Media):
             # by exp(z). Both scalings cancel in the ratios below, which keeps a conductor
             # many skin depths deep from over- and underflowing.
             g = np.sqrt(1j*w*mu*sigma)  # propagation constant inside the metal
+            # scipy stops evaluating the Bessel functions a little above |z| = 1e9, long
+            # after the ratios below have settled to 1, so capping the argument there
+            # leaves them untouched and keeps an unphysically large conductivity finite.
+            g = g*np.minimum(1., 1e8/np.abs(g*(r if t is None or thick else r + t)))
             if t is None:
                 # eq. (65) of Schelkunoff, solid rod
                 Z = Zhf*scipy.special.ive(0, g*r)/scipy.special.ive(1, g*r)
