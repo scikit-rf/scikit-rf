@@ -109,7 +109,10 @@ Transmission Line Physics
 
         skin_depth
         surface_resistivity
+        surface_impedance
 """
+
+import warnings
 
 import numpy as np
 from numpy import array, exp, pi, real, sqrt
@@ -154,6 +157,7 @@ def skin_depth(f: NumberLike, rho: float, mu_r: float):
     See Also
     --------
     surface_resistivity
+    surface_impedance
 
     """
     return sqrt(rho/(pi*f*mu_r*_const.mu_0))
@@ -196,8 +200,318 @@ def surface_resistivity(f: NumberLike, rho: float, mu_r: float):
     See Also
     --------
     skin_depth
+    surface_impedance
     """
     return rho/skin_depth(rho=rho, f=f, mu_r=mu_r)
+
+
+def surface_impedance(f: NumberLike, material_properties: list[dict] | dict,
+                      rms_roughness: NumberLike, boundary_loc: NumberLike = 0,
+                      distribution='norm', rtol: float = 1e-6):
+    r"""
+    Surface impedance of a rough conductor boundary.
+
+    The rough boundary between two materials -- and, more generally, each
+    boundary of a stack of coated conductors -- is described by the cumulative
+    distribution function (CDF) of its surface height, which grades the
+    material properties across the transition [#tegowski]_ [#gold]_:
+
+    .. math::
+
+        \mu(x) = \mu_1 + \sum_k \left( \mu_{k+1} - \mu_k \right) \mathrm{CDF}_k(x)
+
+    and likewise for :math:`\epsilon(x)`, with :math:`x` the depth into the
+    stack. The graded profile is discretized into short transmission line
+    segments with propagation constant :math:`\gamma_i = j\omega\sqrt{\mu_i \epsilon_i}`
+    and intrinsic impedance :math:`\eta_i = \sqrt{\mu_i / \epsilon_i}`, and the
+    input impedance is transformed from the deepest material up to the surface:
+
+    .. math::
+
+        Z_i = \eta_i \frac{Z_{i+1} + \eta_i \tanh(\gamma_i \Delta x_i)}
+                          {\eta_i + Z_{i+1} \tanh(\gamma_i \Delta x_i)}
+
+    starting at the intrinsic impedance of the deepest material. The result is
+    the surface impedance seen by a wave impinging on the stack: its real part
+    is the effective surface resistance and its imaginary part the internal
+    reactance.
+
+    Parameters
+    ----------
+    f : number or array-like
+        frequency, in Hz. Must be non-zero.
+    material_properties : list of dict or dict
+        Material stack, ordered from the outside medium the wave impinges from
+        (vacuum, dielectric) down to the deepest conductor. Each dict takes
+        any of the keys ``'sigma'`` (conductivity in S/m), ``'ep_r'``
+        (relative permittivity) and ``'mu_r'`` (relative permeability), with
+        defaults 0, 1 and 1; values are scalars or arrays matching ``f``.
+        Describe a conductor by ``'sigma'`` (its ``'ep_r'``, if given, must be
+        real-valued) and a lossy dielectric by a complex ``'ep_r'``. Passing a
+        single dict is a shorthand for that material below vacuum, i.e.
+        ``[{}, {...}]``. Consecutive materials are separated by one rough
+        boundary each.
+    rms_roughness : number or array-like
+        rms roughness (Rq) of each boundary, in meter. One value per boundary;
+        a scalar applies to all. Use 0 for an ideally smooth (step) boundary.
+    boundary_loc : number or array-like, optional
+        Mean depth of each boundary, in meter, in increasing order. The
+        spacing of consecutive boundaries is the coating thickness.
+        Default is 0.
+    distribution : str, frozen scipy.stats distribution, callable, or list thereof, optional
+        Height distribution of each boundary: the name of a scipy.stats
+        continuous distribution without shape parameters (``'norm'``
+        (default), ``'rayleigh'``, ``'uniform'``, ...), a frozen distribution
+        for those with shape parameters (e.g. ``scipy.stats.gamma(2)``), or a
+        function ``distribution(x, rms_roughness, boundary_loc)`` returning
+        the CDF at depths ``x``. Named and frozen distributions are shifted
+        and scaled to the given mean and standard deviation.
+    rtol : float, optional
+        Relative tolerance to which the discretization is refined. Default is 1e-6.
+
+    Returns
+    -------
+    Zs : complex number or array-like
+        surface impedance, in ohm (per square), at each frequency.
+
+    Notes
+    -----
+    The material variation inside each segment is handled by a 4th-order
+    Magnus scheme (Eqs. (252)-(254) in [#blanes]_), and the segment count over the
+    rough transitions is doubled -- combining the last refinement levels by
+    Richardson extrapolation -- until ``Zs`` changes by less than ``rtol``; a
+    ``RuntimeWarning`` is issued if the refinement does not converge. ``Zs``
+    is referenced 5 rms outside the outermost boundary, where the material is
+    still the unperturbed outside medium.
+
+    With ``rms_roughness=0`` a single smooth conductor recovers the classic
+    :math:`(1 + j)\sqrt{\pi f \mu \rho}` known from :func:`surface_resistivity`.
+
+    See Also
+    --------
+    skin_depth
+    surface_resistivity
+
+    References
+    ----------
+    .. [#tegowski] B. Tegowski, T. Jaschke, A. Sieganschin and A. F. Jacob, "A Transmission
+       Line Approach for Rough Conductor Surface Impedance Analysis," IEEE Trans.
+       Microw. Theory Techn., vol. 71, no. 2, pp. 471-479, 2023.
+       https://doi.org/10.1109/TMTT.2022.3206440
+    .. [#gold] G. Gold and K. Helmreich, "Modeling of transmission lines with multiple
+       coated conductors," 46th European Microwave Conference (EuMC), 2016.
+       https://doi.org/10.1109/EuMC.2016.7824423
+    .. [#blanes] S. Blanes, F. Casas, J. A. Oteo and J. Ros, "The Magnus expansion and
+       some of its applications," Physics Reports, vol. 470, no. 5-6, pp. 151-238,
+       2009. https://doi.org/10.1016/j.physrep.2008.11.001
+
+    Examples
+    --------
+    Copper with 1 um rms roughness at 10 GHz, against the smooth value
+    :math:`(1 + j) R_s`:
+
+    >>> import skrf as rf
+    >>> Zs = rf.tlineFunctions.surface_impedance(10e9, {'sigma': 58e6}, rms_roughness=1e-6)
+    >>> Rs = rf.tlineFunctions.surface_resistivity(10e9, rho=1/58e6, mu_r=1)
+    >>> print(f"rough: {Zs:.4f} ohm, smooth: {(1 + 1j)*Rs:.4f} ohm")
+    rough: 0.0630+0.3356j ohm, smooth: 0.0261+0.0261j ohm
+
+    The top side of a microstrip trace with an ENIG surface finish; a nearly
+    flat (5 nm rms) stack of 0.05 um gold and 4 um nickel on copper:
+
+    >>> mats = [{}, {'sigma': 41.1e6}, {'sigma': 14.5e6, 'mu_r': 20}, {'sigma': 58e6}]
+    >>> Zs = rf.tlineFunctions.surface_impedance(10e9, mats, rms_roughness=5e-9,
+    ...                                          boundary_loc=[0, 0.05e-6, 4.05e-6])
+    >>> print(f"{Zs:.4f} ohm")
+    0.1895+0.1012j ohm
+
+    The bottom side of the trace; copper against the substrate
+    (:math:`\epsilon_r = 3.2`), rough at the copper-substrate boundary, from
+    1 to 100 GHz:
+
+    >>> import numpy as np
+    >>> f = np.logspace(9, 11, 201)
+    >>> Zs = rf.tlineFunctions.surface_impedance(f, [{'ep_r': 3.2}, {'sigma': 58e6}],
+    ...                                          rms_roughness=0.5e-6)
+    >>> print(f"{Zs[-1]:.4f} ohm")  # at 100 GHz
+    0.2743+1.5154j ohm
+    """
+    f = np.asarray(f, dtype=float)
+    is_scalar = f.ndim == 0
+    f = np.atleast_1d(f)
+    if np.any(f <= 0):
+        raise ValueError("Frequency must be non-zero and positive.")
+    omega = 2*np.pi*f
+
+    if isinstance(material_properties, dict):
+        material_properties = [{}, material_properties]  # a single material below vacuum
+    if len(material_properties) < 2:
+        raise ValueError("material_properties needs at least two materials (outside medium and conductor).")
+    mu_r, ep_r = _parse_material_properties(material_properties, omega)  # (M, nf) each
+
+    # one value per boundary between consecutive materials; a single value applies to all
+    K = len(material_properties) - 1
+    rms_roughness = np.broadcast_to(np.asarray(rms_roughness, dtype=float), K)
+    boundary_loc = np.broadcast_to(np.asarray(boundary_loc, dtype=float), K)
+    distribution = list(np.broadcast_to(np.asarray(distribution, dtype=object), K))
+    if np.any(np.diff(boundary_loc) < 0):
+        raise ValueError("boundary_loc must be sorted in increasing depth order (matching material_properties).")
+
+    # computation span: reach 5 rms past every boundary (the -5 Rq convention of Tegowski
+    # et al.), not just the outermost one -- a deeper boundary that is rougher reaches
+    # further out. Zs is referenced to x_start, where the material is still the outside medium.
+    # Zero roughness is floored to 1e-14 m, making that boundary a practically ideal step.
+    reach = 5*np.maximum(rms_roughness, 1e-14)
+    x_start = np.min(boundary_loc - reach)
+    x_end = np.max(boundary_loc + reach)
+
+    # ------- surface impedance, doubling the segments until it converges -------
+    # Doubling is the standard geometric refinement: total work stays about twice the
+    # finest level, and the fixed 2:1 ratio gives the clean Richardson factor
+    # 1/(2**4 - 1) below.
+    eta_bulk = np.sqrt(_const.mu_0*mu_r[-1]/(_const.epsilon_0*ep_r[-1]))
+    Zs_levels = []  # surface impedance at each refinement level
+    converged = False
+    for n_segments in (64*2**k for k in range(9)):  # 64, 128, ..., 16384
+        edges = _segment_edges(rms_roughness, boundary_loc, x_start, x_end, n_segments)
+        dx = np.diff(edges)
+        n = dx.size  # actual segment count: n_segments in the transitions, plus the bulk gaps
+        x = edges[:-1] + 0.5*dx  # segment midpoints
+
+        # material at the two Gauss-Legendre points of each segment, x -+ dx/(2*sqrt(3))
+        x_gauss = np.concatenate([x - np.sqrt(3)/6*dx, x + np.sqrt(3)/6*dx])
+        cdf = np.array([_roughness_cdf(x_gauss, r, loc, dist)
+                        for r, loc, dist in zip(rms_roughness, boundary_loc, distribution)])
+        mu_gauss = _const.mu_0*(mu_r[0][:, None] + np.einsum('kf,kn->fn', np.diff(mu_r, axis=0), cdf))
+        ep_gauss = _const.epsilon_0*(ep_r[0][:, None] + np.einsum('kf,kn->fn', np.diff(ep_r, axis=0), cdf))
+        mu_1, mu_2 = mu_gauss[:, :n], mu_gauss[:, n:]
+        ep_1, ep_2 = ep_gauss[:, :n], ep_gauss[:, n:]
+
+        # Segment quantities of the 4th-order Magnus method (Eqs. (252)-(254) of Blanes et
+        # al., see docstring references): the electrical length s (= gamma*dx if uniform),
+        # the products eta*tanh(gamma*dx) and tanh(gamma*dx)/eta, and the correction d for
+        # the material variation inside the segment (d = 0 when mu_1 = mu_2 and ep_1 = ep_2).
+        mu_sum, ep_sum = mu_1 + mu_2, ep_1 + ep_2
+        d = -np.sqrt(3)/12*dx**2*omega[:, None]**2*(ep_1*mu_2 - mu_1*ep_2)
+        s = np.sqrt(d**2 - 0.25*dx**2*omega[:, None]**2*mu_sum*ep_sum)
+        tanh_over_s = np.tanh(s)/s  # even in s, so the branch of the sqrt above does not matter
+        eta_tanh = tanh_over_s*0.5j*dx*omega[:, None]*mu_sum       # eta*tanh(gamma*dx)
+        tanh_over_eta = tanh_over_s*0.5j*dx*omega[:, None]*ep_sum  # tanh(gamma*dx)/eta
+        d = tanh_over_s*d
+
+        # transform from the deepest material up to the surface: the impedance recursion
+        # of Tegowski et al. (Eq. (9)) divided by eta, with the correction d
+        Zs = eta_bulk.copy()
+        for i in range(n - 1, -1, -1):
+            Zs = ((1 - d[:, i])*Zs + eta_tanh[:, i])/((1 + d[:, i]) + tanh_over_eta[:, i]*Zs)
+        Zs_levels.append(Zs)
+
+        # Richardson extrapolation: the 4th-order error drops by 2**4 when the segment
+        # count doubles, so 1/(2**4 - 1) of the change cancels it. Stop once the
+        # extrapolated Zs settles within rtol.
+        if len(Zs_levels) >= 3:
+            Zs = Zs_levels[-1] + (Zs_levels[-1] - Zs_levels[-2])/(2**4 - 1)
+            Zs_before = Zs_levels[-2] + (Zs_levels[-2] - Zs_levels[-3])/(2**4 - 1)
+            change = np.max(np.abs(Zs - Zs_before)/np.abs(Zs))
+            if change < rtol:
+                converged = True
+                break
+    if not converged:
+        warnings.warn(f"surface_impedance did not converge to rtol={rtol:.1e} "
+                      f"(last change {change:.1e}); returning the last refinement.",
+                      RuntimeWarning, stacklevel=2)
+    return Zs[0] if is_scalar else Zs
+
+
+def _roughness_cdf(x: NumberLike, rms_roughness: float, boundary_loc: float, distribution):
+    """
+    Cumulative height distribution of a rough boundary, evaluated at depths x.
+
+    ``distribution`` is the name of a scipy.stats continuous distribution
+    without shape parameters ('norm', 'rayleigh', 'uniform', ...), a frozen
+    one for those with shape parameters (e.g. ``scipy.stats.gamma(2)``), or a
+    function ``distribution(x, rms_roughness, boundary_loc)`` returning the
+    CDF. Named and frozen distributions are shifted and scaled to mean
+    ``boundary_loc`` and standard deviation ``rms_roughness``.
+    """
+    import scipy.stats  # heavy import: deferred so that `import skrf` stays lean
+
+    x = np.asarray(x, dtype=float)
+    rms_roughness = max(float(rms_roughness), 1e-14)  # zero roughness --> practically a step transition
+
+    if isinstance(distribution, str):
+        dist = getattr(scipy.stats, distribution, None)
+        if not isinstance(dist, scipy.stats.rv_continuous):
+            raise ValueError(f"Unknown distribution '{distribution}'. Use the name of a "
+                             "scipy.stats continuous distribution, e.g. 'norm', 'rayleigh', 'uniform'.")
+        try:
+            m, v = dist.stats(moments='mv')
+        except TypeError as e:
+            raise ValueError(f"Distribution '{distribution}' requires shape parameters. Pass a frozen "
+                             f"distribution instead, e.g. scipy.stats.{distribution}(...).") from e
+        scale = rms_roughness/np.sqrt(float(v))
+        return dist.cdf(x, loc=boundary_loc - float(m)*scale, scale=scale)
+
+    if hasattr(distribution, 'cdf'):  # frozen scipy.stats distribution
+        m, v = distribution.stats(moments='mv')
+        s = np.sqrt(float(v))
+        return distribution.cdf((x - boundary_loc)*(s/rms_roughness) + float(m))
+
+    if callable(distribution):  # user-supplied CDF function
+        return np.asarray(distribution(x, rms_roughness, boundary_loc))
+
+    raise ValueError(f"Invalid distribution: {distribution!r}")
+
+
+def _parse_material_properties(material_properties: list, omega: np.ndarray):
+    """
+    Turn the list of material dicts into (M, nf) arrays of complex mu_r and ep_r.
+
+    A scalar value applies to all frequencies; an array must match the length
+    of the frequency vector. Conduction loss enters the relative permittivity
+    as -1j*sigma/(omega*epsilon_0).
+    """
+    ones = np.ones_like(omega)
+    mu_r_list, ep_r_list = [], []
+    for k, mat in enumerate(material_properties):
+        unknown = set(mat) - {'sigma', 'mu_r', 'ep_r'}
+        if unknown:  # catch typos, which would otherwise silently fall back to the defaults
+            raise ValueError(f"material_properties[{k}] has unknown key(s) {sorted(unknown)}; "
+                             "allowed keys are 'sigma', 'mu_r' and 'ep_r'.")
+        sigma = np.asarray(mat.get('sigma', 0), dtype=float)*ones
+        ep_r = np.asarray(mat.get('ep_r', 1), dtype=complex)*ones
+        # a conductor's loss is described by sigma; allowing a complex ep_r next to it
+        # would count the loss twice
+        if np.any(sigma != 0) and np.any(ep_r.imag != 0):
+            raise ValueError(f"material_properties[{k}]: a conductor (nonzero 'sigma') must have a "
+                             "real-valued 'ep_r'; for a lossy dielectric give a complex 'ep_r' and no 'sigma'.")
+        mu_r_list.append(np.asarray(mat.get('mu_r', 1), dtype=complex)*ones)
+        ep_r_list.append(ep_r - 1j*sigma/(omega*_const.epsilon_0))
+    return np.array(mu_r_list), np.array(ep_r_list)
+
+
+def _segment_edges(rms_roughness: np.ndarray, boundary_loc: np.ndarray,
+                   x_start: float, x_end: float, n_segments: int):
+    """
+    Segment edges for the impedance recursion: about n_segments spread uniformly
+    over the rough transitions [boundary_loc -+ 5*rms_roughness], merged where
+    they overlap. Each uniform bulk gap in between gets a single segment, which
+    is exact for a uniform line.
+    """
+    intervals = sorted([b - 5*max(r, 1e-14), b + 5*max(r, 1e-14)]
+                       for r, b in zip(rms_roughness, boundary_loc))
+    merged = [intervals[0]]
+    for a, b in intervals[1:]:
+        if a <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], b)
+        else:
+            merged.append([a, b])
+    # spread n_segments uniformly over the total transition width; each bulk gap gets one segment
+    dx = sum(b - a for a, b in merged)/n_segments
+    edges = {x_start, x_end}
+    for a, b in merged:
+        edges.update(np.linspace(a, b, max(1, round((b - a)/dx)) + 1))
+    return np.array(sorted(edges))
 
 
 def distributed_circuit_2_propagation_impedance(distributed_admittance: NumberLike,

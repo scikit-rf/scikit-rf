@@ -520,6 +520,10 @@ class Circuit:
         """
         Return a 1-port Network to be used as a Circuit port.
 
+        The network topology is::
+
+            (Port)
+
         Parameters
         ----------
         frequency : :class:`~skrf.frequency.Frequency`
@@ -555,6 +559,10 @@ class Circuit:
     def SeriesImpedance(cls, frequency: Frequency, Z: NumberLike, name: str, z0: float = 50) -> Network:
         """
         Return a 2-port network of a series impedance.
+
+        The network topology is::
+
+            (Port 1)-----[Z]-----(Port 2)
 
         Passing the frequency and name is mandatory.
 
@@ -599,6 +607,14 @@ class Circuit:
         """
         Return a 2-port network of a shunt admittance.
 
+        The network topology is::
+
+            (Port 1)-----(Port 2)
+                      |
+                     [Y]
+                      |
+                     Gnd
+
         Passing the frequency and name is mandatory.
 
         Parameters
@@ -642,6 +658,10 @@ class Circuit:
         """
         Return a 1-port network of a grounded link.
 
+        The network topology is::
+
+            (Port)-----Gnd
+
         Passing the frequency and a name is mandatory.
 
         The ground link is implemented by media.short object.
@@ -681,6 +701,10 @@ class Circuit:
     def Open(cls, frequency: Frequency, name: str, z0: float = 50) -> Network:
         """
         Return a 1-port network of an open link.
+
+        The network topology is::
+
+            (Port)-----Open
 
         Passing the frequency and name is mandatory.
 
@@ -1252,6 +1276,27 @@ class Circuit:
                 port_indexes.append(idx_cnx)
         return port_indexes
 
+    @property
+    def port_names(self) -> list[str]:
+        """
+        Return the names of the "external" ports.
+
+        The names are given in the same order as the ports of the Network
+        returned by :func:`network`, ie. in the order the port Networks appear
+        in the connection list.
+
+        Returns
+        -------
+        port_names : list of str
+
+        See Also
+        --------
+        port_indexes
+        network
+        """
+        return [ntw.name for (ntw, _) in chain.from_iterable(self.connections)
+                if Circuit._is_port(ntw)]
+
     def _cnx_z0(self, cnx_k: list[tuple]) -> np.ndarray:
         """
         Return the characteristic impedances of a specific connections.
@@ -1365,9 +1410,16 @@ class Circuit:
         -------
         ntw : :class:`~skrf.network.Network`
             Network associated to external ports
+
+        See Also
+        --------
+        port_names
         """
-        return Network(frequency = self.frequency, z0 = self.port_z0,
+        ntw = Network(frequency = self.frequency, z0 = self.port_z0,
                       s = self.s_external, name = self.name)
+        # the external ports are named, keep track of which port is where
+        ntw.port_names = self.port_names
+        return ntw
 
     def s_active(self, a: NumberLike) -> np.ndarray:
         r"""

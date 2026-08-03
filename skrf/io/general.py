@@ -873,9 +873,12 @@ def from_json_string(obj_string):
     ntwk.variables = obj['variables']
     ntwk.name = obj['name']
     ntwk.comments = obj['comments']
-    ntwk.port_names = obj['port_names']
     ntwk.z0 = np.array(obj['_z0'])[..., 0] + np.array(obj['_z0'])[..., 1] * 1j  # recreate complex numbers
     ntwk.s = np.array(obj['_s'])[..., 0] + np.array(obj['_s'])[..., 1] * 1j
+    # after the s-parameters, the number of ports has to be known to be able to
+    # check that there is a name for every port. 'port_names' is the key used
+    # before port_names became a property, accept it as well.
+    ntwk.port_names = obj.get('_port_names', obj.get('port_names'))
     ntwk.frequency = Frequency.from_f(np.array(obj['_frequency']['flist']),
                                          unit=obj['_frequency']['funit'])
     return ntwk
