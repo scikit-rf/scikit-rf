@@ -388,7 +388,8 @@ class CircularWaveguide(Media):
         References
         ----------
 
-        .. [#] Eq. (9-34a) and Eq. (9-34b), Chapter 9.2.3, Balanis' Advanced Engineering Electromagnetics, Balanis Constantine A., 2024
+        .. [#] Eq. (9-34a) and Eq. (9-34b), Chapter 9.2.3,
+            Advanced Engineering Electromagnetics, Balanis Constantine A., 2024
 
         See Also
         --------
