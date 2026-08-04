@@ -992,6 +992,13 @@ class Network:
         if m:
             t0 = int(m.group(1)) - 1
             t1 = int(m.group(2)) - 1
+            # the indices are one-based. 0 is not a valid port, and would
+            # otherwise silently wrap around to the last one
+            if not (0 <= t0 < self.nports and 0 <= t1 < self.nports):
+                raise AttributeError(
+                    f"Object does not have attribute {name}. "
+                    f"Indices are one-based and this network has "
+                    f"{self.nports} port(s)")
             ntwk = self.copy()
             # setting s drops the port names, the result is a one-port
             ntwk.s = self.s[:, t0, t1]
@@ -4124,12 +4131,26 @@ class Network:
         ntwk : :class:`Network` object
             Resulting renumbered Network
 
+        Raises
+        ------
+        ValueError
+            If an index is out of range. Being one-based, 0 is not a valid
+            index.
+        KeyError
+            If a port name is unknown.
+
         """
         # the s{m}_{n} attributes are one-based, port indices are not
         if isinstance(m, str):
             m = _port_index(self, m) + 1
         if isinstance(n, str):
             n = _port_index(self, n) + 1
+
+        for index in (m, n):
+            if not 1 <= index <= self.nports:
+                raise ValueError(
+                    f"Port index {index} is out of range. The indices are "
+                    f"one-based and this network has {self.nports} ports")
 
         forward = getattr(self, f"s{m}_{n}")
         reverse = getattr(self, f"s{n}_{m}")
