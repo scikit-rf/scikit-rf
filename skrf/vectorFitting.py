@@ -2667,23 +2667,25 @@ class VectorFitting:
 
 
 class VectorFittingParametric:
-    def __init__(self, networkset: NetworkSet = None, n_poles_global: int = -1):
+    def __init__(self, networkset: NetworkSet = None, n_poles: int = -1):
         self.networkset = networkset
-        self.n_poles_global = n_poles_global
+        self.n_poles = n_poles
 
-        if self.n_poles_global == -1:
+        if self.n_poles == -1:
             # automatic model order estimation based on model order of the first network in the set
             vf = VectorFitting(self.networkset[0])
             vf.auto_fit()
-            self.n_poles_global = len(vf.poles)
-            print(f'automatic model order estimation; using {self.n_poles_global = }.')
+            self.n_poles = len(vf.poles)
+            print(f'automatic model order estimation; using {self.n_poles = }.')
 
         # init global poles
         freqs_global = self.networkset[0].f
-        polefreqs_global = np.linspace(freqs_global[0], freqs_global[-1], self.n_poles_global)
+        polefreqs_global = np.linspace(freqs_global[0], freqs_global[-1], self.n_poles)
         if polefreqs_global[0] == 0.0:
             polefreqs_global[0] = 0.1 * polefreqs_global[1]
-        self.poles_global = (-0.01 + 1j) * 2 * np.pi * polefreqs_global
+        self.poles_global = np.empty(2 * self.n_poles, dtype=complex)
+        self.poles_global[0::2] = (-0.01 + 1j) * 2 * np.pi * polefreqs_global
+        self.poles_global[1::2] = (-0.01 - 1j) * 2 * np.pi * polefreqs_global
 
         #print('The following parameters are available:')
         #print(f'{self.networkset.dims = }')
@@ -2712,37 +2714,65 @@ class VectorFittingParametric:
             vf = VectorFitting(nw)
             vf.auto_fit()
 
-            poles_global = VectorFittingParametric.get_conjugate_pairs(self.poles_global)
-            poles_local = VectorFittingParametric.get_conjugate_pairs(vf.poles)
-            residues_local = VectorFittingParametric.get_conjugate_pairs(vf.residues)
+            n_responses = nw.nports ** 2
+            n_poles_local = len(vf.poles)
+            n_poles_global = len(self.poles_global)
 
-            n_poles_local = len(poles_local)
-            n_poles_global = len(poles_global)
             print(f'{n_poles_global = }')
             print(f'{n_poles_local = }')
+
+            idx_poles_real = np.nonzero(np.imag(vf.poles) == 0)[0]
+            idx_poles_cmplx = np.nonzero(np.imag(vf.poles) > 0)[0]
+
+            # find and save indices of real and complex poles to be assembled in the respective row of the coefficient matrix
+            # this is due to the missing complex-conjugate parts in vf.poles
+            n_poles_local = 0
+            idx_row_real = []
+            idx_row_complex_pos = []
+            idx_row_complex_neg = []
+            for pole in vf.poles:
+                if pole.imag == 0:
+                    idx_row_real.append(n_poles_local)
+                    n_poles_local += 1
+                else:
+                    idx_row_complex_pos.append(n_poles_local)
+                    idx_row_complex_neg.append(n_poles_local + 1)
+                    n_poles_local += 2
 
             # preparing linear system (a * r = b)
             # a[n_poles_local, n_poles_global]
             # b[n_poles_local, n_responses]
             # r[n_poles_global, n_responses]
             a = np.empty((n_poles_local, n_poles_global), dtype=complex)
+            b = np.empty((n_poles_local, n_responses), dtype=complex)
 
+            # assemble a
             for i_col in range(n_poles_global):
                 mask = np.ones(n_poles_global, dtype=bool)
                 mask[i_col] = False
-                a[:, i_col] = np.prod(poles_local[:, None] - poles_global, axis=1, where=mask)
+                a[idx_row_real, i_col] = np.prod(vf.poles[idx_poles_real, None] - self.poles_global, axis=1, where=mask)
+                a[idx_row_complex_pos, i_col] = np.prod(vf.poles[idx_poles_cmplx, None] - self.poles_global, axis=1, where=mask)
+                a[idx_row_complex_neg, i_col] = np.prod(np.conj(vf.poles[idx_poles_cmplx, None]) - self.poles_global, axis=1, where=mask)
 
+            # define r0
             r0 = np.ones(len(vf.constant_coeff))
             #r0 = 1 / vf.constant_coeff
-            b = -1 * r0 * np.prod(poles_local[:, None] - poles_global, axis=1, keepdims=True)
-            print(f'{np.shape(b) = }')
-            r, residuals, rank, singulars = np.linalg.lstsq(a, b)
-            q0 = r0 * vf.constant_coeff     # q0 == vf.constant_coeff if r0 = 1
-            print(f'{q0 = }')
 
-            print(f'{np.shape(r) = }')
-            x = np.sum(vf.residues / (poles_global[:, None, None] - poles_local), axis=2)
-            q = r * (vf.constant_coeff + np.sum(vf.residues / (poles_global[:, None, None] - poles_local), axis=2))
+            # assemble b
+            b[idx_row_real] = -1 * r0 * np.prod(vf.poles[idx_poles_real, None] - self.poles_global, axis=1, keepdims=True)
+            b[idx_row_complex_pos] = -1 * r0 * np.prod(vf.poles[idx_poles_cmplx, None] - self.poles_global, axis=1, keepdims=True)
+            b[idx_row_complex_neg] = -1 * r0 * np.prod(np.conj(vf.poles[idx_poles_cmplx, None]) - self.poles_global, axis=1, keepdims=True)
+
+            # solve for r
+            r, residuals, rank, singulars = np.linalg.lstsq(a, b)
+
+            # calculate q from r
+            q0 = r0 * vf.constant_coeff  # q0 == vf.constant_coeff if r0 = 1
+            q = r * (vf.constant_coeff
+                     + np.sum(vf.residues[:, idx_poles_real] / (self.poles_global[:, None, None] - vf.poles[idx_poles_real]), axis=2)
+                     + np.sum(vf.residues[:, idx_poles_cmplx] / (self.poles_global[:, None, None] - vf.poles[idx_poles_cmplx]), axis=2)
+                     + np.sum(np.conj(vf.residues[:, idx_poles_cmplx]) / (self.poles_global[:, None, None] - np.conj(vf.poles[idx_poles_cmplx])), axis=2)
+                     )
 
             s = 1j * 2 * np.pi * nw.f
             # shapes:
@@ -2750,10 +2780,10 @@ class VectorFittingParametric:
             # dim 1: n_poles_global (to be reduced by np.sum())
             # dim 2: n_responses
             # vf_global[n_freqs, n_responses]
-            vf_global = ((q0 + np.sum(q[None, :, :] / (s[:, None, None] - poles_global[None, :, None]), axis=1))
-                         / (r0 + np.sum(r[None, :, :] / (s[:, None, None] - poles_global[None, :, None]), axis=1)))
+            vf_global = ((q0 + np.sum(q[None, :, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1))
+                         / (r0 + np.sum(r[None, :, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1)))
 
-            print(f'{np.shape(vf_global) = }')
+            #print(f'{np.shape(vf_global) = }')
 
             import matplotlib.pyplot as plt
 
@@ -2762,19 +2792,17 @@ class VectorFittingParametric:
             if nw.nports > 1:
                 for i in range(nw.nports):
                     for j in range(nw.nports):
-                        ax[i][j].plot(nw.f, np.abs(nw.s[:, i, j]))
-                        ax[i][j].plot(nw.f, np.abs(vf.get_model_response(i, j, nw.f)))
-                        ax[i][j].plot(nw.f, np.abs(vf_global[:, i * nw.nports + j]))
+                        ax[i][j].plot(nw.f, np.abs(nw.s[:, i, j]), label='Samples')
+                        ax[i][j].plot(nw.f, np.abs(vf.get_model_response(i, j, nw.f)), label='VF (auto_fit)')
+                        ax[i][j].plot(nw.f, np.abs(vf_global[:, i * nw.nports + j]), label='VF (parametric)')
+                        ax[i][j].legend()
             else:
-                ax.plot(nw.f, np.abs(nw.s[:, 0, 0]))
-                ax.plot(nw.f, np.abs(vf.get_model_response(0, 0, nw.f)))
-                ax.plot(nw.f, np.abs(vf_global[:, 0]))
+                ax.plot(nw.f, np.abs(nw.s[:, 0, 0]), label='Samples')
+                ax.plot(nw.f, np.abs(vf.get_model_response(0, 0, nw.f)), label='VF (auto_fit)')
+                ax.plot(nw.f, np.abs(vf_global[:, 0]), label='VF (parametric)')
+                ax.legend()
             fig.tight_layout()
             plt.show()
-
-            print()
-            quit()
-
 
     @staticmethod
     def generate_networkset(path: str, filename_prefix: str, param_names: list) -> NetworkSet:
@@ -2798,31 +2826,3 @@ class VectorFittingParametric:
                 nw.params = params
                 networks.append(nw)
         return NetworkSet(networks)
-
-    @staticmethod
-    def get_conjugate_pairs(a: np.ndarray) -> np.ndarray:
-
-        idx_real = np.nonzero(a.imag == 0.0)
-        idx_cmplx = np.nonzero(a.imag > 0.0)
-        n_real = np.shape(idx_real)[-1]
-        n_cmplx = np.shape(idx_cmplx)[-1]
-
-        print(f'{np.shape(idx_real) = }')
-        print(f'{np.shape(idx_cmplx) = }')
-
-        print(f'{n_real = }')
-        print(f'{n_cmplx = }')
-
-        print(f'{np.shape(a) = }')
-
-        out_shape = np.shape(a)
-        out_shape[0][-1] = n_real + 2 * n_cmplx
-
-        print(f'{out_shape = }')
-
-        pole_pairs[:, 0:n_real] = poles[idx_real]
-        pole_pairs[:, n_real:n_real+n_cmplx] = poles[idx_cmplx]
-        pole_pairs[:, n_real+n_cmplx:] = np.conj(poles[idx_cmplx])
-
-        return pole_pairs
-
