@@ -28,6 +28,7 @@ from skrf.network import (
     connect,
     fix_z0_shape,
     h2s,
+    innerconnect,
     n_twoports_2_nport,
     one_port_2_two_port,
     parallelconnect,
@@ -936,6 +937,211 @@ class NetworkTestCase(unittest.TestCase):
 
         unnamed = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
         self.assertIsNone(unnamed.inv.port_names)
+
+    def test_delay_port_names(self):
+        """delay() extends a port, it stays the same port and keeps its name.
+        """
+        freq = rf.Frequency(1, 3, 5, unit='GHz')
+
+        def nport(nports):
+            z0 = [10 * (i + 1) for i in range(nports)]
+            return rf.Network(frequency=freq, name='a', z0=z0,
+                              s=self.rng.random((5, nports, nports)),
+                              port_names=[f'p{i}' for i in range(nports)])
+
+        # delaying any port of a network leaves the ports as they were
+        four_port = nport(4)
+        for port in range(4):
+            delayed = four_port.delay(1, 'ns', port=port)
+            self.assertEqual(delayed.port_names, ['p0', 'p1', 'p2', 'p3'])
+            np.testing.assert_allclose(delayed.z0, four_port.z0)
+
+        # a name may be used instead of the index, and picks the same port
+        self.assertEqual(four_port.delay(1, 'ns', port='p2'),
+                         four_port.delay(1, 'ns', port=2))
+        with self.assertRaises(KeyError):
+            four_port.delay(1, 'ns', port='nope')
+
+        # whichever way delay() orders the ports of a two-port, the names have
+        # to describe the same ports z0 does
+        two_port = nport(2)
+        for port in range(2):
+            delayed = two_port.delay(90, 'deg', port=port)
+            self.assertEqual([dict(zip(two_port.z0[0].real, two_port.port_names))[z]
+                              for z in delayed.z0[0].real],
+                             delayed.port_names)
+
+        # a network without names stays without names
+        unnamed = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
+        self.assertIsNone(unnamed.delay(1, 'ns').port_names)
+        # d == 0 is a no-op which returns the network itself
+        self.assertIs(two_port.delay(0, 'ns'), two_port)
+
+    def test_nonreciprocity_by_port_name(self):
+        """nonreciprocity picks a pair of ports, which can be given by name."""
+        freq = rf.Frequency(1, 3, 5, unit='GHz')
+        three_port = rf.Network(frequency=freq, name='a', z0=[10, 20, 30],
+                                s=self.rng.random((5, 3, 3)),
+                                port_names=['in', 'out', 'iso'])
+
+        # the s{m}_{n} attributes are one-based, a name means the same port
+        self.assertEqual(three_port.nonreciprocity('in', 'out'),
+                         three_port.nonreciprocity(1, 2))
+        self.assertEqual(three_port.nonreciprocity('out', 'iso'),
+                         three_port.nonreciprocity(2, 3))
+        self.assertEqual(three_port.nonreciprocity('in', 'iso', normalize=True),
+                         three_port.nonreciprocity(1, 3, normalize=True))
+        # the result is a pair of ports, not any single one of them
+        self.assertIsNone(three_port.nonreciprocity('in', 'out').port_names)
+
+        with self.assertRaises(KeyError):
+            three_port.nonreciprocity('nope', 'out')
+        unnamed = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
+        with self.assertRaises(ValueError):
+            unnamed.nonreciprocity('a', 'b')
+
+    def test_duplicate_port_names(self):
+        """Duplicated port names are allowed, but can't be used to address a port.
+
+        Touchstone files may name several ports the same, and connect() creates
+        duplicates when it concatenates the names of two networks. Everything
+        which works on port indices must keep working, while looking a port up
+        by an ambiguous name raises instead of silently returning the first one.
+        """
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+        ntwk = rf.Network(frequency=freq, name='n', z0=[1, 2, 3],
+                          s=self.rng.random((1, 3, 3)))
+        ntwk.port_names = ['a', 'b', 'a']
+
+        # index based operations are unaffected
+        self.assertEqual(ntwk.subnetwork([2, 1]).port_names, ['a', 'b'])
+        self.assertEqual(ntwk.renumbered([0, 2], [2, 0]).port_names, ['a', 'b', 'a'])
+        np.testing.assert_allclose(ntwk[1, 3].s[:, 0, 0], ntwk.s[:, 0, 2])
+
+        # an unambiguous name still resolves
+        np.testing.assert_allclose(ntwk['b', 'b'].s[:, 0, 0], ntwk.s[:, 1, 1])
+
+        # an ambiguous one used to silently resolve to the first match
+        with self.assertRaises(ValueError):
+            ntwk['a', 'b']
+        with self.assertRaises(ValueError):
+            connect(ntwk, 'a', ntwk.copy(), 'b')
+        with self.assertRaises(ValueError):
+            ntwk.subnetwork(['a'])
+
+        # connect creates duplicates out of networks which have unique names
+        def two_port(name):
+            n = rf.Network(frequency=freq, name=name, z0=50,
+                           s=self.rng.random((1, 2, 2)))
+            n.port_names = ['in', 'out']
+            return n
+        self.assertEqual(connect(two_port('a'), 1, two_port('b'), 1).port_names,
+                         ['in', 'in'])
+
+    def test_connect_by_port_name(self):
+        """Ports can be given by name instead of by index."""
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+
+        def nport(nports, prefix):
+            ntwk = rf.Network(frequency=freq, name=prefix,
+                              z0=np.arange(start=1, stop=nports + 1),
+                              s=self.rng.random((1, nports, nports)))
+            ntwk.port_names = [f'{prefix}{i}' for i in range(nports)]
+            return ntwk
+
+        ntwk_a, ntwk_b = nport(4, 'a'), nport(3, 'b')
+
+        # a name is equivalent to the index of that port, for every port and
+        # not just the first one. Names and indices can be mixed.
+        for k in range(ntwk_a.nports):
+            for l in range(ntwk_b.nports):
+                by_index = connect(ntwk_a, k, ntwk_b, l)
+                for by_name in (connect(ntwk_a, f'a{k}', ntwk_b, f'b{l}'),
+                                connect(ntwk_a, f'a{k}', ntwk_b, l),
+                                connect(ntwk_a, k, ntwk_b, f'b{l}')):
+                    self.assertEqual(by_name, by_index)
+                    self.assertEqual(by_name.port_names, by_index.port_names)
+
+        # more than one port at a time, and innerconnect
+        self.assertEqual(connect(ntwk_a, 'a1', ntwk_b, 'b0', num=2),
+                         connect(ntwk_a, 1, ntwk_b, 0, num=2))
+        self.assertEqual(innerconnect(ntwk_a, 'a0', 'a3').port_names, ['a1', 'a2'])
+
+        with self.assertRaises(KeyError):  # unknown name
+            connect(ntwk_a, 'nope', ntwk_b, 0)
+        with self.assertRaises(ValueError):  # network without port names
+            connect(rf.Network(frequency=freq, s=self.rng.random((1, 2, 2))), 'x', ntwk_b, 0)
+        ambiguous = nport(3, 'c')
+        ambiguous.port_names = ['p', 'p', 'r']
+        with self.assertRaises(ValueError):  # the same name twice
+            connect(ambiguous, 'p', ntwk_b, 0)
+
+    def test_parallelconnect_by_port_name(self):
+        """parallelconnect takes port names too, and keeps the port names."""
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+
+        def nport(nports, prefix, named=True):
+            ntwk = rf.Network(frequency=freq, name=prefix, z0=50,
+                              s=self.rng.random((1, nports, nports)))
+            if named:
+                ntwk.port_names = [f'{prefix}{i}' for i in range(nports)]
+            return ntwk
+
+        ntwk_a, ntwk_b, ntwk_c = nport(2, 'a'), nport(2, 'b'), nport(4, 'c')
+
+        by_index = parallelconnect([ntwk_a, ntwk_b, ntwk_c], [1, 1, 0])
+        by_name = parallelconnect([ntwk_a, ntwk_b, ntwk_c], ['a1', 'b1', 'c0'])
+        self.assertEqual(by_name, by_index)
+        # the remaining ports keep their names, in the order of the inputs
+        self.assertEqual(by_index.port_names, ['a0', 'b0', 'c1', 'c2', 'c3'])
+        self.assertEqual(by_name.port_names, by_index.port_names)
+
+        # a sequence of ports of a single network, ie. an innerconnect
+        self.assertEqual(parallelconnect(ntwk_c, [['c1', 'c3']]).port_names, ['c0', 'c2'])
+
+        # names are created for networks which don't have any
+        self.assertEqual(parallelconnect([ntwk_a, nport(2, 'b', named=False)],
+                                         ['a1', 0]).port_names, ['a0', '1'])
+        self.assertIsNone(parallelconnect([nport(2, 'a', named=False),
+                                           nport(2, 'b', named=False)], [1, 0]).port_names)
+
+        with self.assertRaises(KeyError):
+            parallelconnect([ntwk_a, ntwk_b], ['nope', 0])
+
+    def test_subnetwork_renumber_by_port_name(self):
+        """subnetwork and renumber take port names too."""
+        freq = rf.Frequency(1, 1, 1, unit='GHz')
+
+        base = rf.Network(frequency=freq, name='n', z0=[1, 2, 3, 4],
+                          s=self.rng.random((1, 4, 4)))
+        base.port_names = ['in', 'out', 'cpl', 'iso']
+
+        def nport():
+            return base.copy()
+
+        ntwk = nport()
+        self.assertEqual(ntwk.subnetwork(['cpl', 'in']), ntwk.subnetwork([2, 0]))
+        self.assertEqual(ntwk.subnetwork(['cpl', 'in']).port_names, ['cpl', 'in'])
+        self.assertEqual(ntwk.subnetwork(['cpl', 0]).port_names, ['cpl', 'in'])  # mixed
+        np.testing.assert_allclose(ntwk.subnetwork(['cpl', 'in']).z0, [[3, 1]])
+
+        # a name in to_ports refers to the port which currently has that name,
+        # so this swaps the two ports
+        by_name, by_index = nport(), nport()
+        by_name.renumber(['in', 'out'], ['out', 'in'])
+        by_index.renumber([0, 1], [1, 0])
+        self.assertEqual(by_name, by_index)
+        self.assertEqual(by_name.port_names, by_index.port_names)
+        self.assertEqual(by_name.port_names, ['out', 'in', 'cpl', 'iso'])
+        np.testing.assert_allclose(by_name.z0, [[2, 1, 3, 4]])
+
+        self.assertEqual(nport().renumbered(['iso', 'in'], ['in', 'iso']).port_names,
+                         nport().renumbered([3, 0], [0, 3]).port_names)
+
+        with self.assertRaises(KeyError):
+            nport().renumber(['in', 'nope'], [1, 0])
+        with self.assertRaises(KeyError):
+            nport().subnetwork(['nope'])
 
     def test_connect_no_frequency(self):
         """ Connecting 2 networks defined without frequency returns Error
