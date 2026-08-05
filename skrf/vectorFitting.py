@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import scipy
+from scipy.interpolate import interpn
 
 # imports for type hinting
 if TYPE_CHECKING:
@@ -2687,32 +2688,30 @@ class VectorFittingParametric:
         self.poles_global[0::2] = (-0.01 + 1j) * 2 * np.pi * polefreqs_global
         self.poles_global[1::2] = (-0.01 - 1j) * 2 * np.pi * polefreqs_global
 
-        n_networks = len(self.networkset)
-        print(f'{n_networks = }')
-        n_responses = self.networkset[0].nports ** 2
-        self.r0 = np.zeros((n_networks, n_responses), dtype=complex)
-        self.r = np.zeros((n_networks, 2 * self.n_poles, n_responses), dtype=complex)
-        self.q0 = np.zeros((n_networks, n_responses), dtype=complex)
-        self.q = np.zeros((n_networks, 2 * self.n_poles, n_responses), dtype=complex)
-
         #print('The following parameters are available:')
         #print(f'{self.networkset.dims = }')
         #print(f'{self.networkset.coords = }')
 
-        print()
+        # create a sorted grid for all individual parameters
+        self.parameters = networkset.coords
+        self.parameter_grid = []
+        for param in self.parameters:
+            self.parameter_grid.append(sorted(self.parameters[param]))
 
-        # if networkset is not None:
-        #     self.parameters = networkset.coords
-        #     grid_coords = []
-        #     for param in self.parameters:
-        #         grid_coords.append(sorted(self.parameters[param]))
-        #     self.meshgrid = np.meshgrid(*grid_coords)
-        # else:
-        #     self.parameters = None
-        #     self.meshgrid = None
+        # create a meshgrid for interpolation
+        self.parameter_meshgrid = np.meshgrid(*self.parameter_grid, indexing='ij')
+
+        # initialize fitting parameters q and r on that same meshgrid
+        # (extended by the parameter shape [..., 1 + 2 * n_poles, n_responses])
+        shape_meshgrid = np.shape(self.parameter_meshgrid)
+        n_responses = self.networkset[0].nports ** 2
+        self.r = np.empty((*shape_meshgrid[1:], 1 + 2 * self.n_poles, n_responses), dtype=complex)
+        self.q = np.empty((*shape_meshgrid[1:], 1 + 2 * self.n_poles, n_responses), dtype=complex)
 
     def auto_fit(self):
-        for i_nw, nw in enumerate(self.networkset):
+        for nw in self.networkset:
+            print(f'fitting network with params = {nw.params}')
+
             vf = VectorFitting(nw)
             vf.auto_fit()
 
@@ -2772,25 +2771,33 @@ class VectorFittingParametric:
                      + np.sum(np.conj(vf.residues[:, idx_poles_cmplx]) / (self.poles_global[:, None, None] - np.conj(vf.poles[idx_poles_cmplx])), axis=2)
                      )
 
-            self.r0[i_nw] = r0
-            self.r[i_nw] = r
-            self.q0[i_nw] = q0
-            self.q[i_nw] = q
+            idx_meshgrid = self._get_parameter_indices(nw.params)
+
+            #print(f'{self.parameter_meshgrid[0][*idx_meshgrid] = }')
+            #print(f'{self.parameter_meshgrid[1][*idx_meshgrid] = }')
+            #print(f'{self.parameter_meshgrid[2][*idx_meshgrid] = }')
+
+            self.r[*idx_meshgrid, 0] = r0
+            self.r[*idx_meshgrid, 1:] = r
+            self.q[*idx_meshgrid, 0] = q0
+            self.q[*idx_meshgrid, 1:] = q
 
     def get_model_response(self, params, freqs):
         s = 1j * 2 * np.pi * freqs
-        q0 = self.q0[0]
-        q = self.q[0]
-        r0 = self.r0[0]
-        r = self.r[0]
 
-        # shapes:
+        # interpolate q and r, which have shape [..., 1 + n_poles, n_responses]
+        param_values = []
+        for param in params:
+            param_values.append(params[param])
+        q = interpn(tuple(self.parameter_grid), self.q, param_values)[0]
+        r = interpn(tuple(self.parameter_grid), self.r, param_values)[0]
+
+        # return model responses with shape [n_freqs, n_responses]:
         # dim 0: n_freqs
-        # dim 1: n_poles_global (to be reduced by np.sum())
+        # dim 1: 1 + n_poles (to be reduced by np.sum())
         # dim 2: n_responses
-        # vf_global[n_freqs, n_responses]
-        return ((q0 + np.sum(q[None, :, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1))
-                / (r0 + np.sum(r[None, :, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1)))
+        return ((q[0] + np.sum(q[None, 1:, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1))
+                / (r[0] + np.sum(r[None, 1:, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1)))
 
     @staticmethod
     def generate_networkset(path: str, filename_prefix: str, param_names: list) -> NetworkSet:
@@ -2814,3 +2821,11 @@ class VectorFittingParametric:
                 nw.params = params
                 networks.append(nw)
         return NetworkSet(networks)
+
+    def _get_parameter_indices(self, params: dict):
+        # get indices of the provided parameters on the parameter meshgrid
+        idx_meshgrid = []
+        for i_param, param in enumerate(self.parameters):
+            idx_param = np.argwhere(np.array(self.parameter_grid[i_param]) == params[param])[0][0]
+            idx_meshgrid.append(idx_param)
+        return idx_meshgrid
