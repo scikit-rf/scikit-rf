@@ -70,9 +70,9 @@ class Coaxial(DistributedCircuit, Media):
     tout : number, or array-like, optional
         wall thickness of the outer conductor, in m.
         Default is infinity, i.e. a shield much thicker than the skin depth.
-    simple_model : bool, optional
-        If False (default), the conductors follow the Bessel function solution
-        of [#Schelkunoff]_. If True, they follow the equivalent circuit
+    model : str, optional
+        Model of the conductors. 'schelkunoff' (default) is the Bessel function
+        solution of [#Schelkunoff]_, 'tesche' the equivalent circuit
         approximation of [#Tesche]_.
     dielectric : dict or None, optional
         Material of the dielectric filling, as a dict taking the keys ``'ep_r'``
@@ -98,14 +98,14 @@ class Coaxial(DistributedCircuit, Media):
 
     References
     ----------
-    .. [#Tesche] F. M. Tesche, "A Simple Model for the Line Parameters of a Lossy
-       Coaxial Cable Filled With a Nondispersive Dielectric," IEEE Trans.
-       Electromagn. Compat., vol. 49, no. 1, pp. 12-17, Feb. 2007.
-       https://doi.org/10.1109/TEMC.2006.888185
     .. [#Schelkunoff] S. A. Schelkunoff, "The electromagnetic theory of coaxial
        transmission lines and cylindrical shields," Bell Syst. Tech. J.,
        vol. 13, no. 4, pp. 532-579, Oct. 1934.
        https://doi.org/10.1002/j.1538-7305.1934.tb00679.x
+    .. [#Tesche] F. M. Tesche, "A Simple Model for the Line Parameters of a Lossy
+       Coaxial Cable Filled With a Nondispersive Dielectric," IEEE Trans.
+       Electromagn. Compat., vol. 49, no. 1, pp. 12-17, Feb. 2007.
+       https://doi.org/10.1109/TEMC.2006.888185
 
     Examples
     --------
@@ -153,7 +153,7 @@ class Coaxial(DistributedCircuit, Media):
                  Dint: NumberLike = .81e-3, Dout: NumberLike = 5e-3,
                  epsilon_r: NumberLike = 1, tan_delta: NumberLike = 0,
                  sigma: NumberLike = INF, tout: NumberLike = INF,
-                 simple_model: bool = False,
+                 model: str = 'schelkunoff',
                  dielectric: dict | None = None,
                  inner_conductor: dict | list[dict] | None = None,
                  outer_conductor: dict | list[dict] | None = None,
@@ -163,7 +163,7 @@ class Coaxial(DistributedCircuit, Media):
 
         self.Dint, self.Dout, self.tout = Dint, Dout, tout
         self.epsilon_r, self.tan_delta, self.sigma = epsilon_r, tan_delta, sigma
-        self.simple_model = simple_model
+        self.model = model
         self.inner_conductor, self.outer_conductor = inner_conductor, outer_conductor
         # epsilon_r and tan_delta are the special case of a purely dielectric filling
         self.dielectric = {'ep_r': epsilon_r*(1 - 1j*tan_delta)} if dielectric is None else dielectric
@@ -395,7 +395,7 @@ class Coaxial(DistributedCircuit, Media):
 
         Zhf = Zs/(2*np.pi*r)  # impedance per unit length of a conductor many skin depths deep
         thick = t is not None and np.all(t >= INF)
-        if self.simple_model:
+        if self.model == 'tesche':
             if thick:
                 # neither a dc resistance nor an internal inductance is left over
                 Z = Zhf
@@ -409,7 +409,7 @@ class Coaxial(DistributedCircuit, Media):
                     Lint = mu/(2*np.pi)*(c**4*np.log(c/r)/(c**2 - r**2)**2
                                          + (r**2 - 3*c**2)/(4*(c**2 - r**2)))
                 Z = Rdc + 1j*w*Lint*Zhf/(Zhf + 1j*w*Lint)
-        else:
+        elif self.model == 'schelkunoff':
             # ive(n, z) is I_n(z) scaled by exp(-|Re(z)|) and kve(n, z) is K_n(z) scaled
             # by exp(z). Both scalings cancel in the ratios below, which keeps a conductor
             # many skin depths deep from over- and underflowing.
@@ -433,6 +433,8 @@ class Coaxial(DistributedCircuit, Media):
                 num = scipy.special.ive(0, x)*k1y*P + scipy.special.kve(0, x)*i1y
                 den = i1y*scipy.special.kve(1, x) - scipy.special.ive(1, x)*k1y*P
                 Z = Zhf*num/den
+        else:
+            raise ValueError('Unknown conductor model')
 
         return np.where(perfect, 0., np.where(dc, Rdc, Z))
 

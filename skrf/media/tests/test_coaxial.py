@@ -173,16 +173,16 @@ class MediaTestCase(unittest.TestCase):
         """At dc the current fills the conductors uniformly."""
         rho, a, b, t = 1.68e-8, 0.5e-3, 1.5e-3, 0.2e-3
         freq = rf.Frequency(0, 10, 3, unit='GHz')
-        for simple_model in (False, True):
+        for model in ('schelkunoff', 'tesche'):
             # a wall of finite thickness carries a dc resistance of its own
             media = Coaxial(freq, Dint=2*a, Dout=2*b, sigma=1/rho, tout=t,
-                            simple_model=simple_model)
+                            model=model)
             assert_allclose(media.R[0],
                             rho/(np.pi*a**2) + rho/(2*np.pi*b*t), rtol=1e-9)
 
             # an infinitely thick one does not
             media = Coaxial(freq, Dint=2*a, Dout=2*b, sigma=1/rho,
-                            simple_model=simple_model)
+                            model=model)
             assert_allclose(media.R[0], rho/(np.pi*a**2), rtol=1e-9)
 
             # the internal inductance is dropped at dc, leaving the external one
@@ -200,9 +200,9 @@ class MediaTestCase(unittest.TestCase):
 
         # the equivalent circuit only approaches the limit as the log of the wall
         # thickness, through the internal inductance of the tube
-        ref_simple = Coaxial(freq, **kw, simple_model=True)
+        ref_simple = Coaxial(freq, **kw, model='tesche')
         deviation = [
-            np.max(np.abs(Coaxial(freq, **kw, tout=t, simple_model=True).gamma
+            np.max(np.abs(Coaxial(freq, **kw, tout=t, model='tesche').gamma
                           - ref_simple.gamma)/np.abs(ref_simple.gamma))
             for t in (0.1e-3, 1e-3, 1e-2)]
         self.assertTrue(deviation[0] < 1e-4)
@@ -217,8 +217,8 @@ class MediaTestCase(unittest.TestCase):
         freq = rf.Frequency(1, 40, 21, unit='GHz')
         kw = {'Dint': 1e-3, 'Dout': 3e-3, 'epsilon_r': 2.1}
         for sigma in (INF, np.inf):
-            for simple_model in (False, True):
-                media = Coaxial(freq, **kw, sigma=sigma, simple_model=simple_model)
+            for model in ('schelkunoff', 'tesche'):
+                media = Coaxial(freq, **kw, sigma=sigma, model=model)
                 assert_allclose(media.R, 0, atol=0)
                 assert_allclose(media.gamma.real, 0, atol=1e-12)
                 # without loss the inductance is purely external
