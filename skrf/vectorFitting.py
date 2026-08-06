@@ -2835,7 +2835,7 @@ class VectorFittingParametric:
 
         # interpolate q and r, which have shape [..., 1 + n_poles, n_responses]
         param_values = []
-        for param in params:
+        for param in self.parameters:
             param_values.append(params[param])
         q = interpn(tuple(self.parameter_grid), self.q, param_values, method='linear', fill_value=None)[0]
         r = interpn(tuple(self.parameter_grid), self.r, param_values, method='linear', fill_value=None)[0]
