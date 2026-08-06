@@ -2668,6 +2668,38 @@ class VectorFitting:
 
 
 class VectorFittingParametric:
+    """
+        This class provides a Python implementation of the parametric vector fitting algorithm [#Triverio_parametric].
+
+        Parameters
+        ----------
+        networkset : :class:`skrf.networkSet.NetworkSet`
+                NetworkSet instance of multiple :math:`N`-port networks holding the frequency responses to be fitted
+                for some discrete values of one or multiple design parameter.
+
+        n_poles : int, optional
+                The number of complex-conjugate poles in the final parametric model. In case of `n_poles=-1`, a suitable
+                number will be determined automatically by running :func:`VectorFitting.auto_fit()` on the first
+                network in :attr:`networkset`.
+
+        Examples
+        --------
+        Load a bunch of parametric `Network` and bundle them in a parametric `NetworkSet` using the helper function
+        :func:`generate_networkset()`. Then create a `VectorFittingParametric` instance and perform the fit.
+        Afterwards, the parametric model can be evaluated (interpolated) at arbitrary values for each parameter:
+
+        >>> nwset = VectorFittingParametric.generate_networkset(path='myfolder', filename_prefix='spiral', param_names=['param1', 'param2', 'param3'])
+        >>> vfparam = VectorFittingParametric(nwset)
+        >>> vfparam.auto_fit()
+        >>> model = vfparam.get_model_response(params={'param1': 3.4, 'param2': -2, 'param3': 10}, freqs=np.linspace(0, 10e9, 101))
+
+        References
+        ----------
+        .. [#Triverio_parametric] P. Triverio, S. Grivet-Talocia and M. S. Nakhla, "A Parameterized Macromodeling
+            Strategy With Uniform Stability Test", IEEE Transactions on Advanced Packaging, vol. 32, no. 1, pp. 205-215,
+            Feb. 2009, DOI: https://doi.org/10.1109/TADVP.2008.2007913
+    """
+
     def __init__(self, networkset: NetworkSet = None, n_poles: int = -1):
         self.networkset = networkset
         self.n_poles = n_poles
@@ -2679,7 +2711,7 @@ class VectorFittingParametric:
             self.n_poles = len(vf.poles)
             print(f'automatic model order estimation; using {self.n_poles = }.')
 
-        # init global poles
+        # init global poles using evenly distributed complex-conjugate pairs
         freqs_global = self.networkset[0].f
         polefreqs_global = np.linspace(freqs_global[0], freqs_global[-1], self.n_poles)
         if polefreqs_global[0] == 0.0:
@@ -2687,10 +2719,6 @@ class VectorFittingParametric:
         self.poles_global = np.empty(2 * self.n_poles, dtype=complex)
         self.poles_global[0::2] = (-0.01 + 1j) * 2 * np.pi * polefreqs_global
         self.poles_global[1::2] = (-0.01 - 1j) * 2 * np.pi * polefreqs_global
-
-        #print('The following parameters are available:')
-        #print(f'{self.networkset.dims = }')
-        #print(f'{self.networkset.coords = }')
 
         # create a sorted grid for all individual parameters
         self.parameters = networkset.coords
@@ -2702,13 +2730,20 @@ class VectorFittingParametric:
         self.parameter_meshgrid = np.meshgrid(*self.parameter_grid, indexing='ij')
 
         # initialize fitting parameters q and r on that same meshgrid
-        # (extended by the parameter shape [..., 1 + 2 * n_poles, n_responses])
+        # (extended to accommodate the parameters for all network responses [..., 1 + 2 * n_poles, n_responses])
         shape_meshgrid = np.shape(self.parameter_meshgrid)
         n_responses = self.networkset[0].nports ** 2
         self.r = np.empty((*shape_meshgrid[1:], 1 + 2 * self.n_poles, n_responses), dtype=complex)
         self.q = np.empty((*shape_meshgrid[1:], 1 + 2 * self.n_poles, n_responses), dtype=complex)
 
     def auto_fit(self):
+        """
+        Perform the parametric vector fitting on all networks in :attr:`networkset` using
+        :func:`VectorFitting.auto_fit()`.
+        """
+
+        n_poles_global = len(self.poles_global)
+
         for nw in self.networkset:
             print(f'fitting network with params = {nw.params}')
 
@@ -2716,7 +2751,6 @@ class VectorFittingParametric:
             vf.auto_fit()
 
             n_responses = nw.nports ** 2
-            n_poles_global = len(self.poles_global)
 
             idx_poles_real = np.nonzero(np.imag(vf.poles) == 0)[0]
             idx_poles_cmplx = np.nonzero(np.imag(vf.poles) > 0)[0]
@@ -2743,7 +2777,7 @@ class VectorFittingParametric:
             a = np.empty((n_poles_local, n_poles_global), dtype=complex)
             b = np.empty((n_poles_local, n_responses), dtype=complex)
 
-            # assemble a
+            # assemble coefficient matrix a
             for i_col in range(n_poles_global):
                 mask = np.ones(n_poles_global, dtype=bool)
                 mask[i_col] = False
@@ -2752,8 +2786,7 @@ class VectorFittingParametric:
                 a[idx_row_complex_neg, i_col] = np.prod(np.conj(vf.poles[idx_poles_cmplx, None]) - self.poles_global, axis=1, where=mask)
 
             # define r0 (degree of freedom; can be fixed to any value)
-            r0 = np.ones(len(vf.constant_coeff))
-            #r0 = 1 / vf.constant_coeff
+            r0 = np.ones(len(vf.constant_coeff))    # q0 == vf.constant_coeff if r0 = 1
 
             # assemble b
             b[idx_row_real] = -1 * r0 * np.prod(vf.poles[idx_poles_real, None] - self.poles_global, axis=1, keepdims=True)
@@ -2771,33 +2804,57 @@ class VectorFittingParametric:
                      + np.sum(np.conj(vf.residues[:, idx_poles_cmplx]) / (self.poles_global[:, None, None] - np.conj(vf.poles[idx_poles_cmplx])), axis=2)
                      )
 
+            # store local q and r at the correct global meshgrid positions for this parameter sample
             idx_meshgrid = self._get_parameter_indices(nw.params)
-
-            #print(f'{self.parameter_meshgrid[0][*idx_meshgrid] = }')
-            #print(f'{self.parameter_meshgrid[1][*idx_meshgrid] = }')
-            #print(f'{self.parameter_meshgrid[2][*idx_meshgrid] = }')
-
             self.r[*idx_meshgrid, 0] = r0
             self.r[*idx_meshgrid, 1:] = r
             self.q[*idx_meshgrid, 0] = q0
             self.q[*idx_meshgrid, 1:] = q
 
-    def get_model_response(self, params, freqs):
+    def get_model_response(self, params: dict, freqs: Any) -> np.ndarray:
+        """
+        Returns the network response matrix for a given list of frequencies and a given set of values for the design
+        parameters used in :attr:`networkset`. This also works for parameter values outside of the original sample
+        interval (i.e. extrapolation instead of interpolation), but the results are likely going to be invalid.
+
+        Parameters
+        ----------
+        params : dict
+            A dictionary with the design parameters to be used. For example: `params={'param1': 1.1, 'param2': -2.2}`.
+
+        freqs : list or numpy.ndarray
+            A list of frequencies to evaluate the parametric model at.
+
+        Returns
+        -------
+        model : numpy.ndarray
+            The returned array has the shape [n_freqs, n_ports, n_ports], similar to `Network.s`.
+        """
+
         s = 1j * 2 * np.pi * freqs
 
         # interpolate q and r, which have shape [..., 1 + n_poles, n_responses]
         param_values = []
         for param in params:
             param_values.append(params[param])
-        q = interpn(tuple(self.parameter_grid), self.q, param_values)[0]
-        r = interpn(tuple(self.parameter_grid), self.r, param_values)[0]
+        q = interpn(tuple(self.parameter_grid), self.q, param_values, method='linear', fill_value=None)[0]
+        r = interpn(tuple(self.parameter_grid), self.r, param_values, method='linear', fill_value=None)[0]
 
         # return model responses with shape [n_freqs, n_responses]:
         # dim 0: n_freqs
         # dim 1: 1 + n_poles (to be reduced by np.sum())
         # dim 2: n_responses
-        return ((q[0] + np.sum(q[None, 1:, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1))
-                / (r[0] + np.sum(r[None, 1:, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1)))
+        model = ((q[0] + np.sum(q[None, 1:, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1))
+                 / (r[0] + np.sum(r[None, 1:, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1)))
+        n_ports = int(np.sqrt(np.shape(model)[1]))
+        return np.reshape(model, (len(freqs), n_ports, n_ports))
+
+    def get_poles_residues(self, params: dict):
+        """
+        Convert the model interpolated at `params` back into pole/residue form to be processed or exported with
+        :class:`VectorFitting`.
+        """
+        raise NotImplementedError()
 
     @staticmethod
     def generate_networkset(path: str, filename_prefix: str, param_names: list) -> NetworkSet:
@@ -2806,6 +2863,25 @@ class VectorFittingParametric:
         with `param_names`, which are searched for in the file comments. Example: Specify `param_names=['myparam']` to
         extract the value 12 from the comment line `! myparam = 12`. This also works for multiple parameters:
         `param_names=['myparam1', 'myparam2']`.
+
+        Parameters
+        ----------
+        path : str
+            The path of a folder that contains individual Touchstone files.
+
+        filename_prefix : str
+            A prefix string common to each filename that must be matched for the file to be considered. Other files in
+            the will be ignored.
+
+        param_names : list
+            A list of parameter names that will be searched for in the comment section of each Touchstone file to
+            extract the corresponding value of that parameter.
+
+        Returns
+        -------
+        networkset : :class:`NetworkSet`
+            A `NetworkSet` that holds all imported `Network` with the `params` attribute filled according to the names
+            specified in `param_names`.
         """
         networks = []
         for filename in os.listdir(path):
