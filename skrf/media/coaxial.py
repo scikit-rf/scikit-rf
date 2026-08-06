@@ -13,13 +13,14 @@ A coaxial transmission line defined from its electrical or geometrical/physical 
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy
 
 from .. import constants as _const
-from ..constants import INF, NumberLike
+from ..constants import NumberLike
 from ..mathFunctions import db_2_np, db_per_100feet_2_db_per_100meter, feet_2_meter
 from ..tlineFunctions import surface_impedance, surface_resistivity
 from .distributedCircuit import DistributedCircuit
@@ -66,10 +67,10 @@ class Coaxial(DistributedCircuit, Media):
         Default is 0.
     sigma : number, or array-like, optional.
         conductors electrical conductivity, in S/m.
-        Default is infinity (non lossy metal).
-    tout : number, or array-like, optional
+        Default is 58e6, the conductivity of annealed copper at 20 °C (100% IACS).
+    tout : number, array-like, or None, optional
         wall thickness of the outer conductor, in m.
-        Default is infinity, i.e. a shield much thicker than the skin depth.
+        If None (default), the shield is infinitely thick.
     model : str, optional
         Model of the conductors. 'schelkunoff' (default) is the Bessel function
         solution of [#Schelkunoff]_, 'tesche' the equivalent circuit
@@ -152,7 +153,7 @@ class Coaxial(DistributedCircuit, Media):
                  z0: NumberLike | None = None,
                  Dint: NumberLike = .81e-3, Dout: NumberLike = 5e-3,
                  epsilon_r: NumberLike = 1, tan_delta: NumberLike = 0,
-                 sigma: NumberLike = INF, tout: NumberLike = INF,
+                 sigma: NumberLike = 58e6, tout: NumberLike | None = None,
                  model: str = 'schelkunoff',
                  dielectric: dict | None = None,
                  inner_conductor: dict | list[dict] | None = None,
@@ -161,10 +162,20 @@ class Coaxial(DistributedCircuit, Media):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)
 
-        self.Dint, self.Dout, self.tout = Dint, Dout, tout
-        self.epsilon_r, self.tan_delta, self.sigma = epsilon_r, tan_delta, sigma
+        self.Dint, self.Dout = Dint, Dout
+        self.tout = np.inf if tout is None else tout
+        self.sigma = sigma
         self.model = model
         self.inner_conductor, self.outer_conductor = inner_conductor, outer_conductor
+        # warning when describing one conductor and not the other
+        if (inner_conductor is None) != (outer_conductor is None):
+            given, missing = (('outer_conductor', 'inner_conductor') if inner_conductor is None
+                              else ('inner_conductor', 'outer_conductor'))
+            warnings.warn(
+                f'Only {given} was given a material, so {missing} stays a smooth bulk '
+                f'conductor of sigma = {sigma} S/m and unit relative permeability. '
+                f'Pass {missing} as well to describe both conductors.',
+                UserWarning, stacklevel = 2)
         # epsilon_r and tan_delta are the special case of a purely dielectric filling
         self.dielectric = {'ep_r': epsilon_r*(1 - 1j*tan_delta)} if dielectric is None else dielectric
         ep_r = self.dielectric.get('ep_r', 1)
@@ -172,6 +183,10 @@ class Coaxial(DistributedCircuit, Media):
         # a lossy ep_r = ep' - j*ep'' has a negative imaginary part, while epsilon_second
         # is ep'' itself, which G expects to be positive
         self.epsilon_second = -_const.epsilon_0*np.imag(ep_r)
+        # read back from the filling actually in use, which is the dielectric dict
+        # when one is given and the epsilon_r, tan_delta pair otherwise
+        self.epsilon_r  = np.real(ep_r)
+        self.tan_delta  = -np.imag(ep_r)/np.real(ep_r)
 
     @classmethod
     def from_attenuation_VF(cls, frequency: Frequency | None = None,
@@ -303,6 +318,10 @@ class Coaxial(DistributedCircuit, Media):
         Rs : number or array
             surface resistivity
 
+        Note
+        ----
+        Not used in code. Kept for backward-compatibility.
+
         """
         f  = self.frequency.f
         rho = 1./self.sigma
@@ -373,13 +392,13 @@ class Coaxial(DistributedCircuit, Media):
         # a perfect conductor and dc are the two limits the models below cannot evaluate.
         # Both are put back at the end, so the placeholders substituted here only have to
         # keep the intermediate results finite.
-        perfect = sigma >= INF
+        perfect = np.isinf(sigma)
         dc = self.frequency.f == 0
         sigma = np.where(perfect, 1., sigma)  # placeholder value for perfect conductor
         f     = np.where(dc, 1., self.frequency.f)  # placeholder value for dc, to avoid division by zero
         w = 2*np.pi*f
         # dc resistance, where the current is spread uniformly over the conductor
-        Rdc = 1/(np.pi*r**2*sigma) if t is None else 1/(2*np.pi*r*t*sigma)
+        Rdc = 1/(np.pi*r**2*sigma) if t is None else 1/(2*np.pi*r*t)/sigma
 
         rms_roughness = [layer.get('rms_roughness', 0) for layer in stack]
         if len(stack) == 1 and not np.any(rms_roughness):
@@ -394,45 +413,37 @@ class Coaxial(DistributedCircuit, Media):
                     distribution = [layer.get('distribution', 'norm') for layer in stack])
 
         Zhf = Zs/(2*np.pi*r)  # impedance per unit length of a conductor many skin depths deep
-        thick = t is not None and np.all(t >= INF)
         if self.model == 'tesche':
-            if thick:
-                # neither a dc resistance nor an internal inductance is left over
-                Z = Zhf
+            if t is None:
+                Lint = mu/(8*np.pi)  # eq. (11) of Tesche, solid rod
             else:
-                # eq. (14) of Tesche: the dc resistance in series with the internal
-                # inductance in parallel with the high frequency impedance
-                if t is None:
-                    Lint = mu/(8*np.pi)  # eq. (11) of Tesche, solid rod
-                else:
-                    c = r + t  # eq. (13) of Tesche, tube of outer radius c
-                    Lint = mu/(2*np.pi)*(c**4*np.log(c/r)/(c**2 - r**2)**2
-                                         + (r**2 - 3*c**2)/(4*(c**2 - r**2)))
-                Z = Rdc + 1j*w*Lint*Zhf/(Zhf + 1j*w*Lint)
+                # eq. (13) of Tesche, tube of outer radius c, written in terms of
+                # q = (r/c)**2 so that a wall much thicker than r does not overflow
+                q = (r/(r + t))**2
+                Lint = mu/(2*np.pi)*(np.log1p(t/r)/(1 - q)**2 + (q - 3)/(4*(1 - q)))
+            # eq. (14) of Tesche
+            Z = Rdc + Zhf/(1 + Zhf/(1j*w)/Lint)
         elif self.model == 'schelkunoff':
             # ive(n, z) is I_n(z) scaled by exp(-|Re(z)|) and kve(n, z) is K_n(z) scaled
             # by exp(z). Both scalings cancel in the ratios below, which keeps a conductor
             # many skin depths deep from over- and underflowing.
             g = np.sqrt(1j*w*mu*sigma)  # propagation constant inside the metal
-            # scipy stops evaluating the Bessel functions a little above |z| = 1e9, long
-            # after the ratios below have settled to 1, so capping the argument there
-            # leaves them untouched and keeps an unphysically large conductivity finite.
-            g = g*np.minimum(1., 1e8/np.abs(g*(r if t is None or thick else r + t)))
+            # scipy returns nan past |z| = 2**31/2. Nothing real comes near it.
+            deepest = 1e8/np.abs(g)
+            x = g*np.minimum(r, deepest)
             if t is None:
                 # eq. (65) of Schelkunoff, solid rod
-                Z = Zhf*scipy.special.ive(0, g*r)/scipy.special.ive(1, g*r)
-            elif thick:
-                # eq. (74) of Schelkunoff with the outer radius sent to infinity
-                Z = Zhf*scipy.special.kve(0, g*r)/scipy.special.kve(1, g*r)
+                Z = Zhf*scipy.special.ive(0, x)/scipy.special.ive(1, x)
             else:
-                # eq. (74) of Schelkunoff, tube. The factor exp(|Re(y)| - x) shared by the
-                # numerator and the denominator is written out as P, and |P| <= 1 as r < c.
-                x, y = g*r, g*(r + t)
-                P = np.exp(x + abs(x.real) - (y + abs(y.real)))
-                i1y, k1y = scipy.special.ive(1, y), scipy.special.kve(1, y)
-                num = scipy.special.ive(0, x)*k1y*P + scipy.special.kve(0, x)*i1y
-                den = i1y*scipy.special.kve(1, x) - scipy.special.ive(1, x)*k1y*P
-                Z = Zhf*num/den
+                # eq. (74) of Schelkunoff, tube, divided by I_1 of its outer surface so
+                # that the wall enters only through Q, what the outer surface sends back.
+                # Q carries the round trip exp(-2*g*t) across the wall, which underflows
+                # to zero once the wall is many skin depths thick and leaves eq. (74) with
+                # its outer radius at infinity.
+                y, gt = g*np.minimum(r + t, deepest), g*np.minimum(t, deepest)
+                Q = ( scipy.special.kve(1, y)/scipy.special.ive(1, y)*np.exp(-(gt + abs(gt.real))) )
+                Z = Zhf*((scipy.special.ive(0, x)*Q + scipy.special.kve(0, x))
+                         /(scipy.special.kve(1, x) - scipy.special.ive(1, x)*Q))
         else:
             raise ValueError('Unknown conductor model')
 

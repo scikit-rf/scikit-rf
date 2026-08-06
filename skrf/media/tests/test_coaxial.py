@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_almost_equal, assert_array_almost_equal
 from scipy.constants import mu_0
+from scipy.special import ive, kve
 
 import skrf as rf
-from skrf.constants import INF
 from skrf.mathFunctions import db_2_np, meter_2_feet
 from skrf.media import Coaxial
 
@@ -192,7 +192,7 @@ class MediaTestCase(unittest.TestCase):
         """A wall many skin depths thick is the infinitely thick one."""
         freq = rf.Frequency(1, 40, 21, unit='GHz')
         kw = {'Dint': 1e-3, 'Dout': 3e-3, 'epsilon_r': 2.1, 'sigma': 58e6}
-        ref = Coaxial(freq, **kw)  # tout defaults to infinity
+        ref = Coaxial(freq, **kw)  # tout defaults to None, an infinitely thick wall
 
         # the field dies out inside the wall, so the Bessel solution sits at its
         # limit already for a wall of a few skin depths
@@ -208,18 +208,35 @@ class MediaTestCase(unittest.TestCase):
         self.assertTrue(deviation[0] < 1e-4)
         self.assertTrue(np.all(np.diff(deviation) < 0))
 
-        # skrf's INF and numpy's infinity both mean an infinitely thick wall
+        # numpy's infinity is the same infinitely thick wall as the default None,
+        # and so is a wall whose thickness is merely far beyond any skin depth
         assert_allclose(Coaxial(freq, **kw, tout=np.inf).gamma, ref.gamma, rtol=1e-15)
-        assert_allclose(Coaxial(freq, **kw, tout=INF).gamma, ref.gamma, rtol=1e-15)
+        for t in (1e10, 1e99, 1e300):
+            assert_allclose(Coaxial(freq, **kw, tout=t).gamma, ref.gamma, rtol=1e-15)
+            # the equivalent circuit converges to it from below, without overflowing
+            assert_allclose(Coaxial(freq, **kw, tout=t, model='tesche').gamma,
+                            ref_simple.gamma, rtol=1e-7)
+
+        # the limit itself is eq. (74) of Schelkunoff with the outer radius sent to
+        # infinity, a solid rod inside and a half space outside
+        a, b, w = kw['Dint']/2, kw['Dout']/2, freq.w
+        g, Zs = np.sqrt(1j*w*mu_0*kw['sigma']), np.sqrt(1j*w*mu_0/kw['sigma'])
+        assert_allclose(ref.R,
+                        (Zs/(2*np.pi*a)*ive(0, g*a)/ive(1, g*a)
+                         + Zs/(2*np.pi*b)*kve(0, g*b)/kve(1, g*b)).real, rtol=1e-12)
 
     def test_perfect_conductor(self):
-        """An infinite conductivity is lossless, as INF or as numpy's infinity."""
+        """An infinite conductivity is lossless."""
         freq = rf.Frequency(1, 40, 21, unit='GHz')
         kw = {'Dint': 1e-3, 'Dout': 3e-3, 'epsilon_r': 2.1}
-        for sigma in (INF, np.inf):
-            for model in ('schelkunoff', 'tesche'):
-                media = Coaxial(freq, **kw, sigma=sigma, model=model)
-                assert_allclose(media.R, 0, atol=0)
-                assert_allclose(media.gamma.real, 0, atol=1e-12)
-                # without loss the inductance is purely external
-                assert_allclose(media.L, mu_0/(2*np.pi)*np.log(3.), rtol=1e-12)
+        for model in ('schelkunoff', 'tesche'):
+            media = Coaxial(freq, **kw, sigma=np.inf, model=model)
+            assert_allclose(media.R, 0, atol=0)
+            assert_allclose(media.gamma.real, 0, atol=1e-12)
+            # without loss the inductance is purely external
+            assert_allclose(media.L, mu_0/(2*np.pi)*np.log(3.), rtol=1e-12)
+
+            # a large but finite conductivity approaches the same limit
+            media = Coaxial(freq, **kw, sigma=1e30, model=model)
+            assert_allclose(media.R, 0, atol=1e-9)
+            assert_allclose(media.L, mu_0/(2*np.pi)*np.log(3.), rtol=1e-12)
