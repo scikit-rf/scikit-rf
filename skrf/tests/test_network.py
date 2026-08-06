@@ -994,6 +994,11 @@ class NetworkTestCase(unittest.TestCase):
         # the result is a pair of ports, not any single one of them
         self.assertIsNone(three_port.nonreciprocity('in', 'out').port_names)
 
+        # one-based indices. 0 is not a valid port.
+        for m, n in [(0, 1), (1, 0), (0, 0), (4, 1), (1, 4), (-1, 1)]:
+            with self.assertRaises(ValueError):
+                three_port.nonreciprocity(m, n)
+
         with self.assertRaises(KeyError):
             three_port.nonreciprocity('nope', 'out')
         unnamed = rf.Network(frequency=freq, z0=50, s=self.rng.random((5, 2, 2)))
@@ -2651,6 +2656,27 @@ class NetworkTestCase(unittest.TestCase):
             ntwk.s99.s[:,0,0]
         )
 
+
+    def test_generate_subnetworks_invalid_port(self):
+        """
+        The s{m}_{n} indices are one-based, an out of range index is not an
+        attribute. 0 used to wrap around to the last port.
+        """
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
+
+        for name in ['s0_1', 's1_0', 's0_0', 's00', 's01', 's10',
+                     's33_1', 's1_33', 's99_99']:
+            with self.assertRaises(AttributeError):
+                getattr(ntwk, name)
+            self.assertFalse(hasattr(ntwk, name))
+
+        # a two port has no third port, whichever way it is spelled
+        two_port = rf.Network(frequency=rf.Frequency(1, 3, 5, unit='GHz'),
+                              z0=50, s=self.rng.random((5, 2, 2)))
+        with self.assertRaises(AttributeError):
+            two_port.s31
+        with self.assertRaises(AttributeError):
+            two_port.s3_1
 
     def test_generate_subnetworks_allports(self):
         """
