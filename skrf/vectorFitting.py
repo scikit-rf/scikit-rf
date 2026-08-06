@@ -2700,25 +2700,30 @@ class VectorFittingParametric:
             Feb. 2009, DOI: https://doi.org/10.1109/TADVP.2008.2007913
     """
 
-    def __init__(self, networkset: NetworkSet = None, n_poles: int = -1):
+    def __init__(self, networkset: NetworkSet = None):
         self.networkset = networkset
-        self.n_poles = n_poles
 
-        if self.n_poles == -1:
-            # automatic model order estimation based on model order of the first network in the set
-            vf = VectorFitting(self.networkset[0])
-            vf.auto_fit()
-            self.n_poles = len(vf.poles)
-            print(f'automatic model order estimation; using {self.n_poles = }.')
+        # # automatic model order estimation based on model order of the first network in the set
+        # vf = VectorFitting(self.networkset[0])
+        # vf.auto_fit()
+        # idx_poles_real = (np.imag(vf.poles) == 0)
+        # n_poles_real = np.sum(idx_poles_real)
+        # n_poles_cmplx = np.sum(~idx_poles_real)
 
-        # init global poles using evenly distributed complex-conjugate pairs
-        freqs_global = self.networkset[0].f
-        polefreqs_global = np.linspace(freqs_global[0], freqs_global[-1], self.n_poles)
-        if polefreqs_global[0] == 0.0:
-            polefreqs_global[0] = 0.1 * polefreqs_global[1]
-        self.poles_global = np.empty(2 * self.n_poles, dtype=complex)
-        self.poles_global[0::2] = (-0.01 + 1j) * 2 * np.pi * polefreqs_global
-        self.poles_global[1::2] = (-0.01 - 1j) * 2 * np.pi * polefreqs_global
+        # manual model order setting
+        n_poles_real = 0
+        n_poles_cmplx = 2
+
+        # init the poles
+        poles_init = VectorFitting._init_poles(self.networkset[0].f, n_poles_real, n_poles_cmplx, 'lin')
+        poles_global = []
+        for pole in poles_init:
+            if pole.imag == 0:
+                poles_global.append(pole)
+            else:
+                poles_global.append(pole)
+                poles_global.append(np.conj(pole))
+        self.poles_global = np.array(poles_global)
 
         # create a sorted grid for all individual parameters
         self.parameters = networkset.coords
@@ -2733,8 +2738,8 @@ class VectorFittingParametric:
         # (extended to accommodate the parameters for all network responses [..., 1 + 2 * n_poles, n_responses])
         shape_meshgrid = np.shape(self.parameter_meshgrid)
         n_responses = self.networkset[0].nports ** 2
-        self.r = np.empty((*shape_meshgrid[1:], 1 + 2 * self.n_poles, n_responses), dtype=complex)
-        self.q = np.empty((*shape_meshgrid[1:], 1 + 2 * self.n_poles, n_responses), dtype=complex)
+        self.r = np.empty((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
+        self.q = np.empty((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
 
     def auto_fit(self):
         """
