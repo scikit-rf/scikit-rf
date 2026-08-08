@@ -376,38 +376,38 @@ class CircularWaveguide(Media):
     @property
     def alpha_c(self) -> NumberLike:
         """
-        Loss due to finite conductivity of the sidewalls for the fundamental mode TE11. Higher order
-        modes are not implemented, as well as effects due to surface roughness.
+        Loss due to finite conductivity of the sidewalls.
+        Effects due to surface roughness are not implemented.
 
         In units of Np/m
 
         See property `rho` for setting conductivity.
 
-        Effects of finite conductivity are taken from [#]_, but expressed in the same terms as in [#]_.
+        Effects of finite conductivity are taken from [#].
 
         References
         ----------
 
-        .. [#] Eq. (3.133), Chapter 3.4, Microwave Engineering, Pozar David, 2011
-        .. [#] Eq. (9.8.1), Chapter 9, Electromagnetic Waves and Antennas by Sophocles J. Orfanidis
-            http://eceweb1.rutgers.edu/~orfanidi/ewa/
+        .. [#] Eq. (9-34a) and Eq. (9-34b), Chapter 9.2.3,
+            Advanced Engineering Electromagnetics, Balanis Constantine A., 2024
 
         See Also
         --------
         rho
         """
-
-        # TODO: Generalize to higher order modes
-        if (self.mode_type != "te") or (self.m != 1) or (self.n != 1):
-            raise NotImplementedError
-
         if self.rho is None:
             return 0
-        r, w, ep, rho, f_n = self.r, self.frequency.w, self.ep, \
-            self.rho, self.f_norm
-        u= self.kc*r
-        return 1./r * sqrt( (w*ep)/(2./rho) ) * ( (1/f_n)**2 + 1/(u**2 - 1) ) \
-            /sqrt(1-(1/f_n)**2)
+        r, w, m, n, rho, f_n, mu = self.r, self.frequency.w, self.m, self.n, \
+            self.rho, self.f_norm, self.mu
+        Rs = np.sqrt(w * mu * rho / 2)
+        z0 = np.sqrt(_const.mu_0 / _const.epsilon_0)
+        if (self.mode_type == "tm"):
+            return Rs / r / z0 / np.sqrt(1 - (1 / f_n)**2)
+        elif (self.mode_type == "te"):
+            Jp = scipy.special.jnp_zeros(m, n)[-1]
+            return Rs / r / z0 / np.sqrt(1 - (1 / f_n)**2) * ((1 / f_n)**2 + m**2 / (Jp**2 - m**2))
+        else:
+            raise NotImplementedError
 
     @property
     def z0_characteristic(self) -> NumberLike:

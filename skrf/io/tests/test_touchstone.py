@@ -1,3 +1,4 @@
+import io
 import os
 import unittest
 from pathlib import Path
@@ -7,7 +8,7 @@ import numpy as np
 import pytest
 
 from skrf import Network
-from skrf.io.touchstone import Touchstone, read_zipped_touchstones
+from skrf.io.touchstone import Touchstone, hfss_touchstone_2_media, read_zipped_touchstones
 
 
 class TouchstoneTestCase(unittest.TestCase):
@@ -196,6 +197,9 @@ class TouchstoneTestCase(unittest.TestCase):
 
                 assert(gamma.shape[-1] == touchst.rank)
                 assert(z0.shape[-1] == touchst.rank)
+                # a partly read block leaves trailing ports at zero, which shape cannot catch
+                assert np.all(gamma != 0)
+                assert np.all(z0 != 0)
 
 
     def test_touchstone_2(self):
@@ -213,7 +217,6 @@ class TouchstoneTestCase(unittest.TestCase):
         ])
         assert np.allclose(net.z0, z0)
 
-    @pytest.mark.skip
     def test_ansys_terminal_data(self):
         net = Touchstone(os.path.join(self.test_dir, "ansys_terminal_data.s4p"))
 
@@ -222,6 +225,46 @@ class TouchstoneTestCase(unittest.TestCase):
             [61.+11.j, 62.+12.j, 63.+13.j, 64.+14.j]
         ])
         assert np.allclose(net.z0, z0)
+
+    def test_ansys_terminal_data_two_port(self):
+        """Driven Terminal export of HFSS 3D Layout 2020.1, from issue #354.
+
+        Gamma and the port impedances are both 2x2 matrices here, so reading only their first
+        row still gives an array of the expected shape.
+        """
+        path = os.path.join(self.test_dir, "ansys_terminal_data.s2p")
+        net = Touchstone(path)
+
+        assert np.allclose(net.z0, [[50. + 0.j, 50. + 0.j]])
+        assert np.allclose(net.gamma, [[-0. + 51.3987323033759j, -0. + 51.4044656498624j]])
+
+        # the per port media built from these columns is what issue #354 reported as broken
+        for medium, gamma in zip(hfss_touchstone_2_media(path),
+                                 [51.3987323033759j, 51.4044656498624j]):
+            assert np.allclose(medium.gamma, gamma)
+            assert np.allclose(medium.z0, 50.0)
+
+    def test_ansys_terminal_marker_without_matrix(self):
+        """Most "Terminal data exported" files hold one value per port, not a matrix (#354)."""
+        net = Touchstone(os.path.join(self.test_dir, "HFSS_2020R2/test_multiport.s4p"))
+
+        assert "! Terminal data exported" in Path(net.filename).read_text()
+        assert np.allclose(net.gamma[0],
+                           [59.9337480052838, 76.2425892174664, 59.9338199102431, 103.00705352512])
+        assert np.allclose(net.z0[0],
+                           [29.2484484956908j, 57.3494977406045j, 58.4318474711903j, 28.3610139898588j])
+
+    def test_hfss_comment_block_of_unexpected_length(self):
+        """A block that is neither one value per port nor a matrix is reported, not guessed."""
+        stream = io.StringIO(
+            "# GHZ S RI R 50\n"
+            "1 0 0 0 0 0 0 0 0\n"
+            "! Port Impedance 50 0 50 0 50 0\n"
+        )
+        stream.name = "unexpected.s2p"
+
+        with pytest.warns(UserWarning, match="Expected 2 or 4 values"):
+            Touchstone(stream)
 
     def test_read_zipped_touchstones(self):
         file = ZipFile(os.path.join(self.test_dir, "ntwk_zip.zip"))
