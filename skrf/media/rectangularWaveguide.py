@@ -128,7 +128,7 @@ class RectangularWaveguide(Media):
 
     Note
     ----
-    The two-wire model is derived for the TE10 mode [#Lomakin]_. It carries over to any
+    The two-wire model is derived for the TE10 mode. It carries over to any
     TE_m0 and TE_0n mode. It does not carry over to a mode with both indices nonzero.
 
     References
