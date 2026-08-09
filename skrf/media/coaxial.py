@@ -13,14 +13,16 @@ A coaxial transmission line defined from its electrical or geometrical/physical 
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 
-from numpy import array, exp, expm1, imag, log, pi, size, sqrt
+import numpy as np
+import scipy
 
 from .. import constants as _const
-from ..constants import INF, NumberLike
+from ..constants import NumberLike
 from ..mathFunctions import db_2_np, db_per_100feet_2_db_per_100meter, feet_2_meter
-from ..tlineFunctions import skin_depth, surface_resistivity
+from ..tlineFunctions import surface_impedance, surface_resistivity
 from .distributedCircuit import DistributedCircuit
 from .media import DefinedGammaZ0, Media
 
@@ -29,7 +31,7 @@ if TYPE_CHECKING:
 
 
 class Coaxial(DistributedCircuit, Media):
-    """
+    r"""
     A coaxial transmission line defined in terms of its inner/outer
     diameters and permittivity.
 
@@ -65,19 +67,83 @@ class Coaxial(DistributedCircuit, Media):
         Default is 0.
     sigma : number, or array-like, optional.
         conductors electrical conductivity, in S/m.
-        Default is infinity (non lossy metal).
-
-
-    TODO : different conductivity in case of different conductor kind
+        Default is 58e6, the conductivity of annealed copper at 20 °C (100% IACS).
+    tout : number, array-like, or None, optional
+        wall thickness of the outer conductor, in m.
+        If None (default), the shield is infinitely thick.
+    model : str, optional
+        Model of the conductors. 'schelkunoff' (default) is the Bessel function
+        solution of [#Schelkunoff]_, 'tesche' the equivalent circuit
+        approximation of [#Tesche]_.
+    dielectric : dict or None, optional
+        Material of the dielectric filling, as a dict taking the keys ``'ep_r'``
+        (complex relative permittivity :math:`\epsilon_r (1 - j\tan\delta)`) and
+        ``'mu_r'`` (complex relative permeability), both defaulting to 1.
+        If None (default), the filling is described by `epsilon_r` and `tan_delta`.
+    inner_conductor : dict, list of dict, or None, optional
+        Material of the inner conductor. A single dict describes a bulk conductor,
+        a list of dict a stack of coatings ordered from the dielectric inwards, of
+        which the deepest layer is the bulk that carries the dc current. Each dict
+        takes the keys ``'sigma'``, ``'mu_r'`` and ``'ep_r'`` of the layer itself,
+        and ``'rms_roughness'``, ``'boundary_loc'`` and ``'distribution'`` of the
+        boundary on top of it, which are handed to
+        :func:`~skrf.tlineFunctions.surface_impedance`.
+        If None (default), the conductor is smooth and made of bulk `sigma`.
+    outer_conductor : dict, list of dict, or None, optional
+        Material of the outer conductor, described as `inner_conductor`.
 
     Note
     ----
-    Dint, Dout, epsilon_r, tan_delta, sigma can all be vectors as long
+    Dint, Dout, tout, epsilon_r, tan_delta, sigma can all be vectors as long
     as they are the same length
 
     References
     ----------
-    .. [#] Pozar, D.M.; , "Microwave Engineering", Wiley India Pvt. Limited, 1 sept. 2009
+    .. [#Schelkunoff] S. A. Schelkunoff, "The electromagnetic theory of coaxial
+       transmission lines and cylindrical shields," Bell Syst. Tech. J.,
+       vol. 13, no. 4, pp. 532-579, Oct. 1934.
+       https://doi.org/10.1002/j.1538-7305.1934.tb00679.x
+    .. [#Tesche] F. M. Tesche, "A Simple Model for the Line Parameters of a Lossy
+       Coaxial Cable Filled With a Nondispersive Dielectric," IEEE Trans.
+       Electromagn. Compat., vol. 49, no. 1, pp. 12-17, Feb. 2007.
+       https://doi.org/10.1109/TEMC.2006.888185
+
+    Examples
+    --------
+    An RG58C/U flexible cable with copper conductors and a lossy polyethylene filling.
+    Its characteristic impedance and the insertion loss of a 100 mm length of it at 5 GHz:
+
+    >>> import skrf as rf
+    >>> from skrf.media import Coaxial
+    >>> freq = rf.Frequency(1, 5, 101, unit='GHz')
+    >>> rg58 = Coaxial(freq, Dint=0.91e-3, Dout=2.95e-3, epsilon_r=2.3,
+    ...                tan_delta=2e-4, sigma=58e6, z0_port=50)
+    >>> print(f"{rg58.z0[0]:.2f} ohm, {rg58.line(100, 'mm').s_db[-1, 1, 0]:.3f} dB")
+    46.56-0.05j ohm, -0.094 dB
+
+    The same cable roughened by 0.6 um rms at the inner conductor and by 1 um rms
+    at the braided shield, which is described by giving each conductor a material
+    of its own instead of the bulk `sigma`:
+
+    >>> rg58 = Coaxial(freq, Dint=0.91e-3, Dout=2.95e-3, epsilon_r=2.3,
+    ...                tan_delta=2e-4, z0_port=50,
+    ...                inner_conductor={'sigma': 58e6, 'rms_roughness': 0.6e-6},
+    ...                outer_conductor={'sigma': 58e6, 'rms_roughness': 1e-6})
+    >>> print(f"{rg58.line(100, 'mm').s_db[-1, 1, 0]:.3f} dB")
+    -0.140 dB
+
+    An APC-7 air line whose two conductors carry an ENIG finish, 0.05 um of gold
+    over 4 um of nickel over copper, roughened by 50 nm rms at the outside and by
+    0.2 um rms at the copper underneath:
+
+    >>> enig = [{'sigma': 41.1e6, 'rms_roughness': 50e-9, 'boundary_loc': 0},
+    ...         {'sigma': 14.5e6, 'mu_r': 20, 'rms_roughness': 50e-9, 'boundary_loc': 0.05e-6},
+    ...         {'sigma': 58e6, 'rms_roughness': 0.2e-6, 'boundary_loc': 4.05e-6}]
+    >>> freq = rf.Frequency(1, 18, 171, unit='GHz')
+    >>> apc7 = Coaxial(freq, Dint=3.04e-3, Dout=7.00e-3,
+    ...                inner_conductor=enig, outer_conductor=enig)
+    >>> print(f"{apc7.z0[0]:.2f} ohm, {apc7.line(100, 'mm').s_db[-1, 1, 0]:.3f} dB")
+    50.22-0.25j ohm, -0.301 dB
 
     """
     ## CONSTRUCTOR
@@ -87,15 +153,40 @@ class Coaxial(DistributedCircuit, Media):
                  z0: NumberLike | None = None,
                  Dint: NumberLike = .81e-3, Dout: NumberLike = 5e-3,
                  epsilon_r: NumberLike = 1, tan_delta: NumberLike = 0,
-                 sigma: NumberLike = INF,
+                 sigma: NumberLike = 58e6, tout: NumberLike | None = None,
+                 model: str = 'schelkunoff',
+                 dielectric: dict | None = None,
+                 inner_conductor: dict | list[dict] | None = None,
+                 outer_conductor: dict | list[dict] | None = None,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)
 
-        self.Dint, self.Dout = Dint,Dout
-        self.epsilon_r, self.tan_delta, self.sigma = epsilon_r, tan_delta, sigma
-        self.epsilon_prime = _const.epsilon_0*self.epsilon_r
-        self.epsilon_second = _const.epsilon_0*self.epsilon_r*self.tan_delta
+        self.Dint, self.Dout = Dint, Dout
+        self.tout = np.inf if tout is None else tout
+        self.sigma = sigma
+        self.model = model
+        self.inner_conductor, self.outer_conductor = inner_conductor, outer_conductor
+        # warning when describing one conductor and not the other
+        if (inner_conductor is None) != (outer_conductor is None):
+            given, missing = (('outer_conductor', 'inner_conductor') if inner_conductor is None
+                              else ('inner_conductor', 'outer_conductor'))
+            warnings.warn(
+                f'Only {given} was given a material, so {missing} stays a smooth bulk '
+                f'conductor of sigma = {sigma} S/m and unit relative permeability. '
+                f'Pass {missing} as well to describe both conductors.',
+                UserWarning, stacklevel = 2)
+        # epsilon_r and tan_delta are the special case of a purely dielectric filling
+        self.dielectric = {'ep_r': epsilon_r*(1 - 1j*tan_delta)} if dielectric is None else dielectric
+        ep_r = self.dielectric.get('ep_r', 1)
+        self.epsilon_prime  = _const.epsilon_0*np.real(ep_r)
+        # a lossy ep_r = ep' - j*ep'' has a negative imaginary part, while epsilon_second
+        # is ep'' itself, which G expects to be positive
+        self.epsilon_second = -_const.epsilon_0*np.imag(ep_r)
+        # read back from the filling actually in use, which is the dielectric dict
+        # when one is given and the epsilon_r, tan_delta pair otherwise
+        self.epsilon_r  = np.real(ep_r)
+        self.tan_delta  = -np.imag(ep_r)/np.real(ep_r)
 
     @classmethod
     def from_attenuation_VF(cls, frequency: Frequency | None = None,
@@ -141,7 +232,7 @@ class Coaxial(DistributedCircuit, Media):
 
         """
         # test size of parameters
-        if size(array(att, dtype="object")) not in (1, size(frequency.f)):
+        if np.size(np.array(att, dtype="object")) not in (1, np.size(frequency.f)):
             raise ValueError('Attenuation should be scalar or of same size that the frequency.')
 
         # create gamma
@@ -163,7 +254,7 @@ class Coaxial(DistributedCircuit, Media):
         else:
             raise ValueError('Incorrect attenuation unit. Please see documentation. ', unit)
 
-        beta = 2 * pi * frequency.f / _const.c / VF
+        beta = 2 * np.pi * frequency.f / _const.c / VF
 
         gamma = alpha + 1j*beta
 
@@ -206,11 +297,11 @@ class Coaxial(DistributedCircuit, Media):
         """
         ep= _const.epsilon_0*epsilon_r
 
-        if imag(z0) !=0:
+        if np.imag(z0) !=0:
             raise NotImplementedError()
 
         b = Dout/2.
-        b_over_a = exp(2*pi*z0*sqrt(ep/_const.mu_0))
+        b_over_a = np.exp(2*np.pi*z0*np.sqrt(ep/_const.mu_0))
         a = b/b_over_a
         Dint = 2*a
         return cls(frequency=frequency, z0_port = z0_port, Dint=Dint, Dout=Dout,
@@ -226,6 +317,10 @@ class Coaxial(DistributedCircuit, Media):
         -------
         Rs : number or array
             surface resistivity
+
+        Note
+        ----
+        Not used in code. Kept for backward-compatibility.
 
         """
         f  = self.frequency.f
@@ -258,38 +353,151 @@ class Coaxial(DistributedCircuit, Media):
         """
         return self.Dout/2.
 
+    def _conductor_impedance(self, r: NumberLike, t: NumberLike | None,
+                             conductor: dict | list[dict] | None) -> NumberLike:
+        r"""
+        Impedance per unit length of one conductor, in Ohm/m.
+
+        A conductor is described by its surface impedance :math:`Z_s`, in Ohm per
+        square, which is used to build the impedance per unit length that
+        also carries the dc resistance and the internal inductance of the conductor.
+
+        Parameters
+        ----------
+        r : number, or array-like
+            radius of the conductor, in m. The inner conductor is a rod of radius
+            `r`, the outer conductor a tube whose inside sits at `r`.
+        t : number, array-like, or None
+            wall thickness of the tube, in m. None for the solid inner conductor.
+        conductor : dict, list of dict, or None
+            material stack of the conductor, as described in :class:`Coaxial`.
+
+        Returns
+        -------
+        Z : number, or array-like
+            impedance per unit length, in Ohm/m
+        """
+        if conductor is None:
+            stack = [{}]
+        elif isinstance(conductor, dict):
+            stack = [conductor]
+        else:
+            stack = list(conductor)
+        # the deepest layer is the bulk of the conductor, which carries the dc current
+        # and the internal inductance; the layers on top of it only shape Zs
+        ones = np.ones_like(self.frequency.f)
+        sigma = ones*stack[-1].get('sigma', self.sigma)
+        mu = _const.mu_0*ones*stack[-1].get('mu_r', 1)
+
+        # a perfect conductor and dc are the two limits the models below cannot evaluate.
+        # Both are put back at the end, so the placeholders substituted here only have to
+        # keep the intermediate results finite.
+        perfect = np.isinf(sigma)
+        dc = self.frequency.f == 0
+        sigma = np.where(perfect, 1., sigma)  # placeholder value for perfect conductor
+        f     = np.where(dc, 1., self.frequency.f)  # placeholder value for dc, to avoid division by zero
+        w = 2*np.pi*f
+        # dc resistance, where the current is spread uniformly over the conductor
+        Rdc = 1/(np.pi*r**2*sigma) if t is None else 1/(2*np.pi*r*t)/sigma
+
+        rms_roughness = [layer.get('rms_roughness', 0) for layer in stack]
+        if len(stack) == 1 and not np.any(rms_roughness):
+            Zs = np.sqrt(1j*w*mu/sigma)  # a smooth bulk conductor, where Zs is a closed form
+        else:
+            # the wave impinges on the conductor from the dielectric filling, which is
+            # therefore the outside medium of the stack
+            materials = [self.dielectric] + [{k: v for k, v in layer.items()
+                                               if k in ('sigma', 'mu_r', 'ep_r')} for layer in stack]
+            Zs = surface_impedance(f, materials, rms_roughness = rms_roughness,
+                    boundary_loc = [layer.get('boundary_loc', 0) for layer in stack],
+                    distribution = [layer.get('distribution', 'norm') for layer in stack])
+
+        Zhf = Zs/(2*np.pi*r)  # impedance per unit length of a conductor many skin depths deep
+        if self.model == 'tesche':
+            if t is None:
+                Lint = mu/(8*np.pi)  # eq. (11) of Tesche, solid rod
+            else:
+                # eq. (13) of Tesche, tube of outer radius c, written in terms of
+                # q = (r/c)**2 so that a wall much thicker than r does not overflow
+                q = (r/(r + t))**2
+                Lint = mu/(2*np.pi)*(np.log1p(t/r)/(1 - q)**2 + (q - 3)/(4*(1 - q)))
+            # eq. (14) of Tesche
+            Z = Rdc + Zhf/(1 + Zhf/(1j*w)/Lint)
+        elif self.model == 'schelkunoff':
+            # ive(n, z) is I_n(z) scaled by exp(-|Re(z)|) and kve(n, z) is K_n(z) scaled
+            # by exp(z). Both scalings cancel in the ratios below, which keeps a conductor
+            # many skin depths deep from over- and underflowing.
+            g = np.sqrt(1j*w*mu*sigma)  # propagation constant inside the metal
+            # scipy returns nan past |z| = 2**31/2. Nothing real comes near it.
+            deepest = 1e8/np.abs(g)
+            x = g*np.minimum(r, deepest)
+            if t is None:
+                # eq. (65) of Schelkunoff, solid rod
+                Z = Zhf*scipy.special.ive(0, x)/scipy.special.ive(1, x)
+            else:
+                # eq. (74) of Schelkunoff, tube, divided by I_1 of its outer surface so
+                # that the wall enters only through Q, what the outer surface sends back.
+                # Q carries the round trip exp(-2*g*t) across the wall, which underflows
+                # to zero once the wall is many skin depths thick and leaves eq. (74) with
+                # its outer radius at infinity.
+                y, gt = g*np.minimum(r + t, deepest), g*np.minimum(t, deepest)
+                Q = ( scipy.special.kve(1, y)/scipy.special.ive(1, y)*np.exp(-(gt + abs(gt.real))) )
+                Z = Zhf*((scipy.special.ive(0, x)*Q + scipy.special.kve(0, x))
+                         /(scipy.special.kve(1, x) - scipy.special.ive(1, x)*Q))
+        else:
+            raise ValueError('Unknown conductor model')
+
+        return np.where(perfect, 0., np.where(dc, Rdc, Z))
+
+    @property
+    def _Zc(self) -> NumberLike:
+        """
+        Impedance per unit length of both conductors together, in Ohm/m.
+
+        Returns
+        -------
+        Zc : number, or array-like
+            impedance per unit length, in Ohm/m
+        """
+        return (self._conductor_impedance(self.a, None, self.inner_conductor)
+                + self._conductor_impedance(self.b, self.tout, self.outer_conductor))
+
+    @property
+    def _L_ext(self) -> NumberLike:
+        """
+        External inductance, in H/m, i.e. the inductance of the field between the
+        two conductors. It comes out complex for a magnetically lossy filling, the
+        imaginary part being the magnetic loss, the same way a lossy dielectric
+        makes the permittivity complex.
+        """
+        return _const.mu_0*self.dielectric.get('mu_r', 1)/(2.*np.pi)*np.log(self.b/self.a)
+
     # derivation of distributed circuit parameters
     @property
     def R(self) -> NumberLike:
         """
         Distributed resistance R, in Ohm/m.
-        See [#]_ for more information.
+
+        This is the loss of the two conductors, from their dc resistance up to the
+        skin effect, plus the magnetic loss of the filling if there is any.
+        See the references of :class:`Coaxial`.
 
         Returns
         -------
         R : number, or array-like
             distributed resistance, in Ohm/m
 
-        References
-        -------
-
-        .. [#] https://www.microwaves101.com/encyclopedias/a-more-exact-coax-attenuation-solution
-
         """
-        rho = 1/self.sigma
-        delta = skin_depth(f=self.frequency.f, rho=rho, mu_r=1)
-        # Avoid infinites at DC
-        delta[delta > 1e6] = 1e6
-
-        Rin = rho / (2*pi*delta*self.a + 2*pi*delta**2*expm1(-self.a/delta))
-        # Outer shield is assumed to be much thicker than skin depth
-        Rout = rho / (2*pi*delta*self.b)
-        return Rin + Rout
+        return self._Zc.real - self.frequency.w*np.imag(self._L_ext)
 
     @property
     def L(self) -> NumberLike:
         """
         Distributed inductance L, in H/m
+
+        This is the external inductance of the field between the two conductors,
+        plus the internal inductance of the conductors themselves. The latter is
+        dropped at dc, where it is not defined for an infinitely thick shield.
 
         Returns
         -------
@@ -297,7 +505,9 @@ class Coaxial(DistributedCircuit, Media):
             distributed inductance, in  H/m
 
         """
-        return _const.mu_0/(2.*pi)*log(self.b/self.a)
+        w = self.frequency.w
+        Lint = np.divide(self._Zc.imag, w, out=np.zeros_like(w), where=w != 0)
+        return np.real(self._L_ext) + Lint
 
     @property
     def C(self) -> NumberLike:
@@ -310,7 +520,7 @@ class Coaxial(DistributedCircuit, Media):
             distributed capacitance, in F/m
 
         """
-        return 2.*pi*self.epsilon_prime/log(self.b/self.a)
+        return 2.*np.pi*self.epsilon_prime/np.log(self.b/self.a)
 
     @property
     def G(self) -> NumberLike:
@@ -323,7 +533,7 @@ class Coaxial(DistributedCircuit, Media):
             distributed conductance, in S/m
 
         """
-        return 2*pi*self.frequency.w*self.epsilon_second/log(self.b/self.a)
+        return 2*np.pi*self.frequency.w*self.epsilon_second/np.log(self.b/self.a)
 
     def __str__(self):
         f=self.frequency
