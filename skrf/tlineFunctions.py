@@ -206,13 +206,14 @@ def surface_resistivity(f: NumberLike, rho: float, mu_r: float):
 
 
 def surface_impedance(f: NumberLike, material_properties: list[dict] | dict,
-                      rms_roughness: NumberLike, boundary_loc: NumberLike = 0,
+                      rms_roughness: NumberLike = 0, boundary_loc: NumberLike = 0,
                       distribution='norm', rtol: float = 1e-6):
     r"""
-    Surface impedance of a rough conductor boundary.
+    Surface impedance of an arbitrary conductor boundary that
+    could compromise roughness and stack of materials.
 
-    The rough boundary between two materials -- and, more generally, each
-    boundary of a stack of coated conductors -- is described by the cumulative
+    The rough boundary between two materials, and, more generally, each
+    boundary of a stack of coated conductors, is described by the cumulative
     distribution function (CDF) of its surface height, which grades the
     material properties across the transition [#tegowski]_ [#gold]_:
 
@@ -231,10 +232,7 @@ def surface_impedance(f: NumberLike, material_properties: list[dict] | dict,
         Z_i = \eta_i \frac{Z_{i+1} + \eta_i \tanh(\gamma_i \Delta x_i)}
                           {\eta_i + Z_{i+1} \tanh(\gamma_i \Delta x_i)}
 
-    starting at the intrinsic impedance of the deepest material. The result is
-    the surface impedance seen by a wave impinging on the stack: its real part
-    is the effective surface resistance and its imaginary part the internal
-    reactance.
+    The result is the surface impedance seen by a wave impinging on the stack.
 
     Parameters
     ----------
@@ -246,18 +244,17 @@ def surface_impedance(f: NumberLike, material_properties: list[dict] | dict,
         any of the keys ``'sigma'`` (conductivity in S/m), ``'ep_r'``
         (relative permittivity) and ``'mu_r'`` (relative permeability), with
         defaults 0, 1 and 1; values are scalars or arrays matching ``f``.
-        Describe a conductor by ``'sigma'`` (its ``'ep_r'``, if given, must be
-        real-valued) and a lossy dielectric by a complex ``'ep_r'``. Passing a
-        single dict is a shorthand for that material below vacuum, i.e.
-        ``[{}, {...}]``. Consecutive materials are separated by one rough
-        boundary each.
-    rms_roughness : number or array-like
-        rms roughness (Rq) of each boundary, in meter. One value per boundary;
-        a scalar applies to all. Use 0 for an ideally smooth (step) boundary.
+        Describe a conductor by ``'sigma'``, where ``'ep_r'``, if given, must be
+        real-valued. On the other hand, a lossy dielectric described by complex ``'ep_r'``.
+        Passing a single dict is a shorthand for that material below vacuum, i.e.
+        ``[{}, {...}]``. Consecutive materials are separated by one rough boundary each.
+    rms_roughness : number or array-like, optional
+        rms roughness (i.e., Rq or Rrms) of each boundary, in meter. One value per boundary;
+        a scalar applies to all. Default is 0.
     boundary_loc : number or array-like, optional
-        Mean depth of each boundary, in meter, in increasing order. The
-        spacing of consecutive boundaries is the coating thickness.
-        Default is 0.
+        Mean location of each boundary, in meter, in increasing order. Default is 0 for a single boundary.
+        For multiple boundaries, the first is at 0 and the last is at the total thickness of the stack,
+        e.g. ``[0, 0.05e-6, 4.05e-6]`` for a 50 nm gold layer on top of 4 um nickel layer.
     distribution : str, frozen scipy.stats distribution, callable, or list thereof, optional
         Height distribution of each boundary: the name of a scipy.stats
         continuous distribution without shape parameters (``'norm'``
@@ -278,14 +275,13 @@ def surface_impedance(f: NumberLike, material_properties: list[dict] | dict,
     -----
     The material variation inside each segment is handled by a 4th-order
     Magnus scheme (Eqs. (252)-(254) in [#blanes]_), and the segment count over the
-    rough transitions is doubled -- combining the last refinement levels by
-    Richardson extrapolation -- until ``Zs`` changes by less than ``rtol``; a
-    ``RuntimeWarning`` is issued if the refinement does not converge. ``Zs``
-    is referenced 5 rms outside the outermost boundary, where the material is
-    still the unperturbed outside medium.
+    rough transitions is doubled, combining the last refinement levels by
+    Richardson extrapolation, until ``Zs`` changes by less than ``rtol``; a
+    ``RuntimeWarning`` is issued if the refinement does not converge.
 
-    With ``rms_roughness=0`` a single smooth conductor recovers the classic
-    :math:`(1 + j)\sqrt{\pi f \mu \rho}` known from :func:`surface_resistivity`.
+    With the default ``rms_roughness=0`` a single smooth conductor recovers the
+    classic :math:`(1 + j)\sqrt{\pi f \mu \rho}` known from
+    :func:`surface_resistivity`.
 
     See Also
     --------
@@ -307,14 +303,19 @@ def surface_impedance(f: NumberLike, material_properties: list[dict] | dict,
 
     Examples
     --------
-    Copper with 1 um rms roughness at 10 GHz, against the smooth value
-    :math:`(1 + j) R_s`:
+    Smooth copper at 10 GHz, reproducing :math:`(1 + j) R_s`:
 
     >>> import skrf as rf
-    >>> Zs = rf.tlineFunctions.surface_impedance(10e9, {'sigma': 58e6}, rms_roughness=1e-6)
+    >>> Zs = rf.tlineFunctions.surface_impedance(10e9, {'sigma': 58e6})
     >>> Rs = rf.tlineFunctions.surface_resistivity(10e9, rho=1/58e6, mu_r=1)
-    >>> print(f"rough: {Zs:.4f} ohm, smooth: {(1 + 1j)*Rs:.4f} ohm")
-    rough: 0.0630+0.3356j ohm, smooth: 0.0261+0.0261j ohm
+    >>> print(f"{Zs:.4f} ohm, {(1 + 1j)*Rs:.4f} ohm")
+    0.0261+0.0261j ohm, 0.0261+0.0261j ohm
+
+    The same conductor with 1 um rms roughness:
+
+    >>> Zs = rf.tlineFunctions.surface_impedance(10e9, {'sigma': 58e6}, rms_roughness=1e-6)
+    >>> print(f"{Zs:.4f} ohm")
+    0.0630+0.3356j ohm
 
     The top side of a microstrip trace with an ENIG surface finish; a nearly
     flat (5 nm rms) stack of 0.05 um gold and 4 um nickel on copper:
@@ -357,18 +358,16 @@ def surface_impedance(f: NumberLike, material_properties: list[dict] | dict,
     if np.any(np.diff(boundary_loc) < 0):
         raise ValueError("boundary_loc must be sorted in increasing depth order (matching material_properties).")
 
-    # computation span: reach 5 rms past every boundary (the -5 Rq convention of Tegowski
-    # et al.), not just the outermost one -- a deeper boundary that is rougher reaches
-    # further out. Zs is referenced to x_start, where the material is still the outside medium.
+    # computation span: reach 5 rms past every boundary, where a deeper boundary that is rougher
+    # reaches further out. Zs is referenced to x_start, where the material is still the outside medium.
     # Zero roughness is floored to 1e-14 m, making that boundary a practically ideal step.
     reach = 5*np.maximum(rms_roughness, 1e-14)
     x_start = np.min(boundary_loc - reach)
-    x_end = np.max(boundary_loc + reach)
+    x_end   = np.max(boundary_loc + reach)
 
     # ------- surface impedance, doubling the segments until it converges -------
     # Doubling is the standard geometric refinement: total work stays about twice the
-    # finest level, and the fixed 2:1 ratio gives the clean Richardson factor
-    # 1/(2**4 - 1) below.
+    # finest level, and the fixed 2:1 ratio gives the Richardson factor 1/(2**4 - 1).
     eta_bulk = np.sqrt(_const.mu_0*mu_r[-1]/(_const.epsilon_0*ep_r[-1]))
     Zs_levels = []  # surface impedance at each refinement level
     converged = False

@@ -3,8 +3,9 @@ import unittest
 
 import numpy as np
 import pytest
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import assert_allclose, assert_almost_equal, assert_array_almost_equal
 from scipy.constants import mu_0
+from scipy.special import ive, kve
 
 import skrf as rf
 from skrf.mathFunctions import db_2_np, meter_2_feet
@@ -133,3 +134,109 @@ class MediaTestCase(unittest.TestCase):
             z0_port = 50.
             )
         assert_array_almost_equal(coax.L*coax.C, mu_0*coax.epsilon_prime)
+
+    def test_material_dicts_match_scalar_parameters(self):
+        """The material dicts reproduce epsilon_r, tan_delta and sigma."""
+        freq = rf.Frequency(1, 40, 21, unit='GHz')
+        geometry = {'Dint': 1e-3, 'Dout': 3e-3}
+        ref = Coaxial(freq, **geometry, epsilon_r=2.1, tan_delta=2e-4, sigma=58e6)
+        media = Coaxial(freq, **geometry,
+                        dielectric={'ep_r': 2.1*(1 - 2e-4j)},
+                        inner_conductor={'sigma': 58e6},
+                        outer_conductor={'sigma': 58e6})
+        assert_allclose(media.gamma, ref.gamma, rtol=1e-12)
+        assert_allclose(media.z0, ref.z0, rtol=1e-12)
+
+    def test_zero_roughness_matches_smooth_conductor(self):
+        """A boundary of zero rms roughness leaves the smooth conductor."""
+        freq = rf.Frequency(1, 40, 21, unit='GHz')
+        kw = {'Dint': 1e-3, 'Dout': 3e-3, 'epsilon_r': 2.1, 'tan_delta': 2e-4}
+        ref = Coaxial(freq, **kw, sigma=58e6)
+
+        # a single smooth layer, where the surface impedance has a closed form
+        smooth = {'sigma': 58e6, 'rms_roughness': 0}
+        media = Coaxial(freq, **kw, inner_conductor=smooth, outer_conductor=smooth)
+        assert_allclose(media.gamma, ref.gamma, rtol=1e-12)
+
+        # two identical layers instead go through surface_impedance, which has to
+        # degenerate to the same bulk conductor
+        stack = [{'sigma': 58e6}, {'sigma': 58e6}]
+        media = Coaxial(freq, **kw, inner_conductor=stack, outer_conductor=stack)
+        assert_allclose(media.gamma, ref.gamma, rtol=1e-8)
+
+        # roughening the conductors can only add loss
+        rough = {'sigma': 58e6, 'rms_roughness': 1e-6}
+        media = Coaxial(freq, **kw, inner_conductor=rough, outer_conductor=rough)
+        self.assertTrue(np.all(media.gamma.real > ref.gamma.real))
+
+    def test_R_dc_limit(self):
+        """At dc the current fills the conductors uniformly."""
+        rho, a, b, t = 1.68e-8, 0.5e-3, 1.5e-3, 0.2e-3
+        freq = rf.Frequency(0, 10, 3, unit='GHz')
+        for model in ('schelkunoff', 'tesche'):
+            # a wall of finite thickness carries a dc resistance of its own
+            media = Coaxial(freq, Dint=2*a, Dout=2*b, sigma=1/rho, tout=t,
+                            model=model)
+            assert_allclose(media.R[0],
+                            rho/(np.pi*a**2) + rho/(2*np.pi*b*t), rtol=1e-9)
+
+            # an infinitely thick one does not
+            media = Coaxial(freq, Dint=2*a, Dout=2*b, sigma=1/rho,
+                            model=model)
+            assert_allclose(media.R[0], rho/(np.pi*a**2), rtol=1e-9)
+
+            # the internal inductance is dropped at dc, leaving the external one
+            assert_allclose(media.L[0], mu_0/(2*np.pi)*np.log(b/a), rtol=1e-12)
+
+    def test_thick_outer_conductor(self):
+        """A wall many skin depths thick is the infinitely thick one."""
+        freq = rf.Frequency(1, 40, 21, unit='GHz')
+        kw = {'Dint': 1e-3, 'Dout': 3e-3, 'epsilon_r': 2.1, 'sigma': 58e6}
+        ref = Coaxial(freq, **kw)  # tout defaults to None, an infinitely thick wall
+
+        # the field dies out inside the wall, so the Bessel solution sits at its
+        # limit already for a wall of a few skin depths
+        assert_allclose(Coaxial(freq, **kw, tout=0.1e-3).gamma, ref.gamma, rtol=1e-12)
+
+        # the equivalent circuit only approaches the limit as the log of the wall
+        # thickness, through the internal inductance of the tube
+        ref_simple = Coaxial(freq, **kw, model='tesche')
+        deviation = [
+            np.max(np.abs(Coaxial(freq, **kw, tout=t, model='tesche').gamma
+                          - ref_simple.gamma)/np.abs(ref_simple.gamma))
+            for t in (0.1e-3, 1e-3, 1e-2)]
+        self.assertTrue(deviation[0] < 1e-4)
+        self.assertTrue(np.all(np.diff(deviation) < 0))
+
+        # numpy's infinity is the same infinitely thick wall as the default None,
+        # and so is a wall whose thickness is merely far beyond any skin depth
+        assert_allclose(Coaxial(freq, **kw, tout=np.inf).gamma, ref.gamma, rtol=1e-15)
+        for t in (1e10, 1e99, 1e300):
+            assert_allclose(Coaxial(freq, **kw, tout=t).gamma, ref.gamma, rtol=1e-15)
+            # the equivalent circuit converges to it from below, without overflowing
+            assert_allclose(Coaxial(freq, **kw, tout=t, model='tesche').gamma,
+                            ref_simple.gamma, rtol=1e-7)
+
+        # the limit itself is eq. (74) of Schelkunoff with the outer radius sent to
+        # infinity, a solid rod inside and a half space outside
+        a, b, w = kw['Dint']/2, kw['Dout']/2, freq.w
+        g, Zs = np.sqrt(1j*w*mu_0*kw['sigma']), np.sqrt(1j*w*mu_0/kw['sigma'])
+        assert_allclose(ref.R,
+                        (Zs/(2*np.pi*a)*ive(0, g*a)/ive(1, g*a)
+                         + Zs/(2*np.pi*b)*kve(0, g*b)/kve(1, g*b)).real, rtol=1e-12)
+
+    def test_perfect_conductor(self):
+        """An infinite conductivity is lossless."""
+        freq = rf.Frequency(1, 40, 21, unit='GHz')
+        kw = {'Dint': 1e-3, 'Dout': 3e-3, 'epsilon_r': 2.1}
+        for model in ('schelkunoff', 'tesche'):
+            media = Coaxial(freq, **kw, sigma=np.inf, model=model)
+            assert_allclose(media.R, 0, atol=0)
+            assert_allclose(media.gamma.real, 0, atol=1e-12)
+            # without loss the inductance is purely external
+            assert_allclose(media.L, mu_0/(2*np.pi)*np.log(3.), rtol=1e-12)
+
+            # a large but finite conductivity approaches the same limit
+            media = Coaxial(freq, **kw, sigma=1e30, model=model)
+            assert_allclose(media.R, 0, atol=1e-9)
+            assert_allclose(media.L, mu_0/(2*np.pi)*np.log(3.), rtol=1e-12)

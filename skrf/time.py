@@ -227,7 +227,7 @@ def detect_span(ntwk: Network, t_unit: str = "") -> float:
 
     return span / time_lookup_dict[t_unit]
 
-def get_window(window: str | tuple | Callable, Nx: int, **kwargs) -> np.ndarray:
+def get_window(window: str | tuple | Callable, Nx: int, fftbins: bool = True, **kwargs) -> np.ndarray:
     """Calls a custom window function or `scipy.signal.get_window()` depending on the window argument.
 
     Parameters
@@ -237,6 +237,12 @@ def get_window(window: str | tuple | Callable, Nx: int, **kwargs) -> np.ndarray:
         for `scipy.signal.get_window()`.
     Nx : int
         Number of samples
+    fftbins : bool
+        If True (default), create a periodic window, which is symmetric about sample `Nx / 2`.
+        If False, create a symmetric window, which is symmetric about sample `(Nx - 1) / 2`.
+        Only used for string or tuple window specifications, which are passed on to
+        `scipy.signal.get_window()`. Callable windows are called as `window(Nx)` and do not
+        receive this argument.
 
     Returns
     -------
@@ -247,7 +253,7 @@ def get_window(window: str | tuple | Callable, Nx: int, **kwargs) -> np.ndarray:
     if callable(window):
         return window(Nx, **kwargs)
     else:
-        return scipy.signal.get_window(window, Nx=Nx, **kwargs)
+        return scipy.signal.get_window(window, Nx=Nx, fftbins=fftbins, **kwargs)
 
 def time_gate(ntwk: Network, start: float = None, stop: float = None, center: float = None, span: float = None,
               mode: str = 'bandpass', window=('kaiser', 6),
@@ -285,7 +291,11 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
     mode : ['bandpass', 'bandstop']
         mode of gate
     window : string, float, or tuple
-        passed to `window` arg of `scipy.signal.get_window()` or callable function
+        passed to `window` arg of `scipy.signal.get_window()` or callable function.
+        String and tuple specifications are requested with `fftbins=False`, so that the
+        time-domain gate is symmetric about its center sample. Callable windows are called
+        as `window(window_width)` and are themselves responsible for returning a symmetric
+        window.
     method : str
         Gating method. There are 3 option: 'convolution', 'fft', 'rfft'.
 
@@ -433,7 +443,11 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
 
     # create gating window
     window_width = abs(stop_idx - start_idx) + 1
-    window = get_window(window, window_width)
+    # The gate multiplies a time vector that is centered on t = 0, so the window has to be symmetric
+    # about its own center sample. A periodic window (the scipy default) is symmetric about sample
+    # `window_width / 2` instead of `(window_width - 1) / 2`, which shifts the gate by half a sample
+    # and lowers its peak below unity.
+    window = get_window(window, window_width, fftbins=False)
 
     # create the gate by padding the window with zeros
     gate = np.zeros_like(t)
