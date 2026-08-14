@@ -257,6 +257,68 @@ class NetworkTestCase(unittest.TestCase):
         gated = ntwk.s11.time_gate()
         self.assertTrue(len(gated)== len(ntwk))
 
+    def test_autogate_ignores_t_unit(self):
+        """In auto-gate mode `t_unit` has nothing to label, so it must not change the result.
+
+        `t_unit` states the unit of `start`, `stop`, `center` and `span`. When all four are
+        None the gate is determined by the data alone: the centre is the tallest time-domain
+        peak and the span is the distance to the second tallest. Passing a different unit for
+        arguments that were not passed cannot move the gate.
+
+        The gate edges land on the same integer sample indices whatever the unit, so all three
+        networks come out of identical FFT operations and the comparison is exact.
+
+        The second assertion pins the gate against a reference built here, without calling
+        `time_gate()`: two reflections are placed by hand at -8 and +20 samples from t = 0, so
+        the documented auto-gate rule (centre on the tallest peak, span equal to the distance
+        between the two tallest) puts a boxcar over the closed sample interval [20-14, 20+14].
+
+        The third assertion covers the mixed case, where one of centre and span is given and
+        the other is detected. The given one is expressed in `t_unit` and the detected one is
+        not, so the gate must land on the same samples for every unit there too.
+        """
+        npoints = 128
+        freq = Frequency(1, npoints, npoints, unit='GHz')
+        dt = 1 / (npoints * freq.step)
+        center_idx = npoints // 2  # index of t = 0 on the fftshift-ed time axis
+
+        # a 1e-9 floor keeps s_time_db finite for the peak finder; it is 180 dB below the
+        # reflections and cannot move them
+        t_domain = np.full(npoints, 1e-9, dtype=complex)
+        t_domain[center_idx - 8] = 0.4
+        t_domain[center_idx + 20] = 1.0
+        ntwk = rf.Network(frequency=freq, s=np.fft.fft(np.fft.ifftshift(t_domain)))
+
+        # a boxcar gate and no frequency-domain window keep the covered samples untouched,
+        # so the result is pinned without depending on the shape of any window
+        gated = {unit: ntwk.time_gate(window='boxcar', fft_window=None, t_unit=unit)
+                 for unit in ('s', 'ns', 'ps')}
+
+        for unit in ('s', 'ps'):
+            np.testing.assert_array_equal(
+                gated[unit].s, gated['ns'].s,
+                err_msg=f"auto-gate result differs between t_unit='{unit}' and t_unit='ns'")
+
+        s_td = np.fft.fftshift(np.fft.ifft(ntwk.s[:, 0, 0]))
+        lo, hi = center_idx + 20 - 14, center_idx + 20 + 14
+        reference_td = np.zeros(npoints, dtype=complex)
+        reference_td[lo:hi + 1] = s_td[lo:hi + 1]
+        reference = np.fft.fft(np.fft.ifftshift(reference_td))
+
+        for unit in ('s', 'ns', 'ps'):
+            np.testing.assert_array_equal(
+                gated[unit].s[:, 0, 0], reference,
+                err_msg=f"auto-gate with t_unit='{unit}' does not match the hand-built gate")
+
+        # mixed case: one bound comes from the caller in t_unit, the other is detected
+        per_second = {'s': 1.0, 'ns': 1e9, 'ps': 1e12}
+        for unit, factor in per_second.items():
+            for given in ({'center': 20 * dt * factor}, {'span': 28 * dt * factor}):
+                mixed = ntwk.time_gate(window='boxcar', fft_window=None, t_unit=unit, **given)
+                np.testing.assert_array_equal(
+                    mixed.s[:, 0, 0], reference,
+                    err_msg=f"t_unit='{unit}' with {given} does not match the hand-built gate")
+
     def test_lpi(self):
         """Test low pass impulse response against data generated with METAS VNA Tools."""
 

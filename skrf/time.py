@@ -378,16 +378,23 @@ def time_gate(ntwk: Network, start: float = None, stop: float = None, center: fl
         center = (stop+start)/2.
 
     else:
+        # `t_unit` states the unit of the arguments the caller passed, so `t_mult` may only
+        # be applied to those. The values detected below are read in ns and are converted
+        # with the ns multiplier instead.
+        ns_mult = time_lookup_dict["ns"]
+
         if center is None:
             # they didn't provide center, so find the peak
             n = ntwk.s_time_mag.argmax()
-            center = ntwk.frequency.t_ns[n]
+            center = ntwk.frequency.t_ns[n] * ns_mult
+        else:
+            center *= t_mult
 
         if span is None:
-            span = detect_span(ntwk, t_unit='ns')
+            span = detect_span(ntwk, t_unit='ns') * ns_mult
+        else:
+            span *= t_mult
 
-        center *= t_mult
-        span *= t_mult
         start = center - span / 2.
         stop = center + span / 2.
 
