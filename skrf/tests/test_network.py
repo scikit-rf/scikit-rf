@@ -1305,6 +1305,58 @@ class NetworkTestCase(unittest.TestCase):
                 self.assertTrue((net.z0 == net[0].z0).all())
                 self.assertTrue(net.s_def != net[0].s_def)
 
+    def test_innerconnect_preserves_s_def(self):
+        """ Test that innerconnect() returns a Network with the same s_def as
+        the one it was given, and that the returned s-parameters are expressed
+        in that definition.
+
+        The network is a 4-port made of two uncoupled 2-port blocks: ports 0
+        and 1 carry block P, ports 2 and 3 carry block Q, and there is no
+        coupling between the blocks. Connecting ports 0 and 1 together cannot
+        change block Q, so the result must be block Q on the same reference
+        impedance, in the same s_def. That reference is built independently of
+        the connection code.
+
+        Both blocks are passive and reciprocal by construction: Z is symmetric
+        and Re(Z) is positive definite.
+        """
+        zp = np.array([[60.0 + 20.0j, 25.0 - 10.0j],
+                       [25.0 - 10.0j, 80.0 + 5.0j]])
+        zq = np.array([[45.0 - 15.0j, 30.0 + 12.0j],
+                       [30.0 + 12.0j, 70.0 + 25.0j]])
+        z0 = 50.0 + 30.0j
+
+        for blk in (zp, zq):
+            self.assertTrue(np.all(np.linalg.eigvalsh(blk.real) > 0))
+
+        z4 = np.zeros((1, 4, 4), dtype=complex)
+        z4[0, 0:2, 0:2] = zp
+        z4[0, 2:4, 2:4] = zq
+
+        ntwk = rf.Network(s=np.zeros((1, 4, 4)), f=1, z0=z0, s_def='power')
+        ntwk.z = z4
+        ref = rf.Network(s=np.zeros((1, 2, 2)), f=1, z0=z0, s_def='power')
+        ref.z = zq.reshape(1, 2, 2)
+
+        # Tolerance, fixed before the run from the data type and the operation
+        # count, and not adjusted afterwards. complex128 unit roundoff is
+        # u = 2**-53. The reference and the result are separated by k = 14
+        # elementary n x n matrix operations: z2s on each side (2 each), the
+        # power->pseudo and pseudo->power renormalizations inside innerconnect
+        # (4 each), and the connection itself (2). Each carries a relative
+        # error of order n*u amplified by the condition number of the operand
+        # that is inverted, and a factor 10 covers the LU growth factor:
+        #     atol = 10 * k * n * kappa * u
+        u = 2.0 ** -53
+        kappa = float(np.linalg.cond(z4[0] + z0 * np.eye(4)))
+        self.assertLess(kappa, 5.0)
+        atol = 10 * 14 * 4 * kappa * u
+
+        result = rf.network.innerconnect(ntwk, 0, 1)
+
+        np.testing.assert_allclose(result.s, ref.s, rtol=0, atol=atol)
+        self.assertEqual(result.s_def, 'power')
+
     def test_parallelconnect(self):
         # Create 2 network with 2 ports
         ntwka = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwka')
