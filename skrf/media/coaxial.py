@@ -520,7 +520,7 @@ class Coaxial(DistributedCircuit, Media):
             distributed capacitance, in F/m
 
         """
-        return 2.*np.pi*self.epsilon_prime/np.log(self.b/self.a)
+        return 2.*np.pi*self.epsilon_prime/np.log(self.b/self.a)*np.ones_like(self.frequency.f)
 
     @property
     def G(self) -> NumberLike:
