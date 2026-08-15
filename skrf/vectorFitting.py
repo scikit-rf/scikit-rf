@@ -2700,21 +2700,20 @@ class VectorFittingParametric:
             Feb. 2009, DOI: https://doi.org/10.1109/TADVP.2008.2007913
     """
 
-    def __init__(self, networkset: NetworkSet = None):
+    def __init__(self, networkset: NetworkSet = None, n_poles_real: int = -1, n_poles_cmplx: int = -1):
         self.networkset = networkset
 
-        # # automatic model order estimation based on model order of the first network in the set
-        # vf = VectorFitting(self.networkset[0])
-        # vf.auto_fit()
-        # idx_poles_real = (np.imag(vf.poles) == 0)
-        # n_poles_real = np.sum(idx_poles_real)
-        # n_poles_cmplx = np.sum(~idx_poles_real)
+        if n_poles_real == -1 or n_poles_cmplx == -1:
+            # automatic model order estimation based on model order of the first network in the set
+            vf = VectorFitting(self.networkset[0])
+            vf.auto_fit()
 
-        # manual model order setting
-        n_poles_real = 0
-        n_poles_cmplx = 2
+            # determine number of real poles and complex-conjugate pole pairs in the test fit
+            idx_poles_real = (np.imag(vf.poles) == 0)
+            n_poles_real = np.sum(idx_poles_real)
+            n_poles_cmplx = np.sum(~idx_poles_real)
 
-        # init the poles
+        # init the global poles with `n_poles_real` and `n_poles_cmplx`
         poles_init = VectorFitting._init_poles(self.networkset[0].f, n_poles_real, n_poles_cmplx, 'lin')
         poles_global = []
         for pole in poles_init:
@@ -2735,13 +2734,13 @@ class VectorFittingParametric:
         self.parameter_meshgrid = np.meshgrid(*self.parameter_grid, indexing='ij')
 
         # initialize fitting parameters q and r on that same meshgrid
-        # (extended to accommodate the parameters for all network responses [..., 1 + 2 * n_poles, n_responses])
+        # (extended to accommodate the parameters for all network responses [..., 1 + model_order, n_responses])
         shape_meshgrid = np.shape(self.parameter_meshgrid)
         n_responses = self.networkset[0].nports ** 2
-        self.r = np.empty((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
-        self.q = np.empty((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
+        self.r = np.zeros((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
+        self.q = np.zeros((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
 
-    def auto_fit(self):
+    def auto_fit(self, enforce_passivity: bool = True):
         """
         Perform the parametric vector fitting on all networks in :attr:`networkset` using
         :func:`VectorFitting.auto_fit()`.
@@ -2750,10 +2749,14 @@ class VectorFittingParametric:
         n_poles_global = len(self.poles_global)
 
         for nw in self.networkset:
-            print(f'fitting network with params = {nw.params}')
-
             vf = VectorFitting(nw)
             vf.auto_fit()
+
+            if enforce_passivity:
+                if nw.is_passive():
+                    vf.passivity_enforce()
+                else:
+                    pass
 
             n_responses = nw.nports ** 2
 
@@ -2844,6 +2847,10 @@ class VectorFittingParametric:
             param_values.append(params[param])
         q = interpn(tuple(self.parameter_grid), self.q, param_values, method='linear', fill_value=None)[0]
         r = interpn(tuple(self.parameter_grid), self.r, param_values, method='linear', fill_value=None)[0]
+
+        if np.all(r == 0):
+            raise ValueError(f'The interpolation at {params} yielded an invalid model: all denominator coefficients '
+                             '(r) are zero.')
 
         # return model responses with shape [n_freqs, n_responses]:
         # dim 0: n_freqs
