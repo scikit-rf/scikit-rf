@@ -2861,12 +2861,35 @@ class VectorFittingParametric:
         n_ports = int(np.sqrt(np.shape(model)[1]))
         return np.reshape(model, (len(freqs), n_ports, n_ports))
 
-    def get_poles_residues(self, params: dict):
+    def get_local_vectorfit(self, params: dict) -> VectorFitting:
         """
-        Convert the model interpolated at `params` back into pole/residue form to be processed or exported with
-        :class:`VectorFitting`.
+        Returns a local point of the parametric model given by the parameters `params`. The returned object is an
+        instance of the class :class:`VectorFitting`, which can be used to post-process or export the local model.
+
+        Parameters
+        ----------
+        params : dict
+            A dictionary with the design parameters to be used. For example: `params={'param1': 1.1, 'param2': -2.2}`.
+
+        Returns
+        -------
+        VectorFitting
+
+        Examples
+        --------
+        >>> vf_param = VectorFittingParametric(nwset)
+        >>> vf_param.auto_fit()
+        >>> vf_local = vf_param.get_local_vectorfit({'myparam1': -12, 'myparam2': 5})
+        >>> vf_local.passivity_enforce()
+        >>> vf_local.write_spice_subcircuit_s('model_-12_5.sp')
         """
-        raise NotImplementedError()
+
+        nw = self.networkset[0]
+        nw.params = params
+        nw.s = self.get_model_response(params, nw.f)
+        vf = VectorFitting(nw)
+        vf.auto_fit()
+        return vf
 
     @staticmethod
     def generate_networkset(path: str, filename_prefix: str, param_names: list) -> NetworkSet:
