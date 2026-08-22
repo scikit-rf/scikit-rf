@@ -64,7 +64,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from .constants import NumberLike, PrimaryPropertiesT
+    from .constants import ErrorFunctionsT, NumberLike, PrimaryPropertiesT
     from .frequency import Frequency
     from .network import Network
     from .networkSet import NetworkSet
@@ -1084,6 +1084,52 @@ def plot_reciprocity2(netw: Network, db=False, *args, **kwargs):
                     y = mf.complex_2_db(y)
                 netw.frequency.plot(y, *args, **kwargs)
 
+    plt.legend()
+    if plt.isinteractive():
+        plt.draw()
+
+
+def plot_s_error(netw: Network, other: Network,
+                 error_function: ErrorFunctionsT = "average_l2_norm",
+                 db: bool = False, *args, **kwargs):
+    r"""
+    Plot the s-parameter error between two networks vs frequency.
+
+    Parameters
+    ----------
+    netw : :class:`~skrf.network.Network`
+        The reference network.
+    other : :class:`~skrf.network.Network`
+        The network to compare against ``netw``.
+    error_function : str
+        Error function name passed to :func:`~skrf.network.s_error`.
+        One of ``average_l1_norm``, ``average_l2_norm``, ``maximum_l1_norm``,
+        or ``average_normalized_l1_norm``. Default is ``average_l2_norm``.
+    db : bool
+        If True, plot :math:`20\log_{10}(\delta)`. Default is False.
+    \*args, \*\*kwargs :
+        Passed to :meth:`~skrf.frequency.Frequency.plot`.
+
+    See Also
+    --------
+    skrf.network.s_error
+    skrf.network.Network.s_error
+    """
+    import matplotlib.pyplot as plt
+
+    error = netw.s_error(other, error_function=error_function)
+    if db:
+        with np.errstate(divide='ignore'):
+            error = 20 * np.log10(error)
+
+    name_a = '' if netw.name is None else netw.name
+    name_b = '' if other.name is None else other.name
+    if 'label' not in kwargs:
+        kwargs['label'] = f"{name_a} vs {name_b} ({error_function})"
+
+    netw.frequency.plot(error, *args, **kwargs)
+
+    plt.ylabel(f"{'dB ' if db else ''}s-parameter error ({error_function})")
     plt.legend()
     if plt.isinteractive():
         plt.draw()

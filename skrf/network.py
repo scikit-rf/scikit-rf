@@ -5308,6 +5308,12 @@ class Network:
     def plot_reciprocity2(self, db=False, *args, **kwargs):
         return rfplt.plot_reciprocity2(self, db, *args, **kwargs)
 
+    @copy_doc(rfplt.plot_s_error)
+    def plot_s_error(self, other: Network,
+                     error_function: ErrorFunctionsT = "average_l2_norm",
+                     db: bool = False, *args, **kwargs):
+        return rfplt.plot_s_error(self, other, error_function, db, *args, **kwargs)
+
     @copy_doc(rfplt.plot_s_db_time)
     def plot_s_db_time(self, center_to_dc=None, *args, **kwargs):
         return rfplt.plot_s_db_time(self, *args, center_to_dc=center_to_dc, **kwargs)
