@@ -522,7 +522,7 @@ class Coaxial(DistributedCircuit, Media):
         """
         return np.broadcast_to(
             2.*np.pi*self.epsilon_prime/np.log(self.b/self.a),
-            self.frequency.w.shape,
+            self.frequency.npoints,
         )
 
     @property
