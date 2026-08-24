@@ -26,16 +26,15 @@ Characteristic Impedance              :math:`z_0`    :attr:`z0`
 """
 from __future__ import annotations
 
+import warnings
 from numbers import Number
 from typing import TYPE_CHECKING
 
 import numpy as np
-from numpy import exp, pi, sqrt, where
 
 from .. import constants as _const
 from ..data import materials
-from ..tlineFunctions import skin_depth
-from .freespace import Freespace
+from ..tlineFunctions import surface_impedance
 from .media import Media
 
 if TYPE_CHECKING:
@@ -85,24 +84,113 @@ class RectangularWaveguide(Media):
         filling material's relative permittivity
     mu_r : number, array-like
         filling material's relative permeability
-    rho : number, array-like, string
+    rho : number, array-like, string, or None
         resistivity (ohm-m) of the conductor walls. If array-like
         must be same length as frequency. if str, it must be a key in
         :data:`skrf.data.materials`.
+        Default is 1/58e6, the resistivity of annealed copper at 20 °C
+        (100% IACS). Use 0, or None, for perfectly conducting walls.
     roughness : number, or array-like
-        surface roughness of the conductor walls in units of RMS
-        deviation from surface
+        rms roughness of the conductor walls, in meter. It is handed to
+        :func:`~skrf.tlineFunctions.surface_impedance`, and it applies to any wall
+        whose material does not carry an ``'rms_roughness'`` of its own.
+    model : str, optional
+        Model of the loss. 'lomakin' (default) is the two-wire model of
+        [#Lomakin]_, where the loss of the walls shapes the phase constant as well
+        as the attenuation (agrees better with EM simulations). 'marcuvitz' is the
+        power loss method of [#Marcuvitz]_, which is also given by the IEC 60153-2
+        and IEEE 1785.1 standards and discussed in [#Skinner]_; it leaves the phase
+        constant at its lossless value.
+        A TM mode, or a mode with both indices nonzero, is not covered by 'lomakin'
+        and follows 'marcuvitz' instead, which is warned about.
+    dielectric : dict or None, optional
+        Material filling the waveguide, as a dict taking the keys ``'ep_r'``
+        (complex relative permittivity) and ``'mu_r'`` (complex relative
+        permeability), both defaulting to 1. If None (default), the filling is
+        described by parameters `ep_r` and `mu_r`.
+    wall_a : dict, list of dict, or None, optional
+        Material of the pair of walls of width `a`. It describes both walls of the pair.
+        A single dict describes a bulk conductor, a list of dict a stack of coatings ordered
+        from the filling inwards, of which the deepest layer is the bulk. Each dict takes
+        the keys ``'sigma'``, ``'mu_r'`` and ``'ep_r'`` of the layer itself, and
+        ``'rms_roughness'``, ``'boundary_loc'`` and ``'distribution'`` of the
+        boundary on top of it, which are handed to
+        :func:`~skrf.tlineFunctions.surface_impedance`.
+        If None (default), the pair is described by `rho` and `roughness`.
+    wall_b : dict, list of dict, or None, optional
+        Material of the pair of walls of width `b`, described in similar way as
+        `wall_a`. The two pairs are usually of the same material, but would have
+        different effective conductivities, e.g., different roughness due to
+        machining or 3D printed waveguides [#Zhu]_, [#Lomakin3D]_.
     \*args, \*\*kwargs : arguments, keyword arguments
             passed to :class:`~skrf.media.media.Media`'s constructor
             (:func:`~skrf.media.media.Media.__init__`
+
+    Note
+    ----
+    The two-wire model is derived for the TE10 mode. It carries over to any
+    TE_m0 and TE_0n mode. It does not carry over to a mode with both indices nonzero.
+
+    References
+    ----------
+    .. [#Lomakin] K. Lomakin, G. Gold and K. Helmreich, "Analytical Waveguide Model
+       Precisely Predicting Loss and Delay Including Surface Roughness," IEEE Trans.
+       Microw. Theory Techn., vol. 66, no. 6, pp. 2649-2662, June 2018.
+       https://doi.org/10.1109/TMTT.2018.2827383
+    .. [#Marcuvitz] N. Marcuvitz, "Transmission-line modes," in Waveguide Handbook,
+       2nd ed. New York: McGraw-Hill, 1951, Chapter 2.
+    .. [#Skinner] J. Skinner, D. Koller, H.-U. Nickel, N. M. Ridler and S. Lucyszyn,
+       "Derivation of Rectangular Metallic Waveguide Attenuation Constant for
+       IEC 60153-2 and IEEE 1785.1 International Standards," IEEE Trans. THz Sci.
+       Technol., vol. 15, no. 4, pp. 734-737, July 2025.
+       https://doi.org/10.1109/TTHZ.2025.3573847
+    .. [#Zhu] L. Zhu et al., "3-D Printed THz Waveguide Components," IEEE Access,
+       vol. 11, pp. 79073-79086, 2023.
+       https://doi.org/10.1109/ACCESS.2023.3297271
+    .. [#Lomakin3D] K. Lomakin et al., "SLA-Printed 3-D Waveguide Paths for E-Band
+       Using Electroless Silver Plating," IEEE Trans. Compon. Packag. Manuf.
+       Technol., vol. 9, no. 12, pp. 2476-2481, Dec. 2019.
+       https://doi.org/10.1109/TCPMT.2019.2927671
 
     Examples
     --------
     Most common usage is standard aspect ratio (2:1) dominant
     mode, TE10 mode of wr10 waveguide can be constructed by
 
-    >>> freq = rf.Frequency(75,110,101,'ghz')
-    >>> rf.RectangularWaveguide(freq,a= 100*mil)
+    >>> import numpy as np
+    >>> import skrf as rf
+    >>> from skrf.constants import mil
+    >>> from skrf.media import RectangularWaveguide
+    >>> freq = rf.Frequency(75, 110, 101, unit='ghz')
+    >>> RectangularWaveguide(freq, a=100*mil)
+    Rectangular Waveguide Media.  75.0-110.0 GHz.  101 points
+     a= 2.54e-03m, b= 1.27e-03m
+
+    A WR-12 guide of brass, with the `a` walls rougher than the `b` ones,
+    and the attenuation of a 100 mm length of it at 90 GHz:
+
+    >>> freq = rf.Frequency(60, 90, 61, unit='GHz')
+    >>> wr12 = RectangularWaveguide(freq, a=3.0988e-3, b=1.5494e-3,
+    ...     wall_a={'sigma': 0.28*58e6, 'rms_roughness': 1e-6},
+    ...     wall_b={'sigma': 0.28*58e6, 'rms_roughness': 0.4e-6})
+    >>> print(f"{wr12.line(100, 'mm').s_db[-1, 1, 0]:.3f} dB")
+    -1.002 dB
+
+    A WR-6.5 waveguide (D-band) whose walls carry an ENIG finish, 0.05 um of gold
+    over 4 um of nickel over copper, roughened by 50 nm rms at the outside and by
+    0.2 um rms at the copper underneath:
+
+    >>> enig = [{'sigma': 41.1e6, 'rms_roughness': 50e-9, 'boundary_loc': 0},
+    ...         {'sigma': 14.5e6, 'mu_r': 20, 'rms_roughness': 50e-9, 'boundary_loc': 0.05e-6},
+    ...         {'sigma': 58e6, 'rms_roughness': 0.2e-6, 'boundary_loc': 4.05e-6}]
+    >>> freq = rf.Frequency(110, 170, 61, unit='GHz')
+    >>> wr65 = RectangularWaveguide(freq, a=1.6510e-3, b=0.8255e-3,
+    ...                             wall_a=enig, wall_b=enig)
+    >>> smooth_copper = RectangularWaveguide(freq, a=1.6510e-3, b=0.8255e-3, rho=1/58e6)
+    >>> np2db = 20*np.log10(np.e)
+    >>> print(f"{np2db*wr65.gamma[-1].real:.1f} dB/m, against "
+    ...       f"{np2db*smooth_copper.gamma[-1].real:.1f} dB/m for smooth copper")
+    20.3 dB/m, against 4.6 dB/m for smooth copper
     """
 
     def __init__(self, frequency: Frequency | None = None,
@@ -112,8 +200,12 @@ class RectangularWaveguide(Media):
                  a: float = 1, b: float | None = None,
                  mode_type: str = 'te', m: int = 1, n: int = 0,
                  ep_r: None | NumberLike = 1, mu_r: None | NumberLike = 1,
-                 rho: None | NumberLike = None,
+                 rho: None | NumberLike | str = 1/58e6,
                  roughness: None | NumberLike = None,
+                 model: str = 'lomakin',
+                 dielectric: dict | None = None,
+                 wall_a: dict | list[dict] | None = None,
+                 wall_b: dict | list[dict] | None = None,
                  *args, **kwargs):
         Media.__init__(self, frequency = frequency,
                        z0_port = z0_port, z0_override = z0_override, z0 = z0)
@@ -122,19 +214,43 @@ class RectangularWaveguide(Media):
             b = a/2.
         if mode_type.lower() not in ['te','tm']:
             raise ValueError('mode_type must be either \'te\' or \'tm\'')
-
-
+        # a TE mode needs one nonzero index and a TM mode needs both, the field being
+        # identically zero otherwise. Neither is a mode at any size or frequency.
+        if (m == 0 and n == 0) or (mode_type.lower() == 'tm' and m*n == 0):
+            raise ValueError(f'{mode_type.upper()}{m}{n} is not a mode: a TE mode needs '
+                             'one nonzero index and a TM mode needs both')
+        if model.lower() not in ['lomakin','marcuvitz']:
+            raise ValueError('model must be either \'lomakin\' or \'marcuvitz\'')
 
         self.a = a
         self.b = b
         self.mode_type = mode_type.lower()
         self.m = m
         self.n = n
-        self.ep_r = ep_r
-        self.mu_r = mu_r
+        self.model = model.lower()
+        self.wall_a, self.wall_b = wall_a, wall_b
+        self.dielectric = {'ep_r': ep_r, 'mu_r': mu_r} if dielectric is None else dielectric
+        self.ep_r = self.dielectric.get('ep_r', 1)
+        self.mu_r = self.dielectric.get('mu_r', 1)
         self.rho = rho
         self.roughness = roughness
-
+        # warning when describing one wall pair and not the other
+        if (wall_a is None) != (wall_b is None):
+            given, missing = (('wall_b', 'wall_a') if wall_a is None
+                              else ('wall_a', 'wall_b'))
+            warnings.warn(
+                f'Only {given} was given a material, so {missing} stays a smooth bulk '
+                f'conductor of rho = {self.rho} ohm*m and unit relative permeability. '
+                f'Pass {missing} as well to describe both wall pairs.',
+                UserWarning, stacklevel = 2)
+        # warning when the mode falls outside of what the chosen model covers.
+        if self._model_used != self.model:
+            warnings.warn(
+                f"The '{self.model}' model does not cover the "
+                f"{self.mode_type.upper()}{self.m}{self.n} mode, so the "
+                f"'{self._model_used}' model is used instead. Pass "
+                f"model='{self._model_used}' to select it explicitly.",
+                UserWarning, stacklevel = 2)
 
     def __str__(self):
         f=self.frequency
@@ -170,8 +286,8 @@ class RectangularWaveguide(Media):
 
         mu = _const.mu_0*mu_r
         ep = _const.epsilon_0*ep_r
-        w = 2*pi*f
-        a =pi/(w*mu) * 1./sqrt(1/(z0*1j)**2+ep/mu)
+        w = 2*np.pi*f
+        a = np.pi/(w*mu) * 1./np.sqrt(1/(z0*1j)**2+ep/mu)
 
         kw.update(dict(frequency=frequency,a=a, m=1, n=0, ep_r=ep_r, mu_r=mu_r))
 
@@ -182,7 +298,7 @@ class RectangularWaveguide(Media):
         r"""
         The permittivity of the filling material.
 
-        .. math:
+        .. math::
 
             \varepsilon = \varepsilon_r \varepsilon_0
 
@@ -217,14 +333,14 @@ class RectangularWaveguide(Media):
 
         .. math::
 
-            k_0 = \frac{\omega}{v} = \omega \sqrt{\varepsilon_r \mu_r}
+            k_0 = \frac{\omega}{v} = \omega \sqrt{\varepsilon \mu}
 
         Returns
         -------
         k0 : number
             characteristic wave number
         """
-        return 2*pi*self.frequency.f*sqrt(self.ep * self.mu)
+        return 2*np.pi*self.frequency.f*np.sqrt(self.ep * self.mu)
 
     @property
     def ky(self) -> NumberLike:
@@ -242,7 +358,7 @@ class RectangularWaveguide(Media):
         ky : number
                 eigenvalue in `b` direction
         """
-        return self.n*pi/self.b
+        return self.n*np.pi/self.b
 
     @property
     def kx(self) -> NumberLike:
@@ -260,7 +376,7 @@ class RectangularWaveguide(Media):
         kx : number
                 eigenvalue in `a` direction
         """
-        return self.m*pi/self.a
+        return self.m*np.pi/self.a
 
     @property
     def kc(self) -> NumberLike:
@@ -279,7 +395,7 @@ class RectangularWaveguide(Media):
         kc : number
                 cut-off wavenumber
         """
-        return sqrt( self.kx**2 + self.ky**2)
+        return np.sqrt( self.kx**2 + self.ky**2)
 
 
     @property
@@ -295,7 +411,7 @@ class RectangularWaveguide(Media):
         where :math:`v= 1/\sqrt{\varepsilon \mu}`.
 
         """
-        v = 1/sqrt(self.ep*self.mu)
+        v = 1/np.sqrt(self.ep*self.mu)
         return v* self.kc/(2*np.pi)
 
     @property
@@ -306,37 +422,41 @@ class RectangularWaveguide(Media):
         return self.frequency.f/self.f_cutoff
 
     @property
-    def rho(self) -> NumberLike:
+    def rho(self) -> None | NumberLike:
         """
-        Conductivity of sidewalls in ohm*m.
+        Resistivity of all four walls in ohm*m.
+
+        This is the bulk resistivity of the metal, and it describes any wall pair
+        that `wall_a` or `wall_b` does not describe itself. Roughness is
+        not folded into it. Zero, or None, is a perfect conductor.
 
         Parameters
         ----------
-        val : float, array-like or str
-            the conductivity in ohm*m. If array-like must be same length
+        val : float, array-like, str or None
+            the resistivity in ohm*m. If array-like must be same length
             as self.frequency. if str, it must be a key in
             :data:`skrf.data.materials`.
 
         Examples
         ---------
+        >>> import numpy as np
+        >>> import skrf as rf
+        >>> from skrf.media import RectangularWaveguide
+        >>> wg = RectangularWaveguide(rf.Frequency(75, 110, 101, unit='GHz'), a=2.54e-3)
         >>> wg.rho = 2.8e-8
-        >>> wg.rho = 2.8e-8 * ones(len(wg.frequency))
+        >>> wg.rho = 2.8e-8*np.ones(len(wg.frequency))
         >>> wg.rho = 'al'
         >>> wg.rho = 'aluminum'
+        >>> wg.rho = 0
         """
-        if self.roughness is not None:
-            delta = skin_depth(self.frequency.f, self._rho, self.mu_r)
-            k_w = 1. +exp(-(delta/(2*self.roughness))**1.6)
-            return self._rho*k_w**2
-
         return self._rho
 
     @rho.setter
-    def rho(self, val: NumberLike | str):
+    def rho(self, val: None | NumberLike | str):
         if isinstance(val, str):
             self._rho = materials[val.lower()]['resistivity(ohm*m)']
         else:
-            self._rho=val
+            self._rho = val
 
     @property
     def lambda_guide(self) -> NumberLike:
@@ -353,7 +473,7 @@ class RectangularWaveguide(Media):
         --------
         k0
         """
-        return 2*pi/self.beta
+        return 2*np.pi/self.beta
 
     @property
     def lambda_cutoff(self) -> NumberLike:
@@ -370,8 +490,113 @@ class RectangularWaveguide(Media):
         --------
         f_cutoff
         """
-        v = 1/sqrt(self.ep*self.mu)
+        v = 1/np.sqrt(self.ep*self.mu)
         return v/self.f_cutoff
+
+    @property
+    def _model_used(self) -> str:
+        """
+        The loss model actually used, which is `model` itself unless the mode
+        falls outside of what that model covers and it has to fall back.
+
+        The two-wire model is derived for TE_m0 and TE_0n modes only, so exactly
+        one of the two indices has to be zero.
+        """
+        covers_mode = {'lomakin': self.mode_type == 'te' and (self.m == 0) != (self.n == 0),
+                       'marcuvitz': True}
+        return self.model if covers_mode[self.model] else 'marcuvitz'
+
+    def _wall_impedance(self, wall: dict | list[dict] | None) -> NumberLike:
+        r"""
+        Surface impedance of one pair of walls, in Ohm per square.
+
+        Parameters
+        ----------
+        wall : dict, list of dict, or None
+            material stack of the wall, as described in
+            :class:`RectangularWaveguide`. None falls back to `rho` and `roughness`.
+
+        Returns
+        -------
+        Zs : number, or array-like
+            surface impedance, in Ohm per square
+        """
+        # the surface impedance cannot be evaluated at dc, where no mode exists
+        # anyway. A small placeholder there keeps it continuous with the rest of the
+        # band instead of dividing by zero.
+        f = np.where(self.frequency.f == 0, 1e-6, self.frequency.f)
+        w = 2*np.pi*f
+        if wall is None:
+            if self.rho is None or np.all(np.equal(self.rho, 0)):
+                return np.zeros_like(f)  # perfectly conducting walls
+            stack = [{'sigma': 1/np.asarray(self.rho)}]
+        else:
+            stack = [wall] if isinstance(wall, dict) else list(wall)
+
+        # a layer that does not name a roughness of its own takes the one of the
+        # roughness parameter
+        default = 0 if self.roughness is None else self.roughness
+        rms_roughness = [layer.get('rms_roughness', default) for layer in stack]
+
+        if len(stack) == 1 and not np.any(rms_roughness):
+            # a smooth bulk conductor, where the surface impedance has a closed form
+            sigma = np.ones_like(f)*stack[-1].get('sigma', np.inf)
+            mu = _const.mu_0*np.ones_like(f)*stack[-1].get('mu_r', 1)
+            return np.sqrt(1j*w*mu/sigma)
+
+        # the wave impinges on the wall from the filling, which is therefore the
+        # outside medium of the stack
+        layers = [self.dielectric] + [{k: v for k, v in layer.items()
+                                       if k in ('sigma', 'mu_r', 'ep_r')} for layer in stack]
+        return surface_impedance(f, layers, rms_roughness = rms_roughness,
+                boundary_loc = [layer.get('boundary_loc', 0) for layer in stack],
+                distribution = [layer.get('distribution', 'norm') for layer in stack])
+
+    @property
+    def _rotated(self) -> tuple:
+        """
+        The guide turned so that the field varies along `A` and not along `B`, as
+        both the two-wire model and the power loss method are written for. Returns
+        the two dimensions and the surface impedance of the matching wall pairs,
+        `Zs_A` being that of the pair of width `A`.
+
+        Only a TE_0n mode is actually turned. Any other mode is already in this
+        orientation, or has no expression of its own and only borrows the TE_m0 one.
+        """
+        Zs_a = self._wall_impedance(self.wall_a)
+        Zs_b = self._wall_impedance(self.wall_b)
+        if self.m == 0 and self.n != 0:
+            # a TE_0n mode is the TE_m0 one of the guide turned on its side, so the
+            # two dimensions and the two pairs of walls exchange roles
+            return self.b, self.a, Zs_b, Zs_a
+        return self.a, self.b, Zs_a, Zs_b
+
+    @property
+    def _ZY(self) -> tuple:
+        r"""
+        Series impedance in Ohm/m and shunt admittance in S/m of the mode, as the
+        model in use states them. `gamma` and `z0_characteristic` follow from the
+        pair the same way for every model, so this is the one place a model is
+        written. See the references of :class:`RectangularWaveguide`.
+        """
+        # the shunt branch shorts out at dc, where no mode exists anyway
+        w = np.where(self.frequency.w == 0, 2*np.pi*1e-6, self.frequency.w)
+
+        if self._model_used == 'lomakin':
+            A, B, Zs_A, Zs_B = self._rotated
+            # the longitudinal current scales with the dimension the field does not
+            # vary along, not with the one it does
+            Z = 1j*w*self.mu + 2/B*Zs_A
+            Z2 = (1j*w*self.mu + 2/B*Zs_A + 4/A*Zs_B)/self.kc**2
+            return Z, 1j*w*self.ep + 1/Z2
+
+        # the power loss method keeps the walls out of the branches and perturbs the
+        # lossless gamma by their loss instead, so one branch is the filling alone
+        # and the other is whatever reproduces that gamma
+        gamma = np.sqrt(np.asarray(self.kc**2 - self.k0**2, dtype=complex)) + self.alpha_c
+        if self.mode_type == 'te':
+            return 1j*w*self.mu, gamma**2/(1j*w*self.mu)
+        return gamma**2/(1j*w*self.ep), 1j*w*self.ep
 
     @property
     def gamma(self) -> NumberLike:
@@ -382,87 +607,59 @@ class RectangularWaveguide(Media):
 
         .. math::
 
-            k_z = \pm j \sqrt {k_0^2 - k_c^2}
+            k_z = \sqrt {k_c^2 - k_0^2}
 
-        This is:
-
-        * IMAGINARY for propagating modes
-        * REAL for non-propagating modes,
+        With a lossless filling this is purely imaginary above cutoff, where the
+        mode propagates, and purely real below it, where the mode is evanescent.
+        A lossy filling or lossy walls make it complex throughout.
 
         Returns
         -------
         gamma :  number
             The propagation constant
         """
-        ## haringtons form
-        if False:  #self.m==1 and self.n==0:
-            fs = Freespace(frequency=self.frequency,
-                           ep_r=self.ep_r,
-                           mu_r=self.mu_r)
-
-
-            g = where(self.f_norm>1.,
-                     sqrt(1-self.f_norm**(-2))*fs.gamma,  # cutton
-                 -1j*sqrt(1-self.f_norm**(2))*fs.gamma)  # cutoff
-
-        else:
-            # TODO:  fix this for lossy ep/mu (remove abs?)
-            k0, kc = self.k0, self.kc
-            g =  1j*sqrt(abs(k0**2 - kc**2)) * (k0>kc) +\
-                    sqrt(abs(kc**2- k0**2))*(k0<kc) + \
-                    0*(kc==k0)
-
-        g = g + self.alpha_c *(self.rho is not None)
-
-        return g
+        Z, Y = self._ZY
+        return np.sqrt(Z*Y)
 
 
     @property
     def alpha_c(self) -> NumberLike:
         r"""
-        Loss due to finite conductivity and roughness of sidewalls.
-
-        In units of np/m
-        See property `rho` for setting conductivity.
-
-        Effects of finite conductivity are taken from [#]_. If
-        :attr:`roughness` is not None, then its effects the conductivity
-        by
-
+        Loss of the walls by the power loss method, in Np/m. This is ch. 2, eq. (14a)
+        of Marcuvitz, which the IEC 60153-2 and IEEE 1785.1 standards give for the
+        attenuation constant. See the references of :class:`RectangularWaveguide`.
 
         .. math::
 
-            \sigma_c = \frac{\sigma}{k_w^2}
+            \alpha = \frac{R_{s,a}
+                           + \frac{2b}{a}\left(\frac{f_c}{f}\right)^2 R_{s,b}}
+                          {\eta b \sqrt{1 - \left(\frac{f_c}{f}\right)^2}}
 
+        where :math:`\eta` is the intrinsic impedance of the filling and :math:`R_s`
+        the surface resistance of a pair of walls. The two pairs are carried
+        separately, unlike ch. 2, eq. (14a) as published, which the same material on
+        both recovers.
 
-        where
+        It is derived for TE10 and holds for any TE_m0 and TE_0n mode, the mode
+        entering only through :math:`f_c`. Any other mode falls back to it and is
+        only estimated, its `b` walls also carrying longitudinal current. It
+        diverges at cutoff and is zero below it, where the evanescent decay of the
+        mode dwarfs the loss of the walls.
 
-        .. math::
-
-            k_w = 1 + e^{(-\delta/2h)^{1.6}}
-
-            \delta = \mbox{skin depth}
-
-            h = \mbox{surface roughness }
-
-
-        This is taken from Ansoft HFSS help documents.
-
-        References
-        ----------
-
-        .. [#] Chapter 9, (eq 9.8.1) of Electromagnetic Waves and Antennas by Sophocles J. Orfanidis
-            http://eceweb1.rutgers.edu/~orfanidi/ewa/
+        See Also
+        --------
+        rho
         """
+        f_n = self.f_norm
+        # below cutoff the power loss method cannot be evaluated, and the conductor
+        # loss is negligible anyway against the evanescent decay of the mode
+        propagating = f_n > 1.
+        f_n = np.where(propagating, f_n, 2.)  # placeholder, discarded below
 
-        if self.rho is None:
-            return 0
-
-        a,b,w,ep,rho,f_n = self.a, self.b, self.frequency.w, self.ep, \
-            self.rho, self.f_norm
-
-        return 1./b * sqrt( (w*ep)/(2./rho) ) * (1+2.*b/a*(1/f_n)**2)/\
-            sqrt(1-(1/f_n)**2)
+        A, B, Zs_A, Zs_B = self._rotated
+        eta = np.sqrt(self.mu/self.ep)
+        alpha = (Zs_A.real + 2.*B/A*(1/f_n)**2*Zs_B.real)/(eta*B*np.sqrt(1-(1/f_n)**2))
+        return np.where(propagating, alpha, 0.)
 
     @property
     def z0_characteristic(self) -> NumberLike:
@@ -476,9 +673,5 @@ class RectangularWaveguide(Media):
         z0_characteristic : np.ndarray
             Characteristic Impedance in units of ohms
         """
-        omega = self.frequency.w
-        impedance_dict = {'te':   1j*omega*self.mu/(self.gamma),
-                          'tm':   -1j*self.gamma/(omega*self.ep),\
-                         }
-
-        return impedance_dict[self.mode_type]
+        Z, Y = self._ZY
+        return np.sqrt(Z/Y)
