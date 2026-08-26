@@ -48,6 +48,12 @@ def test_plot_s_db_time(ntwk1_dc: rf.Network, ):
     ntwk1_dc.plot_s_db_time()
     ntwk1_dc.plot_s_db_time(m=0, n=0)
 
+def test_plot_s_error(ntwk1_dc: rf.Network):
+    ntwk1_dc.plot_s_error(ntwk1_dc)
+    ntwk1_dc.plot_s_error(ntwk1_dc, error_function='average_l1_norm')
+    ntwk1_dc.plot_s_error(ntwk1_dc, db=True)
+    rf.plotting.plot_s_error(ntwk1_dc, ntwk1_dc, error_function='maximum_l1_norm')
+
 def test_plot_s_smith(ntwk1_dc: rf.Network, ):
     ntwk1_dc.plot_s_smith()
 
