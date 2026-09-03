@@ -6009,6 +6009,8 @@ def innerconnect(ntwkA: Network, k: int | str, l: int | str, num: int = 1) -> Ne
     if (l + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `l` out of range')
 
+    s_def_original = ntwkA.s_def
+
     # 'power' is not supported, convert to supported definition and back afterwards
     if ntwkA.s_def == 'power':
         ntwkA = ntwkA.copy()
@@ -6017,8 +6019,6 @@ def innerconnect(ntwkA: Network, k: int | str, l: int | str, num: int = 1) -> Ne
     # create output Network, from copy of input
     # Since ntwkC's s-parameters will change later, use shallow_copy for speedup
     ntwkC = ntwkA.copy(shallow_copy=True)
-
-    s_def_original = ntwkC.s_def
 
     z0_equal = (ntwkC.z0[:, k] == ntwkC.z0[:, l]).all()
 
