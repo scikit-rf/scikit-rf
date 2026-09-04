@@ -1814,16 +1814,22 @@ class Network:
     @property
     def passivity(self) -> ndarray:
         r"""
-        Passivity metric for a multi-port network.
+        Passivity metric for a one-port or multi-port network.
 
-        This returns a matrix who's diagonals are equal to the total
+        This returns a matrix whose diagonals are equal to the total
         power received at all ports, normalized to the power at a single
         excitement port.
 
         Mathematically, this is a test for unitary-ness of the
         s-parameter matrix [#]_.
 
-        For two port this is
+        For a one-port network this is
+
+        .. math::
+
+                |S_{11}|
+
+        For a two-port network this is
 
         .. math::
 
@@ -1833,7 +1839,7 @@ class Network:
 
         .. math::
 
-                S^H \cdot S
+                \sqrt( S^H \cdot S)
 
         where :math:`H` is conjugate transpose of S, and :math:`\cdot`
         is dot product.
@@ -8411,18 +8417,24 @@ def s2g(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
 ## these methods are used in the secondary properties
 def passivity(s: np.ndarray) -> np.ndarray:
     r"""
-    Passivity metric for a multi-port network.
+    Passivity metric for a one-port or multi-port network.
 
     A metric which is proportional to the amount of power lost in a
-    multiport network, depending on the excitation port. Specifically,
-    this returns a matrix who's diagonals are equal to the total
+    network, depending on the excitation port. Specifically,
+    this returns a matrix whose diagonals are equal to the total
     power received at all ports, normalized to the power at a single
     excitement port.
 
-    mathematically, this is a test for unitary-ness of the
+    Mathematically, this is a test for unitary-ness of the
     s-parameter matrix [#]_.
 
-    for two port this is
+    For a one-port network this is
+
+    .. math::
+
+            |S_{11}|
+
+    For a two-port network this is
 
     .. math::
 
@@ -8445,6 +8457,10 @@ def passivity(s: np.ndarray) -> np.ndarray:
     cascaded with a mismatch, the power dissipated will not be equivalent
     to the attenuator value, nor equal for each excitation port.
 
+    Parameters
+    ----------
+    s : :class:`numpy.ndarray` of shape `fxnxn`
+        s-parameter matrix
 
     Returns
     -------
@@ -8454,9 +8470,6 @@ def passivity(s: np.ndarray) -> np.ndarray:
     ------------
     .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
     """
-    if s.shape[-1] == 1:
-        raise (ValueError('Doesn\'t exist for one ports'))
-
     pas_mat = s.copy()
     for f in range(len(s)):
         pas_mat[f, :, :] = np.sqrt(np.dot(s[f, :, :].conj().T, s[f, :, :]))

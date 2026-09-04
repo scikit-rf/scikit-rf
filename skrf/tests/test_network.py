@@ -2365,6 +2365,29 @@ class NetworkTestCase(unittest.TestCase):
         self.assertFalse(y.is_symmetric(n=4))
         return
 
+    def test_passivity(self):
+        # 1-port with complex reflection coefficients across multiple frequencies
+        s = np.array([[[0.3 + 0.4j]], [[-0.6 + 0.8j]], [[0.0]]])
+        ntwk = rf.Network(f=[1, 2, 3], s=s, z0=50)
+        p = ntwk.passivity
+
+        # returns |S11| with shape (nfreqs, 1, 1)
+        self.assertEqual(p.shape, (3, 1, 1))
+        np.testing.assert_allclose(p.real, [[[0.5]], [[1.0]], [[0.0]]])
+        np.testing.assert_allclose(p.imag, 0.0)
+
+        # verify helper function directly
+        np.testing.assert_allclose(rf.network.passivity(s), p)
+
+        # multi-port calculation and return shape remain unchanged
+        s_2port = np.array([[[0.0, 0.5], [0.5, 0.0]]])
+        ntwk_2port = rf.Network(f=[1], s=s_2port, z0=50)
+        p_2port = ntwk_2port.passivity
+        self.assertEqual(p_2port.shape, (1, 2, 2))
+        np.testing.assert_allclose(p_2port.real, [[[0.5, 0.0], [0.0, 0.5]]])
+        np.testing.assert_allclose(p_2port.imag, 0.0)
+        return
+
     def test_is_passive(self):
         a = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
