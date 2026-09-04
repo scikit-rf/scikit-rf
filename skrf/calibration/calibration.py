@@ -1675,9 +1675,9 @@ class TwelveTerm(Calibration):
             guess for you by comparing measure transmission to trans_thres,
 
         trans_thres: float
-            The  minimum transmission magnitude (in dB) that is
+            The minimum transmission magnitude (in dB) that is
             the threshold for categorizing a transmissive standard.
-            Compared to the measured s21,s12  meaned over frequency
+            Compared to the measured s21,s12 mean over frequency
             Only use if n_thrus=None.
 
         isolation : :class:`~skrf.network.Network` object
@@ -3909,7 +3909,7 @@ class TUGMultilineTRL(EightTerm):
 
         def solve_quadratic(v1, v2, inx, x_est):
             # This is related to solving the normalized error terms using nullspace approach.
-            # The variable `inx` allowes to reuse the function to shuffel the coefficient to get other error terms.
+            # The variable `inx` allows to reuse the function to shuffle the coefficient to get other error terms.
             v12,v13 = v1[inx]
             v22,v23 = v2[inx]
             mask = np.ones(v1.shape, bool)

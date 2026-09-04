@@ -1756,7 +1756,7 @@ class Network:
         to touchstone files.
 
         Length of the port_names list should match the number of ports in the
-        network, this is checked on assigment. The names are dropped when an
+        network, this is checked on assignment. The names are dropped when an
         operation changes the number of ports without being able to tell what
         the new ports are.
 
@@ -2284,7 +2284,7 @@ class Network:
         >>> b = rf.N('my_file.s2p')
         >>> a.copy_from (b)
         """
-        # assigment order matters here since there are checks in some setters
+        # assignment order matters here since there are checks in some setters
         for attr in ['_s', 'frequency', '_z0', 'name', 'port_names']:
             setattr(self, attr, copy(getattr(other, attr)))
 
