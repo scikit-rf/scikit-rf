@@ -2170,10 +2170,7 @@ class Network:
         bool : boolean
 
         """
-        try:
-            M = np.square(self.passivity)
-        except ValueError:
-            return False
+        M = np.square(self.passivity)
 
         I = np.identity(M.shape[-1])
         for f_idx in range(len(M)):
