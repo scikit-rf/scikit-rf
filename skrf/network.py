@@ -1814,7 +1814,7 @@ class Network:
     @property
     def passivity(self) -> ndarray:
         r"""
-        Passivity metric for a one-port or multi-port network.
+        Passivity metric for a network.
 
         This returns a matrix whose diagonals are equal to the total
         power received at all ports, normalized to the power at a single
@@ -8414,7 +8414,7 @@ def s2g(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
 ## these methods are used in the secondary properties
 def passivity(s: np.ndarray) -> np.ndarray:
     r"""
-    Passivity metric for a one-port or multi-port network.
+    Passivity metric for a network.
 
     A metric which is proportional to the amount of power lost in a
     network, depending on the excitation port. Specifically,
