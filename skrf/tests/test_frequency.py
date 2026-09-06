@@ -1,5 +1,6 @@
 import os
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -42,6 +43,22 @@ class FrequencyTestCase(unittest.TestCase):
         # with self.assertRaises(AttributeError):
         #     # number of point is a property and can't be set
         #     freq.npoints = 10
+
+    def test_configurable_default_unit(self):
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
+            freq = rf.Frequency(1, 10, 10)
+            self.assertEqual(freq.unit, "GHz")
+            self.assertTrue((freq.f == np.linspace(1, 10, 10) * 1e9).all())
+
+            freq_from_f = rf.Frequency.from_f([1, 5, 10])
+            self.assertEqual(freq_from_f.unit, "GHz")
+            self.assertTrue((freq_from_f.f == np.array([1, 5, 10]) * 1e9).all())
+
+    def test_explicit_unit_overrides_default(self):
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
+            freq = rf.Frequency(1, 10, 10, unit="MHz")
+            self.assertEqual(freq.unit, "MHz")
+            self.assertTrue((freq.f == np.linspace(1, 10, 10) * 1e6).all())
 
     def test_rando_sweep_from_touchstone(self):
         """
