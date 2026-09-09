@@ -152,15 +152,15 @@ class Frequency:
             unit = _constants.FREQ_UNIT_DEFAULT
         self._unit = unit.lower()
 
-        start =  self.multiplier * start
-        stop = self.multiplier * stop
+        start_hz = self.multiplier * start
+        stop_hz = self.multiplier * stop
 
         if npoints == 0:
             self._f = np.array([])
         elif sweep_type.lower() == 'lin':
-            self._f = linspace(start, stop, npoints)
-        elif sweep_type.lower() == 'log' and start > 0:
-            self._f = geomspace(start, stop, npoints)
+            self._f = linspace(start_hz, stop_hz, npoints)
+        elif sweep_type.lower() == 'log' and start_hz > 0:
+            self._f = geomspace(start_hz, stop_hz, npoints)
         else:
             raise ValueError('Sweep Type not recognized')
 
