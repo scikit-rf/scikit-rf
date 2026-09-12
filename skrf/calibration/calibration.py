@@ -1083,77 +1083,106 @@ class Calibration:
 
 class OnePort(Calibration):
     r"""
-    Standard algorithm for a one port calibration.
+    Standard algorithm for a one-port calibration.
 
-    Solves the linear set of equations:
-
+    The measured reflection coefficient of each standard relates to its definition through
+    the bilinear (Moebius) transform of the error box [#Speciale]_,
 
     .. math::
-        e_{11}\mathbf{i_1m_1}-\Delta e\,\mathbf{i_1}+e_{00}=\mathbf{m_1}
 
-        e_{11}\mathbf{i_2m_2}-\Delta e\,\mathbf{i_2}+e_{00}=\mathbf{m_2}
+        \Gamma_\mathrm{meas}^{(k)} = \frac{t_{11}\Gamma_\mathrm{def}^{(k)} + t_{12}}
+                                          {t_{21}\Gamma_\mathrm{def}^{(k)} + 1}
 
-        e_{11}\mathbf{i_3m_3}-\Delta e\,\mathbf{i_3}+e_{00}=\mathbf{m_3}
+    where :math:`k` is the index of the standard and the :math:`t`'s are the T-parameters of
+    the error box, normalized to its last element. They relate to the classical error terms
+    as [#Marks]_
 
-        ...
+    .. math::
 
-    Where **m**'s and **i**'s are the measured and ideal reflection coefficients,
-    respectively.
+        \begin{bmatrix} t_{11} & t_{12} \\ t_{21} & 1 \end{bmatrix} =
+        \begin{bmatrix} E_\mathrm{R} - E_\mathrm{D}E_\mathrm{S} & E_\mathrm{D} \\
+                        -E_\mathrm{S} & 1 \end{bmatrix}
 
-    See :func:`__init__` for the correct parameters order. If more than three
-    standards are supplied, then a least square algorithm is applied.
+    with :math:`E_\mathrm{D}` the directivity, :math:`E_\mathrm{S}` the source match and
+    :math:`E_\mathrm{R}` the reflection tracking, also sometimes written as ``e00``, ``e11`` and
+    ``e01e10``, respectively.
 
-    See [1]_  and [2]_
+    Reordering the equation makes the problem linear in the T-parameters, so that :math:`K`
+    standards form the system :math:`\mathbf{A}\mathbf{x} = \mathbf{b}`, as follows:
+
+    .. math::
+
+        \begin{bmatrix}
+            \Gamma_\mathrm{def}^{(1)} & 1 & -\Gamma_\mathrm{def}^{(1)}\Gamma_\mathrm{meas}^{(1)} \\
+            \vdots & \vdots & \vdots \\
+            \Gamma_\mathrm{def}^{(K)} & 1 & -\Gamma_\mathrm{def}^{(K)}\Gamma_\mathrm{meas}^{(K)}
+        \end{bmatrix}
+        \begin{bmatrix} t_{11} \\ t_{12} \\ t_{21} \end{bmatrix} =
+        \begin{bmatrix} \Gamma_\mathrm{meas}^{(1)} \\ \vdots \\ \Gamma_\mathrm{meas}^{(K)} \end{bmatrix}
+
+    Three standards give a unique solution. With more standards the system is overdetermined
+    and is solved in a least squares sense.
+
+    Parameters
+    ----------
+    measured : list/dict of :class:`~skrf.network.Network` objects
+        Raw measurements of the calibration standards. The order
+        must align with the `ideals` parameter (or use `sloppy_input`).
+
+    ideals : list/dict of :class:`~skrf.network.Network` objects
+        Predicted ideal response of the calibration standards.
+        The order must align with the `measured` list (or use `sloppy_input`).
+
+    args, kwargs :
+        passed to :func:`Calibration.__init__`
+
+    Notes
+    -----
+    See :func:`Calibration.__init__` for details about automatic standards alignment
+    (aka `sloppy_input`).
+
+    Examples
+    --------
+    >>> import skrf as rf
+    >>> ideals = [rf.Network('ideal_short.s1p'),
+    ...           rf.Network('ideal_open.s1p'),
+    ...           rf.Network('ideal_load.s1p')]
+    >>> measured = [rf.Network('measured_short.s1p'),
+    ...             rf.Network('measured_open.s1p'),
+    ...             rf.Network('measured_load.s1p')]
+    >>> cal = rf.OnePort(measured=measured, ideals=ideals)
+    >>> dut = cal.apply_cal(rf.Network('measured_dut.s1p'))
+
+    A fourth standard makes the problem overdetermined, and it is then solved by least squares:
+
+    >>> ideals.append(rf.Network('ideal_offset_short.s1p'))
+    >>> measured.append(rf.Network('measured_offset_short.s1p'))
+    >>> cal = rf.OnePort(measured=measured, ideals=ideals)
+    >>> dut = cal.apply_cal(rf.Network('measured_dut.s1p'))
 
     References
     ----------
+    .. [#Speciale] R. A. Speciale, "Projective Matrix Transformations in Microwave Network
+        Theory," 1981 IEEE MTT-S International Microwave Symposium Digest, Los Angeles, CA,
+        USA, 1981, pp. 510-512, doi: https://doi.org/10.1109/MWSYM.1981.1129979
 
-    .. [1] http://na.tm.agilent.com/vnahelp/tip20.html
-
-    .. [2] Bauer, R.F., Jr.; Penfield, Paul, "De-Embedding and Unterminating,"
-        Microwave Theory and Techniques, IEEE Transactions on , vol.22, no.3, pp.282,288, Mar 1974
-        doi: 10.1109/TMTT.1974.1128212
-        URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1128212&isnumber=25001
+    .. [#Marks] R. B. Marks, "Formulations of the Basic Vector Network Analyzer Error Model
+        including Switch-Terms," 50th ARFTG Conference Digest, Portland, OR, USA, 1997,
+        pp. 115-126, doi: https://doi.org/10.1109/ARFTG.1997.327265
 
     """
 
     family = 'OnePort'
-    def __init__(self, measured, ideals,*args, **kwargs):
+
+    def __init__(self, measured, ideals, *args, **kwargs):
         """
         One Port initializer.
-
-        If more than three standards are supplied then a least square
-        algorithm is applied.
-
-        Notes
-        -----
-        See func:`Calibration.__init__` for details about
-        automatic standards alignment (aka `sloppy_input`)
-
-
-        Parameters
-        ----------
-        measured : list/dict  of :class:`~skrf.network.Network` objects
-            Raw measurements of the calibration standards. The order
-            must align with the `ideals` parameter ( or use `sloppy_input`)
-
-        ideals : list/dict of :class:`~skrf.network.Network` objects
-            Predicted ideal response of the calibration standards.
-            The order must align with `ideals` list ( or use `sloppy_input`)
-
-        args, kwargs :
-            passed to func:`Calibration.__init__`
-
-        Notes
-        -----
-        This uses numpy.linalg.lstsq() for least squares calculation
 
         See Also
         --------
         Calibration.__init__
         """
-        Calibration.__init__(self, measured, ideals,
-                             *args, **kwargs)
+        Calibration.__init__(self, measured, ideals, *args, **kwargs)
 
     def _check_input(self):
         if not all([n.number_of_ports==1 for n in self.ideals]):
@@ -1162,69 +1191,58 @@ class OnePort(Calibration):
             raise ValueError(f'measured networks for {self.family} should be 1-port Networks')
 
     def run(self):
-        """ Run the calibration algorithm.
         """
-        numStds = self.nstandards
-        numCoefs=3
-
-        mList = [self.measured[k].s.reshape((-1,1)) for k in range(numStds)]
-        iList = [self.ideals[k].s.reshape((-1,1)) for k in range(numStds)]
-
+        Run the calibration algorithm.
+        """
         self._check_input()
 
-        # ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
-        fLength = len(mList[0])
+        # the measured and defined reflection coefficients of shape (nfreqs, nstandards)
+        gamma_meas = np.array([ntwk.s.flatten() for ntwk in self.measured]).T
+        gamma_def  = np.array([ntwk.s.flatten() for ntwk in self.ideals]).T
+        nfreqs, nstds = gamma_meas.shape
+        if nstds < 3:
+            raise ValueError(f'{self.family} needs at least 3 standards, {nstds} were given.')
 
-        #initialize outputs
-        abc = np.zeros((fLength,numCoefs),dtype=complex)
-        residuals =     np.zeros((fLength,\
-                np.sign(numStds-numCoefs)),dtype=complex)
-        parameter_variance = np.zeros((fLength, 3,3),dtype=complex)
-        measurement_variance = np.zeros((fLength, 1),dtype=complex)
-        # loop through frequencies and form m, a vectors and
-        # the matrix M. where M = i1, 1, i1*m1
-        #                         i2, 1, i2*m2
-        #                                 ...etc
-        for f in list(range(fLength)):
-            #create  m, i, and 1 vectors
-            one = np.ones(shape=(numStds,1))
-            m = np.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
-            i = np.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f
+        # the system A@x = b for the T-parameters x = [t11, t12, t21], one per frequency.
+        A = np.stack([gamma_def, np.ones_like(gamma_def), -gamma_def*gamma_meas], axis=-1)
+        b = gamma_meas[:, :, None]
 
-            # construct the matrix
-            Q = np.hstack([i, one, i*m])
-            # calculate least squares
-            abcTmp, residualsTmp = np.linalg.lstsq(Q,m,rcond=None)[0:2]
-            if numStds > 3:
-                measurement_variance[f,:]= residualsTmp/(numStds-numCoefs)
-                parameter_variance[f,:] = \
-                        abs(measurement_variance[f,:])*\
-                        np.linalg.inv(np.dot(Q.T,Q))
+        # the standards must stay distinguishable, otherwise A loses a rank at some frequency
+        u, s, vh = np.linalg.svd(A, full_matrices=False)
+        singular = s[:, -1] <= s[:, 0]*nstds*np.finfo(float).eps
+        for f in np.flatnonzero(singular):
+            warnings.warn(
+                f'The system is singular at {self.frequency.f_scaled[f]} '
+                f'{self.frequency.unit}. Ensure that the standards are far enough '
+                'away from each other on the Smith chart.', stacklevel=2
+                )
 
+        # solve linear least squares for every frequency at once.
+        x = (vh.conj().swapaxes(-1, -2)/s[:, None, :])@(u.conj().swapaxes(-1, -2)@b)
+        t11, t12, t21 = x[:, 0, 0], x[:, 1, 0], x[:, 2, 0]
 
-            abc[f,:] = abcTmp.flatten()
-            try:
-                residuals[f,:] = residualsTmp
-            except ValueError as err:
-                raise(ValueError('matrix has singular values. ensure standards are far enough away on smith chart'))\
-                    from err
+        # the T-parameters give the classical error terms, see the class docstring
+        self._coefs = {
+            'directivity': t12,
+            'reflection tracking': t11 - t12*t21,
+            'source match': -t21,
+            }
 
-        # convert the abc vector to standard error coefficients
-        a,b,c = abc[:,0], abc[:,1],abc[:,2]
-        e01e10 = a+b*c
-        e00 = b
-        e11 = c
-        self._coefs = {\
-                'directivity':e00,\
-                'reflection tracking':e01e10, \
-                'source match':e11\
-                }
+        # what the fit leaves over, and the covariance of x that it implies.
+        # as in numpy.linalg.lstsq, this is the sum of the squared residuals,
+        # and stays empty while three standards fit exactly.
+        residuals = np.zeros((nfreqs, np.sign(nstds - 3)), dtype=complex)
+        parameter_variance = np.zeros((nfreqs, 3, 3), dtype=complex)
+        if nstds > 3:
+            residuals[:, 0] = (abs((b - A@x)[:, :, 0])**2).sum(axis=1)
+            measurement_variance = residuals[:, 0].real/(nstds - 3)
+            # the covariance scales with inv(A^H@A), which is V@diag(1/s^2)@V^H
+            inv_AHA = (vh.conj().swapaxes(-1, -2)/s[:, None, :]**2)@vh
+            parameter_variance = measurement_variance[:, None, None]*inv_AHA
 
-
-        # output is a dictionary of information
         self._output_from_run = {
-            'residuals':residuals,
-            'parameter variance':parameter_variance
+            'residuals': residuals,
+            'parameter variance': parameter_variance
             }
 
         return None
