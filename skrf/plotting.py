@@ -241,7 +241,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     """
     from matplotlib.patches import Circle
 
-    # contour holds matplotlib instances of: pathes.Circle, and lines.Line2D, which
+    # contour holds matplotlib instances of: paths.Circle, and lines.Line2D, which
     # are the contours on the smith chart
     contour = []
 

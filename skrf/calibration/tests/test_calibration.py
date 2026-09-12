@@ -1494,7 +1494,7 @@ class TwoPortOnePathTest(TwelveTermTest):
         r = self.cal.embed(a.flipped())
         self.assertEqual(self.cal.apply_cal((f,r)),a)
 
-    @pytest.mark.skip(reason='measurement procedure is different so this test doesnt apply')
+    @pytest.mark.skip(reason='measurement procedure is different so this test does not apply')
     def test_embed_equal_measure(self):
         pass
 

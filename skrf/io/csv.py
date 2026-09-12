@@ -578,7 +578,7 @@ def pna_csv_header_split(filename):
     warn("deprecated", DeprecationWarning, stacklevel=2)
     header, comments, d = read_pna_csv(filename)
 
-    n_traces =  d.shape[1] - 1 # because theres is one frequency column
+    n_traces =  d.shape[1] - 1 # because there is one frequency column
 
     if header.count(',') == n_traces:
         cols = header.split(',') # column names
@@ -686,7 +686,7 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
     warn("deprecated", DeprecationWarning, stacklevel=2)
     header, comments, d = read_pna_csv(filename)
 
-    n_traces =  d.shape[1] - 1 # because theres is one frequency column
+    n_traces =  d.shape[1] - 1 # because there is one frequency column
 
     cols = pna_csv_header_split(filename)
 
