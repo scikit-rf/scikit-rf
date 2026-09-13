@@ -10,6 +10,7 @@ jobs:
       checks: write
       pull-requests: write
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
 
@@ -28,15 +29,37 @@ jobs:
         . .venv/bin/activate
         python -c "import skrf; print(skrf.__version__)"  # Test import with minimal dependencies
 
+    # Temporary diagnostics for the two versions that timed out in PR #1437.
+    - name: Install external stack diagnostic tool
+      if: matrix.python-version == '3.10' || matrix.python-version == '3.11'
+      timeout-minutes: 3
+      continue-on-error: true
+      run: uv tool install py-spy==0.4.1
+
     # run the tests located in skrf/
     - name: Test the code, tutorials and examples
+      timeout-minutes: 25
       if: ${{ always() }}
       run: |
         uv pip install -e .[visa,netw,xlsx,plot] --group dev --compile -v
         echo "Finished installing dependencies, now running tests"
         . .venv/bin/activate
         echo "Running tests with Python ${{ matrix.python-version }}"
-        python -m pytest -n auto --timeout=60 -v --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }} --dist loadscope
+        if [[ "${{ matrix.python-version }}" == "3.10" || "${{ matrix.python-version }}" == "3.11" ]]; then
+          python .github/scripts/diagnose_pytest.py --python-version "${{ matrix.python-version }}"
+        else
+          python -m pytest -n auto --timeout=60 -v --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }} --dist loadscope
+        fi
+
+    - name: Upload CI diagnostics
+      if: always() && (matrix.python-version == '3.10' || matrix.python-version == '3.11')
+      uses: actions/upload-artifact@v7
+      with:
+        name: CI diagnostics (Python ${{ matrix.python-version }})
+        path: ci-diagnostics/
+        if-no-files-found: warn
+        retention-days: 14
+
 
     - name: Upload Test Results
       if: always()
