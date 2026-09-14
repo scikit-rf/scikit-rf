@@ -31,10 +31,16 @@ jobs:
 
     # Temporary diagnostics for the two versions that timed out in PR #1437.
     - name: Install external stack diagnostic tool
-      if: matrix.python-version == '3.10' || matrix.python-version == '3.11'
+      if: matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12'
       timeout-minutes: 3
       continue-on-error: true
       run: uv tool install py-spy==0.4.1
+
+    - name: Install isolated numerical observer
+      if: matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12'
+      timeout-minutes: 3
+      continue-on-error: true
+      run: uv pip install --python .venv/bin/python --target "$RUNNER_TEMP/ci-observer" threadpoolctl==3.6.0
 
     # run the tests located in skrf/
     - name: Test the code, tutorials and examples
@@ -51,8 +57,17 @@ jobs:
           python -m pytest -n auto --timeout=60 -v --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }} --dist loadscope
         fi
 
+    - name: Compare vector fitting with default and single BLAS threads
+      if: always() && (matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12')
+      timeout-minutes: 5
+      env:
+        CI_OBSERVER_PATH: ${{ runner.temp }}/ci-observer
+      run: |
+        . .venv/bin/activate
+        python .github/scripts/diagnose_pytest.py --python-version "${{ matrix.python-version }}" --probe-only
+
     - name: Upload CI diagnostics
-      if: always() && (matrix.python-version == '3.10' || matrix.python-version == '3.11')
+      if: always() && (matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12')
       uses: actions/upload-artifact@v7
       with:
         name: CI diagnostics (Python ${{ matrix.python-version }})

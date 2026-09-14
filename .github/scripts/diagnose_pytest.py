@@ -61,7 +61,7 @@ def stop_group(process):
     process.wait()
 
 
-def monitored(command, directory, limit, interval):
+def monitored(command, directory, limit, interval, env=None):
     directory.mkdir(parents=True, exist_ok=True)
     print(f"Starting: {shlex.join(command)}", flush=True)
     started = time.monotonic()
@@ -69,7 +69,11 @@ def monitored(command, directory, limit, interval):
     timed_out = False
     with (directory / "output.log").open("w") as log:
         process = subprocess.Popen(
-            command, stdout=log, stderr=subprocess.STDOUT, start_new_session=True
+            command,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+            env=env,
         )
         try:
             while process.poll() is None:
@@ -98,15 +102,37 @@ def monitored(command, directory, limit, interval):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--python-version", required=True)
+    parser.add_argument("--probe-only", action="store_true")
     args = parser.parse_args()
     root = Path("ci-diagnostics")
     root.mkdir(exist_ok=True)
+    if args.probe_only:
+        capture(["lscpu"], root / "cpu.txt")
+        command = [sys.executable, str(Path(__file__).with_name("vectorfit_probe.py"))]
+        codes = []
+        for name in ("default", "single"):
+            env = os.environ.copy()
+            if name == "single":
+                env.update(
+                    {
+                        key: "1"
+                        for key in (
+                            "OPENBLAS_NUM_THREADS",
+                            "OMP_NUM_THREADS",
+                            "MKL_NUM_THREADS",
+                            "BLIS_NUM_THREADS",
+                            "VECLIB_MAXIMUM_THREADS",
+                        )
+                    }
+                )
+            code, _ = monitored(command, root / f"vectorfit-{name}", 90, 30, env=env)
+            codes.append(code)
+        return int(any(code != 0 for code in codes))
     (root / "environment.txt").write_text(
         f"Python: {sys.version}\nExecutable: {sys.executable}\n"
         f"CPU count: {os.cpu_count()}\n"
         + "".join(
-            f"{key}={os.environ.get(key, '')}\n"
-            for key in ("ImageOS", "ImageVersion", "RUNNER_OS", "RUNNER_ARCH")
+            f"{key}={os.environ.get(key, '')}\n" for key in ("ImageOS", "ImageVersion", "RUNNER_OS", "RUNNER_ARCH")
         )
     )
     capture(["uname", "-a"], root / "kernel.txt")
