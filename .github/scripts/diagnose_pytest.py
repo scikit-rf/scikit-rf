@@ -110,23 +110,23 @@ def main():
         capture(["lscpu"], root / "cpu.txt")
         command = [sys.executable, str(Path(__file__).with_name("vectorfit_probe.py"))]
         codes = []
-        for name in ("default", "single"):
+        # Fresh processes on the same runner: only kernel selection changes
+        # within each pair. Never force AVX-512 on unsupported hardware.
+        for name in ("default", "haswell"):
             env = os.environ.copy()
-            if name == "single":
-                env.update(
-                    {
-                        key: "1"
-                        for key in (
-                            "OPENBLAS_NUM_THREADS",
-                            "OMP_NUM_THREADS",
-                            "MKL_NUM_THREADS",
-                            "BLIS_NUM_THREADS",
-                            "VECLIB_MAXIMUM_THREADS",
-                        )
-                    }
-                )
+            env.pop("OPENBLAS_CORETYPE", None)
+            if name.startswith("haswell"):
+                env["OPENBLAS_CORETYPE"] = "Haswell"
+            env["CI_ITERATIONS_PATH"] = str(root / f"vectorfit-{name}" / "iterations.jsonl")
             code, _ = monitored(command, root / f"vectorfit-{name}", 90, 30, env=env)
             codes.append(code)
+        import json
+
+        from compare_vectorfit import compare
+
+        comparison = compare(root)
+        (root / "comparison.json").write_text(json.dumps(comparison, indent=2))
+        print(json.dumps(comparison, indent=2), flush=True)
         return int(any(code != 0 for code in codes))
     (root / "environment.txt").write_text(
         f"Python: {sys.version}\nExecutable: {sys.executable}\n"
@@ -150,32 +150,7 @@ def main():
         "--dist",
         "loadscope",
     ]
-    code, timed_out = monitored(command, root / "original", 600, 120)
-    if timed_out:
-        # These follow-up processes may see warmed caches; they do not replace
-        # the original run's status, even if they succeed.
-        probes = {
-            "import-pytest": [
-                sys.executable,
-                "-c",
-                "import pytest; print(pytest.__version__)",
-            ],
-            "import-skrf": [
-                sys.executable,
-                "-c",
-                "import skrf; print(skrf.__version__)",
-            ],
-            "collect": [
-                sys.executable,
-                "-m",
-                "pytest",
-                "--collect-only",
-                "-q",
-                "--no-cov",
-            ],
-        }
-        for name, probe in probes.items():
-            monitored(probe, root / name, 90, 30)
+    code, _ = monitored(command, root / "original", 600, 120)
     return code if code >= 0 else 128 - code
 
 

@@ -57,7 +57,12 @@ jobs:
           python -m pytest -n auto --timeout=60 -v --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }} --dist loadscope
         fi
 
-    - name: Compare vector fitting with default and single BLAS threads
+    - name: Validate diagnostic comparison logic
+      if: always() && (matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12')
+      timeout-minutes: 1
+      run: .venv/bin/python -m unittest discover -s .github/scripts/tests -v
+
+    - name: Compare automatic and Haswell BLAS kernels
       if: always() && (matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12')
       timeout-minutes: 5
       env:
