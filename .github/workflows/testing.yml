@@ -6,6 +6,9 @@ jobs:
   Tests:
 
     runs-on: ubuntu-latest
+    env:
+      # See .github/diagnostics/blas-kernel-investigation.md for the same-runner evidence.
+      OPENBLAS_CORETYPE: Haswell
     permissions:
       checks: write
       pull-requests: write
@@ -29,19 +32,6 @@ jobs:
         . .venv/bin/activate
         python -c "import skrf; print(skrf.__version__)"  # Test import with minimal dependencies
 
-    # Temporary diagnostics for the two versions that timed out in PR #1437.
-    - name: Install external stack diagnostic tool
-      if: matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12'
-      timeout-minutes: 3
-      continue-on-error: true
-      run: uv tool install py-spy==0.4.1
-
-    - name: Install isolated numerical observer
-      if: matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12'
-      timeout-minutes: 3
-      continue-on-error: true
-      run: uv pip install --python .venv/bin/python --target "$RUNNER_TEMP/ci-observer" threadpoolctl==3.6.0
-
     # run the tests located in skrf/
     - name: Test the code, tutorials and examples
       timeout-minutes: 25
@@ -51,35 +41,7 @@ jobs:
         echo "Finished installing dependencies, now running tests"
         . .venv/bin/activate
         echo "Running tests with Python ${{ matrix.python-version }}"
-        if [[ "${{ matrix.python-version }}" == "3.10" || "${{ matrix.python-version }}" == "3.11" ]]; then
-          python .github/scripts/diagnose_pytest.py --python-version "${{ matrix.python-version }}"
-        else
-          python -m pytest -n auto --timeout=60 -v --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }} --dist loadscope
-        fi
-
-    - name: Validate diagnostic comparison logic
-      if: always() && (matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12')
-      timeout-minutes: 1
-      run: .venv/bin/python -m unittest discover -s .github/scripts/tests -v
-
-    - name: Compare automatic and Haswell BLAS kernels
-      if: always() && (matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12')
-      timeout-minutes: 5
-      env:
-        CI_OBSERVER_PATH: ${{ runner.temp }}/ci-observer
-      run: |
-        . .venv/bin/activate
-        python .github/scripts/diagnose_pytest.py --python-version "${{ matrix.python-version }}" --probe-only
-
-    - name: Upload CI diagnostics
-      if: always() && (matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12')
-      uses: actions/upload-artifact@v7
-      with:
-        name: CI diagnostics (Python ${{ matrix.python-version }})
-        path: ci-diagnostics/
-        if-no-files-found: warn
-        retention-days: 14
-
+        python -m pytest -n auto --timeout=60 -v --junitxml=test-results/junit-${{ matrix.python-version }}.xml --junit-prefix=${{ matrix.python-version }} --dist loadscope
 
     - name: Upload Test Results
       if: always()
