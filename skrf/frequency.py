@@ -56,6 +56,7 @@ from numpy import (
     pi,
 )
 
+from . import constants as _constants
 from .constants import FREQ_UNITS, ZERO
 from .plotting import axes_kwarg
 from .util import find_nearest_index, slice_domain
@@ -119,7 +120,8 @@ class Frequency:
             Frequency unit of the band: 'Hz', 'kHz', 'MHz', 'GHz', 'THz'.
             This is used to create the attribute :attr:`f_scaled`.
             It is also used by the :class:`~skrf.network.Network` class
-            for plots vs. frequency. Default is 'Hz'.
+            for plots vs. frequency. The default is set by
+            :data:`~skrf.constants.FREQ_UNIT_DEFAULT`.
         sweep_type : string, optional
             Type of the sweep: 'lin' or 'log'.
             'lin' for linear and 'log' for logarithmic. Default is 'lin'.
@@ -147,22 +149,18 @@ class Frequency:
 
         """
         if unit is None:
-            warnings.warn('''
-                          Frequency unit not passed: uses 'Hz' per default.
-                          ''',
-                          DeprecationWarning, stacklevel=2)
-            unit = 'Hz'
+            unit = _constants.FREQ_UNIT_DEFAULT
         self._unit = unit.lower()
 
-        start =  self.multiplier * start
-        stop = self.multiplier * stop
+        start_hz = self.multiplier * start
+        stop_hz = self.multiplier * stop
 
         if npoints == 0:
             self._f = np.array([])
         elif sweep_type.lower() == 'lin':
-            self._f = linspace(start, stop, npoints)
-        elif sweep_type.lower() == 'log' and start > 0:
-            self._f = geomspace(start, stop, npoints)
+            self._f = linspace(start_hz, stop_hz, npoints)
+        elif sweep_type.lower() == 'log' and start_hz > 0:
+            self._f = geomspace(start_hz, stop_hz, npoints)
         else:
             raise ValueError('Sweep Type not recognized')
 
@@ -256,9 +254,9 @@ class Frequency:
         ----------
         f : scalar or array-like
             frequency vector
-
-        *args, **kwargs : arguments, keyword arguments
-            passed on to  :func:`__init__`.
+        unit : string, optional
+            Frequency unit of the band: 'Hz', 'kHz', 'MHz', 'GHz', 'THz'.
+            The default is set by :data:`~skrf.constants.FREQ_UNIT_DEFAULT`.
 
         Returns
         -------

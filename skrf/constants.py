@@ -52,6 +52,10 @@ This module contains constants, numerical approximations, and unit conversions
 
     Frequency units: "Hz", "kHz", "MHz", "GHz", "THz" (case-insensitive).
 
+.. data:: FREQ_UNIT_DEFAULT
+
+    Default frequency unit used when none is explicitly provided.
+
 .. autosummary::
    :toctree: generated/
 
@@ -128,6 +132,11 @@ FrequencyUnitT = Literal["Hz", "kHz", "MHz", "GHz", "THz"]
 Frequency units: "Hz", "kHz", "MHz", "GHz", "THz" (case-insensitive).
 """
 FREQ_UNITS: dict[FrequencyUnitT, float] = {"Hz": 1.0, "kHz": 1e3, "MHz": 1e6, "GHz": 1e9, "THz": 1e12}
+
+FREQ_UNIT_DEFAULT: FrequencyUnitT = "Hz"
+"""
+Default frequency unit used when none is explicitly provided.
+"""
 
 SweepTypeT = Literal["lin", "log"]
 """

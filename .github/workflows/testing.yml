@@ -6,10 +6,14 @@ jobs:
   Tests:
 
     runs-on: ubuntu-latest
+    env:
+      # See .github/diagnostics/blas-kernel-investigation.md for the same-runner evidence.
+      OPENBLAS_CORETYPE: Haswell
     permissions:
       checks: write
       pull-requests: write
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
 
@@ -30,6 +34,7 @@ jobs:
 
     # run the tests located in skrf/
     - name: Test the code, tutorials and examples
+      timeout-minutes: 25
       if: ${{ always() }}
       run: |
         uv pip install -e .[visa,netw,xlsx,plot] --group dev --compile -v

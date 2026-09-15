@@ -118,7 +118,7 @@ class NanoVNAv2(vna.VNA):
 
         self._reset_protocol()
 
-        self.frequency = skrf.Frequency(start=1e6, stop=10e6, npoints=201)
+        self.frequency = skrf.Frequency(start=1e6, stop=10e6, npoints=201, unit="Hz")
 
     def _reset_protocol(self):
         self.write_raw(b"\x00\x00\x00\x00\x00\x00\x00\x00")
@@ -172,7 +172,7 @@ class NanoVNAv2(vna.VNA):
     @freq_start.setter
     def freq_start(self, f: int) -> None:
         self.write(OP.WRITE8, REG_ADDR.SWEEP_START, 8, f)
-        self._freq = skrf.Frequency(start=f, stop=self._freq.stop, npoints=self._freq.npoints)
+        self._freq = skrf.Frequency(start=f, stop=self._freq.stop, npoints=self._freq.npoints, unit="Hz")
 
     @property
     def freq_stop(self) -> float:
@@ -180,7 +180,7 @@ class NanoVNAv2(vna.VNA):
 
     @freq_stop.setter
     def freq_stop(self, f: int) -> None:
-        self._freq = skrf.Frequency(start=self._freq.start, stop=f, npoints=self._freq.npoints)
+        self._freq = skrf.Frequency(start=self._freq.start, stop=f, npoints=self._freq.npoints, unit="Hz")
         self.write(OP.WRITE8, REG_ADDR.SWEEP_STEP, 8, self._freq.step)
 
     @property
@@ -191,7 +191,9 @@ class NanoVNAv2(vna.VNA):
     def freq_step(self, f: int) -> None:
         npoints = (self._freq.stop - self._freq.start + f) / f
         npoints = int(npoints.round())
-        self._freq = skrf.Frequency(start=self._freq.start, stop=self._freq.stop, npoints=npoints)
+        self._freq = skrf.Frequency(
+            start=self._freq.start, stop=self._freq.stop, npoints=npoints, unit="Hz"
+        )
         self.write(OP.WRITE2, REG_ADDR.SWEEP_POINTS, 2, npoints)
 
     @property
@@ -201,7 +203,7 @@ class NanoVNAv2(vna.VNA):
     @npoints.setter
     def npoints(self, n: int) -> None:
         self.write(OP.WRITE2, REG_ADDR.SWEEP_POINTS, 2, n)
-        self._freq = skrf.Frequency(start=self._freq.start, stop=self._freq.stop, npoints=n)
+        self._freq = skrf.Frequency(start=self._freq.start, stop=self._freq.stop, npoints=n, unit="Hz")
 
     @property
     def frequency(self) -> skrf.Frequency:
