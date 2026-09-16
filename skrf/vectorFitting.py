@@ -2748,9 +2748,23 @@ class VectorFittingParametric:
 
         n_poles_global = len(self.poles_global)
 
+        # determine number of global real poles and complex-conjugate pole pairs
+        idx_poles_global_real = (np.imag(self.poles_global) == 0)
+        n_poles_global_real = np.sum(idx_poles_global_real)
+        n_poles_global_cmplx = int(0.5 * np.sum(~idx_poles_global_real))
+
         for nw in self.networkset:
             vf = VectorFitting(nw)
-            vf.auto_fit()
+
+            # catch passivity warnings (passivity enforcement is handled below)
+            warnings.filterwarnings('error')
+            try:
+                # it is important to use the same number of poles for each individual fit in the set
+                # standard vector fitting works much better than automatic vector fitting for this application
+                vf.vector_fit(n_poles_global_real, n_poles_global_cmplx)
+            except UserWarning:
+                pass
+            warnings.resetwarnings()
 
             if enforce_passivity:
                 if nw.is_passive():
@@ -2884,11 +2898,23 @@ class VectorFittingParametric:
         >>> vf_local.write_spice_subcircuit_s('model_-12_5.sp')
         """
 
+        # copy self.networkset[0] to create a network with the same frequency vector and parameters
         nw = self.networkset[0]
+
+        # overwrite the parameter values and the s-matrix with the interpolated parametric model response
         nw.params = params
         nw.s = self.get_model_response(params, nw.f)
+
+        # determine number of global real poles and complex-conjugate pole pairs
+        idx_poles_global_real = (np.imag(self.poles_global) == 0)
+        n_poles_global_real = np.sum(idx_poles_global_real)
+        n_poles_global_cmplx = int(0.5 * np.sum(~idx_poles_global_real))
+
+        # fit the interpolated network using regular vector fitting
+        # using the same number and type of poles as in the parametric model
         vf = VectorFitting(nw)
-        vf.auto_fit()
+        vf.vector_fit(n_poles_global_real, n_poles_global_cmplx)
+
         return vf
 
     @staticmethod
@@ -2924,11 +2950,15 @@ class VectorFittingParametric:
                 file = os.path.join(path, filename)
                 nw = Network(file)
                 params = {}
-                for comment in nw.comments.splitlines():
+
+                for line in nw.comments.splitlines():
                     for name in param_names:
-                        if name in comment.split()[0]:
-                            val = float(comment.split()[-1])
-                            params.update({name: val})
+                        i = line.find(name)
+                        if i > -1:
+                            print(i)
+                        # if name in line.find:
+                        #     val = float(comment.split()[-1])
+                        #     params.update({name: val})
                 nw.params = params
                 networks.append(nw)
         return NetworkSet(networks)
