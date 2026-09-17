@@ -58,20 +58,20 @@ class FrequencyTestCase(unittest.TestCase):
             self.assertTrue((freq_from_f.f == np.array([1, 5, 10]) * 1e9).all())
             self.assertTrue((freq_from_f.f_scaled == np.array([1, 5, 10])).all())
 
-    def test_explicit_unit_overrides_default(self):
+    def test_explicit_input_unit_is_converted_to_default(self):
         with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
             freq = rf.Frequency(1, 10, 10, unit="MHz")
-            self.assertEqual(freq.unit, "MHz")
+            self.assertEqual(freq.unit, "GHz")
             self.assertTrue((freq.f == np.linspace(1, 10, 10) * 1e6).all())
-            np.testing.assert_array_equal(freq.f_scaled, np.linspace(1, 10, 10))
+            np.testing.assert_allclose(freq.f_scaled, np.linspace(1, 10, 10) * 1e-3)
 
             freq_from_f = rf.Frequency.from_f([1, 5, 10], unit="MHz")
-            self.assertEqual(freq_from_f.unit, "MHz")
+            self.assertEqual(freq_from_f.unit, "GHz")
             np.testing.assert_array_equal(freq_from_f.f, [1e6, 5e6, 10e6])
-            np.testing.assert_array_equal(freq_from_f.f_scaled, [1, 5, 10])
+            np.testing.assert_allclose(freq_from_f.f_scaled, [0.001, 0.005, 0.01])
 
-    def test_builtin_default_is_hz(self):
-        self.assertEqual(rf.constants.FREQ_UNIT_DEFAULT, "Hz")
+    def test_passive_default_uses_hz_for_omitted_units(self):
+        self.assertIsNone(rf.constants.FREQ_UNIT_DEFAULT)
         for freq in (rf.Frequency(1, 2, 2), rf.Frequency.from_f([1, 2])):
             self.assertEqual(freq.unit, "Hz")
             np.testing.assert_array_equal(freq.f, [1, 2])
@@ -120,15 +120,15 @@ class FrequencyTestCase(unittest.TestCase):
                 self.assertEqual(empty.unit, "GHz")
                 self.assertEqual(empty.f.size, 0)
 
-    def test_touchstone_unit_overrides_default(self):
+    def test_touchstone_input_unit_is_converted_to_default(self):
         for unit, multiplier in (("Hz", 1), ("MHz", 1e6)):
             with self.subTest(unit=unit), patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
                 touchstone = StringIO(f"# {unit} S RI R 50\n1 0.1 0\n2 0.2 0\n")
                 touchstone.name = "unit_test.s1p"
                 network = rf.Network(touchstone)
-                self.assertEqual(network.frequency.unit, unit)
+                self.assertEqual(network.frequency.unit, "GHz")
                 np.testing.assert_array_equal(network.f, np.array([1, 2]) * multiplier)
-                np.testing.assert_array_equal(network.frequency.f_scaled, [1, 2])
+                np.testing.assert_allclose(network.frequency.f_scaled, np.array([1, 2]) * multiplier / 1e9)
                 np.testing.assert_allclose(network.s[:, 0, 0], [0.1, 0.2])
 
     def test_rando_sweep_from_touchstone(self):
