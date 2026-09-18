@@ -2365,6 +2365,29 @@ class NetworkTestCase(unittest.TestCase):
         self.assertFalse(y.is_symmetric(n=4))
         return
 
+    def test_passivity(self):
+        # 1-port with complex reflection coefficients across multiple frequencies
+        s = np.array([[[0.3 + 0.4j]], [[-0.6 + 0.8j]], [[0.0]]])
+        ntwk = rf.Network(f=[1, 2, 3], s=s, z0=50)
+        p = ntwk.passivity
+
+        # returns |S11| with shape (nfreqs, 1, 1)
+        self.assertEqual(p.shape, (3, 1, 1))
+        np.testing.assert_allclose(p.real, [[[0.5]], [[1.0]], [[0.0]]])
+        np.testing.assert_allclose(p.imag, 0.0)
+
+        # verify helper function directly
+        np.testing.assert_allclose(rf.network.passivity(s), p)
+
+        # multi-port calculation and return shape remain unchanged
+        s_2port = np.array([[[0.0, 0.5], [0.5, 0.0]]])
+        ntwk_2port = rf.Network(f=[1], s=s_2port, z0=50)
+        p_2port = ntwk_2port.passivity
+        self.assertEqual(p_2port.shape, (1, 2, 2))
+        np.testing.assert_allclose(p_2port.real, [[[0.5, 0.0], [0.0, 0.5]]])
+        np.testing.assert_allclose(p_2port.imag, 0.0)
+        return
+
     def test_is_passive(self):
         a = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
@@ -2377,6 +2400,32 @@ class NetworkTestCase(unittest.TestCase):
                           [10, 0]],
                        z0=50)
         self.assertFalse(b.is_passive(), 'A unilateral amplifier is not passive.')
+
+        # matched load (S11 = 0)
+        matched = rf.Network(f=[1], s=[[[0.0]]], z0=50)
+        self.assertTrue(matched.is_passive(), 'A matched load is passive.')
+
+        # ideal open and short circuits (|S11| = 1)
+        open_c = rf.Network(f=[1], s=[[[1.0]]], z0=50)
+        short_c = rf.Network(f=[1], s=[[[-1.0]]], z0=50)
+        self.assertTrue(open_c.is_passive(), 'An ideal open circuit is passive.')
+        self.assertTrue(short_c.is_passive(), 'An ideal short circuit is passive.')
+
+        # one-port with gain (|S11| > 1)
+        gain = rf.Network(f=[1], s=[[[1.1]]], z0=50)
+        self.assertFalse(gain.is_passive(), 'A one-port with gain is not passive.')
+
+        # multi-frequency one-port
+        multi_freq_pass = rf.Network(f=[1, 2, 3], s=[[[0.5]], [[0.9]], [[1.0]]], z0=50)
+        self.assertTrue(multi_freq_pass.is_passive(), 'A multi-frequency passive one-port is passive.')
+        multi_freq_fail = rf.Network(f=[1, 2, 3], s=[[[0.5]], [[1.2]], [[0.8]]], z0=50)
+        self.assertFalse(multi_freq_fail.is_passive(), 'A multi-frequency one-port with violation is not passive.')
+
+        # boundary violation with explicit tolerance
+        s_viol = 1.0 + 1e-4
+        ntwk_viol = rf.Network(f=[1], s=[[[s_viol]]], z0=50)
+        self.assertTrue(ntwk_viol.is_passive(tol=1e-3), 'Boundary violation within tolerance is accepted.')
+        self.assertFalse(ntwk_viol.is_passive(tol=1e-5), 'Boundary violation outside tolerance is rejected.')
         return
 
     def test_is_lossless(self):
