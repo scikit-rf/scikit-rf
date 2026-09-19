@@ -3908,17 +3908,17 @@ class TUGMultilineTRL(EightTerm):
             # inverse covariance matrix for propagation constant computation
             return np.eye(N-1, dtype=complex) - (1/N)*np.ones(shape=(N-1, N-1), dtype=complex)
 
-        def compute_gamma(z, y, lengths, gamma_est, inx=0):
+        def compute_gamma(z, lengths, gamma_est, inx=None):
             # gamma = alpha + 1j*beta is determined through linear weighted least-squares.
-            # z = exp(-gamma*length) and y = 1/z are passed directly; `inx` selects the
-            # reference line (the choice does not affect the result).
+            # pick line that maximizes the unwrapping margin |dbeta*(l-l_ref)| < pi.
+            if inx is None:
+                inx = np.argmin([abs(lengths - l).max() for l in lengths])
             lengths = lengths - lengths[inx]
             z = z/z[inx]
-            y = y/y[inx]
             del_inx = np.arange(len(lengths)) != inx  # get rid of the reference line (i.e., thru)
 
             l = -lengths[del_inx]
-            gamma_l = np.log((z + 1/y)/2)[del_inx]
+            gamma_l = np.log(z[del_inx])
             n = np.round( (gamma_l - gamma_est*l).imag/np.pi/2 )
             gamma_l = gamma_l - 1j*2*np.pi*n # unwrap
             gamma = WLS(l, gamma_l, Vgl(len(l)+1))
@@ -3949,6 +3949,13 @@ class TUGMultilineTRL(EightTerm):
             x = np.array( [v1*x + v2*y for x,y in zip(c1,c2)] )  # 2 solutions
             mininx = np.argmin( abs(x - x_est).sum(axis=1) )
             return x[mininx]
+
+        def compute_lambd(gamma, lengths):
+            # compute eigenvalue estimate based on gamma.
+            z = np.exp(-gamma*lengths)
+            y = 1/z
+            W = (np.outer(y,z) - np.outer(z,y)).conj()
+            return abs(W.conj()*W).sum()/2
 
         line_meas_S    = np.array([x.s for x in self.line_meas])    # get the S-parameters
         reflect_meas_S = np.array([x.s for x in self.reflect_meas]) # get the S-parameters
@@ -3983,19 +3990,17 @@ class TUGMultilineTRL(EightTerm):
             G, lambd = compute_G_with_takagi(Dinv@M.T@P@Q@M)
             W = (G@np.array([[0,1j],[-1j,0]])@G.T).conj()
 
-            ## recover z = exp(-gamma*length) and y = 1/z from the matrix G (rank-1 recovery)
+            ## recover z = exp(-gamma*length) from the matrix G (rank-1 recovery)
             zy = G@np.array([[1,-1j],[1j,1]])@G.T  # outer product of z and y (up to sign of W)
-            u,_,vh = np.linalg.svd(zy)
-            z = u[:,0]
-            y = vh[0,:]
+            eigval, eigvec = np.linalg.eig(zy)
+            z = eigvec[:,np.argmax(abs(eigval))]
 
-            ## resolve the sign of W and swap z and y if needed
+            ## resolve the sign of W and invert z if needed
             z_est = np.exp(-gamma_est*lengths)
-            y_est = 1/z_est
-            lambd_est = y_est.dot(W).dot(z_est)  # projection of the estimate onto W (defines lambda's sign)
+            lambd_est = (1/z_est).dot(W).dot(z_est)  # projection of the estimate onto W (defines lambda's sign)
             if abs(lambd_est - lambd) > abs(lambd_est + lambd):
                 W = -W
-                y, z = z, y
+                z = 1/z
 
             ## scale the weighting matrix to handle repeated lengths and/or the L-norm weighting
             _, inv, counts = np.unique(lengths, return_inverse=True, return_counts=True)
@@ -4049,22 +4054,20 @@ class TUGMultilineTRL(EightTerm):
             _,_,vh = np.linalg.svd(R)
             s21 = vh[0,:]/vh[0,0]  # normalized to the thru
 
-            ## compute propagation constant two ways and pick the one consistent with lambda
-            gamma1 = compute_gamma(z, y, lengths, gamma_est)        # from the Takagi matrix G
-            gamma2 = compute_gamma(s21, 1/s21, lengths, gamma_est)  # from the de-embedded lines
-            z1 = np.exp(-gamma1*lengths)
-            z2 = np.exp(-gamma2*lengths)
-            lambd1 = (1/z1).dot(W).dot(z1)
-            lambd2 = (1/z2).dot(W).dot(z2)
-            gamma = gamma1 if abs(lambd1 - lambd) < abs(lambd2 - lambd) else gamma2
-            er_eff = gamma2ereff(gamma, f)
+            ## compute propagation constant two ways. gamma2 is reported to the user, while
+            ## gamma1 is the internal estimate for the reflect offset and the next frequency.
+            gamma1 = compute_gamma(z, lengths, gamma_est)    # from the Takagi matrix G
+            gamma2 = compute_gamma(s21, lengths, gamma_est)  # from the de-embedded lines
+            if abs(compute_lambd(gamma2, lengths) - lambd) < abs(compute_lambd(gamma1, lengths) - lambd):
+                gamma1 = gamma2
+            er_eff = gamma2ereff(gamma2, f)
 
             ## solve a11b11 and k from the thru measurement (S-parameter formulation; forces thru S21=S12=1)
             k = 1/Slines_cal[0,1,0]
             a11b11 = Slines_cal[0,0,1]/k
             # shift plane to edges of the thru standard plus defined reference plane
-            a11b11 = a11b11*np.exp(2*gamma*(lengths[0] - self.ref_plane.sum()))
-            k = k*np.exp(-gamma*(lengths[0] - self.ref_plane.sum()))
+            a11b11 = a11b11*np.exp(2*gamma2*(lengths[0] - self.ref_plane.sum()))
+            k = k*np.exp(-gamma2*(lengths[0] - self.ref_plane.sum()))
 
             if np.isnan(reflect_meas_S[0,m,0,0]):
                 # no reflect measurement available.
@@ -4072,7 +4075,7 @@ class TUGMultilineTRL(EightTerm):
                 b11 = a11
             else:
                 # solve for a11/b11, a11 and b11 (use redundant reflect measurement, if available)
-                reflect_est_offset = reflect_est*np.exp(-2*gamma*reflect_offset) # shift estimated reflect
+                reflect_est_offset = reflect_est*np.exp(-2*gamma1*reflect_offset) # shift estimated reflect
                 Sreflect_cal = np.array([LFTinv(E_, s) for s in reflect_meas_S[:,m,:,:]])
                 R = np.vstack(( Sreflect_cal[:, 0, 0], Sreflect_cal[:, 1, 1] ))
                 u,_,_ = np.linalg.svd(R)  # rank-1 recovery across all reflect measurements
@@ -4088,14 +4091,14 @@ class TUGMultilineTRL(EightTerm):
 
             Xs[m] = X
             ks[m] = k
-            gammas[m]  = gamma
+            gammas[m]  = gamma2
             er_effs[m] = er_eff
             lambds[m]  = lambd_S
             kappas[m]  = kappa_S
 
             # carry the propagation constant forward as the estimate for the next frequency
             if m+1 < fpoints:
-                gamma_est = (gamma/f)*freqs[m+1]
+                gamma_est = (gamma1/f)*freqs[m+1]
 
         self._er_eff = er_effs
         self._gamma  = gammas
