@@ -56,6 +56,7 @@ from numpy import (
     pi,
 )
 
+from . import constants as _constants
 from .constants import FREQ_UNITS, ZERO
 from .plotting import axes_kwarg
 from .util import find_nearest_index, slice_domain
@@ -116,10 +117,11 @@ class Frequency:
         npoints : int, optional
             number of points in the band. Default is 0.
         unit : string, optional
-            Frequency unit of the band: 'Hz', 'kHz', 'MHz', 'GHz', 'THz'.
-            This is used to create the attribute :attr:`f_scaled`.
-            It is also used by the :class:`~skrf.network.Network` class
-            for plots vs. frequency. Default is 'Hz'.
+            Unit of the input start/stop values: 'Hz', 'kHz', 'MHz', 'GHz', 'THz'.
+            If omitted, use :data:`~skrf.constants.FREQ_UNIT_DEFAULT`, or Hz
+            when that setting is None. A configured global unit determines
+            the resulting :attr:`unit` and :attr:`f_scaled`, even when an
+            explicit input unit is supplied. With None, retain the input unit.
         sweep_type : string, optional
             Type of the sweep: 'lin' or 'log'.
             'lin' for linear and 'log' for logarithmic. Default is 'lin'.
@@ -146,23 +148,22 @@ class Frequency:
         >>> logband = Frequency(1, 1e9, 301, sweep_type='log')
 
         """
-        if unit is None:
-            warnings.warn('''
-                          Frequency unit not passed: uses 'Hz' per default.
-                          ''',
-                          DeprecationWarning, stacklevel=2)
-            unit = 'Hz'
-        self._unit = unit.lower()
+        input_unit = unit if unit is not None else (_constants.FREQ_UNIT_DEFAULT or "Hz")
+        input_multiplier = self.multiplier_dict[input_unit.lower()]
+        display_unit = _constants.FREQ_UNIT_DEFAULT
+        self._unit = (input_unit if display_unit is None else display_unit).lower()
+        # Validate the configured output unit independently of the input unit.
+        self.multiplier_dict[self._unit]
 
-        start =  self.multiplier * start
-        stop = self.multiplier * stop
+        start_hz = input_multiplier * start
+        stop_hz = input_multiplier * stop
 
         if npoints == 0:
             self._f = np.array([])
         elif sweep_type.lower() == 'lin':
-            self._f = linspace(start, stop, npoints)
-        elif sweep_type.lower() == 'log' and start > 0:
-            self._f = geomspace(start, stop, npoints)
+            self._f = linspace(start_hz, stop_hz, npoints)
+        elif sweep_type.lower() == 'log' and start_hz > 0:
+            self._f = geomspace(start_hz, stop_hz, npoints)
         else:
             raise ValueError('Sweep Type not recognized')
 
@@ -250,15 +251,17 @@ class Frequency:
         """
         Construct Frequency object from a frequency vector.
 
-        The unit is set by kwarg 'unit'
+        Interpret the vector using its input unit, then apply the global unit.
 
         Parameters
         ----------
         f : scalar or array-like
             frequency vector
-
-        *args, **kwargs : arguments, keyword arguments
-            passed on to  :func:`__init__`.
+        unit : string, optional
+            Unit of the input vector: 'Hz', 'kHz', 'MHz', 'GHz', 'THz'.
+            If omitted, use :data:`~skrf.constants.FREQ_UNIT_DEFAULT`, or Hz
+            when that setting is None. A configured global unit controls
+            the result's unit without changing its absolute frequencies.
 
         Returns
         -------
@@ -277,8 +280,10 @@ class Frequency:
         """
         if np.isscalar(f):
             f = [f]
-        temp_freq =  cls(0,0,0,unit=unit)
-        temp_freq._f = np.asarray(f) * temp_freq.multiplier
+        input_unit = unit if unit is not None else (_constants.FREQ_UNIT_DEFAULT or "Hz")
+        input_multiplier = cls.multiplier_dict[input_unit.lower()]
+        temp_freq = cls(0, 0, 0, unit=unit)
+        temp_freq._f = np.asarray(f) * input_multiplier
         temp_freq.check_monotonic_increasing()
 
         return temp_freq
