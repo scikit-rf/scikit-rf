@@ -2701,50 +2701,63 @@ class VectorFittingParametric:
     """
 
     def __init__(self, networkset: NetworkSet = None, n_poles_real: int = -1, n_poles_cmplx: int = -1):
-        self.networkset = networkset
 
-        if n_poles_real == -1 or n_poles_cmplx == -1:
-            # automatic model order estimation based on model order of the first network in the set
-            vf = VectorFitting(self.networkset[0])
-            vf.auto_fit()
+        if networkset is not None:
+            self.networkset = networkset
 
-            # determine number of real poles and complex-conjugate pole pairs in the test fit
-            idx_poles_real = (np.imag(vf.poles) == 0)
-            n_poles_real = np.sum(idx_poles_real)
-            n_poles_cmplx = np.sum(~idx_poles_real)
+            if n_poles_real == -1 or n_poles_cmplx == -1:
+                # automatic model order estimation based on model order of the first network in the set
+                vf = VectorFitting(self.networkset[0])
+                vf.auto_fit()
 
-        # init the global poles with `n_poles_real` and `n_poles_cmplx`
-        poles_init = VectorFitting._init_poles(self.networkset[0].f, n_poles_real, n_poles_cmplx, 'lin')
-        poles_global = []
-        for pole in poles_init:
-            if pole.imag == 0:
-                poles_global.append(pole)
-            else:
-                poles_global.append(pole)
-                poles_global.append(np.conj(pole))
-        self.poles_global = np.array(poles_global)
+                # determine number of real poles and complex-conjugate pole pairs in the test fit
+                idx_poles_real = (np.imag(vf.poles) == 0)
+                n_poles_real = np.sum(idx_poles_real)
+                n_poles_cmplx = np.sum(~idx_poles_real)
 
-        # create a sorted grid for all individual parameters
-        self.parameters = networkset.coords
-        self.parameter_grid = []
-        for param in self.parameters:
-            self.parameter_grid.append(sorted(self.parameters[param]))
+            # init the global poles with `n_poles_real` and `n_poles_cmplx`
+            poles_init = VectorFitting._init_poles(self.networkset[0].f, n_poles_real, n_poles_cmplx, 'lin')
+            poles_global = []
+            for pole in poles_init:
+                if pole.imag == 0:
+                    poles_global.append(pole)
+                else:
+                    poles_global.append(pole)
+                    poles_global.append(np.conj(pole))
+            self.poles_global = np.array(poles_global)
 
-        # create a meshgrid for interpolation
-        self.parameter_meshgrid = np.meshgrid(*self.parameter_grid, indexing='ij')
+            # create a sorted grid for all individual parameters
+            self.parameters = networkset.coords
+            self.parameter_grid = []
+            shape_meshgrid = [len(self.parameters)]
+            for param in self.parameters:
+                self.parameter_grid.append(sorted(self.parameters[param]))
+                shape_meshgrid.append(len(self.parameters[param]))
+            shape_meshgrid = tuple(shape_meshgrid)
 
-        # initialize fitting parameters q and r on that same meshgrid
-        # (extended to accommodate the parameters for all network responses [..., 1 + model_order, n_responses])
-        shape_meshgrid = np.shape(self.parameter_meshgrid)
-        n_responses = self.networkset[0].nports ** 2
-        self.r = np.zeros((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
-        self.q = np.zeros((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
+            # initialize fitting parameters q and r on a meshgrid
+            # (extended to accommodate the parameters for all network responses [..., 1 + model_order, n_responses])
+            n_responses = self.networkset[0].nports ** 2
+            self.r = np.zeros((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
+            self.q = np.zeros((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
+
+        else:
+            # leave everything uninitialized. to be done later by the user or by load()
+            self.networkset = None
+            self.poles_global = None
+            self.parameters = None
+            self.parameter_grid = []
+            self.r = None
+            self.q = None
 
     def auto_fit(self, enforce_passivity: bool = True):
         """
         Perform the parametric vector fitting on all networks in :attr:`networkset` using
         :func:`VectorFitting.auto_fit()`.
         """
+
+        if self.networkset is None or self.poles_global is None:
+            raise RuntimeError('Some attributes have not been initialized correctly.')
 
         n_poles_global = len(self.poles_global)
 
@@ -2916,6 +2929,103 @@ class VectorFittingParametric:
         vf.vector_fit(n_poles_global_real, n_poles_global_cmplx)
 
         return vf
+
+    def write_npz(self, path: str, filename: str = None) -> None:
+        """
+        Writes the model parameters in :attr:`q`, :attr:`r`, :attr:`poles_global`, and parameters in :attr:`parameters`
+        to a NumPy .npz file.
+
+        Parameters
+        ----------
+        path : str
+            Target path without filename for the export.
+
+        filename: str
+            Name of the exported npz-file. If the filename is `None` (default), it will be taken from the name of the
+            networkset in :attr:`networkset`. If that name is `None`, the file will be saved as `model.npz`.
+
+        Returns
+        -------
+        None
+
+        See Also
+        --------
+        read_npz : Reads all model parameters from a .npz file
+        """
+
+        if self.q is None:
+            warnings.warn('Nothing to export; self.q is None.', RuntimeWarning, stacklevel=2)
+            return
+        if self.r is None:
+            warnings.warn('Nothing to export; self.r is None.', RuntimeWarning, stacklevel=2)
+            return
+        if self.poles_global is None:
+            warnings.warn('Nothing to export; self.poles_global is None.', RuntimeWarning, stacklevel=2)
+            return
+        if self.parameters is None:
+            warnings.warn('Nothing to export; self.parameters is None.', RuntimeWarning, stacklevel=2)
+            return
+
+        if filename is None and self.networkset is not None:
+            filename = self.networkset.name
+            if filename is None:
+                filename = 'model'
+
+        logger.info(f'Exporting results as compressed NumPy array to {path}')
+        np.savez_compressed(os.path.join(path, filename), q=self.q, r=self.r, poles=self.poles_global,
+                            parameters=self.parameters)
+
+    def read_npz(self, file: str) -> None:
+        """
+        Reads the model parameters :attr:`q`, :attr:`r`, :attr:`poles_global`, and the parameters in :attr:`parameters`
+        from a labelled NumPy .npz file.
+
+        Parameters
+        ----------
+        file : str
+            NumPy .npz file containing the parameters. See notes.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If the shapes of the coefficient arrays in the provided file are not compatible.
+
+        Notes
+        -----
+        The .npz file contain include the model parameters Q, R, A, and the corresponding parameters as individual
+        NumPy arrays (ndarray). The shapes of those arrays must be compatible. Preferably, the .npz file was created
+        with :func:`write_npz`.
+
+        See Also
+        --------
+        write_npz : Writes all model parameters to a .npz file
+
+        Examples
+        --------
+        Create an empty `VectorFittingParametric` instance and load the model parameters:
+
+        >>> vf = VectorFittingParametric(None)
+        >>> vf.read_npz('./data/coefficients_my3port.npz')
+        """
+
+        with (np.load(file, allow_pickle=True) as data):
+            parameters = data['parameters'].item()
+            if (np.shape(data['q']) == np.shape(data['r']) and
+                np.shape(data['q'])[0] == len(parameters) and
+                np.shape(data['q'])[-2] == len(data['poles']) + 1):
+                self.q = data['q']
+                self.r = data['r']
+                self.poles_global = data['poles']
+                self.parameters = parameters
+                self.parameter_grid = []
+                for param in parameters:
+                    self.parameter_grid.append(sorted(parameters[param]))
+            else:
+                raise ValueError('The shapes of the provided parameters are not compatible')
 
     @staticmethod
     def generate_networkset(path: str, filename_prefix: str, param_names: list) -> NetworkSet:
