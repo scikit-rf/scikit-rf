@@ -1,6 +1,5 @@
 import numpy as np
 import unittest
-import pytest
 import tempfile
 import os
 from skrf.network import Network
