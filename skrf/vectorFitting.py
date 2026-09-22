@@ -2688,10 +2688,12 @@ class VectorFittingParametric:
         :func:`generate_networkset()`. Then create a `VectorFittingParametric` instance and perform the fit.
         Afterwards, the parametric model can be evaluated (interpolated) at arbitrary values for each parameter:
 
-        >>> nwset = VectorFittingParametric.generate_networkset(path='myfolder', filename_prefix='spiral', param_names=['param1', 'param2', 'param3'])
+        >>> nwset = VectorFittingParametric.generate_networkset(path='myfolder', filename_prefix='spiral',
+        >>>                                                     param_names=['param1', 'param2', 'param3'])
         >>> vfparam = VectorFittingParametric(nwset)
         >>> vfparam.auto_fit()
-        >>> model = vfparam.get_model_response(params={'param1': 3.4, 'param2': -2, 'param3': 10}, freqs=np.linspace(0, 10e9, 101))
+        >>> model = vfparam.get_model_response(params={'param1': 3.4, 'param2': -2, 'param3': 10},
+        >>>                                    freqs=np.linspace(0, 10e9, 101))
 
         References
         ----------
@@ -2816,17 +2818,23 @@ class VectorFittingParametric:
             for i_col in range(n_poles_global):
                 mask = np.ones(n_poles_global, dtype=bool)
                 mask[i_col] = False
-                a[idx_row_real, i_col] = np.prod(vf.poles[idx_poles_real, None] - self.poles_global, axis=1, where=mask)
-                a[idx_row_complex_pos, i_col] = np.prod(vf.poles[idx_poles_cmplx, None] - self.poles_global, axis=1, where=mask)
-                a[idx_row_complex_neg, i_col] = np.prod(np.conj(vf.poles[idx_poles_cmplx, None]) - self.poles_global, axis=1, where=mask)
+                a[idx_row_real, i_col] = np.prod(vf.poles[idx_poles_real, None] - self.poles_global,
+                                                 axis=1, where=mask)
+                a[idx_row_complex_pos, i_col] = np.prod(vf.poles[idx_poles_cmplx, None] - self.poles_global,
+                                                        axis=1, where=mask)
+                a[idx_row_complex_neg, i_col] = np.prod(np.conj(vf.poles[idx_poles_cmplx, None]) - self.poles_global,
+                                                        axis=1, where=mask)
 
             # define r0 (degree of freedom; can be fixed to any value)
             r0 = np.ones(len(vf.constant_coeff))    # q0 == vf.constant_coeff if r0 = 1
 
             # assemble b
-            b[idx_row_real] = -1 * r0 * np.prod(vf.poles[idx_poles_real, None] - self.poles_global, axis=1, keepdims=True)
-            b[idx_row_complex_pos] = -1 * r0 * np.prod(vf.poles[idx_poles_cmplx, None] - self.poles_global, axis=1, keepdims=True)
-            b[idx_row_complex_neg] = -1 * r0 * np.prod(np.conj(vf.poles[idx_poles_cmplx, None]) - self.poles_global, axis=1, keepdims=True)
+            b[idx_row_real] = -1 * r0 * np.prod(vf.poles[idx_poles_real, None] - self.poles_global,
+                                                axis=1, keepdims=True)
+            b[idx_row_complex_pos] = -1 * r0 * np.prod(vf.poles[idx_poles_cmplx, None] - self.poles_global,
+                                                       axis=1, keepdims=True)
+            b[idx_row_complex_neg] = -1 * r0 * np.prod(np.conj(vf.poles[idx_poles_cmplx, None]) - self.poles_global,
+                                                       axis=1, keepdims=True)
 
             # solve for r
             r, residuals, rank, singulars = np.linalg.lstsq(a, b)
@@ -2834,9 +2842,12 @@ class VectorFittingParametric:
             # calculate q from r
             q0 = r0 * vf.constant_coeff  # q0 == vf.constant_coeff if r0 = 1
             q = r * (vf.constant_coeff
-                     + np.sum(vf.residues[:, idx_poles_real] / (self.poles_global[:, None, None] - vf.poles[idx_poles_real]), axis=2)
-                     + np.sum(vf.residues[:, idx_poles_cmplx] / (self.poles_global[:, None, None] - vf.poles[idx_poles_cmplx]), axis=2)
-                     + np.sum(np.conj(vf.residues[:, idx_poles_cmplx]) / (self.poles_global[:, None, None] - np.conj(vf.poles[idx_poles_cmplx])), axis=2)
+                     + np.sum(vf.residues[:, idx_poles_real] / (self.poles_global[:, None, None] -
+                                                                vf.poles[idx_poles_real]), axis=2)
+                     + np.sum(vf.residues[:, idx_poles_cmplx] / (self.poles_global[:, None, None] -
+                                                                 vf.poles[idx_poles_cmplx]), axis=2)
+                     + np.sum(np.conj(vf.residues[:, idx_poles_cmplx]) / (self.poles_global[:, None, None] -
+                                                                          np.conj(vf.poles[idx_poles_cmplx])), axis=2)
                      )
 
             # store local q and r at the correct global meshgrid positions for this parameter sample
