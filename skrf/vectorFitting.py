@@ -3032,52 +3032,6 @@ class VectorFittingParametric:
                 raise ValueError(f'The shapes of the provided parameters are not compatible: shape(q) = {shape_q}, '
                                  f'shape(r) = {shape_r}, shape(poles) = {shape_poles}, len(parameters) = {len_params}.')
 
-    @staticmethod
-    def generate_networkset(path: str, filename_prefix: str, param_names: list) -> NetworkSet:
-        """
-        Reads parametric Touchstone files in `path` that match the `filename_prefix`. Parameter names are defined
-        with `param_names`, which are searched for in the file comments. Example: Specify `param_names=['myparam']` to
-        extract the value 12 from the comment line `! myparam = 12`. This also works for multiple parameters:
-        `param_names=['myparam1', 'myparam2']`.
-
-        Parameters
-        ----------
-        path : str
-            The path of a folder that contains individual Touchstone files.
-
-        filename_prefix : str
-            A prefix string common to each filename that must be matched for the file to be considered. Other files in
-            the will be ignored.
-
-        param_names : list
-            A list of parameter names that will be searched for in the comment section of each Touchstone file to
-            extract the corresponding value of that parameter.
-
-        Returns
-        -------
-        networkset : :class:`NetworkSet`
-            A `NetworkSet` that holds all imported `Network` with the `params` attribute filled according to the names
-            specified in `param_names`.
-        """
-        networks = []
-        for filename in os.listdir(path):
-            if filename.startswith(filename_prefix):
-                file = os.path.join(path, filename)
-                nw = Network(file)
-                params = {}
-
-                for line in nw.comments.splitlines():
-                    for name in param_names:
-                        i = line.find(name)
-                        if i > -1:
-                            print(i)
-                        # if name in line.find:
-                        #     val = float(comment.split()[-1])
-                        #     params.update({name: val})
-                nw.params = params
-                networks.append(nw)
-        return NetworkSet(networks)
-
     def _get_parameter_indices(self, params: dict):
         # get indices of the provided parameters on the parameter meshgrid
         idx_meshgrid = []
