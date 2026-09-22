@@ -2708,7 +2708,7 @@ class VectorFittingParametric:
             if n_poles_real == -1 or n_poles_cmplx == -1:
                 # automatic model order estimation based on model order of the first network in the set
                 vf = VectorFitting(self.networkset[0])
-                vf.auto_fit()
+                vf.auto_fit(n_poles_init_real=1, n_poles_init_cmplx=1, n_poles_add=1)
 
                 # determine number of real poles and complex-conjugate pole pairs in the test fit
                 idx_poles_real = (np.imag(vf.poles) == 0)
@@ -3015,7 +3015,7 @@ class VectorFittingParametric:
         with (np.load(file, allow_pickle=True) as data):
             parameters = data['parameters'].item()
             if (np.shape(data['q']) == np.shape(data['r']) and
-                np.shape(data['q'])[0] == len(parameters) and
+                len(np.shape(data['q'])[:-2]) == len(parameters) and
                 np.shape(data['q'])[-2] == len(data['poles']) + 1):
                 self.q = data['q']
                 self.r = data['r']
@@ -3025,7 +3025,12 @@ class VectorFittingParametric:
                 for param in parameters:
                     self.parameter_grid.append(sorted(parameters[param]))
             else:
-                raise ValueError('The shapes of the provided parameters are not compatible')
+                shape_q = np.shape(data['q'])
+                shape_r = np.shape(data['r'])
+                shape_poles = np.shape(data['poles'])
+                len_params = len(parameters)
+                raise ValueError(f'The shapes of the provided parameters are not compatible: shape(q) = {shape_q}, '
+                                 f'shape(r) = {shape_r}, shape(poles) = {shape_poles}, len(parameters) = {len_params}.')
 
     @staticmethod
     def generate_networkset(path: str, filename_prefix: str, param_names: list) -> NetworkSet:
