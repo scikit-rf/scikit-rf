@@ -2852,10 +2852,10 @@ class VectorFittingParametric:
 
             # store local q and r at the correct global meshgrid positions for this parameter sample
             idx_meshgrid = self._get_parameter_indices(nw.params)
-            self.r[*idx_meshgrid, 0] = r0
-            self.r[*idx_meshgrid, 1:] = r
-            self.q[*idx_meshgrid, 0] = q0
-            self.q[*idx_meshgrid, 1:] = q
+            self.r[tuple(idx_meshgrid)][0] = r0
+            self.r[tuple(idx_meshgrid)][1:] = r
+            self.q[tuple(idx_meshgrid)][0] = q0
+            self.q[tuple(idx_meshgrid)][1:] = q
 
     def get_model_response(self, params: dict, freqs: Any) -> np.ndarray:
         """
