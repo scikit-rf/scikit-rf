@@ -2669,7 +2669,7 @@ class VectorFitting:
 
 class VectorFittingParametric:
     """
-        This class provides a Python implementation of the parametric vector fitting algorithm [#Triverio_parametric].
+        This class provides a Python implementation of the parametric vector fitting algorithm [#Triverio_parametric]_.
 
         Parameters
         ----------
