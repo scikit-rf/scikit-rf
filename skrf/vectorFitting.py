@@ -8,12 +8,14 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import scipy
+from scipy.interpolate import interpn
 
 # imports for type hinting
 if TYPE_CHECKING:
-    from .network import Network
     from .plotting import Axes
 
+from .network import Network
+from .networkSet import NetworkSet
 from .plotting import axes_kwarg
 
 logger = logging.getLogger(__name__)
@@ -2663,3 +2665,388 @@ class VectorFitting:
                     f.write(f'Fe{i + 1} 0 e{i + 1} V{i + 1} {gain_cccs_a_i}\n')
 
             f.write(f'.ENDS {fitted_model_name}\n')
+
+
+class VectorFittingParametric:
+    """
+        This class provides a Python implementation of the parametric vector fitting algorithm [#Triverio_parametric]_.
+
+        Parameters
+        ----------
+        networkset : :class:`skrf.networkSet.NetworkSet`
+                NetworkSet instance of multiple :math:`N`-port networks holding the frequency responses to be fitted
+                for some discrete values of one or multiple design parameter.
+
+        n_poles : int, optional
+                The number of complex-conjugate poles in the final parametric model. In case of `n_poles=-1`, a suitable
+                number will be determined automatically by running :func:`VectorFitting.auto_fit()` on the first
+                network in :attr:`networkset`.
+
+        Examples
+        --------
+        Load a bunch of parametric `Network` and bundle them in a parametric `NetworkSet` using the helper function
+        :func:`generate_networkset()`. Then create a `VectorFittingParametric` instance and perform the fit.
+        Afterwards, the parametric model can be evaluated (interpolated) at arbitrary values for each parameter:
+
+        >>> nwset = VectorFittingParametric.generate_networkset(path='myfolder', filename_prefix='spiral',
+        >>>                                                     param_names=['param1', 'param2', 'param3'])
+        >>> vfparam = VectorFittingParametric(nwset)
+        >>> vfparam.auto_fit()
+        >>> model = vfparam.get_model_response(params={'param1': 3.4, 'param2': -2, 'param3': 10},
+        >>>                                    freqs=np.linspace(0, 10e9, 101))
+
+        References
+        ----------
+        .. [#Triverio_parametric] P. Triverio, S. Grivet-Talocia and M. S. Nakhla, "A Parameterized Macromodeling
+            Strategy With Uniform Stability Test", IEEE Transactions on Advanced Packaging, vol. 32, no. 1, pp. 205-215,
+            Feb. 2009, DOI: https://doi.org/10.1109/TADVP.2008.2007913
+    """
+
+    def __init__(self, networkset: NetworkSet = None, n_poles_real: int = -1, n_poles_cmplx: int = -1):
+
+        if networkset is not None:
+            self.networkset = networkset
+
+            if n_poles_real == -1 or n_poles_cmplx == -1:
+                # automatic model order estimation based on model order of the first network in the set
+                vf = VectorFitting(self.networkset[0])
+                vf.auto_fit(n_poles_init_real=1, n_poles_init_cmplx=1, n_poles_add=1)
+
+                # determine number of real poles and complex-conjugate pole pairs in the test fit
+                idx_poles_real = (np.imag(vf.poles) == 0)
+                n_poles_real = np.sum(idx_poles_real)
+                n_poles_cmplx = np.sum(~idx_poles_real)
+
+            # init the global poles with `n_poles_real` and `n_poles_cmplx`
+            poles_init = VectorFitting._init_poles(self.networkset[0].f, n_poles_real, n_poles_cmplx, 'lin')
+            poles_global = []
+            for pole in poles_init:
+                if pole.imag == 0:
+                    poles_global.append(pole)
+                else:
+                    poles_global.append(pole)
+                    poles_global.append(np.conj(pole))
+            self.poles_global = np.array(poles_global)
+
+            # create a sorted grid for all individual parameters
+            self.parameters = networkset.coords
+            self.parameter_grid = []
+            shape_meshgrid = [len(self.parameters)]
+            for param in self.parameters:
+                self.parameter_grid.append(sorted(self.parameters[param]))
+                shape_meshgrid.append(len(self.parameters[param]))
+            shape_meshgrid = tuple(shape_meshgrid)
+
+            # initialize fitting parameters q and r on a meshgrid
+            # (extended to accommodate the parameters for all network responses [..., 1 + model_order, n_responses])
+            n_responses = self.networkset[0].nports ** 2
+            self.r = np.zeros((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
+            self.q = np.zeros((*shape_meshgrid[1:], 1 + len(self.poles_global), n_responses), dtype=complex)
+
+        else:
+            # leave everything uninitialized. to be done later by the user or by load()
+            self.networkset = None
+            self.poles_global = None
+            self.parameters = None
+            self.parameter_grid = []
+            self.r = None
+            self.q = None
+
+    def auto_fit(self, enforce_passivity: bool = True):
+        """
+        Perform the parametric vector fitting on all networks in :attr:`networkset` using
+        :func:`VectorFitting.auto_fit()`.
+        """
+
+        if self.networkset is None or self.poles_global is None:
+            raise RuntimeError('Some attributes have not been initialized correctly.')
+
+        n_poles_global = len(self.poles_global)
+
+        # determine number of global real poles and complex-conjugate pole pairs
+        idx_poles_global_real = (np.imag(self.poles_global) == 0)
+        n_poles_global_real = np.sum(idx_poles_global_real)
+        n_poles_global_cmplx = int(0.5 * np.sum(~idx_poles_global_real))
+
+        for nw in self.networkset:
+            vf = VectorFitting(nw)
+
+            # catch passivity warnings (passivity enforcement is handled below)
+            warnings.filterwarnings('error')
+            try:
+                # it is important to use the same number of poles for each individual fit in the set
+                # standard vector fitting works much better than automatic vector fitting for this application
+                vf.vector_fit(n_poles_global_real, n_poles_global_cmplx)
+            except UserWarning:
+                pass
+            warnings.resetwarnings()
+
+            if enforce_passivity:
+                if nw.is_passive():
+                    vf.passivity_enforce()
+                else:
+                    pass
+
+            n_responses = nw.nports ** 2
+
+            idx_poles_real = np.nonzero(np.imag(vf.poles) == 0)[0]
+            idx_poles_cmplx = np.nonzero(np.imag(vf.poles) > 0)[0]
+
+            # find and save row indices of real and complex poles in the coefficient matrix a and the vector b
+            # this is due to the missing complex-conjugate parts in vf.poles
+            n_poles_local = 0
+            idx_row_real = []
+            idx_row_complex_pos = []
+            idx_row_complex_neg = []
+            for pole in vf.poles:
+                if pole.imag == 0:
+                    idx_row_real.append(n_poles_local)
+                    n_poles_local += 1
+                else:
+                    idx_row_complex_pos.append(n_poles_local)
+                    idx_row_complex_neg.append(n_poles_local + 1)
+                    n_poles_local += 2
+
+            # preparing linear system (a * r = b)
+            # a[n_poles_local, n_poles_global]
+            # b[n_poles_local, n_responses]
+            # r[n_poles_global, n_responses]
+            a = np.empty((n_poles_local, n_poles_global), dtype=complex)
+            b = np.empty((n_poles_local, n_responses), dtype=complex)
+
+            # assemble coefficient matrix a
+            for i_col in range(n_poles_global):
+                mask = np.ones(n_poles_global, dtype=bool)
+                mask[i_col] = False
+                a[idx_row_real, i_col] = np.prod(vf.poles[idx_poles_real, None] - self.poles_global,
+                                                 axis=1, where=mask)
+                a[idx_row_complex_pos, i_col] = np.prod(vf.poles[idx_poles_cmplx, None] - self.poles_global,
+                                                        axis=1, where=mask)
+                a[idx_row_complex_neg, i_col] = np.prod(np.conj(vf.poles[idx_poles_cmplx, None]) - self.poles_global,
+                                                        axis=1, where=mask)
+
+            # define r0 (degree of freedom; can be fixed to any value)
+            r0 = np.ones(len(vf.constant_coeff))    # q0 == vf.constant_coeff if r0 = 1
+
+            # assemble b
+            b[idx_row_real] = -1 * r0 * np.prod(vf.poles[idx_poles_real, None] - self.poles_global,
+                                                axis=1, keepdims=True)
+            b[idx_row_complex_pos] = -1 * r0 * np.prod(vf.poles[idx_poles_cmplx, None] - self.poles_global,
+                                                       axis=1, keepdims=True)
+            b[idx_row_complex_neg] = -1 * r0 * np.prod(np.conj(vf.poles[idx_poles_cmplx, None]) - self.poles_global,
+                                                       axis=1, keepdims=True)
+
+            # solve for r
+            r, residuals, rank, singulars = np.linalg.lstsq(a, b)
+
+            # calculate q from r
+            q0 = r0 * vf.constant_coeff  # q0 == vf.constant_coeff if r0 = 1
+            q = r * (vf.constant_coeff
+                     + np.sum(vf.residues[:, idx_poles_real] / (self.poles_global[:, None, None] -
+                                                                vf.poles[idx_poles_real]), axis=2)
+                     + np.sum(vf.residues[:, idx_poles_cmplx] / (self.poles_global[:, None, None] -
+                                                                 vf.poles[idx_poles_cmplx]), axis=2)
+                     + np.sum(np.conj(vf.residues[:, idx_poles_cmplx]) / (self.poles_global[:, None, None] -
+                                                                          np.conj(vf.poles[idx_poles_cmplx])), axis=2)
+                     )
+
+            # store local q and r at the correct global meshgrid positions for this parameter sample
+            idx_meshgrid = self._get_parameter_indices(nw.params)
+            self.r[tuple(idx_meshgrid)][0] = r0
+            self.r[tuple(idx_meshgrid)][1:] = r
+            self.q[tuple(idx_meshgrid)][0] = q0
+            self.q[tuple(idx_meshgrid)][1:] = q
+
+    def get_model_response(self, params: dict, freqs: Any) -> np.ndarray:
+        """
+        Returns the network response matrix for a given list of frequencies and a given set of values for the design
+        parameters used in :attr:`networkset`. This also works for parameter values outside of the original sample
+        interval (i.e. extrapolation instead of interpolation), but the results are likely going to be invalid.
+
+        Parameters
+        ----------
+        params : dict
+            A dictionary with the design parameters to be used. For example: `params={'param1': 1.1, 'param2': -2.2}`.
+
+        freqs : list or numpy.ndarray
+            A list of frequencies to evaluate the parametric model at.
+
+        Returns
+        -------
+        model : numpy.ndarray
+            The returned array has the shape [n_freqs, n_ports, n_ports], similar to `Network.s`.
+        """
+
+        s = 1j * 2 * np.pi * freqs
+
+        # interpolate q and r, which have shape [..., 1 + n_poles, n_responses]
+        param_values = []
+        for param in self.parameters:
+            param_values.append(params[param])
+        q = interpn(tuple(self.parameter_grid), self.q, param_values, method='linear', fill_value=None)[0]
+        r = interpn(tuple(self.parameter_grid), self.r, param_values, method='linear', fill_value=None)[0]
+
+        if np.all(r == 0):
+            raise ValueError(f'The interpolation at {params} yielded an invalid model: all denominator coefficients '
+                             '(r) are zero.')
+
+        # return model responses with shape [n_freqs, n_responses]:
+        # dim 0: n_freqs
+        # dim 1: 1 + n_poles (to be reduced by np.sum())
+        # dim 2: n_responses
+        model = ((q[0] + np.sum(q[None, 1:, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1))
+                 / (r[0] + np.sum(r[None, 1:, :] / (s[:, None, None] - self.poles_global[None, :, None]), axis=1)))
+        n_ports = int(np.sqrt(np.shape(model)[1]))
+        return np.reshape(model, (len(freqs), n_ports, n_ports))
+
+    def get_local_vectorfit(self, params: dict) -> VectorFitting:
+        """
+        Returns a local point of the parametric model given by the parameters `params`. The returned object is an
+        instance of the class :class:`VectorFitting`, which can be used to post-process or export the local model.
+
+        Parameters
+        ----------
+        params : dict
+            A dictionary with the design parameters to be used. For example: `params={'param1': 1.1, 'param2': -2.2}`.
+
+        Returns
+        -------
+        VectorFitting
+
+        Examples
+        --------
+        >>> vf_param = VectorFittingParametric(nwset)
+        >>> vf_param.auto_fit()
+        >>> vf_local = vf_param.get_local_vectorfit({'myparam1': -12, 'myparam2': 5})
+        >>> vf_local.passivity_enforce()
+        >>> vf_local.write_spice_subcircuit_s('model_-12_5.sp')
+        """
+
+        # copy self.networkset[0] to create a network with the same frequency vector and parameters
+        nw = self.networkset[0]
+
+        # overwrite the parameter values and the s-matrix with the interpolated parametric model response
+        nw.params = params
+        nw.s = self.get_model_response(params, nw.f)
+
+        # determine number of global real poles and complex-conjugate pole pairs
+        idx_poles_global_real = (np.imag(self.poles_global) == 0)
+        n_poles_global_real = np.sum(idx_poles_global_real)
+        n_poles_global_cmplx = int(0.5 * np.sum(~idx_poles_global_real))
+
+        # fit the interpolated network using regular vector fitting
+        # using the same number and type of poles as in the parametric model
+        vf = VectorFitting(nw)
+        vf.vector_fit(n_poles_global_real, n_poles_global_cmplx)
+
+        return vf
+
+    def write_npz(self, path: str, filename: str = None) -> None:
+        """
+        Writes the model parameters in :attr:`q`, :attr:`r`, :attr:`poles_global`, and parameters in :attr:`parameters`
+        to a NumPy .npz file.
+
+        Parameters
+        ----------
+        path : str
+            Target path without filename for the export.
+
+        filename: str
+            Name of the exported npz-file. If the filename is `None` (default), it will be taken from the name of the
+            networkset in :attr:`networkset`. If that name is `None`, the file will be saved as `model.npz`.
+
+        Returns
+        -------
+        None
+
+        See Also
+        --------
+        read_npz : Reads all model parameters from a .npz file
+        """
+
+        if self.q is None:
+            warnings.warn('Nothing to export; self.q is None.', RuntimeWarning, stacklevel=2)
+            return
+        if self.r is None:
+            warnings.warn('Nothing to export; self.r is None.', RuntimeWarning, stacklevel=2)
+            return
+        if self.poles_global is None:
+            warnings.warn('Nothing to export; self.poles_global is None.', RuntimeWarning, stacklevel=2)
+            return
+        if self.parameters is None:
+            warnings.warn('Nothing to export; self.parameters is None.', RuntimeWarning, stacklevel=2)
+            return
+
+        if filename is None and self.networkset is not None:
+            filename = self.networkset.name
+            if filename is None:
+                filename = 'model'
+
+        logger.info(f'Exporting results as compressed NumPy array to {path}')
+        np.savez_compressed(os.path.join(path, filename), q=self.q, r=self.r, poles=self.poles_global,
+                            parameters=self.parameters)
+
+    def read_npz(self, file: str) -> None:
+        """
+        Reads the model parameters :attr:`q`, :attr:`r`, :attr:`poles_global`, and the parameters in :attr:`parameters`
+        from a labelled NumPy .npz file.
+
+        Parameters
+        ----------
+        file : str
+            NumPy .npz file containing the parameters. See notes.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If the shapes of the coefficient arrays in the provided file are not compatible.
+
+        Notes
+        -----
+        The .npz file contain include the model parameters Q, R, A, and the corresponding parameters as individual
+        NumPy arrays (ndarray). The shapes of those arrays must be compatible. Preferably, the .npz file was created
+        with :func:`write_npz`.
+
+        See Also
+        --------
+        write_npz : Writes all model parameters to a .npz file
+
+        Examples
+        --------
+        Create an empty `VectorFittingParametric` instance and load the model parameters:
+
+        >>> vf = VectorFittingParametric(None)
+        >>> vf.read_npz('./data/coefficients_my3port.npz')
+        """
+
+        with (np.load(file, allow_pickle=True) as data):
+            parameters = data['parameters'].item()
+            if (np.shape(data['q']) == np.shape(data['r']) and
+                len(np.shape(data['q'])[:-2]) == len(parameters) and
+                np.shape(data['q'])[-2] == len(data['poles']) + 1):
+                self.q = data['q']
+                self.r = data['r']
+                self.poles_global = data['poles']
+                self.parameters = parameters
+                self.parameter_grid = []
+                for param in parameters:
+                    self.parameter_grid.append(sorted(parameters[param]))
+            else:
+                shape_q = np.shape(data['q'])
+                shape_r = np.shape(data['r'])
+                shape_poles = np.shape(data['poles'])
+                len_params = len(parameters)
+                raise ValueError(f'The shapes of the provided parameters are not compatible: shape(q) = {shape_q}, '
+                                 f'shape(r) = {shape_r}, shape(poles) = {shape_poles}, len(parameters) = {len_params}.')
+
+    def _get_parameter_indices(self, params: dict):
+        # get indices of the provided parameters on the parameter meshgrid
+        idx_meshgrid = []
+        for i_param, param in enumerate(self.parameters):
+            idx_param = np.argwhere(np.array(self.parameter_grid[i_param]) == params[param])[0][0]
+            idx_meshgrid.append(idx_param)
+        return idx_meshgrid
