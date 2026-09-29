@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import scipy
-from scipy.interpolate import interpn
 
 # imports for type hinting
 if TYPE_CHECKING:
@@ -2876,6 +2875,7 @@ class VectorFittingParametric:
         model : numpy.ndarray
             The returned array has the shape [n_freqs, n_ports, n_ports], similar to `Network.s`.
         """
+        from scipy.interpolate import interpn
 
         s = 1j * 2 * np.pi * freqs
 

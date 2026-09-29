@@ -1,11 +1,13 @@
-import numpy as np
-import unittest
-import tempfile
 import os
+import tempfile
+import unittest
+from pathlib import Path
+
+import numpy as np
+
 from skrf.network import Network
 from skrf.networkSet import NetworkSet
 from skrf.vectorFitting import VectorFittingParametric
-from pathlib import Path
 
 
 class VectorFittingParametricTestCase(unittest.TestCase):
