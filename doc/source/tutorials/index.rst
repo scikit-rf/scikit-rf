@@ -13,6 +13,7 @@ ipython `notebook <http://ipython.org/notebook.html>`_
 
     Installation
     Introduction
+    Frequency_units
     Networks
     Connecting_Networks
     Plotting

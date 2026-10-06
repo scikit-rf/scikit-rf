@@ -7,7 +7,6 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      # See .github/diagnostics/blas-kernel-investigation.md for the same-runner evidence.
       OPENBLAS_CORETYPE: Haswell
     permissions:
       checks: write
