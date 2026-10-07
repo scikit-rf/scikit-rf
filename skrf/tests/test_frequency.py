@@ -48,10 +48,12 @@ class FrequencyTestCase(unittest.TestCase):
 
     def test_configurable_default_unit(self):
         with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
-            freq = rf.Frequency(1, 10, 10)
-            self.assertEqual(freq.unit, "GHz")
-            self.assertTrue((freq.f == np.linspace(1, 10, 10) * 1e9).all())
-            self.assertTrue((freq.f_scaled == np.linspace(1, 10, 10)).all())
+            for sweep, expected in (("lin", [1, 5.5, 10]), ("log", [1, np.sqrt(10), 10])):
+                with self.subTest(sweep=sweep):
+                    freq = rf.Frequency(1, 10, 3, sweep_type=sweep)
+                    self.assertEqual(freq.unit, "GHz")
+                    np.testing.assert_allclose(freq.f, np.array(expected) * 1e9)
+                    np.testing.assert_allclose(freq.f_scaled, expected)
 
             freq_from_f = rf.Frequency.from_f([1, 5, 10])
             self.assertEqual(freq_from_f.unit, "GHz")
@@ -109,6 +111,32 @@ class FrequencyTestCase(unittest.TestCase):
                     rf.Frequency.from_f([1, 2])
                     rf.Frequency(1, 2, 2, unit="MHz")
                     rf.Frequency.from_f([1, 2], unit="MHz")
+
+    def test_invalid_configured_unit(self):
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "invalid"):
+            for unit in (None, "Hz", "invalid"):
+                with self.subTest(unit=unit):
+                    with self.assertRaises(KeyError):
+                        rf.Frequency(1, 2, 2, unit=unit)
+                    with self.assertRaises(KeyError):
+                        rf.Frequency.from_f([1, 2], unit=unit)
+
+    def test_copy_and_slice_preserve_units_after_default_change(self):
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", None):
+            original = rf.Frequency.from_f([1, 2, 3], unit="MHz")
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
+            copied = original.copy()
+            sliced = original[1:]
+            self.assertIsNot(copied, original)
+            self.assertEqual(copied.unit, "MHz")
+            self.assertEqual(sliced.unit, "MHz")
+            np.testing.assert_array_equal(copied.f, original.f)
+            np.testing.assert_array_equal(sliced.f, [2e6, 3e6])
+
+            copied.unit = "GHz"
+            self.assertEqual(original.unit, "MHz")
+            np.testing.assert_array_equal(copied.f, original.f)
+            np.testing.assert_allclose(copied.f_scaled, [0.001, 0.002, 0.003])
 
     def test_configured_default_with_scalar_and_empty_input(self):
         with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):

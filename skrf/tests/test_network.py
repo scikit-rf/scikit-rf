@@ -9,6 +9,7 @@ import warnings
 import zipfile
 from functools import partial
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -155,6 +156,28 @@ class NetworkTestCase(unittest.TestCase):
         np.allclose(n.f, self.freq.f)
         n=rf.Network(f=self.freq.f, f_unit=self.freq.unit)
         np.allclose(n.f, self.freq.f)
+
+    def test_configured_unit_preserves_raw_frequency_input(self):
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
+            raw_hz = rf.Network(f=[1e6, 2e6], s=[0.1, 0.2])
+            explicit = rf.Network(f=[1, 2], f_unit="MHz", s=[0.1, 0.2])
+
+        for network in (raw_hz, explicit):
+            self.assertEqual(network.frequency.unit, "GHz")
+            np.testing.assert_array_equal(network.f, [1e6, 2e6])
+
+    def test_configured_unit_does_not_mutate_source_frequencies(self):
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", None):
+            original = rf.Frequency.from_f([1, 2], unit="MHz")
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
+            network = rf.Network(frequency=original, noise_freq=original, s=[0.1, 0.2])
+
+        for frequency in (network.frequency, network.noise_freq):
+            self.assertIsNot(frequency, original)
+            self.assertEqual(frequency.unit, "GHz")
+            np.testing.assert_array_equal(frequency.f, [1e6, 2e6])
+        self.assertEqual(original.unit, "MHz")
+        np.testing.assert_array_equal(original.f, [1e6, 2e6])
 
     def test_timedomain(self):
         t = self.ntwk1.s11.s_time
@@ -2219,6 +2242,17 @@ class NetworkTestCase(unittest.TestCase):
         interp = net.interpolate(rf.Frequency(0, 4, 5, unit="Hz"), kind="linear")
         assert np.allclose(interp.s[2], 5.0)
 
+    def test_interpolate_after_default_unit_changes(self):
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
+            net = rf.Network(f=[1, 2, 3], f_unit="GHz", s=[0.2, 0.4, 0.6])
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "THz"):
+            interpolated = net.interpolate(5)
+
+        np.testing.assert_allclose(interpolated.f, np.linspace(1, 3, 5) * 1e9)
+        np.testing.assert_allclose(interpolated.s[:, 0, 0], np.linspace(0.2, 0.6, 5))
+        self.assertEqual(net.frequency.unit, "GHz")
+        np.testing.assert_array_equal(net.f, [1e9, 2e9, 3e9])
+
     def test_interpolate_cubic(self):
         net = rf.Network(f=[0, 1, 3, 4], s=[0,1,9,16], f_unit="Hz")
 
@@ -2393,6 +2427,20 @@ class NetworkTestCase(unittest.TestCase):
                        z0=50)
         self.assertTrue(b.is_lossless(), 'This unmatched power divider is lossless.')
         return
+
+    def test_touchstone_noise_uses_configured_unit(self):
+        path = os.path.join(self.test_dir, "ntwk_noise.s2p")
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", None):
+            baseline = rf.Network(path)
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "MHz"):
+            loaded = rf.Network(path, f_unit="kHz")
+
+        self.assertEqual(loaded.frequency.unit, "MHz")
+        self.assertEqual(loaded.noise_freq.unit, "MHz")
+        np.testing.assert_array_equal(loaded.f, baseline.f)
+        np.testing.assert_array_equal(loaded.noise_freq.f, baseline.noise_freq.f)
+        np.testing.assert_allclose(loaded.s, baseline.s)
+        np.testing.assert_allclose(loaded.noise, baseline.noise)
 
     def test_noise(self):
         a = self.ntwk_noise
