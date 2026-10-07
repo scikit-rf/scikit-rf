@@ -79,6 +79,15 @@ Vector Fitting
 
     vectorfitting/*
 
+Parametric Vector Fitting
+------------------
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    vectorfitting_parametric/*
+
 Q-factor
 ------------------
 
