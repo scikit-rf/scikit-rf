@@ -2676,23 +2676,30 @@ class VectorFittingParametric:
                 NetworkSet instance of multiple :math:`N`-port networks holding the frequency responses to be fitted
                 for some discrete values of one or multiple design parameter.
 
-        n_poles : int, optional
-                The number of complex-conjugate poles in the final parametric model. In case of `n_poles=-1`, a suitable
-                number will be determined automatically by running :func:`VectorFitting.auto_fit()` on the first
-                network in :attr:`networkset`.
+        n_poles_real : int, optional
+                The number of real starting poles for the parametric fitting process. In case of `n_poles_real=-1`, a
+                suitable number will be determined automatically by running :func:`VectorFitting.auto_fit()` on the
+                first network in :attr:`networkset`. This does not always succeed, so manual adjustments might be
+                required.
+
+        n_poles_cmplx : int, optional
+                The number of complex-conjugate starting poles for the parametric fitting process. In case of
+                `n_poles_cmplx=-1`, a suitable number will be determined automatically by running
+                :func:`VectorFitting.auto_fit()` on the first network in :attr:`networkset`. This does not always
+                succeed, so manual adjustments might be required.
 
         Examples
         --------
-        Load a bunch of parametric `Network` and bundle them in a parametric `NetworkSet` using the helper function
-        :func:`generate_networkset()`. Then create a `VectorFittingParametric` instance and perform the fit.
-        Afterwards, the parametric model can be evaluated (interpolated) at arbitrary values for each parameter:
+        Load a bunch of parametric `Network` and bundle them in a parametric `NetworkSet`. Then create a
+        `VectorFittingParametric` instance and perform the fit. Afterward, the parametric model can be evaluated
+        (interpolated) at arbitrary values for each parameter:
 
-        >>> nwset = VectorFittingParametric.generate_networkset(path='myfolder', filename_prefix='spiral',
-        >>>                                                     param_names=['param1', 'param2', 'param3'])
+        >>> nwset = NetworkSet([Network('file1_2.s4p', params={'a': 1.2}),
+        >>>                     Network('file1_4.s4p', params={'a': 1.4}),
+        >>>                     Network('file1_6.s4p', params={'a': 1.6})])
         >>> vfparam = VectorFittingParametric(nwset)
         >>> vfparam.auto_fit()
-        >>> model = vfparam.get_model_response(params={'param1': 3.4, 'param2': -2, 'param3': 10},
-        >>>                                    freqs=np.linspace(0, 10e9, 101))
+        >>> model = vfparam.get_model_response(params={'a': 1.27}, freqs=np.linspace(0, 10e9, 101))
 
         References
         ----------
