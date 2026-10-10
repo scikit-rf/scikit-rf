@@ -209,6 +209,7 @@ from numpy import gradient, ndarray, shape
 from numpy.linalg import inv as npy_inv
 
 from . import __version__
+from . import constants as _constants
 from . import mathFunctions as mf
 from . import plotting as rfplt
 from .constants import (
@@ -543,6 +544,12 @@ class Network:
         for attr in list(PRIMARY_PROPERTIES) + ['frequency', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
+
+        if _constants.FREQ_UNIT_DEFAULT is not None:
+            self.frequency.unit = _constants.FREQ_UNIT_DEFAULT
+            if self.noise_freq is not None:
+                self.noise_freq = self.noise_freq.copy()
+                self.noise_freq.unit = _constants.FREQ_UNIT_DEFAULT
 
         # Assign port_names after S-parameters so that the number of ports can
         # be checked.
@@ -2519,7 +2526,7 @@ class Network:
         # able to check that there is a name for every port
         self.port_names = touchstoneFile.port_names
         self.frequency = Frequency.from_f(f, unit='hz')
-        self.frequency.unit = touchstoneFile.frequency_unit
+        self.frequency.unit = _constants.FREQ_UNIT_DEFAULT or touchstoneFile.frequency_unit
 
         self.gamma = touchstoneFile.gamma
         self.z0 = touchstoneFile.z0
@@ -2544,7 +2551,7 @@ class Network:
             # use the voltage/current correlation matrix; this works nicely with
             # cascading networks
             self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
-            self.noise_freq.unit = touchstoneFile.frequency_unit
+            self.noise_freq.unit = _constants.FREQ_UNIT_DEFAULT or touchstoneFile.frequency_unit
             self.set_noise_a(self.noise_freq, nfmin_db, gamma_opt, rn)
 
         if self.name is None:

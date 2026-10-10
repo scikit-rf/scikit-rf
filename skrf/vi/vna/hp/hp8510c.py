@@ -88,7 +88,7 @@ class HP8510C(VNA):
         freq_block_1 = np.linspace(1e9,2e9,801)
         freq_block_2 = [10e9,11e9,12e9]
         freqs = np.concatenate((freq_block_1, freq_block_2))
-        vna.frequency = skrf.Frequency.from_f(freqs)
+        vna.frequency = skrf.Frequency.from_f(freqs, unit="Hz")
         vna.get_snp_network(ports=(1,2))
     '''
     min_hz = None  #: Minimum frequency supported by instrument
