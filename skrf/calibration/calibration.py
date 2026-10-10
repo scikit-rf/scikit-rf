@@ -2905,7 +2905,8 @@ class NISTMultilineTRL(EightTerm):
 
         if np.isscalar(ref_plane):
             ref_plane = [ref_plane, ref_plane]
-        self.ref_plane = ref_plane
+        # Copy so later in-place edits do not mutate the caller's list.
+        self.ref_plane = [float(v) for v in ref_plane]
         self.er_est = er_est
         self.l = [float(v) for v in l] # cast to float, see gh-895
         self.Grefls = Grefls
@@ -3426,12 +3427,15 @@ class NISTMultilineTRL(EightTerm):
             if np.any(self.ref_plane):
                 shift1 = exp(-2*gamma[m]*self.ref_plane[0])
                 shift2 = exp(-2*gamma[m]*self.ref_plane[1])
+                # Transmission terms R1/R2 span both ports: one-way shift
+                # uses the sum of the two plane offsets (see #1444).
+                shift_tx = exp(-gamma[m]*(self.ref_plane[0] + self.ref_plane[1]))
                 A1 *= shift1
                 A2 *= shift2
                 C1 *= shift1
                 C2 *= shift2
-                R1 *= shift1
-                R2 *= shift2
+                R1 *= shift_tx
+                R2 *= shift_tx
 
             if self.c0 is not None:
                 #Estimate the line characteristic impedance

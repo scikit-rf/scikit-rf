@@ -1047,6 +1047,44 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
         cal.run()
         cal.apply_cal(self.measured[0])
 
+
+class NISTMultilineTRLUnequalRefPlaneTest(unittest.TestCase):
+    """Unequal per-port ref_plane must keep a reciprocal DUT reciprocal (#1444)."""
+
+    @suppress_warning_decorator("No switch terms provided")
+    def test_unequal_ref_plane_preserves_reciprocity(self):
+        from skrf.constants import c
+        from skrf.media import DefinedGammaZ0
+
+        freq = rf.Frequency(1, 20, 20, "GHz")
+        gamma = 1j * 2 * np.pi * freq.f * 2 / c
+        med = DefinedGammaZ0(freq, z0=50, gamma=gamma)
+
+        X = med.inductor(30e-12) ** med.shunt_capacitor(20e-15)
+        Y = med.shunt_capacitor(10e-15) ** med.inductor(50e-12)
+        lengths = [0, 1e-3, 3e-3, 9e-3]
+        lines = [X ** med.line(length, "m") ** Y for length in lengths]
+        reflect = two_port_reflect(X ** med.short(), Y.flipped() ** med.short())
+        dut = X ** med.line(1e-3, "m") ** med.resistor(10) ** med.line(2e-3, "m") ** Y
+
+        for ref_plane in ([0, 0], [1e-3, 1e-3], [1e-3, -2e-3]):
+            caller_plane = list(ref_plane)
+            cal = NISTMultilineTRL(
+                measured=[lines[0], reflect, *lines[1:]],
+                Grefls=[-1],
+                l=lengths,
+                er_est=4,
+                ref_plane=caller_plane,
+            )
+            s = cal.apply_cal(dut).s
+            self.assertTrue(
+                np.max(np.abs(s[:, 1, 0] - s[:, 0, 1])) < 1e-12,
+                msg=f"non-reciprocal result for ref_plane={ref_plane}",
+            )
+            # Caller's list must not be mutated.
+            self.assertEqual(caller_plane, list(ref_plane))
+
+
 class TUGMultilineTest(EightTermTest):
     thru_length = 0
     line_offsets = [100e-6, 200e-6, 900e-6]  # line lengths relative to the thru
