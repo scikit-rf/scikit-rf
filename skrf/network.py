@@ -2064,11 +2064,10 @@ class Network:
         gd = self.s * 0  # quick way to make a new array of correct shape
 
         phi = self.s_rad_unwrap
-        dw = self.frequency.dw
+        w = self.frequency.w
 
         for m, n in self.port_tuples:
-            dphi = gradient(phi[:, m, n])
-            gd[:, m, n] = -dphi / dw
+            gd[:, m, n] = -gradient(phi[:, m, n], w)
 
         return gd
 
