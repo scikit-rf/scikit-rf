@@ -1666,6 +1666,28 @@ class NetworkTestCase(unittest.TestCase):
             )
         )
 
+    def test_group_delay_nonuniform(self):
+        f_ghz = np.array([1., 2., 4., 7., 11.])
+        factors = np.array([[1., 1.5], [1.5, 2.]])
+        phase = -0.02 * f_ghz[:, None, None] ** 2 * factors
+        ntwk = rf.Network(
+            frequency=rf.Frequency.from_f(f_ghz, unit="GHz"),
+            s=np.exp(1j * phase),
+        )
+        expected = 0.04 * f_ghz[:, None, None] * factors / (2 * np.pi * 1e9)
+        np.testing.assert_allclose(ntwk.group_delay[1:-1], expected[1:-1], rtol=1e-12, atol=1e-24)
+        for edge, pair in [(0, [0, 1]), (-1, [-2, -1])]:
+            slope = -np.diff(phase[pair], axis=0)[0] / np.diff(ntwk.frequency.w[pair])[0]
+            np.testing.assert_allclose(ntwk.group_delay[edge], slope, rtol=1e-12, atol=1e-24)
+
+    def test_group_delay_linear_phase(self):
+        for frequencies in [[1., 2.], [1., 2., 3., 4.], [1., 2., 4., 7., 11.]]:
+            with self.subTest(frequencies=frequencies):
+                freq = rf.Frequency.from_f(frequencies, unit="GHz")
+                delay = 20e-12
+                ntwk = rf.Network(frequency=freq, s=np.exp(-1j * delay * freq.w))
+                np.testing.assert_allclose(ntwk.group_delay, delay, rtol=1e-12, atol=1e-24)
+
     def test_connect_multiports(self):
         a = rf.Network()
         a.frequency = rf.Frequency(1, 1, 1, unit='GHz')
