@@ -298,6 +298,25 @@ class Mdif:
 
         return ntwk
 
+    @staticmethod
+    def _merge_continuation_lines(lines):
+        """
+        Merge MWO-style continuation lines.
+
+        MDIF files exported by AWR Microwave Office (and other GMDIF/MDF
+        variants) wrap long ``%``-header and data rows onto multiple
+        physical lines by starting each continuation with a tab character.
+        Fold those back into the previous line so the rest of the parser
+        sees each row as a single logical line.
+        """
+        merged = []
+        for line in lines:
+            if line.startswith('\t') and merged:
+                merged[-1] = merged[-1].rstrip('\r\n') + ' ' + line.lstrip('\t')
+            else:
+                merged.append(line)
+        return merged
+
     def _parse_mdif(self, fid) -> list:
         """
         MDIF parser.
@@ -311,6 +330,7 @@ class Mdif:
         list: list of Networks
         """
         fid.seek(0)
+        lines = self._merge_continuation_lines(fid.readlines())
 
         block_data = []
         ntwks = []
@@ -319,7 +339,7 @@ class Mdif:
         in_data_block = False
         in_noise_block = False
 
-        for line in fid:
+        for line in lines:
 
             # parse parameters:
             #

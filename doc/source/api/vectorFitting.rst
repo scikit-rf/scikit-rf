@@ -10,3 +10,4 @@ Module for vector fitting of networks.
     :recursive:
 
     VectorFitting
+    VectorFittingParametric

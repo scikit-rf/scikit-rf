@@ -135,6 +135,21 @@ class MediaTestCase(unittest.TestCase):
             )
         assert_array_almost_equal(coax.L*coax.C, mu_0*coax.epsilon_prime)
 
+    def test_RLCG_shapes_consistent(self):
+        """R, L, C and G broadcast to the frequency shape (regression for #1423)."""
+        freq = rf.Frequency(1, 10, npoints=21, unit='GHz')
+        # constant or frequency-dependant permittivity
+        eps_rs = [2.1, np.linspace(2.1, 2.2, freq.npoints)]
+        for eps_r in eps_rs:
+            coax = Coaxial(freq, Dint=0.5e-3, Dout=1.68e-3, epsilon_r=eps_r)
+
+            for name, val in (('R', coax.R), ('L', coax.L), ('C', coax.C), ('G', coax.G)):
+                self.assertEqual(val.shape, freq.w.shape,
+                                 msg=f'{name} shape {val.shape} != frequency shape {freq.w.shape}')
+            # per-frequency indexing must not raise any issue
+            _ = coax.C[0]
+            _ = coax.C[-1]
+
     def test_material_dicts_match_scalar_parameters(self):
         """The material dicts reproduce epsilon_r, tan_delta and sigma."""
         freq = rf.Frequency(1, 40, 21, unit='GHz')

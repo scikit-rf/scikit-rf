@@ -257,6 +257,68 @@ class NetworkTestCase(unittest.TestCase):
         gated = ntwk.s11.time_gate()
         self.assertTrue(len(gated)== len(ntwk))
 
+    def test_autogate_ignores_t_unit(self):
+        """In auto-gate mode `t_unit` has nothing to label, so it must not change the result.
+
+        `t_unit` states the unit of `start`, `stop`, `center` and `span`. When all four are
+        None the gate is determined by the data alone: the centre is the tallest time-domain
+        peak and the span is the distance to the second tallest. Passing a different unit for
+        arguments that were not passed cannot move the gate.
+
+        The gate edges land on the same integer sample indices whatever the unit, so all three
+        networks come out of identical FFT operations and the comparison is exact.
+
+        The second assertion pins the gate against a reference built here, without calling
+        `time_gate()`: two reflections are placed by hand at -8 and +20 samples from t = 0, so
+        the documented auto-gate rule (centre on the tallest peak, span equal to the distance
+        between the two tallest) puts a boxcar over the closed sample interval [20-14, 20+14].
+
+        The third assertion covers the mixed case, where one of centre and span is given and
+        the other is detected. The given one is expressed in `t_unit` and the detected one is
+        not, so the gate must land on the same samples for every unit there too.
+        """
+        npoints = 128
+        freq = Frequency(1, npoints, npoints, unit='GHz')
+        dt = 1 / (npoints * freq.step)
+        center_idx = npoints // 2  # index of t = 0 on the fftshift-ed time axis
+
+        # a 1e-9 floor keeps s_time_db finite for the peak finder; it is 180 dB below the
+        # reflections and cannot move them
+        t_domain = np.full(npoints, 1e-9, dtype=complex)
+        t_domain[center_idx - 8] = 0.4
+        t_domain[center_idx + 20] = 1.0
+        ntwk = rf.Network(frequency=freq, s=np.fft.fft(np.fft.ifftshift(t_domain)))
+
+        # a boxcar gate and no frequency-domain window keep the covered samples untouched,
+        # so the result is pinned without depending on the shape of any window
+        gated = {unit: ntwk.time_gate(window='boxcar', fft_window=None, t_unit=unit)
+                 for unit in ('s', 'ns', 'ps')}
+
+        for unit in ('s', 'ps'):
+            np.testing.assert_array_equal(
+                gated[unit].s, gated['ns'].s,
+                err_msg=f"auto-gate result differs between t_unit='{unit}' and t_unit='ns'")
+
+        s_td = np.fft.fftshift(np.fft.ifft(ntwk.s[:, 0, 0]))
+        lo, hi = center_idx + 20 - 14, center_idx + 20 + 14
+        reference_td = np.zeros(npoints, dtype=complex)
+        reference_td[lo:hi + 1] = s_td[lo:hi + 1]
+        reference = np.fft.fft(np.fft.ifftshift(reference_td))
+
+        for unit in ('s', 'ns', 'ps'):
+            np.testing.assert_array_equal(
+                gated[unit].s[:, 0, 0], reference,
+                err_msg=f"auto-gate with t_unit='{unit}' does not match the hand-built gate")
+
+        # mixed case: one bound comes from the caller in t_unit, the other is detected
+        per_second = {'s': 1.0, 'ns': 1e9, 'ps': 1e12}
+        for unit, factor in per_second.items():
+            for given in ({'center': 20 * dt * factor}, {'span': 28 * dt * factor}):
+                mixed = ntwk.time_gate(window='boxcar', fft_window=None, t_unit=unit, **given)
+                np.testing.assert_array_equal(
+                    mixed.s[:, 0, 0], reference,
+                    err_msg=f"t_unit='{unit}' with {given} does not match the hand-built gate")
+
     def test_lpi(self):
         """Test low pass impulse response against data generated with METAS VNA Tools."""
 
@@ -1305,6 +1367,58 @@ class NetworkTestCase(unittest.TestCase):
                 self.assertTrue((net.z0 == net[0].z0).all())
                 self.assertTrue(net.s_def != net[0].s_def)
 
+    def test_innerconnect_preserves_s_def(self):
+        """ Test that innerconnect() returns a Network with the same s_def as
+        the one it was given, and that the returned s-parameters are expressed
+        in that definition.
+
+        The network is a 4-port made of two uncoupled 2-port blocks: ports 0
+        and 1 carry block P, ports 2 and 3 carry block Q, and there is no
+        coupling between the blocks. Connecting ports 0 and 1 together cannot
+        change block Q, so the result must be block Q on the same reference
+        impedance, in the same s_def. That reference is built independently of
+        the connection code.
+
+        Both blocks are passive and reciprocal by construction: Z is symmetric
+        and Re(Z) is positive definite.
+        """
+        zp = np.array([[60.0 + 20.0j, 25.0 - 10.0j],
+                       [25.0 - 10.0j, 80.0 + 5.0j]])
+        zq = np.array([[45.0 - 15.0j, 30.0 + 12.0j],
+                       [30.0 + 12.0j, 70.0 + 25.0j]])
+        z0 = 50.0 + 30.0j
+
+        for blk in (zp, zq):
+            self.assertTrue(np.all(np.linalg.eigvalsh(blk.real) > 0))
+
+        z4 = np.zeros((1, 4, 4), dtype=complex)
+        z4[0, 0:2, 0:2] = zp
+        z4[0, 2:4, 2:4] = zq
+
+        ntwk = rf.Network(s=np.zeros((1, 4, 4)), f=1, z0=z0, s_def='power')
+        ntwk.z = z4
+        ref = rf.Network(s=np.zeros((1, 2, 2)), f=1, z0=z0, s_def='power')
+        ref.z = zq.reshape(1, 2, 2)
+
+        # Tolerance, fixed before the run from the data type and the operation
+        # count, and not adjusted afterwards. complex128 unit roundoff is
+        # u = 2**-53. The reference and the result are separated by k = 14
+        # elementary n x n matrix operations: z2s on each side (2 each), the
+        # power->pseudo and pseudo->power renormalizations inside innerconnect
+        # (4 each), and the connection itself (2). Each carries a relative
+        # error of order n*u amplified by the condition number of the operand
+        # that is inverted, and a factor 10 covers the LU growth factor:
+        #     atol = 10 * k * n * kappa * u
+        u = 2.0 ** -53
+        kappa = float(np.linalg.cond(z4[0] + z0 * np.eye(4)))
+        self.assertLess(kappa, 5.0)
+        atol = 10 * 14 * 4 * kappa * u
+
+        result = rf.network.innerconnect(ntwk, 0, 1)
+
+        np.testing.assert_allclose(result.s, ref.s, rtol=0, atol=atol)
+        self.assertEqual(result.s_def, 'power')
+
     def test_parallelconnect(self):
         # Create 2 network with 2 ports
         ntwka = rf.Network(s=self.rng.random((1, 2, 2)), f=1, name='ntwka')
@@ -2251,6 +2365,29 @@ class NetworkTestCase(unittest.TestCase):
         self.assertFalse(y.is_symmetric(n=4))
         return
 
+    def test_passivity(self):
+        # 1-port with complex reflection coefficients across multiple frequencies
+        s = np.array([[[0.3 + 0.4j]], [[-0.6 + 0.8j]], [[0.0]]])
+        ntwk = rf.Network(f=[1, 2, 3], s=s, z0=50)
+        p = ntwk.passivity
+
+        # returns |S11| with shape (nfreqs, 1, 1)
+        self.assertEqual(p.shape, (3, 1, 1))
+        np.testing.assert_allclose(p.real, [[[0.5]], [[1.0]], [[0.0]]])
+        np.testing.assert_allclose(p.imag, 0.0)
+
+        # verify helper function directly
+        np.testing.assert_allclose(rf.network.passivity(s), p)
+
+        # multi-port calculation and return shape remain unchanged
+        s_2port = np.array([[[0.0, 0.5], [0.5, 0.0]]])
+        ntwk_2port = rf.Network(f=[1], s=s_2port, z0=50)
+        p_2port = ntwk_2port.passivity
+        self.assertEqual(p_2port.shape, (1, 2, 2))
+        np.testing.assert_allclose(p_2port.real, [[[0.5, 0.0], [0.0, 0.5]]])
+        np.testing.assert_allclose(p_2port.imag, 0.0)
+        return
+
     def test_is_passive(self):
         a = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
@@ -2263,6 +2400,32 @@ class NetworkTestCase(unittest.TestCase):
                           [10, 0]],
                        z0=50)
         self.assertFalse(b.is_passive(), 'A unilateral amplifier is not passive.')
+
+        # matched load (S11 = 0)
+        matched = rf.Network(f=[1], s=[[[0.0]]], z0=50)
+        self.assertTrue(matched.is_passive(), 'A matched load is passive.')
+
+        # ideal open and short circuits (|S11| = 1)
+        open_c = rf.Network(f=[1], s=[[[1.0]]], z0=50)
+        short_c = rf.Network(f=[1], s=[[[-1.0]]], z0=50)
+        self.assertTrue(open_c.is_passive(), 'An ideal open circuit is passive.')
+        self.assertTrue(short_c.is_passive(), 'An ideal short circuit is passive.')
+
+        # one-port with gain (|S11| > 1)
+        gain = rf.Network(f=[1], s=[[[1.1]]], z0=50)
+        self.assertFalse(gain.is_passive(), 'A one-port with gain is not passive.')
+
+        # multi-frequency one-port
+        multi_freq_pass = rf.Network(f=[1, 2, 3], s=[[[0.5]], [[0.9]], [[1.0]]], z0=50)
+        self.assertTrue(multi_freq_pass.is_passive(), 'A multi-frequency passive one-port is passive.')
+        multi_freq_fail = rf.Network(f=[1, 2, 3], s=[[[0.5]], [[1.2]], [[0.8]]], z0=50)
+        self.assertFalse(multi_freq_fail.is_passive(), 'A multi-frequency one-port with violation is not passive.')
+
+        # boundary violation with explicit tolerance
+        s_viol = 1.0 + 1e-4
+        ntwk_viol = rf.Network(f=[1], s=[[[s_viol]]], z0=50)
+        self.assertTrue(ntwk_viol.is_passive(tol=1e-3), 'Boundary violation within tolerance is accepted.')
+        self.assertFalse(ntwk_viol.is_passive(tol=1e-5), 'Boundary violation outside tolerance is rejected.')
         return
 
     def test_is_lossless(self):

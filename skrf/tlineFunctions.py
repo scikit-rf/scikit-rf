@@ -279,6 +279,11 @@ def surface_impedance(f: NumberLike, material_properties: list[dict] | dict,
     Richardson extrapolation, until ``Zs`` changes by less than ``rtol``; a
     ``RuntimeWarning`` is issued if the refinement does not converge.
 
+    A layer thinner than the roughness of its boundaries lets their CDFs cross, which
+    mixes the materials with negative weights and can flip the sign of the loss. The
+    CDFs are therefore put back in order before they are mixed, which leaves a well
+    formed stack as it is, and a ``RuntimeWarning`` is issued if negative weight is found.
+
     With the default ``rms_roughness=0`` a single smooth conductor recovers the
     classic :math:`(1 + j)\sqrt{\pi f \mu \rho}` known from
     :func:`surface_resistivity`.
@@ -370,6 +375,7 @@ def surface_impedance(f: NumberLike, material_properties: list[dict] | dict,
     # finest level, and the fixed 2:1 ratio gives the Richardson factor 1/(2**4 - 1).
     eta_bulk = np.sqrt(_const.mu_0*mu_r[-1]/(_const.epsilon_0*ep_r[-1]))
     Zs_levels = []  # surface impedance at each refinement level
+    negative_weight = 0.0  # most negative mixer weight. assume no negative weight until found otherwise
     converged = False
     for n_segments in (64*2**k for k in range(9)):  # 64, 128, ..., 16384
         edges = _segment_edges(rms_roughness, boundary_loc, x_start, x_end, n_segments)
@@ -381,8 +387,13 @@ def surface_impedance(f: NumberLike, material_properties: list[dict] | dict,
         x_gauss = np.concatenate([x - np.sqrt(3)/6*dx, x + np.sqrt(3)/6*dx])
         cdf = np.array([_roughness_cdf(x_gauss, r, loc, dist)
                         for r, loc, dist in zip(rms_roughness, boundary_loc, distribution)])
-        mu_gauss = _const.mu_0*(mu_r[0][:, None] + np.einsum('kf,kn->fn', np.diff(mu_r, axis=0), cdf))
-        ep_gauss = _const.epsilon_0*(ep_r[0][:, None] + np.einsum('kf,kn->fn', np.diff(ep_r, axis=0), cdf))
+        # mixer weight of each material at every depth: 1 - F_0, F_0 - F_1, ..., F_(K-1)
+        weight = -np.diff(cdf, axis=0, prepend=1.0, append=0.0)
+        if weight.min() < 0:  # negative weight detected. Pull the CDFs back into order.
+            negative_weight = weight.min()
+            weight = -np.diff(_order_cdf(cdf), axis=0, prepend=1.0, append=0.0)
+        mu_gauss = _const.mu_0*(mu_r.T @ weight)
+        ep_gauss = _const.epsilon_0*(ep_r.T @ weight)
         mu_1, mu_2 = mu_gauss[:, :n], mu_gauss[:, n:]
         ep_1, ep_2 = ep_gauss[:, :n], ep_gauss[:, n:]
 
@@ -415,12 +426,37 @@ def surface_impedance(f: NumberLike, material_properties: list[dict] | dict,
             if change < rtol:
                 converged = True
                 break
+    if negative_weight < -1e-6:  # 0.0001% of the mixture, anything below that is negligible error.
+        warnings.warn("negative mixer weight, the roughness at a layer's boundaries being too "
+                      "large for its thickness; this is not physical, check rms_roughness.",
+                      RuntimeWarning, stacklevel=2)
     if not converged:
         warnings.warn(f"surface_impedance did not converge to rtol={rtol:.1e} "
                       f"(last change {change:.1e}); returning the last refinement.",
                       RuntimeWarning, stacklevel=2)
     return Zs[0] if is_scalar else Zs
 
+def _order_cdf(cdf: np.ndarray) -> np.ndarray:
+    """
+    Pull the boundary CDFs into non-increasing order, cdf[0] >= cdf[1] >= ...
+
+    A deeper boundary cannot have been passed by more of the surface than a shallower one,
+    so the CDFs have to come in order. A roughness of the size of a layer thickness breaks
+    that and the mixer weights turn negative, which makes the blended material unphysical. The
+    CDFs are then pulled to the nearest ordered set in the least squares sense, by isotonic
+    regression over the boundaries at each depth, and an already ordered set is left as it is.
+    See https://en.wikipedia.org/wiki/Isotonic_regression
+    """
+    K = len(cdf)
+    if K < 2 or np.all(np.diff(cdf, axis=0) <= 0):
+        return cdf  # already ordered, nothing to do
+    # running sum, so the mean over boundaries s to t is (csum[t + 1] - csum[s])/(t - s + 1)
+    csum = np.vstack([np.zeros_like(cdf[:1]), np.cumsum(cdf, axis=0)])
+    ordered = []
+    for i in range(K):
+        blocks = [[(csum[t + 1] - csum[s])/(t - s + 1) for t in range(i, K)] for s in range(i + 1)]
+        ordered.append(np.min([np.max(b, axis=0) for b in blocks], axis=0))
+    return np.array(ordered)
 
 def _roughness_cdf(x: NumberLike, rms_roughness: float, boundary_loc: float, distribution):
     """

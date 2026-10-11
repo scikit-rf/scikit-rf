@@ -1756,7 +1756,7 @@ class Network:
         to touchstone files.
 
         Length of the port_names list should match the number of ports in the
-        network, this is checked on assigment. The names are dropped when an
+        network, this is checked on assignment. The names are dropped when an
         operation changes the number of ports without being able to tell what
         the new ports are.
 
@@ -1814,16 +1814,22 @@ class Network:
     @property
     def passivity(self) -> ndarray:
         r"""
-        Passivity metric for a multi-port network.
+        Passivity metric for a network.
 
-        This returns a matrix who's diagonals are equal to the total
+        This returns a matrix whose diagonals are equal to the total
         power received at all ports, normalized to the power at a single
         excitement port.
 
         Mathematically, this is a test for unitary-ness of the
         s-parameter matrix [#]_.
 
-        For two port this is
+        For a one-port network this is
+
+        .. math::
+
+                |S_{11}|
+
+        For a two-port network this is
 
         .. math::
 
@@ -1833,7 +1839,7 @@ class Network:
 
         .. math::
 
-                S^H \cdot S
+                \sqrt( S^H \cdot S)
 
         where :math:`H` is conjugate transpose of S, and :math:`\cdot`
         is dot product.
@@ -2164,10 +2170,7 @@ class Network:
         bool : boolean
 
         """
-        try:
-            M = np.square(self.passivity)
-        except ValueError:
-            return False
+        M = np.square(self.passivity)
 
         I = np.identity(M.shape[-1])
         for f_idx in range(len(M)):
@@ -2284,7 +2287,7 @@ class Network:
         >>> b = rf.N('my_file.s2p')
         >>> a.copy_from (b)
         """
-        # assigment order matters here since there are checks in some setters
+        # assignment order matters here since there are checks in some setters
         for attr in ['_s', 'frequency', '_z0', 'name', 'port_names']:
             setattr(self, attr, copy(getattr(other, attr)))
 
@@ -5308,6 +5311,12 @@ class Network:
     def plot_reciprocity2(self, db=False, *args, **kwargs):
         return rfplt.plot_reciprocity2(self, db, *args, **kwargs)
 
+    @copy_doc(rfplt.plot_s_error)
+    def plot_s_error(self, other: Network,
+                     error_function: ErrorFunctionsT = "average_l2_norm",
+                     db: bool = False, *args, **kwargs):
+        return rfplt.plot_s_error(self, other, error_function, db, *args, **kwargs)
+
     @copy_doc(rfplt.plot_s_db_time)
     def plot_s_db_time(self, center_to_dc=None, *args, **kwargs):
         return rfplt.plot_s_db_time(self, *args, center_to_dc=center_to_dc, **kwargs)
@@ -6003,6 +6012,8 @@ def innerconnect(ntwkA: Network, k: int | str, l: int | str, num: int = 1) -> Ne
     if (l + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `l` out of range')
 
+    s_def_original = ntwkA.s_def
+
     # 'power' is not supported, convert to supported definition and back afterwards
     if ntwkA.s_def == 'power':
         ntwkA = ntwkA.copy()
@@ -6011,8 +6022,6 @@ def innerconnect(ntwkA: Network, k: int | str, l: int | str, num: int = 1) -> Ne
     # create output Network, from copy of input
     # Since ntwkC's s-parameters will change later, use shallow_copy for speedup
     ntwkC = ntwkA.copy(shallow_copy=True)
-
-    s_def_original = ntwkC.s_def
 
     z0_equal = (ntwkC.z0[:, k] == ntwkC.z0[:, l]).all()
 
@@ -8405,18 +8414,24 @@ def s2g(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
 ## these methods are used in the secondary properties
 def passivity(s: np.ndarray) -> np.ndarray:
     r"""
-    Passivity metric for a multi-port network.
+    Passivity metric for a network.
 
     A metric which is proportional to the amount of power lost in a
-    multiport network, depending on the excitation port. Specifically,
-    this returns a matrix who's diagonals are equal to the total
+    network, depending on the excitation port. Specifically,
+    this returns a matrix whose diagonals are equal to the total
     power received at all ports, normalized to the power at a single
     excitement port.
 
-    mathematically, this is a test for unitary-ness of the
+    Mathematically, this is a test for unitary-ness of the
     s-parameter matrix [#]_.
 
-    for two port this is
+    For a one-port network this is
+
+    .. math::
+
+            |S_{11}|
+
+    For a two-port network this is
 
     .. math::
 
@@ -8439,6 +8454,10 @@ def passivity(s: np.ndarray) -> np.ndarray:
     cascaded with a mismatch, the power dissipated will not be equivalent
     to the attenuator value, nor equal for each excitation port.
 
+    Parameters
+    ----------
+    s : :class:`numpy.ndarray` of shape `fxnxn`
+        s-parameter matrix
 
     Returns
     -------
@@ -8448,9 +8467,6 @@ def passivity(s: np.ndarray) -> np.ndarray:
     ------------
     .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
     """
-    if s.shape[-1] == 1:
-        raise (ValueError('Doesn\'t exist for one ports'))
-
     pas_mat = s.copy()
     for f in range(len(s)):
         pas_mat[f, :, :] = np.sqrt(np.dot(s[f, :, :].conj().T, s[f, :, :]))

@@ -95,6 +95,45 @@ class MdifTestCase(unittest.TestCase):
         # to Networkset Init
         ns = NetworkSet.from_mdif(file)
 
+    def test_awr_tab_continuation_lines(self):
+        """
+        Regression test for #1249: MDIF files exported by AWR Microwave Office
+        wrap long %-header and data rows onto continuation lines that start
+        with a tab. These must be folded back into their previous line before
+        the parser sees them, or parsing fails with ValueError on the wrapped
+        header tokens (e.g. 'N22X').
+        """
+        content = (
+            "! AWR Design Environment (17603) Fri Mar  7 16:50:01 2025\n"
+            "! nPorts: 3, nXvals: 6\n"
+            "\n"
+            "VAR x1 = 20\n"
+            "VAR x2 = 30\n"
+            "BEGIN ACDATA\n"
+            "# GHz S DB R 50\n"
+            "% F N11X N11Y N12X N12Y N13X N13Y N21X N21Y \n"
+            "\tN22X N22Y N23X N23Y N31X N31Y N32X N32Y \n"
+            "\tN33X N33Y \n"
+            "0.1 -9.5574863 179.87028 -3.5265759 -0.08911217 -3.524635 -0.042428161 -3.5265759 -0.08911217 \n"
+            "\t-9.5573313 179.84258 -3.5245584 -0.05627355 -3.524635 -0.042428161 -3.5245584 -0.05627355 \n"
+            "\t-9.5534535 179.93604 \n"
+            "1.1 -9.5640098 178.64805 -3.5296304 -0.95062039 -3.5257785 -0.45939033 -3.5296304 -0.95062039 \n"
+            "\t-9.5651793 178.36214 -3.5264164 -0.60217335 -3.5257785 -0.45939033 -3.5264164 -0.60217335 \n"
+            "\t-9.5582923 179.34614 \n"
+            "END\n"
+        )
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.mdf', delete=False) as tf:
+            tf.write(content)
+            path = tf.name
+        try:
+            ns = NetworkSet.from_mdif(path)
+            self.assertEqual(len(ns), 1)
+            self.assertEqual(ns[0].nports, 3)
+            self.assertEqual(len(ns[0].frequency), 2)
+            self.assertEqual(ns[0].params, {'x1': 20.0, 'x2': 30.0})
+        finally:
+            os.unlink(path)
+
     def test_read_and_write_back_noise(self):
         net = rf.Network("skrf/io/tests/ts/ex_18.s2p")
         nset1 = NetworkSet([net.copy() for _i in range(4)])
