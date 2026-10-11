@@ -1047,6 +1047,28 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
         cal.run()
         cal.apply_cal(self.measured[0])
 
+    def test_unequal_shift(self):
+        d1, d2 = 200e-6, 700e-6
+        ref_plane = [d1, d2]
+        caller_plane = list(ref_plane)
+        cal = NISTMultilineTRL(
+            measured = self.measured,
+            isolation = self.measured[1],
+            Grefls = [-1],
+            refl_offset = 500e-6,
+            l = [1000e-6, 1010e-6, 1100e-6, 1800e-6],
+            switch_terms = (self.gamma_f, self.gamma_r),
+            ref_plane = caller_plane,
+            c0=self.rlgc.C,
+            z0_ref=50,
+            gamma_root_choice = 'real'
+            )
+        dut = self.wg.random(n_ports=2, name='DUT')
+        dut_meas = self.measure(self.rlgc.line(d1, 'm') ** dut ** self.rlgc.line(d2, 'm'))
+        self.assertEqual(cal.apply_cal(dut_meas), dut)
+        # Caller's list must not be mutated.
+        self.assertEqual(caller_plane, list(ref_plane))
+
 class TUGMultilineTest(EightTermTest):
     thru_length = 0
     line_offsets = [100e-6, 200e-6, 900e-6]  # line lengths relative to the thru
