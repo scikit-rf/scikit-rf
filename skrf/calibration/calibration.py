@@ -3427,15 +3427,20 @@ class NISTMultilineTRL(EightTerm):
             if np.any(self.ref_plane):
                 shift1 = exp(-2*gamma[m]*self.ref_plane[0])
                 shift2 = exp(-2*gamma[m]*self.ref_plane[1])
-                # Transmission terms R1/R2 span both ports: one-way shift
-                # uses the sum of the two plane offsets (see #1444).
-                shift_tx = exp(-gamma[m]*(self.ref_plane[0] + self.ref_plane[1]))
                 A1 *= shift1
                 A2 *= shift2
                 C1 *= shift1
                 C2 *= shift2
-                R1 *= shift_tx
-                R2 *= shift_tx
+                if self.k_method == 'marks':
+                    # R1/R2 are per-port T-matrix scale factors.
+                    R1 *= exp(gamma[m]*self.ref_plane[0])
+                    R2 *= exp(gamma[m]*self.ref_plane[1])
+                else:
+                    # Transmission terms R1/R2 span both ports: one-way shift
+                    # uses the sum of the two plane offsets (see #1444).
+                    shift_tx = exp(-gamma[m]*(self.ref_plane[0] + self.ref_plane[1]))
+                    R1 *= shift_tx
+                    R2 *= shift_tx
 
             if self.c0 is not None:
                 #Estimate the line characteristic impedance
