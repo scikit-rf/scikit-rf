@@ -895,9 +895,15 @@ class Media(ABC):
         match : called to create a 'blank' network
         splitter_s : actual S-parameter matrix generator algorithm.
         """
-        result = self.match(nports, **kwargs)
+        s_def = kwargs.pop('s_def', S_DEF_DEFAULT)
+        result = self.match(nports, s_def='power', **kwargs)
 
         result.s = splitter_s(result.z0)
+
+        # Renormalize into s_def if required
+        if s_def != 'power':
+            result.renormalize(z_new=result.z0, s_def=s_def)
+
         return result
 
     # transmission line
