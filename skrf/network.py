@@ -2539,6 +2539,10 @@ class Network:
                 rn = touchstoneFile.noise[:, 4]
 
             gamma_opt = gamma_opt_mag * np.exp(1j * gamma_opt_angle)
+            if touchstoneFile.reference is not None:
+                # Noise Gammaopt uses option-line R, not the [Reference] impedances.
+                z_opt = touchstoneFile.resistance * (1 + gamma_opt) / (1 - gamma_opt)
+                gamma_opt = (z_opt - self.z0[0, 0]) / (z_opt + self.z0[0, 0])
 
             # use the voltage/current correlation matrix; this works nicely with
             # cascading networks
