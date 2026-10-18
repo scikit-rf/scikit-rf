@@ -466,3 +466,21 @@ def test_ts_example_16():
     ts = rf.Network(test_data / "ex_16.ts")
     assert np.all(ts.port_modes == np.array(["S", "D", "C", "S", "D", "C"]))
     assert np.allclose(ts.z0, [50, 150, 37.5, 50, 0.02, 0.005])
+
+
+def test_version_1_1_per_port_reference():
+    stream = io.StringIO("# GHz S RI R 50 200\n1 0 0 1 0 1 0 0 0\n")
+    stream.name = "transformer.s2p"
+    ntwk = rf.Network(stream)
+
+    np.testing.assert_array_equal(ntwk.z0, [[50, 200]])
+    np.testing.assert_allclose(ntwk.a[0], [[0.5, 0], [0, 2]], atol=1e-12)
+
+
+def test_version_1_1_per_port_reference_three_port():
+    stream = io.StringIO("# GHz S RI R 50 75 100\n1 1 0 0 0 0 0\n  0 0 1 0 0 0\n  0 0 0 0 1 0\n")
+    stream.name = "device.s3p"
+    ntwk = rf.Network(stream)
+
+    np.testing.assert_array_equal(ntwk.z0, [[50, 75, 100]])
+    np.testing.assert_allclose(ntwk.s[0], np.eye(3), atol=1e-12)
