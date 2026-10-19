@@ -161,21 +161,30 @@ class NetworkTestCase(unittest.TestCase):
         with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
             raw_hz = rf.Network(f=[1e6, 2e6], s=[0.1, 0.2])
             explicit = rf.Network(f=[1, 2], f_unit="MHz", s=[0.1, 0.2])
+            sequence = rf.Network(frequency=[1, 2], f_unit="MHz", s=[0.1, 0.2])
+            self.assertEqual(rf.constants.FREQ_UNIT_DEFAULT, "GHz")
 
-        for network in (raw_hz, explicit):
-            self.assertEqual(network.frequency.unit, "GHz")
-            np.testing.assert_array_equal(network.f, [1e6, 2e6])
+        for network, unit, scaled in (
+            (raw_hz, "GHz", [0.001, 0.002]),
+            (explicit, "MHz", [1, 2]),
+            (sequence, "MHz", [1, 2]),
+        ):
+            with self.subTest(unit=unit, network=network):
+                self.assertEqual(network.frequency.unit, unit)
+                np.testing.assert_array_equal(network.f, [1e6, 2e6])
+                np.testing.assert_allclose(network.frequency.f_scaled, scaled)
 
     def test_configured_unit_does_not_mutate_source_frequencies(self):
         with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", None):
             original = rf.Frequency.from_f([1, 2], unit="MHz")
-        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
-            network = rf.Network(frequency=original, noise_freq=original, s=[0.1, 0.2])
+        for default, f_unit, expected in (("GHz", None, "GHz"), ("GHz", "kHz", "kHz"), (None, "kHz", "kHz")):
+            with self.subTest(default=default, f_unit=f_unit), patch.object(rf.constants, "FREQ_UNIT_DEFAULT", default):
+                network = rf.Network(frequency=original, noise_freq=original, s=[0.1, 0.2], f_unit=f_unit)
+                for frequency in (network.frequency, network.noise_freq):
+                    self.assertIsNot(frequency, original)
+                    self.assertEqual(frequency.unit, expected)
+                    np.testing.assert_array_equal(frequency.f, [1e6, 2e6])
 
-        for frequency in (network.frequency, network.noise_freq):
-            self.assertIsNot(frequency, original)
-            self.assertEqual(frequency.unit, "GHz")
-            np.testing.assert_array_equal(frequency.f, [1e6, 2e6])
         self.assertEqual(original.unit, "MHz")
         np.testing.assert_array_equal(original.f, [1e6, 2e6])
 
@@ -2432,15 +2441,20 @@ class NetworkTestCase(unittest.TestCase):
         path = os.path.join(self.test_dir, "ntwk_noise.s2p")
         with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", None):
             baseline = rf.Network(path)
-        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "MHz"):
-            loaded = rf.Network(path, f_unit="kHz")
-
-        self.assertEqual(loaded.frequency.unit, "MHz")
-        self.assertEqual(loaded.noise_freq.unit, "MHz")
-        np.testing.assert_array_equal(loaded.f, baseline.f)
-        np.testing.assert_array_equal(loaded.noise_freq.f, baseline.noise_freq.f)
-        np.testing.assert_allclose(loaded.s, baseline.s)
-        np.testing.assert_allclose(loaded.noise, baseline.noise)
+        for default, f_unit, expected in (("MHz", None, "MHz"), ("MHz", "hz", "Hz"), (None, "hz", "Hz")):
+            with self.subTest(default=default, f_unit=f_unit), patch.object(rf.constants, "FREQ_UNIT_DEFAULT", default):
+                loaded = rf.Network(path, f_unit=f_unit)
+                self.assertEqual(loaded.frequency.unit, expected)
+                self.assertEqual(loaded.noise_freq.unit, expected)
+                np.testing.assert_array_equal(loaded.f, baseline.f)
+                np.testing.assert_array_equal(loaded.noise_freq.f, baseline.noise_freq.f)
+                np.testing.assert_allclose(loaded.frequency.f_scaled, baseline.f / loaded.frequency.multiplier)
+                np.testing.assert_allclose(
+                    loaded.noise_freq.f_scaled, baseline.noise_freq.f / loaded.noise_freq.multiplier
+                )
+                np.testing.assert_allclose(loaded.s, baseline.s)
+                np.testing.assert_allclose(loaded.noise, baseline.noise)
+                self.assertEqual(rf.constants.FREQ_UNIT_DEFAULT, default)
 
     def test_noise(self):
         a = self.ntwk_noise

@@ -141,6 +141,7 @@ Unit for newly constructed frequency objects, regardless of input units.
 Also interprets omitted Frequency input units. None (the default) preserves
 explicit/file units and interprets omitted input units as Hz. Existing objects
 and explicit assignments to Frequency.unit are not changed retroactively.
+An explicit Network f_unit overrides this setting for that network.
 """
 
 SweepTypeT = Literal["lin", "log"]
