@@ -435,6 +435,41 @@ def test_ts_example_17():
 
 
 @pytest.mark.parametrize("version", ["2.0", "2.1"])
+@pytest.mark.parametrize("option_r", [25, 50])
+@pytest.mark.parametrize("reference", [None, (50, 50), (75, 75), (75, 100)])
+def test_noise_option_line_reference(version, option_r, reference):
+    reference_line = "" if reference is None else f"[Reference] {reference[0]} {reference[1]}"
+    stream = io.StringIO(f"""[Version] {version}
+# GHz S RI R {option_r}
+[Number of Ports] 2
+[Two-Port Data Order] 21_12
+[Number of Frequencies] 2
+[Number of Noise Frequencies] 2
+{reference_line}
+[Network Data]
+1 0 0 2 0 0 0 0 0
+2 0 0 2 0 0 0 0 0
+[Noise Data]
+1 3.010299956639812 .2 0 30
+2 3.010299956639812 .2 90 30
+[End]
+""")
+    stream.name = "noise_reference.ts"
+    ntwk = rf.Network(stream)
+
+    expected_z0 = np.broadcast_to(reference or (option_r, option_r), (2, 2))
+    # Gammaopt is 0.2 and 0.2j in the option-line reference, respectively.
+    expected_z_opt = option_r * np.array([1.5, (12 + 5j) / 13])
+    expected_g_opt = (expected_z_opt - expected_z0[:, 0]) / (expected_z_opt + expected_z0[:, 0])
+    np.testing.assert_allclose(ntwk.z0, expected_z0)
+    np.testing.assert_allclose(ntwk.z_opt, expected_z_opt)
+    np.testing.assert_allclose(ntwk.g_opt, expected_g_opt, atol=1e-14)
+    np.testing.assert_allclose(ntwk.rn, 30)
+    np.testing.assert_allclose(ntwk.nfmin, 2)
+    np.testing.assert_allclose(ntwk.nf(expected_z_opt), 2)
+
+
+@pytest.mark.parametrize("version", ["2.0", "2.1"])
 def test_ts_example_17_write_v2(version):
     ts = rf.Network(test_data / "ex_17.ts")
 
