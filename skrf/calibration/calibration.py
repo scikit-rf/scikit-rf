@@ -4663,6 +4663,30 @@ class LRRM(EightTerm):
             isolation = isolation,
             **kwargs)
 
+    @staticmethod
+    def _reactance_roots(a, b, c):
+        """Solve the match reactance equation without subtractive cancellation."""
+        if np.any((a == 0) & (b == 0)):
+            raise ValueError('Cannot determine match inductance: the reactance equation is degenerate.')
+
+        det = b**2 - 4*a*c
+        negative_det = det < 0
+        if np.any(negative_det):
+            warnings.warn('Load inductance determination failed. Calibration might be incorrect.', stacklevel=3)
+        det[negative_det] = 0
+        q = -0.5 * (b + np.copysign(np.sqrt(det), b))
+        roots = [np.zeros_like(a), np.zeros_like(a)]
+        np.divide(q, a, out=roots[0], where=a != 0)
+        np.divide(c, q, out=roots[1], where=q != 0)
+        # Clamping the discriminant invalidates c/q; keep the repeated root.
+        roots[1][negative_det] = roots[0][negative_det]
+        # A flush thru gives a linear equation with one finite root.
+        roots[0][a == 0] = roots[1][a == 0]
+        # Preserve the +sqrt, -sqrt ordering used to choose between equal guesses.
+        negative_b = np.signbit(b)
+        return [np.where(negative_b, roots[0], roots[1]),
+                np.where(negative_b, roots[1], roots[0])]
+
     def run(self):
         mList = [k for k in self.measured_unterminated]
         lm = mList[0]
@@ -4790,13 +4814,7 @@ class LRRM(EightTerm):
         b = 4*R*(gr2.imag + (gr2*thru_s21**(-2)).imag)
         c = 4*R**2*(np.abs(gr2)**2 - 1)
 
-        det = b**2 - 4*a*c
-        if np.any(det < 0):
-            warnings.warn('Load inductance determination failed. Calibration might be incorrect.', stacklevel=2)
-        det[det < 0] = 0
-        wL = [None, None]
-        wL[0] = (-b+np.sqrt(det))/(2*a)
-        wL[1] = (-b-np.sqrt(det))/(2*a)
+        wL = self._reactance_roots(a, b, c)
 
         gm_guess = [None, None]
         for p in [0,1]:
