@@ -35,7 +35,7 @@ from skrf.calibration import (
     terminate_nport,
 )
 from skrf.constants import mil
-from skrf.media import Coaxial, DistributedCircuit, RectangularWaveguide
+from skrf.media import Coaxial, DefinedGammaZ0, DistributedCircuit, RectangularWaveguide
 from skrf.network import two_port_reflect
 from skrf.networkSet import NetworkSet
 from skrf.util import suppress_warning_decorator
@@ -1792,6 +1792,65 @@ class LRRMTestNoFit(LRRMTest):
             isolation = measured[3],
             match_fit = 'none'
             )
+
+@pytest.mark.parametrize('thru_length', [0, 1e-10, 50])
+@pytest.mark.parametrize('match_fit', ['l', 'lc', 'none'])
+def test_lrrm_short_thru(thru_length, match_fit):
+    frequency = rf.Frequency(1, 110, 51, unit='GHz')
+    media = DefinedGammaZ0(frequency, z0=50, z0_port=50,
+                          gamma=0.1 + 1j * frequency.w / 3e8)
+    x = media.resistor(5) ** media.line(150, 'um')
+    y = media.line(250, 'um') ** media.shunt_capacitor(3e-15)
+    thru = media.line(thru_length, 'um')
+    short = media.inductor(5.8e-12) ** media.load(-0.98)
+    opened = media.shunt_capacitor(6.1e-15) ** media.open()
+    inductance = 40e-12
+    match = media.inductor(inductance) ** media.match()
+    ideals = [thru] + [two_port_reflect(load, load)
+                       for load in [media.short(), media.open(), media.match()]]
+    actual = [thru, two_port_reflect(short, short),
+              two_port_reflect(opened, opened), two_port_reflect(match, opened)]
+    measured = [x ** standard ** y for standard in actual]
+    cal = LRRM(measured=measured, ideals=ideals,
+               switch_terms=(media.match(), media.match()),
+               isolation=measured[-1], match_fit=match_fit)
+    dut = media.resistor(25) ** media.shunt_capacitor(30e-15) ** media.line(100, 'um')
+
+    np.testing.assert_allclose(cal.apply_cal(x ** dut ** y).s, dut.s, rtol=1e-8, atol=1e-10)
+    np.testing.assert_allclose(cal.solved_l, inductance, rtol=1e-6, atol=1e-16)
+
+
+def test_lrrm_reactance_roots():
+    # Two distinct real roots, a linear equation, and a repeated zero root.
+    roots = LRRM._reactance_roots(np.array([1., 1., 0., 1.]),
+                                 np.array([-3., 3., 2., 0.]),
+                                 np.array([2., 2., -8., 0.]))
+    np.testing.assert_allclose(roots, [[2, -1, 4, 0], [1, -2, 4, 0]])
+
+    # Keep the original +sqrt root first, including when b is signed zero.
+    roots = LRRM._reactance_roots(np.array([1., 1.]), np.array([0., -0.]),
+                                 np.array([-1., -1.]))
+    np.testing.assert_allclose(roots, [[1, 1], [-1, -1]])
+
+    # A direct quadratic formula loses the smaller root to cancellation.
+    roots = LRRM._reactance_roots(np.array([1e-20]), np.array([-1.]), np.array([1.]))
+    np.testing.assert_allclose(np.sort(roots, axis=0).ravel(), [1., 1e20])
+
+
+def test_lrrm_reactance_negative_discriminant():
+    with pytest.warns(UserWarning, match='Load inductance determination failed'):
+        roots = LRRM._reactance_roots(np.array([1., 1., -1., 1.]),
+                                     np.array([2., 0., 2., -3.]),
+                                     np.array([2., 1., -2., 2.]))
+    np.testing.assert_allclose(roots, [[-1, 0, 1, 2], [-1, 0, 1, 1]])
+
+
+@pytest.mark.parametrize('constant', [0., 1.])
+def test_lrrm_degenerate_reactance(constant):
+    # The all-zero equation is underdetermined; a nonzero constant has no root.
+    with pytest.raises(ValueError, match='reactance equation is degenerate'):
+        LRRM._reactance_roots(np.array([0.]), np.array([0.]), np.array([constant]))
+
 
 class MRCTest(EightTermTest):
     def setUp(self):
