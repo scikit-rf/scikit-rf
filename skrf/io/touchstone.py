@@ -146,13 +146,15 @@ class ParserState:
         """
         if self.option_line_parsed:
             return
-        toks = line.lower()[1:].strip().split()
+        toks = line.lower()[1:].partition("!")[0].split()
         # fill the option line with the missing defaults
         toks.extend(["ghz", "s", "ma", "r", "50"][len(toks) :])
         self.frequency_unit = toks[0]
         self.parameter = toks[1]
         self.format = toks[2]
-        self.resistance = complex(toks[4])
+        # Version 1.1 allows one reference resistance per port
+        resistance = [complex(t) for t in toks[4:]]
+        self.resistance = resistance[0] if len(resistance) == 1 else resistance
         err_msg = ""
         if self.frequency_unit not in ["hz", "khz", "mhz", "ghz"]:
             err_msg = f"ERROR: illegal frequency_unit {self.frequency_unit}\n"

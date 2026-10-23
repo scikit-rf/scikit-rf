@@ -69,6 +69,17 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         np.einsum('kii->ki', s)[:] -= 1  # Sii
         assert_array_almost_equal(skrf_ntwk.s, s)
 
+    def test_splitter_s_def(self):
+        """Test non-power wave definitions at complex port impedances."""
+        med = DefinedGammaZ0(Frequency(1, 1, 1, unit='GHz'), z0=50+50j)
+        for nports in range(2, 5):
+            expected = np.full((nports, nports), 2 / nports) - np.eye(nports)
+            for s_def in ('pseudo', 'traveling'):
+                with self.subTest(nports=nports, s_def=s_def):
+                    splitter = med.splitter(nports, s_def=s_def)
+                    self.assertEqual(splitter.s_def, s_def)
+                    np.testing.assert_allclose(splitter.s[0], expected, atol=1e-14)
+
     def test_mismatch_splitter(self):
         """
         Test mismatched splitter against 50-ohm splitter connected to

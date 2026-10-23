@@ -82,6 +82,15 @@ def test_frequency_write(mocker, mocked_ff):
     ]
     mocked_ff.write.assert_has_calls(calls)
 
+
+def test_active_channel_parameter_write(mocked_ff):
+    mocked_ff.query.return_value = "1"
+
+    mocked_ff.freq_start = "100 MHz"
+
+    mocked_ff.write.assert_called_once_with("SENS1:FREQ:STAR 100000000")
+    assert "freq_start" not in vars(mocked_ff)
+
 # def test_create_channel(mocker, mocked_ff):
     # mocked_ff.create_channel(2, 'Channel 2')
     # assert hasattr(mocked_ff, 'ch2')

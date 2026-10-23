@@ -102,7 +102,7 @@ def indexes(y: np.ndarray, thres: float = 0.3, min_dist: int = 1) -> np.ndarray:
     # propagate left and right values successively to fill all plateau pixels (0-value)
     zeros, = np.where(dy == 0)
 
-    # check if the singal is totally flat
+    # check if the signal is totally flat
     if len(zeros) == len(y) - 1:
         return np.array([])
 

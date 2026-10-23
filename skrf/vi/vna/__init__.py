@@ -91,6 +91,16 @@ Here, the start frequency is set **per channel** whereas the number of ports is
 related to the instrument itself. Instruments with channel support should create a
 single channel in `__init__()` using `create_channel`
 
+Channel properties can also be read and set through the instrument, using the
+currently active channel. For example, these assignments are equivalent:
+
+.. code-block:: python
+
+    instr.freq_start = 1e9
+    instr.active_channel.freq_start = 1e9
+
+Properties defined on the instrument itself take precedence over channel properties.
+
 Property Creator
 ----------------
 

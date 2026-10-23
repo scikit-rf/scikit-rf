@@ -1768,7 +1768,7 @@ class Network:
         to touchstone files.
 
         Length of the port_names list should match the number of ports in the
-        network, this is checked on assigment. The names are dropped when an
+        network, this is checked on assignment. The names are dropped when an
         operation changes the number of ports without being able to tell what
         the new ports are.
 
@@ -1826,16 +1826,22 @@ class Network:
     @property
     def passivity(self) -> ndarray:
         r"""
-        Passivity metric for a multi-port network.
+        Passivity metric for a network.
 
-        This returns a matrix who's diagonals are equal to the total
+        This returns a matrix whose diagonals are equal to the total
         power received at all ports, normalized to the power at a single
         excitement port.
 
         Mathematically, this is a test for unitary-ness of the
         s-parameter matrix [#]_.
 
-        For two port this is
+        For a one-port network this is
+
+        .. math::
+
+                |S_{11}|
+
+        For a two-port network this is
 
         .. math::
 
@@ -1845,7 +1851,7 @@ class Network:
 
         .. math::
 
-                S^H \cdot S
+                \sqrt( S^H \cdot S)
 
         where :math:`H` is conjugate transpose of S, and :math:`\cdot`
         is dot product.
@@ -2070,11 +2076,10 @@ class Network:
         gd = self.s * 0  # quick way to make a new array of correct shape
 
         phi = self.s_rad_unwrap
-        dw = self.frequency.dw
+        w = self.frequency.w
 
         for m, n in self.port_tuples:
-            dphi = gradient(phi[:, m, n])
-            gd[:, m, n] = -dphi / dw
+            gd[:, m, n] = -gradient(phi[:, m, n], w)
 
         return gd
 
@@ -2176,10 +2181,7 @@ class Network:
         bool : boolean
 
         """
-        try:
-            M = np.square(self.passivity)
-        except ValueError:
-            return False
+        M = np.square(self.passivity)
 
         I = np.identity(M.shape[-1])
         for f_idx in range(len(M)):
@@ -2296,7 +2298,7 @@ class Network:
         >>> b = rf.N('my_file.s2p')
         >>> a.copy_from (b)
         """
-        # assigment order matters here since there are checks in some setters
+        # assignment order matters here since there are checks in some setters
         for attr in ['_s', 'frequency', '_z0', 'name', 'port_names']:
             setattr(self, attr, copy(getattr(other, attr)))
 
@@ -8423,18 +8425,24 @@ def s2g(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
 ## these methods are used in the secondary properties
 def passivity(s: np.ndarray) -> np.ndarray:
     r"""
-    Passivity metric for a multi-port network.
+    Passivity metric for a network.
 
     A metric which is proportional to the amount of power lost in a
-    multiport network, depending on the excitation port. Specifically,
-    this returns a matrix who's diagonals are equal to the total
+    network, depending on the excitation port. Specifically,
+    this returns a matrix whose diagonals are equal to the total
     power received at all ports, normalized to the power at a single
     excitement port.
 
-    mathematically, this is a test for unitary-ness of the
+    Mathematically, this is a test for unitary-ness of the
     s-parameter matrix [#]_.
 
-    for two port this is
+    For a one-port network this is
+
+    .. math::
+
+            |S_{11}|
+
+    For a two-port network this is
 
     .. math::
 
@@ -8457,6 +8465,10 @@ def passivity(s: np.ndarray) -> np.ndarray:
     cascaded with a mismatch, the power dissipated will not be equivalent
     to the attenuator value, nor equal for each excitation port.
 
+    Parameters
+    ----------
+    s : :class:`numpy.ndarray` of shape `fxnxn`
+        s-parameter matrix
 
     Returns
     -------
@@ -8466,9 +8478,6 @@ def passivity(s: np.ndarray) -> np.ndarray:
     ------------
     .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
     """
-    if s.shape[-1] == 1:
-        raise (ValueError('Doesn\'t exist for one ports'))
-
     pas_mat = s.copy()
     for f in range(len(s)):
         pas_mat[f, :, :] = np.sqrt(np.dot(s[f, :, :].conj().T, s[f, :, :]))

@@ -24,4 +24,5 @@ ipython `notebook <http://ipython.org/notebook.html>`_
     Q-Factor
     Media
     VectorFitting
+    VectorFittingParametric
     VirtualInstruments

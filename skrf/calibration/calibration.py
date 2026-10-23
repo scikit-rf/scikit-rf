@@ -1083,77 +1083,106 @@ class Calibration:
 
 class OnePort(Calibration):
     r"""
-    Standard algorithm for a one port calibration.
+    Standard algorithm for a one-port calibration.
 
-    Solves the linear set of equations:
-
+    The measured reflection coefficient of each standard relates to its definition through
+    the bilinear (Moebius) transform of the error box [#Speciale]_,
 
     .. math::
-        e_{11}\mathbf{i_1m_1}-\Delta e\,\mathbf{i_1}+e_{00}=\mathbf{m_1}
 
-        e_{11}\mathbf{i_2m_2}-\Delta e\,\mathbf{i_2}+e_{00}=\mathbf{m_2}
+        \Gamma_\mathrm{meas}^{(k)} = \frac{t_{11}\Gamma_\mathrm{def}^{(k)} + t_{12}}
+                                          {t_{21}\Gamma_\mathrm{def}^{(k)} + 1}
 
-        e_{11}\mathbf{i_3m_3}-\Delta e\,\mathbf{i_3}+e_{00}=\mathbf{m_3}
+    where :math:`k` is the index of the standard and the :math:`t`'s are the T-parameters of
+    the error box, normalized to its last element. They relate to the classical error terms
+    as [#Marks]_
 
-        ...
+    .. math::
 
-    Where **m**'s and **i**'s are the measured and ideal reflection coefficients,
-    respectively.
+        \begin{bmatrix} t_{11} & t_{12} \\ t_{21} & 1 \end{bmatrix} =
+        \begin{bmatrix} E_\mathrm{R} - E_\mathrm{D}E_\mathrm{S} & E_\mathrm{D} \\
+                        -E_\mathrm{S} & 1 \end{bmatrix}
 
-    See :func:`__init__` for the correct parameters order. If more than three
-    standards are supplied, then a least square algorithm is applied.
+    with :math:`E_\mathrm{D}` the directivity, :math:`E_\mathrm{S}` the source match and
+    :math:`E_\mathrm{R}` the reflection tracking, also sometimes written as ``e00``, ``e11`` and
+    ``e01e10``, respectively.
 
-    See [1]_  and [2]_
+    Reordering the equation makes the problem linear in the T-parameters, so that :math:`K`
+    standards form the system :math:`\mathbf{A}\mathbf{x} = \mathbf{b}`, as follows:
+
+    .. math::
+
+        \begin{bmatrix}
+            \Gamma_\mathrm{def}^{(1)} & 1 & -\Gamma_\mathrm{def}^{(1)}\Gamma_\mathrm{meas}^{(1)} \\
+            \vdots & \vdots & \vdots \\
+            \Gamma_\mathrm{def}^{(K)} & 1 & -\Gamma_\mathrm{def}^{(K)}\Gamma_\mathrm{meas}^{(K)}
+        \end{bmatrix}
+        \begin{bmatrix} t_{11} \\ t_{12} \\ t_{21} \end{bmatrix} =
+        \begin{bmatrix} \Gamma_\mathrm{meas}^{(1)} \\ \vdots \\ \Gamma_\mathrm{meas}^{(K)} \end{bmatrix}
+
+    Three standards give a unique solution. With more standards the system is overdetermined
+    and is solved in a least squares sense.
+
+    Parameters
+    ----------
+    measured : list/dict of :class:`~skrf.network.Network` objects
+        Raw measurements of the calibration standards. The order
+        must align with the `ideals` parameter (or use `sloppy_input`).
+
+    ideals : list/dict of :class:`~skrf.network.Network` objects
+        Predicted ideal response of the calibration standards.
+        The order must align with the `measured` list (or use `sloppy_input`).
+
+    args, kwargs :
+        passed to :func:`Calibration.__init__`
+
+    Notes
+    -----
+    See :func:`Calibration.__init__` for details about automatic standards alignment
+    (aka `sloppy_input`).
+
+    Examples
+    --------
+    >>> import skrf as rf
+    >>> ideals = [rf.Network('ideal_short.s1p'),
+    ...           rf.Network('ideal_open.s1p'),
+    ...           rf.Network('ideal_load.s1p')]
+    >>> measured = [rf.Network('measured_short.s1p'),
+    ...             rf.Network('measured_open.s1p'),
+    ...             rf.Network('measured_load.s1p')]
+    >>> cal = rf.OnePort(measured=measured, ideals=ideals)
+    >>> dut = cal.apply_cal(rf.Network('measured_dut.s1p'))
+
+    A fourth standard makes the problem overdetermined, and it is then solved by least squares:
+
+    >>> ideals.append(rf.Network('ideal_offset_short.s1p'))
+    >>> measured.append(rf.Network('measured_offset_short.s1p'))
+    >>> cal = rf.OnePort(measured=measured, ideals=ideals)
+    >>> dut = cal.apply_cal(rf.Network('measured_dut.s1p'))
 
     References
     ----------
+    .. [#Speciale] R. A. Speciale, "Projective Matrix Transformations in Microwave Network
+        Theory," 1981 IEEE MTT-S International Microwave Symposium Digest, Los Angeles, CA,
+        USA, 1981, pp. 510-512, doi: https://doi.org/10.1109/MWSYM.1981.1129979
 
-    .. [1] http://na.tm.agilent.com/vnahelp/tip20.html
-
-    .. [2] Bauer, R.F., Jr.; Penfield, Paul, "De-Embedding and Unterminating,"
-        Microwave Theory and Techniques, IEEE Transactions on , vol.22, no.3, pp.282,288, Mar 1974
-        doi: 10.1109/TMTT.1974.1128212
-        URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1128212&isnumber=25001
+    .. [#Marks] R. B. Marks, "Formulations of the Basic Vector Network Analyzer Error Model
+        including Switch-Terms," 50th ARFTG Conference Digest, Portland, OR, USA, 1997,
+        pp. 115-126, doi: https://doi.org/10.1109/ARFTG.1997.327265
 
     """
 
     family = 'OnePort'
-    def __init__(self, measured, ideals,*args, **kwargs):
+
+    def __init__(self, measured, ideals, *args, **kwargs):
         """
         One Port initializer.
-
-        If more than three standards are supplied then a least square
-        algorithm is applied.
-
-        Notes
-        -----
-        See func:`Calibration.__init__` for details about
-        automatic standards alignment (aka `sloppy_input`)
-
-
-        Parameters
-        ----------
-        measured : list/dict  of :class:`~skrf.network.Network` objects
-            Raw measurements of the calibration standards. The order
-            must align with the `ideals` parameter ( or use `sloppy_input`)
-
-        ideals : list/dict of :class:`~skrf.network.Network` objects
-            Predicted ideal response of the calibration standards.
-            The order must align with `ideals` list ( or use `sloppy_input`)
-
-        args, kwargs :
-            passed to func:`Calibration.__init__`
-
-        Notes
-        -----
-        This uses numpy.linalg.lstsq() for least squares calculation
 
         See Also
         --------
         Calibration.__init__
         """
-        Calibration.__init__(self, measured, ideals,
-                             *args, **kwargs)
+        Calibration.__init__(self, measured, ideals, *args, **kwargs)
 
     def _check_input(self):
         if not all([n.number_of_ports==1 for n in self.ideals]):
@@ -1162,69 +1191,58 @@ class OnePort(Calibration):
             raise ValueError(f'measured networks for {self.family} should be 1-port Networks')
 
     def run(self):
-        """ Run the calibration algorithm.
         """
-        numStds = self.nstandards
-        numCoefs=3
-
-        mList = [self.measured[k].s.reshape((-1,1)) for k in range(numStds)]
-        iList = [self.ideals[k].s.reshape((-1,1)) for k in range(numStds)]
-
+        Run the calibration algorithm.
+        """
         self._check_input()
 
-        # ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
-        fLength = len(mList[0])
+        # the measured and defined reflection coefficients of shape (nfreqs, nstandards)
+        gamma_meas = np.array([ntwk.s.flatten() for ntwk in self.measured]).T
+        gamma_def  = np.array([ntwk.s.flatten() for ntwk in self.ideals]).T
+        nfreqs, nstds = gamma_meas.shape
+        if nstds < 3:
+            raise ValueError(f'{self.family} needs at least 3 standards, {nstds} were given.')
 
-        #initialize outputs
-        abc = np.zeros((fLength,numCoefs),dtype=complex)
-        residuals =     np.zeros((fLength,\
-                np.sign(numStds-numCoefs)),dtype=complex)
-        parameter_variance = np.zeros((fLength, 3,3),dtype=complex)
-        measurement_variance = np.zeros((fLength, 1),dtype=complex)
-        # loop through frequencies and form m, a vectors and
-        # the matrix M. where M = i1, 1, i1*m1
-        #                         i2, 1, i2*m2
-        #                                 ...etc
-        for f in list(range(fLength)):
-            #create  m, i, and 1 vectors
-            one = np.ones(shape=(numStds,1))
-            m = np.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
-            i = np.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f
+        # the system A@x = b for the T-parameters x = [t11, t12, t21], one per frequency.
+        A = np.stack([gamma_def, np.ones_like(gamma_def), -gamma_def*gamma_meas], axis=-1)
+        b = gamma_meas[:, :, None]
 
-            # construct the matrix
-            Q = np.hstack([i, one, i*m])
-            # calculate least squares
-            abcTmp, residualsTmp = np.linalg.lstsq(Q,m,rcond=None)[0:2]
-            if numStds > 3:
-                measurement_variance[f,:]= residualsTmp/(numStds-numCoefs)
-                parameter_variance[f,:] = \
-                        abs(measurement_variance[f,:])*\
-                        np.linalg.inv(np.dot(Q.T,Q))
+        # the standards must stay distinguishable, otherwise A loses a rank at some frequency
+        u, s, vh = np.linalg.svd(A, full_matrices=False)
+        singular = s[:, -1] <= s[:, 0]*nstds*np.finfo(float).eps
+        for f in np.flatnonzero(singular):
+            warnings.warn(
+                f'The system is singular at {self.frequency.f_scaled[f]} '
+                f'{self.frequency.unit}. Ensure that the standards are far enough '
+                'away from each other on the Smith chart.', stacklevel=2
+                )
 
+        # solve linear least squares for every frequency at once.
+        x = (vh.conj().swapaxes(-1, -2)/s[:, None, :])@(u.conj().swapaxes(-1, -2)@b)
+        t11, t12, t21 = x[:, 0, 0], x[:, 1, 0], x[:, 2, 0]
 
-            abc[f,:] = abcTmp.flatten()
-            try:
-                residuals[f,:] = residualsTmp
-            except ValueError as err:
-                raise(ValueError('matrix has singular values. ensure standards are far enough away on smith chart'))\
-                    from err
+        # the T-parameters give the classical error terms, see the class docstring
+        self._coefs = {
+            'directivity': t12,
+            'reflection tracking': t11 - t12*t21,
+            'source match': -t21,
+            }
 
-        # convert the abc vector to standard error coefficients
-        a,b,c = abc[:,0], abc[:,1],abc[:,2]
-        e01e10 = a+b*c
-        e00 = b
-        e11 = c
-        self._coefs = {\
-                'directivity':e00,\
-                'reflection tracking':e01e10, \
-                'source match':e11\
-                }
+        # what the fit leaves over, and the covariance of x that it implies.
+        # as in numpy.linalg.lstsq, this is the sum of the squared residuals,
+        # and stays empty while three standards fit exactly.
+        residuals = np.zeros((nfreqs, np.sign(nstds - 3)), dtype=complex)
+        parameter_variance = np.zeros((nfreqs, 3, 3), dtype=complex)
+        if nstds > 3:
+            residuals[:, 0] = (abs((b - A@x)[:, :, 0])**2).sum(axis=1)
+            measurement_variance = residuals[:, 0].real/(nstds - 3)
+            # the covariance scales with inv(A^H@A), which is V@diag(1/s^2)@V^H
+            inv_AHA = (vh.conj().swapaxes(-1, -2)/s[:, None, :]**2)@vh
+            parameter_variance = measurement_variance[:, None, None]*inv_AHA
 
-
-        # output is a dictionary of information
         self._output_from_run = {
-            'residuals':residuals,
-            'parameter variance':parameter_variance
+            'residuals': residuals,
+            'parameter variance': parameter_variance
             }
 
         return None
@@ -1675,9 +1693,9 @@ class TwelveTerm(Calibration):
             guess for you by comparing measure transmission to trans_thres,
 
         trans_thres: float
-            The  minimum transmission magnitude (in dB) that is
+            The minimum transmission magnitude (in dB) that is
             the threshold for categorizing a transmissive standard.
-            Compared to the measured s21,s12  meaned over frequency
+            Compared to the measured s21,s12 averaged over frequency
             Only use if n_thrus=None.
 
         isolation : :class:`~skrf.network.Network` object
@@ -2887,7 +2905,8 @@ class NISTMultilineTRL(EightTerm):
 
         if np.isscalar(ref_plane):
             ref_plane = [ref_plane, ref_plane]
-        self.ref_plane = ref_plane
+        # Copy so later in-place edits do not mutate the caller's list.
+        self.ref_plane = [float(v) for v in ref_plane]
         self.er_est = er_est
         self.l = [float(v) for v in l] # cast to float, see gh-895
         self.Grefls = Grefls
@@ -3412,8 +3431,16 @@ class NISTMultilineTRL(EightTerm):
                 A2 *= shift2
                 C1 *= shift1
                 C2 *= shift2
-                R1 *= shift1
-                R2 *= shift2
+                if self.k_method == 'marks':
+                    # R1/R2 are per-port T-matrix scale factors.
+                    R1 *= exp(gamma[m]*self.ref_plane[0])
+                    R2 *= exp(gamma[m]*self.ref_plane[1])
+                else:
+                    # Transmission terms R1/R2 span both ports: one-way shift
+                    # uses the sum of the two plane offsets (see #1444).
+                    shift_tx = exp(-gamma[m]*(self.ref_plane[0] + self.ref_plane[1]))
+                    R1 *= shift_tx
+                    R2 *= shift_tx
 
             if self.c0 is not None:
                 #Estimate the line characteristic impedance
@@ -3890,17 +3917,17 @@ class TUGMultilineTRL(EightTerm):
             # inverse covariance matrix for propagation constant computation
             return np.eye(N-1, dtype=complex) - (1/N)*np.ones(shape=(N-1, N-1), dtype=complex)
 
-        def compute_gamma(z, y, lengths, gamma_est, inx=0):
+        def compute_gamma(z, lengths, gamma_est, inx=None):
             # gamma = alpha + 1j*beta is determined through linear weighted least-squares.
-            # z = exp(-gamma*length) and y = 1/z are passed directly; `inx` selects the
-            # reference line (the choice does not affect the result).
+            # pick line that maximizes the unwrapping margin |dbeta*(l-l_ref)| < pi.
+            if inx is None:
+                inx = np.argmin([abs(lengths - l).max() for l in lengths])
             lengths = lengths - lengths[inx]
             z = z/z[inx]
-            y = y/y[inx]
             del_inx = np.arange(len(lengths)) != inx  # get rid of the reference line (i.e., thru)
 
             l = -lengths[del_inx]
-            gamma_l = np.log((z + 1/y)/2)[del_inx]
+            gamma_l = np.log(z[del_inx])
             n = np.round( (gamma_l - gamma_est*l).imag/np.pi/2 )
             gamma_l = gamma_l - 1j*2*np.pi*n # unwrap
             gamma = WLS(l, gamma_l, Vgl(len(l)+1))
@@ -3909,7 +3936,7 @@ class TUGMultilineTRL(EightTerm):
 
         def solve_quadratic(v1, v2, inx, x_est):
             # This is related to solving the normalized error terms using nullspace approach.
-            # The variable `inx` allowes to reuse the function to shuffel the coefficient to get other error terms.
+            # The variable `inx` allows to reuse the function to shuffle the coefficient to get other error terms.
             v12,v13 = v1[inx]
             v22,v23 = v2[inx]
             mask = np.ones(v1.shape, bool)
@@ -3931,6 +3958,13 @@ class TUGMultilineTRL(EightTerm):
             x = np.array( [v1*x + v2*y for x,y in zip(c1,c2)] )  # 2 solutions
             mininx = np.argmin( abs(x - x_est).sum(axis=1) )
             return x[mininx]
+
+        def compute_lambd(gamma, lengths):
+            # compute eigenvalue estimate based on gamma.
+            z = np.exp(-gamma*lengths)
+            y = 1/z
+            W = (np.outer(y,z) - np.outer(z,y)).conj()
+            return abs(W.conj()*W).sum()/2
 
         line_meas_S    = np.array([x.s for x in self.line_meas])    # get the S-parameters
         reflect_meas_S = np.array([x.s for x in self.reflect_meas]) # get the S-parameters
@@ -3965,19 +3999,17 @@ class TUGMultilineTRL(EightTerm):
             G, lambd = compute_G_with_takagi(Dinv@M.T@P@Q@M)
             W = (G@np.array([[0,1j],[-1j,0]])@G.T).conj()
 
-            ## recover z = exp(-gamma*length) and y = 1/z from the matrix G (rank-1 recovery)
+            ## recover z = exp(-gamma*length) from the matrix G (rank-1 recovery)
             zy = G@np.array([[1,-1j],[1j,1]])@G.T  # outer product of z and y (up to sign of W)
-            u,_,vh = np.linalg.svd(zy)
-            z = u[:,0]
-            y = vh[0,:]
+            eigval, eigvec = np.linalg.eig(zy)
+            z = eigvec[:,np.argmax(abs(eigval))]
 
-            ## resolve the sign of W and swap z and y if needed
+            ## resolve the sign of W and invert z if needed
             z_est = np.exp(-gamma_est*lengths)
-            y_est = 1/z_est
-            lambd_est = y_est.dot(W).dot(z_est)  # projection of the estimate onto W (defines lambda's sign)
+            lambd_est = (1/z_est).dot(W).dot(z_est)  # projection of the estimate onto W (defines lambda's sign)
             if abs(lambd_est - lambd) > abs(lambd_est + lambd):
                 W = -W
-                y, z = z, y
+                z = 1/z
 
             ## scale the weighting matrix to handle repeated lengths and/or the L-norm weighting
             _, inv, counts = np.unique(lengths, return_inverse=True, return_counts=True)
@@ -4031,22 +4063,20 @@ class TUGMultilineTRL(EightTerm):
             _,_,vh = np.linalg.svd(R)
             s21 = vh[0,:]/vh[0,0]  # normalized to the thru
 
-            ## compute propagation constant two ways and pick the one consistent with lambda
-            gamma1 = compute_gamma(z, y, lengths, gamma_est)        # from the Takagi matrix G
-            gamma2 = compute_gamma(s21, 1/s21, lengths, gamma_est)  # from the de-embedded lines
-            z1 = np.exp(-gamma1*lengths)
-            z2 = np.exp(-gamma2*lengths)
-            lambd1 = (1/z1).dot(W).dot(z1)
-            lambd2 = (1/z2).dot(W).dot(z2)
-            gamma = gamma1 if abs(lambd1 - lambd) < abs(lambd2 - lambd) else gamma2
-            er_eff = gamma2ereff(gamma, f)
+            ## compute propagation constant two ways. gamma2 is reported to the user, while
+            ## gamma1 is the internal estimate for the reflect offset and the next frequency.
+            gamma1 = compute_gamma(z, lengths, gamma_est)    # from the Takagi matrix G
+            gamma2 = compute_gamma(s21, lengths, gamma_est)  # from the de-embedded lines
+            if abs(compute_lambd(gamma2, lengths) - lambd) < abs(compute_lambd(gamma1, lengths) - lambd):
+                gamma1 = gamma2
+            er_eff = gamma2ereff(gamma2, f)
 
             ## solve a11b11 and k from the thru measurement (S-parameter formulation; forces thru S21=S12=1)
             k = 1/Slines_cal[0,1,0]
             a11b11 = Slines_cal[0,0,1]/k
             # shift plane to edges of the thru standard plus defined reference plane
-            a11b11 = a11b11*np.exp(2*gamma*(lengths[0] - self.ref_plane.sum()))
-            k = k*np.exp(-gamma*(lengths[0] - self.ref_plane.sum()))
+            a11b11 = a11b11*np.exp(2*gamma2*(lengths[0] - self.ref_plane.sum()))
+            k = k*np.exp(-gamma2*(lengths[0] - self.ref_plane.sum()))
 
             if np.isnan(reflect_meas_S[0,m,0,0]):
                 # no reflect measurement available.
@@ -4054,7 +4084,7 @@ class TUGMultilineTRL(EightTerm):
                 b11 = a11
             else:
                 # solve for a11/b11, a11 and b11 (use redundant reflect measurement, if available)
-                reflect_est_offset = reflect_est*np.exp(-2*gamma*reflect_offset) # shift estimated reflect
+                reflect_est_offset = reflect_est*np.exp(-2*gamma1*reflect_offset) # shift estimated reflect
                 Sreflect_cal = np.array([LFTinv(E_, s) for s in reflect_meas_S[:,m,:,:]])
                 R = np.vstack(( Sreflect_cal[:, 0, 0], Sreflect_cal[:, 1, 1] ))
                 u,_,_ = np.linalg.svd(R)  # rank-1 recovery across all reflect measurements
@@ -4070,14 +4100,14 @@ class TUGMultilineTRL(EightTerm):
 
             Xs[m] = X
             ks[m] = k
-            gammas[m]  = gamma
+            gammas[m]  = gamma2
             er_effs[m] = er_eff
             lambds[m]  = lambd_S
             kappas[m]  = kappa_S
 
             # carry the propagation constant forward as the estimate for the next frequency
             if m+1 < fpoints:
-                gamma_est = (gamma/f)*freqs[m+1]
+                gamma_est = (gamma1/f)*freqs[m+1]
 
         self._er_eff = er_effs
         self._gamma  = gammas
