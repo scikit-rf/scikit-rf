@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -150,6 +151,25 @@ class MdifTestCase(unittest.TestCase):
 
             for n1, n2 in zip(nset1, nset4):
                 np.testing.assert_allclose(n1.noise, n2.noise)
+
+    def test_noise_input_units_are_independent_of_configured_unit(self):
+        path = os.path.join(os.path.dirname(__file__), "ts", "ex_18.s2p")
+        with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", None):
+            baseline = rf.Network(path)
+        # Export in a different unit from the configured display unit.
+        baseline.frequency.unit = "MHz"
+        baseline.noise_freq.unit = "MHz"
+        with tempfile.TemporaryDirectory() as tempdir:
+            path = os.path.join(tempdir, "noise.mdf")
+            NetworkSet([baseline]).write_mdif(path)
+            with patch.object(rf.constants, "FREQ_UNIT_DEFAULT", "GHz"):
+                restored = NetworkSet.from_mdif(path)[0]
+
+        self.assertEqual(restored.frequency.unit, "GHz")
+        self.assertEqual(restored.noise_freq.unit, "GHz")
+        np.testing.assert_allclose(restored.f, baseline.f)
+        np.testing.assert_allclose(restored.noise_freq.f, baseline.noise_freq.f)
+        np.testing.assert_allclose(restored.noise, baseline.noise)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(MdifTestCase)

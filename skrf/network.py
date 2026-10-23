@@ -209,6 +209,7 @@ from numpy import gradient, ndarray, shape
 from numpy.linalg import inv as npy_inv
 
 from . import __version__
+from . import constants as _constants
 from . import mathFunctions as mf
 from . import plotting as rfplt
 from .constants import (
@@ -399,6 +400,11 @@ class Network:
             Dictionary of parameters associated with the Network
         comments : str, optional
             Comments associated with the Network
+        f_unit : str, optional
+            Frequency unit for the resulting network, overriding
+            :data:`~skrf.constants.FREQ_UNIT_DEFAULT`. For raw frequency
+            values passed as `f`, this also specifies the input unit
+            (Hz if omitted). File values are always read using their file unit.
         s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
             Scattering parameter definition : 'power' for power-waves definition,
             'pseudo' for pseudo-waves definition.
@@ -536,13 +542,19 @@ class Network:
 
 
         if "f" in kwargs.keys():
-            if f_unit is None:
-                f_unit = "hz"
-            kwargs["frequency"] = Frequency.from_f(kwargs.pop("f"), unit=f_unit)
+            input_unit = "Hz" if f_unit is None else f_unit
+            kwargs["frequency"] = Frequency.from_f(kwargs.pop("f"), unit=input_unit)
 
         for attr in list(PRIMARY_PROPERTIES) + ['frequency', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
+
+        display_unit = f_unit if f_unit is not None else _constants.FREQ_UNIT_DEFAULT
+        if display_unit is not None:
+            self.frequency.unit = display_unit
+            if self.noise_freq is not None:
+                self.noise_freq = self.noise_freq.copy()
+                self.noise_freq.unit = display_unit
 
         # Assign port_names after S-parameters so that the number of ports can
         # be checked.
@@ -2518,7 +2530,7 @@ class Network:
         # able to check that there is a name for every port
         self.port_names = touchstoneFile.port_names
         self.frequency = Frequency.from_f(f, unit='hz')
-        self.frequency.unit = touchstoneFile.frequency_unit
+        self.frequency.unit = _constants.FREQ_UNIT_DEFAULT or touchstoneFile.frequency_unit
 
         self.gamma = touchstoneFile.gamma
         self.z0 = touchstoneFile.z0
@@ -2543,7 +2555,7 @@ class Network:
             # use the voltage/current correlation matrix; this works nicely with
             # cascading networks
             self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
-            self.noise_freq.unit = touchstoneFile.frequency_unit
+            self.noise_freq.unit = _constants.FREQ_UNIT_DEFAULT or touchstoneFile.frequency_unit
             self.set_noise_a(self.noise_freq, nfmin_db, gamma_opt, rn)
 
         if self.name is None:

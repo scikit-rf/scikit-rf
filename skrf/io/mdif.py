@@ -338,6 +338,7 @@ class Mdif:
 
         in_data_block = False
         in_noise_block = False
+        frequency_unit = "hz"
 
         for line in lines:
 
@@ -377,7 +378,7 @@ class Mdif:
                         [e.split() for e in block_data if not e.startswith(("!", "#", "%"))]
                         ).astype(float)
                     freq, nfmin, gamma_opt_mag, gamma_opt_angle, rn = noise_arr.T
-                    nfreq = Frequency.from_f(freq, unit=ntwk.frequency.unit)
+                    nfreq = Frequency.from_f(freq, unit=frequency_unit)
                     gamma = gamma_opt_mag * np.exp(1j*np.deg2rad(gamma_opt_angle))
                     ntwk.set_noise_a(nfreq, nfmin, gamma, rn * ntwk.z0[0,0])
 
@@ -385,11 +386,15 @@ class Mdif:
 
             if in_data_block or in_noise_block:
                 block_data.append(line)
+                if line.startswith('#'):
+                    # Keep file units separate from the network's display unit.
+                    frequency_unit = (line[1:].split() or ['ghz'])[0]
 
             if line.lower().startswith("begin ndata"):
                 in_noise_block = True
             elif line.lower().startswith('begin'):
                 in_data_block = True
+                frequency_unit = 'hz'
 
         return ntwks
 
