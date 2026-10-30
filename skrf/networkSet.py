@@ -455,17 +455,23 @@ class NetworkSet:
 
 
     def __add_a_element_wise_method(self, network_method_name: str):
-        @skrf_plt._fig_kwarg
+        if network_method_name in self.__class__.__dict__:  # added by an earlier NetworkSet
+            return
+
         def func(self,  *args, **kwargs):
-            if network_method_name.startswith('plot_'):
-                kwargs['backend'] = skrf_plt._resolve_backend(kwargs.get('backend'), kwargs.get('ax'))
-                if kwargs['backend'] == 'plotly':
-                    # draw all networks on one figure, created by the first call unless ax is given
-                    for ntwk in self.ntwk_set:
-                        kwargs['ax'] = getattr(ntwk, network_method_name)(*args, **kwargs)
-                    return kwargs['ax']
             return self.element_wise_method(network_method_name, *args, **kwargs)
-        setattr(self.__class__,network_method_name,func)
+
+        @skrf_plt._fig_kwarg
+        def plot_func(self,  *args, **kwargs):
+            kwargs['backend'] = skrf_plt._resolve_backend(kwargs.get('backend'), kwargs.get('ax'))
+            if kwargs['backend'] == 'plotly':
+                # draw all networks on one figure, created by the first call unless ax is given
+                for ntwk in self.ntwk_set:
+                    kwargs['ax'] = getattr(ntwk, network_method_name)(*args, **kwargs)
+                return kwargs['ax']
+            return self.element_wise_method(network_method_name, *args, **kwargs)
+
+        setattr(self.__class__,network_method_name,plot_func if network_method_name.startswith('plot_') else func)
 
 
     def __add_a_func_on_property(self, func, network_property_name: str):

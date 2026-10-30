@@ -2163,7 +2163,7 @@ class VectorFitting:
 
                         if plotly:
                             _plotly_rect(self.network.f, y_vals, ax=ax, color='r', marker='o', linestyle='none',
-                                         **({} if label == '_nolegend_' else {'label': label}))
+                                         label=label)
                         else:
                             ax.scatter(self.network.f, y_vals, color='r', label=label)
 
@@ -2209,8 +2209,7 @@ class VectorFitting:
                         y_label = 'Imaginary Part'
 
                     if plotly:
-                        _plotly_rect(freqs, y_vals, ax=ax, color='k',
-                                     **({} if label == '_nolegend_' else {'label': label}))
+                        _plotly_rect(freqs, y_vals, ax=ax, color='k', label=label)
                     else:
                         ax.plot(freqs, y_vals, color='k', label=label)
 

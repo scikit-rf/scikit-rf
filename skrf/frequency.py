@@ -766,18 +766,16 @@ class Frequency:
         plotly = _resolve_backend(backend, ax) == 'plotly'
         ax = _plotly_figure(ax) if plotly else _get_axes(ax)
 
-        try:
+        if len(np.shape(y)) > 2:
+            # perhaps the dimensions are empty, try to squeeze it down
+            y = y.squeeze()
             if len(np.shape(y)) > 2:
-                # perhaps the dimensions are empty, try to squeeze it down
-                y = y.squeeze()
-                if len(np.shape(y)) > 2:
-                    # the dimensions are full, so lets loop and plot each
-                    # (matplotlib has always drawn these on the current axes)
-                    for m in range(np.shape(y)[1]):
-                        for n in range(np.shape(y)[2]):
-                            self.plot(y[:, m, n], *args, ax=ax if plotly else None,
-                                      backend='plotly' if plotly else 'matplotlib', **kwargs)
-                    return ax if plotly else None
+                # the dimensions are full, so lets loop and plot each
+                for m in range(np.shape(y)[1]):
+                    for n in range(np.shape(y)[2]):
+                        self.plot(y[:, m, n], *args, ax=ax, backend='plotly' if plotly else 'matplotlib', **kwargs)
+                return ax if plotly else None
+        try:
             if len(y) == len(self):
                 pass
             else:

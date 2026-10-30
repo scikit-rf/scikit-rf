@@ -149,6 +149,10 @@ needs_plotly = pytest.mark.skipif(go is None, reason="plotly not installed")
 
 @pytest.fixture(autouse=True)
 def reset_plotting_backend():
+    if go is not None:  # other test modules call rf.stylely
+        import plotly.io as pio
+
+        pio.templates.default = "plotly"
     yield
     rf.plotting.options.backend = "matplotlib"
 
@@ -922,7 +926,8 @@ def test_plotly_stylely(style_file: str, monkeypatch):
     assert mpl.colors.to_hex(layout.plot_bgcolor) == mpl.colors.to_hex(rc["axes.facecolor"])
     assert mpl.colors.to_hex(layout.xaxis.gridcolor) == mpl.colors.to_hex(rc["grid.color"])
     if style_file != "ieeetrans.mplstyle":  # whose old axes.color_cycle setting matplotlib ignores
-        assert [mpl.colors.to_hex(c) for c in rf.plotting.colors(backend="plotly")] ==             [mpl.colors.to_hex(c) for c in rf.plotting.colors()]
+        assert ([mpl.colors.to_hex(c) for c in rf.plotting.colors(backend="plotly")]
+                == [mpl.colors.to_hex(c) for c in rf.plotting.colors()])
     assert pio.templates[pio.templates.default].data.scatter[0].line.width == rc["lines.linewidth"]
     rf.stylely(style_file=style_file, rc_dict={"font.size": "14"})
     assert pio.templates[pio.templates.default].layout.font.size == 14 == mpl.pyplot.rcParams["font.size"]
@@ -1034,12 +1039,39 @@ def test_plotly_subplots_frequency_unit(ntwk1: rf.Network):
     edges = ntwk1.f[[0, 40]]
     rf.plotting.shade_bands(edges, fig=fig, backend="plotly")
     assert fig.layout.shapes[0].x0 == pytest.approx(ntwk1.frequency.f_scaled[0])
-    others = [np.array(t.x) for t in fig.data if t.xaxis != "x" and t.x is not None]
-    x = next(t.x for t in fig.data if t.xaxis == "x")[0]
+    others = [np.array(t.x) for t in fig.data if t.xaxis in ("x3", "x4") and t.x is not None]
+    x = {t.xaxis: t.x[0] for t in fig.data if t.xaxis in ("x", "x2")}
     rf.plotting.scale_frequency_ticks(funit="MHz", fig=fig, backend="plotly")
-    assert next(t.x for t in fig.data if t.xaxis == "x")[0] == pytest.approx(x * 1e3)
-    for before, after in zip(others, [t.x for t in fig.data if t.xaxis != "x" and t.x is not None]):
+    # both panels vs frequency, not the smith chart and the complex plane
+    assert {t.xaxis: t.x[0] for t in fig.data if t.xaxis in ("x", "x2")} == pytest.approx(
+        {k: v * 1e3 for k, v in x.items()})
+    assert (fig.layout.xaxis.title.text, fig.layout.xaxis2.title.text) == ("Frequency (MHz)", "Frequency (MHz)")
+    for before, after in zip(others, [t.x for t in fig.data if t.xaxis in ("x3", "x4") and t.x is not None]):
         np.testing.assert_array_equal(before, after)
+    assert ntwk1.plot_s_db(0, 0, backend="plotly").layout.meta["skrf_frequency_unit"] == ntwk1.frequency.unit
+
+@needs_plotly
+def test_plotly_scale_frequency_ticks_subplot_shapes_and_units(ntwk1: rf.Network):
+    fig = rf.plotting.subplot_params(ntwk1, proj="deg", backend="plotly")
+    fig.add_shape(type="rect", x0=1, x1=2, y0=0, y1=1, row=1, col=2)
+    fig.update_xaxes(range=[1, 2], row=1, col=2)
+    fig.update_xaxes(title_text="Frequency (kHz)", row=2, col=2)  # a panel in another unit
+    x4 = np.array(fig.data[3].x)
+    rf.plotting.scale_frequency_ticks(funit="MHz", fig=fig, backend="plotly")
+    np.testing.assert_allclose(fig.data[1].x, ntwk1.f / 1e6)
+    np.testing.assert_allclose(fig.data[3].x, x4 * 1e-3)
+    assert (fig.layout.shapes[0].x0, fig.layout.shapes[0].x1) == pytest.approx((1e3, 2e3))
+    assert {a: fig.layout[a].title.text for a in ("xaxis", "xaxis2", "xaxis3", "xaxis4")} == dict.fromkeys(
+        ("xaxis", "xaxis2", "xaxis3", "xaxis4"), "Frequency (MHz)")
+
+@needs_plotly
+def test_plotly_scale_frequency_ticks_animation(ntwk_set_zip: NetworkSet):
+    fig = ntwk_set_zip.animate("s_db", m=0, n=0, backend="plotly")
+    x = np.array(fig.data[0].x)
+    rf.plotting.scale_frequency_ticks(funit="MHz", fig=fig, backend="plotly")
+    np.testing.assert_allclose(fig.data[0].x, x * 1e3)
+    for frame in fig.frames:
+        np.testing.assert_allclose(frame.data[0].x, x * 1e3)
 
 @needs_plotly
 def test_plotly_scale_frequency_ticks_log_axis(ntwk1: rf.Network):
@@ -1067,3 +1099,180 @@ def test_plotly_frequency_plot_complex(ntwk1: rf.Network):
         fig = ntwk1.frequency.plot(ntwk1.s[:, 0, 0], backend="plotly")
     np.testing.assert_array_equal(fig.data[0].y, ntwk1.s[:, 0, 0].real)
     fig.to_json()
+    with pytest.warns(match="imaginary part"):  # also for a list
+        fig = rf.plotting.plot_rectangular([0, 1], [1 + 1j, 2], backend="plotly")
+    np.testing.assert_array_equal(fig.data[0].y, [1, 2])
+
+@pytest.fixture
+def match() -> rf.Network:
+    freq = rf.Frequency(1, 2, 5, "GHz")
+    return rf.media.DefinedGammaZ0(freq, z0=50, gamma=1j).match(name="match")
+
+@needs_plotly
+@pytest.mark.filterwarnings("ignore:divide by zero:RuntimeWarning")  # -inf dB
+def test_plotly_legend_without_finite_data(match: rf.Network):
+    fig = match.plot_it_all(backend="plotly")  # S11 is -inf dB
+    assert fig.layout.legend.x is not None
+    line = rf.media.DefinedGammaZ0(match.frequency, z0=50, gamma=1j).line(30, "deg")
+    assert len(rf.plotting.subplot_params(line, proj="db", backend="plotly").data) == 4
+    empty = go.Figure(go.Scatter(x=[1, 2], y=[-np.inf, -np.inf], name="a", showlegend=True))
+    assert rf.plotting._plotly_legend_position(empty, 300, 300) == rf.plotting._PLOTLY_LEGEND_SPOTS[0]
+
+@needs_plotly
+@pytest.mark.parametrize("rc, attr, expected", [
+    ({"axes.facecolor": "none"}, lambda t: t.layout.plot_bgcolor, "rgba(0,0,0,0)"),
+    ({"axes.titlesize": "larger", "font.size": 10}, lambda t: t.layout.title.font.size, 12),
+    ({"font.family": "serif", "font.serif": ["Times"]}, lambda t: t.layout.font.family, "Times, serif"),
+    ({"font.family": ["serif"], "font.serif": ["Times"]}, lambda t: t.layout.font.family, "Times, serif"),
+])
+def test_plotly_stylely_rcparams(rc: dict, attr, expected, monkeypatch):
+    import plotly.io as pio
+
+    monkeypatch.setattr(pio.templates, "default", pio.templates.default)  # restored after the test
+    with mpl.rc_context():
+        rf.stylely(rc)
+    assert attr(pio.templates[pio.templates.default]) == pytest.approx(expected)
+
+@needs_plotly
+def test_plotly_stylely_skips_what_plotly_lacks(monkeypatch, caplog):
+    import plotly.io as pio
+    from cycler import cycler
+
+    monkeypatch.setattr(pio.templates, "default", pio.templates.default)  # restored after the test
+    default = pio.templates["plotly"].layout.colorway
+    with mpl.rc_context():
+        rf.stylely({"axes.prop_cycle": cycler(linestyle=["-", "--"]), "grid.color": "tab:blue", "font.size": 12})
+    layout = pio.templates[pio.templates.default].layout
+    assert layout.colorway == default and layout.font.size == 12
+    assert layout.xaxis.gridcolor == mpl.colors.to_hex("tab:blue")  # matplotlib's own colors are resolved
+    # the linestyles of a style file are no colors either
+    assert rf.plotting._plotly_template({"axes.prop_cycle": "cycler('linestyle', ['-', '--'])"}).layout.colorway == \
+        default
+    # a value plotly can't take is skipped, and the other settings still apply
+    template = rf.plotting._plotly_template({"grid.color": "notacolor", "font.size": 12})
+    assert template.layout.font.size == 12 and "grid.color" in caplog.text
+
+@needs_plotly
+def test_plotly_stylely_settings(ntwk1: rf.Network, monkeypatch):
+    import plotly.io as pio
+
+    monkeypatch.setattr(pio.templates, "default", pio.templates.default)  # restored after the test
+    with mpl.rc_context():
+        rf.stylely(style_file="skrf2.mplstyle", rc_dict={"lines.markeredgewidth": 2, "legend.frameon": False})
+    template = pio.templates["skrf2"]
+    layout = template.layout
+    for axis in (layout.xaxis, layout.yaxis):
+        assert (axis.showline, axis.mirror, axis.linecolor, axis.linewidth) == (True, True, "black", 1)
+        assert (axis.griddash, axis.ticks, axis.ticklen, axis.layer) == ("dash", "inside", 5, "below traces")
+    assert (layout.xaxis.minor.ticklen, layout.xaxis.minor.tickwidth) == (3, 1)
+    assert (template.data.scatter[0].marker.size, template.data.scatter[0].marker.line.width) == (3, 2)
+    assert layout.legend.borderwidth == 0
+    assert (layout.width, layout.height) == (600, 400)
+    assert (layout.margin.l, layout.margin.r, layout.margin.b, layout.margin.t) == pytest.approx((72, 60, 48, 40))
+    # new figures take the size of the template, and keep the centered title
+    fig = ntwk1.plot_s_db(0, 0, backend="plotly")
+    assert (fig.layout.width, fig.layout.height, fig.layout.margin.t) == (None, None, None)
+    assert fig.layout.title.x == 0.5
+    # a smith chart stays without frame and ticks
+    fig = ntwk1.plot_s_smith(0, 0, backend="plotly")
+    assert (fig.layout.xaxis.showline, fig.layout.yaxis.showline) == (False, False)
+    assert (fig.layout.xaxis.ticks, fig.layout.yaxis.ticks) == ("", "")
+
+def test_networkset_creation_adds_methods_once(ntwk1: rf.Network, monkeypatch):
+    NetworkSet([ntwk1])
+    calls = []
+    monkeypatch.setattr(rf.plotting, "_fig_kwarg", lambda func: calls.append(func) or func)
+    NetworkSet([ntwk1])
+    assert not calls
+
+def test_networkset_non_plot_method_not_wrapped():
+    assert hasattr(NetworkSet.plot_s_db, "__wrapped__") and not hasattr(NetworkSet.write_touchstone, "__wrapped__")
+
+@needs_plotly
+@pytest.mark.parametrize("label", [None, "_nolegend_"])
+def test_plotly_label_without_legend_entry(ntwk1: rf.Network, ntwk_set_zip: NetworkSet, label):
+    for fig in (ntwk1.plot_s_db(0, 0, label=label, backend="plotly"),
+                ntwk_set_zip.animate("s_db", m=0, n=0, label=label, backend="plotly")):
+        assert fig.data[0].name is None and not fig.data[0].showlegend
+
+def test_frequency_plot_uses_ax(ntwk1: rf.Network, mpl_axes):
+    other = mpl_axes.figure.add_subplot(2, 1, 2)  # now the current axes, not the one passed in
+    y = np.ones((len(ntwk1), 2, 2))
+    ntwk1.frequency.plot(y, ax=mpl_axes, backend="matplotlib")
+    assert (len(mpl_axes.lines), len(other.lines)) == (4, 0)
+
+def test_frequency_plot_keeps_errors_of_the_matrix_loop(ntwk1: rf.Network, mpl_axes):
+    with pytest.raises(AttributeError, match="not_a_keyword"):
+        ntwk1.frequency.plot(np.ones((len(ntwk1), 2, 2)), ax=mpl_axes, backend="matplotlib", not_a_keyword=1)
+    mpl_axes.plot = lambda *a, **k: (_ for _ in ()).throw(TypeError("from plot"))
+    with pytest.raises(TypeError, match="from plot"):
+        ntwk1.frequency.plot(np.ones((len(ntwk1), 2, 2)), ax=mpl_axes, backend="matplotlib")
+
+@needs_plotly
+@pytest.mark.parametrize("draw", [
+    lambda ntwk, fig: ntwk.plot_it_all(fig=fig, backend="plotly"),
+    lambda ntwk, fig: rf.plotting.subplot_params(ntwk, fig=fig, backend="plotly"),
+], ids=["plot_it_all", "subplot_params"])
+def test_plotly_new_figure_plots_reject_fig(ntwk1: rf.Network, draw):
+    fig = go.Figure()
+    with pytest.raises(TypeError, match="fig is not supported"):
+        draw(ntwk1, fig)
+    assert not fig.data
+
+@needs_plotly
+def test_plotly_subplot_params_polar(ntwk1: rf.Network):
+    fig = rf.plotting.subplot_params(ntwk1, proj="polar", backend="plotly")
+    assert {t.type for t in fig.data} == {"scatterpolar"}
+    assert [t.subplot for t in fig.data] == ["polar", "polar2", "polar3", "polar4"]
+    # specs of the caller are kept
+    fig = rf.plotting.subplot_params(ntwk1, backend="plotly", subplot_kw=dict(specs=[[{}, {"b": 0.1}], [{}, {}]]))
+    assert len(fig.data) == 4
+
+def test_save_all_figs_unique_names(tmp_path):
+    figs = [mpl.pyplot.figure() for _ in range(2)]
+    for fig in figs:
+        fig.add_subplot()
+    rf.plotting.save_all_figs(str(tmp_path), figs=figs, format=["png"])
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["unnamedPlot.png", "unnamedPlot_1.png"]
+    mpl.pyplot.close("all")
+
+@needs_plotly
+def test_plotly_save_all_figs_unique_names(ntwk1: rf.Network, tmp_path):
+    figs = [ntwk1.plot_s_db(backend="plotly"), ntwk1.plot_s_deg(backend="plotly"),
+            ntwk1.plot_s_db(backend="plotly").update_layout(title_text="a b"),
+            ntwk1.plot_s_deg(backend="plotly").update_layout(title_text="a b")]
+    rf.plotting.save_all_figs(str(tmp_path), figs=figs)
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["a_b.html", "a_b_1.html", "unnamedPlot.html",
+                                                          "unnamedPlot_1.html"]
+
+@pytest.fixture
+def three_port() -> rf.Network:
+    freq = rf.Frequency(1, 2, 5, "GHz")
+    return rf.Network(frequency=freq, s=np.ones((5, 3, 3)) * 0.1, z0=50)
+
+@pytest.mark.parametrize("method", ["plot_reciprocity", "plot_reciprocity2"])
+@pytest.mark.parametrize("backend", ["matplotlib", pytest.param("plotly", marks=needs_plotly)])
+def test_plot_reciprocity_labels(three_port: rf.Network, mpl_axes, method: str, backend: str):
+    fig = getattr(rf.plotting, method)(three_port, backend=backend)
+    labels = [t.name for t in fig.data] if backend == "plotly" else [line.get_label() for line in mpl_axes.lines]
+    assert labels == ["ports 21", "ports 31", "ports 32"]
+
+@needs_plotly
+def test_plotly_all_matplotlib_markers(ntwk1: rf.Network):
+    markers = [m for m in mpl.lines.Line2D.markers if isinstance(m, str) and len(m) == 1 and m != " "]
+    assert set(markers) <= rf.plotting._PLOTLY_MARKERS.keys()
+    for marker in markers:
+        fig = ntwk1.plot_s_db(0, 0, backend="plotly")
+        rf.plotting.add_markers_to_lines(fig=fig, marker_list=[marker], backend="plotly")
+        assert fig.data[0].marker.symbol == rf.plotting._PLOTLY_MARKERS[marker]
+
+@needs_plotly
+@pytest.mark.parametrize("kind", ["shade", "bar"])
+def test_plotly_uncertainty_color_error(ntwk_set_zip: NetworkSet, kind: str):
+    fig = ntwk_set_zip.plot_uncertainty_bounds_component("s_mag", 0, 0, type=kind, color_error="r", backend="plotly")
+    assert "red" in (fig.data[-1].fillcolor, fig.data[-1].marker.color)
+
+@needs_plotly
+def test_plotly_minmax_color_error(ntwk_set_zip: NetworkSet):
+    fig = ntwk_set_zip.plot_minmax_bounds_component("s_mag", 0, 0, color_error="0.5", backend="plotly")
+    assert fig.data[-1].fillcolor == "rgb(128,128,128)"

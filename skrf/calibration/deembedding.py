@@ -1548,9 +1548,7 @@ class IEEEP370_FER:
         backend = _resolve_backend(backend, ax)
         draw = partial(_plotly_rect, ax = _plotly_figure(ax)) if backend == 'plotly' else ax.plot
         draw(x, y * (1.0 + value), **kwargs)
-        kwargs.pop('label', None)
-        if backend == 'matplotlib':
-            kwargs['label'] = '_nolabel_'
+        kwargs['label'] = '_nolabel_'
         draw(x, y * (1.0 - value), **kwargs)
 
     @_fig_kwarg
