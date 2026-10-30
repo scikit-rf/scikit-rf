@@ -220,10 +220,54 @@ def test_matplotlib_unchanged_under_global_plotly(ntwk1: rf.Network, ntwk_set_zi
             call()
 
 @needs_plotly
-def test_plotly_ax_needs_plotly_backend(ntwk1: rf.Network):
-    # the backend comes from the global option (matplotlib), never from the type of ax
-    with pytest.raises(TypeError, match="cannot be used with backend='matplotlib'"):
-        ntwk1.plot_s_db(ax=go.Figure())
+def test_plotly_fig_argument(ntwk1: rf.Network, ntwk_set_zip, mpl_axes):
+    fig = go.Figure()
+    # on any path to the plotting code
+    for call in (lambda **kw: ntwk1.plot_s_db(fig=fig, **kw), lambda **kw: ntwk1.plot_s_db(0, 0, None, fig=fig, **kw),
+                 lambda **kw: ntwk1.plot_s_smith(fig=fig, **kw), lambda **kw: ntwk_set_zip.plot_s_db(fig=fig, **kw),
+                 lambda **kw: ntwk_set_zip.plot_uncertainty_bounds_s_db(fig=fig, **kw)):
+        assert call(backend="plotly") is fig
+        # the backend comes from the global option (matplotlib), never from fig
+        with pytest.raises(TypeError, match="cannot be used with backend='matplotlib'"):
+            call()
+    # ax and fig take the figures of their own backend only
+    with pytest.raises(TypeError, match="pass a plotly Figure as fig"):
+        ntwk1.plot_s_db(ax=fig, backend="plotly")
+    with pytest.raises(TypeError, match="pass a plotly Figure as fig"):
+        ntwk1.plot_s_db(0, 0, fig)
+    with pytest.raises(TypeError, match="pass a plotly Figure as fig"):
+        ntwk_set_zip.plot_s_db(ax=fig)
+    with pytest.raises(TypeError, match="pass matplotlib Axes as ax"):
+        ntwk1.plot_s_db(fig=mpl_axes)
+    with pytest.raises(TypeError, match="not both"):
+        ntwk1.plot_s_db(ax=mpl_axes, fig=fig)
+
+@needs_plotly
+@pytest.mark.parametrize("keywords", [{"color": "r"}, {"c": "r"}, {"linestyle": "--"}, {"ls": "--"}, {"linewidth": 2},
+                                      {"lw": 2}, {"marker": "o"}, {"markersize": 3}, {"ms": 3}, {"alpha": 0.5}])
+def test_plotly_rejects_matplotlib_keywords(ntwk1: rf.Network, ntwk_set_zip, keywords: dict):
+    for call in (ntwk1.plot_s_db, ntwk1.plot_s_smith, ntwk1.plot_s_polar, ntwk_set_zip.plot_s_db):
+        with pytest.raises(TypeError, match="Matplotlib keywords"):
+            call(backend="plotly", **keywords)
+    rf.plotting.options.backend = "plotly"
+    with pytest.raises(TypeError, match="Matplotlib keywords"):
+        ntwk1.plot_s_db(**keywords)
+
+@needs_plotly
+def test_plotly_keywords(ntwk1: rf.Network):
+    trace = ntwk1.plot_s_db(0, 0, line=dict(width=3, dash="dash", color="red"), backend="plotly").data[0]
+    assert (trace.line.width, trace.line.dash, trace.line.color) == (3, "dash", "red")
+    assert ntwk1.plot_s_db(0, 0, name="plotly name", backend="plotly").data[0].name == "plotly name"
+
+def test_matplotlib_rejects_plotly_keywords(ntwk1: rf.Network, mpl_axes):
+    for keywords in ({"name": "a"}, {"line": {"width": 3}}):
+        with pytest.raises(AttributeError):
+            ntwk1.plot_s_db(0, 0, ax=mpl_axes, **keywords)
+
+@pytest.mark.parametrize("backend", ["matplotlib", pytest.param("plotly", marks=needs_plotly)])
+def test_label_works_with_both_backends(ntwk1: rf.Network, mpl_axes, backend: str):
+    out = ntwk1.plot_s_db(0, 0, label="both", backend=backend, **({"ax": mpl_axes} if backend == "matplotlib" else {}))
+    assert (mpl_axes.lines[0].get_label() if backend == "matplotlib" else out.data[0].name) == "both"
 
 def test_plot_prop_keyword_args(ntwk1: rf.Network, mpl_axes):
     ntwk1.plot_prop_complex(prop_name="s", m=0, n=0, ax=mpl_axes)
@@ -240,8 +284,9 @@ def test_plotly_does_not_import_matplotlib():
         "rf.plotting.plot_rectangular(n.f, n.s_db[:, 0, 0]); rf.plotting.plot_complex_rectangular(s); "
         "rf.plotting.plot_complex_polar(s); rf.plotting.plot_smith(s); rf.plotting.subplot_params(n); "
         "rf.media.Freespace(n.frequency).plot_ep_mu(); ns.signature(); ns.animate('s_db'); "
-        "rf.plotting.shade_bands([1e9, 2e9], ax=n.plot_s_db()); rf.plotting.plot_vector(1j); "
-        "rf.plotting.colors(); rf.plotting.scale_frequency_ticks(n.plot_s_db(), 'MHz'); n.frequency.labelXAxis()")
+        "rf.plotting.shade_bands([1e9, 2e9], fig=n.plot_s_db()); rf.plotting.plot_vector(1j); "
+        "rf.plotting.colors(); rf.plotting.scale_frequency_ticks(fig=n.plot_s_db(), funit='MHz'); "
+        "n.frequency.labelXAxis()")
     assert "plotly" in loaded
     assert "matplotlib" not in loaded
 
@@ -274,10 +319,10 @@ def test_plotly_rectangular_parity(ntwk1_dc: rf.Network, ntwk_set_zip: NetworkSe
 @needs_plotly
 def test_plotly_figure_overlay_and_units(ntwk1: rf.Network):
     fig = go.Figure()
-    assert ntwk1.plot_s_db(0, 0, ax=fig, backend="plotly") is fig
+    assert ntwk1.plot_s_db(0, 0, fig=fig, backend="plotly") is fig
     mhz = ntwk1.copy()
     mhz.frequency.unit = "MHz"
-    assert mhz.plot_s_db(0, 0, ax=fig, backend="plotly") is fig
+    assert mhz.plot_s_db(0, 0, fig=fig, backend="plotly") is fig
     assert len(fig.data) == 2
     np.testing.assert_allclose(fig.data[1].x, fig.data[0].x)  # rescaled to the figure's first unit
     assert fig.layout.xaxis.title.text == f"Frequency ({ntwk1.frequency.unit})"
@@ -297,8 +342,11 @@ def test_plotly_errors(ntwk1: rf.Network, mpl_axes):
 
 @needs_plotly
 def test_plotly_kwargs_translation(ntwk1: rf.Network):
-    trace = ntwk1.plot_s_db(0, 0, c="r", ls="--", lw=2, marker="o", ms=4, alpha=0.5, label="a",
-                            backend="plotly").data[0]
+    # the keywords of skrf's own plots, not available to users
+    fig = rf.plotting._plotly_figure()
+    rf.plotting._plotly_rect(ntwk1.f, ntwk1.s_db[:, 0, 0], ax=fig, c="r", ls="--", lw=2, marker="o", ms=4, alpha=0.5,
+                             label="a")
+    trace = fig.data[0]
     assert (trace.line.color, trace.line.dash, trace.line.width) == ("red", "dash", 2)
     assert (trace.marker.symbol, trace.marker.size, trace.mode) == ("circle", 4, "lines+markers")
     assert (trace.opacity, trace.name) == (0.5, "a")
@@ -349,7 +397,7 @@ def test_plotly_smith(ntwk1_dc: rf.Network, chart_type: str):
     np.testing.assert_allclose(fig.layout.xaxis.range, [-1.1 * r, 1.1 * r])
     assert (fig.layout.xaxis.constrain, fig.layout.yaxis.constrain) == ("domain", "domain")
     assert (fig.layout.width, fig.layout.height) == (700, 550)
-    assert ntwk1_dc.plot_s_smith(ax=go.Figure(layout_height=300), backend="plotly").layout.width is None
+    assert ntwk1_dc.plot_s_smith(fig=go.Figure(layout_height=300), backend="plotly").layout.width is None
     assert (fig.layout.xaxis.title.text, fig.layout.yaxis.title.text) == ("Real", "Imaginary")
 
 @needs_plotly
@@ -372,7 +420,7 @@ def test_plotly_smith_grid(mpl_axes):
 def test_plotly_geometric_overlay(ntwk1: rf.Network, kind: str):
     fig = getattr(ntwk1, f"plot_s_{kind}")(0, 0, backend="plotly")
     n_traces, n_grid = len(fig.data), len(_smith_grid_traces(fig))
-    assert getattr(ntwk1, f"plot_s_{kind}")(1, 1, ax=fig, backend="plotly") is fig
+    assert getattr(ntwk1, f"plot_s_{kind}")(1, 1, fig=fig, backend="plotly") is fig
     assert len(fig.data) == n_traces + 1
     assert len(_smith_grid_traces(fig)) == n_grid  # the smith chart is drawn once
 
@@ -397,7 +445,7 @@ def test_plotly_bounds_parity(ntwk_set_zip: NetworkSet, method: str, mpl_axes):
         np.testing.assert_allclose(np.unique(fill.y), np.unique(poly.get_paths()[0].vertices[:, 1]))
         assert (fill.fill, fill.fillcolor, fill.showlegend) == ("toself", mean.line.color, False)
     assert fig.layout.yaxis.title.text == mpl_axes.get_ylabel()
-    assert getattr(ntwk_set_zip, method)(ax=fig, backend="plotly") is fig
+    assert getattr(ntwk_set_zip, method)(fig=fig, backend="plotly") is fig
     assert len(fig.data) == 4 * len(means)  # mean and fill traces added again
 
 @needs_plotly
@@ -437,7 +485,7 @@ def test_plotly_public_plot_functions(ntwk1: rf.Network, func: str, mpl_axes):
     np.testing.assert_allclose(trace.y, mpl_axes.lines[-1].get_ydata())
     assert trace.name == "a"
     n_traces = len(fig.data)
-    assert getattr(rf.plotting, func)(*args, ax=fig, backend="plotly") is fig
+    assert getattr(rf.plotting, func)(*args, fig=fig, backend="plotly") is fig
     assert len(fig.data) == n_traces + 1  # the smith chart is drawn once
 
 @needs_plotly
@@ -477,21 +525,21 @@ def test_plot_vector(mpl_axes):
 def test_plotly_shade_bands(ntwk1: rf.Network):
     fig = ntwk1.plot_s_db(0, 0, backend="plotly")
     edges = ntwk1.f[[0, 40, 80]]
-    assert rf.plotting.shade_bands(edges, alpha=0.2, ax=fig, backend="plotly") is fig
+    assert rf.plotting.shade_bands(edges, opacity=0.2, fig=fig, backend="plotly") is fig
     bands = fig.layout.shapes
     assert len(bands) == 2 and len({b.fillcolor for b in bands}) == 2
     # edges in Hz drawn in the unit of the figure, behind the data and over its whole height
     np.testing.assert_allclose([b.x0 for b in bands] + [bands[-1].x1], edges / ntwk1.frequency.multiplier)
     assert {(b.layer, b.opacity, b.yref, b.y0, b.y1) for b in bands} == {("below", 0.2, "y domain", 0, 1)}
-    rf.plotting.shade_bands(edges, y_range=(-10, 0), cmap="Viridis", ax=fig, backend="plotly")
+    rf.plotting.shade_bands(edges, y_range=(-10, 0), cmap="Viridis", fig=fig, backend="plotly")
     assert (fig.layout.shapes[-1].yref, fig.layout.shapes[-1].y0, fig.layout.shapes[-1].y1) == ("y", -10, 0)
     with pytest.raises(TypeError, match="cannot be used with backend='matplotlib'"):
-        rf.plotting.shade_bands(edges, ax=fig)
+        rf.plotting.shade_bands(edges, fig=fig)
 
 @needs_plotly
 def test_plotly_plot_vector(ntwk1: rf.Network):
     fig = ntwk1.plot_s_smith(0, 0, backend="plotly")
-    assert rf.plotting.plot_vector(1 + 2j, 0.5j, color="r", ax=fig, backend="plotly") is fig
+    assert rf.plotting.plot_vector(1 + 2j, 0.5j, arrowcolor="red", fig=fig, backend="plotly") is fig
     (arrow,) = fig.layout.annotations[-1:]
     # from off to off + a, like quiver
     assert (arrow.ax, arrow.ay, arrow.x, arrow.y) == (0, 0.5, 1, 2.5)
@@ -540,7 +588,7 @@ def test_plotly_calibration_errors(one_port_cal, mpl_axes):
     assert fig.layout.title.text == "S11" and tuple(fig.layout.yaxis.range) == (-100, 0)
     # global option, and adding to an existing figure
     rf.plotting.options.backend = "plotly"
-    assert one_port_cal.plot_calibration_errors(ax=fig) is fig
+    assert one_port_cal.plot_calibration_errors(fig=fig) is fig
     assert len(fig.data) == 6
     with pytest.raises(TypeError):
         one_port_cal.plot_calibration_errors(ax=mpl_axes, backend="plotly")
@@ -710,7 +758,7 @@ def test_plotly_calibration_set_uncertainty(one_port_cal, mpl_axes):
     assert cal_set.plot_uncertainty_per_standard(ax=mpl_axes) is None
     fig = cal_set.plot_uncertainty_per_standard(backend="plotly")
     assert_plotly_parity(fig, mpl_axes, x_scale=1e9)
-    assert cal_set.plot_uncertainty_per_standard(ax=fig, backend="plotly") is fig
+    assert cal_set.plot_uncertainty_per_standard(fig=fig, backend="plotly") is fig
     with pytest.raises(TypeError, match="cannot be used with backend='plotly'"):
         cal_set.plot_uncertainty_per_standard(ax=mpl_axes, backend="plotly")
 
@@ -776,11 +824,10 @@ def test_plotly_deembedding(deembedding, plot: str):
     mpl.pyplot.close("all")
     # a figure from an earlier call can be drawn over, as matplotlib's axes or figure
     n_traces = len(fig.data)
-    key = "fig" if "fer" in plot else "ax"
-    assert deembedding[plot](**{key: fig}, backend="plotly") is fig
+    assert deembedding[plot](fig=fig, backend="plotly") is fig
     assert len(fig.data) == 2 * n_traces
     with pytest.raises(TypeError, match="cannot be used with backend='matplotlib'"):
-        deembedding[plot](**{key: fig})
+        deembedding[plot](fig=fig)
 
 @needs_plotly
 def test_plotly_fer_limits(deembedding):
@@ -788,10 +835,10 @@ def test_plotly_fer_limits(deembedding):
 
     freq = rf.Frequency(1, 10, 11, "GHz")
     fig = go.Figure()
-    IEEEP370_FER().plot_limit_fer2(freq, fig, backend="plotly")
+    IEEEP370_FER().plot_limit_fer2(freq, fig=fig, backend="plotly")
     assert [t.name for t in fig.data] == ["Maximum A", "Maximum B", "Maximum C"]
     np.testing.assert_allclose(fig.data[0].x, [1, 10])  # in the unit of the figure
-    IEEEP370_FER().plot_limit_fer5(np.arange(3), np.ones(3), fig, backend="plotly")
+    IEEEP370_FER().plot_limit_fer5(np.arange(3), np.ones(3), fig=fig, backend="plotly")
     assert [t.showlegend for t in fig.data[3:5]] == [True, False]  # one legend entry for the +/- lines
 
 @needs_plotly
@@ -845,17 +892,17 @@ def test_legend_helpers(ntwk1: rf.Network, mpl_axes):
 @needs_plotly
 def test_plotly_legend_helpers(ntwk1: rf.Network):
     fig = ntwk1.plot_s_db(backend="plotly")
-    assert rf.plotting.add_markers_to_lines(ax=fig, markevery=5, backend="plotly") is fig
+    assert rf.plotting.add_markers_to_lines(fig=fig, markevery=5, backend="plotly") is fig
     assert [t.marker.symbol for t in fig.data] == ["circle", "diamond", "square", "cross"]
     assert {(t.mode, t.marker.maxdisplayed) for t in fig.data} == {("lines+markers", -(-len(ntwk1) // 5))}
-    assert rf.plotting.scrape_legend(2, ax=fig, backend="plotly") is fig
+    assert rf.plotting.scrape_legend(2, fig=fig, backend="plotly") is fig
     assert [t.name for t in fig.data if t.showlegend] == ["ntwk1, S11", "ntwk1, S22"]
-    assert rf.plotting.legend_off(ax=fig, backend="plotly").layout.showlegend is False
+    assert rf.plotting.legend_off(fig=fig, backend="plotly").layout.showlegend is False
     with pytest.raises(TypeError, match="cannot be used with backend='matplotlib'"):
-        rf.plotting.legend_off(ax=fig)
+        rf.plotting.legend_off(fig=fig)
     # the smith chart grid is not a line to mark
     fig = ntwk1.plot_s_smith(0, 0, backend="plotly")
-    rf.plotting.add_markers_to_lines(ax=fig, backend="plotly")
+    rf.plotting.add_markers_to_lines(fig=fig, backend="plotly")
     assert [t.mode for t in fig.data if t.meta == "skrf_smith_chart"] == ["lines"] * len(_smith_grid_traces(fig))
 
 @needs_plotly
@@ -894,20 +941,20 @@ def test_plotly_colors(monkeypatch):
 @needs_plotly
 def test_plotly_scale_frequency_ticks(ntwk1: rf.Network):
     fig = ntwk1.plot_s_db(0, 0, backend="plotly")
-    rf.plotting.shade_bands(ntwk1.f[[0, 40]], ax=fig, backend="plotly")
+    rf.plotting.shade_bands(ntwk1.f[[0, 40]], fig=fig, backend="plotly")
     fig.update_xaxes(range=[2, 4])
-    assert rf.plotting.scale_frequency_ticks(fig, "mhz", backend="plotly") is fig
+    assert rf.plotting.scale_frequency_ticks(fig=fig, funit="mhz", backend="plotly") is fig
     # the frequencies, bands and range of the figure in MHz, also for traces added later
     scale = ntwk1.frequency.multiplier / 1e6
     np.testing.assert_allclose(fig.data[0].x, ntwk1.f / 1e6)
     np.testing.assert_allclose([fig.layout.shapes[0].x0, fig.layout.shapes[0].x1], ntwk1.f[[0, 40]] / 1e6)
     assert fig.layout.xaxis.range == (2 * scale, 4 * scale) and fig.layout.xaxis.title.text == "Frequency (MHz)"
-    np.testing.assert_allclose(ntwk1.plot_s_db(1, 0, ax=fig, backend="plotly").data[-1].x, ntwk1.f / 1e6)
+    np.testing.assert_allclose(ntwk1.plot_s_db(1, 0, fig=fig, backend="plotly").data[-1].x, ntwk1.f / 1e6)
     with pytest.raises(ValueError, match="invalid funit"):
-        rf.plotting.scale_frequency_ticks(fig, "furlongs", backend="plotly")
+        rf.plotting.scale_frequency_ticks(fig=fig, funit="furlongs", backend="plotly")
     with pytest.raises(ValueError, match="no frequency axis"):
-        rf.plotting.scale_frequency_ticks(rf.plotting.plot_complex_rectangular(ntwk1.s[:, 0, 0], backend="plotly"),
-                                          "MHz", backend="plotly")
+        rf.plotting.scale_frequency_ticks(fig=rf.plotting.plot_complex_rectangular(ntwk1.s[:, 0, 0], backend="plotly"),
+                                          funit="MHz", backend="plotly")
 
 @needs_plotly
 def test_label_x_axis(ntwk1: rf.Network, mpl_axes):
@@ -915,7 +962,7 @@ def test_label_x_axis(ntwk1: rf.Network, mpl_axes):
     ntwk1.frequency.labelXAxis(mpl_axes)
     assert mpl_axes.get_xlabel() == f"Frequency ({ntwk1.frequency.unit})" and other.get_xlabel() == ""
     fig = go.Figure()
-    assert ntwk1.frequency.labelXAxis(fig, backend="plotly") is fig
+    assert ntwk1.frequency.labelXAxis(fig=fig, backend="plotly") is fig
     assert fig.layout.xaxis.title.text == f"Frequency ({ntwk1.frequency.unit})"
     # the matplotlib plots of a Network keep labelling their own axes under a global plotly backend
     rf.plotting.options.backend = "plotly"

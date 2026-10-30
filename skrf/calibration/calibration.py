@@ -143,7 +143,7 @@ from ..network import (
     zipfile,
 )
 from ..networkSet import NetworkSet
-from ..plotting import _get_axes, _plotly_figure, _plotly_subplots, _resolve_backend, subplots
+from ..plotting import _fig_kwarg, _get_axes, _plotly_figure, _plotly_subplots, _resolve_backend, subplots
 
 logger = getLogger(__name__)
 
@@ -1006,15 +1006,17 @@ class Calibration:
 
         write(file,self, *args, **kwargs)
 
+    @_fig_kwarg
     def plot_calibration_errors(self, *args, ax: Axes = None, backend: str | None = None, **kwargs):
         r"""
         Plot biased, unbiased and total error in dB scaled.
 
         Parameters
         ----------
-        ax : :class:`matplotlib.axes.Axes` or plotly Figure, optional
-            axes to draw on, default the current matplotlib axes, or a new
-            plotly Figure with the plotly backend.
+        ax : :class:`matplotlib.axes.Axes`, optional
+            axes to draw on, default the current matplotlib axes.
+        fig : plotly Figure, optional
+            figure to draw on with the plotly backend.
         backend : {'matplotlib', 'plotly'}, optional
             plotting backend, default ``skrf.plotting.options.backend``.
         \*\*kwargs : kwargs
@@ -1093,6 +1095,7 @@ class Calibration:
         fig.tight_layout()
 
 
+    @_fig_kwarg
     def plot_residuals(self, attr: str = 's_db', **kwargs):
         r"""
         Plot residual networks.

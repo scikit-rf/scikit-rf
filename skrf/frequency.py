@@ -57,6 +57,7 @@ from numpy import (
 )
 
 from .constants import FREQ_UNITS, ZERO
+from .plotting import _fig_kwarg
 from .util import find_nearest_index, slice_domain
 
 
@@ -712,6 +713,7 @@ class Frequency:
             sweep_type = 'unknown'
         return sweep_type
 
+    @_fig_kwarg
     def labelXAxis(self, ax: Axes = None, *, backend: str | None = None):
         """
         Label the x-axis of a plot.
@@ -726,6 +728,8 @@ class Frequency:
                 Defaults is None, for the current axe
                 returned by :func:`matplotlib.gca()`,
                 or with plotly the plotly Figure to label.
+        fig : plotly Figure, optional
+            figure to draw on with the plotly backend.
         backend : {'matplotlib', 'plotly'}, optional
                 plotting backend, default ``skrf.plotting.options.backend``.
 
@@ -739,6 +743,7 @@ class Frequency:
             return _plotly_figure(ax).update_xaxes(title_text=f'Frequency ({self.unit})')
         _get_axes(ax).set_xlabel(f'Frequency ({self.unit})')
 
+    @_fig_kwarg
     def plot(self, y: NumberLike, *args, ax: Axes=None, backend: str | None = None, **kwargs):
         """
         Plot something vs this frequency.

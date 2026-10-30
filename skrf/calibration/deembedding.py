@@ -71,6 +71,7 @@ from numpy.linalg import norm
 from ..frequency import Frequency
 from ..network import Network, concat_ports, overlap_multi, subnetwork
 from ..plotting import (
+    _fig_kwarg,
     _figure,
     _frequency_x,
     _plotly_figure,
@@ -1530,6 +1531,7 @@ class IEEEP370_FER:
     Circuit Board and Related Interconnects at Frequencies up to 50 GHz",
     IEEE 370-2020.
     """
+    @_fig_kwarg
     def plot_constant_limit(self, frequency: Frequency, value: float, ax: Axes,
                             backend: str | None = None, **kwargs) -> None:
         """
@@ -1539,6 +1541,7 @@ class IEEEP370_FER:
         draw = partial(_plotly_rect, ax = _plotly_figure(ax)) if backend == 'plotly' else ax.plot
         draw(_frequency_x(ax, frequency)[[0, -1]], [value, value], **kwargs)
 
+    @_fig_kwarg
     def plot_relative_limit(self, x: ndarray, y: ndarray, value: float, ax: Axes,
                             backend: str | None = None, **kwargs) -> None:
         """
@@ -1552,6 +1555,7 @@ class IEEEP370_FER:
             kwargs['label'] = '_nolabel_'
         draw(x, y * (1.0 - value), **kwargs)
 
+    @_fig_kwarg
     def plot_limit_fer1(self, frequency: Frequency, ax: Axes,
                         backend: str | None = None) -> None:
         """
@@ -1562,6 +1566,7 @@ class IEEEP370_FER:
         self.plot_constant_limit(frequency, -15, ax, backend = backend, color = 'r',
                             linestyle = 'dashed', label = 'Minimum B, C')
 
+    @_fig_kwarg
     def plot_limit_fer2(self, frequency: Frequency, ax: Axes,
                         backend: str | None = None) -> None:
         """
@@ -1574,6 +1579,7 @@ class IEEEP370_FER:
         self.plot_constant_limit(frequency, -6, ax, backend = backend, color = 'r',
                             linestyle = 'dashed', label = 'Maximum C')
 
+    @_fig_kwarg
     def plot_limit_fer3(self, frequency: Frequency, ax: Axes,
                         backend: str | None = None) -> None:
         """
@@ -1584,6 +1590,7 @@ class IEEEP370_FER:
         self.plot_constant_limit(frequency, 0, ax, backend = backend, color = 'r',
                             linestyle = 'dashed', label = 'Minimum B, C')
 
+    @_fig_kwarg
     def plot_limit_fer5(self, x: ndarray, y: ndarray, ax: Axes,
                         backend: str | None = None) -> None:
         """
@@ -1596,6 +1603,7 @@ class IEEEP370_FER:
         self.plot_relative_limit(x, y, 0.1, ax, backend = backend, linestyle = 'dashed', color = 'r',
                                      label = 'Limit C ±10%')
 
+    @_fig_kwarg
     def plot_limit_fer6(self, frequency: Frequency, ax: Axes,
                         backend: str | None = None) -> None:
         """
@@ -3477,13 +3485,14 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
         return (s_side1, s_side2)
 
+    @_fig_kwarg
     def plot_check_residuals(self, ax: Axes = None, *, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
 
         Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes, or
-        the plotly Figure, of an earlier call to draw over.
+        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
+        or `fig` the plotly Figure, of an earlier call to draw over.
         """
         res = self.deembed(self.s2xthru)
         res.name = 'Residuals'
@@ -3521,6 +3530,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
         return fig.to_plotly() if backend == 'plotly' else (fig, ax)
 
+    @_fig_kwarg
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
                              window: str = 'hamming', *,
                              backend: str | None = None) -> (Figure, Axes):
@@ -3528,8 +3538,8 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
 
         Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes, or
-        the plotly Figure, of an earlier call to draw over.
+        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
+        or `fig` the plotly Figure, of an earlier call to draw over.
         """
         # if dc point already exists, it will be replaced
         s2xthru = IEEEP370.extrapolate_to_dc(self.s2xthru)
@@ -3875,13 +3885,14 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
 
         return (se_side1, se_side2)
 
+    @_fig_kwarg
     def plot_check_residuals(self, ax: Axes = None, *, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
 
         Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes, or
-        the plotly Figure, of an earlier call to draw over.
+        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
+        or `fig` the plotly Figure, of an earlier call to draw over.
         """
         res = self.deembed(self.s2xthru)
         res.name = 'Residuals'
@@ -3924,6 +3935,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
 
         return fig.to_plotly() if backend == 'plotly' else (fig, ax)
 
+    @_fig_kwarg
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
                              window: str = 'hamming', *,
                              backend: str | None = None) -> (Figure, Axes):
@@ -3931,8 +3943,8 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
 
         Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes, or
-        the plotly Figure, of an earlier call to draw over.
+        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
+        or `fig` the plotly Figure, of an earlier call to draw over.
         """
         # if dc point already exists, it will be replaced
         s2xthru = self.s2xthru.copy()
@@ -4497,13 +4509,14 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         # unflip FIX-2 as per IEEEP370 numbering recommendation
         return (s_side1, s_side2.flipped())
 
+    @_fig_kwarg
     def plot_check_residuals(self, ax: Axes = None, *, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
 
         Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes, or
-        the plotly Figure, of an earlier call to draw over.
+        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
+        or `fig` the plotly Figure, of an earlier call to draw over.
         """
         res = self.deembed(self.s2xthru)
         res.name = 'Residuals'
@@ -4541,6 +4554,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
         return fig.to_plotly() if backend == 'plotly' else (fig, ax)
 
+    @_fig_kwarg
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
                              window: str = 'hamming', *,
                              backend: str | None = None) -> (Figure, Axes):
@@ -4548,8 +4562,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
 
         Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes, or
-        the plotly Figure, of an earlier call to draw over.
+        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
+        or `fig` the plotly Figure, of an earlier call to draw over.
         """
         # if dc point already exists, it will be replaced
         s2xthru = IEEEP370.extrapolate_to_dc(self.s2xthru)
@@ -4932,13 +4946,14 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
 
         return (se_side1, se_side2)
 
+    @_fig_kwarg
     def plot_check_residuals(self, ax: Axes = None, *, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
 
         Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes, or
-        the plotly Figure, of an earlier call to draw over.
+        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
+        or `fig` the plotly Figure, of an earlier call to draw over.
         """
         res = self.deembed(self.s2xthru)
         res.name = 'Residuals'
@@ -4981,6 +4996,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
 
         return fig.to_plotly() if backend == 'plotly' else (fig, ax)
 
+    @_fig_kwarg
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
                              window: str = 'hamming', *,
                              backend: str | None = None) -> (Figure, Axes):
@@ -4988,8 +5004,8 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
 
         Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes, or
-        the plotly Figure, of an earlier call to draw over.
+        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
+        or `fig` the plotly Figure, of an earlier call to draw over.
         """
         # if dc point already exists, it will be replaced
         s2xthru = self.s2xthru.copy()

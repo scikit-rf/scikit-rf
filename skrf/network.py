@@ -5175,6 +5175,8 @@ class Network:
         second index of the s-parameter matrix, if None will use all
     ax : :class:`matplotlib.Axes` object, optional
         An existing Axes object to plot on
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     show_legend : Boolean
         draw legend or not
     y_label : string, optional
@@ -5183,7 +5185,6 @@ class Network:
         Enable logarithmic x-axis, default off
     backend : {{'matplotlib', 'plotly'}}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` may be a plotly Figure to add the traces to.
     \**kwargs : arguments, keyword arguments
         passed to :func:`matplotlib.plot` (or :class:`plotly.graph_objects.Scatter`)
 
@@ -5203,6 +5204,7 @@ class Network:
 
     """
 
+    @rfplt._fig_kwarg
     def plot_attribute(     self,
                             attribute: PrimaryPropertiesT,
                             conversion: ComponentFuncT,
@@ -5338,6 +5340,7 @@ class Network:
     def plot_s_db_time(self, center_to_dc=None, *args, **kwargs):
         return rfplt.plot_s_db_time(self, *args, center_to_dc=center_to_dc, **kwargs)
 
+    @rfplt._fig_kwarg
     @copy_doc(rfplt.plot_s_smith)
     def plot_s_smith(self, m=None, n=None,r=1, ax=None, show_legend=True,\
         chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):

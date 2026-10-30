@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 from .network import Network
 from .networkSet import NetworkSet
-from .plotting import _get_axes, _import_plotly, _plotly_figure, _plotly_rect, _resolve_backend
+from .plotting import _fig_kwarg, _get_axes, _import_plotly, _plotly_figure, _plotly_rect, _resolve_backend
 
 logger = logging.getLogger(__name__)
 
@@ -2046,6 +2046,7 @@ class VectorFitting:
                 resp += residues[i] / (s - pole) + np.conjugate(residues[i]) / (s - np.conjugate(pole))
         return resp
 
+    @_fig_kwarg
     def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None,
              parameter: str = 's', *, ax: Axes = None, backend: str | None = None) -> Axes:
         """
@@ -2080,9 +2081,10 @@ class VectorFitting:
             in :attr:`network` that is used for comparison with the fit. Must be one of the following items unless
             :attr:`network` is `None`: ['s', 'z', 'y'] for *scattering* (default), *impedance*, or *admittance*.
 
-        ax : :class:`matplotlib.Axes` object, plotly Figure or None
-            axes to draw on. If None, the current matplotlib axes is fetched with :func:`gca()`, or a new plotly
-            Figure is created with the plotly backend.
+        ax : :class:`matplotlib.Axes` object or None
+            axes to draw on. If None, the current matplotlib axes is fetched with :func:`gca()`.
+        fig : plotly Figure, optional
+            figure to draw on with the plotly backend.
 
         backend : {'matplotlib', 'plotly'}, optional
             plotting backend, default ``skrf.plotting.options.backend``.
@@ -2380,6 +2382,7 @@ class VectorFitting:
 
         return self.plot('im', *args, **kwargs)
 
+    @_fig_kwarg
     def plot_s_singular(self, freqs: Any = None, *, ax: Axes = None, backend: str | None = None) -> Axes:
         """
         Plots the singular values of the vector fitted S-matrix in linear scale.
@@ -2390,9 +2393,10 @@ class VectorFitting:
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
             :attr:`network` are used. This only works if :attr:`network` is not `None`.
 
-        ax : :class:`matplotlib.Axes` object, plotly Figure or None
-            axes to draw on. If None, the current matplotlib axes is fetched with :func:`gca()`, or a new plotly
-            Figure is created with the plotly backend.
+        ax : :class:`matplotlib.Axes` object or None
+            axes to draw on. If None, the current matplotlib axes is fetched with :func:`gca()`.
+        fig : plotly Figure, optional
+            figure to draw on with the plotly backend.
 
         backend : {'matplotlib', 'plotly'}, optional
             plotting backend, default ``skrf.plotting.options.backend``.
@@ -2442,6 +2446,7 @@ class VectorFitting:
         ax.legend(loc='best')
         return ax
 
+    @_fig_kwarg
     def plot_convergence(self, ax: Axes = None, backend: str | None = None) -> Axes:
         """
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
@@ -2450,9 +2455,10 @@ class VectorFitting:
 
         Parameters
         ----------
-        ax : :class:`matplotlib.Axes` object, plotly Figure or None
-            axes to draw on. If None, the current matplotlib axes is fetched with :func:`gca()`, or a new plotly
-            Figure is created with the plotly backend.
+        ax : :class:`matplotlib.Axes` object or None
+            axes to draw on. If None, the current matplotlib axes is fetched with :func:`gca()`.
+        fig : plotly Figure, optional
+            figure to draw on with the plotly backend.
 
         backend : {'matplotlib', 'plotly'}, optional
             plotting backend, default ``skrf.plotting.options.backend``.
@@ -2484,6 +2490,7 @@ class VectorFitting:
         ax2.set_ylabel('Residue', color='orangered')
         return ax
 
+    @_fig_kwarg
     def plot_passivation(self, ax: Axes = None, backend: str | None = None) -> Axes:
         """
         Plots the history of the greatest singular value during the iterative passivity enforcement process, which
@@ -2492,9 +2499,10 @@ class VectorFitting:
 
         Parameters
         ----------
-        ax : :class:`matplotlib.Axes` object, plotly Figure or None
-            axes to draw on. If None, the current matplotlib axes is fetched with :func:`gca()`, or a new plotly
-            Figure is created with the plotly backend.
+        ax : :class:`matplotlib.Axes` object or None
+            axes to draw on. If None, the current matplotlib axes is fetched with :func:`gca()`.
+        fig : plotly Figure, optional
+            figure to draw on with the plotly backend.
 
         backend : {'matplotlib', 'plotly'}, optional
             plotting backend, default ``skrf.plotting.options.backend``.

@@ -19,7 +19,7 @@ CalibrationSet Class
 from itertools import product
 
 from ..networkSet import NetworkSet
-from ..plotting import _plotly_figure, _resolve_backend
+from ..plotting import _fig_kwarg, _plotly_figure, _resolve_backend
 from .calibration import Calibration
 
 
@@ -97,15 +97,17 @@ class CalibrationSet:
         return NetworkSet([k.apply_cal(raw_ntwk) for k in self.cal_list],
             *args, **kwargs)
 
+    @_fig_kwarg
     def plot_uncertainty_per_standard(self, *, ax=None, backend: str | None = None, **kwargs):
         r"""
         Plot the standard deviation of the measurements of each standard.
 
         Parameters
         ----------
-        ax : :class:`matplotlib.axes.Axes` or plotly Figure, optional
-            axes to draw on, default the current matplotlib axes, or a new
-            plotly Figure with the plotly backend.
+        ax : :class:`matplotlib.axes.Axes`, optional
+            axes to draw on, default the current matplotlib axes.
+        fig : plotly Figure, optional
+            figure to draw on with the plotly backend.
         backend : {'matplotlib', 'plotly'}, optional
             plotting backend, default ``skrf.plotting.options.backend``.
         \*\*kwargs : kwargs

@@ -455,6 +455,7 @@ class NetworkSet:
 
 
     def __add_a_element_wise_method(self, network_method_name: str):
+        @skrf_plt._fig_kwarg
         def func(self,  *args, **kwargs):
             if network_method_name.startswith('plot_'):
                 kwargs['backend'] = skrf_plt._resolve_backend(kwargs.get('backend'), kwargs.get('ax'))

@@ -40,9 +40,13 @@ Backend selection
 ``pip install scikit-rf[plotly]``). The general-purpose plot methods also
 take a per-call ``backend=`` argument.
 
-With plotly they return a ``plotly.graph_objects.Figure``; pass it as ``ax``
-to add traces to it. An ``ax`` that does not belong to the backend raises a
-``TypeError``. Of the convenience functions below, `subplot_params`,
+With plotly they return a ``plotly.graph_objects.Figure``; pass it as ``fig``
+to add traces to it. ``ax`` takes matplotlib Axes only, and ``fig`` plotly
+Figures only. Neither selects the backend: one that does not belong to the
+backend of the call raises a ``TypeError``. Likewise, keyword arguments go to the
+library of the backend, so plotly takes plotly keywords such as ``line=dict(...)``,
+not matplotlib ones such as ``linewidth``. ``label`` works with both, and names
+the trace with plotly. Of the convenience functions below, `subplot_params`,
 `shade_bands` and `signature` support plotly, as does `plot_vector`; the
 others always use matplotlib.
 
@@ -65,10 +69,12 @@ Convenience plotting functions
 """
 from __future__ import annotations
 
+import inspect
 import os
 import re
 from collections.abc import Callable
 from contextlib import suppress
+from contextvars import ContextVar
 from functools import partial, wraps
 from logging import getLogger
 from numbers import Number
@@ -146,8 +152,55 @@ def _resolve_backend(backend: str | None = None, ax=None) -> str:
     """
     backend = options.backend if backend is None else _validate_backend(backend)
     if ax is not None and (backend == 'plotly') != _is_plotly_figure(ax):
-        raise TypeError(f"ax of type {type(ax).__name__} cannot be used with backend={backend!r}")
+        raise TypeError(f"{type(ax).__name__} cannot be used with backend={backend!r}")
     return backend
+
+
+_in_plot_call = ContextVar('_in_plot_call', default=False)
+_MATPLOTLIB_KEYWORDS = {'alpha', 'c', 'color', 'linestyle', 'linewidth', 'ls', 'lw', 'markersize', 'ms'}
+
+
+def _fig_kwarg(func: Callable) -> Callable:
+    """
+    Decorator adding the `fig` keyword, the plotly Figure to draw on, for an `ax` that takes matplotlib Axes only.
+
+    It also rejects matplotlib keywords with the plotly backend. The decorated function gets `fig` as `ax`, and can
+    pass it on as `ax`, with matplotlib keywords that are translated for plotly, to other decorated functions.
+    """
+    parameters = inspect.signature(func).parameters
+    has_ax_position = 'ax' in parameters and parameters['ax'].kind is parameters['ax'].POSITIONAL_OR_KEYWORD
+    ax_index = list(parameters).index('ax') if has_ax_position else None
+    matplotlib_keywords = _MATPLOTLIB_KEYWORDS - set(parameters)
+
+    @wraps(func)
+    def wrapper(*args, fig=None, **kwargs):
+        positional = has_ax_position and ax_index < len(args)
+        ax = args[ax_index] if positional else kwargs.get('ax')
+        if fig is not None:
+            if ax is not None:
+                raise TypeError("Pass either ax or fig, not both")
+            if not _is_plotly_figure(fig):
+                raise TypeError(f"fig must be a plotly Figure, not {type(fig).__name__}, pass matplotlib Axes as ax")
+            if positional:
+                args = (*args[:ax_index], fig, *args[ax_index + 1:])
+            else:
+                kwargs['ax'] = fig
+        if not _in_plot_call.get() and not isinstance(ax, _PlotlyAxes):
+            if fig is None and _is_plotly_figure(ax):
+                raise TypeError("ax must be matplotlib Axes, pass a plotly Figure as fig")
+            keywords = matplotlib_keywords & kwargs.keys()
+            if isinstance(kwargs.get('marker'), str):
+                keywords = keywords | {'marker'}
+            if keywords and _resolve_backend(kwargs.get('backend'), ax if fig is None else fig) == 'plotly':
+                raise TypeError(f"Matplotlib keywords {sorted(keywords)} are not supported by the plotly backend, "
+                                "use plotly keywords such as line=dict(...) or marker=dict(...)")
+        token = _in_plot_call.set(True)
+        try:
+            return func(*args, **kwargs)
+        finally:
+            _in_plot_call.reset(token)
+
+    return wrapper
 
 
 def _import_plotly():
@@ -235,6 +288,7 @@ def _get_label_str(netw: Network, param: str, m: int, n: int, usetex: bool | Non
     return label_string
 
 
+@_fig_kwarg
 def scale_frequency_ticks(ax: Axes, funit: str, *, backend: str | None = None):
     """
     Scale frequency axis ticks.
@@ -242,7 +296,9 @@ def scale_frequency_ticks(ax: Axes, funit: str, *, backend: str | None = None):
     Parameters
     ----------
     ax : plt.Axes
-        Matplotlib figure axe, or with plotly the plotly Figure
+        Matplotlib figure axe
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     funit : str
         frequency unit string as in :data:`~skrf.frequency.Frequency.unit`
     backend : {'matplotlib', 'plotly'}, optional
@@ -294,6 +350,7 @@ def scale_frequency_ticks(ax: Axes, funit: str, *, backend: str | None = None):
     ticks_x = ticker.FuncFormatter(lambda x, pos: f'{x * scale:g}')
     ax.xaxis.set_major_formatter(ticks_x)
 
+@_fig_kwarg
 def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
           border: bool = False, ax: Axes | None = None, ref_imm: float = 1.0,
           draw_vswr: list | bool | None = None, backend: str | None = None):
@@ -327,6 +384,8 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     ax : :class:`matplotlib.pyplot.Axes` or None, optional
         existing axes to draw smith chart on.
         Default is None (creates a new figure)
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     ref_imm : number, optional
         Reference immittance for center of Smith chart. Only changes
         labels, if printed.
@@ -543,6 +602,7 @@ def _smith_grid(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = F
     return circles, labels
 
 
+@_fig_kwarg
 def plot_rectangular(x: NumberLike, y: NumberLike,
                      x_label: str | None = None, y_label: str | None = None,
                      title: str | None = None, show_legend: bool = True,
@@ -569,9 +629,10 @@ def plot_rectangular(x: NumberLike, y: NumberLike,
         whether or not to autoscale the axis. Default is 'tight'
     ax : :class:`matplotlib.axes.AxesSubplot` object or None, optional.
         axes to draw on. Default is None (creates a new figure)
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` may be a plotly Figure to add the trace to.
     \*args, \*\*kwargs : passed to pylab.plot (or :class:`plotly.graph_objects.Scatter`)
 
     Returns
@@ -643,10 +704,10 @@ def _plotly_figure(ax=None, **layout):
 
 
 def _plotly_kwargs(args: tuple, kwargs: dict) -> dict:
-    """Translate common matplotlib line keywords for go.Scatter; other keywords are passed on."""
+    """Translate the common matplotlib line keywords of skrf's own plots for go.Scatter; others are passed on."""
     if args:
         raise TypeError(f"Positional matplotlib format arguments {args!r} are not supported by the plotly "
-                        "backend, use keywords such as color=, linestyle= or marker=")
+                        "backend, use plotly keywords such as line=dict(...) or marker=dict(...)")
     kw = {_PLOTLY_ALIASES.get(k, k): v for k, v in kwargs.items()}
     color, linestyle, marker = kw.pop('color', None), kw.pop('linestyle', None), kw.pop('marker', None)
     line = dict(kw.pop('line', {}))
@@ -664,7 +725,7 @@ def _plotly_kwargs(args: tuple, kwargs: dict) -> dict:
     if 'alpha' in kw:
         kw['opacity'] = kw.pop('alpha')
     if 'label' in kw:
-        kw['name'] = str(kw.pop('label'))
+        kw.setdefault('name', str(kw.pop('label')))
     mode = [] if linestyle in _PLOTLY_NONE else ['lines']
     if 'symbol' in markers:
         mode.append('markers')
@@ -1021,6 +1082,7 @@ def _plotly_smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool =
     return ax
 
 
+@_fig_kwarg
 def plot_polar(theta: NumberLike, r: NumberLike,
                x_label: str | None = None, y_label: str | None = None,
                title: str | None = None, show_legend: bool = True,
@@ -1045,10 +1107,11 @@ def plot_polar(theta: NumberLike, r: NumberLike,
         controls the drawing of the legend. Default is True.
     ax : :class:`matplotlib.axes.AxesSubplot` object or None.
         axes to draw on. Default is None (creates a new figure).
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` may be a plotly Figure to add the trace to,
-        `theta` is in radians, `y_label` titles the radial axis, and
+        With plotly, `theta` is in radians, `y_label` titles the radial axis, and
         `x_label` and `axis_equal` are not used.
     \*args, \*\*kwargs : passed to pylab.plot (or :class:`plotly.graph_objects.Scatterpolar`)
 
@@ -1121,6 +1184,7 @@ def plot_polar(theta: NumberLike, r: NumberLike,
         plt.draw()
 
 
+@_fig_kwarg
 def plot_complex_rectangular(z: NumberLike,
                              x_label: str = 'Real', y_label: str = 'Imag',
                              title: str = 'Complex Plane', show_legend: bool = True,
@@ -1143,9 +1207,10 @@ def plot_complex_rectangular(z: NumberLike,
         controls the drawing of the legend. Default is True.
     ax : :class:`matplotlib.axes.AxesSubplot` object or None.
         axes to draw on. Default is None (creates a new figure)
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` may be a plotly Figure to add the trace to.
     \*\*kwargs : passed to pylab.plot (or :class:`plotly.graph_objects.Scatter`)
 
     Returns
@@ -1171,6 +1236,7 @@ def plot_complex_rectangular(z: NumberLike,
         ax=ax, backend='matplotlib', **kwargs)
 
 
+@_fig_kwarg
 def plot_complex_polar(z: NumberLike,
                        x_label: str | None = None, y_label: str | None = None,
                        title: str | None = None, show_legend: bool = True,
@@ -1193,6 +1259,8 @@ def plot_complex_polar(z: NumberLike,
         controls the drawing of the legend. Default is True.
     ax : :class:`matplotlib.axes.AxesSubplot` object or None.
         axes to draw on. Default is None (creates a new figure).
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
         See :func:`plot_polar`.
@@ -1217,6 +1285,7 @@ def plot_complex_polar(z: NumberLike,
         ax=ax, backend=backend, **kwargs)
 
 
+@_fig_kwarg
 def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
                x_label: str = 'Real', y_label: str = 'Imaginary', title: str = 'Complex Plane',
                show_legend: bool = True, axis: str = 'equal', ax: Axes | None = None,
@@ -1247,6 +1316,8 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
         sets axis to be equal increments. Default is 'equal'.
     ax : :class:`matplotlib.axes.AxesSubplot` object or None.
         axes to draw on. Default is None (creates a new figure).
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     force_chart : Boolean, optional.
         forces the re-drawing of smith chart. Default is False.
     draw_vswr : list of numbers, Boolean or None, optional
@@ -1256,7 +1327,6 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
         annotate chart with impedance values
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` may be a plotly Figure to add the trace to.
     \*\*kwargs : passed to pylab.plot (or :class:`plotly.graph_objects.Scatter`)
 
     Returns
@@ -1369,6 +1439,7 @@ def subplot_params(ntwk: Network, param: str = 's', proj: str = 'db',
     return f, axs
 
 
+@_fig_kwarg
 def shade_bands(edges: NumberLike, y_range: tuple | None = None,
                 cmap: str | None = None, *, ax: Axes | None = None,
                 backend: str | None = None, **kwargs):
@@ -1377,7 +1448,7 @@ def shade_bands(edges: NumberLike, y_range: tuple | None = None,
 
     When plotting data over a set of frequency bands it is nice to
     have each band visually separated from the other. The kwarg `alpha`
-    is useful.
+    is useful, or `opacity` with plotly.
 
     Parameters
     ----------
@@ -1389,9 +1460,10 @@ def shade_bands(edges: NumberLike, y_range: tuple | None = None,
         see matplotlib.cm  or matplotlib.colormaps for acceptable values,
         or with plotly a plotly colorscale name.
         Default is None: 'prism', or with plotly its qualitative colors.
-    ax : :class:`matplotlib.axes.Axes` or plotly Figure, optional
-        plot to shade, default the current matplotlib axes, or a new
-        plotly Figure with the plotly backend.
+    ax : :class:`matplotlib.axes.Axes`, optional
+        plot to shade, default the current matplotlib axes.
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
     \*\*kwargs : key word arguments
@@ -1418,7 +1490,6 @@ def shade_bands(edges: NumberLike, y_range: tuple | None = None,
         # edges in Hz, as the x data of matplotlib plots vs frequency, drawn in the unit of the figure
         unit = (ax.layout.meta if isinstance(ax.layout.meta, dict) else {}).get('skrf_frequency_unit')
         scale = Frequency.multiplier_dict[unit.lower()] if unit else 1
-        kwargs.setdefault('opacity', kwargs.pop('alpha', None))
         y = dict(y0=y_range[0], y1=y_range[1], yref='y') if y_range is not None else dict(y0=0, y1=1, yref='y domain')
         for k in range(len(edges) - 1):
             ax.add_shape(type='rect', x0=edges[k] / scale, x1=edges[k + 1] / scale, xref='x', **y,
@@ -1496,6 +1567,7 @@ def save_all_figs(dir: str = './', format: None | list[str] = None,
 
 saf = save_all_figs
 
+@_fig_kwarg
 def add_markers_to_lines(ax: Axes = None,
                          marker_list: list = None,
                          markevery: int = 10, *, backend: str | None = None):
@@ -1512,6 +1584,8 @@ def add_markers_to_lines(ax: Axes = None,
     ax : matplotlib.Axes or None, optional
         axis which to add markers to.
         Default is current axe gca()
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     marker_list : list of string, optional
         list of marker characters. Default is ['o', 'D', 's', '+', 'x'].
         see matplotlib.plot help for possible marker characters
@@ -1520,7 +1594,6 @@ def add_markers_to_lines(ax: Axes = None,
         Default is 10.
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` is the plotly Figure to add markers to.
 
     Returns
     -------
@@ -1547,6 +1620,7 @@ def add_markers_to_lines(ax: Axes = None,
     [k[0].set_marker(k[1]) for k in zip(lines, marker_list)]
     [line.set_markevery(markevery) for line in lines]
 
+@_fig_kwarg
 def legend_off(ax: Axes = None, *, backend: str | None = None):
     """
     Turn off the legend for a given axes.
@@ -1558,9 +1632,10 @@ def legend_off(ax: Axes = None, *, backend: str | None = None):
     ax : matplotlib.Axes or None, optional
         axis to operate on.
         Default is None for current axe gca()
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` is the plotly Figure whose legends are turned off.
 
     Returns
     -------
@@ -1570,6 +1645,7 @@ def legend_off(ax: Axes = None, *, backend: str | None = None):
         return _plotly_figure(ax).update_layout(showlegend=False)
     _get_axes(ax).legend_.set_visible(0)
 
+@_fig_kwarg
 def scrape_legend(n: int | None = None,
                   ax: Axes = None, *, backend: str | None = None):
     """
@@ -1587,9 +1663,10 @@ def scrape_legend(n: int | None = None,
     ax : matplotlib.Axes or None, optional
         axis to operate on.
         Default is None for current axe gca()
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` is the plotly Figure whose legend entries are scraped.
 
     Returns
     -------
@@ -1658,6 +1735,7 @@ def func_on_all_figs(func: Callable, *args, figs: list | None = None, **kwargs):
 foaf = func_on_all_figs
 
 
+@_fig_kwarg
 def plot_vector(a: complex, off: complex = 0+0j, *, ax: Axes | None = None,
                 backend: str | None = None, **kwargs):
     """
@@ -1669,14 +1747,15 @@ def plot_vector(a: complex, off: complex = 0+0j, *, ax: Axes | None = None,
         the vector (real for X, imag for Y), drawn as an arrow from `off`.
     off : complex, optional
         start of the arrow, by default 0+0j
-    ax : :class:`matplotlib.axes.Axes` or plotly Figure, optional
-        plot to draw on, default the current matplotlib axes, or a new
-        plotly Figure with the plotly backend.
+    ax : :class:`matplotlib.axes.Axes`, optional
+        plot to draw on, default the current matplotlib axes.
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
     **kwargs :
         passed to :func:`matplotlib.pyplot.quiver`, or with plotly to the Figure's
-        ``add_annotation``, where `color` sets the color of the arrow.
+        ``add_annotation``, such as `arrowcolor`.
 
     Returns
     -------
@@ -1684,8 +1763,6 @@ def plot_vector(a: complex, off: complex = 0+0j, *, ax: Axes | None = None,
     """
     if _resolve_backend(backend, ax) == 'plotly':
         ax = _plotly_figure(ax)
-        if 'color' in kwargs:
-            kwargs['arrowcolor'] = _plotly_color(kwargs.pop('color'))
         end = off + a
         ax.add_annotation(x=end.real, y=end.imag, ax=off.real, ay=off.imag, xref='x', yref='y', axref='x',
                           ayref='y', text='', showarrow=True, **{'arrowhead': 2, 'arrowwidth': 2, **kwargs})
@@ -1739,6 +1816,7 @@ def plot(netw: Network, *args, **kw):
     return netw.frequency.plot(*args, **kw)
 
 
+@_fig_kwarg
 def plot_passivity(netw: Network, port=None, label_prefix=None, *, backend: str | None = None, **kwargs):
     """
     Plot dB(diag(passivity metric)) vs frequency.
@@ -1779,6 +1857,7 @@ def plot_passivity(netw: Network, port=None, label_prefix=None, *, backend: str 
         plt.draw()
 
 
+@_fig_kwarg
 def plot_reciprocity(netw: Network, db=False, *args, backend: str | None = None, **kwargs):
     """
     Plot reciprocity metric.
@@ -1807,6 +1886,7 @@ def plot_reciprocity(netw: Network, db=False, *args, backend: str | None = None,
         plt.draw()
 
 
+@_fig_kwarg
 def plot_reciprocity2(netw: Network, db=False, *args, backend: str | None = None, **kwargs):
     """
     Plot reciprocity metric #2.
@@ -1845,6 +1925,7 @@ def plot_reciprocity2(netw: Network, db=False, *args, backend: str | None = None
         plt.draw()
 
 
+@_fig_kwarg
 def plot_s_error(netw: Network, other: Network,
                  error_function: ErrorFunctionsT = "average_l2_norm",
                  db: bool = False, *args, backend: str | None = None, **kwargs):
@@ -1908,6 +1989,7 @@ def plot_s_db_time(netw: Network, *args, window: str | float | tuple[str, float]
 
 
 # plotting
+@_fig_kwarg
 def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
         chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,
         backend: str | None = None, **kwargs):
@@ -1927,6 +2009,8 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
     ax : matplotlib.Axes object, optional
             axes to plot on. in case you want to update an existing
             plot.
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     show_legend : boolean, optional
             to turn legend show legend of not, optional
     chart_type : ['z','y']
@@ -1941,7 +2025,6 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
         draw VSWR circles. If True, default values are used.
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` may be a plotly Figure to add the traces to.
 
     \*args : arguments, optional
             passed to the matplotlib.plot command
@@ -2027,6 +2110,7 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
         ax.set_ylabel('Imaginary')
 
 
+@_fig_kwarg
 def plot_it_all(netw: Network, *args, **kwargs):
     r"""
     Plot dB, deg, smith, and complex in subplots.
@@ -2172,6 +2256,7 @@ def stylely(rc_dict: dict = None, style_file: str = 'skrf.mplstyle'):
         warnings.warn("Could not import matplotlib or plotly to style", ImportWarning, stacklevel=2)
 
 # Network Set Plotting Commands
+@_fig_kwarg
 def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
             xlims: tuple | None = None, show: bool = True,
             savefigs: bool = False, dir_: str = '.', *args, **kwargs):
@@ -2294,6 +2379,7 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
 #
 #------------------------------
 
+@_fig_kwarg
 def plot_uncertainty_bounds_component(
         self: NetworkSet, attribute: PrimaryPropertiesT,
         m: int | None = None, n: int | None = None, *,
@@ -2337,6 +2423,8 @@ def plot_uncertainty_bounds_component(
         if type=='bar', this controls frequency of error bars
     ax : matplotlib axes object
         Axes to plot on. Default is None.
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     ppf : function
         post processing function. a function applied to the
         upper and lower bounds. Default is None
@@ -2346,7 +2434,6 @@ def plot_uncertainty_bounds_component(
          (to :class:`plotly.graph_objects.Scatter` with plotly).
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` may be a plotly Figure to add the traces to.
     \*\*kwargs :
         passed to Network.plot_s_re command used to plot mean response
 
@@ -2440,6 +2527,7 @@ def plot_uncertainty_bounds_component(
         # the label of the last component, as matplotlib
         return ax.update_yaxes(title_text=self[0].Y_LABEL_DICT.get(plot_attribute[2:], ''))
 
+@_fig_kwarg
 def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: int = 0,
                                  *, type: str = 'shade',
                                  alpha: float = .3, color_error: str | None = None,
@@ -2482,6 +2570,8 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT
         if type=='bar', this controls frequency of error bars
     ax : matplotlib axes object
         Axes to plot on. Default is None.
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     ppf : function
         post processing function. a function applied to the
         upper and lower bounds. Default is None
@@ -2491,7 +2581,6 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT
          (to :class:`plotly.graph_objects.Scatter` with plotly).
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` may be a plotly Figure to add the traces to.
     \*\*kwargs :
         passed to Network.plot_s_re command used to plot mean response
 
@@ -2559,6 +2648,7 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT
     scale_frequency_ticks(ax, ntwk_mean.frequency.unit, backend='matplotlib')
     ax.axis('tight')
 
+@_fig_kwarg
 def plot_violin(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: int = 0,
                          *, widths: float = None, showmeans: bool = True,
                          showextrema: bool = True, showmedians: bool = False,
@@ -2597,10 +2687,11 @@ def plot_violin(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: 
         _description_. Defaults to None.
     ax : matplotlib axes object
         Axes to plot on. Default is None.
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` may be a plotly Figure to add the violins to; `showmedians`
-        shows a box with the median, `points` and `showextrema` are ignored, and
+        With plotly, `showmedians` shows a box with the median, `points` and `showextrema` are ignored, and
         `quantiles` and `bw_method` are not supported.
     \*\*kwargs :
         passed to :meth:`matplotlib.pyplot.violinplot` (or :class:`plotly.graph_objects.Violin`)
@@ -2696,6 +2787,7 @@ def plot_minmax_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
     kwargs.update({'ppf':mf.magnitude_2_db})
     return self.plot_minmax_bounds_component("s_time_mag", *args, **kwargs)
 
+@_fig_kwarg
 def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0, *,
                                    backend: str | None = None, **kwargs):
     r"""
@@ -2734,6 +2826,7 @@ def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0, *,
     if backend == "plotly":
         return kwargs["ax"]
 
+@_fig_kwarg
 def plot_logsigma(self: NetworkSet, label_axis: bool = True, *args, backend: str | None = None, **kwargs):
     r"""
     Plot the uncertainty for the set in units of log-sigma.
@@ -2963,6 +3056,7 @@ def plot_contour(freq: Frequency,
         plt.show()
     return GAMopt, VALopt
 
+@_fig_kwarg
 def plot_prop_complex(netw: Network, prop_name: str,
                     m=None, n=None, ax=None,
                     show_legend=True, *, backend: str | None = None, **kwargs):
@@ -2979,13 +3073,14 @@ def plot_prop_complex(netw: Network, prop_name: str,
         second index of the s-parameter matrix, if None will use all
     ax : :class:`matplotlib.Axes` object, optional
         An existing Axes object to plot on
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     show_legend : Boolean
         draw legend or not
     y_label : string, optional
         the y-axis label
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` may be a plotly Figure to add the traces to.
 
     \*args,\**kwargs : arguments, keyword arguments
         passed to :func:`matplotlib.plot`
@@ -3041,6 +3136,7 @@ def plot_prop_complex(netw: Network, prop_name: str,
 
     return ax if plotly else None
 
+@_fig_kwarg
 def plot_prop_polar(netw: Network, prop_name: str,
                     m=None, n=None, ax=None,
                     show_legend=True, *, backend: str | None = None, **kwargs):
@@ -3058,13 +3154,14 @@ def plot_prop_polar(netw: Network, prop_name: str,
         second index of the s-parameter matrix, if None will use all
     ax : :class:`matplotlib.Axes` object, optional
         An existing Axes object to plot on
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     show_legend : Boolean
         draw legend or not
     y_label : string, optional
         the y-axis label
     backend : {'matplotlib', 'plotly'}, optional
         plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `ax` may be a plotly Figure to add the traces to.
 
     \*args,\**kwargs : arguments, keyword arguments
         passed to :func:`matplotlib.plot`
