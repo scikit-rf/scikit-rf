@@ -356,6 +356,16 @@ def test_plotly_kwargs_translation(ntwk1: rf.Network):
     assert (trace.opacity, trace.name) == (0.5, "a")
     trace = ntwk1.plot_s_db(0, 0, marker=dict(size=5), backend="plotly").data[0]
     assert (trace.marker.size, trace.mode) == (5, "lines+markers")
+    trace = ntwk1.plot_s_db(0, 0, line=go.scatter.Line(color="red"), marker=go.scatter.Marker(symbol="x"),
+                            backend="plotly").data[0]
+    assert (trace.line.color, trace.marker.symbol, trace.mode) == ("red", "x", "lines+markers")
+
+@needs_plotly
+def test_plotly_rectangular_complex_x():
+    with pytest.warns(np.exceptions.ComplexWarning):
+        fig = rf.plotting.plot_rectangular(np.array([1 + 1j, 2 + 1j]), np.array([1, 2]), backend="plotly")
+    assert list(fig.data[0].x) == [1, 2]
+    fig.to_json()
 
 def _smith_grid_traces(fig) -> list:
     return [t for t in fig.data if t.meta == "skrf_smith_chart"]
@@ -660,6 +670,14 @@ def test_plotly_animate(ntwk_set_zip: NetworkSet, monkeypatch):
     assert len(saved) == len(mhz) and saved[0].endswith("out_00000.png")
     rf.plotting.options.backend = "plotly"
     assert isinstance(mhz.animate("s_db"), go.Figure)
+
+@needs_plotly
+@pytest.mark.parametrize("attr", ["s_time_db", "s_smith", "s_complex", "s_polar"])
+def test_plotly_animate_not_vs_frequency(ntwk_set_zip: NetworkSet, attr: str):
+    fig = ntwk_set_zip.animate(attr, xlims=(-1, 1), backend="plotly")
+    assert fig.layout.xaxis.range == (-1, 1)  # not scaled as a frequency
+    with pytest.raises(ValueError, match="no frequency axis"):
+        rf.plotting.scale_frequency_ticks(fig=fig, funit="MHz", backend="plotly")
 
 def test_animate_matplotlib(ntwk_set_zip: NetworkSet, mpl_axes):
     assert ntwk_set_zip.animate("s_db", show=False) is None
@@ -1063,6 +1081,13 @@ def test_plotly_scale_frequency_ticks_subplot_shapes_and_units(ntwk1: rf.Network
     assert (fig.layout.shapes[0].x0, fig.layout.shapes[0].x1) == pytest.approx((1e3, 2e3))
     assert {a: fig.layout[a].title.text for a in ("xaxis", "xaxis2", "xaxis3", "xaxis4")} == dict.fromkeys(
         ("xaxis", "xaxis2", "xaxis3", "xaxis4"), "Frequency (MHz)")
+
+@needs_plotly
+def test_plotly_scale_frequency_ticks_path_shape(ntwk1: rf.Network):
+    fig = ntwk1.plot_s_db(0, 0, backend="plotly")
+    fig.add_shape(type="path", path="M 0 0 L 1 1", xref="x", yref="y")
+    rf.plotting.scale_frequency_ticks(fig=fig, funit="MHz", backend="plotly")
+    np.testing.assert_allclose(fig.data[0].x, ntwk1.f / 1e6)
 
 @needs_plotly
 def test_plotly_scale_frequency_ticks_animation(ntwk_set_zip: NetworkSet):

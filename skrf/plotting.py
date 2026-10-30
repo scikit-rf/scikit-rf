@@ -324,7 +324,7 @@ def scale_frequency_ticks(ax: Axes, funit: str, *, backend: str | None = None):
                 if getattr(trace, 'width', None) is not None:  # such as the violins of plot_violin
                     trace.width = np.multiply(trace.width, scales[x][1])
         for shape in ax.layout.shapes:  # such as the bands of shade_bands
-            if shape.xref in scales:
+            if shape.xref in scales and None not in (shape.x0, shape.x1):  # not path shapes
                 shape.update(x0=shape.x0 * scales[shape.xref][1], x1=shape.x1 * scales[shape.xref][1])
         for axis, scale in scales.values():
             if axis.range is not None:
@@ -712,14 +712,20 @@ def _plotly_figure(ax=None, **layout):
     return ax
 
 
+def _plotly_style_dict(style):
+    """Plotly style object `style` such as a go.scatter.Line as a dict, other values are returned as they are."""
+    return style.to_plotly_json() if hasattr(style, 'to_plotly_json') else style
+
+
 def _plotly_kwargs(args: tuple, kwargs: dict) -> dict:
     """Translate the common matplotlib line keywords of skrf's own plots for go.Scatter; others are passed on."""
     if args:
         raise TypeError(f"Positional matplotlib format arguments {args!r} are not supported by the plotly "
                         "backend, use plotly keywords such as line=dict(...) or marker=dict(...)")
     kw = {_PLOTLY_ALIASES.get(k, k): v for k, v in kwargs.items()}
-    color, linestyle, marker = kw.pop('color', None), kw.pop('linestyle', None), kw.pop('marker', None)
-    line = dict(kw.pop('line', {}))
+    color, linestyle = kw.pop('color', None), kw.pop('linestyle', None)
+    marker = _plotly_style_dict(kw.pop('marker', None))
+    line = dict(_plotly_style_dict(kw.pop('line', {})))
     markers = dict(marker) if isinstance(marker, dict) else {}  # a plotly marker dict is passed on
     if color is not None:
         line['color'] = markers['color'] = _plotly_color(color)
@@ -776,6 +782,7 @@ def _plotly_rect(x: NumberLike, y: NumberLike, *args,
     trace = _plotly_kwargs(args, kwargs)
     trace.setdefault('showlegend', bool(show_legend and 'name' in trace))
     # the real part of complex data with a warning, like matplotlib, as plotly can't serialize it
+    x = np.asarray(x).astype(float) if np.iscomplexobj(x) else x
     ax.add_trace(_import_plotly().Scatter(x=x, y=np.asarray(y).astype(float), **trace))
     if x_label is not None:
         ax.update_xaxes(title_text=x_label)
@@ -2412,10 +2419,13 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
             # every frame in the frequency unit of the first Network
             fig = ntwk.__getattribute__('plot_' + attr)(*args, ax=_plotly_figure(meta={'skrf_frequency_unit': unit}),
                                                         **kwargs)
+            vs_frequency = fig.layout.xaxis.title.text == f'Frequency ({unit})'
+            if not vs_frequency:  # such as time or smith plots
+                fig.update_layout(meta=None)
             if ylims is not None:
                 fig.update_yaxes(range=ylims)
             if xlims is not None:  # in Hz for frequency, like the matplotlib x data
-                scale = 1 if 'time' in attr else ntwk.frequency.multiplier_dict[unit.lower()]
+                scale = ntwk.frequency.multiplier_dict[unit.lower()] if vs_frequency else 1
                 fig.update_xaxes(range=[x / scale for x in xlims])
             if savefigs:
                 fig.write_image(os.path.join(dir_, 'out_%.5i' % idx + '.png'))
