@@ -78,8 +78,6 @@ from ..plotting import (
     _plotly_rect,
     _resolve_backend,
     _subplots,
-    figure,
-    subplots,
 )
 
 if TYPE_CHECKING:

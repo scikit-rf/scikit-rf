@@ -220,24 +220,6 @@ def _get_axes(ax: Axes | None = None) -> Axes:
     return plt.gca() if ax is None else ax
 
 
-def axes_kwarg(func):
-    """
-    This decorator checks if a :class:`matplotlib.axes.Axes` object is passed,
-    if not the current axis will be gathered through :func:`plt.gca`.
-
-    Raises
-    ------
-    RuntimeError
-        When trying to run the decorated function without matplotlib
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        func(*args, ax=_get_axes(kwargs.pop('ax', None)), **kwargs)
-
-    return wrapper
-
-
 def figure(*args, **kwargs) -> Figure:
     """
     Wraps the matplotlib figure call and raises if not available.
@@ -327,14 +309,17 @@ def scale_frequency_ticks(ax: Axes, funit: str, *, backend: str | None = None):
             raise ValueError("the figure has no frequency axis drawn by scikit-rf")
         unit = units[funit.lower()]
         scale = FREQ_UNITS[units[meta['skrf_frequency_unit'].lower()]] / FREQ_UNITS[unit]
-        for trace in ax.data:
-            if getattr(trace, 'x', None) is not None:
+        for trace in ax.data:  # of the first subplot, the one the unit and the x-axis below belong to
+            if getattr(trace, 'xaxis', None) in (None, 'x') and getattr(trace, 'x', None) is not None:
                 trace.x = np.asarray(trace.x) * scale
+                if getattr(trace, 'width', None) is not None:  # such as the violins of plot_violin
+                    trace.width = np.multiply(trace.width, scale)
         for shape in ax.layout.shapes:  # such as the bands of shade_bands
             if shape.xref == 'x':
                 shape.update(x0=shape.x0 * scale, x1=shape.x1 * scale)
         if ax.layout.xaxis.range is not None:
-            ax.update_xaxes(range=[x * scale for x in ax.layout.xaxis.range])
+            log = ax.layout.xaxis.type == 'log'  # with its range in log10 units
+            ax.update_xaxes(range=[x + np.log10(scale) if log else x * scale for x in ax.layout.xaxis.range])
         return ax.update_layout(meta={**meta, 'skrf_frequency_unit': unit}, xaxis_title_text=f'Frequency ({unit})')
 
     from matplotlib import ticker
@@ -727,7 +712,7 @@ def _plotly_kwargs(args: tuple, kwargs: dict) -> dict:
     if 'label' in kw:
         kw.setdefault('name', str(kw.pop('label')))
     mode = [] if linestyle in _PLOTLY_NONE else ['lines']
-    if 'symbol' in markers:
+    if 'symbol' in markers or isinstance(marker, dict):
         mode.append('markers')
     kw.setdefault('mode', '+'.join(mode) or 'none')
     return {**kw, 'line': line, 'marker': markers}
@@ -765,7 +750,8 @@ def _plotly_rect(x: NumberLike, y: NumberLike, *args,
     """plotly counterpart of :func:`plot_rectangular`, drawing on the plotly Figure `ax`."""
     trace = _plotly_kwargs(args, kwargs)
     trace.setdefault('showlegend', bool(show_legend and 'name' in trace))
-    ax.add_trace(_import_plotly().Scatter(x=x, y=y, **trace))
+    # the real part of complex data with a warning, like matplotlib, as plotly can't serialize it
+    ax.add_trace(_import_plotly().Scatter(x=x, y=np.asarray(y, dtype=float), **trace))
     if x_label is not None:
         ax.update_xaxes(title_text=x_label)
     if y_label is not None:
@@ -776,11 +762,12 @@ def _plotly_rect(x: NumberLike, y: NumberLike, *args,
 
 
 def _plotly_trace_color(fig) -> str:
-    """Line color of the last trace of `fig`, set to plotly's default for its index if unset."""
+    """Line color of the last trace of `fig`, set to the color for its index in the colorway of `fig` if unset."""
     trace = fig.data[-1]
     if trace.line.color is None:
         from plotly.colors import qualitative
-        trace.line.color = qualitative.Plotly[(len(fig.data) - 1) % len(qualitative.Plotly)]
+        colorway = fig.layout.colorway or fig.layout.template.layout.colorway or qualitative.Plotly
+        trace.line.color = colorway[(len(fig.data) - 1) % len(colorway)]
     return trace.line.color
 
 
@@ -801,7 +788,8 @@ def _plotly_complex(z: NumberLike, x_label: str = 'Real', y_label: str = 'Imag',
     _plotly_rect(np.real(z), np.imag(z), x_label=x_label, y_label=y_label, title=title,
                  show_legend=show_legend, ax=ax, **kwargs)
     # pad the range of all traces by 5% like matplotlib, as plotly's autorange fits lines tightly
-    for update, values in ((ax.update_xaxes, [t.x for t in ax.data]), (ax.update_yaxes, [t.y for t in ax.data])):
+    for update, attr in ((ax.update_xaxes, 'x'), (ax.update_yaxes, 'y')):
+        values = [getattr(t, attr, None) for t in ax.data]
         values = np.concatenate([np.asarray(v, dtype=float) for v in values if v is not None])
         lo, hi = np.nanmin(values), np.nanmax(values)
         update(range=[lo - 0.05 * (hi - lo), hi + 0.05 * (hi - lo)])
@@ -829,6 +817,8 @@ def _plotly_add_panel(fig, panel, row: int, col: int, k: int, show_legend: bool 
     area of the subplot like matplotlib's legend of each Axes.
     """
     legend = f"legend{k + 1 if k else ''}"
+    if k == 0 and fig.layout.meta is None:  # the frequency unit of the first subplot
+        fig.update_layout(meta=panel.layout.meta)
     for trace in panel.data:
         trace.update(legend=legend, showlegend=bool(trace.showlegend) and show_legend)
     fig.add_traces(panel.data, rows=row, cols=col)
@@ -1475,7 +1465,7 @@ def shade_bands(edges: NumberLike, y_range: tuple | None = None,
 
     Examples
     --------
-    >>> rf.shade_bands([325,500,750,1100], alpha=.2)
+    >>> rf.plotting.shade_bands([325,500,750,1100], alpha=.2)
     """
     if _resolve_backend(backend, ax) == 'plotly':
         from plotly.colors import qualitative, sample_colorscale
@@ -1714,8 +1704,8 @@ def func_on_all_figs(func: Callable, *args, figs: list | None = None, **kwargs):
 
     Examples
     --------
-    >>> rf.func_on_all_figs(grid, alpha=.3)
-    >>> rf.func_on_all_figs(lambda fig: fig.update_xaxes(showgrid=False), figs=[fig])
+    >>> rf.plotting.func_on_all_figs(plt.grid, alpha=.3)
+    >>> rf.plotting.func_on_all_figs(lambda fig: fig.update_xaxes(showgrid=False), figs=[fig])
     """
     if figs is None:
         import matplotlib.pyplot as plt
@@ -1727,6 +1717,7 @@ def func_on_all_figs(func: Callable, *args, figs: list | None = None, **kwargs):
             continue
         import matplotlib.pyplot as plt
 
+        plt.figure(fig.number)
         for ax_n in fig.axes:
             fig.add_axes(ax_n) # trick to make axes current
             func(*args, **kwargs)
@@ -2175,6 +2166,8 @@ _PLOTLY_FONT_SCALES = {'xx-small': .579, 'x-small': .694, 'small': .833, 'medium
 
 def _plotly_style_color(value: str) -> str:
     """plotly color for a color of a matplotlib style file, where hex colors are written without '#'."""
+    if not isinstance(value, str):  # an rgb(a) tuple of `rc_dict`
+        return 'rgb({},{},{})'.format(*(round(255 * c) for c in value[:3]))
     value = value.strip()
     return '#' + value if re.fullmatch('[0-9A-Fa-f]{6}', value) else _plotly_color(value)
 
@@ -2183,7 +2176,7 @@ def _plotly_template(rc: dict):
     """
     plotly template with the settings of the matplotlib style `rc` that plotly has, on top of plotly's default.
 
-    `rc` maps the settings to their values as written in a style file.
+    `rc` maps the settings to their values, as written in a style file or as the types of rcParams.
     """
     go = _import_plotly()
     import plotly.io as pio
@@ -2191,9 +2184,9 @@ def _plotly_template(rc: dict):
     font_size = float(rc.get('font.size', 10))
 
     def value(key: str, setting: str):
-        v = rc[key].strip()
         if setting.endswith('color'):
-            return _plotly_style_color(v)
+            return _plotly_style_color(rc[key])
+        v = str(rc[key]).strip()
         if setting == 'showgrid':
             return v.lower() == 'true'
         return font_size * _PLOTLY_FONT_SCALES[v] if v in _PLOTLY_FONT_SCALES else float(v)
@@ -2204,8 +2197,10 @@ def _plotly_template(rc: dict):
             if key.format(axis) in rc:
                 layout[f'{axis}axis_{setting}'] = value(key.format(axis), setting)
     if 'axes.prop_cycle' in rc:  # cycler('color', ['348ABD', ...])
-        layout['colorway'] = [_plotly_style_color(c) for c in re.findall("'([^']*)'", rc['axes.prop_cycle'])[1:]]
-    family = rc.get('font.family', '').strip()
+        cycle = rc['axes.prop_cycle']
+        cycle = re.findall("'([^']*)'", cycle)[1:] if isinstance(cycle, str) else cycle.by_key()['color']
+        layout['colorway'] = [_plotly_style_color(c) for c in cycle]
+    family = str(rc.get('font.family', '')).strip()
     if family in ('serif', 'sans-serif', 'monospace'):
         layout['font_family'] = ', '.join(re.findall("'([^']*)'", rc.get(f'font.{family}', '')) + [family])
     template = go.layout.Template(pio.templates['plotly'])
@@ -2312,6 +2307,8 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
     """
     kwargs['backend'] = _resolve_backend(kwargs.get('backend'), kwargs.get('ax'))
     if kwargs['backend'] == 'plotly':
+        if kwargs.pop('ax', None) is not None:
+            raise TypeError("animate draws a new plotly Figure, fig is not supported")
         go = _import_plotly()
         unit = self[0].frequency.unit
         frames = []
@@ -2909,6 +2906,8 @@ def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag'
         freq = self[0].frequency
         y = [now_string_2_dt(k.name) for k in self] if vs_time else np.arange(len(self))
         fig = _plotly_figure()
+        if vmax is not None:  # plotly ignores zmax without zmin
+            kwargs.setdefault('zmin', np.nanmin(mat))
         fig.add_trace(go.Heatmap(z=mat, x=freq.f_scaled, y=y, zmax=vmax, colorbar=dict(title=cbar_label), **kwargs))
         # first Network at the top, like imshow
         return fig.update_layout(xaxis_title=f'Frequency ({freq.unit})', yaxis_title='Time' if vs_time else 'Network #',

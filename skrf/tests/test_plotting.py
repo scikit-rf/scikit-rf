@@ -351,7 +351,7 @@ def test_plotly_kwargs_translation(ntwk1: rf.Network):
     assert (trace.marker.symbol, trace.marker.size, trace.mode) == ("circle", 4, "lines+markers")
     assert (trace.opacity, trace.name) == (0.5, "a")
     trace = ntwk1.plot_s_db(0, 0, marker=dict(size=5), backend="plotly").data[0]
-    assert (trace.marker.size, trace.mode) == (5, "lines")
+    assert (trace.marker.size, trace.mode) == (5, "lines+markers")
 
 def _smith_grid_traces(fig) -> list:
     return [t for t in fig.data if t.meta == "skrf_smith_chart"]
@@ -1000,3 +1000,70 @@ def test_plotly_func_on_all_figs(ntwk1: rf.Network, mpl_axes):
     assert fig.layout.xaxis.showgrid is False
     rf.plotting.func_on_all_figs(mpl.pyplot.xlabel, "x", figs=[mpl_axes.figure])
     assert mpl_axes.get_xlabel() == "x"
+
+def test_func_on_all_figs_makes_each_figure_current(mpl_axes):
+    mpl.pyplot.figure().add_subplot()
+    seen = []
+    rf.plotting.func_on_all_figs(lambda: seen.append(mpl.pyplot.gcf().number))
+    assert seen == mpl.pyplot.get_fignums()
+
+@needs_plotly
+def test_plotly_stylely_rcparams_types(monkeypatch):
+    import plotly.io as pio
+    from cycler import cycler
+
+    monkeypatch.setattr(pio.templates, "default", pio.templates.default)  # restored after the test
+    rc = {"font.size": 12, "axes.grid": False, "grid.color": (1, 0, 0),
+          "axes.prop_cycle": cycler(color=["r", "#00ff00"], linestyle=["-", "--"])}
+    with mpl.rc_context():
+        rf.stylely(rc)
+    layout = pio.templates[pio.templates.default].layout
+    assert layout.xaxis.showgrid is False
+    assert layout.xaxis.gridcolor == "rgb(255,0,0)"
+    assert layout.colorway == ("red", "#00ff00")
+
+@needs_plotly
+def test_plotly_signature_vmax(ntwk_set_zip: NetworkSet):
+    trace = ntwk_set_zip.signature(vmax=0.5, backend="plotly").data[0]
+    assert (trace.zmin, trace.zmax) == (np.nanmin(trace.z), 0.5)
+    assert ntwk_set_zip.signature(vmax=0.5, zmin=0.1, backend="plotly").data[0].zmin == 0.1
+
+@needs_plotly
+def test_plotly_subplots_frequency_unit(ntwk1: rf.Network):
+    fig = ntwk1.plot_it_all(backend="plotly")
+    edges = ntwk1.f[[0, 40]]
+    rf.plotting.shade_bands(edges, fig=fig, backend="plotly")
+    assert fig.layout.shapes[0].x0 == pytest.approx(ntwk1.frequency.f_scaled[0])
+    others = [np.array(t.x) for t in fig.data if t.xaxis != "x" and t.x is not None]
+    x = next(t.x for t in fig.data if t.xaxis == "x")[0]
+    rf.plotting.scale_frequency_ticks(funit="MHz", fig=fig, backend="plotly")
+    assert next(t.x for t in fig.data if t.xaxis == "x")[0] == pytest.approx(x * 1e3)
+    for before, after in zip(others, [t.x for t in fig.data if t.xaxis != "x" and t.x is not None]):
+        np.testing.assert_array_equal(before, after)
+
+@needs_plotly
+def test_plotly_scale_frequency_ticks_log_axis(ntwk1: rf.Network):
+    fig = ntwk1.plot_s_db(0, 0, logx=True, backend="plotly").update_xaxes(range=[0.5, 1])
+    rf.plotting.scale_frequency_ticks(funit="MHz", fig=fig, backend="plotly")
+    assert fig.layout.xaxis.range == pytest.approx((3.5, 4))
+
+@needs_plotly
+def test_plotly_scale_frequency_ticks_violin(ntwk_set_zip: NetworkSet):
+    fig = ntwk_set_zip.plot_violin("s_db", backend="plotly")
+    width = fig.data[0].width
+    rf.plotting.scale_frequency_ticks(funit="MHz", fig=fig, backend="plotly")
+    assert fig.data[0].width == pytest.approx(width * 1e3)
+
+@needs_plotly
+def test_plotly_bounds_follow_colorway(ntwk_set_zip: NetworkSet):
+    for colorway in (dict(colorway=["#111111"]), dict(template=dict(layout=dict(colorway=["#111111"])))):
+        fig = go.Figure(layout=colorway)
+        ntwk_set_zip.plot_uncertainty_bounds_component("s_mag", 0, 0, fig=fig, backend="plotly")
+        assert fig.data[0].line.color == "#111111"
+
+@needs_plotly
+def test_plotly_frequency_plot_complex(ntwk1: rf.Network):
+    with pytest.warns(match="imaginary part"):
+        fig = ntwk1.frequency.plot(ntwk1.s[:, 0, 0], backend="plotly")
+    np.testing.assert_array_equal(fig.data[0].y, ntwk1.s[:, 0, 0].real)
+    fig.to_json()
