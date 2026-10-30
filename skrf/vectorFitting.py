@@ -15,7 +15,15 @@ if TYPE_CHECKING:
 
 from .network import Network
 from .networkSet import NetworkSet
-from .plotting import _fig_kwarg, _get_axes, _import_plotly, _plotly_figure, _plotly_rect, _resolve_backend
+from .plotting import (
+    _fig_kwarg,
+    _get_axes,
+    _import_plotly,
+    _plotly_figure,
+    _plotly_hz_x,
+    _plotly_rect,
+    _resolve_backend,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -2162,8 +2170,8 @@ class VectorFitting:
                             y_vals = np.imag(responses[:, i, j])
 
                         if plotly:
-                            _plotly_rect(self.network.f, y_vals, ax=ax, color='r', marker='o', linestyle='none',
-                                         label=label)
+                            _plotly_rect(_plotly_hz_x(ax, self.network.f)[0], y_vals, ax=ax, color='r', marker='o',
+                                         linestyle='none', label=label)
                         else:
                             ax.scatter(self.network.f, y_vals, color='r', label=label)
 
@@ -2209,7 +2217,7 @@ class VectorFitting:
                         y_label = 'Imaginary Part'
 
                     if plotly:
-                        _plotly_rect(freqs, y_vals, ax=ax, color='k', label=label)
+                        _plotly_rect(_plotly_hz_x(ax, freqs)[0], y_vals, ax=ax, color='k', label=label)
                     else:
                         ax.plot(freqs, y_vals, color='k', label=label)
 
@@ -2218,7 +2226,7 @@ class VectorFitting:
             if plotly:
                 if title is not None:
                     ax.update_layout(title_text=title)
-                return ax.update_layout(xaxis_title='Frequency (Hz)', yaxis_title=y_label)
+                return ax.update_layout(xaxis_title=_plotly_hz_x(ax, freqs)[1], yaxis_title=y_label)
 
             ax.set_xlabel('Frequency (Hz)')
             ax.set_ylabel(y_label)
@@ -2434,8 +2442,8 @@ class VectorFitting:
         # plot the frequency response of each singular value
         for n in range(n_ports):
             if plotly:
-                _plotly_rect(freqs, sigma[:, n], ax=ax, label=f'σ{n + 1}', x_label='Frequency (Hz)',
-                             y_label='Magnitude')
+                x, x_label = _plotly_hz_x(ax, freqs)
+                _plotly_rect(x, sigma[:, n], ax=ax, label=f'σ{n + 1}', x_label=x_label, y_label='Magnitude')
             else:
                 ax.plot(freqs, sigma[:, n], label=fr'$\sigma_{n + 1}$')
         if plotly:

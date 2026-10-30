@@ -348,12 +348,11 @@ def test_plotly_errors(ntwk1: rf.Network, mpl_axes):
 def test_plotly_kwargs_translation(ntwk1: rf.Network):
     # the keywords of skrf's own plots, not available to users
     fig = rf.plotting._plotly_figure()
-    rf.plotting._plotly_rect(ntwk1.f, ntwk1.s_db[:, 0, 0], ax=fig, c="r", ls="--", lw=2, marker="o", ms=4, alpha=0.5,
-                             label="a")
+    rf.plotting._plotly_rect(ntwk1.f, ntwk1.s_db[:, 0, 0], ax=fig, color="r", linestyle="--", marker="o", label="a")
     trace = fig.data[0]
-    assert (trace.line.color, trace.line.dash, trace.line.width) == ("red", "dash", 2)
-    assert (trace.marker.symbol, trace.marker.size, trace.mode) == ("circle", 4, "lines+markers")
-    assert (trace.opacity, trace.name) == (0.5, "a")
+    assert (trace.line.color, trace.line.dash) == ("red", "dash")
+    assert (trace.marker.symbol, trace.mode) == ("circle", "lines+markers")
+    assert trace.name == "a"
     trace = ntwk1.plot_s_db(0, 0, marker=dict(size=5), backend="plotly").data[0]
     assert (trace.marker.size, trace.mode) == (5, "lines+markers")
     trace = ntwk1.plot_s_db(0, 0, line=go.scatter.Line(color="red"), marker=go.scatter.Marker(symbol="x"),
@@ -1301,3 +1300,93 @@ def test_plotly_uncertainty_color_error(ntwk_set_zip: NetworkSet, kind: str):
 def test_plotly_minmax_color_error(ntwk_set_zip: NetworkSet):
     fig = ntwk_set_zip.plot_minmax_bounds_component("s_mag", 0, 0, color_error="0.5", backend="plotly")
     assert fig.data[-1].fillcolor == "rgb(128,128,128)"
+
+@needs_plotly
+def test_plotly_vector_fitting_frequency_unit(ntwk1: rf.Network):
+    vf = rf.vectorFitting.VectorFitting(ntwk1)
+    vf.poles = np.array([-1e9, -1e9 + 6e9j])
+    vf.residues = np.ones((4, 2), dtype=complex)
+    vf.constant_coeff = np.zeros(4)
+    vf.proportional_coeff = np.zeros(4)
+    fig = vf.plot_s_db(0, 0, fig=ntwk1.plot_s_db(0, 0, backend="plotly"), backend="plotly")
+    for trace in fig.data:
+        np.testing.assert_allclose(trace.x, ntwk1.frequency.f_scaled)
+    assert fig.layout.xaxis.title.text == f"Frequency ({ntwk1.frequency.unit})"
+    fig = vf.plot_s_singular(fig=ntwk1.plot_s_db(0, 0, backend="plotly"), backend="plotly")
+    np.testing.assert_allclose(fig.data[-1].x, ntwk1.frequency.f_scaled)
+    fig = vf.plot_s_db(0, 0, backend="plotly")  # in Hz like matplotlib on a new figure
+    np.testing.assert_allclose(fig.data[0].x, ntwk1.f)
+    assert fig.layout.xaxis.title.text == "Frequency (Hz)"
+
+@needs_plotly
+@pytest.mark.filterwarnings("ignore:divide by zero:RuntimeWarning")
+@pytest.mark.parametrize("plot", ["fd_se_fer", "se_nzc_residuals"])
+def test_plotly_panels_use_figure_unit(deembedding, plot: str):
+    fig = deembedding[plot](backend="plotly")
+    unit = fig.layout.meta["skrf_frequency_unit"]
+    rf.plotting.scale_frequency_ticks(fig=fig, funit="kHz" if unit != "kHz" else "MHz", backend="plotly")
+    n, x = len(fig.data), fig.data[0].x[-1]
+    deembedding[plot](fig=fig, backend="plotly")
+    np.testing.assert_allclose(fig.data[n].x[-1], x)
+    assert fig.layout.xaxis.title.text == f"Frequency ({fig.layout.meta['skrf_frequency_unit']})"
+
+@needs_plotly
+def test_plotly_uncertainty_single_frequency(ntwk1: rf.Network):
+    ntwk_set = NetworkSet([ntwk1[:1], ntwk1[:1]])
+    assert len(ntwk_set.plot_uncertainty_bounds_s_mag(m=0, n=0, backend="plotly").data) == 2
+
+@needs_plotly
+def test_plotly_network_set_positional_ax(ntwk_set_zip: NetworkSet):
+    n = len(ntwk_set_zip)
+    assert len(ntwk_set_zip.plot_s_db(0, 0, None, False, backend="plotly").data) == n
+    assert len([t for t in ntwk_set_zip.plot_s_smith(0, 0, 1, None, backend="plotly").data if t.name]) == n
+
+@needs_plotly
+def test_plotly_shade_bands_before_traces(ntwk1: rf.Network):
+    fig = rf.plotting.shade_bands(ntwk1.f[[0, 40]], fig=go.Figure(), backend="plotly")
+    ntwk1.plot_s_db(0, 0, fig=fig, backend="plotly")
+    assert fig.layout.shapes[0].x0 == pytest.approx(fig.data[0].x[0])
+
+@needs_plotly
+def test_plotly_overlay_on_subplots(ntwk1: rf.Network):
+    def other_axes(fig):
+        return [(a.title.text, a.showticklabels) for a in (*fig.select_xaxes(), *fig.select_yaxes())
+                if a.plotly_name not in ("xaxis", "yaxis")]
+
+    fig = ntwk1.plot_it_all(backend="plotly")
+    axes = other_axes(fig)
+    ntwk1.plot_s_db(0, 0, fig=fig, backend="plotly")
+    ntwk1.plot_s_smith(0, 0, fig=fig, backend="plotly")
+    ntwk1.plot_s_complex(0, 0, fig=fig, backend="plotly")
+    assert other_axes(fig) == axes
+
+@needs_plotly
+def test_plotly_kwargs_override_defaults(ntwk1: rf.Network, ntwk_set_zip: NetworkSet):
+    fig = ntwk_set_zip.plot_minmax_bounds_s_db(backend="plotly", kwargs_error=dict(opacity=0.2))
+    assert fig.data[-1].opacity == 0.2
+    fig = ntwk_set_zip.plot_uncertainty_bounds_s_db(m=0, n=0, backend="plotly", kwargs_error=dict(showlegend=True))
+    assert fig.data[-1].showlegend
+    assert ntwk_set_zip.signature(zmax=1, colorbar=dict(title="x"), backend="plotly").data[0].zmax == 1
+    fig = rf.plotting.shade_bands(ntwk1.f[[0, 40]], fillcolor="red", fig=ntwk1.plot_s_db(0, 0, backend="plotly"),
+                                  backend="plotly")
+    assert fig.layout.shapes[0].fillcolor == "red"
+
+def test_uncertainty_decomposition_title_on_ax(ntwk_set_zip: NetworkSet):
+    _, (ax, other) = mpl.pyplot.subplots(1, 2)
+    ntwk_set_zip.name = "set"
+    ntwk_set_zip.plot_uncertainty_decomposition(ax=ax)
+    assert ax.get_title().startswith("Uncertainty Decomposition")
+    assert other.get_title() == ""
+
+@needs_plotly
+def test_plotly_scale_frequency_ticks_user_meta(ntwk1: rf.Network):
+    fig = ntwk1.plot_s_db(0, 0, fig=go.Figure(layout=dict(meta="mine")), backend="plotly")
+    rf.plotting.scale_frequency_ticks(fig=fig, funit="MHz", backend="plotly")
+    assert fig.layout.meta == "mine"
+    with pytest.raises(TypeError, match="arguments after ax are keywords"):
+        rf.plotting.scale_frequency_ticks("MHz", fig=fig, backend="plotly")
+
+@needs_plotly
+def test_plotly_add_markers_without_x():
+    fig = rf.plotting.add_markers_to_lines(fig=go.Figure(go.Scatter(y=[1, 2, 3])), backend="plotly")
+    assert fig.data[0].mode == "lines+markers"

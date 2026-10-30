@@ -5290,7 +5290,7 @@ class Network:
                             # plotly has no tick formatter, so plot f in the figure's frequency unit
                             x, xlabel = rfplt._plotly_frequency_x(ax, self.frequency)
                             if logx:
-                                ax.update_xaxes(type='log')
+                                ax.update_layout(xaxis_type='log')
                         else:
                             # scale the ticklabels according to the frequency unit and set log-scale if desired:
                             if logx:

@@ -726,8 +726,7 @@ class Frequency:
         ax : :class:`matplotlib.Axes` or None, optional
                 Axes on which to label the plot.
                 Defaults is None, for the current axe
-                returned by :func:`matplotlib.gca()`,
-                or with plotly the plotly Figure to label.
+                returned by :func:`matplotlib.gca()`.
         fig : plotly Figure, optional
             figure to draw on with the plotly backend.
         backend : {'matplotlib', 'plotly'}, optional
@@ -740,7 +739,7 @@ class Frequency:
         from .plotting import _get_axes, _plotly_figure, _resolve_backend
 
         if _resolve_backend(backend, ax) == 'plotly':
-            return _plotly_figure(ax).update_xaxes(title_text=f'Frequency ({self.unit})')
+            return _plotly_figure(ax).update_layout(xaxis_title_text=f'Frequency ({self.unit})')
         _get_axes(ax).set_xlabel(f'Frequency ({self.unit})')
 
     @_fig_kwarg
@@ -751,7 +750,7 @@ class Frequency:
         This plots whatever is given vs. `self.f_scaled` and then
         calls `labelXAxis`. With the plotly `backend` (default
         ``skrf.plotting.options.backend``), it draws on the plotly Figure
-        `ax`, or a new one, and returns it.
+        `fig`, or a new one, and returns it.
         """
 
         from .plotting import (
