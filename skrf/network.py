@@ -5204,7 +5204,7 @@ class Network:
 
     """
 
-    @rfplt._fig_kwarg
+    @rfplt._validate_plot_args
     def plot_attribute(     self,
                             attribute: PrimaryPropertiesT,
                             conversion: ComponentFuncT,
@@ -5216,8 +5216,8 @@ class Network:
                             logx=False, backend=None, *, fig=None, **kwargs):
 
         plotly = rfplt._resolve_backend(backend, ax, fig) == 'plotly'
-        fig = rfplt._plotly_figure(fig) if plotly else None
-        ax = None if plotly else rfplt._get_axes(ax)
+        fig = rfplt._get_plotly_figure(fig) if plotly else None
+        ax = rfplt._get_matplotlib_axes(ax) if not plotly else None
         plot_rect = (partial(rfplt._plotly_rect, fig=fig) if plotly
                      else partial(rfplt.plot_rectangular, ax=ax, backend='matplotlib'))
 
@@ -5342,7 +5342,7 @@ class Network:
     def plot_s_db_time(self, center_to_dc=None, *args, **kwargs):
         return rfplt.plot_s_db_time(self, *args, center_to_dc=center_to_dc, **kwargs)
 
-    @rfplt._fig_kwarg
+    @rfplt._validate_plot_args
     @copy_doc(rfplt.plot_s_smith)
     def plot_s_smith(self, m=None, n=None,r=1, ax=None, show_legend=True,\
         chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):

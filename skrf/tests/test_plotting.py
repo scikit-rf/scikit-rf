@@ -347,7 +347,7 @@ def test_plotly_errors(ntwk1: rf.Network, mpl_axes):
 @needs_plotly
 def test_plotly_kwargs_translation(ntwk1: rf.Network):
     # the keywords of skrf's own plots, not available to users
-    fig = rf.plotting._plotly_figure()
+    fig = rf.plotting._get_plotly_figure()
     rf.plotting._plotly_rect(ntwk1.f, ntwk1.s_db[:, 0, 0], fig=fig, color="r", linestyle="--", marker="o", label="a")
     trace = fig.data[0]
     assert (trace.line.color, trace.line.dash) == ("red", "dash")
@@ -1205,7 +1205,7 @@ def test_plotly_stylely_settings(ntwk1: rf.Network, monkeypatch):
 def test_networkset_creation_adds_methods_once(ntwk1: rf.Network, monkeypatch):
     NetworkSet([ntwk1])
     calls = []
-    monkeypatch.setattr(rf.plotting, "_fig_kwarg", lambda func: calls.append(func) or func)
+    monkeypatch.setattr(rf.plotting, "_validate_plot_args", lambda func: calls.append(func) or func)
     NetworkSet([ntwk1])
     assert not calls
 
@@ -1413,7 +1413,7 @@ def test_plotly_fig_on_network_set_plot(ntwk_set_zip: NetworkSet):
 def test_plot_functions_take_fig_as_fig():
     received = {}
 
-    @rf.plotting._fig_kwarg
+    @rf.plotting._validate_plot_args
     def plot(ax=None, *, fig=None):
         received.update(ax=ax, fig=fig)
 

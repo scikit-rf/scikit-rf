@@ -71,14 +71,14 @@ from numpy.linalg import norm
 from ..frequency import Frequency
 from ..network import Network, concat_ports, overlap_multi, subnetwork
 from ..plotting import (
-    _fig_kwarg,
     _figure,
     _frequency_x,
-    _get_axes,
-    _plotly_figure,
+    _get_matplotlib_axes,
+    _get_plotly_figure,
     _plotly_rect,
     _resolve_backend,
     _subplots,
+    _validate_plot_args,
 )
 
 if TYPE_CHECKING:
@@ -1530,30 +1530,30 @@ class IEEEP370_FER:
     Circuit Board and Related Interconnects at Frequencies up to 50 GHz",
     IEEE 370-2020.
     """
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_constant_limit(self, frequency: Frequency, value: float, ax: Axes = None,
                             backend: str | None = None, *, fig = None, **kwargs) -> None:
         """
         Plot a constant limit line.
         """
         plotly = _resolve_backend(backend, ax, fig) == 'plotly'
-        fig = _plotly_figure(fig) if plotly else None
-        draw = partial(_plotly_rect, fig = fig) if plotly else _get_axes(ax).plot
+        fig = _get_plotly_figure(fig) if plotly else None
+        draw = partial(_plotly_rect, fig = fig) if plotly else _get_matplotlib_axes(ax).plot
         draw(_frequency_x(fig, frequency)[[0, -1]], [value, value], **kwargs)
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_relative_limit(self, x: ndarray, y: ndarray, value: float, ax: Axes = None,
                             backend: str | None = None, *, fig = None, **kwargs) -> None:
         """
         Plot positive and negative relative limit line around a reference trace.
         """
         plotly = _resolve_backend(backend, ax, fig) == 'plotly'
-        draw = partial(_plotly_rect, fig = _plotly_figure(fig)) if plotly else _get_axes(ax).plot
+        draw = partial(_plotly_rect, fig = _get_plotly_figure(fig)) if plotly else _get_matplotlib_axes(ax).plot
         draw(x, y * (1.0 + value), **kwargs)
         kwargs['label'] = '_nolabel_'
         draw(x, y * (1.0 - value), **kwargs)
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_limit_fer1(self, frequency: Frequency, ax: Axes = None,
                         backend: str | None = None, *, fig = None) -> None:
         """
@@ -1564,7 +1564,7 @@ class IEEEP370_FER:
         self.plot_constant_limit(frequency, -15, ax, backend = backend, fig = fig, color = 'r',
                             linestyle = 'dashed', label = 'Minimum B, C')
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_limit_fer2(self, frequency: Frequency, ax: Axes = None,
                         backend: str | None = None, *, fig = None) -> None:
         """
@@ -1577,7 +1577,7 @@ class IEEEP370_FER:
         self.plot_constant_limit(frequency, -6, ax, backend = backend, fig = fig, color = 'r',
                             linestyle = 'dashed', label = 'Maximum C')
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_limit_fer3(self, frequency: Frequency, ax: Axes = None,
                         backend: str | None = None, *, fig = None) -> None:
         """
@@ -1588,7 +1588,7 @@ class IEEEP370_FER:
         self.plot_constant_limit(frequency, 0, ax, backend = backend, fig = fig, color = 'r',
                             linestyle = 'dashed', label = 'Minimum B, C')
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_limit_fer5(self, x: ndarray, y: ndarray, ax: Axes = None,
                         backend: str | None = None, *, fig = None) -> None:
         """
@@ -1601,7 +1601,7 @@ class IEEEP370_FER:
         self.plot_relative_limit(x, y, 0.1, ax, backend = backend, fig = fig, linestyle = 'dashed', color = 'r',
                                      label = 'Limit C ±10%')
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_limit_fer6(self, frequency: Frequency, ax: Axes = None,
                         backend: str | None = None, *, fig = None) -> None:
         """
@@ -3483,7 +3483,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
         return (s_side1, s_side2)
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
@@ -3528,7 +3528,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
         return fig.to_plotly() if backend == 'plotly' else (fig, ax)
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
                              window: str = 'hamming', *, fig = None,
                              backend: str | None = None) -> (Figure, Axes):
@@ -3883,7 +3883,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
 
         return (se_side1, se_side2)
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
@@ -3933,7 +3933,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
 
         return fig.to_plotly() if backend == 'plotly' else (fig, ax)
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
                              window: str = 'hamming', *, fig = None,
                              backend: str | None = None) -> (Figure, Axes):
@@ -4507,7 +4507,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         # unflip FIX-2 as per IEEEP370 numbering recommendation
         return (s_side1, s_side2.flipped())
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
@@ -4552,7 +4552,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
         return fig.to_plotly() if backend == 'plotly' else (fig, ax)
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
                              window: str = 'hamming', *, fig = None,
                              backend: str | None = None) -> (Figure, Axes):
@@ -4944,7 +4944,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
 
         return (se_side1, se_side2)
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
@@ -4994,7 +4994,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
 
         return fig.to_plotly() if backend == 'plotly' else (fig, ax)
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
                              window: str = 'hamming', *, fig = None,
                              backend: str | None = None) -> (Figure, Axes):

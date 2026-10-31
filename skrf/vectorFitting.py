@@ -16,13 +16,13 @@ if TYPE_CHECKING:
 from .network import Network
 from .networkSet import NetworkSet
 from .plotting import (
-    _fig_kwarg,
-    _get_axes,
+    _get_matplotlib_axes,
+    _get_plotly_figure,
     _import_plotly,
-    _plotly_figure,
     _plotly_hz_x,
     _plotly_rect,
     _resolve_backend,
+    _validate_plot_args,
 )
 
 logger = logging.getLogger(__name__)
@@ -2054,7 +2054,7 @@ class VectorFitting:
                 resp += residues[i] / (s - pole) + np.conjugate(residues[i]) / (s - np.conjugate(pole))
         return resp
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None,
              parameter: str = 's', *, ax: Axes = None, fig=None, backend: str | None = None) -> Axes:
         """
@@ -2111,8 +2111,8 @@ class VectorFitting:
         """
 
         plotly = _resolve_backend(backend, ax, fig) == 'plotly'
-        fig = _plotly_figure(fig) if plotly else None
-        ax = None if plotly else _get_axes(ax)
+        fig = _get_plotly_figure(fig) if plotly else None
+        ax = _get_matplotlib_axes(ax) if not plotly else None
 
         components = ['db', 'mag', 'deg', 'deg_unwrap', 're', 'im']
         if component.lower() in components:
@@ -2390,7 +2390,7 @@ class VectorFitting:
 
         return self.plot('im', *args, **kwargs)
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_s_singular(self, freqs: Any = None, *, ax: Axes = None, fig=None, backend: str | None = None) -> Axes:
         """
         Plots the singular values of the vector fitted S-matrix in linear scale.
@@ -2422,8 +2422,8 @@ class VectorFitting:
         """
 
         plotly = _resolve_backend(backend, ax, fig) == 'plotly'
-        fig = _plotly_figure(fig) if plotly else None
-        ax = None if plotly else _get_axes(ax)
+        fig = _get_plotly_figure(fig) if plotly else None
+        ax = _get_matplotlib_axes(ax) if not plotly else None
 
         if freqs is None:
             if self.network is None:
@@ -2455,7 +2455,7 @@ class VectorFitting:
         ax.legend(loc='best')
         return ax
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_convergence(self, ax: Axes = None, backend: str | None = None, *, fig=None) -> Axes:
         """
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
@@ -2480,7 +2480,7 @@ class VectorFitting:
         """
 
         if _resolve_backend(backend, ax, fig) == 'plotly':
-            fig = _plotly_figure(fig)
+            fig = _get_plotly_figure(fig)
             _plotly_rect(np.arange(len(self.delta_max_history)) + 1, self.delta_max_history, fig=fig, color='darkblue',
                          x_label='Iteration step')
             # the residue on a second y-axis, like twinx()
@@ -2490,7 +2490,7 @@ class VectorFitting:
                 yaxis=dict(type='log', title_text='Max. relative change', title_font_color='darkblue'),
                 yaxis2=dict(overlaying='y', side='right', title_text='Residue', title_font_color='orangered'))
 
-        ax = _get_axes(ax)
+        ax = _get_matplotlib_axes(ax)
         ax.semilogy(np.arange(len(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
         ax.set_xlabel('Iteration step')
         ax.set_ylabel('Max. relative change', color='darkblue')
@@ -2499,7 +2499,7 @@ class VectorFitting:
         ax2.set_ylabel('Residue', color='orangered')
         return ax
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_passivation(self, ax: Axes = None, backend: str | None = None, *, fig=None) -> Axes:
         """
         Plots the history of the greatest singular value during the iterative passivity enforcement process, which
@@ -2525,9 +2525,9 @@ class VectorFitting:
 
         if _resolve_backend(backend, ax, fig) == 'plotly':
             return _plotly_rect(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma,
-                                fig=_plotly_figure(fig), x_label='Iteration step', y_label='Max. singular value')
+                                fig=_get_plotly_figure(fig), x_label='Iteration step', y_label='Max. singular value')
 
-        ax = _get_axes(ax)
+        ax = _get_matplotlib_axes(ax)
         ax.plot(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma)
         ax.set_xlabel('Iteration step')
         ax.set_ylabel('Max. singular value')

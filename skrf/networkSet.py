@@ -461,7 +461,7 @@ class NetworkSet:
         def func(self,  *args, **kwargs):
             return self.element_wise_method(network_method_name, *args, **kwargs)
 
-        @skrf_plt._fig_kwarg
+        @skrf_plt._validate_plot_args
         def plot_func(self,  *args, **kwargs):
             kwargs['backend'] = skrf_plt._resolve_backend(kwargs.get('backend'), kwargs.get('ax'), kwargs.get('fig'))
             if kwargs['backend'] == 'plotly':

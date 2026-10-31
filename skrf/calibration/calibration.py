@@ -143,7 +143,14 @@ from ..network import (
     zipfile,
 )
 from ..networkSet import NetworkSet
-from ..plotting import _fig_kwarg, _get_axes, _plotly_figure, _plotly_subplots, _resolve_backend, subplots
+from ..plotting import (
+    _get_matplotlib_axes,
+    _get_plotly_figure,
+    _plotly_subplots,
+    _resolve_backend,
+    _validate_plot_args,
+    subplots,
+)
 
 logger = getLogger(__name__)
 
@@ -1006,7 +1013,7 @@ class Calibration:
 
         write(file,self, *args, **kwargs)
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_calibration_errors(self, *args, ax: Axes = None, fig=None, backend: str | None = None, **kwargs):
         r"""
         Plot biased, unbiased and total error in dB scaled.
@@ -1014,17 +1021,17 @@ class Calibration:
         Parameters
         ----------
         ax : :class:`matplotlib.axes.Axes`, optional
-            axes to draw on, default the current matplotlib axes.
+            axes to draw on with matplotlib backend.
         fig : plotly Figure, optional
             figure to draw on with the plotly backend.
         backend : {'matplotlib', 'plotly'}, optional
-            plotting backend, default ``skrf.plotting.options.backend``.
+            plotting backend to use, default ``skrf.plotting.options.backend`` if unspecified.
         \*\*kwargs : kwargs
             passed to :meth:`NetworkSet.plot_s_db`
 
         Returns
         -------
-        None, or the plotly Figure with the plotly backend
+        None, or plotly Figure if using plotly backend
 
         See Also
         --------
@@ -1033,8 +1040,8 @@ class Calibration:
         total_error
         """
         backend = _resolve_backend(backend, ax, fig)
-        fig = _plotly_figure(fig) if backend == 'plotly' else None
-        ax = None if backend == 'plotly' else _get_axes(ax)
+        fig = _get_plotly_figure(fig) if backend == 'plotly' else None
+        ax = _get_matplotlib_axes(ax) if backend == 'matplotlib' else None
         port_list = self.biased_error.port_tuples
         for m,n in port_list:
             title = f"S{self.biased_error._fmt_trace_name(m,n)}"
@@ -1096,7 +1103,7 @@ class Calibration:
         fig.tight_layout()
 
 
-    @_fig_kwarg
+    @_validate_plot_args
     def plot_residuals(self, attr: str = 's_db', **kwargs):
         r"""
         Plot residual networks.
@@ -6393,7 +6400,7 @@ def unterminate(ntwk, gamma_f, gamma_r):
 
     Parameters
     ----------
-    ntwk : 2-port Network
+    two_port : 2-port Network
         the raw measurement
     gamma_f : 1-port Network
         the measured forward switch term.
@@ -6438,7 +6445,7 @@ def terminate(ntwk, gamma_f, gamma_r):
 
     Parameters
     ----------
-    ntwk : 2-port Network
+    two_port : 2-port Network
         an unterminated network
     gamma_f : 1-port Network
         measured forward switch term.
@@ -6482,7 +6489,7 @@ def terminate_nport(ntwk, gammas):
 
     Parameters
     ----------
-    ntwk : Network
+    two_port : Network
         an unterminated network.
     gammas : list of 1-port Network
         measured switch term.
