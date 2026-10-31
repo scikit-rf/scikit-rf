@@ -74,6 +74,7 @@ from ..plotting import (
     _fig_kwarg,
     _figure,
     _frequency_x,
+    _get_axes,
     _plotly_figure,
     _plotly_rect,
     _resolve_backend,
@@ -1530,82 +1531,83 @@ class IEEEP370_FER:
     IEEE 370-2020.
     """
     @_fig_kwarg
-    def plot_constant_limit(self, frequency: Frequency, value: float, ax: Axes,
-                            backend: str | None = None, **kwargs) -> None:
+    def plot_constant_limit(self, frequency: Frequency, value: float, ax: Axes = None,
+                            backend: str | None = None, *, fig = None, **kwargs) -> None:
         """
         Plot a constant limit line.
         """
-        backend = _resolve_backend(backend, ax)
-        draw = partial(_plotly_rect, ax = _plotly_figure(ax)) if backend == 'plotly' else ax.plot
-        draw(_frequency_x(ax, frequency)[[0, -1]], [value, value], **kwargs)
+        plotly = _resolve_backend(backend, ax, fig) == 'plotly'
+        fig = _plotly_figure(fig) if plotly else None
+        draw = partial(_plotly_rect, fig = fig) if plotly else _get_axes(ax).plot
+        draw(_frequency_x(fig, frequency)[[0, -1]], [value, value], **kwargs)
 
     @_fig_kwarg
-    def plot_relative_limit(self, x: ndarray, y: ndarray, value: float, ax: Axes,
-                            backend: str | None = None, **kwargs) -> None:
+    def plot_relative_limit(self, x: ndarray, y: ndarray, value: float, ax: Axes = None,
+                            backend: str | None = None, *, fig = None, **kwargs) -> None:
         """
         Plot positive and negative relative limit line around a reference trace.
         """
-        backend = _resolve_backend(backend, ax)
-        draw = partial(_plotly_rect, ax = _plotly_figure(ax)) if backend == 'plotly' else ax.plot
+        plotly = _resolve_backend(backend, ax, fig) == 'plotly'
+        draw = partial(_plotly_rect, fig = _plotly_figure(fig)) if plotly else _get_axes(ax).plot
         draw(x, y * (1.0 + value), **kwargs)
         kwargs['label'] = '_nolabel_'
         draw(x, y * (1.0 - value), **kwargs)
 
     @_fig_kwarg
-    def plot_limit_fer1(self, frequency: Frequency, ax: Axes,
-                        backend: str | None = None) -> None:
+    def plot_limit_fer1(self, frequency: Frequency, ax: Axes = None,
+                        backend: str | None = None, *, fig = None) -> None:
         """
         Plot fer 1 limit lines.
         """
-        self.plot_constant_limit(frequency, -10, ax, backend = backend, color = 'g',
+        self.plot_constant_limit(frequency, -10, ax, backend = backend, fig = fig, color = 'g',
                             linestyle = 'dashed', label = 'Minimum A')
-        self.plot_constant_limit(frequency, -15, ax, backend = backend, color = 'r',
+        self.plot_constant_limit(frequency, -15, ax, backend = backend, fig = fig, color = 'r',
                             linestyle = 'dashed', label = 'Minimum B, C')
 
     @_fig_kwarg
-    def plot_limit_fer2(self, frequency: Frequency, ax: Axes,
-                        backend: str | None = None) -> None:
+    def plot_limit_fer2(self, frequency: Frequency, ax: Axes = None,
+                        backend: str | None = None, *, fig = None) -> None:
         """
         Plot fer 2 limit lines.
         """
-        self.plot_constant_limit(frequency, -20, ax, backend = backend, color = 'g',
+        self.plot_constant_limit(frequency, -20, ax, backend = backend, fig = fig, color = 'g',
                             linestyle = 'dashed', label = 'Maximum A')
-        self.plot_constant_limit(frequency, -10, ax, backend = backend, color = 'b',
+        self.plot_constant_limit(frequency, -10, ax, backend = backend, fig = fig, color = 'b',
                             linestyle = 'dashed', label = 'Maximum B')
-        self.plot_constant_limit(frequency, -6, ax, backend = backend, color = 'r',
+        self.plot_constant_limit(frequency, -6, ax, backend = backend, fig = fig, color = 'r',
                             linestyle = 'dashed', label = 'Maximum C')
 
     @_fig_kwarg
-    def plot_limit_fer3(self, frequency: Frequency, ax: Axes,
-                        backend: str | None = None) -> None:
+    def plot_limit_fer3(self, frequency: Frequency, ax: Axes = None,
+                        backend: str | None = None, *, fig = None) -> None:
         """
         Plot fer 3 limit lines.
         """
-        self.plot_constant_limit(frequency, 5, ax, backend = backend, color = 'g',
+        self.plot_constant_limit(frequency, 5, ax, backend = backend, fig = fig, color = 'g',
                             linestyle = 'dashed', label = 'Minimum A')
-        self.plot_constant_limit(frequency, 0, ax, backend = backend, color = 'r',
+        self.plot_constant_limit(frequency, 0, ax, backend = backend, fig = fig, color = 'r',
                             linestyle = 'dashed', label = 'Minimum B, C')
 
     @_fig_kwarg
-    def plot_limit_fer5(self, x: ndarray, y: ndarray, ax: Axes,
-                        backend: str | None = None) -> None:
+    def plot_limit_fer5(self, x: ndarray, y: ndarray, ax: Axes = None,
+                        backend: str | None = None, *, fig = None) -> None:
         """
         Plot fer 5 limit lines.
         """
-        self.plot_relative_limit(x, y, 0.025, ax, backend = backend, linestyle = 'dashed', color = 'g',
+        self.plot_relative_limit(x, y, 0.025, ax, backend = backend, fig = fig, linestyle = 'dashed', color = 'g',
                                      label = 'Limit A ±2.5%')
-        self.plot_relative_limit(x, y, 0.05, ax, backend = backend, linestyle = 'dashed', color = 'b',
+        self.plot_relative_limit(x, y, 0.05, ax, backend = backend, fig = fig, linestyle = 'dashed', color = 'b',
                                      label = 'Limit B ±5%')
-        self.plot_relative_limit(x, y, 0.1, ax, backend = backend, linestyle = 'dashed', color = 'r',
+        self.plot_relative_limit(x, y, 0.1, ax, backend = backend, fig = fig, linestyle = 'dashed', color = 'r',
                                      label = 'Limit C ±10%')
 
     @_fig_kwarg
-    def plot_limit_fer6(self, frequency: Frequency, ax: Axes,
-                        backend: str | None = None) -> None:
+    def plot_limit_fer6(self, frequency: Frequency, ax: Axes = None,
+                        backend: str | None = None, *, fig = None) -> None:
         """
         Plot fer 6 limit lines.
         """
-        self.plot_constant_limit(frequency, -15, ax, backend = backend, color = 'r',
+        self.plot_constant_limit(frequency, -15, ax, backend = backend, fig = fig, color = 'r',
                             linestyle = 'dashed', label = 'Maximum A, B, C')
 
 
@@ -3482,7 +3484,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         return (s_side1, s_side2)
 
     @_fig_kwarg
-    def plot_check_residuals(self, ax: Axes = None, *, backend: str | None = None) -> (Figure, Axes):
+    def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
 
@@ -3493,9 +3495,9 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         res = self.deembed(self.s2xthru)
         res.name = 'Residuals'
 
-        backend = _resolve_backend(backend, ax)
+        backend = _resolve_backend(backend, ax, fig)
         if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, ax, sharex = True, figsize=(10, 5))
+            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
         else:
             fig = ax[0].get_figure()
 
@@ -3528,7 +3530,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
     @_fig_kwarg
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
-                             window: str = 'hamming', *,
+                             window: str = 'hamming', *, fig = None,
                              backend: str | None = None) -> (Figure, Axes):
         """
         Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
@@ -3546,9 +3548,9 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         n = s2xthru.frequency.npoints * 2 - 1
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
-        backend = _resolve_backend(backend, ax)
+        backend = _resolve_backend(backend, ax, fig)
         if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, ax, sharex = True, figsize=(10, 5))
+            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
         else:
             fig = ax[0].get_figure()
 
@@ -3882,7 +3884,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         return (se_side1, se_side2)
 
     @_fig_kwarg
-    def plot_check_residuals(self, ax: Axes = None, *, backend: str | None = None) -> (Figure, Axes):
+    def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
 
@@ -3894,9 +3896,9 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         res.name = 'Residuals'
         res.se2gmm(p=2)
 
-        backend = _resolve_backend(backend, ax)
+        backend = _resolve_backend(backend, ax, fig)
         if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, ax, sharex = True, figsize=(10, 5))
+            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
         else:
             fig = ax[0].get_figure()
 
@@ -3933,7 +3935,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
 
     @_fig_kwarg
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
-                             window: str = 'hamming', *,
+                             window: str = 'hamming', *, fig = None,
                              backend: str | None = None) -> (Figure, Axes):
         """
         Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
@@ -3959,9 +3961,9 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         n = s2xthru.frequency.npoints * 2 - 1
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
-        backend = _resolve_backend(backend, ax)
+        backend = _resolve_backend(backend, ax, fig)
         if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, ax, sharex = True, figsize=(10, 5))
+            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
         else:
             fig = ax[0].get_figure()
 
@@ -4506,7 +4508,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         return (s_side1, s_side2.flipped())
 
     @_fig_kwarg
-    def plot_check_residuals(self, ax: Axes = None, *, backend: str | None = None) -> (Figure, Axes):
+    def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
 
@@ -4517,9 +4519,9 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         res = self.deembed(self.s2xthru)
         res.name = 'Residuals'
 
-        backend = _resolve_backend(backend, ax)
+        backend = _resolve_backend(backend, ax, fig)
         if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, ax, sharex = True, figsize=(10, 5))
+            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
         else:
             fig = ax[0].get_figure()
 
@@ -4552,7 +4554,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
     @_fig_kwarg
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
-                             window: str = 'hamming', *,
+                             window: str = 'hamming', *, fig = None,
                              backend: str | None = None) -> (Figure, Axes):
         """
         Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
@@ -4572,9 +4574,9 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         n = s2xthru.frequency.npoints * 2 - 1
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
-        backend = _resolve_backend(backend, ax)
+        backend = _resolve_backend(backend, ax, fig)
         if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, ax, sharex = True, figsize=(10, 5))
+            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
         else:
             fig = ax[0].get_figure()
 
@@ -4943,7 +4945,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         return (se_side1, se_side2)
 
     @_fig_kwarg
-    def plot_check_residuals(self, ax: Axes = None, *, backend: str | None = None) -> (Figure, Axes):
+    def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
         """
         Plot the residuals of the self de-embedding of the 2x-thru against their limits.
 
@@ -4955,9 +4957,9 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         res.name = 'Residuals'
         res.se2gmm(p=2)
 
-        backend = _resolve_backend(backend, ax)
+        backend = _resolve_backend(backend, ax, fig)
         if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, ax, sharex = True, figsize=(10, 5))
+            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
         else:
             fig = ax[0].get_figure()
 
@@ -4994,7 +4996,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
 
     @_fig_kwarg
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
-                             window: str = 'hamming', *,
+                             window: str = 'hamming', *, fig = None,
                              backend: str | None = None) -> (Figure, Axes):
         """
         Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
@@ -5024,9 +5026,9 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         n = s2xthru.frequency.npoints * 2 - 1
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
-        backend = _resolve_backend(backend, ax)
+        backend = _resolve_backend(backend, ax, fig)
         if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, ax, sharex = True, figsize=(10, 5))
+            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
         else:
             fig = ax[0].get_figure()
 

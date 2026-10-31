@@ -1007,7 +1007,7 @@ class Calibration:
         write(file,self, *args, **kwargs)
 
     @_fig_kwarg
-    def plot_calibration_errors(self, *args, ax: Axes = None, backend: str | None = None, **kwargs):
+    def plot_calibration_errors(self, *args, ax: Axes = None, fig=None, backend: str | None = None, **kwargs):
         r"""
         Plot biased, unbiased and total error in dB scaled.
 
@@ -1032,21 +1032,22 @@ class Calibration:
         unbiased_error
         total_error
         """
-        backend = _resolve_backend(backend, ax)
-        ax = _plotly_figure(ax) if backend == 'plotly' else _get_axes(ax)
+        backend = _resolve_backend(backend, ax, fig)
+        fig = _plotly_figure(fig) if backend == 'plotly' else None
+        ax = None if backend == 'plotly' else _get_axes(ax)
         port_list = self.biased_error.port_tuples
         for m,n in port_list:
             title = f"S{self.biased_error._fmt_trace_name(m,n)}"
-            self.unbiased_error.plot_s_db(m,n,ax=ax,backend=backend,**kwargs)
-            self.biased_error.plot_s_db(m,n,ax=ax,backend=backend,**kwargs)
-            self.total_error.plot_s_db(m,n,ax=ax,backend=backend,**kwargs)
+            self.unbiased_error.plot_s_db(m,n,ax=ax,fig=fig,backend=backend,**kwargs)
+            self.biased_error.plot_s_db(m,n,ax=ax,fig=fig,backend=backend,**kwargs)
+            self.total_error.plot_s_db(m,n,ax=ax,fig=fig,backend=backend,**kwargs)
             if backend == 'plotly':
-                ax.update_layout(title_text=title, yaxis_range=[-100,0])
+                fig.update_layout(title_text=title, yaxis_range=[-100,0])
             else:
                 ax.set_title(title)
                 ax.set_ylim(-100,0)
         if backend == 'plotly':
-            return ax
+            return fig
 
 
     def plot_caled_ntwks(self, attr: str = 's_smith', show_legend: bool = False, *,
@@ -1121,7 +1122,7 @@ class Calibration:
         Calibration.residual_networks
         """
 
-        kwargs['backend'] = _resolve_backend(kwargs.get('backend'), kwargs.get('ax'))
+        kwargs['backend'] = _resolve_backend(kwargs.get('backend'), kwargs.get('ax'), kwargs.get('fig'))
         out = NetworkSet(self.residual_ntwks).__getattribute__('plot_'+attr)(**kwargs)
         if kwargs['backend'] == 'plotly':
             return out

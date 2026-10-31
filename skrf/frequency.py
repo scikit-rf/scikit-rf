@@ -714,7 +714,7 @@ class Frequency:
         return sweep_type
 
     @_fig_kwarg
-    def labelXAxis(self, ax: Axes = None, *, backend: str | None = None):
+    def labelXAxis(self, ax: Axes = None, *, fig=None, backend: str | None = None):
         """
         Label the x-axis of a plot.
 
@@ -738,12 +738,12 @@ class Frequency:
         """
         from .plotting import _get_axes, _plotly_figure, _resolve_backend
 
-        if _resolve_backend(backend, ax) == 'plotly':
-            return _plotly_figure(ax).update_layout(xaxis_title_text=f'Frequency ({self.unit})')
+        if _resolve_backend(backend, ax, fig) == 'plotly':
+            return _plotly_figure(fig).update_layout(xaxis_title_text=f'Frequency ({self.unit})')
         _get_axes(ax).set_xlabel(f'Frequency ({self.unit})')
 
     @_fig_kwarg
-    def plot(self, y: NumberLike, *args, ax: Axes=None, backend: str | None = None, **kwargs):
+    def plot(self, y: NumberLike, *args, ax: Axes=None, fig=None, backend: str | None = None, **kwargs):
         """
         Plot something vs this frequency.
 
@@ -762,8 +762,9 @@ class Frequency:
             scale_frequency_ticks,
         )
 
-        plotly = _resolve_backend(backend, ax) == 'plotly'
-        ax = _plotly_figure(ax) if plotly else _get_axes(ax)
+        plotly = _resolve_backend(backend, ax, fig) == 'plotly'
+        fig = _plotly_figure(fig) if plotly else None
+        ax = None if plotly else _get_axes(ax)
 
         if len(np.shape(y)) > 2:
             # perhaps the dimensions are empty, try to squeeze it down
@@ -772,8 +773,9 @@ class Frequency:
                 # the dimensions are full, so lets loop and plot each
                 for m in range(np.shape(y)[1]):
                     for n in range(np.shape(y)[2]):
-                        self.plot(y[:, m, n], *args, ax=ax, backend='plotly' if plotly else 'matplotlib', **kwargs)
-                return ax if plotly else None
+                        self.plot(y[:, m, n], *args, ax=ax, fig=fig, backend='plotly' if plotly else 'matplotlib',
+                                  **kwargs)
+                return fig if plotly else None
         try:
             if len(y) == len(self):
                 pass
@@ -785,10 +787,10 @@ class Frequency:
             y = y * np.ones(len(self))
 
         if plotly:
-            x, x_label = _plotly_frequency_x(ax, self)
+            x, x_label = _plotly_frequency_x(fig, self)
             for column in np.reshape(y, (len(self), -1)).T:
-                _plotly_rect(x, column, *args, x_label=x_label, ax=ax, **kwargs)
-            return ax
+                _plotly_rect(x, column, *args, x_label=x_label, fig=fig, **kwargs)
+            return fig
 
         # plt.plot(self.f_scaled, y, *args, **kwargs)
         ax.plot(self.f, y, *args, **kwargs)

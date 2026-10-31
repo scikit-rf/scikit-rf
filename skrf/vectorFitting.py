@@ -2056,7 +2056,7 @@ class VectorFitting:
 
     @_fig_kwarg
     def plot(self, component: str, i: int = -1, j: int = -1, freqs: Any = None,
-             parameter: str = 's', *, ax: Axes = None, backend: str | None = None) -> Axes:
+             parameter: str = 's', *, ax: Axes = None, fig=None, backend: str | None = None) -> Axes:
         """
         Plots the specified component of the parameter :math:`H_{i+1,j+1}` in the fit, where :math:`H` is
         either the scattering (:math:`S`), the impedance (:math:`Z`), or the admittance (:math:`H`) response specified
@@ -2110,8 +2110,9 @@ class VectorFitting:
             Also if `component` and/or `parameter` are not valid.
         """
 
-        plotly = _resolve_backend(backend, ax) == 'plotly'
-        ax = _plotly_figure(ax) if plotly else _get_axes(ax)
+        plotly = _resolve_backend(backend, ax, fig) == 'plotly'
+        fig = _plotly_figure(fig) if plotly else None
+        ax = None if plotly else _get_axes(ax)
 
         components = ['db', 'mag', 'deg', 'deg_unwrap', 're', 'im']
         if component.lower() in components:
@@ -2170,7 +2171,7 @@ class VectorFitting:
                             y_vals = np.imag(responses[:, i, j])
 
                         if plotly:
-                            _plotly_rect(_plotly_hz_x(ax, self.network.f)[0], y_vals, ax=ax, color='r', marker='o',
+                            _plotly_rect(_plotly_hz_x(fig, self.network.f)[0], y_vals, fig=fig, color='r', marker='o',
                                          linestyle='none', label=label)
                         else:
                             ax.scatter(self.network.f, y_vals, color='r', label=label)
@@ -2217,7 +2218,7 @@ class VectorFitting:
                         y_label = 'Imaginary Part'
 
                     if plotly:
-                        _plotly_rect(_plotly_hz_x(ax, freqs)[0], y_vals, ax=ax, color='k', label=label)
+                        _plotly_rect(_plotly_hz_x(fig, freqs)[0], y_vals, fig=fig, color='k', label=label)
                     else:
                         ax.plot(freqs, y_vals, color='k', label=label)
 
@@ -2225,8 +2226,8 @@ class VectorFitting:
             title = f'Response i={i}, j={j}' if i_fit == 1 else None
             if plotly:
                 if title is not None:
-                    ax.update_layout(title_text=title)
-                return ax.update_layout(xaxis_title=_plotly_hz_x(ax, freqs)[1], yaxis_title=y_label)
+                    fig.update_layout(title_text=title)
+                return fig.update_layout(xaxis_title=_plotly_hz_x(fig, freqs)[1], yaxis_title=y_label)
 
             ax.set_xlabel('Frequency (Hz)')
             ax.set_ylabel(y_label)
@@ -2390,7 +2391,7 @@ class VectorFitting:
         return self.plot('im', *args, **kwargs)
 
     @_fig_kwarg
-    def plot_s_singular(self, freqs: Any = None, *, ax: Axes = None, backend: str | None = None) -> Axes:
+    def plot_s_singular(self, freqs: Any = None, *, ax: Axes = None, fig=None, backend: str | None = None) -> Axes:
         """
         Plots the singular values of the vector fitted S-matrix in linear scale.
 
@@ -2420,8 +2421,9 @@ class VectorFitting:
             If the `freqs` parameter is not specified while the Network in :attr:`network` is `None`.
         """
 
-        plotly = _resolve_backend(backend, ax) == 'plotly'
-        ax = _plotly_figure(ax) if plotly else _get_axes(ax)
+        plotly = _resolve_backend(backend, ax, fig) == 'plotly'
+        fig = _plotly_figure(fig) if plotly else None
+        ax = None if plotly else _get_axes(ax)
 
         if freqs is None:
             if self.network is None:
@@ -2442,19 +2444,19 @@ class VectorFitting:
         # plot the frequency response of each singular value
         for n in range(n_ports):
             if plotly:
-                x, x_label = _plotly_hz_x(ax, freqs)
-                _plotly_rect(x, sigma[:, n], ax=ax, label=f'σ{n + 1}', x_label=x_label, y_label='Magnitude')
+                x, x_label = _plotly_hz_x(fig, freqs)
+                _plotly_rect(x, sigma[:, n], fig=fig, label=f'σ{n + 1}', x_label=x_label, y_label='Magnitude')
             else:
                 ax.plot(freqs, sigma[:, n], label=fr'$\sigma_{n + 1}$')
         if plotly:
-            return ax
+            return fig
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Magnitude')
         ax.legend(loc='best')
         return ax
 
     @_fig_kwarg
-    def plot_convergence(self, ax: Axes = None, backend: str | None = None) -> Axes:
+    def plot_convergence(self, ax: Axes = None, backend: str | None = None, *, fig=None) -> Axes:
         """
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
         vector fitting, which should eventually converge to a fixed value. Additionally, the relative change of the
@@ -2477,14 +2479,14 @@ class VectorFitting:
             figure. With the plotly backend, the plotly Figure.
         """
 
-        if _resolve_backend(backend, ax) == 'plotly':
-            ax = _plotly_figure(ax)
-            _plotly_rect(np.arange(len(self.delta_max_history)) + 1, self.delta_max_history, ax=ax, color='darkblue',
+        if _resolve_backend(backend, ax, fig) == 'plotly':
+            fig = _plotly_figure(fig)
+            _plotly_rect(np.arange(len(self.delta_max_history)) + 1, self.delta_max_history, fig=fig, color='darkblue',
                          x_label='Iteration step')
             # the residue on a second y-axis, like twinx()
-            ax.add_trace(_import_plotly().Scatter(x=np.arange(len(self.d_res_history)) + 1, y=self.d_res_history,
-                                                  mode='lines', line_color='orangered', yaxis='y2', showlegend=False))
-            return ax.update_layout(
+            fig.add_trace(_import_plotly().Scatter(x=np.arange(len(self.d_res_history)) + 1, y=self.d_res_history,
+                                                   mode='lines', line_color='orangered', yaxis='y2', showlegend=False))
+            return fig.update_layout(
                 yaxis=dict(type='log', title_text='Max. relative change', title_font_color='darkblue'),
                 yaxis2=dict(overlaying='y', side='right', title_text='Residue', title_font_color='orangered'))
 
@@ -2498,7 +2500,7 @@ class VectorFitting:
         return ax
 
     @_fig_kwarg
-    def plot_passivation(self, ax: Axes = None, backend: str | None = None) -> Axes:
+    def plot_passivation(self, ax: Axes = None, backend: str | None = None, *, fig=None) -> Axes:
         """
         Plots the history of the greatest singular value during the iterative passivity enforcement process, which
         should eventually converge to a value slightly lower than 1.0 or stop after reaching the maximum number of
@@ -2521,9 +2523,9 @@ class VectorFitting:
             figure. With the plotly backend, the plotly Figure.
         """
 
-        if _resolve_backend(backend, ax) == 'plotly':
+        if _resolve_backend(backend, ax, fig) == 'plotly':
             return _plotly_rect(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma,
-                                ax=_plotly_figure(ax), x_label='Iteration step', y_label='Max. singular value')
+                                fig=_plotly_figure(fig), x_label='Iteration step', y_label='Max. singular value')
 
         ax = _get_axes(ax)
         ax.plot(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma)

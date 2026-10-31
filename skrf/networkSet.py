@@ -463,12 +463,12 @@ class NetworkSet:
 
         @skrf_plt._fig_kwarg
         def plot_func(self,  *args, **kwargs):
-            kwargs['backend'] = skrf_plt._resolve_backend(kwargs.get('backend'), kwargs.get('ax'))
+            kwargs['backend'] = skrf_plt._resolve_backend(kwargs.get('backend'), kwargs.get('ax'), kwargs.get('fig'))
             if kwargs['backend'] == 'plotly':
-                # draw all networks on one figure, created by the first call unless ax is given
+                # draw all networks on one figure, created by the first call unless fig is given
                 for ntwk in self.ntwk_set:
-                    kwargs['ax'] = getattr(ntwk, network_method_name)(*args, **kwargs)
-                return kwargs['ax']
+                    kwargs['fig'] = getattr(ntwk, network_method_name)(*args, **kwargs)
+                return kwargs['fig']
             return self.element_wise_method(network_method_name, *args, **kwargs)
 
         setattr(self.__class__,network_method_name,plot_func if network_method_name.startswith('plot_') else func)

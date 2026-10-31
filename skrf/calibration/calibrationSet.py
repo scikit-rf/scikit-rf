@@ -98,7 +98,7 @@ class CalibrationSet:
             *args, **kwargs)
 
     @_fig_kwarg
-    def plot_uncertainty_per_standard(self, *, ax=None, backend: str | None = None, **kwargs):
+    def plot_uncertainty_per_standard(self, *, ax=None, fig=None, backend: str | None = None, **kwargs):
         r"""
         Plot the standard deviation of the measurements of each standard.
 
@@ -117,13 +117,13 @@ class CalibrationSet:
         -------
         None, or the plotly Figure with the plotly backend
         """
-        backend = _resolve_backend(backend, ax)
+        backend = _resolve_backend(backend, ax, fig)
         if backend == 'plotly':
-            ax = _plotly_figure(ax)
+            fig = _plotly_figure(fig)
         for measured_set in self.measured_sets:
-            measured_set.std_s.plot_s_mag(ax=ax, backend=backend, **kwargs)
+            measured_set.std_s.plot_s_mag(ax=ax, fig=fig, backend=backend, **kwargs)
         if backend == 'plotly':
-            return ax
+            return fig
 
     def dankness(self, prop, func, *args, **kwargs):
         """

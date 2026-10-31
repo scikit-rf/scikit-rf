@@ -348,7 +348,7 @@ def test_plotly_errors(ntwk1: rf.Network, mpl_axes):
 def test_plotly_kwargs_translation(ntwk1: rf.Network):
     # the keywords of skrf's own plots, not available to users
     fig = rf.plotting._plotly_figure()
-    rf.plotting._plotly_rect(ntwk1.f, ntwk1.s_db[:, 0, 0], ax=fig, color="r", linestyle="--", marker="o", label="a")
+    rf.plotting._plotly_rect(ntwk1.f, ntwk1.s_db[:, 0, 0], fig=fig, color="r", linestyle="--", marker="o", label="a")
     trace = fig.data[0]
     assert (trace.line.color, trace.line.dash) == ("red", "dash")
     assert (trace.marker.symbol, trace.mode) == ("circle", "lines+markers")
@@ -1390,3 +1390,36 @@ def test_plotly_scale_frequency_ticks_user_meta(ntwk1: rf.Network):
 def test_plotly_add_markers_without_x():
     fig = rf.plotting.add_markers_to_lines(fig=go.Figure(go.Scatter(y=[1, 2, 3])), backend="plotly")
     assert fig.data[0].mode == "lines+markers"
+
+
+@needs_plotly
+def test_plotly_panel_reaches_plot_function_as_fig(ntwk1: rf.Network):
+    panel = rf.plotting._PlotlyFigure().add_subplot(1, 1, 1)
+    assert ntwk1.plot_s_db(0, 0, panel, backend="plotly") is panel.fig
+    assert ntwk1.plot_s_deg(ax=panel, m=0, n=0, backend="plotly") is panel.fig
+    assert len(panel.fig.data) == 2
+    with pytest.raises(TypeError, match="either ax or fig"):
+        ntwk1.plot_s_db(ax=panel, fig=panel.fig, backend="plotly")
+
+
+@needs_plotly
+def test_plotly_fig_on_network_set_plot(ntwk_set_zip: NetworkSet):
+    fig = go.Figure()
+    assert ntwk_set_zip.plot_s_db(0, 0, fig=fig, backend="plotly") is fig
+    assert len(fig.data) == len(ntwk_set_zip)
+
+
+@needs_plotly
+def test_plot_functions_take_fig_as_fig():
+    received = {}
+
+    @rf.plotting._fig_kwarg
+    def plot(ax=None, *, fig=None):
+        received.update(ax=ax, fig=fig)
+
+    fig = go.Figure()
+    plot(fig=fig)
+    assert received["ax"] is None
+    assert received["fig"] is fig
+    with pytest.raises(TypeError, match="pass a plotly Figure as fig"):
+        plot(ax=fig)

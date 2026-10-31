@@ -5213,11 +5213,13 @@ class Network:
                             ax: Axes=None,
                             show_legend=True,
                             y_label=None,
-                            logx=False, backend=None, **kwargs):
+                            logx=False, backend=None, *, fig=None, **kwargs):
 
-        plotly = rfplt._resolve_backend(backend, ax) == 'plotly'
-        ax = rfplt._plotly_figure(ax) if plotly else rfplt._get_axes(ax)
-        plot_rect = rfplt._plotly_rect if plotly else partial(rfplt.plot_rectangular, backend='matplotlib')
+        plotly = rfplt._resolve_backend(backend, ax, fig) == 'plotly'
+        fig = rfplt._plotly_figure(fig) if plotly else None
+        ax = None if plotly else rfplt._get_axes(ax)
+        plot_rect = (partial(rfplt._plotly_rect, fig=fig) if plotly
+                     else partial(rfplt.plot_rectangular, ax=ax, backend='matplotlib'))
 
         # create y_label if not provided
         if y_label is None:
@@ -5268,7 +5270,7 @@ class Network:
                               y=y[:, m, n],
                               x_label=xlabel,
                               y_label=y_label,
-                              show_legend=show_legend, ax=ax,
+                              show_legend=show_legend,
                               **kwargs)
 
                 else:
@@ -5288,9 +5290,9 @@ class Network:
 
                         if plotly:
                             # plotly has no tick formatter, so plot f in the figure's frequency unit
-                            x, xlabel = rfplt._plotly_frequency_x(ax, self.frequency)
+                            x, xlabel = rfplt._plotly_frequency_x(fig, self.frequency)
                             if logx:
-                                ax.update_layout(xaxis_type='log')
+                                fig.update_layout(xaxis_type='log')
                         else:
                             # scale the ticklabels according to the frequency unit and set log-scale if desired:
                             if logx:
@@ -5304,10 +5306,10 @@ class Network:
                               y=y,
                               x_label=xlabel,
                               y_label=y_label,
-                              show_legend=show_legend, ax=ax,
+                              show_legend=show_legend,
                               **kwargs)
 
-        return ax if plotly else None
+        return fig if plotly else None
 
     plot_attribute.__doc__ = _plot_attribute_doc.format(
         attribute="conversion",

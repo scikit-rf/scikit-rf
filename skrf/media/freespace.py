@@ -314,7 +314,7 @@ class Freespace(Media):
         return sqrt(self.mu/ep)*ones(len(self))
 
     @_fig_kwarg
-    def plot_ep(self, ax=None, backend: str | None = None):
+    def plot_ep(self, ax=None, backend: str | None = None, *, fig=None):
         """
         Plot the real and imaginary part of the complex permittivity.
 
@@ -331,11 +331,11 @@ class Freespace(Media):
         -------
         None, or the plotly Figure with the plotly backend
         """
-        fig = self.plot(self.ep_r.real, label=r'ep_r real', ax=ax, backend=backend)
-        return self.plot(self.ep_r.imag, label=r'ep_r imag', ax=ax if fig is None else fig, backend=backend)
+        fig = self.plot(self.ep_r.real, label=r'ep_r real', ax=ax, fig=fig, backend=backend)
+        return self.plot(self.ep_r.imag, label=r'ep_r imag', ax=ax, fig=fig, backend=backend)
 
     @_fig_kwarg
-    def plot_mu(self, ax=None, backend: str | None = None):
+    def plot_mu(self, ax=None, backend: str | None = None, *, fig=None):
         """
         Plot the real and imaginary part of the complex permeability.
 
@@ -352,11 +352,11 @@ class Freespace(Media):
         -------
         None, or the plotly Figure with the plotly backend
         """
-        fig = self.plot(self.mu_r.real, label=r'mu_r real', ax=ax, backend=backend)
-        return self.plot(self.mu_r.imag, label=r'mu_r imag', ax=ax if fig is None else fig, backend=backend)
+        fig = self.plot(self.mu_r.real, label=r'mu_r real', ax=ax, fig=fig, backend=backend)
+        return self.plot(self.mu_r.imag, label=r'mu_r imag', ax=ax, fig=fig, backend=backend)
 
     @_fig_kwarg
-    def plot_ep_mu(self, ax=None, backend: str | None = None):
+    def plot_ep_mu(self, ax=None, backend: str | None = None, *, fig=None):
         """
         Plot the real and imaginary part of the complex permittivity with resistivity.
 
@@ -373,5 +373,5 @@ class Freespace(Media):
         -------
         None, or the plotly Figure with the plotly backend
         """
-        fig = self.plot_ep(ax=ax, backend=backend)
-        return self.plot_mu(ax=ax if fig is None else fig, backend=backend)
+        fig = self.plot_ep(ax=ax, fig=fig, backend=backend)
+        return self.plot_mu(ax=ax, fig=fig, backend=backend)
