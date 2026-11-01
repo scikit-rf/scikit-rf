@@ -75,10 +75,10 @@ from ..plotting import (
     _frequency_x,
     _get_matplotlib_axes,
     _get_plotly_figure,
-    _plotly_rect,
     _resolve_backend,
     _subplots,
     _validate_plot_args,
+    plot_rectangular,
 )
 
 if TYPE_CHECKING:
@@ -1538,7 +1538,7 @@ class IEEEP370_FER:
         """
         plotly = _resolve_backend(backend, ax, fig) == 'plotly'
         fig = _get_plotly_figure(fig) if plotly else None
-        draw = partial(_plotly_rect, fig = fig) if plotly else _get_matplotlib_axes(ax).plot
+        draw = partial(plot_rectangular, fig = fig, backend = 'plotly') if plotly else _get_matplotlib_axes(ax).plot
         draw(_frequency_x(fig, frequency)[[0, -1]], [value, value], **kwargs)
 
     @_validate_plot_args
@@ -1548,7 +1548,8 @@ class IEEEP370_FER:
         Plot positive and negative relative limit line around a reference trace.
         """
         plotly = _resolve_backend(backend, ax, fig) == 'plotly'
-        draw = partial(_plotly_rect, fig = _get_plotly_figure(fig)) if plotly else _get_matplotlib_axes(ax).plot
+        fig = _get_plotly_figure(fig) if plotly else None
+        draw = partial(plot_rectangular, fig = fig, backend = 'plotly') if plotly else _get_matplotlib_axes(ax).plot
         draw(x, y * (1.0 + value), **kwargs)
         kwargs['label'] = '_nolabel_'
         draw(x, y * (1.0 - value), **kwargs)

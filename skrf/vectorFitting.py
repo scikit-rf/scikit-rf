@@ -20,9 +20,9 @@ from .plotting import (
     _get_plotly_figure,
     _import_plotly,
     _plotly_hz_x,
-    _plotly_rect,
     _resolve_backend,
     _validate_plot_args,
+    plot_rectangular,
 )
 
 logger = logging.getLogger(__name__)
@@ -2171,8 +2171,8 @@ class VectorFitting:
                             y_vals = np.imag(responses[:, i, j])
 
                         if plotly:
-                            _plotly_rect(_plotly_hz_x(fig, self.network.f)[0], y_vals, fig=fig, color='r', marker='o',
-                                         linestyle='none', label=label)
+                            plot_rectangular(_plotly_hz_x(fig, self.network.f)[0], y_vals, fig=fig, backend='plotly',
+                                             color='r', marker='o', linestyle='none', label=label)
                         else:
                             ax.scatter(self.network.f, y_vals, color='r', label=label)
 
@@ -2218,7 +2218,8 @@ class VectorFitting:
                         y_label = 'Imaginary Part'
 
                     if plotly:
-                        _plotly_rect(_plotly_hz_x(fig, freqs)[0], y_vals, fig=fig, color='k', label=label)
+                        plot_rectangular(_plotly_hz_x(fig, freqs)[0], y_vals, fig=fig, backend='plotly', color='k',
+                                         label=label)
                     else:
                         ax.plot(freqs, y_vals, color='k', label=label)
 
@@ -2445,7 +2446,7 @@ class VectorFitting:
         for n in range(n_ports):
             if plotly:
                 x, x_label = _plotly_hz_x(fig, freqs)
-                _plotly_rect(x, sigma[:, n], fig=fig, label=f'σ{n + 1}', x_label=x_label, y_label='Magnitude')
+                plot_rectangular(x, sigma[:, n], x_label, 'Magnitude', fig=fig, backend='plotly', label=f'σ{n + 1}')
             else:
                 ax.plot(freqs, sigma[:, n], label=fr'$\sigma_{n + 1}$')
         if plotly:
@@ -2481,8 +2482,8 @@ class VectorFitting:
 
         if _resolve_backend(backend, ax, fig) == 'plotly':
             fig = _get_plotly_figure(fig)
-            _plotly_rect(np.arange(len(self.delta_max_history)) + 1, self.delta_max_history, fig=fig, color='darkblue',
-                         x_label='Iteration step')
+            plot_rectangular(np.arange(len(self.delta_max_history)) + 1, self.delta_max_history, 'Iteration step',
+                             fig=fig, backend='plotly', color='darkblue')
             # the residue on a second y-axis, like twinx()
             fig.add_trace(_import_plotly().Scatter(x=np.arange(len(self.d_res_history)) + 1, y=self.d_res_history,
                                                    mode='lines', line_color='orangered', yaxis='y2', showlegend=False))
@@ -2524,8 +2525,8 @@ class VectorFitting:
         """
 
         if _resolve_backend(backend, ax, fig) == 'plotly':
-            return _plotly_rect(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma,
-                                fig=_get_plotly_figure(fig), x_label='Iteration step', y_label='Max. singular value')
+            return plot_rectangular(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma,
+                                    'Iteration step', 'Max. singular value', fig=fig, backend='plotly')
 
         ax = _get_matplotlib_axes(ax)
         ax.plot(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma)
