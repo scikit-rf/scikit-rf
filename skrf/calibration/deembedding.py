@@ -59,7 +59,6 @@ from __future__ import annotations
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from functools import partial
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -73,30 +72,15 @@ from ..network import Network, concat_ports, overlap_multi, subnetwork
 from ..plotting import (
     _figure,
     _frequency_x,
-    _get_matplotlib_axes,
-    _get_plotly_figure,
     _resolve_backend,
     _subplots,
     _validate_plot_args,
-    plot_rectangular,
 )
 
 if TYPE_CHECKING:
     from .plotting import Axes, Figure
 
 PortOrderT = Literal["first", "second", "third"]
-
-
-def _show_verbose_figure(owner, fig, backend: str) -> None:
-    """
-    Keep a figure of the `verbose` output in ``owner.verbose_figures``, and show it with plotly.
-
-    pyplot keeps the matplotlib figures, and a notebook shows them, which plotly does not do for its own.
-    """
-    if backend == 'plotly':
-        fig = fig.to_plotly()
-        fig.show()
-    owner.verbose_figures.append(fig)
 
 class Deembedding(ABC):
     """
@@ -1530,85 +1514,67 @@ class IEEEP370_FER:
     Circuit Board and Related Interconnects at Frequencies up to 50 GHz",
     IEEE 370-2020.
     """
-    @_validate_plot_args
-    def plot_constant_limit(self, frequency: Frequency, value: float, ax: Axes = None,
-                            backend: str | None = None, *, fig = None, **kwargs) -> None:
+    def plot_constant_limit(self, frequency: Frequency, value: float, ax: Axes,
+                            **kwargs) -> None:
         """
         Plot a constant limit line.
         """
-        plotly = _resolve_backend(backend, ax, fig) == 'plotly'
-        fig = _get_plotly_figure(fig) if plotly else None
-        draw = partial(plot_rectangular, fig = fig, backend = 'plotly') if plotly else _get_matplotlib_axes(ax).plot
-        draw(_frequency_x(fig, frequency)[[0, -1]], [value, value], **kwargs)
+        ax.plot(_frequency_x(ax, frequency)[[0, -1]], [value, value], **kwargs)
 
-    @_validate_plot_args
-    def plot_relative_limit(self, x: ndarray, y: ndarray, value: float, ax: Axes = None,
-                            backend: str | None = None, *, fig = None, **kwargs) -> None:
+    def plot_relative_limit(self, x: ndarray, y: ndarray, value: float, ax: Axes,
+                            **kwargs) -> None:
         """
         Plot positive and negative relative limit line around a reference trace.
         """
-        plotly = _resolve_backend(backend, ax, fig) == 'plotly'
-        fig = _get_plotly_figure(fig) if plotly else None
-        draw = partial(plot_rectangular, fig = fig, backend = 'plotly') if plotly else _get_matplotlib_axes(ax).plot
-        draw(x, y * (1.0 + value), **kwargs)
-        kwargs['label'] = '_nolabel_'
-        draw(x, y * (1.0 - value), **kwargs)
+        ax.plot(x, y * (1.0 + value), **kwargs)
+        kwargs.pop('label', None)
+        ax.plot(x, y * (1.0 - value), label = '_nolabel_', **kwargs)
 
-    @_validate_plot_args
-    def plot_limit_fer1(self, frequency: Frequency, ax: Axes = None,
-                        backend: str | None = None, *, fig = None) -> None:
+    def plot_limit_fer1(self, frequency: Frequency, ax: Axes) -> None:
         """
         Plot fer 1 limit lines.
         """
-        self.plot_constant_limit(frequency, -10, ax, backend = backend, fig = fig, color = 'g',
+        self.plot_constant_limit(frequency, -10, ax, color = 'g',
                             linestyle = 'dashed', label = 'Minimum A')
-        self.plot_constant_limit(frequency, -15, ax, backend = backend, fig = fig, color = 'r',
+        self.plot_constant_limit(frequency, -15, ax, color = 'r',
                             linestyle = 'dashed', label = 'Minimum B, C')
 
-    @_validate_plot_args
-    def plot_limit_fer2(self, frequency: Frequency, ax: Axes = None,
-                        backend: str | None = None, *, fig = None) -> None:
+    def plot_limit_fer2(self, frequency: Frequency, ax: Axes) -> None:
         """
         Plot fer 2 limit lines.
         """
-        self.plot_constant_limit(frequency, -20, ax, backend = backend, fig = fig, color = 'g',
+        self.plot_constant_limit(frequency, -20, ax, color = 'g',
                             linestyle = 'dashed', label = 'Maximum A')
-        self.plot_constant_limit(frequency, -10, ax, backend = backend, fig = fig, color = 'b',
+        self.plot_constant_limit(frequency, -10, ax, color = 'b',
                             linestyle = 'dashed', label = 'Maximum B')
-        self.plot_constant_limit(frequency, -6, ax, backend = backend, fig = fig, color = 'r',
+        self.plot_constant_limit(frequency, -6, ax, color = 'r',
                             linestyle = 'dashed', label = 'Maximum C')
 
-    @_validate_plot_args
-    def plot_limit_fer3(self, frequency: Frequency, ax: Axes = None,
-                        backend: str | None = None, *, fig = None) -> None:
+    def plot_limit_fer3(self, frequency: Frequency, ax: Axes) -> None:
         """
         Plot fer 3 limit lines.
         """
-        self.plot_constant_limit(frequency, 5, ax, backend = backend, fig = fig, color = 'g',
+        self.plot_constant_limit(frequency, 5, ax, color = 'g',
                             linestyle = 'dashed', label = 'Minimum A')
-        self.plot_constant_limit(frequency, 0, ax, backend = backend, fig = fig, color = 'r',
+        self.plot_constant_limit(frequency, 0, ax, color = 'r',
                             linestyle = 'dashed', label = 'Minimum B, C')
 
-    @_validate_plot_args
-    def plot_limit_fer5(self, x: ndarray, y: ndarray, ax: Axes = None,
-                        backend: str | None = None, *, fig = None) -> None:
+    def plot_limit_fer5(self, x: ndarray, y: ndarray, ax: Axes) -> None:
         """
         Plot fer 5 limit lines.
         """
-        self.plot_relative_limit(x, y, 0.025, ax, backend = backend, fig = fig, linestyle = 'dashed', color = 'g',
+        self.plot_relative_limit(x, y, 0.025, ax, linestyle = 'dashed', color = 'g',
                                      label = 'Limit A ±2.5%')
-        self.plot_relative_limit(x, y, 0.05, ax, backend = backend, fig = fig, linestyle = 'dashed', color = 'b',
+        self.plot_relative_limit(x, y, 0.05, ax, linestyle = 'dashed', color = 'b',
                                      label = 'Limit B ±5%')
-        self.plot_relative_limit(x, y, 0.1, ax, backend = backend, fig = fig, linestyle = 'dashed', color = 'r',
+        self.plot_relative_limit(x, y, 0.1, ax, linestyle = 'dashed', color = 'r',
                                      label = 'Limit C ±10%')
 
-    @_validate_plot_args
-    def plot_limit_fer6(self, frequency: Frequency, ax: Axes = None,
-                        backend: str | None = None, *, fig = None) -> None:
+    def plot_limit_fer6(self, frequency: Frequency, ax: Axes) -> None:
         """
         Plot fer 6 limit lines.
         """
-        self.plot_constant_limit(frequency, -15, ax, backend = backend, fig = fig, color = 'r',
+        self.plot_constant_limit(frequency, -15, ax, color = 'r',
                             linestyle = 'dashed', label = 'Maximum A, B, C')
 
 
@@ -1630,14 +1596,14 @@ class IEEEP370_FER:
         ax.set_title('FER1 2x-Thru IL')
         s2xthru.plot_s_db(1, 0, ax = ax, color = '0.5', backend = backend)
         s2xthru.plot_s_db(0, 1, ax = ax, color = 'k', backend = backend)
-        self.plot_limit_fer1(s2xthru.frequency, ax, backend = backend)
+        self.plot_limit_fer1(s2xthru.frequency, ax)
         ax.legend(loc = 'lower left')
 
         ax = fig.add_subplot(2, 2, 2)
         ax.set_title('FER2 2x-Thru RL')
         s2xthru.plot_s_db(0, 0, ax = ax, color = '0.5', backend = backend)
         s2xthru.plot_s_db(1, 1, ax = ax, color = 'k', backend = backend)
-        self.plot_limit_fer2(s2xthru.frequency, ax, backend = backend)
+        self.plot_limit_fer2(s2xthru.frequency, ax)
         ax.legend(loc = 'lower left')
 
         ax = fig.add_subplot(2, 1, 2)
@@ -1646,7 +1612,7 @@ class IEEEP370_FER:
         s2 = s2xthru.s_db[:, 0, 1] - s2xthru.s_db[:, 1, 1]
         ax.plot(_frequency_x(ax, s2xthru.frequency), s1, color = '0.5', label = 'S21 - S11')
         ax.plot(_frequency_x(ax, s2xthru.frequency), s2, color = 'k', label = 'S21 - S22')
-        self.plot_limit_fer3(s2xthru.frequency, ax, backend = backend)
+        self.plot_limit_fer3(s2xthru.frequency, ax)
         ax.set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
         ax.set_ylabel('Magnitude (dB)')
         ax.legend(loc = 'upper right')
@@ -1674,14 +1640,14 @@ class IEEEP370_FER:
         ax.set_title('FER1 2x-Thru IL')
         mm_2xthru.plot_s_db(1, 0, ax = ax, color = '0.5', backend = backend)
         mm_2xthru.plot_s_db(0, 1, ax = ax, color = 'k', backend = backend)
-        self.plot_limit_fer1(mm_2xthru.frequency, ax, backend = backend)
+        self.plot_limit_fer1(mm_2xthru.frequency, ax)
         ax.legend(loc = 'lower left')
 
         ax = fig.add_subplot(2, 2, 2)
         ax.set_title('FER2 2x-Thru RL')
         mm_2xthru.plot_s_db(0, 0, ax = ax, color = '0.5', backend = backend)
         mm_2xthru.plot_s_db(1, 1, ax = ax, color = 'k', backend = backend)
-        self.plot_limit_fer2(mm_2xthru.frequency, ax, backend = backend)
+        self.plot_limit_fer2(mm_2xthru.frequency, ax)
         ax.legend(loc = 'lower left')
 
         ax = fig.add_subplot(2, 2, 3)
@@ -1690,7 +1656,7 @@ class IEEEP370_FER:
         s2 = mm_2xthru.s_db[:, 0, 1] - mm_2xthru.s_db[:, 1, 1]
         ax.plot(_frequency_x(ax, mm_2xthru.frequency), s1, color = '0.5', label = 'S21 - S11')
         ax.plot(_frequency_x(ax, mm_2xthru.frequency), s2, color = 'k', label = 'S21 - S22')
-        self.plot_limit_fer3(mm_2xthru.frequency, ax, backend = backend)
+        self.plot_limit_fer3(mm_2xthru.frequency, ax)
         ax.set_xlabel(f'Frequency ({mm_2xthru.frequency.unit})')
         ax.set_ylabel('Magnitude (dB)')
         ax.legend(loc = 'upper right')
@@ -1701,7 +1667,7 @@ class IEEEP370_FER:
         s2 = mm_2xthru.s_db[:, 3, 1] - mm_2xthru.s_db[:, 0, 1]
         ax.plot(_frequency_x(ax, mm_2xthru.frequency), s1, color = '0.5', label = 'SCD21 - S21')
         ax.plot(_frequency_x(ax, mm_2xthru.frequency), s2, color = 'k', label = 'SCD42 - S12')
-        self.plot_limit_fer6(mm_2xthru.frequency, ax, backend = backend)
+        self.plot_limit_fer6(mm_2xthru.frequency, ax)
         ax.legend(loc = 'upper right')
 
         fig.tight_layout()
@@ -1736,7 +1702,7 @@ class IEEEP370_FER:
         s2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax, backend = backend)
         x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
         y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-        self.plot_limit_fer5(x, y, ax, backend = backend)
+        self.plot_limit_fer5(x, y, ax)
         ax.legend(loc = 'lower right')
         # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
         ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
@@ -1753,7 +1719,7 @@ class IEEEP370_FER:
         s2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax, backend = backend)
         x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
         y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-        self.plot_limit_fer5(x, y, ax, backend = backend)
+        self.plot_limit_fer5(x, y, ax)
         ax.legend(loc = 'lower right')
         # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
         ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
@@ -1814,7 +1780,7 @@ class IEEEP370_FER:
         mm_2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax, backend = backend)
         x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
         y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-        self.plot_limit_fer5(x, y, ax, backend = backend)
+        self.plot_limit_fer5(x, y, ax)
         ax.legend(loc = 'lower right')
         # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
         ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
@@ -1831,7 +1797,7 @@ class IEEEP370_FER:
         mm_2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax, backend = backend)
         x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
         y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-        self.plot_limit_fer5(x, y, ax, backend = backend)
+        self.plot_limit_fer5(x, y, ax)
         ax.legend(loc = 'lower right')
         # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
         ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
@@ -1881,8 +1847,7 @@ class IEEEP370_FD_QM:
         verbose      : :boolean
                        Plot internal causality, passivity, and reciprocity
                        figures (default False).
-                       The figures follow the plotting backend, are kept
-                       in `verbose_figures`, and with plotly are shown as drawn.
+                       The figures follow the plotting backend.
 
         References
         ----------
@@ -1891,7 +1856,6 @@ class IEEEP370_FD_QM:
         IEEE 370-2020.
         """
         self.verbose = verbose
-        self.verbose_figures = []
 
     def check_causality(self, ntwk: Network) -> float:
         """
@@ -2080,7 +2044,8 @@ class IEEEP370_FD_QM:
             ax.set_ylabel('Sum of S-pairs differences')
             ax.legend(loc = 'upper right')
             fig.tight_layout()
-            _show_verbose_figure(self, fig, backend)
+            if backend == 'plotly':
+                fig.to_plotly().show()
 
         return QM
 
@@ -2169,8 +2134,7 @@ class IEEEP370_TD_QM:
                        Plot extrapolated frequency data, generated pulse and
                        the time domain comparison between the original and the
                        causality enforced responses.
-                       The figures follow the plotting backend, are kept
-                       in `verbose_figures`, and with plotly are shown as drawn.
+                       The figures follow the plotting backend.
 
         References
         ----------
@@ -2184,7 +2148,6 @@ class IEEEP370_TD_QM:
         self.pulse_shape = pulse_shape
         self.extrapolation = extrapolation
         self.verbose = verbose
-        self.verbose_figures = []
 
     def add_conj(self, s_ij: ndarray):
         """
@@ -2616,7 +2579,8 @@ class IEEEP370_TD_QM:
             ax.set_ylabel('Amplitude (V)')
             ax.set_xlabel('Time (s)')
             ax.set_title('Gaussian Pulse')
-            _show_verbose_figure(self, fig, backend)
+            if backend == 'plotly':
+                fig.to_plotly().show()
 
         return fft(self.v_pulse)
 
@@ -2668,7 +2632,8 @@ class IEEEP370_TD_QM:
             ax.set_ylabel('Amplitude (V)')
             ax.set_xlabel('Time (s)')
             ax.set_title('Rectangular Pulse')
-            _show_verbose_figure(self, fig, backend)
+            if backend == 'plotly':
+                fig.to_plotly().show()
 
         return fft(self.v_pulse)
 
@@ -2985,7 +2950,8 @@ class IEEEP370_TD_QM:
                 ax.set_ylabel('Amplitude (V)')
                 ax.legend(loc = 'upper right')
             fig.tight_layout()
-            _show_verbose_figure(self, fig, backend)
+            if backend == 'plotly':
+                fig.to_plotly().show()
 
         QM = {'causality': {'value': causality_metric / 2., 'unit': 'mV',
                             'evaluation': ''},
@@ -3197,7 +3163,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
         verbose :
             view the process (default: False). The figures follow the plotting
-            backend, are kept in `verbose_figures`, and with plotly are shown as drawn.
+            backend.
 
         args, kwargs:
             passed to :func:`Deembedding.__init__`
@@ -3213,7 +3179,6 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         self.use_z_instead_ifft = use_z_instead_ifft
         self.forced_z0_line = forced_z0_line
         self.verbose = verbose
-        self.verbose_figures = []
         # debug outputs
         self.x_end = None
         self.z_x = None
@@ -3334,7 +3299,8 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
                 ax2.set_xlim((x - 50, x + 50))
                 ax2.grid()
                 ax2.legend()
-                _show_verbose_figure(self, fig, backend)
+                if backend == 'plotly':
+                    fig.to_plotly().show()
 
             temp = Network(frequency = Frequency.from_f(f, 'Hz'), s = s, z0 = self.z0)
             temp.renormalize(z11x)
@@ -3756,7 +3722,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
 
         verbose :
             view the process (default: False). The figures follow the plotting
-            backend, are kept in `verbose_figures`, and with plotly are shown as drawn.
+            backend.
 
         args, kwargs:
             passed to :func:`Deembedding.__init__`
@@ -3772,7 +3738,6 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         dummies = [self.s2xthru]
         self.use_z_instead_ifft = use_z_instead_ifft
         self.verbose = verbose
-        self.verbose_figures = []
         self.forced_z0_line_dd = forced_z0_line_dd
         self.forced_z0_line_cc = forced_z0_line_cc
         # debug outputs
@@ -3871,8 +3836,6 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
                                 forced_z0_line = self.forced_z0_line_cc)
         self.x_end_cc = dm_cc.x_end
         self.z_x_cc = dm_cc.z_x
-
-        self.verbose_figures += dm_dd.verbose_figures + dm_cc.verbose_figures
 
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
@@ -4130,7 +4093,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
         verbose :
             view the process (default: False). The figures follow the plotting
-            backend, are kept in `verbose_figures`, and with plotly are shown as drawn.
+            backend.
 
         args, kwargs:
             passed to :func:`Deembedding.__init__`
@@ -4152,7 +4115,6 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         self.NRP_enable = NRP_enable
         self.leadin = leadin
         self.verbose = verbose
-        self.verbose_figures = []
         self.flag_DC = False
         self.flag_df = False
         # debug outputs
@@ -4270,7 +4232,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
             axs[1].legend()
             axs[1].set_title('Right')
             axs[1].set_ylabel('Z (ohm)')
-            _show_verbose_figure(self, fig, backend)
+            if backend == 'plotly':
+                fig.to_plotly().show()
         return errorbox1, errorbox2.flipped()
 
     def makeErrorBox_v8(self, s_dut: Network, s2x: Network, gamma: ndarray,
@@ -4319,7 +4282,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
             axs.set_xlim((n-50, n+x*2+50))
             axs.legend()
             axs.set_ylabel('Z (ohm)')
-            _show_verbose_figure(self, fig, backend)
+            if backend == 'plotly':
+                fig.to_plotly().show()
         return errorbox1
 
 
@@ -4406,7 +4370,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
                 axs[1].legend()
                 axs[1].set_title('Right leadin')
                 axs[1].set_ylabel('Z (ohm)')
-                _show_verbose_figure(self, fig, backend)
+                if backend == 'plotly':
+                    fig.to_plotly().show()
 
         # calculate gamma
         #grabbing s21
@@ -4448,7 +4413,8 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
             axs[1].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
             axs[1].set_ylabel('Beta (rad/length)')
             axs[1].legend()
-            _show_verbose_figure(self, fig, backend)
+            if backend == 'plotly':
+                fig.to_plotly().show()
 
         # extract error boxes
         # make the both error box
@@ -4780,7 +4746,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
 
         verbose :
             view the process (default: False). The figures follow the plotting
-            backend, are kept in `verbose_figures`, and with plotly are shown as drawn.
+            backend.
 
         args, kwargs:
             passed to :func:`Deembedding.__init__`
@@ -4803,7 +4769,6 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         self.NRP_enable = NRP_enable
         self.leadin = leadin
         self.verbose = verbose
-        self.verbose_figures = []
         self.flag_DC = False
         self.flag_df = False
 
@@ -4933,8 +4898,6 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         self.x_end_cc = dm_cc.x_end
         self.z_side1_cc = dm_cc.z_side1
         self.z_side2_cc = dm_cc.z_side2
-        self.verbose_figures += dm_dd.verbose_figures + dm_cc.verbose_figures
-
         #convert back to single-ended
         mm_side1 = concat_ports([dm_dd.s_side1, dm_cc.s_side1], port_order = 'first')
         se_side1 = mm_side1.copy()

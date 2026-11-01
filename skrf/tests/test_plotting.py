@@ -856,12 +856,12 @@ def test_plotly_fer_limits(deembedding):
     from skrf.calibration.deembedding import IEEEP370_FER
 
     freq = rf.Frequency(1, 10, 11, "GHz")
-    fig = go.Figure()
-    IEEEP370_FER().plot_limit_fer2(freq, fig=fig, backend="plotly")
-    assert [t.name for t in fig.data] == ["Maximum A", "Maximum B", "Maximum C"]
-    np.testing.assert_allclose(fig.data[0].x, [1, 10])  # in the unit of the figure
-    IEEEP370_FER().plot_limit_fer5(np.arange(3), np.ones(3), fig=fig, backend="plotly")
-    assert [t.showlegend for t in fig.data[3:5]] == [True, False]  # one legend entry for the +/- lines
+    _, ax = rf.plotting._subplots(1, 1, "plotly")
+    IEEEP370_FER().plot_limit_fer2(freq, ax)
+    assert [t.name for t in ax.fig.data] == ["Maximum A", "Maximum B", "Maximum C"]
+    np.testing.assert_allclose(ax.fig.data[0].x, [1, 10])  # in the unit of the figure
+    IEEEP370_FER().plot_limit_fer5(np.arange(3), np.ones(3), ax)
+    assert [t.showlegend for t in ax.fig.data[3:5]] == [True, False]  # one legend entry for the +/- lines
 
 @needs_plotly
 def test_plotly_legend_position():
@@ -877,7 +877,7 @@ def test_plotly_legend_position():
 
 @needs_plotly
 @pytest.mark.filterwarnings("ignore:divide by zero:RuntimeWarning")  # no mode conversion in the mixed-mode data
-@pytest.mark.parametrize("make", [  # each returns the object that drew, and keeps, the verbose figures
+@pytest.mark.parametrize("make", [  # each draws the verbose figures
     lambda de, s2x, fdf, se2x, sefdf: (qm := de.IEEEP370_FD_QM(), qm.check_se_quality(s2x, verbose=True))[0],
     lambda de, s2x, fdf, se2x, sefdf: (qm := de.IEEEP370_TD_QM(1e9, 32, 0.4, 2, 2),
                                        qm.check_se_quality(s2x, verbose=True))[0],
@@ -888,15 +888,17 @@ def test_plotly_legend_position():
 def test_plotly_verbose_figures(p370_networks, make, monkeypatch):
     from skrf.calibration import deembedding as de
 
-    mpl_figs = make(de, *p370_networks).verbose_figures
-    assert mpl_figs and all(isinstance(f, mpl.figure.Figure) for f in mpl_figs)
+    mpl.pyplot.close("all")
+    make(de, *p370_networks)
+    mpl_figs = [mpl.pyplot.figure(num) for num in mpl.pyplot.get_fignums()]
+    assert mpl_figs
     shown = []
     monkeypatch.setattr(go.Figure, "show", lambda fig, *a, **k: shown.append(fig))
     rf.plotting.options.backend = "plotly"
-    figs = make(de, *p370_networks).verbose_figures
-    # each figure is shown and kept, with the panels, titles and traces of its matplotlib figure
-    assert shown == figs and len(figs) == len(mpl_figs)
-    for fig, mpl_fig in zip(figs, mpl_figs):
+    make(de, *p370_networks)
+    # each figure is shown, with the panels, titles and traces of its matplotlib figure
+    assert len(shown) == len(mpl_figs)
+    for fig, mpl_fig in zip(shown, mpl_figs):
         assert len(fig.data) == sum(len(ax.lines) for ax in mpl_fig.axes)
         titles = [ax.get_title() for ax in mpl_fig.axes if ax.get_title()]
         assert [a.text for a in fig.layout.annotations if a.text in titles] == titles
