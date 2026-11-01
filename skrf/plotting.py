@@ -700,13 +700,17 @@ _PLOTLY_NONE = ('', ' ', 'none', 'None')
 
 
 def _plotly_layout() -> dict:
-    """Layout of a new figure, leaving the size and top margin to the default template if it sets them."""
+    """
+    Layout of a new figure, with the size and top margin of the default template if it sets them.
+
+    They are copied as plotly.js fills the page if the size is set by the template only.
+    """
     _import_plotly()
     import plotly.io as pio
 
     template = pio.templates[pio.templates.default] if pio.templates.default else None
-    return {k: v for k, v in _PLOTLY_LAYOUT.items()
-            if template is None or k == 'title' or template.layout[k] is None}
+    return {k: v if template is None or k == 'title' or template.layout[k] is None else template.layout[k]
+            for k, v in _PLOTLY_LAYOUT.items()}
 
 
 def _get_plotly_figure(fig=None, **layout):

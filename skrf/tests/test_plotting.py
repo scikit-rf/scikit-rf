@@ -1191,9 +1191,9 @@ def test_plotly_stylely_settings(ntwk1: rf.Network, monkeypatch):
     assert layout.legend.borderwidth == 0
     assert (layout.width, layout.height) == (600, 400)
     assert (layout.margin.l, layout.margin.r, layout.margin.b, layout.margin.t) == pytest.approx((72, 60, 48, 40))
-    # new figures take the size of the template, and keep the centered title
+    # new figures take the size of the template, set on the figure or plotly.js fills the page, and keep the title
     fig = ntwk1.plot_s_db(0, 0, backend="plotly")
-    assert (fig.layout.width, fig.layout.height, fig.layout.margin.t) == (None, None, None)
+    assert (fig.layout.width, fig.layout.height, fig.layout.margin.t) == pytest.approx((600, 400, 40))
     assert fig.layout.title.x == 0.5
     # a smith chart stays without frame and ticks
     fig = ntwk1.plot_s_smith(0, 0, backend="plotly")
