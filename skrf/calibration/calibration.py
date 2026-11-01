@@ -1027,7 +1027,7 @@ class Calibration:
         backend : {'matplotlib', 'plotly'}, optional
             plotting backend to use, default ``skrf.plotting.options.backend`` if unspecified.
         \*\*kwargs : kwargs
-            passed to :meth:`NetworkSet.plot_s_db`
+            passed to the plot method of Network
 
         Returns
         -------
@@ -1095,11 +1095,9 @@ class Calibration:
                                                                                                    height=800)
         else:
             fig, axes = subplots(ns[0].nports, ns[0].nports, figsize=(8,8), squeeze=False)
-
             for ax ,(m, n) in zip(axes.flat, ns[0].port_tuples):
                 ax.set_title(f"S{ns.ntwk_set[0]._fmt_trace_name(m, n)}")
                 ns.__getattribute__('plot_'+attr)(m, n, ax=ax, backend='matplotlib', **kwargs)
-
             fig.tight_layout()
 
 

@@ -99,16 +99,6 @@ class CalibrationSet:
 
     def plot_uncertainty_per_standard(self, *, backend: str | None = None):
         """
-        Plot the standard deviation of the measurements of each standard.
-
-        Parameters
-        ----------
-        backend : {'matplotlib', 'plotly'}, optional
-            plotting backend, default ``skrf.plotting.options.backend``.
-
-        Returns
-        -------
-        None, or plotly Figure if using plotly backend
         """
         backend = _resolve_backend(backend)
         fig = _get_plotly_figure() if backend == 'plotly' else None
