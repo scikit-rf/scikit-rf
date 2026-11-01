@@ -314,14 +314,12 @@ class Freespace(Media):
         return sqrt(self.mu/ep)*ones(len(self))
 
     @_validate_plot_args
-    def plot_ep(self, ax=None, backend: str | None = None, *, fig=None):
+    def plot_ep(self, *, fig=None, backend: str | None = None):
         """
         Plot the real and imaginary part of the complex permittivity.
 
         Parameters
         ----------
-        ax : :class:`matplotlib.axes.Axes`, optional
-            axes to draw on.
         fig : plotly Figure, optional
             figure to draw on with the plotly backend.
         backend : {'matplotlib', 'plotly'}, optional
@@ -331,18 +329,16 @@ class Freespace(Media):
         -------
         None, or the plotly Figure with the plotly backend
         """
-        fig = self.plot(self.ep_r.real, label=r'ep_r real', ax=ax, fig=fig, backend=backend)
-        return self.plot(self.ep_r.imag, label=r'ep_r imag', ax=ax, fig=fig, backend=backend)
+        fig = self.plot(self.ep_r.real, label=r'ep_r real', fig=fig, backend=backend)
+        return self.plot(self.ep_r.imag, label=r'ep_r imag', fig=fig, backend=backend)
 
     @_validate_plot_args
-    def plot_mu(self, ax=None, backend: str | None = None, *, fig=None):
+    def plot_mu(self, *, fig=None, backend: str | None = None):
         """
         Plot the real and imaginary part of the complex permeability.
 
         Parameters
         ----------
-        ax : :class:`matplotlib.axes.Axes`, optional
-            axes to draw on.
         fig : plotly Figure, optional
             figure to draw on with the plotly backend.
         backend : {'matplotlib', 'plotly'}, optional
@@ -352,18 +348,16 @@ class Freespace(Media):
         -------
         None, or the plotly Figure with the plotly backend
         """
-        fig = self.plot(self.mu_r.real, label=r'mu_r real', ax=ax, fig=fig, backend=backend)
-        return self.plot(self.mu_r.imag, label=r'mu_r imag', ax=ax, fig=fig, backend=backend)
+        fig = self.plot(self.mu_r.real, label=r'mu_r real', fig=fig, backend=backend)
+        return self.plot(self.mu_r.imag, label=r'mu_r imag', fig=fig, backend=backend)
 
     @_validate_plot_args
-    def plot_ep_mu(self, ax=None, backend: str | None = None, *, fig=None):
+    def plot_ep_mu(self, *, fig=None, backend: str | None = None):
         """
         Plot the real and imaginary part of the complex permittivity with resistivity.
 
         Parameters
         ----------
-        ax : :class:`matplotlib.axes.Axes`, optional
-            axes to draw on.
         fig : plotly Figure, optional
             figure to draw on with the plotly backend.
         backend : {'matplotlib', 'plotly'}, optional
@@ -373,5 +367,5 @@ class Freespace(Media):
         -------
         None, or the plotly Figure with the plotly backend
         """
-        fig = self.plot_ep(ax=ax, fig=fig, backend=backend)
-        return self.plot_mu(ax=ax, fig=fig, backend=backend)
+        fig = self.plot_ep(fig=fig, backend=backend)
+        return self.plot_mu(fig=fig, backend=backend)

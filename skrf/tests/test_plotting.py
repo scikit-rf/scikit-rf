@@ -214,7 +214,8 @@ def test_matplotlib_unchanged_under_global_plotly(ntwk1: rf.Network, ntwk_set_zi
     assert ntwk_set_zip.plot_violin("s_db", ax=mpl_axes, backend="matplotlib") is None
     assert len(mpl_axes.lines) > 0
     n_lines = len(mpl_axes.lines)
-    assert rf.media.Freespace(ntwk1.frequency).plot_ep_mu(ax=mpl_axes, backend="matplotlib") is None
+    mpl.pyplot.sca(mpl_axes)
+    assert rf.media.Freespace(ntwk1.frequency).plot_ep_mu(backend="matplotlib") is None
     assert len(mpl_axes.lines) == n_lines + 4
     # without it the ax conflicts with the global backend
     for call in (lambda: ntwk1.plot_s_db(ax=mpl_axes), lambda: ntwk1.plot_s_smith(ax=mpl_axes),
@@ -620,9 +621,11 @@ def test_plotly_calibration_residuals(one_port_cal, attr: str, mpl_axes):
 @pytest.mark.parametrize("method", ["plot_ep", "plot_mu", "plot_ep_mu"])
 def test_plotly_freespace(ntwk1: rf.Network, method: str, mpl_axes):
     media = rf.media.Freespace(ntwk1.frequency, ep_r=4 - 0.1j, mu_r=1.2)
-    assert getattr(media, method)(ax=mpl_axes) is None
+    mpl.pyplot.sca(mpl_axes)
+    assert getattr(media, method)() is None
     fig = getattr(media, method)(backend="plotly")
     assert_plotly_parity(fig, mpl_axes, x_scale=1e9)
+    assert getattr(media, method)(fig=fig, backend="plotly") is fig
     rf.plotting.options.backend = "plotly"
     assert isinstance(getattr(media, method)(), go.Figure)
 
