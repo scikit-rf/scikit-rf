@@ -2451,10 +2451,11 @@ class VectorFitting:
                 ax.plot(freqs, sigma[:, n], label=fr'$\sigma_{n + 1}$')
         if plotly:
             return fig
-        ax.set_xlabel('Frequency (Hz)')
-        ax.set_ylabel('Magnitude')
-        ax.legend(loc='best')
-        return ax
+        else:
+            ax.set_xlabel('Frequency (Hz)')
+            ax.set_ylabel('Magnitude')
+            ax.legend(loc='best')
+            return ax
 
     @_validate_plot_args
     def plot_convergence(self, ax: Axes = None, backend: str | None = None, *, fig=None) -> Axes:
@@ -2490,15 +2491,15 @@ class VectorFitting:
             return fig.update_layout(
                 yaxis=dict(type='log', title_text='Max. relative change', title_font_color='darkblue'),
                 yaxis2=dict(overlaying='y', side='right', title_text='Residue', title_font_color='orangered'))
-
-        ax = _get_matplotlib_axes(ax)
-        ax.semilogy(np.arange(len(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
-        ax.set_xlabel('Iteration step')
-        ax.set_ylabel('Max. relative change', color='darkblue')
-        ax2 = ax.twinx()
-        ax2.plot(np.arange(len(self.d_res_history)) + 1, self.d_res_history, color='orangered')
-        ax2.set_ylabel('Residue', color='orangered')
-        return ax
+        else:
+            ax = _get_matplotlib_axes(ax)
+            ax.semilogy(np.arange(len(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
+            ax.set_xlabel('Iteration step')
+            ax.set_ylabel('Max. relative change', color='darkblue')
+            ax2 = ax.twinx()
+            ax2.plot(np.arange(len(self.d_res_history)) + 1, self.d_res_history, color='orangered')
+            ax2.set_ylabel('Residue', color='orangered')
+            return ax
 
     @_validate_plot_args
     def plot_passivation(self, ax: Axes = None, backend: str | None = None, *, fig=None) -> Axes:
@@ -2527,12 +2528,12 @@ class VectorFitting:
         if _resolve_backend(backend, ax, fig) == 'plotly':
             return plot_rectangular(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma,
                                     'Iteration step', 'Max. singular value', fig=fig, backend='plotly')
-
-        ax = _get_matplotlib_axes(ax)
-        ax.plot(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma)
-        ax.set_xlabel('Iteration step')
-        ax.set_ylabel('Max. singular value')
-        return ax
+        else:
+            ax = _get_matplotlib_axes(ax)
+            ax.plot(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma)
+            ax.set_xlabel('Iteration step')
+            ax.set_ylabel('Max. singular value')
+            return ax
 
     def write_spice_subcircuit_s(self, file: str, fitted_model_name: str = "s_equivalent",
                                      create_reference_pins: bool = False) -> None:
