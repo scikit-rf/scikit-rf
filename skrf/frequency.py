@@ -57,7 +57,15 @@ from numpy import (
 )
 
 from .constants import FREQ_UNITS, ZERO
-from .plotting import _validate_plot_args
+from .plotting import (
+    _get_matplotlib_axes,
+    _get_plotly_figure,
+    _plotly_frequency_x,
+    _plotly_rect,
+    _resolve_backend,
+    _validate_plot_args,
+    scale_frequency_ticks,
+)
 from .util import find_nearest_index, slice_domain
 
 
@@ -736,8 +744,6 @@ class Frequency:
         -------
         None, or the plotly Figure with the plotly backend
         """
-        from .plotting import _get_matplotlib_axes, _get_plotly_figure, _resolve_backend
-
         if _resolve_backend(backend, ax, fig) == 'plotly':
             return _get_plotly_figure(fig).update_layout(xaxis_title_text=f'Frequency ({self.unit})')
         _get_matplotlib_axes(ax).set_xlabel(f'Frequency ({self.unit})')
@@ -752,15 +758,6 @@ class Frequency:
         ``skrf.plotting.options.backend``), it draws on the plotly Figure
         `fig`, or a new one, and returns it.
         """
-
-        from .plotting import (
-            _get_matplotlib_axes,
-            _get_plotly_figure,
-            _plotly_frequency_x,
-            _plotly_rect,
-            _resolve_backend,
-            scale_frequency_ticks,
-        )
 
         plotly = _resolve_backend(backend, ax, fig) == 'plotly'
         fig = _get_plotly_figure(fig) if plotly else None
@@ -791,12 +788,12 @@ class Frequency:
             for column in np.reshape(y, (len(self), -1)).T:
                 _plotly_rect(x, column, *args, x_label=x_label, fig=fig, **kwargs)
             return fig
-
-        # plt.plot(self.f_scaled, y, *args, **kwargs)
-        ax.plot(self.f, y, *args, **kwargs)
-        scale_frequency_ticks(ax, self.unit, backend='matplotlib')
-        ax.autoscale(axis='x', tight=True)
-        self.labelXAxis(ax, backend='matplotlib')
+        else:
+            # plt.plot(self.f_scaled, y, *args, **kwargs)
+            ax.plot(self.f, y, *args, **kwargs)
+            scale_frequency_ticks(ax, self.unit, backend='matplotlib')
+            ax.autoscale(axis='x', tight=True)
+            self.labelXAxis(ax, backend='matplotlib')
 
 
 def overlap_freq(f1: Frequency,f2: Frequency) -> Frequency:
