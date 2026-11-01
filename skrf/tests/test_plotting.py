@@ -776,12 +776,10 @@ def test_plotly_caled_ntwks(cal: str, attr: str, request):
 def test_plotly_calibration_set_uncertainty(one_port_cal, mpl_axes):
     measured_sets = [NetworkSet(one_port_cal.measured[k::3]) for k in range(3)]
     cal_set = rf.calibration.calibrationSet.Dot(rf.calibration.OnePort, one_port_cal.ideals[:3], measured_sets)
-    assert cal_set.plot_uncertainty_per_standard(ax=mpl_axes) is None
+    mpl.pyplot.sca(mpl_axes)
+    assert cal_set.plot_uncertainty_per_standard() is None
     fig = cal_set.plot_uncertainty_per_standard(backend="plotly")
     assert_plotly_parity(fig, mpl_axes, x_scale=1e9)
-    assert cal_set.plot_uncertainty_per_standard(fig=fig, backend="plotly") is fig
-    with pytest.raises(TypeError, match="cannot be used with backend='plotly'"):
-        cal_set.plot_uncertainty_per_standard(ax=mpl_axes, backend="plotly")
 
 @pytest.fixture(scope="module")
 def p370_networks():

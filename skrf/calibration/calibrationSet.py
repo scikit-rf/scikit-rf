@@ -19,7 +19,7 @@ CalibrationSet Class
 from itertools import product
 
 from ..networkSet import NetworkSet
-from ..plotting import _get_plotly_figure, _resolve_backend, _validate_plot_args
+from ..plotting import _get_plotly_figure, _resolve_backend
 from .calibration import Calibration
 
 
@@ -97,31 +97,22 @@ class CalibrationSet:
         return NetworkSet([k.apply_cal(raw_ntwk) for k in self.cal_list],
             *args, **kwargs)
 
-    @_validate_plot_args
-    def plot_uncertainty_per_standard(self, *, ax=None, fig=None, backend: str | None = None, **kwargs):
-        r"""
+    def plot_uncertainty_per_standard(self, *, backend: str | None = None):
+        """
         Plot the standard deviation of the measurements of each standard.
 
         Parameters
         ----------
-        ax : :class:`matplotlib.axes.Axes`, optional
-            axes to draw on, default the current matplotlib axes.
-        fig : plotly Figure, optional
-            figure to draw on with the plotly backend.
         backend : {'matplotlib', 'plotly'}, optional
             plotting backend, default ``skrf.plotting.options.backend``.
-        \*\*kwargs : kwargs
-            passed to :meth:`~skrf.network.Network.plot_s_mag`
 
         Returns
         -------
-        None, or the plotly Figure with the plotly backend
+        None, or plotly Figure if using plotly backend
         """
-        backend = _resolve_backend(backend, ax, fig)
-        if backend == 'plotly':
-            fig = _get_plotly_figure(fig)
-        for measured_set in self.measured_sets:
-            measured_set.std_s.plot_s_mag(ax=ax, fig=fig, backend=backend, **kwargs)
+        backend = _resolve_backend(backend)
+        fig = _get_plotly_figure() if backend == 'plotly' else None
+        self.dankness('std_s', 'plot_s_mag', fig=fig, backend=backend)
         if backend == 'plotly':
             return fig
 

@@ -1081,26 +1081,26 @@ class Calibration:
 
         Returns
         -------
-        None, or the plotly Figure with the plotly backend
+        None, or plotly Figure if using plotly backend
         """
         ns = NetworkSet(self.caled_ntwks)
-        port_tuples = ns[0].port_tuples
-        titles = [f"S{ns[0]._fmt_trace_name(m, n)}" for m, n in port_tuples]
         kwargs.update({'show_legend':show_legend})
 
         if _resolve_backend(backend) == 'plotly':
+            port_tuples = ns[0].port_tuples
+            titles = [f"S{ns.ntwk_set[0]._fmt_trace_name(m, n)}" for m, n in port_tuples]
             figs = [ns.__getattribute__('plot_'+attr)(m, n, backend='plotly', **kwargs) for m, n in port_tuples]
             # 100 pixels per inch of the matplotlib figure size
             return _plotly_subplots(figs, cols=ns[0].nports, subplot_titles=titles).update_layout(width=800,
                                                                                                    height=800)
+        else:
+            fig, axes = subplots(ns[0].nports, ns[0].nports, figsize=(8,8), squeeze=False)
 
-        fig, axes = subplots(ns[0].nports, ns[0].nports, figsize=(8,8), squeeze=False)
+            for ax ,(m, n) in zip(axes.flat, ns[0].port_tuples):
+                ax.set_title(f"S{ns.ntwk_set[0]._fmt_trace_name(m, n)}")
+                ns.__getattribute__('plot_'+attr)(m, n, ax=ax, backend='matplotlib', **kwargs)
 
-        for ax, title, (m, n) in zip(axes.flat, titles, port_tuples):
-            ax.set_title(title)
-            ns.__getattribute__('plot_'+attr)(m, n, ax=ax, backend='matplotlib', **kwargs)
-
-        fig.tight_layout()
+            fig.tight_layout()
 
 
     @_validate_plot_args
@@ -1122,7 +1122,7 @@ class Calibration:
 
         Returns
         -------
-        None, or the plotly Figure with the plotly backend
+        None, or plotly Figure if using plotly backend
 
         See Also
         --------
