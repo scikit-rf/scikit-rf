@@ -197,7 +197,7 @@ import re
 import warnings
 import zipfile
 from copy import deepcopy as copy
-from functools import partial, reduce
+from functools import reduce
 from itertools import product
 from numbers import Number
 from pathlib import Path
@@ -229,6 +229,7 @@ from .constants import (
     SparamFormatT,
 )
 from .frequency import Frequency
+from .plotting import _validate_plot_args
 from .time import get_window, time_gate
 from .util import copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
 
@@ -5204,7 +5205,7 @@ class Network:
 
     """
 
-    @rfplt._validate_plot_args
+    @_validate_plot_args
     def plot_attribute(     self,
                             attribute: PrimaryPropertiesT,
                             conversion: ComponentFuncT,
@@ -5215,11 +5216,10 @@ class Network:
                             y_label=None,
                             logx=False, backend=None, *, fig=None, **kwargs):
 
-        plotly = rfplt._resolve_backend(backend, ax, fig) == 'plotly'
+        backend = rfplt._resolve_backend(backend, ax, fig)
+        plotly = backend == 'plotly'
         fig = rfplt._get_plotly_figure(fig) if plotly else None
         ax = rfplt._get_matplotlib_axes(ax) if not plotly else None
-        plot_rect = (partial(rfplt._plotly_rect, fig=fig) if plotly
-                     else partial(rfplt.plot_rectangular, ax=ax, backend='matplotlib'))
 
         # create y_label if not provided
         if y_label is None:
@@ -5266,12 +5266,12 @@ class Network:
                                                            usetex=False if plotly else None)
 
                 if conversion in ["time_impulse", "time_step"]:
-                    plot_rect(x=x * 1e9,
-                              y=y[:, m, n],
-                              x_label=xlabel,
-                              y_label=y_label,
-                              show_legend=show_legend,
-                              **kwargs)
+                    rfplt.plot_rectangular(x=x * 1e9,
+                                        y=y[:, m, n],
+                                        x_label=xlabel,
+                                        y_label=y_label,
+                                        show_legend=show_legend, ax=ax, fig=fig, backend=backend,
+                                        **kwargs)
 
                 else:
                     # plot the desired attribute vs frequency
@@ -5302,12 +5302,12 @@ class Network:
 
 
 
-                    plot_rect(x=x,
-                              y=y,
-                              x_label=xlabel,
-                              y_label=y_label,
-                              show_legend=show_legend,
-                              **kwargs)
+                    rfplt.plot_rectangular(x=x,
+                                        y=y,
+                                        x_label=xlabel,
+                                        y_label=y_label,
+                                        show_legend=show_legend, ax=ax, fig=fig, backend=backend,
+                                        **kwargs)
 
         return fig if plotly else None
 
@@ -5342,7 +5342,7 @@ class Network:
     def plot_s_db_time(self, center_to_dc=None, *args, **kwargs):
         return rfplt.plot_s_db_time(self, *args, center_to_dc=center_to_dc, **kwargs)
 
-    @rfplt._validate_plot_args
+    @_validate_plot_args
     @copy_doc(rfplt.plot_s_smith)
     def plot_s_smith(self, m=None, n=None,r=1, ax=None, show_legend=True,\
         chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):
