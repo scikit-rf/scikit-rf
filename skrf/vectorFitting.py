@@ -2228,15 +2228,15 @@ class VectorFitting:
                 if title is not None:
                     fig.update_layout(title_text=title)
                 return fig.update_layout(xaxis_title=_plotly_hz_x(fig, freqs)[1], yaxis_title=y_label)
+            else:
+                ax.set_xlabel('Frequency (Hz)')
+                ax.set_ylabel(y_label)
+                ax.legend(loc='best')
 
-            ax.set_xlabel('Frequency (Hz)')
-            ax.set_ylabel(y_label)
-            ax.legend(loc='best')
+                if title is not None:
+                    ax.set_title(title)
 
-            if title is not None:
-                ax.set_title(title)
-
-            return ax
+                return ax
         else:
             raise ValueError(f'The specified component ("{component}") is not valid. Must be in {components}.')
 
