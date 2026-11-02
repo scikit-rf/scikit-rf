@@ -495,6 +495,11 @@ def test_networkset_creation_adds_methods_once(ntwk1: rf.Network, monkeypatch):
     NetworkSet([ntwk1])
     assert not calls
 
+def test_networkset_plot_keeps_network_method_arguments(ntwk1: rf.Network, monkeypatch):
+    # a subclass or replaced method without a backend argument keeps working with matplotlib
+    monkeypatch.setattr(rf.Network, "plot_s_db", lambda self, m=0, n=0: "drawn")
+    assert NetworkSet([ntwk1, ntwk1]).plot_s_db(0, 0) == ["drawn", "drawn"]
+
 def test_networkset_non_plot_method_not_wrapped():
     assert hasattr(NetworkSet.plot_s_db, "__wrapped__") and not hasattr(NetworkSet.write_touchstone, "__wrapped__")
 
