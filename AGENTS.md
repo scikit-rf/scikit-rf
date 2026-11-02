@@ -13,7 +13,7 @@ Guidance for AI coding agents and reviewers working on scikit-rf (`skrf`).
 
 - Keep the public API backward compatible. Deprecate with a warning before removing or renaming.
 - S-parameter arrays have shape `(nfreq, nports, nports)`. Keep that shape through every operation.
-- Frequencies are stored in Hz. Port impedances (`z0`) can be complex and differ per port.
+- Port impedances (`z0`) can be complex and differ per port.
 - Prefer vectorized numpy over Python loops over frequency points.
 - Check numerical results against a reference: a published formula, another simulator's output, or an existing test file.
 
@@ -23,6 +23,7 @@ Guidance for AI coding agents and reviewers working on scikit-rf (`skrf`).
 - Import optional dependencies (matplotlib, networkx, openpyxl, pyvisa) inside the functions that need them.
 - Line length is 120. Ruff rules live in `pyproject.toml`.
 - Docstrings follow the numpydoc format.
+- Keep the code style pythonic.
 
 ## Tests
 
@@ -36,6 +37,7 @@ Guidance for AI coding agents and reviewers working on scikit-rf (`skrf`).
 - Sources are in `doc/source/`, written in reStructuredText and built with Sphinx (`cd doc && make html`).
 - Examples and tutorials are Jupyter notebooks. Clear all outputs before committing.
 - Notebooks run as tests in CI, so keep them working.
+- Large changes to functionality should include an example notebook. 
 
 ## Layout
 
