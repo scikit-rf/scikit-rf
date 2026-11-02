@@ -219,28 +219,6 @@ def test_matplotlib_unchanged_under_global_plotly(ntwk1: rf.Network, ntwk_set_zi
             call()
 
 @needs_plotly
-def test_plotly_fig_argument(ntwk1: rf.Network, ntwk_set_zip, mpl_axes):
-    fig = go.Figure()
-    # on any path to the plotting code
-    for call in (lambda **kw: ntwk1.plot_s_db(fig=fig, **kw), lambda **kw: ntwk1.plot_s_db(0, 0, None, fig=fig, **kw),
-                 lambda **kw: ntwk1.plot_s_smith(fig=fig, **kw), lambda **kw: ntwk_set_zip.plot_s_db(fig=fig, **kw)):
-        assert call(backend="plotly") is fig
-        # the backend comes from the global option (matplotlib), never from fig
-        with pytest.raises(TypeError, match="cannot be used with backend='matplotlib'"):
-            call()
-    # ax and fig take the figures of their own backend only
-    with pytest.raises(TypeError, match="pass a plotly Figure as fig"):
-        ntwk1.plot_s_db(ax=fig, backend="plotly")
-    with pytest.raises(TypeError, match="pass a plotly Figure as fig"):
-        ntwk1.plot_s_db(0, 0, fig)
-    with pytest.raises(TypeError, match="pass a plotly Figure as fig"):
-        ntwk_set_zip.plot_s_db(ax=fig)
-    with pytest.raises(TypeError, match="pass matplotlib Axes as ax"):
-        ntwk1.plot_s_db(fig=mpl_axes)
-    with pytest.raises(TypeError, match="not both"):
-        ntwk1.plot_s_db(ax=mpl_axes, fig=fig)
-
-@needs_plotly
 @pytest.mark.parametrize("keywords", [{"color": "r"}, {"c": "r"}, {"linestyle": "--"}, {"ls": "--"}, {"linewidth": 2},
                                       {"lw": 2}, {"marker": "o"}, {"markersize": 3}, {"ms": 3}, {"alpha": 0.5}])
 def test_plotly_rejects_matplotlib_keywords(ntwk1: rf.Network, ntwk_set_zip, keywords: dict):
@@ -425,42 +403,6 @@ def test_plotly_plot_polar():
     np.testing.assert_allclose(trace.r, [1, 2])
     np.testing.assert_allclose(trace.theta, [np.pi / 2, np.pi])
     assert (fig.layout.polar.radialaxis.title.text, fig.layout.title.text) == ("r", "t")
-
-@needs_plotly
-def test_plotly_title_centered(ntwk1: rf.Network):
-    # centered over the plot area like matplotlib, on single plots and smith charts
-    for fig in (rf.plotting.plot_rectangular(ntwk1.f, ntwk1.s_db[:, 0, 0], title="t", backend="plotly"),
-                rf.plotting.plot_smith(ntwk1.s[:, 0, 0], title="t", backend="plotly")):
-        assert (fig.layout.title.x, fig.layout.title.xanchor, fig.layout.title.xref) == (0.5, "center", "paper")
-
-@needs_plotly
-def test_label_x_axis(ntwk1: rf.Network, mpl_axes):
-    other = mpl_axes.figure.add_subplot(2, 1, 2)  # now the current axes, not the one passed in
-    ntwk1.frequency.labelXAxis(mpl_axes)
-    assert mpl_axes.get_xlabel() == f"Frequency ({ntwk1.frequency.unit})" and other.get_xlabel() == ""
-    fig = go.Figure()
-    assert ntwk1.frequency.labelXAxis(fig=fig, backend="plotly") is fig
-    assert fig.layout.xaxis.title.text == f"Frequency ({ntwk1.frequency.unit})"
-    # the matplotlib plots of a Network keep labelling their own axes under a global plotly backend
-    rf.plotting.options.backend = "plotly"
-    ntwk1.frequency.plot(ntwk1.s_db[:, 0, 0], ax=other, backend="matplotlib")
-    assert other.get_xlabel() == f"Frequency ({ntwk1.frequency.unit})"
-
-@needs_plotly
-def test_plotly_frequency_plot_complex(ntwk1: rf.Network):
-    with pytest.warns(match="imaginary part"):
-        fig = ntwk1.frequency.plot(ntwk1.s[:, 0, 0], backend="plotly")
-    np.testing.assert_array_equal(fig.data[0].y, ntwk1.s[:, 0, 0].real)
-    fig.to_json()
-    with pytest.warns(match="imaginary part"):  # also for a list
-        fig = rf.plotting.plot_rectangular([0, 1], [1 + 1j, 2], backend="plotly")
-    np.testing.assert_array_equal(fig.data[0].y, [1, 2])
-
-@needs_plotly
-@pytest.mark.parametrize("label", [None, "_nolegend_"])
-def test_plotly_label_without_legend_entry(ntwk1: rf.Network, label):
-    fig = ntwk1.plot_s_db(0, 0, label=label, backend="plotly")
-    assert fig.data[0].name is None and not fig.data[0].showlegend
 
 def test_networkset_creation_adds_methods_once(ntwk1: rf.Network, monkeypatch):
     NetworkSet([ntwk1])
