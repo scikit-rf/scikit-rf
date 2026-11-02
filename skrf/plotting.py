@@ -342,7 +342,8 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     if _resolve_backend(backend, ax, fig) == 'plotly':
         return _plotly_smith(smithR, chart_type, draw_labels, fig=_get_plotly_figure(fig, **_PLOTLY_SMITH_LAYOUT),
                              ref_imm=ref_imm, draw_vswr=draw_vswr)
-    _matplotlib_smith(smithR, chart_type, draw_labels, border, ax, ref_imm, draw_vswr)
+    else:
+        _matplotlib_smith(smithR, chart_type, draw_labels, border, ax, ref_imm, draw_vswr)
 
 
 def _matplotlib_smith(smithR: Number, chart_type: str, draw_labels: bool, border: bool, ax: Axes | None,
@@ -582,9 +583,15 @@ def plot_rectangular(x: NumberLike, y: NumberLike,
 
     """
     if _resolve_backend(backend, ax, fig) == 'plotly':
-        return _plotly_rect(x, y, *args, x_label=x_label, y_label=y_label, title=title,
-                            show_legend=show_legend, fig=_get_plotly_figure(fig), **kwargs)
+        return _plotly_rectangular(x, y, *args, x_label=x_label, y_label=y_label, title=title,
+                                   show_legend=show_legend, fig=_get_plotly_figure(fig), **kwargs)
+    else:
+        return _matplotlib_rectangular(x, y, x_label, y_label, title, show_legend, axis, ax, *args, **kwargs)
 
+
+def _matplotlib_rectangular(x: NumberLike, y: NumberLike, x_label: str | None, y_label: str | None,
+                            title: str | None, show_legend: bool, axis: str, ax: Axes | None, *args, **kwargs):
+    """matplotlib counterpart of :func:`_plotly_rectangular`."""
     import matplotlib.pyplot as plt
 
     if ax is None:
@@ -673,7 +680,7 @@ def _plotly_frequency_x(fig, frequency: Frequency) -> tuple[np.ndarray, str]:
     return frequency.f / frequency.multiplier_dict[unit.lower()], f'Frequency ({unit})'
 
 
-def _plotly_rect(x: NumberLike, y: NumberLike, *args,
+def _plotly_rectangular(x: NumberLike, y: NumberLike, *args,
                  x_label: str | None = None, y_label: str | None = None,
                  title: str | None = None, show_legend: bool = True, fig=None, **kwargs):
     """plotly counterpart of :func:`plot_rectangular`, drawing on the plotly Figure `fig`."""
@@ -693,10 +700,10 @@ def _plotly_rect(x: NumberLike, y: NumberLike, *args,
     return fig
 
 
-def _plotly_complex(z: NumberLike, x_label: str = 'Real', y_label: str = 'Imag',
+def _plotly_complex_rectangular(z: NumberLike, x_label: str = 'Real', y_label: str = 'Imag',
                     title: str = 'Complex Plane', show_legend: bool = True, fig=None, **kwargs):
     """plotly counterpart of :func:`plot_complex_rectangular`, with equal axis scales."""
-    _plotly_rect(np.real(z), np.imag(z), x_label=x_label, y_label=y_label, title=title,
+    _plotly_rectangular(np.real(z), np.imag(z), x_label=x_label, y_label=y_label, title=title,
                  show_legend=show_legend, fig=fig, **kwargs)
     # pad the range of all traces by 5% like matplotlib, as plotly's autorange fits lines tightly
     for axis, attr in ((fig.layout.xaxis, 'x'), (fig.layout.yaxis, 'y')):
@@ -792,18 +799,30 @@ def plot_polar(theta: NumberLike, r: NumberLike,
 
     """
     if _resolve_backend(backend, ax, fig) == 'plotly':
-        fig = _get_plotly_figure(fig)
-        import plotly.graph_objects as go
+        return _plotly_polar(theta, r, *args, y_label=y_label, title=title, show_legend=show_legend,
+                             fig=_get_plotly_figure(fig), **kwargs)
+    else:
+        _matplotlib_polar(theta, r, x_label, y_label, title, show_legend, axis_equal, ax, *args, **kwargs)
 
-        trace = _plotly_kwargs(args, kwargs)
-        trace.setdefault('showlegend', bool(show_legend and 'name' in trace))
-        fig.add_trace(go.Scatterpolar(r=r, theta=theta, thetaunit='radians', **trace))
-        if y_label is not None:
-            fig.update_polars(radialaxis_title_text=y_label)
-        if title is not None:
-            fig.update_layout(title_text=title)
-        return fig
 
+def _plotly_polar(theta: NumberLike, r: NumberLike, *args, y_label: str | None = None, title: str | None = None,
+                  show_legend: bool = True, fig=None, **kwargs):
+    """plotly counterpart of :func:`_matplotlib_polar`."""
+    import plotly.graph_objects as go
+
+    trace = _plotly_kwargs(args, kwargs)
+    trace.setdefault('showlegend', bool(show_legend and 'name' in trace))
+    fig.add_trace(go.Scatterpolar(r=r, theta=theta, thetaunit='radians', **trace))
+    if y_label is not None:
+        fig.update_polars(radialaxis_title_text=y_label)
+    if title is not None:
+        fig.update_layout(title_text=title)
+    return fig
+
+
+def _matplotlib_polar(theta: NumberLike, r: NumberLike, x_label: str | None, y_label: str | None, title: str | None,
+                      show_legend: bool, axis_equal: bool, ax: Axes | None, *args, **kwargs):
+    """matplotlib counterpart of :func:`_plotly_polar`."""
     import matplotlib.pyplot as plt
 
     if ax is None:
@@ -892,8 +911,15 @@ def plot_complex_rectangular(z: NumberLike,
 
     """
     if _resolve_backend(backend, ax, fig) == 'plotly':
-        return _plotly_complex(z, x_label=x_label, y_label=y_label, title=title, show_legend=show_legend,
-                               fig=_get_plotly_figure(fig), **kwargs)
+        return _plotly_complex_rectangular(z, x_label=x_label, y_label=y_label, title=title,
+                                           show_legend=show_legend, fig=_get_plotly_figure(fig), **kwargs)
+    else:
+        _matplotlib_complex_rectangular(z, x_label, y_label, title, show_legend, axis, ax, **kwargs)
+
+
+def _matplotlib_complex_rectangular(z: NumberLike, x_label: str, y_label: str, title: str, show_legend: bool,
+                                    axis: str, ax: Axes | None, **kwargs):
+    """matplotlib counterpart of :func:`_plotly_complex_rectangular`."""
     x = np.real(z)
     y = np.imag(z)
     plot_rectangular(x=x, y=y, x_label=x_label, y_label=y_label,
@@ -1007,12 +1033,27 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
     plot_smith : plot complex data on smith chart
     """
     if _resolve_backend(backend, ax, fig) == 'plotly':
-        fig = _get_plotly_figure(fig, **_PLOTLY_SMITH_LAYOUT)
-        if not force_chart and not any(trace.meta == 'skrf_smith_chart' for trace in fig.data):
-            _plotly_smith(smith_r, chart_type, draw_labels, fig=fig, draw_vswr=draw_vswr)
-        return _plotly_rect(np.real(s), np.imag(s), x_label=x_label, y_label=y_label, title=title,
-                            show_legend=show_legend, fig=fig, **kwargs)
+        return _plotly_plot_smith(s, smith_r, chart_type, x_label, y_label, title, show_legend, force_chart,
+                                  draw_vswr, draw_labels, _get_plotly_figure(fig, **_PLOTLY_SMITH_LAYOUT), **kwargs)
+    else:
+        _matplotlib_plot_smith(s, smith_r, chart_type, x_label, y_label, title, show_legend, axis, ax,
+                               force_chart, draw_vswr, draw_labels, **kwargs)
 
+
+def _plotly_plot_smith(s: NumberLike, smith_r: float, chart_type: str, x_label: str, y_label: str, title: str,
+                       show_legend: bool, force_chart: bool, draw_vswr: list | bool | None, draw_labels: bool,
+                       fig, **kwargs):
+    """plotly counterpart of :func:`_matplotlib_plot_smith`."""
+    if not force_chart and not any(trace.meta == 'skrf_smith_chart' for trace in fig.data):
+        _plotly_smith(smith_r, chart_type, draw_labels, fig=fig, draw_vswr=draw_vswr)
+    return _plotly_rectangular(np.real(s), np.imag(s), x_label=x_label, y_label=y_label, title=title,
+                               show_legend=show_legend, fig=fig, **kwargs)
+
+
+def _matplotlib_plot_smith(s: NumberLike, smith_r: float, chart_type: str, x_label: str, y_label: str, title: str,
+                           show_legend: bool, axis: str, ax: Axes | None, force_chart: bool,
+                           draw_vswr: list | bool | None, draw_labels: bool, **kwargs):
+    """matplotlib counterpart of :func:`_plotly_plot_smith`."""
     import matplotlib.pyplot as plt
 
     if ax is None:
@@ -1372,9 +1413,10 @@ def plot_passivity(netw: Network, port=None, label_prefix=None, *, backend: str 
 
     if backend == "plotly":
         return kwargs["fig"]
-    plt.legend()
-    if plt.isinteractive():
-        plt.draw()
+    else:
+        plt.legend()
+        if plt.isinteractive():
+            plt.draw()
 
 
 @_validate_plot_args
@@ -1401,9 +1443,10 @@ def plot_reciprocity(netw: Network, db=False, *args, backend: str | None = None,
 
     if backend == "plotly":
         return kwargs["fig"]
-    plt.legend()
-    if plt.isinteractive():
-        plt.draw()
+    else:
+        plt.legend()
+        if plt.isinteractive():
+            plt.draw()
 
 
 @_validate_plot_args
@@ -1440,9 +1483,10 @@ def plot_reciprocity2(netw: Network, db=False, *args, backend: str | None = None
 
     if backend == "plotly":
         return kwargs["fig"]
-    plt.legend()
-    if plt.isinteractive():
-        plt.draw()
+    else:
+        plt.legend()
+        if plt.isinteractive():
+            plt.draw()
 
 
 @_validate_plot_args
@@ -1497,10 +1541,11 @@ def plot_s_error(netw: Network, other: Network,
     if backend == "plotly":
         kwargs["fig"].update_layout(yaxis_title_text=f"{'dB ' if db else ''}s-parameter error ({error_function})")
         return kwargs["fig"]
-    plt.ylabel(f"{'dB ' if db else ''}s-parameter error ({error_function})")
-    plt.legend()
-    if plt.isinteractive():
-        plt.draw()
+    else:
+        plt.ylabel(f"{'dB ' if db else ''}s-parameter error ({error_function})")
+        plt.legend()
+        if plt.isinteractive():
+            plt.draw()
 
 
 def plot_s_db_time(netw: Network, *args, window: str | float | tuple[str, float]=('kaiser', 6),
@@ -1604,29 +1649,28 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
             if plotly:
                 if not any(trace.meta == 'skrf_smith_chart' for trace in fig.data):
                     _plotly_smith(r, chart_type, draw_labels, fig=fig, draw_vswr=draw_vswr)
-                _plotly_rect(netw.s[:,m,n].real, netw.s[:,m,n].imag, *args, show_legend=show_legend, fig=fig,
-                             **kwargs)
-                continue
-
-            # plot the desired attribute vs frequency
-            if len (ax.patches) == 0:
-                smith(ax=ax, smithR = r, chart_type=chart_type, draw_labels=draw_labels, draw_vswr=draw_vswr,
-                      backend='matplotlib')
-            ax.plot(netw.s[:,m,n].real,  netw.s[:,m,n].imag, *args,**kwargs)
+                _plotly_rectangular(netw.s[:,m,n].real, netw.s[:,m,n].imag, *args, show_legend=show_legend, fig=fig,
+                                    **kwargs)
+            else:
+                # plot the desired attribute vs frequency
+                if len (ax.patches) == 0:
+                    smith(ax=ax, smithR = r, chart_type=chart_type, draw_labels=draw_labels, draw_vswr=draw_vswr,
+                          backend='matplotlib')
+                ax.plot(netw.s[:,m,n].real,  netw.s[:,m,n].imag, *args,**kwargs)
 
     if plotly:
         if label_axes:
             fig.update_layout(xaxis_title_text='Real', yaxis_title_text='Imaginary')
         return fig
+    else:
+        #draw legend
+        if show_legend:
+            ax.legend()
+        ax.axis(np.array([-1.1,1.1,-1.1,1.1])*r)
 
-    #draw legend
-    if show_legend:
-        ax.legend()
-    ax.axis(np.array([-1.1,1.1,-1.1,1.1])*r)
-
-    if label_axes:
-        ax.set_xlabel('Real')
-        ax.set_ylabel('Imaginary')
+        if label_axes:
+            ax.set_xlabel('Real')
+            ax.set_ylabel('Imaginary')
 
 
 @_matplotlib_only
@@ -2369,7 +2413,7 @@ def plot_prop_complex(netw: Network, prop_name: str,
     plotly = _resolve_backend(backend, ax, fig) == 'plotly'
     if plotly:
         fig = _get_plotly_figure(fig)
-    plot_z = (partial(_plotly_complex, fig=fig) if plotly
+    plot_z = (partial(_plotly_complex_rectangular, fig=fig) if plotly
               else partial(plot_complex_rectangular, ax=ax, backend='matplotlib'))
 
     # create index lists, if not provided by user

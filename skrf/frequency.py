@@ -60,7 +60,7 @@ from .constants import FREQ_UNITS, ZERO
 from .plotting import (
     _get_plotly_figure,
     _plotly_frequency_x,
-    _plotly_rect,
+    _plotly_rectangular,
     _resolve_backend,
     _validate_plot_args,
 )
@@ -796,7 +796,7 @@ class Frequency:
         if backend == 'plotly':
             x, x_label = _plotly_frequency_x(fig, self)
             for column in np.reshape(y, (len(self), -1)).T:
-                _plotly_rect(x, column, *args, x_label=x_label, fig=fig, **kwargs)
+                _plotly_rectangular(x, column, *args, x_label=x_label, fig=fig, **kwargs)
             return fig
         else:
             # plt.plot(self.f_scaled, y, *args, **kwargs)
