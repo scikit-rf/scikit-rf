@@ -58,13 +58,11 @@ from numpy import (
 
 from .constants import FREQ_UNITS, ZERO
 from .plotting import (
-    _get_matplotlib_axes,
     _get_plotly_figure,
     _plotly_frequency_x,
     _plotly_rect,
     _resolve_backend,
     _validate_plot_args,
-    scale_frequency_ticks,
 )
 from .util import find_nearest_index, slice_domain
 
@@ -746,7 +744,13 @@ class Frequency:
         """
         if _resolve_backend(backend, ax, fig) == 'plotly':
             return _get_plotly_figure(fig).update_layout(xaxis_title_text=f'Frequency ({self.unit})')
-        _get_matplotlib_axes(ax).set_xlabel(f'Frequency ({self.unit})')
+        else:
+            import matplotlib.pyplot as plt
+
+            if ax is None:
+                ax = plt.gca()
+
+            ax.set_xlabel(f'Frequency ({self.unit})')
 
     @_validate_plot_args
     def plot(self, y: NumberLike, *args, ax: Axes=None, fig=None, backend: str | None = None, **kwargs):
@@ -759,21 +763,27 @@ class Frequency:
         `fig`, or a new one, and returns it.
         """
 
-        plotly = _resolve_backend(backend, ax, fig) == 'plotly'
-        fig = _get_plotly_figure(fig) if plotly else None
-        ax = _get_matplotlib_axes(ax) if not plotly else None
+        from .plotting import scale_frequency_ticks
 
-        if len(np.shape(y)) > 2:
-            # perhaps the dimensions are empty, try to squeeze it down
-            y = y.squeeze()
-            if len(np.shape(y)) > 2:
-                # the dimensions are full, so lets loop and plot each
-                for m in range(np.shape(y)[1]):
-                    for n in range(np.shape(y)[2]):
-                        self.plot(y[:, m, n], *args, ax=ax, fig=fig, backend='plotly' if plotly else 'matplotlib',
-                                  **kwargs)
-                return fig if plotly else None
+        backend = _resolve_backend(backend, ax, fig)
+        if backend == 'plotly':
+            fig = _get_plotly_figure(fig)
+        else:
+            import matplotlib.pyplot as plt
+
+            if ax is None:
+                ax = plt.gca()
+
         try:
+            if len(np.shape(y)) > 2:
+                # perhaps the dimensions are empty, try to squeeze it down
+                y = y.squeeze()
+                if len(np.shape(y)) > 2:
+                    # the dimensions are full, so lets loop and plot each
+                    for m in range(np.shape(y)[1]):
+                        for n in range(np.shape(y)[2]):
+                            self.plot(y[:, m, n], *args, fig=fig, backend=backend, **kwargs)
+                    return fig
             if len(y) == len(self):
                 pass
             else:
@@ -783,7 +793,7 @@ class Frequency:
         except(TypeError):
             y = y * np.ones(len(self))
 
-        if plotly:
+        if backend == 'plotly':
             x, x_label = _plotly_frequency_x(fig, self)
             for column in np.reshape(y, (len(self), -1)).T:
                 _plotly_rect(x, column, *args, x_label=x_label, fig=fig, **kwargs)
@@ -793,7 +803,7 @@ class Frequency:
             ax.plot(self.f, y, *args, **kwargs)
             scale_frequency_ticks(ax, self.unit)
             ax.autoscale(axis='x', tight=True)
-            self.labelXAxis(ax, backend='matplotlib')
+            self.labelXAxis(backend='matplotlib')
 
 
 def overlap_freq(f1: Frequency,f2: Frequency) -> Frequency:

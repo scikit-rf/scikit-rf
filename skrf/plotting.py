@@ -209,23 +209,6 @@ def _validate_plot_args(func: Callable) -> Callable:
     return wrapper
 
 
-def _import_plotly():
-    try:
-        import plotly.graph_objects as go
-    except ImportError as err:
-        raise ImportError("The plotly backend requires plotly: pip install scikit-rf[plotly]") from err
-    return go
-
-
-def _get_matplotlib_axes(ax: Axes | None = None) -> Axes:
-    """Return `ax`, or the current matplotlib axes if it is None."""
-    try:
-        import matplotlib.pyplot as plt
-    except ImportError as err:
-        raise RuntimeError("Plotting is not available") from err
-    return plt.gca() if ax is None else ax
-
-
 def figure(*args, **kwargs) -> Figure:
     """
     Wraps the matplotlib figure call and raises if not available.
@@ -364,9 +347,11 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     if _resolve_backend(backend, ax, fig) == 'plotly':
         return _plotly_smith(smithR, chart_type, draw_labels, fig=_get_plotly_figure(fig, **_PLOTLY_SMITH_LAYOUT),
                              ref_imm=ref_imm, draw_vswr=draw_vswr)
-    ax = _get_matplotlib_axes(ax)
-
+    import matplotlib.pyplot as plt
     from matplotlib.patches import Circle
+
+    if ax is None:
+        ax = plt.gca()
 
     colors = dict(superlight=dict(ec='whitesmoke', fc='none'), verylight=dict(ec='lightgrey', fc='none'),
                   light=dict(ec='grey', fc='none'), heavy=dict(ec='black', fc='none'))
@@ -636,7 +621,6 @@ _PLOTLY_LAYOUT = dict(width=700, height=500, margin_t=60, title=dict(x=0.5, xanc
 
 def _plotly_layout() -> dict:
     """Layout of a new figure, copying the size of the default template, which plotly.js ignores there."""
-    _import_plotly()
     import plotly.io as pio
 
     template = pio.templates[pio.templates.default] if pio.templates.default else None
@@ -646,7 +630,13 @@ def _plotly_layout() -> dict:
 
 def _get_plotly_figure(fig=None, **layout):
     """Return the plotly Figure `fig`, or a new Figure of the default size and `layout` if it is None."""
-    return _import_plotly().Figure(layout={**_plotly_layout(), **layout}) if fig is None else fig
+    if fig is not None:
+        return fig
+    try:
+        import plotly.graph_objects as go
+    except ImportError as err:
+        raise ImportError("The plotly backend requires plotly: pip install scikit-rf[plotly]") from err
+    return go.Figure(layout={**_plotly_layout(), **layout})
 
 
 def _plotly_kwargs(args: tuple, kwargs: dict) -> dict:
@@ -681,11 +671,13 @@ def _plotly_rect(x: NumberLike, y: NumberLike, *args,
                  x_label: str | None = None, y_label: str | None = None,
                  title: str | None = None, show_legend: bool = True, fig=None, **kwargs):
     """plotly counterpart of :func:`plot_rectangular`, drawing on the plotly Figure `fig`."""
+    import plotly.graph_objects as go
+
     trace = _plotly_kwargs(args, kwargs)
     trace.setdefault('showlegend', bool(show_legend and 'name' in trace))
     # the real part of complex data with a warning, like matplotlib, as plotly can't serialize it
     x = np.asarray(x).astype(float) if np.iscomplexobj(x) else x
-    fig.add_trace(_import_plotly().Scatter(x=x, y=np.asarray(y).astype(float), **trace))
+    fig.add_trace(go.Scatter(x=x, y=np.asarray(y).astype(float), **trace))
     if x_label is not None:
         fig.update_layout(xaxis_title_text=x_label)
     if y_label is not None:
@@ -718,7 +710,8 @@ _PLOTLY_ANCHORS = {'baseline': 'bottom', 'center': 'middle'}
 def _plotly_smith(smithR: Number, chart_type: str, draw_labels: bool, fig, ref_imm: float = 1.0,
                   draw_vswr: list | bool | None = None):
     """plotly counterpart of :func:`smith`, with one trace per line weight, marked ``meta='skrf_smith_chart'``."""
-    go = _import_plotly()
+    import plotly.graph_objects as go
+
     circles, labels = _smith_grid(smithR, chart_type, draw_labels, ref_imm, draw_vswr)
     y_flip_sign = -1 if chart_type.startswith('y') else 1
     unit_circle = np.exp(2j * np.pi * np.linspace(0, 1, 361))
@@ -794,9 +787,11 @@ def plot_polar(theta: NumberLike, r: NumberLike,
     """
     if _resolve_backend(backend, ax, fig) == 'plotly':
         fig = _get_plotly_figure(fig)
+        import plotly.graph_objects as go
+
         trace = _plotly_kwargs(args, kwargs)
         trace.setdefault('showlegend', bool(show_legend and 'name' in trace))
-        fig.add_trace(_import_plotly().Scatterpolar(r=r, theta=theta, thetaunit='radians', **trace))
+        fig.add_trace(go.Scatterpolar(r=r, theta=theta, thetaunit='radians', **trace))
         if y_label is not None:
             fig.update_polars(radialaxis_title_text=y_label)
         if title is not None:
@@ -1389,11 +1384,10 @@ def plot_reciprocity(netw: Network, db=False, *args, backend: str | None = None,
     if backend == "matplotlib":
         import matplotlib.pyplot as plt
 
-    gen_label = 'label' not in kwargs
     for m in range(netw.nports):
         for n in range(netw.nports):
             if m > n:
-                if gen_label:
+                if 'label' not in kwargs.keys():
                     kwargs['label'] = f"ports {netw._fmt_trace_name(m, n)}"
                 y = netw.reciprocity[:, m, n].flatten()
                 y = mf.complex_2_db(y) if db else np.abs(y)
@@ -1428,11 +1422,10 @@ def plot_reciprocity2(netw: Network, db=False, *args, backend: str | None = None
     if backend == "matplotlib":
         import matplotlib.pyplot as plt
 
-    gen_label = 'label' not in kwargs
     for m in range(netw.nports):
         for n in range(netw.nports):
             if m > n:
-                if gen_label:
+                if 'label' not in kwargs.keys():
                     kwargs['label'] = f"ports {netw._fmt_trace_name(m, n)}"
                 y = netw.reciprocity2[:, m, n].flatten()
                 if db:

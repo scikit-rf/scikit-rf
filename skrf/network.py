@@ -5218,8 +5218,13 @@ class Network:
 
         backend = rfplt._resolve_backend(backend, ax, fig)
         plotly = backend == 'plotly'
-        fig = rfplt._get_plotly_figure(fig) if plotly else None
-        ax = rfplt._get_matplotlib_axes(ax) if not plotly else None
+        if plotly:
+            fig = rfplt._get_plotly_figure(fig)
+        else:
+            import matplotlib.pyplot as plt
+
+            if ax is None:
+                ax = plt.gca()
 
         # create y_label if not provided
         if y_label is None:

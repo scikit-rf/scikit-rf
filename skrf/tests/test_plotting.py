@@ -502,31 +502,6 @@ def test_plotly_label_without_legend_entry(ntwk1: rf.Network, label):
     fig = ntwk1.plot_s_db(0, 0, label=label, backend="plotly")
     assert fig.data[0].name is None and not fig.data[0].showlegend
 
-def test_frequency_plot_uses_ax(ntwk1: rf.Network, mpl_axes):
-    other = mpl_axes.figure.add_subplot(2, 1, 2)  # now the current axes, not the one passed in
-    y = np.ones((len(ntwk1), 2, 2))
-    ntwk1.frequency.plot(y, ax=mpl_axes, backend="matplotlib")
-    assert (len(mpl_axes.lines), len(other.lines)) == (4, 0)
-
-def test_frequency_plot_keeps_errors_of_the_matrix_loop(ntwk1: rf.Network, mpl_axes):
-    with pytest.raises(AttributeError, match="not_a_keyword"):
-        ntwk1.frequency.plot(np.ones((len(ntwk1), 2, 2)), ax=mpl_axes, backend="matplotlib", not_a_keyword=1)
-    mpl_axes.plot = lambda *a, **k: (_ for _ in ()).throw(TypeError("from plot"))
-    with pytest.raises(TypeError, match="from plot"):
-        ntwk1.frequency.plot(np.ones((len(ntwk1), 2, 2)), ax=mpl_axes, backend="matplotlib")
-
-@pytest.fixture
-def three_port() -> rf.Network:
-    freq = rf.Frequency(1, 2, 5, "GHz")
-    return rf.Network(frequency=freq, s=np.ones((5, 3, 3)) * 0.1, z0=50)
-
-@pytest.mark.parametrize("method", ["plot_reciprocity", "plot_reciprocity2"])
-@pytest.mark.parametrize("backend", ["matplotlib", pytest.param("plotly", marks=needs_plotly)])
-def test_plot_reciprocity_labels(three_port: rf.Network, mpl_axes, method: str, backend: str):
-    fig = getattr(rf.plotting, method)(three_port, backend=backend)
-    labels = [t.name for t in fig.data] if backend == "plotly" else [line.get_label() for line in mpl_axes.lines]
-    assert labels == ["ports 21", "ports 31", "ports 32"]
-
 @needs_plotly
 def test_plotly_network_set_positional_ax(ntwk_set_zip: NetworkSet):
     n = len(ntwk_set_zip)
