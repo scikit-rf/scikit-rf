@@ -123,9 +123,6 @@ def axes_kwarg(func):
     return wrapper
 
 
-_PLOTTING_BACKENDS = ('matplotlib', 'plotly')
-
-
 class _PlottingOptions:
     """Plotting settings: `backend` is 'matplotlib' (default) or 'plotly'."""
 
@@ -163,16 +160,14 @@ def _resolve_backend(backend: str | None = None, *targets) -> str:
 
     Raises if one of `targets`, the `ax` and `fig` of the call, does not belong to that backend.
     """
+    backends = ('matplotlib', 'plotly')
     backend = options.backend if backend is None else backend
-    if backend not in _PLOTTING_BACKENDS:
-        raise ValueError(f"Unknown plotting backend {backend!r}, choose one of {_PLOTTING_BACKENDS}")
+    if backend not in backends:
+        raise ValueError(f"Unknown plotting backend {backend!r}, choose one of {backends}")
     for target in targets:
         if target is not None and (backend == 'plotly') != _is_plotly_figure(target):
             raise TypeError(f"{type(target).__name__} cannot be used with backend={backend!r}")
     return backend
-
-
-_MATPLOTLIB_KEYWORDS = {'alpha', 'c', 'color', 'linestyle', 'linewidth', 'ls', 'lw', 'markersize', 'ms'}
 
 
 def _validate_plot_args(func: Callable) -> Callable:
@@ -180,6 +175,7 @@ def _validate_plot_args(func: Callable) -> Callable:
     parameters = inspect.signature(func).parameters
     has_ax_position = 'ax' in parameters and parameters['ax'].kind is parameters['ax'].POSITIONAL_OR_KEYWORD
     ax_index = list(parameters).index('ax') if has_ax_position else None
+    matplotlib_keywords = {'alpha', 'c', 'color', 'linestyle', 'linewidth', 'ls', 'lw', 'markersize', 'ms'}
 
     @wraps(func)
     def wrapper(*args, fig=None, **kwargs):
@@ -191,7 +187,7 @@ def _validate_plot_args(func: Callable) -> Callable:
                 raise TypeError(f"fig must be a plotly Figure, not {type(fig).__name__}, pass matplotlib Axes as ax")
         if _is_plotly_figure(ax):
             raise TypeError("ax must be matplotlib Axes, pass a plotly Figure as fig")
-        keywords = _MATPLOTLIB_KEYWORDS & kwargs.keys()
+        keywords = matplotlib_keywords & kwargs.keys()
         if isinstance(kwargs.get('marker'), str):
             keywords = keywords | {'marker'}
         if keywords and _resolve_backend(kwargs.get('backend'), ax, fig) == 'plotly':
@@ -204,21 +200,8 @@ def _validate_plot_args(func: Callable) -> Callable:
     return wrapper
 
 
-# layout of a new figure, with a fixed size as a notebook otherwise stretches it across the whole cell
-_PLOTLY_LAYOUT = dict(width=700, height=500, margin_t=60, title=dict(x=0.5, xanchor='center', xref='paper'))
-
-
-def _plotly_layout() -> dict:
-    """Layout of a new figure, copying the size of the default template, which plotly.js ignores there."""
-    import plotly.io as pio
-
-    template = pio.templates[pio.templates.default] if pio.templates.default else None
-    return {k: v if template is None or k == 'title' or template.layout[k] is None else template.layout[k]
-            for k, v in _PLOTLY_LAYOUT.items()}
-
-
 def _is_plotly_figure(fig) -> bool:
-    # checked by name so that plotly is not imported
+    """Check the class names of `fig` rather than use isinstance, which would need plotly, an optional dependency."""
     return any(c.__module__.startswith('plotly.') and c.__name__ == 'Figure' for c in type(fig).__mro__)
 
 
@@ -228,9 +211,16 @@ def _get_plotly_figure(fig=None, **layout):
         return fig
     try:
         import plotly.graph_objects as go
+        import plotly.io as pio
     except ImportError as err:
         raise ImportError("The plotly backend requires plotly: pip install scikit-rf[plotly]") from err
-    return go.Figure(layout={**_plotly_layout(), **layout})
+    # a fixed size, as a notebook otherwise stretches the figure across the whole cell
+    default = dict(width=700, height=500, margin_t=60, title=dict(x=0.5, xanchor='center', xref='paper'))
+    # with the size of the default template, which plotly.js ignores there
+    template = pio.templates[pio.templates.default] if pio.templates.default else None
+    default = {k: v if template is None or k == 'title' or template.layout[k] is None else template.layout[k]
+               for k, v in default.items()}
+    return go.Figure(layout={**default, **layout})
 
 
 def _plotly_kwargs(args: tuple, kwargs: dict) -> dict:
@@ -463,9 +453,7 @@ def _matplotlib_smith(smithR: Number, chart_type: str, draw_labels: bool, border
         cc.set_clip_path(clipc)
 
 
-_PLOTLY_SMITH_COLORS = dict(superlight='whitesmoke', verylight='lightgrey', light='grey', heavy='black')
 _PLOTLY_SMITH_LAYOUT = dict(height=550, margin=dict(l=20, r=20, b=20))  # a new figure around a square chart
-_PLOTLY_ANCHORS = {'baseline': 'bottom', 'center': 'middle'}
 
 
 def _plotly_smith(smithR: Number, chart_type: str, draw_labels: bool, fig, ref_imm: float = 1.0,
@@ -473,17 +461,19 @@ def _plotly_smith(smithR: Number, chart_type: str, draw_labels: bool, fig, ref_i
     """plotly counterpart of :func:`smith`, with one trace per line weight, marked ``meta='skrf_smith_chart'``."""
     import plotly.graph_objects as go
 
+    colors = dict(superlight='whitesmoke', verylight='lightgrey', light='grey', heavy='black')
+    anchors = {'baseline': 'bottom', 'center': 'middle'}
     circles, labels = _smith_grid(smithR, chart_type, draw_labels, ref_imm, draw_vswr)
     y_flip_sign = -1 if chart_type.startswith('y') else 1
     unit_circle = np.exp(2j * np.pi * np.linspace(0, 1, 361))
-    paths = {weight: [] for weight in _PLOTLY_SMITH_COLORS}
+    paths = {weight: [] for weight in colors}
     for center, radius, weight in circles:
         paths[weight].append(complex(*center) + radius * unit_circle)
     # clipping circle and x and y axis
     line = np.linspace(-1, 1, 201) * smithR
     paths['heavy'] += [smithR * unit_circle, line, y_flip_sign + 1j * line]
 
-    for weight, color in _PLOTLY_SMITH_COLORS.items():
+    for weight, color in colors.items():
         if not paths[weight]:
             continue
         p = np.concatenate([np.append(path, np.nan) for path in paths[weight]])
@@ -493,7 +483,7 @@ def _plotly_smith(smithR: Number, chart_type: str, draw_labels: bool, fig, ref_i
                                 hoverinfo='skip', showlegend=False, meta='skrf_smith_chart'))
     for text, x, y, ha, va, kw in labels:
         fig.add_annotation(x=x, y=y, text=text.replace(r'$\infty$', '∞'), showarrow=False,
-                          xanchor=ha, yanchor=_PLOTLY_ANCHORS.get(va, va), font_color=kw.get('color'))
+                          xanchor=ha, yanchor=anchors.get(va, va), font_color=kw.get('color'))
 
     axis = dict(range=[-1.1 * smithR, 1.1 * smithR], showgrid=False, zeroline=False, showticklabels=False,
                 showline=False, ticks='', constrain='domain')
