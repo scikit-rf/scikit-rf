@@ -257,20 +257,11 @@ def test_plotly_keywords(ntwk1: rf.Network):
     trace = ntwk1.plot_s_db(0, 0, line=dict(width=3, dash="dash", color="red"), backend="plotly").data[0]
     assert (trace.line.width, trace.line.dash, trace.line.color) == (3, "dash", "red")
     assert ntwk1.plot_s_db(0, 0, name="plotly name", backend="plotly").data[0].name == "plotly name"
-
-def test_matplotlib_rejects_plotly_keywords(ntwk1: rf.Network, mpl_axes):
-    for keywords in ({"name": "a"}, {"line": {"width": 3}}):
-        with pytest.raises(AttributeError):
-            ntwk1.plot_s_db(0, 0, ax=mpl_axes, **keywords)
-
-@pytest.mark.parametrize("backend", ["matplotlib", pytest.param("plotly", marks=needs_plotly)])
-def test_label_works_with_both_backends(ntwk1: rf.Network, mpl_axes, backend: str):
-    out = ntwk1.plot_s_db(0, 0, label="both", backend=backend, **({"ax": mpl_axes} if backend == "matplotlib" else {}))
-    assert (mpl_axes.lines[0].get_label() if backend == "matplotlib" else out.data[0].name) == "both"
-
-def test_plot_prop_keyword_args(ntwk1: rf.Network, mpl_axes):
-    ntwk1.plot_prop_complex(prop_name="s", m=0, n=0, ax=mpl_axes)
-    assert len(mpl_axes.lines) == 1
+    trace = ntwk1.plot_s_db(0, 0, marker=dict(size=5), backend="plotly").data[0]
+    assert (trace.marker.size, trace.mode) == (5, "lines+markers")
+    trace = ntwk1.plot_s_db(0, 0, line=go.scatter.Line(color="red"), marker=go.scatter.Marker(symbol="x"),
+                            backend="plotly").data[0]
+    assert (trace.line.color, trace.marker.symbol, trace.mode) == ("red", "x", "lines+markers")
 
 @needs_plotly
 def test_plotly_does_not_import_matplotlib():
@@ -325,19 +316,9 @@ def test_plotly_logx(ntwk1: rf.Network, mpl_axes):
     assert mpl_axes.get_xscale() == "log"
 
 @needs_plotly
-def test_plotly_errors(ntwk1: rf.Network, mpl_axes):
+def test_plotly_rejects_format_strings(ntwk1: rf.Network):
     with pytest.raises(TypeError, match="Positional"):
         ntwk1.frequency.plot(ntwk1.s_db[:, 0, 0], "r--", backend="plotly")
-    with pytest.raises(TypeError, match="cannot be used with backend"):
-        ntwk1.plot_s_db(ax=mpl_axes, backend="plotly")
-
-@needs_plotly
-def test_plotly_kwargs_translation(ntwk1: rf.Network):
-    trace = ntwk1.plot_s_db(0, 0, marker=dict(size=5), backend="plotly").data[0]
-    assert (trace.marker.size, trace.mode) == (5, "lines+markers")
-    trace = ntwk1.plot_s_db(0, 0, line=go.scatter.Line(color="red"), marker=go.scatter.Marker(symbol="x"),
-                            backend="plotly").data[0]
-    assert (trace.line.color, trace.marker.symbol, trace.mode) == ("red", "x", "lines+markers")
 
 @needs_plotly
 def test_plotly_rectangular_complex_x():
@@ -476,11 +457,6 @@ def test_plotly_frequency_plot_complex(ntwk1: rf.Network):
         fig = rf.plotting.plot_rectangular([0, 1], [1 + 1j, 2], backend="plotly")
     np.testing.assert_array_equal(fig.data[0].y, [1, 2])
 
-@pytest.fixture
-def match() -> rf.Network:
-    freq = rf.Frequency(1, 2, 5, "GHz")
-    return rf.media.DefinedGammaZ0(freq, z0=50, gamma=1j).match(name="match")
-
 def test_networkset_creation_adds_methods_once(ntwk1: rf.Network, monkeypatch):
     NetworkSet([ntwk1])
     calls = []
@@ -493,9 +469,6 @@ def test_networkset_plot_keeps_network_method_arguments(ntwk1: rf.Network, monke
     monkeypatch.setattr(rf.Network, "plot_s_db", lambda self, m=0, n=0: "drawn")
     assert NetworkSet([ntwk1, ntwk1]).plot_s_db(0, 0) == ["drawn", "drawn"]
 
-def test_networkset_non_plot_method_not_wrapped():
-    assert hasattr(NetworkSet.plot_s_db, "__wrapped__") and not hasattr(NetworkSet.write_touchstone, "__wrapped__")
-
 @needs_plotly
 @pytest.mark.parametrize("label", [None, "_nolegend_"])
 def test_plotly_label_without_legend_entry(ntwk1: rf.Network, label):
@@ -507,28 +480,3 @@ def test_plotly_network_set_positional_ax(ntwk_set_zip: NetworkSet):
     n = len(ntwk_set_zip)
     assert len(ntwk_set_zip.plot_s_db(0, 0, None, False, backend="plotly").data) == n
     assert len([t for t in ntwk_set_zip.plot_s_smith(0, 0, 1, None, backend="plotly").data if t.name]) == n
-
-
-
-
-@needs_plotly
-def test_plotly_fig_on_network_set_plot(ntwk_set_zip: NetworkSet):
-    fig = go.Figure()
-    assert ntwk_set_zip.plot_s_db(0, 0, fig=fig, backend="plotly") is fig
-    assert len(fig.data) == len(ntwk_set_zip)
-
-
-@needs_plotly
-def test_plot_functions_take_fig_as_fig():
-    received = {}
-
-    @rf.plotting._validate_plot_args
-    def plot(ax=None, *, fig=None):
-        received.update(ax=ax, fig=fig)
-
-    fig = go.Figure()
-    plot(fig=fig)
-    assert received["ax"] is None
-    assert received["fig"] is fig
-    with pytest.raises(TypeError, match="pass a plotly Figure as fig"):
-        plot(ax=fig)

@@ -1352,7 +1352,7 @@ def colors() -> list[str]:
 
 
 def _start_plot(backend: str | None, kwargs: dict) -> str:
-    """Resolve `backend`; with plotly, put the figure to draw on in ``kwargs['fig']``."""
+    """Resolve `backend`, and with plotly, which has no current axes, share one figure through ``kwargs['fig']``."""
     backend = _resolve_backend(backend, kwargs.get("ax"), kwargs.get("fig"))
     if backend == "plotly":
         kwargs["fig"] = _get_plotly_figure(kwargs.get("fig"))
