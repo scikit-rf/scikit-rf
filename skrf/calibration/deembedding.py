@@ -75,6 +75,8 @@ from ..plotting import (
     _resolve_backend,
     _subplots,
     _validate_plot_args,
+    figure,
+    subplots,
 )
 
 if TYPE_CHECKING:
@@ -1587,8 +1589,11 @@ class IEEEP370_FER:
         may be a plotly Figure to draw into, and the plotly Figure is returned.
         """
         backend = _resolve_backend(backend, fig)
-        if fig is None or backend == 'plotly':
-            fig = _figure(backend, fig, figsize=(8, 8))
+        if backend == 'plotly':
+            fig = _figure('plotly', fig, figsize=(8, 8))
+        else:
+            if fig is None:
+                fig = figure(figsize=(8, 8))
 
         fig.suptitle('Fixture electrical requirements (FER)')
 
@@ -1618,7 +1623,10 @@ class IEEEP370_FER:
         ax.legend(loc = 'upper right')
 
         fig.tight_layout()
-        return fig.to_plotly() if backend == 'plotly' else fig
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return fig
 
     def plot_fd_mm_fer(self, s2xthru: Network, fig: Figure = None, *, backend: str | None = None) -> Figure:
         """
@@ -1628,8 +1636,11 @@ class IEEEP370_FER:
         may be a plotly Figure to draw into, and the plotly Figure is returned.
         """
         backend = _resolve_backend(backend, fig)
-        if fig is None or backend == 'plotly':
-            fig = _figure(backend, fig, figsize=(8, 8))
+        if backend == 'plotly':
+            fig = _figure('plotly', fig, figsize=(8, 8))
+        else:
+            if fig is None:
+                fig = figure(figsize=(8, 8))
 
         fig.suptitle('Fixture electrical requirements (FER)')
 
@@ -1671,7 +1682,10 @@ class IEEEP370_FER:
         ax.legend(loc = 'upper right')
 
         fig.tight_layout()
-        return fig.to_plotly() if backend == 'plotly' else fig
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return fig
 
     def plot_td_se_fer(self, s2xthru: Network, sfix_dut_fix: Network,
                             fig: Figure = None, *, backend: str | None = None) -> Figure:
@@ -1682,8 +1696,11 @@ class IEEEP370_FER:
         may be a plotly Figure to draw into, and the plotly Figure is returned.
         """
         backend = _resolve_backend(backend, fig)
-        if fig is None or backend == 'plotly':
-            fig = _figure(backend, fig, figsize=(8, 8))
+        if backend == 'plotly':
+            fig = _figure('plotly', fig, figsize=(8, 8))
+        else:
+            if fig is None:
+                fig = figure(figsize=(8, 8))
 
         fig.suptitle('Fixture electrical requirements (FER)')
         f = s2xthru.frequency.f
@@ -1743,7 +1760,10 @@ class IEEEP370_FER:
         ax.set_xlim((-1, x_t + 1))
 
         fig.tight_layout()
-        return fig.to_plotly() if backend == 'plotly' else fig
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return fig
 
     def plot_td_mm_fer(self, s2xthru: Network, sfix_dut_fix: Network,
                             fig: Figure = None, *, backend: str | None = None) -> Figure:
@@ -1754,8 +1774,11 @@ class IEEEP370_FER:
         may be a plotly Figure to draw into, and the plotly Figure is returned.
         """
         backend = _resolve_backend(backend, fig)
-        if fig is None or backend == 'plotly':
-            fig = _figure(backend, fig, figsize=(8, 8))
+        if backend == 'plotly':
+            fig = _figure('plotly', fig, figsize=(8, 8))
+        else:
+            if fig is None:
+                fig = figure(figsize=(8, 8))
 
         mm_2xthru = s2xthru.copy()
         mm_2xthru.se2gmm(p=2)
@@ -1828,7 +1851,10 @@ class IEEEP370_FER:
         ax.set_xlim((-1, x_t + 1))
 
         fig.tight_layout()
-        return fig.to_plotly() if backend == 'plotly' else fig
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return fig
 
 class IEEEP370_FD_QM:
     def __init__(self, verbose: bool = False) -> None:
@@ -3463,10 +3489,13 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         res.name = 'Residuals'
 
         backend = _resolve_backend(backend, ax, fig)
-        if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
+        if backend == 'plotly':
+            fig, ax = _subplots(1, 2, 'plotly', fig, sharex = True, figsize=(10, 5))
         else:
-            fig = ax[0].get_figure()
+            if ax is None:
+                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+            else:
+                fig = ax[0].get_figure()
 
         fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
 
@@ -3493,7 +3522,10 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         ax[1].legend(loc = 'upper right')
         fig.tight_layout()
 
-        return fig.to_plotly() if backend == 'plotly' else (fig, ax)
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return (fig, ax)
 
     @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
@@ -3516,10 +3548,13 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
         backend = _resolve_backend(backend, ax, fig)
-        if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
+        if backend == 'plotly':
+            fig, ax = _subplots(1, 2, 'plotly', fig, sharex = True, figsize=(10, 5))
         else:
-            fig = ax[0].get_figure()
+            if ax is None:
+                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+            else:
+                fig = ax[0].get_figure()
 
         fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
         ax[0].set_title('Side 1')
@@ -3566,7 +3601,10 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
         fig.tight_layout()
 
-        return fig.to_plotly() if backend == 'plotly' else (fig, ax)
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return (fig, ax)
 
 class IEEEP370_MM_NZC_2xThru(IEEEP370):
     """
@@ -3861,10 +3899,13 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         res.se2gmm(p=2)
 
         backend = _resolve_backend(backend, ax, fig)
-        if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
+        if backend == 'plotly':
+            fig, ax = _subplots(1, 2, 'plotly', fig, sharex = True, figsize=(10, 5))
         else:
-            fig = ax[0].get_figure()
+            if ax is None:
+                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+            else:
+                fig = ax[0].get_figure()
 
         fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
 
@@ -3895,7 +3936,10 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         ax[1].legend(loc = 'upper right')
         fig.tight_layout()
 
-        return fig.to_plotly() if backend == 'plotly' else (fig, ax)
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return (fig, ax)
 
     @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
@@ -3926,10 +3970,13 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
         backend = _resolve_backend(backend, ax, fig)
-        if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
+        if backend == 'plotly':
+            fig, ax = _subplots(1, 2, 'plotly', fig, sharex = True, figsize=(10, 5))
         else:
-            fig = ax[0].get_figure()
+            if ax is None:
+                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+            else:
+                fig = ax[0].get_figure()
 
         fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
         ax[0].set_title('Side 1')
@@ -3978,7 +4025,10 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
 
         fig.tight_layout()
 
-        return fig.to_plotly() if backend == 'plotly' else (fig, ax)
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return (fig, ax)
 
 
 class IEEEP370_SE_ZC_2xThru(IEEEP370):
@@ -4487,10 +4537,13 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         res.name = 'Residuals'
 
         backend = _resolve_backend(backend, ax, fig)
-        if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
+        if backend == 'plotly':
+            fig, ax = _subplots(1, 2, 'plotly', fig, sharex = True, figsize=(10, 5))
         else:
-            fig = ax[0].get_figure()
+            if ax is None:
+                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+            else:
+                fig = ax[0].get_figure()
 
         fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
 
@@ -4517,7 +4570,10 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         ax[1].legend(loc = 'upper right')
         fig.tight_layout()
 
-        return fig.to_plotly() if backend == 'plotly' else (fig, ax)
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return (fig, ax)
 
     @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
@@ -4542,10 +4598,13 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
         backend = _resolve_backend(backend, ax, fig)
-        if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
+        if backend == 'plotly':
+            fig, ax = _subplots(1, 2, 'plotly', fig, sharex = True, figsize=(10, 5))
         else:
-            fig = ax[0].get_figure()
+            if ax is None:
+                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+            else:
+                fig = ax[0].get_figure()
 
         fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
         ax[0].set_title('Side 1')
@@ -4592,7 +4651,10 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
 
         fig.tight_layout()
 
-        return fig.to_plotly() if backend == 'plotly' else (fig, ax)
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return (fig, ax)
 
 
 class IEEEP370_MM_ZC_2xThru(IEEEP370):
@@ -4922,10 +4984,13 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         res.se2gmm(p=2)
 
         backend = _resolve_backend(backend, ax, fig)
-        if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
+        if backend == 'plotly':
+            fig, ax = _subplots(1, 2, 'plotly', fig, sharex = True, figsize=(10, 5))
         else:
-            fig = ax[0].get_figure()
+            if ax is None:
+                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+            else:
+                fig = ax[0].get_figure()
 
         fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
 
@@ -4956,7 +5021,10 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         ax[1].legend(loc = 'upper right')
         fig.tight_layout()
 
-        return fig.to_plotly() if backend == 'plotly' else (fig, ax)
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return (fig, ax)
 
     @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
@@ -4991,10 +5059,13 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
         backend = _resolve_backend(backend, ax, fig)
-        if ax is None or backend == 'plotly':
-            fig, ax = _subplots(1, 2, backend, fig, sharex = True, figsize=(10, 5))
+        if backend == 'plotly':
+            fig, ax = _subplots(1, 2, 'plotly', fig, sharex = True, figsize=(10, 5))
         else:
-            fig = ax[0].get_figure()
+            if ax is None:
+                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
+            else:
+                fig = ax[0].get_figure()
 
         fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
         ax[0].set_title('Side 1')
@@ -5041,4 +5112,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
 
         fig.tight_layout()
 
-        return fig.to_plotly() if backend == 'plotly' else (fig, ax)
+        if backend == 'plotly':
+            return fig.to_plotly()
+        else:
+            return (fig, ax)
