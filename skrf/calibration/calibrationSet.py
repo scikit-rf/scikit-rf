@@ -19,7 +19,6 @@ CalibrationSet Class
 from itertools import product
 
 from ..networkSet import NetworkSet
-from ..plotting import _get_plotly_figure, _resolve_backend
 from .calibration import Calibration
 
 
@@ -97,14 +96,10 @@ class CalibrationSet:
         return NetworkSet([k.apply_cal(raw_ntwk) for k in self.cal_list],
             *args, **kwargs)
 
-    def plot_uncertainty_per_standard(self, *, backend: str | None = None):
+    def plot_uncertainty_per_standard(self):
         """
         """
-        backend = _resolve_backend(backend)
-        fig = _get_plotly_figure() if backend == 'plotly' else None
-        self.dankness('std_s', 'plot_s_mag', fig=fig, backend=backend)
-        if backend == 'plotly':
-            return fig
+        self.dankness('std_s','plot_s_mag')
 
     def dankness(self, prop, func, *args, **kwargs):
         """

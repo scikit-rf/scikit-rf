@@ -143,14 +143,7 @@ from ..network import (
     zipfile,
 )
 from ..networkSet import NetworkSet
-from ..plotting import (
-    _get_matplotlib_axes,
-    _get_plotly_figure,
-    _plotly_subplots,
-    _resolve_backend,
-    _validate_plot_args,
-    subplots,
-)
+from ..plotting import axes_kwarg
 
 logger = getLogger(__name__)
 
@@ -1013,25 +1006,10 @@ class Calibration:
 
         write(file,self, *args, **kwargs)
 
-    @_validate_plot_args
-    def plot_calibration_errors(self, *args, ax: Axes = None, fig=None, backend: str | None = None, **kwargs):
-        r"""
+    @axes_kwarg
+    def plot_calibration_errors(self, *args, ax: Axes = None, **kwargs):
+        """
         Plot biased, unbiased and total error in dB scaled.
-
-        Parameters
-        ----------
-        ax : :class:`matplotlib.axes.Axes`, optional
-            axes to draw on with matplotlib backend.
-        fig : plotly Figure, optional
-            figure to draw on with the plotly backend.
-        backend : {'matplotlib', 'plotly'}, optional
-            plotting backend to use, default ``skrf.plotting.options.backend`` if unspecified.
-        \*\*kwargs : kwargs
-            passed to the plot method of Network
-
-        Returns
-        -------
-        None, or plotly Figure if using plotly backend
 
         See Also
         --------
@@ -1039,33 +1017,23 @@ class Calibration:
         unbiased_error
         total_error
         """
-        backend = _resolve_backend(backend, ax, fig)
-        fig = _get_plotly_figure(fig) if backend == 'plotly' else None
-        ax = _get_matplotlib_axes(ax) if backend == 'matplotlib' else None
+
+
         port_list = self.biased_error.port_tuples
         for m,n in port_list:
-            title = f"S{self.biased_error._fmt_trace_name(m,n)}"
-            self.unbiased_error.plot_s_db(m,n,ax=ax,fig=fig,backend=backend,**kwargs)
-            self.biased_error.plot_s_db(m,n,ax=ax,fig=fig,backend=backend,**kwargs)
-            self.total_error.plot_s_db(m,n,ax=ax,fig=fig,backend=backend,**kwargs)
-            if backend == 'plotly':
-                fig.update_layout(title_text=title, yaxis_range=[-100,0])
-            else:
-                ax.set_title(title)
-                ax.set_ylim(-100,0)
-        if backend == 'plotly':
-            return fig
+            ax.set_title(f"S{self.biased_error.ntwk_set[0]._fmt_trace_name(m,n)}")
+            self.unbiased_error.plot_s_db(m,n,**kwargs)
+            self.biased_error.plot_s_db(m,n,**kwargs)
+            self.total_error.plot_s_db(m,n,**kwargs)
+            ax.set_ylim(-100,0)
 
 
-    def plot_caled_ntwks(self, attr: str = 's_smith', show_legend: bool = False, *,
-                         backend: str | None = None, **kwargs):
+    def plot_caled_ntwks(self, attr: str = 's_smith', show_legend: bool = False, **kwargs):
         r"""
         Plot corrected calibration standards.
 
         Given that the calibration is overdetermined, this may be used
         as a heuristic verification of calibration quality.
-
-        Each port pair is plotted on its own subplot of a new figure.
 
         Parameters
         ----------
@@ -1074,34 +1042,21 @@ class Calibration:
             Default is 's_smith'
         show_legend : bool, optional
             draw a legend or not. Default is False.
-        backend : {'matplotlib', 'plotly'}, optional
-            plotting backend, default ``skrf.plotting.options.backend``.
         \*\*kwargs : kwargs
             passed to the plot method of Network
-
-        Returns
-        -------
-        None, or plotly Figure if using plotly backend
         """
         ns = NetworkSet(self.caled_ntwks)
+        fig, axes = util.subplots(figsize=(8,8))
+
         kwargs.update({'show_legend':show_legend})
 
-        if _resolve_backend(backend) == 'plotly':
-            port_tuples = ns[0].port_tuples
-            titles = [f"S{ns.ntwk_set[0]._fmt_trace_name(m, n)}" for m, n in port_tuples]
-            figs = [ns.__getattribute__('plot_'+attr)(m, n, backend='plotly', **kwargs) for m, n in port_tuples]
-            # 100 pixels per inch of the matplotlib figure size
-            return _plotly_subplots(figs, cols=ns[0].nports, subplot_titles=titles).update_layout(width=800,
-                                                                                                   height=800)
-        else:
-            fig, axes = subplots(ns[0].nports, ns[0].nports, figsize=(8,8), squeeze=False)
-            for ax ,(m, n) in zip(axes.flat, ns[0].port_tuples):
-                ax.set_title(f"S{ns.ntwk_set[0]._fmt_trace_name(m, n)}")
-                ns.__getattribute__('plot_'+attr)(m, n, ax=ax, backend='matplotlib', **kwargs)
-            fig.tight_layout()
+        for ax ,(m, n) in zip(axes, ns[0].port_tuples):
+            ax.set_title(f"S{ns.ntwk_set[0]._fmt_trace_name(m, n)}")
+            ns.__getattribute__('plot_'+attr)(m, n, **kwargs)
+
+        fig.tight_layout()
 
 
-    @_validate_plot_args
     def plot_residuals(self, attr: str = 's_db', **kwargs):
         r"""
         Plot residual networks.
@@ -1115,22 +1070,14 @@ class Calibration:
             Network property to plot, ie 's_db', 's_smith', etc.
             Default is 's_db'
         \*\*kwargs : kwargs
-            passed to the plot method of Network, including ``ax`` and
-            ``backend`` (default ``skrf.plotting.options.backend``)
-
-        Returns
-        -------
-        None, or plotly Figure if using plotly backend
+            passed to the plot method of Network
 
         See Also
         --------
         Calibration.residual_networks
         """
 
-        kwargs['backend'] = _resolve_backend(kwargs.get('backend'), kwargs.get('ax'), kwargs.get('fig'))
-        out = NetworkSet(self.residual_ntwks).__getattribute__('plot_'+attr)(**kwargs)
-        if kwargs['backend'] == 'plotly':
-            return out
+        NetworkSet(self.residual_ntwks).__getattribute__('plot_'+attr)(**kwargs)
 
 
 
@@ -6398,7 +6345,7 @@ def unterminate(ntwk, gamma_f, gamma_r):
 
     Parameters
     ----------
-    two_port : 2-port Network
+    ntwk : 2-port Network
         the raw measurement
     gamma_f : 1-port Network
         the measured forward switch term.
@@ -6443,7 +6390,7 @@ def terminate(ntwk, gamma_f, gamma_r):
 
     Parameters
     ----------
-    two_port : 2-port Network
+    ntwk : 2-port Network
         an unterminated network
     gamma_f : 1-port Network
         measured forward switch term.
@@ -6487,7 +6434,7 @@ def terminate_nport(ntwk, gammas):
 
     Parameters
     ----------
-    two_port : Network
+    ntwk : Network
         an unterminated network.
     gammas : list of 1-port Network
         measured switch term.

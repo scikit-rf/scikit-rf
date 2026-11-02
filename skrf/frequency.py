@@ -791,7 +791,7 @@ class Frequency:
         else:
             # plt.plot(self.f_scaled, y, *args, **kwargs)
             ax.plot(self.f, y, *args, **kwargs)
-            scale_frequency_ticks(ax, self.unit, backend='matplotlib')
+            scale_frequency_ticks(ax, self.unit)
             ax.autoscale(axis='x', tight=True)
             self.labelXAxis(ax, backend='matplotlib')
 

@@ -517,7 +517,7 @@ class NetworkSet:
 
         """
         def plot_func(self,*args, **kwargs):
-            return self.plot_uncertainty_bounds_component(network_property_name, *args,**kwargs)
+            self.plot_uncertainty_bounds_component(network_property_name, *args,**kwargs)
 
         setattr(self.__class__,'plot_uncertainty_bounds_'+\
                 network_property_name,plot_func)
@@ -541,7 +541,7 @@ class NetworkSet:
 
         """
         def plot_func(self,*args, **kwargs):
-            return self.plot_minmax_bounds_component(network_property_name, *args,**kwargs)
+            self.plot_minmax_bounds_component(network_property_name, *args,**kwargs)
 
         setattr(self.__class__,'plot_minmax_bounds_'+\
                 network_property_name,plot_func)
@@ -1446,53 +1446,52 @@ class NetworkSet:
 
     @copy_doc(skrf_plt.animate)
     def animate(self, *args, **kwargs):
-        return skrf_plt.animate(self, *args, **kwargs)
+        skrf_plt.animate(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.plot_uncertainty_bounds_component)
     def plot_uncertainty_bounds_component(self, *args, **kwargs):
-        return skrf_plt.plot_uncertainty_bounds_component(self, *args, **kwargs)
+        skrf_plt.plot_uncertainty_bounds_component(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.plot_minmax_bounds_component)
     def plot_minmax_bounds_component(self, *args, **kwargs):
-        return skrf_plt.plot_minmax_bounds_component(self, *args, **kwargs)
+        skrf_plt.plot_minmax_bounds_component(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.plot_uncertainty_bounds_s_db)
     def plot_uncertainty_bounds_s_db(self, *args, **kwargs):
-        return skrf_plt.plot_uncertainty_bounds_s_db(self, *args, **kwargs)
+        skrf_plt.plot_uncertainty_bounds_s_db(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.plot_minmax_bounds_s_db)
     def plot_minmax_bounds_s_db(self, *args, **kwargs):
-        return skrf_plt.plot_minmax_bounds_s_db(self, *args, **kwargs)
+        skrf_plt.plot_minmax_bounds_s_db(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.plot_minmax_bounds_s_db10)
     def plot_minmax_bounds_s_db10(self, *args, **kwargs):
-        return skrf_plt.plot_minmax_bounds_s_db10(self, *args, **kwargs)
+        skrf_plt.plot_minmax_bounds_s_db10(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.plot_uncertainty_bounds_s_time_db)
     def plot_uncertainty_bounds_s_time_db(self, *args, **kwargs):
-        return skrf_plt.plot_uncertainty_bounds_s_time_db(self, *args, **kwargs)
+        skrf_plt.plot_uncertainty_bounds_s_time_db(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.plot_minmax_bounds_s_time_db)
     def plot_minmax_bounds_s_time_db(self, *args, **kwargs):
-        return skrf_plt.plot_minmax_bounds_s_time_db(self, *args, **kwargs)
+        skrf_plt.plot_minmax_bounds_s_time_db(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.plot_uncertainty_decomposition)
     def plot_uncertainty_decomposition(self, *args, **kwargs):
-        return skrf_plt.plot_uncertainty_decomposition(self, *args, **kwargs)
+        skrf_plt.plot_uncertainty_decomposition(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.plot_logsigma)
     def plot_logsigma(self, *args, **kwargs):
-        return skrf_plt.plot_logsigma(self, *args, **kwargs)
+        skrf_plt.plot_logsigma(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.signature)
     def signature(self, *args, **kwargs):
-        out = skrf_plt.signature(self, *args, **kwargs)
-        return out if skrf_plt._is_plotly_figure(out) else None
+        skrf_plt.signature(self, *args, **kwargs)
 
     @copy_doc(skrf_plt.plot_violin)
     def plot_violin(self, attribute, *args, **kwargs):
         if "time" not in attribute:
-            return skrf_plt.plot_violin(self, attribute, *args,**kwargs)
+            skrf_plt.plot_violin(self, attribute, *args,**kwargs)
         else:
             raise NotImplementedError("Violin plots are not implemented for time based parameters")
 

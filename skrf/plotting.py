@@ -46,8 +46,10 @@ Figures only. Neither selects the backend: one that does not belong to the
 backend of the call raises a ``TypeError``. Likewise, keyword arguments go to the
 library of the backend, so plotly takes plotly keywords such as ``line=dict(...)``,
 not matplotlib ones such as ``linewidth``. ``label`` works with both, and names
-the trace with plotly. The convenience functions below support plotly too, as
-does `plot_vector`.
+the trace with plotly. So far this covers `smith`, `plot_smith`, `plot_rectangular`,
+`plot_polar`, `plot_complex_rectangular`, `plot_complex_polar`, the plots of a single
+:class:`~skrf.network.Network`, and the plots a :class:`~skrf.networkSet.NetworkSet`
+takes from it. The other plots of this module raise a ``NotImplementedError``.
 
 Convenience plotting functions
 -------------------------------
@@ -70,7 +72,6 @@ from __future__ import annotations
 
 import inspect
 import os
-import re
 from collections.abc import Callable
 from contextlib import suppress
 from contextvars import ContextVar
@@ -109,6 +110,31 @@ def plotting_available() -> bool:
     return result
 
 
+def axes_kwarg(func):
+    """
+    This decorator checks if a :class:`matplotlib.axes.Axes` object is passed,
+    if not the current axis will be gathered through :func:`plt.gca`.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to run the decorated function without matplotlib
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            import matplotlib.pyplot as plt
+            ax = kwargs.pop('ax', None)
+            if ax is None:
+                ax = plt.gca()
+        except ImportError as err:
+            raise RuntimeError("Plotting is not available") from err
+        func(*args, ax=ax, **kwargs)
+
+    return wrapper
+
+
 _PLOTTING_BACKENDS = ('matplotlib', 'plotly')
 
 
@@ -139,8 +165,19 @@ options = _PlottingOptions()
 
 def _is_plotly_figure(fig) -> bool:
     # checked by name so that plotly is not imported
-    return isinstance(fig, _PlotlyAxes) or any(c.__module__.startswith('plotly.') and c.__name__ == 'Figure'
-                                               for c in type(fig).__mro__)
+    return any(c.__module__.startswith('plotly.') and c.__name__ == 'Figure' for c in type(fig).__mro__)
+
+
+def _matplotlib_only(func: Callable) -> Callable:
+    """Decorator for plots without plotly support, which raise rather than draw with the wrong backend."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if kwargs.get('backend', options.backend) == 'plotly':
+            raise NotImplementedError(f"{func.__name__} is not supported by the plotly backend")
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def _resolve_backend(backend: str | None = None, *targets) -> str:
@@ -164,9 +201,9 @@ def _validate_plot_args(func: Callable) -> Callable:
     """
     Decorator checking the `ax` and `fig` of a plot function: matplotlib Axes and the plotly Figure to draw on.
 
-    The function takes `fig` as a keyword, or in its kwargs, which gets it only if it is set. A :class:`_PlotlyAxes`
-    passed as `ax` reaches it as the `fig` of that panel. Matplotlib keywords are rejected with the plotly backend,
-    except in calls from other decorated functions, as those are translated for plotly.
+    The function takes `fig` as a keyword, or in its kwargs, which gets it only if it is set. Matplotlib keywords
+    are rejected with the plotly backend, except in calls from other decorated functions, as those are translated
+    for plotly.
     """
     parameters = inspect.signature(func).parameters
     has_ax_position = 'ax' in parameters and parameters['ax'].kind is parameters['ax'].POSITIONAL_OR_KEYWORD
@@ -175,23 +212,15 @@ def _validate_plot_args(func: Callable) -> Callable:
 
     @wraps(func)
     def wrapper(*args, fig=None, **kwargs):
-        positional = has_ax_position and ax_index < len(args)
-        ax = args[ax_index] if positional else kwargs.get('ax')
+        ax = args[ax_index] if has_ax_position and ax_index < len(args) else kwargs.get('ax')
         if fig is not None:
             if ax is not None:
                 raise TypeError("Pass either ax or fig, not both, with fig the arguments after ax are keywords")
             if not _is_plotly_figure(fig):
                 raise TypeError(f"fig must be a plotly Figure, not {type(fig).__name__}, pass matplotlib Axes as ax")
-        panel = isinstance(ax, _PlotlyAxes)
-        if panel:
-            fig, ax = ax.fig, None
-            if positional:
-                args = (*args[:ax_index], None, *args[ax_index + 1:])
-            else:
-                del kwargs['ax']
-        elif _is_plotly_figure(ax):
+        if _is_plotly_figure(ax):
             raise TypeError("ax must be matplotlib Axes, pass a plotly Figure as fig")
-        if not _in_plot_call.get() and not panel:
+        if not _in_plot_call.get():
             keywords = matplotlib_keywords & kwargs.keys()
             if isinstance(kwargs.get('marker'), str):
                 keywords = keywords | {'marker'}
@@ -276,9 +305,7 @@ def _get_label_str(netw: Network, param: str, m: int, n: int, usetex: bool | Non
     return label_string
 
 
-@_validate_plot_args
-def scale_frequency_ticks(ax: Axes | None = None, funit: str | None = None, *, fig=None,
-                          backend: str | None = None):
+def scale_frequency_ticks(ax: Axes, funit: str):
     """
     Scale frequency axis ticks.
 
@@ -286,64 +313,14 @@ def scale_frequency_ticks(ax: Axes | None = None, funit: str | None = None, *, f
     ----------
     ax : plt.Axes
         Matplotlib figure axe
-    fig : plotly Figure, optional
-        figure to draw on with the plotly backend.
     funit : str
-        frequency unit string as in :data:`~skrf.frequency.Frequency.unit`,
-        a keyword argument with `fig`
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
-        plotly has no tick formatter, so the frequencies of all subplots and
-        animation frames of the figure, which scikit-rf draws in its frequency
-        unit, are converted to `funit`.
-
-    Returns
-    -------
-    None, or the plotly Figure with the plotly backend
+        frequency unit string as in :data:`~skrf.frequency.Frequency.unit`
 
     Raises
     ------
     ValueError
-        if invalid unit is passed, or with plotly if the figure has no frequency axis drawn by scikit-rf
+        if invalid unit is passed
     """
-    if _resolve_backend(backend, ax, fig) == 'plotly':
-        from .constants import FREQ_UNITS
-
-        units = {unit.lower(): unit for unit in FREQ_UNITS}
-        if funit.lower() not in units:
-            raise ValueError(f"invalid funit {funit}")
-        fig = _get_plotly_figure(fig)
-        meta = fig.layout.meta if isinstance(fig.layout.meta, dict) else {}
-        # each frequency axis with its unit, from its title as the subplots of a figure can differ
-        scales = {}
-        for axis in fig.select_xaxes():
-            title = re.fullmatch(r'Frequency \((\w+)\)', axis.title.text or '')
-            if title and title[1].lower() in units:
-                scales[axis.plotly_name.replace('axis', '')] = axis, FREQ_UNITS[units[title[1].lower()]]
-        if 'skrf_frequency_unit' in meta:  # the first subplot, whatever its title
-            scales['x'] = fig.layout.xaxis, FREQ_UNITS[units[meta['skrf_frequency_unit'].lower()]]
-        if not scales:
-            raise ValueError("the figure has no frequency axis drawn by scikit-rf")
-        unit = units[funit.lower()]
-        scales = {x: (axis, multiplier / FREQ_UNITS[unit]) for x, (axis, multiplier) in scales.items()}
-        for trace in (*fig.data, *(trace for frame in fig.frames for trace in frame.data)):
-            x = getattr(trace, 'xaxis', None) or 'x'
-            if x in scales and getattr(trace, 'x', None) is not None:
-                trace.x = np.asarray(trace.x) * scales[x][1]
-                if getattr(trace, 'width', None) is not None:  # such as the violins of plot_violin
-                    trace.width = np.multiply(trace.width, scales[x][1])
-        for shape in fig.layout.shapes:  # such as the bands of shade_bands
-            if shape.xref in scales and None not in (shape.x0, shape.x1):  # not path shapes
-                shape.update(x0=shape.x0 * scales[shape.xref][1], x1=shape.x1 * scales[shape.xref][1])
-        for axis, scale in scales.values():
-            if axis.range is not None:
-                log = axis.type == 'log'  # with its range in log10 units
-                axis.range = [x + np.log10(scale) if log else x * scale for x in axis.range]
-            axis.title.text = f'Frequency ({unit})'
-        if fig.layout.meta is None or isinstance(fig.layout.meta, dict):  # leave other user metadata alone
-            fig.update_layout(meta={**meta, 'skrf_frequency_unit': unit})
-        return fig
-
     from matplotlib import ticker
 
     if funit.lower() == "hz":
@@ -355,7 +332,7 @@ def scale_frequency_ticks(ax: Axes | None = None, funit: str | None = None, *, f
     else:
         raise ValueError(f"invalid funit {funit}")
     ticks_x = ticker.FuncFormatter(lambda x, pos: f'{x * scale:g}')
-    _get_matplotlib_axes(ax).xaxis.set_major_formatter(ticks_x)
+    ax.xaxis.set_major_formatter(ticks_x)
 
 @_validate_plot_args
 def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
@@ -779,13 +756,6 @@ def _plotly_frequency_x(fig, frequency: Frequency) -> tuple[np.ndarray, str]:
     return frequency.f / frequency.multiplier_dict[unit.lower()], f'Frequency ({unit})'
 
 
-def _plotly_hz_x(fig, f: NumberLike) -> tuple[np.ndarray, str]:
-    """:func:`_plotly_frequency_x` for frequencies `f` in Hz, which is also the unit of a figure without one."""
-    from .frequency import Frequency
-
-    return _plotly_frequency_x(fig, Frequency.from_f(f, unit='Hz'))
-
-
 def _plotly_rect(x: NumberLike, y: NumberLike, *args,
                  x_label: str | None = None, y_label: str | None = None,
                  title: str | None = None, show_legend: bool = True,
@@ -806,27 +776,6 @@ def _plotly_rect(x: NumberLike, y: NumberLike, *args,
     return fig
 
 
-def _plotly_trace_color(fig) -> str:
-    """Line color of the last trace of `fig`, set to the color for its index in the colorway of `fig` if unset."""
-    trace = fig.data[-1]
-    if trace.line.color is None:
-        from plotly.colors import qualitative
-        colorway = fig.layout.colorway or fig.layout.template.layout.colorway or qualitative.Plotly
-        trace.line.color = colorway[(len(fig.data) - 1) % len(colorway)]
-    return trace.line.color
-
-
-def _plotly_fill_between(fig, frequency: Frequency, lower: NumberLike, upper: NumberLike,
-                         color: str | None = None, alpha: float = .3, **kwargs):
-    """plotly counterpart of ``ax.fill_between`` vs `frequency`, without a legend entry."""
-    x, _ = _plotly_frequency_x(fig, frequency)
-    trace = dict(fill='toself', fillcolor=_plotly_color(color), opacity=alpha, mode='none',
-                 hoverinfo='skip', showlegend=False)
-    fig.add_trace(_import_plotly().Scatter(x=np.concatenate([x, x[::-1]]),
-                                           y=np.concatenate([np.atleast_1d(upper), np.atleast_1d(lower)[::-1]]),
-                                           **{**trace, **kwargs}))
-
-
 def _plotly_complex(z: NumberLike, x_label: str = 'Real', y_label: str = 'Imag',
                     title: str = 'Complex Plane', show_legend: bool = True,
                     axis: str = 'equal', fig=None, **kwargs):
@@ -841,251 +790,6 @@ def _plotly_complex(z: NumberLike, x_label: str = 'Real', y_label: str = 'Imag',
         axis.range = [lo - 0.05 * (hi - lo), hi + 0.05 * (hi - lo)]
     # shrink the plot area rather than widen the range, so it fits the data and zoom boxes match the drag
     return fig.update_layout(xaxis_constrain='domain', yaxis=dict(scaleanchor='x', scaleratio=1, constrain='domain'))
-
-
-def _plotly_subplots(figs: list, cols: int, **kwargs):
-    """Copy the traces, axes and annotations of the plotly Figures `figs` into a grid of subplots."""
-    _import_plotly()
-    from plotly.subplots import make_subplots
-
-    cells = [dict(type='polar' if any(t.type == 'scatterpolar' for t in sub.data) else 'xy') for sub in figs]
-    cells += [None] * (-len(figs) % cols)
-    kwargs.setdefault('specs', [cells[i:i + cols] for i in range(0, len(cells), cols)])
-    fig = make_subplots(rows=-(-len(figs) // cols), cols=cols, **kwargs).update_layout(_plotly_layout())
-    for i, sub in enumerate(figs):
-        _plotly_add_panel(fig, sub, i // cols + 1, i % cols + 1, i)
-    return fig
-
-
-def _plotly_add_panel(fig, panel, row: int, col: int, k: int, show_legend: bool = True):
-    """
-    Copy the traces, axes and annotations of the plotly Figure `panel` into subplot `row`, `col` of `fig`.
-
-    Its legend entries go to the `k`-th legend of `fig`, if `show_legend`, which is placed in the plot
-    area of the subplot like matplotlib's legend of each Axes.
-    """
-    legend = f"legend{k + 1 if k else ''}"
-    if k == 0 and fig.layout.meta is None:  # the frequency unit of the first subplot
-        fig.update_layout(meta=panel.layout.meta)
-    for trace in panel.data:
-        trace.update(legend=legend, showlegend=bool(trace.showlegend) and show_legend)
-    fig.add_traces(panel.data, rows=row, cols=col)
-    subplot = fig.get_subplot(row, col)
-    if hasattr(subplot, 'xaxis'):
-        fig.update_xaxes(panel.layout.xaxis, row=row, col=col)
-        fig.update_yaxes(panel.layout.yaxis, row=row, col=col, secondary_y=False)
-        if panel.layout.yaxis.scaleanchor:
-            fig.update_yaxes(scaleanchor=subplot.yaxis.anchor, row=row, col=col, secondary_y=False)
-        for annotation in panel.layout.annotations:
-            fig.add_annotation(annotation, row=row, col=col)
-        (x0, x1), (y0, y1) = subplot.xaxis.domain, subplot.yaxis.domain
-    else:  # a polar subplot
-        fig.update_polars(panel.layout.polar, row=row, col=col)
-        (x0, x1), (y0, y1) = subplot.domain.x, subplot.domain.y
-    if not any(trace.showlegend for trace in panel.data):
-        return
-    margin = fig.layout.margin
-    # plot area in pixels, with plotly's default size and margins where unset
-    width = (x1 - x0) * ((fig.layout.width or 700) - (margin.l or 80) - (margin.r or 80))
-    height = (y1 - y0) * ((fig.layout.height or 450) - (margin.t or 100) - (margin.b or 80))
-    x, y = _plotly_legend_position(panel, width, height)
-    fig.update_layout({legend: dict(
-        x=x0 + x * (x1 - x0), y=y0 + y * (y1 - y0), xanchor={0: 'left', 1: 'right'}[x],
-        yanchor={0: 'bottom', 1: 'top'}.get(y, 'middle'), font_size=_PLOTLY_LEGEND_FONT,
-        bgcolor='rgba(255,255,255,0.8)', bordercolor='lightgrey', borderwidth=1)})
-
-
-class _PlotlyLine:
-    """A plotly trace as the matplotlib Line2D of :attr:`_PlotlyAxes.lines`."""
-
-    def __init__(self, trace):
-        self.trace = trace
-
-    def get_xdata(self) -> np.ndarray:
-        return np.asarray(self.trace.x)
-
-    def get_ydata(self) -> np.ndarray:
-        return np.asarray(self.trace.y)
-
-
-class _PlotlyAxes:
-    """
-    A panel of a :class:`_PlotlyFigure`, with the matplotlib Axes methods used by the
-    multi-panel figures of scikit-rf, so that the same code draws them with both backends.
-
-    It draws on its own plotly Figure `fig`, with the metadata `meta` of the figure it goes into,
-    and plot functions take it as `ax`, where :func:`_validate_plot_args` makes it their `fig`.
-    """
-
-    def __init__(self, pos: tuple[int, int, int], polar: bool = False, meta=None):
-        self.pos, self.polar, self.title, self.has_legend = pos, polar, None, False
-        self.fig = _get_plotly_figure(meta=meta)
-        self.twins = []  # from twinx(), drawn on a second y-axis of this panel
-
-    @property
-    def lines(self) -> list[_PlotlyLine]:
-        return [_PlotlyLine(trace) for trace in self.fig.data]
-
-    def plot(self, x, y=None, **kwargs):
-        if y is None:
-            x, y = np.arange(len(x)), x
-        _plotly_rect(x, y, fig=self.fig, **kwargs)
-
-    def set_title(self, title: str):
-        self.title = title
-
-    def set_xlabel(self, label: str):
-        meta = self.fig.layout.meta if isinstance(self.fig.layout.meta, dict) else {}
-        if label.startswith('Frequency') and 'skrf_frequency_unit' in meta:  # the unit of the traces
-            label = f"Frequency ({meta['skrf_frequency_unit']})"
-        self.fig.update_xaxes(title_text=label)
-
-    def set_ylabel(self, label: str):
-        self.fig.update_yaxes(title_text=label)
-
-    def set_xlim(self, lim):
-        self.fig.update_xaxes(range=list(lim))
-
-    def set_ylim(self, lim):
-        self.fig.update_yaxes(range=list(lim))
-
-    def legend(self, *args, **kwargs):
-        self.has_legend = True  # placed where it covers the least data, see _plotly_legend_position
-
-    def grid(self, *args, **kwargs):
-        pass  # plotly draws a grid by default
-
-    def twinx(self) -> _PlotlyAxes:
-        self.twins.append(_PlotlyAxes(self.pos, meta=self.fig.layout.meta))
-        return self.twins[-1]
-
-
-# candidate legend positions in a plot area, as fractions of its width and height, in order of preference
-_PLOTLY_LEGEND_SPOTS = ((1, 1), (0, 1), (1, 0), (0, 0), (1, .5), (0, .5))
-_PLOTLY_LEGEND_FONT = 10
-
-
-def _plotly_legend_position(fig, width: float, height: float) -> tuple[float, float]:
-    """
-    Position of the legend of the plotly Figure `fig`, with a plot area of `width` x `height` pixels,
-    among :data:`_PLOTLY_LEGEND_SPOTS`, where it covers the fewest data points, like matplotlib's 'best'.
-    """
-    names = [str(trace.name) for trace in fig.data if trace.showlegend]
-    # legend size estimated from the font size: about 0.6 em per character and 1.8 em per entry
-    box_w = min(1., (40 + 0.6 * _PLOTLY_LEGEND_FONT * max(map(len, names), default=0)) / width)
-    box_h = min(1., (10 + 1.8 * _PLOTLY_LEGEND_FONT * len(names)) / height)
-    # the traces resampled along their length, so that lines with few points still count where they pass
-    points = []
-    for trace in fig.data:
-        if (getattr(trace, 'x', None) is None or getattr(trace, 'y', None) is None or len(trace.x) == 0
-                or trace.meta == 'skrf_smith_chart'):  # no data in a plot area (polar), or no data at all
-            continue
-        x, y = np.asarray(trace.x, dtype=float), np.asarray(trace.y, dtype=float)
-        t = np.linspace(0, len(x) - 1, 200)
-        points.append(np.column_stack([np.interp(t, np.arange(len(x)), x), np.interp(t, np.arange(len(y)), y)]))
-    if not points:
-        return _PLOTLY_LEGEND_SPOTS[0]
-    points = np.concatenate(points)
-    points = points[np.isfinite(points).all(axis=1)]
-    if len(points) == 0:  # such as the -inf dB of an ideal match
-        return _PLOTLY_LEGEND_SPOTS[0]
-    # in fractions of the plot area, from the axis ranges if set, else the data range as plotly's autorange
-    for i, axis in enumerate((fig.layout.xaxis, fig.layout.yaxis)):
-        lo, hi = axis.range if axis.range is not None else (points[:, i].min(), points[:, i].max())
-        points[:, i] = (points[:, i] - lo) / ((hi - lo) or 1)
-
-    def covered(spot):
-        x0, y0 = spot[0] * (1 - box_w), spot[1] * (1 - box_h)
-        x, y = points[:, 0], points[:, 1]
-        return np.sum((x >= x0) & (x <= x0 + box_w) & (y >= y0) & (y <= y0 + box_h))
-
-    return min(_PLOTLY_LEGEND_SPOTS, key=covered)
-
-
-class _PlotlyFigure:
-    """
-    plotly counterpart of a matplotlib Figure for :class:`_PlotlyAxes` panels.
-
-    :meth:`to_plotly` copies the panels into subplots of the plotly Figure `fig`, or a new one.
-    """
-
-    def __init__(self, fig=None, figsize: tuple = (6.4, 4.8)):
-        self.fig, self.figsize, self.axes, self.title = fig, figsize, [], None
-
-    def add_subplot(self, rows: int, cols: int, index: int, projection: str | None = None) -> _PlotlyAxes:
-        meta = None if self.fig is None else self.fig.layout.meta
-        self.axes.append(_PlotlyAxes((rows, cols, index), polar=projection == 'polar', meta=meta))
-        return self.axes[-1]
-
-    def suptitle(self, title: str):
-        self.title = title
-
-    def tight_layout(self):
-        pass
-
-    def to_plotly(self):
-        """Copy the traces and axes of the panels into subplots, spanning cells as with matplotlib."""
-        from math import lcm
-
-        _import_plotly()
-        from plotly.subplots import make_subplots
-
-        rows, cols = lcm(*(ax.pos[0] for ax in self.axes)), lcm(*(ax.pos[1] for ax in self.axes))
-        specs, cells = [[None] * cols for _ in range(rows)], {}
-        for ax in self.axes:
-            r, c, i = ax.pos
-            row, col = (i - 1) // c * (rows // r), (i - 1) % c * (cols // c)
-            spec = dict(type='polar') if ax.polar else dict(secondary_y=bool(ax.twins))
-            specs[row][col], cells[row, col] = dict(rowspan=rows // r, colspan=cols // c, **spec), ax
-        grid = dict(rows=rows, cols=cols, specs=specs,
-                    subplot_titles=[cells[cell].title or '' for cell in sorted(cells)])
-        fig = self.fig
-        if fig is None:
-            fig = make_subplots(**grid).update_layout(_plotly_layout(), width=100 * self.figsize[0],
-                                                      height=100 * self.figsize[1])
-        else:
-            try:
-                fig.set_subplots(**grid)
-            except ValueError:  # a figure from an earlier call already has the subplots: draw over it
-                pass
-        for k, ((row, col), ax) in enumerate(sorted(cells.items())):
-            _plotly_add_panel(fig, ax.fig, row + 1, col + 1, k, show_legend=ax.has_legend)
-            for twin in ax.twins:  # on the second y-axis, in the legend of the panel
-                for trace in twin.fig.data:
-                    trace.update(legend=f"legend{k + 1 if k else ''}", showlegend=bool(trace.showlegend)
-                                 and twin.has_legend)
-                fig.add_traces(twin.fig.data, rows=row + 1, cols=col + 1, secondary_ys=[True] * len(twin.fig.data))
-                fig.update_yaxes(twin.fig.layout.yaxis, row=row + 1, col=col + 1, secondary_y=True)
-        if self.title is not None:
-            fig.update_layout(title_text=self.title)
-        return fig
-
-
-def _figure(backend: str, fig=None, **kwargs):
-    """
-    :func:`figure` for `backend`, or with plotly a :class:`_PlotlyFigure` drawing into the plotly Figure `fig`.
-    """
-    if backend == 'plotly':
-        return _PlotlyFigure(fig, kwargs.get('figsize', (6.4, 4.8)))
-    return figure(**kwargs)
-
-
-def _subplots(rows: int, cols: int, backend: str, fig=None, **kwargs):
-    """:func:`subplots` for `backend`, see :func:`_figure`; the axes are squeezed like matplotlib's."""
-    if backend == 'plotly':
-        fig = _figure(backend, fig, **kwargs)
-        axes = np.array([[fig.add_subplot(rows, cols, r * cols + c + 1) for c in range(cols)] for r in range(rows)])
-        return fig, axes[0, 0] if axes.size == 1 else axes.squeeze()
-    return subplots(rows, cols, **kwargs)
-
-
-def _frequency_x(plot, frequency: Frequency) -> np.ndarray:
-    """
-    x values of `frequency` on `plot`, Axes or a plotly Figure or panel: in Hz with matplotlib, whose ticks
-    are scaled, else in the unit of the figure.
-    """
-    plot = plot.fig if isinstance(plot, _PlotlyAxes) else plot
-    return _plotly_frequency_x(plot, frequency)[0] if _is_plotly_figure(plot) else frequency.f
 
 
 _PLOTLY_SMITH_COLORS = dict(superlight='whitesmoke', verylight='lightgrey', light='grey', heavy='black')
@@ -1414,10 +1118,11 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
         plt.draw()
 
 
+@_matplotlib_only
 def subplot_params(ntwk: Network, param: str = 's', proj: str = 'db',
                    size_per_port: int = 4, newfig: bool = True,
                    add_titles: bool = True, keep_it_tight: bool = True,
-                   subplot_kw: dict = None, *, backend: str | None = None,
+                   subplot_kw: dict = None,
                    **kwargs):
     """
     Plot all networks parameters individually on subplots.
@@ -1440,10 +1145,6 @@ def subplot_params(ntwk: Network, param: str = 's', proj: str = 'db',
         by default True
     subplot_kw : dict, optional
         by default {}
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `subplot_kw` is passed to :func:`plotly.subplots.make_subplots`,
-        and `newfig` and `keep_it_tight` are not used.
 
     Returns
     -------
@@ -1452,22 +1153,10 @@ def subplot_params(ntwk: Network, param: str = 's', proj: str = 'db',
     ax : :class:`matplotlib.pyplot.Axes`
         Matplotlib Axes
 
-    or the plotly Figure with the plotly backend
-
     """
-    subplot_kw = subplot_kw if subplot_kw else {}
-    if _resolve_backend(backend) == 'plotly':
-        if kwargs.get('fig') is not None:
-            raise TypeError("subplot_params draws a new plotly Figure, fig is not supported")
-        titles = [f"{param.upper()}{ntwk._fmt_trace_name(m, n)}" if add_titles else '' for m, n in ntwk.port_tuples]
-        figs = [getattr(ntwk, f'plot_{param}_{proj}')(m=m, n=n, backend='plotly', **kwargs)
-                for m, n in ntwk.port_tuples]
-        fig = _plotly_subplots(figs, cols=ntwk.nports, subplot_titles=titles, **subplot_kw)
-        # 100 pixels per inch of the matplotlib figure size
-        return fig.update_layout(width=100 * size_per_port * ntwk.nports, height=100 * size_per_port * ntwk.nports)
-
     import matplotlib.pyplot as plt
 
+    subplot_kw = subplot_kw if subplot_kw else {}
     if newfig:
         f,axs= plt.subplots(ntwk.nports,ntwk.nports,
                             figsize =(size_per_port*ntwk.nports,
@@ -1479,7 +1168,7 @@ def subplot_params(ntwk: Network, param: str = 's', proj: str = 'db',
 
     for ports,ax in zip(ntwk.port_tuples, axs.flatten()):
         plot_func = ntwk.__getattribute__(f'plot_{param}_{proj}')
-        plot_func(m=ports[0], n=ports[1], ax=ax, backend='matplotlib', **kwargs)
+        plot_func(m=ports[0], n=ports[1], ax=ax, **kwargs)
         if add_titles:
             ax.set_title(f"{param.upper()}{ntwk._fmt_trace_name(ports[0], ports[1])}")
     if keep_it_tight:
@@ -1487,84 +1176,51 @@ def subplot_params(ntwk: Network, param: str = 's', proj: str = 'db',
     return f, axs
 
 
-@_validate_plot_args
+@_matplotlib_only
 def shade_bands(edges: NumberLike, y_range: tuple | None = None,
-                cmap: str | None = None, *, ax: Axes | None = None, fig=None,
-                backend: str | None = None, **kwargs):
+                cmap: str = 'prism', **kwargs):
     r"""
     Shades frequency bands.
 
     When plotting data over a set of frequency bands it is nice to
     have each band visually separated from the other. The kwarg `alpha`
-    is useful, or `opacity` with plotly.
+    is useful.
 
     Parameters
     ----------
     edges : array-like
-        x-values separating regions of a given shade, in Hz for a plot vs frequency
+        x-values separating regions of a given shade
     y_range : tuple or None, optional.
-        y-values to shade in. Default is None, the whole height of the plot.
-    cmap : str or None, optional.
-        see matplotlib.cm  or matplotlib.colormaps for acceptable values,
-        or with plotly a plotly colorscale name.
-        Default is None: 'prism', or with plotly its qualitative colors.
-    ax : :class:`matplotlib.axes.Axes`, optional
-        plot to shade, default the current matplotlib axes.
-    fig : plotly Figure, optional
-        figure to draw on with the plotly backend.
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
+        y-values to shade in. Default is None.
+    cmap : str, optional.
+        see matplotlib.cm  or matplotlib.colormaps for acceptable values.
+        Default is 'prism'.
     \*\*kwargs : key word arguments
-        passed to `matplotlib.fill_between` (or the plotly Figure's ``add_shape``)
-
-    Returns
-    -------
-    None, or the plotly Figure with the plotly backend
+        passed to `matplotlib.fill_between`
 
     Examples
     --------
-    >>> rf.plotting.shade_bands([325,500,750,1100], alpha=.2)
+    >>> rf.shade_bands([325,500,750,1100], alpha=.2)
     """
-    if _resolve_backend(backend, ax, fig) == 'plotly':
-        from plotly.colors import qualitative, sample_colorscale
+    import matplotlib.pyplot as plt
 
-        fig = _get_plotly_figure(fig)
-        if cmap is None:
-            colors = qualitative.Plotly * len(edges)
-        else:
-            colors = sample_colorscale(cmap, [k / len(edges) for k in range(len(edges) - 1)])
-        # edges in Hz, as the x data of matplotlib plots vs frequency, drawn in the unit of the figure
-        x, _ = _plotly_hz_x(fig, edges)
-        y = dict(y0=y_range[0], y1=y_range[1], yref='y') if y_range is not None else dict(y0=0, y1=1, yref='y domain')
-        for k in range(len(edges) - 1):
-            shape = dict(type='rect', x0=x[k], x1=x[k + 1], xref='x', **y, fillcolor=colors[k], line_width=0,
-                         layer='below')
-            fig.add_shape(**{**shape, **kwargs})
-        return fig
-
-    import matplotlib
-
-    ax = _get_matplotlib_axes(ax)
-    cmap = matplotlib.colormaps['prism' if cmap is None else cmap]
+    cmap = plt.cm.get_cmap(cmap)
     if not isinstance(y_range, tuple | list) or (len(y_range) != 2):
-        y_range=ax.get_ylim()
-    axis = ax.axis()
+        y_range=plt.gca().get_ylim()
+    axis = plt.axis()
     for k in range(len(edges)-1):
-        ax.fill_between(
+        plt.fill_between(
             [edges[k],edges[k+1]],
             y_range[0], y_range[1],
             color = cmap(1.0*k/len(edges)),
             **kwargs)
-    ax.axis(axis)
+    plt.axis(axis)
 
 
 def save_all_figs(dir: str = './', format: None | list[str] = None,
-                  replace_spaces: bool = True, echo: bool| None = None, *, figs: list | None = None):
+                  replace_spaces: bool = True, echo: bool| None = None):
     """
     Save all open Figures to disk.
-
-    Files are named after the figure titles. Figures of the same name, or without
-    a title, get a numbered suffix such as 'unnamedPlot_1'.
 
     Parameters
     ----------
@@ -1574,58 +1230,40 @@ def save_all_figs(dir: str = './', format: None | list[str] = None,
         the types of formats to save figures as. The elements of this
         list are passed to :func:`matplotlib.pyplot.savefig`. This is a list so that
         you can save each figure in multiple formats. Default is None.
-        A plotly figure is saved as 'html' by default; other formats, such as
-        'png' or 'pdf', need the kaleido package.
     replace_spaces : bool, optional
         default is True.
     echo : bool, optional.
         True prints filenames as they are saved. Default is True.
-    figs : list of matplotlib or plotly Figures, optional
-        the figures to save, by default all open matplotlib figures.
-        plotly keeps no list of open figures, so plotly figures are saved by passing them here.
     """
+    import matplotlib.pyplot as plt
+
     if echo is not None:
         warnings.warn("`echo` parameter is deprecated and will be removed in future versions. "
                       "Use logging instead.", FutureWarning, stacklevel=2)
 
-    if figs is None:
-        import matplotlib.pyplot as plt
-
-        figs = [plt.figure(fignum) for fignum in plt.get_fignums()]
     if dir[-1] != '/':
         dir = dir + '/'
-    names = set()
-    for fig in figs:
-        plotly = _is_plotly_figure(fig)
-        fileName = (fig.layout.title.text or '') if plotly else fig.get_axes()[0].get_title()
+    for fignum in plt.get_fignums():
+        fileName = plt.figure(fignum).get_axes()[0].get_title()
         if replace_spaces:
             fileName = fileName.replace(' ','_')
         if fileName == '':
             fileName = 'unnamedPlot'
-        base, k = fileName, 0
-        while fileName in names:
-            k += 1
-            fileName = f'{base}_{k}'
-        names.add(fileName)
-        for fmt in format if format is not None else [None]:
-            if plotly:
-                fmt = fmt or 'html'
-                path = f"{dir}{fileName}.{fmt}"
-                if fmt == 'html':
-                    fig.write_html(path)
-                else:
-                    fig.write_image(path, format=fmt)
-            else:
-                path = dir + fileName + ('' if fmt is None else '.' + fmt)
-                fig.savefig(path, format=fmt)
-            logger.debug(f"Saved figure {path}")
+        if format is None:
+            plt.savefig(dir+fileName)
+            logger.debug(f"Saved figure {dir+fileName}")
+        else:
+            for fmt in format:
+                path = dir+fileName+'.'+fmt
+                plt.savefig(path, format=fmt)
+                logger.debug(f"Saved figure {path}")
 
 saf = save_all_figs
 
-@_validate_plot_args
+@axes_kwarg
 def add_markers_to_lines(ax: Axes = None,
                          marker_list: list = None,
-                         markevery: int = 10, *, fig=None, backend: str | None = None):
+                         markevery: int = 10):
     """
     Add markers to existing lings on a plot.
 
@@ -1639,44 +1277,24 @@ def add_markers_to_lines(ax: Axes = None,
     ax : matplotlib.Axes or None, optional
         axis which to add markers to.
         Default is current axe gca()
-    fig : plotly Figure, optional
-        figure to draw on with the plotly backend.
     marker_list : list of string, optional
         list of marker characters. Default is ['o', 'D', 's', '+', 'x'].
         see matplotlib.plot help for possible marker characters
     markevery : int, optional.
         markevery number of points with a marker.
         Default is 10.
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
 
-    Returns
-    -------
-    None, or the plotly Figure with the plotly backend
     """
     marker_list = marker_list if marker_list else ['o', 'D', 's', '+', 'x']
 
-    if _resolve_backend(backend, ax, fig) == 'plotly':
-        fig = _get_plotly_figure(fig)
-        lines = [t for t in fig.data if t.type == 'scatter' and t.meta != 'skrf_smith_chart'
-                 and 'lines' in (t.mode or 'lines') and t.y is not None]
-        if len(lines) > len(marker_list):
-            marker_list *= 3
-        for line, marker in zip(lines, marker_list):
-            # marker.maxdisplayed thins the markers like markevery
-            line.update(mode='lines+markers', marker_symbol=_PLOTLY_MARKERS.get(marker, marker),
-                        marker_maxdisplayed=-(-len(line.y) // markevery))
-        return fig
-
-    ax = _get_matplotlib_axes(ax)
     lines = ax.get_lines()
     if len(lines) > len (marker_list ):
         marker_list *= 3
     [k[0].set_marker(k[1]) for k in zip(lines, marker_list)]
     [line.set_markevery(markevery) for line in lines]
 
-@_validate_plot_args
-def legend_off(ax: Axes = None, *, fig=None, backend: str | None = None):
+@axes_kwarg
+def legend_off(ax: Axes = None):
     """
     Turn off the legend for a given axes.
 
@@ -1687,22 +1305,12 @@ def legend_off(ax: Axes = None, *, fig=None, backend: str | None = None):
     ax : matplotlib.Axes or None, optional
         axis to operate on.
         Default is None for current axe gca()
-    fig : plotly Figure, optional
-        figure to draw on with the plotly backend.
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
-
-    Returns
-    -------
-    None, or the plotly Figure with the plotly backend
     """
-    if _resolve_backend(backend, ax, fig) == 'plotly':
-        return _get_plotly_figure(fig).update_layout(showlegend=False)
-    _get_matplotlib_axes(ax).legend_.set_visible(0)
+    ax.legend_.set_visible(0)
 
-@_validate_plot_args
+@axes_kwarg
 def scrape_legend(n: int | None = None,
-                  ax: Axes = None, *, fig=None, backend: str | None = None):
+                  ax: Axes = None):
     """
     Scrape a legend with redundant labels.
 
@@ -1718,23 +1326,9 @@ def scrape_legend(n: int | None = None,
     ax : matplotlib.Axes or None, optional
         axis to operate on.
         Default is None for current axe gca()
-    fig : plotly Figure, optional
-        figure to draw on with the plotly backend.
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
-
-    Returns
-    -------
-    None, or the plotly Figure with the plotly backend
     """
-    plotly = _resolve_backend(backend, ax, fig) == 'plotly'
-    if plotly:
-        fig = _get_plotly_figure(fig)
-        handles = [trace for trace in fig.data if trace.showlegend is not False and trace.name is not None]
-        labels = [trace.name for trace in handles]
-    else:
-        ax = _get_matplotlib_axes(ax)
-        handles, labels = ax.get_legend_handles_labels()
+
+    handles, labels = ax.get_legend_handles_labels()
 
     if n is None:
         n =len ( set(labels))
@@ -1743,14 +1337,10 @@ def scrape_legend(n: int | None = None,
         raise ValueError('number of entries is too large')
 
     k_list = [int(k) for k in np.linspace(0,len(handles)-1,n)]
-    if plotly:
-        for k, trace in enumerate(handles):
-            trace.showlegend = k in k_list
-        return fig
     ax.legend([handles[k] for k in k_list], [labels[k] for k in k_list])
 
 
-def func_on_all_figs(func: Callable, *args, figs: list | None = None, **kwargs):
+def func_on_all_figs(func: Callable, *args, **kwargs):
     r"""
     Run a function after making all open figures current.
 
@@ -1761,29 +1351,16 @@ def func_on_all_figs(func: Callable, *args, figs: list | None = None, **kwargs):
     ----------
     func : function
         function to call
-    figs : list of matplotlib or plotly Figures, optional
-        the figures to run `func` on, by default all open matplotlib figures.
-        A matplotlib figure must be managed by pyplot, as `func` runs on its current axes.
-        plotly has no current figure, so for a plotly figure `func` is called
-        with the figure as its first argument.
     \*args, \*\*kwargs : passed to func
 
     Examples
     --------
-    >>> rf.plotting.func_on_all_figs(plt.grid, alpha=.3)
-    >>> rf.plotting.func_on_all_figs(lambda fig: fig.update_xaxes(showgrid=False), figs=[fig])
+    >>> rf.func_on_all_figs(grid, alpha=.3)
     """
-    if figs is None:
-        import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
 
-        figs = [plt.figure(fig_n) for fig_n in plt.get_fignums()]
-    for fig in figs:
-        if _is_plotly_figure(fig):
-            func(fig, *args, **kwargs)
-            continue
-        import matplotlib.pyplot as plt
-
-        plt.figure(fig.number)
+    for fig_n in plt.get_fignums():
+        fig = plt.figure(fig_n)
         for ax_n in fig.axes:
             fig.add_axes(ax_n) # trick to make axes current
             func(*args, **kwargs)
@@ -1792,66 +1369,37 @@ def func_on_all_figs(func: Callable, *args, figs: list | None = None, **kwargs):
 foaf = func_on_all_figs
 
 
-@_validate_plot_args
-def plot_vector(a: complex, off: complex = 0+0j, *, ax: Axes | None = None, fig=None,
-                backend: str | None = None, **kwargs):
+@_matplotlib_only
+def plot_vector(a: complex, off: complex = 0+0j, **kwargs):
     """
     Plot a 2d vector.
 
     Parameters
     ----------
     a : complex
-        the vector (real for X, imag for Y), drawn as an arrow from `off`.
+        complex coordinates (real for X, imag for Y) of the arrow location.
     off : complex, optional
-        start of the arrow, by default 0+0j
-    ax : :class:`matplotlib.axes.Axes`, optional
-        plot to draw on, default the current matplotlib axes.
-    fig : plotly Figure, optional
-        figure to draw on with the plotly backend.
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
-    **kwargs :
-        passed to :func:`matplotlib.pyplot.quiver`, or with plotly to the Figure's
-        ``add_annotation``, such as `arrowcolor`.
+        complex direction (real for U, imag for V) components
+        of the arrow vectors, by default 0+0j
 
     Returns
     -------
-    quiver : matplotlib.pyplot.quiver, or the plotly Figure with the plotly backend
+    quiver : matplotlib.pyplot.quiver
     """
-    if _resolve_backend(backend, ax, fig) == 'plotly':
-        fig = _get_plotly_figure(fig)
-        end = off + a
-        fig.add_annotation(x=end.real, y=end.imag, ax=off.real, ay=off.imag, xref='x', yref='y', axref='x',
-                           ayref='y', text='', showarrow=True, **{'arrowhead': 2, 'arrowwidth': 2, **kwargs})
-        return fig
+    import matplotlib.pyplot as plt
 
-    return _get_matplotlib_axes(ax).quiver(off.real, off.imag, a.real, a.imag, scale_units='xy',
+    return plt.quiver(off.real, off.imag, a.real, a.imag, scale_units='xy',
            angles='xy', scale=1, **kwargs)
 
 
-def colors(*, backend: str | None = None) -> list[str]:
+def colors() -> list[str]:
     """
     Return the list of colors of the rcParams color cycle.
-
-    With plotly, the colors of plotly's default template, see :func:`stylely`.
-
-    Parameters
-    ----------
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
 
     Returns
     -------
     colors : List[str]
     """
-    if _resolve_backend(backend) == 'plotly':
-        _import_plotly()
-        import plotly.io as pio
-        from plotly.colors import qualitative
-
-        template = pio.templates[pio.templates.default] if pio.templates.default else None
-        return list(template.layout.colorway or qualitative.Plotly) if template else list(qualitative.Plotly)
-
     import matplotlib.pyplot as plt
 
     return [c['color'] for c in plt.rcParams['axes.prop_cycle']]
@@ -2168,7 +1716,7 @@ def plot_s_smith(netw: Network, m=None, n=None,r=1, ax=None, show_legend=True,\
         ax.set_ylabel('Imaginary')
 
 
-@_validate_plot_args
+@_matplotlib_only
 def plot_it_all(netw: Network, *args, **kwargs):
     r"""
     Plot dB, deg, smith, and complex in subplots.
@@ -2183,11 +1731,6 @@ def plot_it_all(netw: Network, *args, **kwargs):
             passed to the matplotlib.plot command
     \*\*kwargs : keyword arguments, optional
             passed to the matplotlib.plot command
-            (or :class:`plotly.graph_objects.Scatter`)
-
-    Returns
-    -------
-    None, or with the plotly `backend` a new plotly Figure with 2x2 subplots
 
     See Also
     --------
@@ -2201,13 +1744,6 @@ def plot_it_all(netw: Network, *args, **kwargs):
     >>> from skrf.data import ring_slot
     >>> ring_slot.plot_it_all()
     """
-    kwargs['backend'] = _resolve_backend(kwargs.get('backend'), kwargs.get('ax'), kwargs.get('fig'))
-    if kwargs['backend'] == 'plotly':
-        if kwargs.get('fig') is not None:
-            raise TypeError("plot_it_all draws a new plotly Figure, fig is not supported")
-        return _plotly_subplots([method(*args, **kwargs) for method in
-                                 [netw.plot_s_db, netw.plot_s_deg, netw.plot_s_smith, netw.plot_s_complex]], cols=2)
-
     import matplotlib.pyplot as plt
 
     plt.clf()
@@ -2221,157 +1757,32 @@ def plot_it_all(netw: Network, *args, **kwargs):
     netw.plot_s_complex(*args, **kwargs)
 
 
-# matplotlib style settings and the plotly template settings they become, see _plotly_template
-_PLOTLY_STYLE_LAYOUT = {'axes.facecolor': 'plot_bgcolor', 'figure.facecolor': 'paper_bgcolor',
-                        'font.size': 'font_size', 'axes.titlesize': 'title_font_size',
-                        'legend.fontsize': 'legend_font_size', 'legend.frameon': 'legend_borderwidth'}
-_PLOTLY_STYLE_AXES = {'axes.grid': 'showgrid', 'grid.color': 'gridcolor', 'axes.labelcolor': 'title_font_color',
-                      'axes.labelsize': 'title_font_size', '{}tick.color': 'tickfont_color',
-                      '{}tick.labelsize': 'tickfont_size', 'axes.edgecolor': 'linecolor',
-                      'axes.linewidth': 'linewidth', 'axes.axisbelow': 'layer', 'grid.linestyle': 'griddash',
-                      'grid.linewidth': 'gridwidth', '{}tick.direction': 'ticks', '{}tick.major.size': 'ticklen',
-                      '{}tick.minor.size': 'minor_ticklen', '{}tick.minor.width': 'minor_tickwidth'}
-# values of matplotlib settings and what plotly calls them
-_PLOTLY_STYLE_VALUES = {'layer': {'true': 'below traces', 'line': 'below traces', 'false': 'above traces'},
-                        'ticks': {'out': 'outside', 'in': 'inside', 'inout': 'outside'},
-                        'griddash': {'-': 'solid', 'solid': 'solid', **_PLOTLY_LINESTYLES},
-                        'legend_borderwidth': {'true': 1, 'false': 0}}
-# matplotlib's relative font sizes
-_PLOTLY_FONT_SCALES = {'xx-small': .579, 'x-small': .694, 'small': .833, 'medium': 1., 'large': 1.2,
-                       'x-large': 1.44, 'xx-large': 1.728, 'larger': 1.2, 'smaller': .833}
-
-
-def _plotly_style_color(value: str) -> str:
-    """plotly color for a color of a matplotlib style file, where hex colors are written without '#'."""
-    if not isinstance(value, str):  # an rgb(a) tuple of `rc_dict`
-        return 'rgb({},{},{})'.format(*(round(255 * c) for c in value[:3]))
-    value = value.strip()
-    if value.lower() == 'none':
-        return 'rgba(0,0,0,0)'
-    if re.fullmatch(r'C\d+|\w+:.+', value):  # matplotlib's cycle colors and named palettes
-        from matplotlib.colors import to_hex
-
-        return to_hex(value)
-    return '#' + value if re.fullmatch('[0-9A-Fa-f]{6}', value) else _plotly_color(value)
-
-
-def _plotly_template(rc: dict):
-    """
-    plotly template with the settings of the matplotlib style `rc` that plotly has, on top of plotly's default.
-
-    `rc` maps the settings to their values, as written in a style file or as the types of rcParams. A value
-    that plotly can't take is skipped with a logged warning. Sizes are 100 pixels per inch, as in the rest of
-    the plotly backend.
-    """
-    go = _import_plotly()
-    import plotly.io as pio
-
-    template = go.layout.Template(pio.templates['plotly'])
-    font_size = float(rc.get('font.size', 10))
-
-    def value(key: str, setting: str):
-        if setting.endswith('color'):
-            return _plotly_style_color(rc[key])
-        v = str(rc[key]).strip()
-        if setting.endswith('showgrid'):
-            return v.lower() == 'true'
-        for name, values in _PLOTLY_STYLE_VALUES.items():
-            if setting.endswith(name):
-                return values[v.lower()]
-        return font_size * _PLOTLY_FONT_SCALES[v] if v in _PLOTLY_FONT_SCALES else float(v)
-
-    def colorway(key: str):
-        cycle = rc[key]  # cycler('color', ['348ABD', ...]) or a Cycler
-        if isinstance(cycle, str):
-            colors = re.search(r"color\W+\[([^]]*)]", cycle)
-            cycle = re.findall("'([^']*)'", colors[1]) if colors else []
-        else:
-            cycle = cycle.by_key().get('color', [])
-        return [_plotly_style_color(c) for c in cycle] or template.layout.colorway
-
-    settings = [(key, setting, value) for key, setting in _PLOTLY_STYLE_LAYOUT.items() if key in rc]
-    for axis in 'xy':
-        settings += [(key.format(axis), f'{axis}axis_{setting}', value) for key, setting in _PLOTLY_STYLE_AXES.items()
-                     if key.format(axis) in rc]
-    if 'axes.prop_cycle' in rc:
-        settings.append(('axes.prop_cycle', 'colorway', lambda key, setting: colorway(key)))
-    for key, setting, get in settings:
-        try:
-            template.layout[setting] = get(key, setting)
-        except (KeyError, TypeError, ValueError) as err:
-            logger.warning(f"plotly does not use the style setting {key}={rc[key]!r}: {err}")
-    family = rc.get('font.family', '')
-    family = (family if isinstance(family, str) else ''.join(family[:1])).strip()
-    if family in ('serif', 'sans-serif', 'monospace'):
-        fonts = rc.get(f'font.{family}', '')
-        fonts = re.findall("'([^']*)'", fonts) if isinstance(fonts, str) else list(fonts)
-        template.layout.font.family = ', '.join([*fonts, family])
-    if 'axes.edgecolor' in rc:  # matplotlib draws all four spines
-        template.layout.update(xaxis_showline=True, xaxis_mirror=True, yaxis_showline=True, yaxis_mirror=True)
-    if 'figure.figsize' in rc:
-        size = rc['figure.figsize']
-        width, height = (100 * float(v) for v in (size.split(',') if isinstance(size, str) else size))
-        template.layout.update(width=width, height=height)
-        margins = {'l': ('left', width, 0), 'r': ('right', width, 1), 'b': ('bottom', height, 0),
-                   't': ('top', height, 1)}
-        for side, (key, length, edge) in margins.items():
-            if f'figure.subplot.{key}' in rc:
-                template.layout.margin[side] = abs(edge - float(rc[f'figure.subplot.{key}'])) * length
-    template.data.scatter = [go.Scatter(line_width=float(rc['lines.linewidth']) if 'lines.linewidth' in rc else None,
-                                        marker_size=float(rc['lines.markersize']) if 'lines.markersize' in rc else None,
-                                        marker_line_width=float(rc['lines.markeredgewidth'])
-                                        if 'lines.markeredgewidth' in rc else None)]
-    return template
-
-
-def _plotly_style(path: str, rc_dict: dict | None):
-    """Make the matplotlib style file `path`, with `rc_dict` over it, plotly's default template."""
-    _import_plotly()
-    import plotly.io as pio
-
-    rc = {}
-    with open(path) as f:
-        for line in f:
-            key, sep, value = line.split('#', 1)[0].partition(':')
-            if sep and key.strip():
-                rc[key.strip()] = value.strip()
-    name = os.path.splitext(os.path.basename(path))[0]
-    pio.templates[name] = _plotly_template({**rc, **(rc_dict or {})})
-    pio.templates.default = name
-
-
 def stylely(rc_dict: dict = None, style_file: str = 'skrf.mplstyle'):
     """
     Loads the rc-params from the specified file (file must be located in skrf/data).
 
-    The style applies to matplotlib and to plotly, whichever are installed. For plotly,
-    the settings that plotly has make a plotly template named after `style_file`, such
-    as 'skrf', which becomes plotly's default template.
-
     Parameters
     ----------
     rc_dict : dict, optional
-        rcParams such as ``{'font.size': 12}`` over those of `style_file`, by default {}
+        rc dict passed to :func:`matplotlib.rc`, by default {}
     style_file : str, optional
         style file, by default 'skrf.mplstyle'
     """
-    from .data import pwd  # delayed to solve circular import
-
-    path, styled = os.path.join(pwd, style_file), False
-    with suppress(ImportError):
+    try:
         import matplotlib.pyplot as plt
 
-        plt.style.use(path)
-        plt.rcParams.update(rc_dict if rc_dict else {})
-        styled = True
-    with suppress(ImportError):
-        _plotly_style(path, rc_dict)
-        styled = True
-    if not styled:
-        warnings.warn("Could not import matplotlib or plotly to style", ImportWarning, stacklevel=2)
+        from .data import pwd  # delayed to solve circular import
+
+        rc_dict = rc_dict if rc_dict else {}
+
+
+        plt.style.use(os.path.join(pwd, style_file))
+        plt.rc(rc_dict)
+    except ImportError as e:
+        warnings.warn(f"Could not import matplotlib: {e}", ImportWarning, stacklevel=2)
 
 # Network Set Plotting Commands
-@_validate_plot_args
+@_matplotlib_only
 def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
             xlims: tuple | None = None, show: bool = True,
             savefigs: bool = False, dir_: str = '.', *args, **kwargs):
@@ -2396,16 +1807,9 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
         show each frame as its animated. Default is True.
     savefigs : bool, optional
         save each frame as a png. Default is False.
-        With plotly, this needs the kaleido package.
 
     \*args, \*\*kwargs :
-        passed to the Network plotting function, including ``backend``
-        (default ``skrf.plotting.options.backend``)
-
-    Returns
-    -------
-    None, or with the plotly backend a plotly Figure with one frame per
-    Network, a slider and play/pause buttons. `show` is not used then.
+        passed to the Network plotting function
 
     Note
     ----
@@ -2425,46 +1829,6 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
     >>> ns.animate('s_deg', ylims=(-5,5), label=None)
 
     """
-    kwargs['backend'] = _resolve_backend(kwargs.get('backend'), kwargs.get('ax'), kwargs.get('fig'))
-    if kwargs['backend'] == 'plotly':
-        if kwargs.pop('fig', None) is not None:
-            raise TypeError("animate draws a new plotly Figure, fig is not supported")
-        go = _import_plotly()
-        unit = self[0].frequency.unit
-        frames = []
-        for idx, k in enumerate(self):
-            ntwk = k.windowed() if 'time' in attr else k
-            # every frame in the frequency unit of the first Network
-            fig = ntwk.__getattribute__('plot_' + attr)(*args, **kwargs,
-                                                        fig=_get_plotly_figure(meta={'skrf_frequency_unit': unit}))
-            vs_frequency = fig.layout.xaxis.title.text == f'Frequency ({unit})'
-            if not vs_frequency:  # such as time or smith plots
-                fig.update_layout(meta=None)
-            if ylims is not None:
-                fig.update_yaxes(range=ylims)
-            if xlims is not None:  # in Hz for frequency, like the matplotlib x data
-                scale = ntwk.frequency.multiplier_dict[unit.lower()] if vs_frequency else 1
-                fig.update_xaxes(range=[x / scale for x in xlims])
-            if savefigs:
-                fig.write_image(os.path.join(dir_, 'out_%.5i' % idx + '.png'))
-            if idx == 0:
-                first = fig
-            frames.append(go.Frame(data=fig.data, name=str(idx)))
-        first.frames = frames
-        steps = [dict(method='animate', label=k.name or str(idx),
-                      args=[[str(idx)], dict(mode='immediate', frame=dict(duration=0, redraw=True))])
-                 for idx, k in enumerate(self)]
-        buttons = [dict(label='Play', method='animate',
-                        args=[None, dict(fromcurrent=True, frame=dict(duration=500, redraw=True))]),
-                   dict(label='Pause', method='animate',
-                        args=[[None], dict(mode='immediate', frame=dict(duration=0, redraw=False))])]
-        return first.update_layout(
-            # the slider under the x-axis title, and the buttons under the slider
-            height=650, margin_b=200,
-            sliders=[dict(steps=steps, x=0, len=1, y=0, yanchor='top', pad=dict(t=60))],
-            updatemenus=[dict(type='buttons', direction='left', buttons=buttons, x=0, y=0,
-                              xanchor='left', yanchor='top', pad=dict(t=150))])
-
     import matplotlib.pyplot as plt
 
     was_interactive = plt.isinteractive()
@@ -2499,15 +1863,16 @@ def animate(self: NetworkSet, attr: str = 's_deg', ylims: tuple = (-5, 5),
 #
 #------------------------------
 
-@_validate_plot_args
+@_matplotlib_only
+@axes_kwarg
 def plot_uncertainty_bounds_component(
         self: NetworkSet, attribute: PrimaryPropertiesT,
         m: int | None = None, n: int | None = None, *,
         type: str = 'shade', n_deviations: int = 3,
         alpha: float = .3, color_error: str | None = None,
-        markevery_error: int = 20, ax: Axes = None, fig=None,
+        markevery_error: int = 20, ax: Axes = None,
         ppf: bool = None, kwargs_error: dict = None,
-        backend: str | None = None, **kwargs):
+        **kwargs):
     r"""
     Plot mean value of a NetworkSet with +/- uncertainty bounds in an Network's attribute.
 
@@ -2543,23 +1908,14 @@ def plot_uncertainty_bounds_component(
         if type=='bar', this controls frequency of error bars
     ax : matplotlib axes object
         Axes to plot on. Default is None.
-    fig : plotly Figure, optional
-        figure to draw on with the plotly backend.
     ppf : function
         post processing function. a function applied to the
         upper and lower bounds. Default is None
      kwargs_error : dict
          dictionary of kwargs to pass to the fill_between or
-         errorbar plot command depending on value of type
-         (to :class:`plotly.graph_objects.Scatter` with plotly).
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
+         errorbar plot command depending on value of type.
     \*\*kwargs :
         passed to Network.plot_s_re command used to plot mean response
-
-    Returns
-    -------
-    None, or the plotly Figure with the plotly backend
 
     Note
     ----
@@ -2567,10 +1923,6 @@ def plot_uncertainty_bounds_component(
     similar. uncertainty for wrapped phase blows up at +-pi.
 
     """
-    backend = _resolve_backend(backend, ax, fig)
-    plotly = backend == 'plotly'
-    fig = _get_plotly_figure(fig) if plotly else None
-    ax = _get_matplotlib_axes(ax) if not plotly else None
 
     kwargs_error = kwargs_error if kwargs_error else {}
 
@@ -2609,11 +1961,7 @@ def plot_uncertainty_bounds_component(
                         plot_attribute = 's_time_db'
 
             if type == 'shade':
-                ntwk_mean.plot_s_re(ax=ax, fig=fig, m=m, n=n, backend=backend, **kwargs)
-                if plotly:
-                    _plotly_fill_between(fig, ntwk_mean.frequency, lower_bound.real, upper_bound.real,
-                                         color_error or _plotly_trace_color(fig), alpha, **kwargs_error)
-                    continue
+                ntwk_mean.plot_s_re(ax=ax, m=m, n=n, **kwargs)
                 if color_error is None:
                     color_error = ax.get_lines()[-1].get_color()
                 ax.fill_between(ntwk_mean.frequency.f,
@@ -2622,38 +1970,29 @@ def plot_uncertainty_bounds_component(
                 # ax.plot(ntwk_mean.frequency.f_scaled, ntwk_mean.s[:,m,n],*args,**kwargs)
 
             elif type == 'bar':
-                ntwk_mean.plot_s_re(ax=ax, fig=fig, m=m, n=n, backend=backend, **kwargs)
-                y = ntwk_mean.s_re[:, m, n].squeeze()[::markevery_error]
-                yerr = ntwk_std.s_mag[:, m, n].squeeze()[::markevery_error]
-                if plotly:
-                    x, _ = _plotly_frequency_x(fig, ntwk_mean.frequency)
-                    color = _plotly_color(color_error) or _plotly_trace_color(fig)
-                    trace = dict(mode='markers', error_y=dict(array=yerr), marker_color=color, showlegend=False)
-                    fig.add_trace(_import_plotly().Scatter(x=x[::markevery_error], y=y, **{**trace, **kwargs_error}))
-                    continue
+                ntwk_mean.plot_s_re(ax=ax, m=m, n=n, **kwargs)
                 if color_error is None:
                     color_error = ax.get_lines()[-1].get_color()
-                ax.errorbar(ntwk_mean.frequency.f[::markevery_error], y, yerr=yerr,
+                ax.errorbar(ntwk_mean.frequency.f[::markevery_error],
+                            ntwk_mean.s_re[:, m, n].squeeze()[::markevery_error],
+                            yerr=ntwk_std.s_mag[:, m, n].squeeze()[::markevery_error],
                             color=color_error, **kwargs_error)
 
             else:
                 raise(ValueError('incorrect plot type'))
 
             ax.set_ylabel(self[0].Y_LABEL_DICT.get(plot_attribute[2:], ''))  # use only the function of the attribute
-            scale_frequency_ticks(ax, ntwk_mean.frequency.unit, backend='matplotlib')
+            scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
             ax.axis('tight')
 
-    if plotly:
-        # the label of the last component, as matplotlib
-        return fig.update_layout(yaxis_title_text=self[0].Y_LABEL_DICT.get(plot_attribute[2:], ''))
-
-@_validate_plot_args
+@_matplotlib_only
+@axes_kwarg
 def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: int = 0,
                                  *, type: str = 'shade',
                                  alpha: float = .3, color_error: str | None = None,
-                                 markevery_error: int = 20, ax: Axes = None, fig=None,
+                                 markevery_error: int = 20, ax: Axes = None,
                                  ppf: bool = None, kwargs_error: dict = None,
-                                 backend: str | None = None, **kwargs):
+                                 **kwargs):
     r"""
     Plots mean value of the NetworkSet with minimum and maximum bounds in an Network's attribute.
 
@@ -2690,23 +2029,14 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT
         if type=='bar', this controls frequency of error bars
     ax : matplotlib axes object
         Axes to plot on. Default is None.
-    fig : plotly Figure, optional
-        figure to draw on with the plotly backend.
     ppf : function
         post processing function. a function applied to the
         upper and lower bounds. Default is None
      kwargs_error : dict
          dictionary of kwargs to pass to the fill_between or
-         errorbar plot command depending on value of type
-         (to :class:`plotly.graph_objects.Scatter` with plotly).
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
+         errorbar plot command depending on value of type.
     \*\*kwargs :
         passed to Network.plot_s_re command used to plot mean response
-
-    Returns
-    -------
-    None, or the plotly Figure with the plotly backend
 
     Note
     ----
@@ -2714,10 +2044,6 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT
     similar.  Uncertainty for wrapped phase blows up at +-pi.
 
     """
-    backend = _resolve_backend(backend, ax, fig)
-    plotly = backend == 'plotly'
-    fig = _get_plotly_figure(fig) if plotly else None
-    ax = _get_matplotlib_axes(ax) if not plotly else None
 
     kwargs_error = kwargs_error if kwargs_error else {}
 
@@ -2741,11 +2067,7 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT
                 attribute = 's_time_db'
 
     if type == 'shade':
-        ntwk_mean.plot_s_re(ax=ax, fig=fig, m=m, n=n, backend=backend, **kwargs)
-        if plotly:
-            _plotly_fill_between(fig, ntwk_mean.frequency, lower_bound, upper_bound,
-                                 color_error or _plotly_trace_color(fig), alpha, **kwargs_error)
-            return fig.update_layout(yaxis_title_text=self[0].Y_LABEL_DICT.get(attribute[2:], ''))
+        ntwk_mean.plot_s_re(ax=ax,m=m,n=n, **kwargs)
         if color_error is None:
             color_error = ax.get_lines()[-1].get_color()
         ax.fill_between(ntwk_mean.frequency.f,
@@ -2754,7 +2076,7 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT
         #ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
     elif type =='bar':
         raise (NotImplementedError)
-        ntwk_mean.plot_s_re(ax=ax, fig=fig, m=m, n=n, backend=backend, **kwargs)
+        ntwk_mean.plot_s_re(ax=ax, m=m, n=n, **kwargs)
         if color_error is None:
             color_error = ax.get_lines()[-1].get_color()
         ax.errorbar(ntwk_mean.frequency.f[::markevery_error],
@@ -2766,15 +2088,16 @@ def plot_minmax_bounds_component(self: NetworkSet, attribute: PrimaryPropertiesT
         raise(ValueError('incorrect plot type'))
 
     ax.set_ylabel(self[0].Y_LABEL_DICT.get(attribute[2:], ''))  # use only the function of the attribute
-    scale_frequency_ticks(ax, ntwk_mean.frequency.unit, backend='matplotlib')
+    scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
     ax.axis('tight')
 
-@_validate_plot_args
+@_matplotlib_only
+@axes_kwarg
 def plot_violin(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: int = 0,
                          *, widths: float = None, showmeans: bool = True,
                          showextrema: bool = True, showmedians: bool = False,
                          quantiles = None, points: int = 100, bw_method = None,
-                         ax: Axes = None, fig=None, backend: str | None = None, **kwargs
+                         ax: Axes = None, **kwargs
     ):
     r"""Plots the violin plot of the network set for the desired attribute.
 
@@ -2808,27 +2131,14 @@ def plot_violin(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: 
         _description_. Defaults to None.
     ax : matplotlib axes object
         Axes to plot on. Default is None.
-    fig : plotly Figure, optional
-        figure to draw on with the plotly backend.
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `showmedians` shows a box with the median, `points` and `showextrema` are ignored, and
-        `quantiles` and `bw_method` are not supported.
     \*\*kwargs :
-        passed to :meth:`matplotlib.pyplot.violinplot` (or :class:`plotly.graph_objects.Violin`)
-
-    Returns
-    -------
-    None, or the plotly Figure with the plotly backend
+        passed to :meth:`matplotlib.pyplot.violinplot`
 
     Note
     ----
     For phase plots you probably want s_deg_unwrap, or
     similar.  Uncertainty for wrapped phase blows up at +-pi.
     """
-    plotly = _resolve_backend(backend, ax, fig) == 'plotly'
-    fig = _get_plotly_figure(fig) if plotly else None
-    ax = _get_matplotlib_axes(ax) if not plotly else None
 
     freq = self.ntwk_set[0].f
 
@@ -2840,23 +2150,12 @@ def plot_violin(self: NetworkSet, attribute: PrimaryPropertiesT, m: int = 0, n: 
 
     data = np.array([getattr(p, attribute)[:,m,n] for p in self.ntwk_set])
 
-    if plotly:
-        if quantiles is not None or bw_method is not None:
-            raise NotImplementedError("quantiles and bw_method are not supported by the plotly backend")
-        x, x_label = _plotly_frequency_x(fig, self.ntwk_set[0].frequency)
-        x_per_hz = x[-1] / freq[-1] if freq[-1] else 1  # widths are in Hz, as freq
-        trace = dict(spanmode='hard', meanline_visible=showmeans, box_visible=showmedians, points=False)
-        fig.add_trace(_import_plotly().Violin(x=np.tile(x, len(data)), y=data.ravel(), width=widths * x_per_hz,
-                                             **{**trace, **kwargs}))
-        return fig.update_layout(xaxis_title_text=x_label,
-                                yaxis_title_text=self[0].Y_LABEL_DICT.get(attribute[2:], ''))
-
     ax.violinplot(data, freq, widths=widths, showmeans=showmeans, showextrema=showextrema,
                   showmedians=showmedians, quantiles=quantiles, points=points, bw_method=bw_method, **kwargs)
 
     ax.set_xlabel(f'Frequency ({self.ntwk_set[0].frequency.unit})')
     ax.set_ylabel(self[0].Y_LABEL_DICT.get(attribute[2:], ''))  # use only the function of the attribute
-    scale_frequency_ticks(ax, self.ntwk_set[0].frequency.unit, backend='matplotlib')
+    scale_frequency_ticks(ax, self.ntwk_set[0].frequency.unit)
     ax.axis('tight')
 
 def plot_uncertainty_bounds_s_db(self: NetworkSet, *args, **kwargs):
@@ -2867,7 +2166,7 @@ def plot_uncertainty_bounds_s_db(self: NetworkSet, *args, **kwargs):
 
     """
     kwargs.update({'ppf':mf.magnitude_2_db})
-    return self.plot_uncertainty_bounds_component("s_mag", *args,**kwargs)
+    self.plot_uncertainty_bounds_component("s_mag", *args,**kwargs)
 
 def plot_minmax_bounds_s_db(self: NetworkSet, *args, **kwargs):
     """
@@ -2877,7 +2176,7 @@ def plot_minmax_bounds_s_db(self: NetworkSet, *args, **kwargs):
 
     """
     kwargs.update({'ppf':mf.magnitude_2_db})
-    return self.plot_minmax_bounds_component("s_mag", *args,**kwargs)
+    self.plot_minmax_bounds_component("s_mag", *args,**kwargs)
 
 def plot_minmax_bounds_s_db10(self: NetworkSet, *args, **kwargs):
     """
@@ -2887,7 +2186,7 @@ def plot_minmax_bounds_s_db10(self: NetworkSet, *args, **kwargs):
 
     """
     kwargs.update({'ppf':mf.mag_2_db10})
-    return self.plot_minmax_bounds_component("s_mag", *args,**kwargs)
+    self.plot_minmax_bounds_component("s_mag", *args,**kwargs)
 
 def plot_uncertainty_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
     """
@@ -2897,7 +2196,7 @@ def plot_uncertainty_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
 
     """
     kwargs.update({'ppf':mf.magnitude_2_db})
-    return self.plot_uncertainty_bounds_component("s_time_mag", *args,**kwargs)
+    self.plot_uncertainty_bounds_component("s_time_mag", *args,**kwargs)
 
 def plot_minmax_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
     """
@@ -2907,12 +2206,11 @@ def plot_minmax_bounds_s_time_db(self: NetworkSet, *args, **kwargs):
 
     """
     kwargs.update({'ppf':mf.magnitude_2_db})
-    return self.plot_minmax_bounds_component("s_time_mag", *args, **kwargs)
+    self.plot_minmax_bounds_component("s_time_mag", *args, **kwargs)
 
-@_validate_plot_args
-def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0, *,
-                                   backend: str | None = None, **kwargs):
-    r"""
+@_matplotlib_only
+def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0):
+    """
     Plot the total and component-wise uncertainty.
 
     Parameters
@@ -2921,34 +2219,19 @@ def plot_uncertainty_decomposition(self: NetworkSet, m: int = 0, n: int = 0, *,
         first s-parameters index
     n :
         second s-parameter index
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``
-    \*\*kwargs :
-        passed to :meth:`~skrf.network.Network.plot_s_mag`
-
-    Returns
-    -------
-    None, or the plotly Figure with the plotly backend
 
     """
-    backend = _start_plot(backend, kwargs)
-    if backend == "plotly":
-        if self.name is not None:
-            kwargs["fig"].update_layout(title_text=f"Uncertainty Decomposition: {self.name} "
-                                                  f"S{self.ntwk_set[0]._fmt_trace_name(m, n)}")
-    elif self.name is not None:
-        _get_matplotlib_axes(kwargs.get("ax")).set_title(f"Uncertainty Decomposition: {self.name} "
-                                              f"$S_{{{self.ntwk_set[0]._fmt_trace_name(m,n)}}}$")
-    self.std_s.plot_s_mag(label='Distance', m=m,n=n, backend=backend, **kwargs)
-    self.std_s_re.plot_s_mag(label='Real',  m=m,n=n, backend=backend, **kwargs)
-    self.std_s_im.plot_s_mag(label='Imaginary',  m=m,n=n, backend=backend, **kwargs)
-    self.std_s_mag.plot_s_mag(label='Magnitude',  m=m,n=n, backend=backend, **kwargs)
-    self.std_s_arcl.plot_s_mag(label='Arc-length',  m=m,n=n, backend=backend, **kwargs)
-    if backend == "plotly":
-        return kwargs["fig"]
+    import matplotlib.pyplot as plt
+    if self.name is not None:
+        plt.title(f"Uncertainty Decomposition: {self.name} $S_{{{self.ntwk_set[0]._fmt.trace_name(m,n)}}}$")
+    self.std_s.plot_s_mag(label='Distance', m=m,n=n)
+    self.std_s_re.plot_s_mag(label='Real',  m=m,n=n)
+    self.std_s_im.plot_s_mag(label='Imaginary',  m=m,n=n)
+    self.std_s_mag.plot_s_mag(label='Magnitude',  m=m,n=n)
+    self.std_s_arcl.plot_s_mag(label='Arc-length',  m=m,n=n)
 
-@_validate_plot_args
-def plot_logsigma(self: NetworkSet, label_axis: bool = True, *args, backend: str | None = None, **kwargs):
+@_matplotlib_only
+def plot_logsigma(self: NetworkSet, label_axis: bool = True, *args,**kwargs):
     r"""
     Plot the uncertainty for the set in units of log-sigma.
 
@@ -2959,32 +2242,21 @@ def plot_logsigma(self: NetworkSet, label_axis: bool = True, *args, backend: str
     ----------
     label_axis : bool, optional
         Default is True.
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``
     \*args, \*\*kwargs : arguments
         passed to self.std_s.plot_s_db()
-
-    Returns
-    -------
-    None, or the plotly Figure with the plotly backend
     """
-    if _resolve_backend(backend, kwargs.get("ax"), kwargs.get("fig")) == "plotly":
-        fig = self.std_s.plot_s_db(*args, backend="plotly", **kwargs)
-        if label_axis:
-            fig.update_layout(yaxis_title_text='Standard Deviation(dB)')
-        return fig
-
     import matplotlib.pyplot as plt
 
-    self.std_s.plot_s_db(*args, backend="matplotlib", **kwargs)
+    self.std_s.plot_s_db(*args,**kwargs)
     if label_axis:
         plt.ylabel('Standard Deviation(dB)')
 
 
+@_matplotlib_only
 def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag',
               vmax: Number | None = None, vs_time: bool = False,
               cbar_label: str | None = None,
-              *args, backend: str | None = None, **kwargs):
+              *args, **kwargs):
     r"""
     Visualization of a NetworkSet.
 
@@ -3010,36 +2282,14 @@ def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag'
         Default is False.
     cbar_label: String or None, optional
         label for the colorbar. Default is None
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
     \*args,\*\*kw : arguments, keyword arguments
-        passed to :func:`~pylab.imshow`, or with plotly keyword arguments
-        to :class:`plotly.graph_objects.Heatmap`
-
-    Returns
-    -------
-    The matplotlib image, or the plotly Figure with the plotly backend
+        passed to :func:`~pylab.imshow`
     """
-    mat = np.array([self[k].__getattribute__(component)[:, m, n] \
-                     for k in range(len(self))])
-
-    if _resolve_backend(backend) == 'plotly':
-        if args:
-            raise TypeError(f"Positional imshow arguments {args!r} are not supported by the plotly backend")
-        go = _import_plotly()
-        freq = self[0].frequency
-        y = [now_string_2_dt(k.name) for k in self] if vs_time else np.arange(len(self))
-        fig = _get_plotly_figure()
-        kwargs = {'zmax': vmax, 'colorbar': dict(title=cbar_label), **kwargs}
-        if kwargs['zmax'] is not None:  # plotly ignores zmax without zmin
-            kwargs.setdefault('zmin', np.nanmin(mat))
-        fig.add_trace(go.Heatmap(z=mat, x=freq.f_scaled, y=y, **kwargs))
-        # first Network at the top, like imshow
-        return fig.update_layout(xaxis_title=f'Frequency ({freq.unit})', yaxis_title='Time' if vs_time else 'Network #',
-                                 yaxis_autorange='reversed')
-
     import matplotlib.pyplot as plt
     from matplotlib.dates import date2num
+
+    mat = np.array([self[k].__getattribute__(component)[:, m, n] \
+                     for k in range(len(self))])
 
     # if vmax is None:
     #    vmax = 3*mat.mean()
@@ -3077,7 +2327,7 @@ def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag'
         plt.ylabel('Network #')
 
     plt.grid(0)
-    freq.labelXAxis(backend='matplotlib')
+    freq.labelXAxis()
 
     cbar = plt.colorbar()
     if cbar_label is not None:
@@ -3085,10 +2335,11 @@ def signature(self: NetworkSet, m: int = 0, n: int = 0, component: str = 's_mag'
 
     return img
 
+@_matplotlib_only
 def plot_contour(freq: Frequency,
                  x: NumberLike, y: NumberLike, z: NumberLike,
                  min0max1: int, graph: bool = True,
-                 cmap: str = 'plasma_r', title: str = '', *, backend: str | None = None,
+                 cmap: str = 'plasma_r', title: str = '',
                  **kwargs):
     r"""
     Create a contour plot.
@@ -3111,12 +2362,8 @@ def plot_contour(freq: Frequency,
         Colormap label. The default is 'plasma_r'.
     title : str, optional
         Figure title. The default is ''.
-    backend : {'matplotlib', 'plotly'}, optional
-        plotting backend, default ``skrf.plotting.options.backend``.
-        With plotly, `cmap` is a plotly colorscale name.
     \*\*kwargs : dict
-        Other parameters passed to `matplotlib.pyplot.subplots()`
-        (or the layout of the plotly Figure).
+        Other parameters passed to `matplotlib.plot()`.
 
     Returns
     -------
@@ -3126,6 +2373,7 @@ def plot_contour(freq: Frequency,
         min or max.
 
     """
+    import matplotlib.pyplot as plt
     from matplotlib import tri
 
     from . import Network
@@ -3145,27 +2393,9 @@ def plot_contour(freq: Frequency,
     GAMopt = Network(f=[freq], s=x[z==VALopt] +1j*y[z==VALopt])
 
     if graph :
+        fig, ax = plt.subplots(**kwargs)
         an = np.linspace(0, 2*np.pi, 50)
         cs, sn = np.cos(an), np.sin(an)
-        if _resolve_backend(backend) == 'plotly':
-            go = _import_plotly()
-            fig = _get_plotly_figure(**kwargs)
-            fig.add_trace(go.Contour(x=xi, y=xi, z=Zi.filled(np.nan), ncontours=20, colorscale=cmap,
-                                     line=dict(color='black', width=0.5)))
-            for x_line, y_line, color in ((cs, sn, 'black'), (cs, sn*0, 'green'), ((1+cs)/2, sn/2, 'black')):
-                fig.add_trace(go.Scatter(x=x_line, y=y_line, mode='lines', line=dict(color=color, width=0.5),
-                                         hoverinfo='skip', showlegend=False))
-            fig.add_trace(go.Scatter(x=x, y=y, mode='markers', marker=dict(color='black', size=2),
-                                     showlegend=False))
-            fig.update_xaxes(range=[-1, 1], visible=False, constrain='domain')
-            fig.update_yaxes(range=[-1, 1], visible=False, scaleanchor='x', constrain='domain')
-            fig.update_layout(title_text=title, plot_bgcolor='white')
-            fig.show()
-            return GAMopt, VALopt
-
-        import matplotlib.pyplot as plt
-
-        fig, ax = plt.subplots(**kwargs)
         plt.plot(cs, sn, color='k', lw=0.25)
         plt.plot(cs, sn*0, color='g', lw=0.25)
         plt.plot((1+cs)/2, sn/2, color='k', lw=0.25)

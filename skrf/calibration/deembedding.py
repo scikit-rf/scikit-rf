@@ -69,149 +69,12 @@ from numpy.linalg import norm
 
 from ..frequency import Frequency
 from ..network import Network, concat_ports, overlap_multi, subnetwork
-from ..plotting import (
-    _get_plotly_figure,
-    _plotly_add_panel,
-    _plotly_frequency_x,
-    _plotly_layout,
-    _resolve_backend,
-    _validate_plot_args,
-    figure,
-    plot_rectangular,
-    subplots,
-)
+from ..plotting import figure, subplots
 
 if TYPE_CHECKING:
     from .plotting import Axes, Figure
 
 PortOrderT = Literal["first", "second", "third"]
-
-_PLOTLY_FER1_LIMITS = ((-10, 'green', 'Minimum A'), (-15, 'red', 'Minimum B, C'))
-_PLOTLY_FER2_LIMITS = ((-20, 'green', 'Maximum A'), (-10, 'blue', 'Maximum B'), (-6, 'red', 'Maximum C'))
-_PLOTLY_FER3_LIMITS = ((5, 'green', 'Minimum A'), (0, 'red', 'Minimum B, C'))
-_PLOTLY_FER6_LIMITS = ((-15, 'red', 'Maximum A, B, C'),)
-
-
-def _plotly_panels(n: int, fig = None) -> list:
-    """`n` new plotly Figures for the panels of a plot, with the metadata of the plotly Figure `fig` they go into."""
-    return [_get_plotly_figure(meta = None if fig is None else fig.layout.meta) for _ in range(n)]
-
-
-def _plotly_combine_panels(panels: list, titles: list, specs: list, title: str | None = None, fig = None,
-                           figsize: tuple = (6.4, 4.8), twins: dict | None = None):
-    """
-    Copy the plotly Figures `panels` into the subplots `specs` of the plotly Figure `fig`, or a new one.
-
-    Each has the subplot title in `titles`, and its legend in its plot area. `twins` maps the index of a panel to a
-    plotly Figure for its second y-axis, and `title` is the title of the figure.
-    """
-    from plotly.subplots import make_subplots
-
-    grid = dict(rows = len(specs), cols = len(specs[0]), specs = specs, subplot_titles = titles)
-    if fig is None:
-        fig = make_subplots(**grid).update_layout(_plotly_layout(), width = 100 * figsize[0],
-                                                  height = 100 * figsize[1])
-    else:
-        try:
-            fig.set_subplots(**grid)
-        except ValueError: # a figure from an earlier call already has the subplots: draw over it
-            pass
-    cells = [(r + 1, c + 1) for r, row in enumerate(specs) for c, cell in enumerate(row) if cell is not None]
-    for k, ((row, col), panel) in enumerate(zip(cells, panels)):
-        _plotly_add_panel(fig, panel, row, col, k)
-    for k, twin in (twins or {}).items():
-        row, col = cells[k]
-        twin.update_traces(legend = f"legend{k + 1 if k else ''}")
-        fig.add_traces(twin.data, rows = row, cols = col, secondary_ys = [True] * len(twin.data))
-        fig.update_yaxes(twin.layout.yaxis, row = row, col = col, secondary_y = True)
-    if title is not None:
-        fig.update_layout(title_text = title)
-    return fig
-
-
-def _plotly_limit_lines(panel, frequency: Frequency, limits: Sequence) -> None:
-    """Draw constant `limits` of (value, color, name) on the plotly Figure `panel` over `frequency`."""
-    x = _plotly_frequency_x(panel, frequency)[0][[0, -1]]
-    for value, color, name in limits:
-        plot_rectangular(x, [value, value], fig = panel, backend = 'plotly',
-                         line = dict(color = color, dash = 'dash'), label = name)
-
-
-def _plotly_relative_limit_lines(panel, x: ndarray, y: ndarray) -> None:
-    """Draw the fer 5 limits around the trace `x`, `y` on the plotly Figure `panel`."""
-    for value, color, name in ((0.025, 'green', 'Limit A ±2.5%'), (0.05, 'blue', 'Limit B ±5%'),
-                               (0.1, 'red', 'Limit C ±10%')):
-        line = dict(color = color, dash = 'dash')
-        plot_rectangular(x, y * (1.0 + value), fig = panel, backend = 'plotly', line = line, label = name)
-        plot_rectangular(x, y * (1.0 - value), fig = panel, backend = 'plotly', line = line)
-
-
-def _plotly_point(panel, x: float, y: float, symbol: str, name: str) -> None:
-    """Mark a point with a black `symbol` on the plotly Figure `panel`."""
-    plot_rectangular([x], [y], fig = panel, backend = 'plotly', line = dict(color = 'black'),
-                     marker = dict(symbol = symbol, color = 'black'), label = name)
-
-
-def _plotly_fer_il_rl(panels: list, ntwk: Network) -> None:
-    """Draw fer 1, 2 and 3 of the 2x-thru `ntwk` on three plotly Figures."""
-    gray, black = dict(color = 'gray'), dict(color = 'black')
-    ntwk.plot_s_db(1, 0, fig = panels[0], backend = 'plotly', line = gray)
-    ntwk.plot_s_db(0, 1, fig = panels[0], backend = 'plotly', line = black)
-    _plotly_limit_lines(panels[0], ntwk.frequency, _PLOTLY_FER1_LIMITS)
-    ntwk.plot_s_db(0, 0, fig = panels[1], backend = 'plotly', line = gray)
-    ntwk.plot_s_db(1, 1, fig = panels[1], backend = 'plotly', line = black)
-    _plotly_limit_lines(panels[1], ntwk.frequency, _PLOTLY_FER2_LIMITS)
-    x, x_label = _plotly_frequency_x(panels[2], ntwk.frequency)
-    plot_rectangular(x, ntwk.s_db[:, 1, 0] - ntwk.s_db[:, 0, 0], x_label, 'Magnitude (dB)', fig = panels[2],
-                     backend = 'plotly', line = gray, label = 'S21 - S11')
-    plot_rectangular(x, ntwk.s_db[:, 0, 1] - ntwk.s_db[:, 1, 1], x_label, 'Magnitude (dB)', fig = panels[2],
-                     backend = 'plotly', line = black, label = 'S21 - S22')
-    _plotly_limit_lines(panels[2], ntwk.frequency, _PLOTLY_FER3_LIMITS)
-
-
-def _plotly_fer5(panel, fix_dut_fix: Network, s2xthru: Network, port: int, n: int, x_k: int, x_t: float) -> None:
-    """Draw the fer 5 TDR Z variation of `port` on the plotly Figure `panel`."""
-    fix_dut_fix.plot_z_time_step(port, port, fig = panel, backend = 'plotly', line = dict(color = 'black'))
-    s2xthru.plot_z_time_step(port, port, fig = panel, backend = 'plotly', line = dict(color = 'black', dash = 'dash'))
-    x = np.asarray(panel.data[-1].x)[:(x_k + n//2 + 1)]
-    y = np.asarray(panel.data[-1].y)[:(x_k + n//2 + 1)]
-    _plotly_relative_limit_lines(panel, x, y)
-    # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-    fdf_y = np.asarray(panel.data[0].y)[(n // 2):(x_k + n // 2)]
-    thru_y = np.asarray(panel.data[1].y)[(n // 2):(x_k + n // 2)]
-    ymax = np.max(np.array([fdf_y, 1.1 * thru_y]))
-    ymin = np.min(np.array([fdf_y, 0.9 * thru_y]))
-    panel.update_yaxes(range = [ymin - 5, ymax + 5])
-    delay = 2 * x_t
-    panel.update_xaxes(range = [-0.5 * delay, 1.5 * delay])
-
-
-def _plotly_fer8(panel, ntwk: Network, f: ndarray, x_t: float) -> None:
-    """Draw the fer 8 TDT minimum length on the plotly Figure `panel`."""
-    ntwk.plot_z_time_impulse(1, 0, fig = panel, backend = 'plotly', line = dict(color = 'gray'))
-    ntwk.plot_z_time_impulse(1, 0, fig = panel, backend = 'plotly', line = dict(color = 'black'))
-    y = np.asarray(panel.data[-1].y)
-    y_lim = [np.min(y), np.max(y)]
-    t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
-    plot_rectangular([0, 0], y_lim, fig = panel, backend = 'plotly', line = dict(color = 'blue', dash = 'dash'),
-                     label = 'Start')
-    plot_rectangular(t_lim, y_lim, fig = panel, backend = 'plotly', line = dict(color = 'red', dash = 'dash'),
-                     label = 'Minimum A, B, C')
-    panel.update_xaxes(range = [-1, x_t + 1])
-
-
-def _plotly_check_residuals(res: Network, ports: Sequence, fig = None):
-    """Plot the residuals `res` of `ports`, as (m, n, line), against their limits with plotly."""
-    panels = _plotly_panels(2, fig)
-    for m, n, line in ports:
-        res.plot_s_db(m, n, fig = panels[0], backend = 'plotly', line = line)
-    _plotly_limit_lines(panels[0], res.frequency, ((0.1, 'red', 'Limit'), (-0.1, 'red', None)))
-    for m, n, line in ports:
-        res.plot_s_deg(m, n, fig = panels[1], backend = 'plotly', line = line)
-    _plotly_limit_lines(panels[1], res.frequency, ((1, 'red', 'Limit'), (-1, 'red', None)))
-    return _plotly_combine_panels(panels, ['Magnitude residuals', 'Phase residuals'], [[{}, {}]],
-                                  'Consistency test #1: Self de-embedding of 2X-Thru', fig, (10, 5))
-
 
 class Deembedding(ABC):
     """
@@ -1710,128 +1573,101 @@ class IEEEP370_FER:
 
 
 
-    def plot_fd_se_fer(self, s2xthru: Network, fig: Figure = None, *, backend: str | None = None) -> Figure:
+    def plot_fd_se_fer(self, s2xthru: Network, fig: Figure = None) -> Figure:
         """
         Plot fixture electrical requirements (FER) for s values
-
-        With the plotly `backend` (default ``skrf.plotting.options.backend``), `fig`
-        may be a plotly Figure to draw into, and the plotly Figure is returned.
         """
-        backend = _resolve_backend(backend, fig)
-        if backend == 'plotly':
-            panels = _plotly_panels(3, fig)
-            _plotly_fer_il_rl(panels, s2xthru)
-            titles = ['FER1 2x-Thru IL', 'FER2 2x-Thru RL', 'FER3 2x-Thru IL - RL']
-            return _plotly_combine_panels(panels, titles, [[{}, {}], [dict(colspan = 2), None]],
-                                          'Fixture electrical requirements (FER)', fig, (8, 8))
-        else:
-            if fig is None:
-                fig = figure(figsize=(8, 8))
+        if fig is None:
+            fig = figure(figsize=(8, 8))
 
-            fig.suptitle('Fixture electrical requirements (FER)')
+        fig.suptitle('Fixture electrical requirements (FER)')
 
-            ax = fig.add_subplot(2, 2, 1)
-            ax.set_title('FER1 2x-Thru IL')
-            s2xthru.plot_s_db(1, 0, ax = ax, color = '0.5', backend = 'matplotlib')
-            s2xthru.plot_s_db(0, 1, ax = ax, color = 'k', backend = 'matplotlib')
-            self.plot_limit_fer1(s2xthru.frequency, ax)
-            ax.legend(loc = 'lower left')
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER1 2x-Thru IL')
+        s2xthru.plot_s_db(1, 0, ax = ax, color = '0.5')
+        s2xthru.plot_s_db(0, 1, ax = ax, color = 'k')
+        self.plot_limit_fer1(s2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
 
-            ax = fig.add_subplot(2, 2, 2)
-            ax.set_title('FER2 2x-Thru RL')
-            s2xthru.plot_s_db(0, 0, ax = ax, color = '0.5', backend = 'matplotlib')
-            s2xthru.plot_s_db(1, 1, ax = ax, color = 'k', backend = 'matplotlib')
-            self.plot_limit_fer2(s2xthru.frequency, ax)
-            ax.legend(loc = 'lower left')
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER2 2x-Thru RL')
+        s2xthru.plot_s_db(0, 0, ax = ax, color = '0.5')
+        s2xthru.plot_s_db(1, 1, ax = ax, color = 'k')
+        self.plot_limit_fer2(s2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
 
-            ax = fig.add_subplot(2, 1, 2)
-            ax.set_title('FER3 2x-Thru IL - RL')
-            s1 = s2xthru.s_db[:, 1, 0] - s2xthru.s_db[:, 0, 0]
-            s2 = s2xthru.s_db[:, 0, 1] - s2xthru.s_db[:, 1, 1]
-            ax.plot(s2xthru.frequency.f, s1, color = '0.5', label = 'S21 - S11')
-            ax.plot(s2xthru.frequency.f, s2, color = 'k', label = 'S21 - S22')
-            self.plot_limit_fer3(s2xthru.frequency, ax)
-            ax.set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
-            ax.set_ylabel('Magnitude (dB)')
-            ax.legend(loc = 'upper right')
+        ax = fig.add_subplot(2, 1, 2)
+        ax.set_title('FER3 2x-Thru IL - RL')
+        s1 = s2xthru.s_db[:, 1, 0] - s2xthru.s_db[:, 0, 0]
+        s2 = s2xthru.s_db[:, 0, 1] - s2xthru.s_db[:, 1, 1]
+        ax.plot(s2xthru.frequency.f, s1, color = '0.5', label = 'S21 - S11')
+        ax.plot(s2xthru.frequency.f, s2, color = 'k', label = 'S21 - S22')
+        self.plot_limit_fer3(s2xthru.frequency, ax)
+        ax.set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
+        ax.set_ylabel('Magnitude (dB)')
+        ax.legend(loc = 'upper right')
 
-            fig.tight_layout()
-            return fig
+        fig.tight_layout()
+        return fig
 
-    def plot_fd_mm_fer(self, s2xthru: Network, fig: Figure = None, *, backend: str | None = None) -> Figure:
+    def plot_fd_mm_fer(self, s2xthru: Network, fig: Figure = None) -> Figure:
         """
         Plot fixture electrical requirements (FER) for s values
-
-        With the plotly `backend` (default ``skrf.plotting.options.backend``), `fig`
-        may be a plotly Figure to draw into, and the plotly Figure is returned.
         """
+        if fig is None:
+            fig = figure(figsize=(8, 8))
+
+        fig.suptitle('Fixture electrical requirements (FER)')
+
         mm_2xthru = s2xthru.copy()
         mm_2xthru.se2gmm(p=2)
-        backend = _resolve_backend(backend, fig)
-        if backend == 'plotly':
-            panels = _plotly_panels(4, fig)
-            _plotly_fer_il_rl(panels, mm_2xthru)
-            x = _plotly_frequency_x(panels[3], mm_2xthru.frequency)[0]
-            plot_rectangular(x, mm_2xthru.s_db[:, 2, 0] - mm_2xthru.s_db[:, 1, 0], fig = panels[3], backend = 'plotly',
-                             line = dict(color = 'gray'), label = 'SCD21 - S21')
-            plot_rectangular(x, mm_2xthru.s_db[:, 3, 1] - mm_2xthru.s_db[:, 0, 1], fig = panels[3], backend = 'plotly',
-                             line = dict(color = 'black'), label = 'SCD42 - S12')
-            _plotly_limit_lines(panels[3], mm_2xthru.frequency, _PLOTLY_FER6_LIMITS)
-            titles = ['FER1 2x-Thru IL', 'FER2 2x-Thru RL', 'FER3 2x-Thru IL - RL',
-                      'FER6 Differential to common CDL - IL']
-            return _plotly_combine_panels(panels, titles, [[{}, {}], [{}, {}]], 'Fixture electrical requirements (FER)',
-                                          fig, (8, 8))
-        else:
-            if fig is None:
-                fig = figure(figsize=(8, 8))
 
-            fig.suptitle('Fixture electrical requirements (FER)')
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER1 2x-Thru IL')
+        mm_2xthru.plot_s_db(1, 0, ax = ax, color = '0.5')
+        mm_2xthru.plot_s_db(0, 1, ax = ax, color = 'k')
+        self.plot_limit_fer1(mm_2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
 
-            ax = fig.add_subplot(2, 2, 1)
-            ax.set_title('FER1 2x-Thru IL')
-            mm_2xthru.plot_s_db(1, 0, ax = ax, color = '0.5', backend = 'matplotlib')
-            mm_2xthru.plot_s_db(0, 1, ax = ax, color = 'k', backend = 'matplotlib')
-            self.plot_limit_fer1(mm_2xthru.frequency, ax)
-            ax.legend(loc = 'lower left')
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER2 2x-Thru RL')
+        mm_2xthru.plot_s_db(0, 0, ax = ax, color = '0.5')
+        mm_2xthru.plot_s_db(1, 1, ax = ax, color = 'k')
+        self.plot_limit_fer2(mm_2xthru.frequency, ax)
+        ax.legend(loc = 'lower left')
 
-            ax = fig.add_subplot(2, 2, 2)
-            ax.set_title('FER2 2x-Thru RL')
-            mm_2xthru.plot_s_db(0, 0, ax = ax, color = '0.5', backend = 'matplotlib')
-            mm_2xthru.plot_s_db(1, 1, ax = ax, color = 'k', backend = 'matplotlib')
-            self.plot_limit_fer2(mm_2xthru.frequency, ax)
-            ax.legend(loc = 'lower left')
+        ax = fig.add_subplot(2, 2, 3)
+        ax.set_title('FER3 2x-Thru IL - RL')
+        s1 = mm_2xthru.s_db[:, 1, 0] - mm_2xthru.s_db[:, 0, 0]
+        s2 = mm_2xthru.s_db[:, 0, 1] - mm_2xthru.s_db[:, 1, 1]
+        ax.plot(mm_2xthru.frequency.f, s1, color = '0.5', label = 'S21 - S11')
+        ax.plot(mm_2xthru.frequency.f, s2, color = 'k', label = 'S21 - S22')
+        self.plot_limit_fer3(mm_2xthru.frequency, ax)
+        ax.set_xlabel(f'Frequency ({mm_2xthru.frequency.unit})')
+        ax.set_ylabel('Magnitude (dB)')
+        ax.legend(loc = 'upper right')
 
-            ax = fig.add_subplot(2, 2, 3)
-            ax.set_title('FER3 2x-Thru IL - RL')
-            s1 = mm_2xthru.s_db[:, 1, 0] - mm_2xthru.s_db[:, 0, 0]
-            s2 = mm_2xthru.s_db[:, 0, 1] - mm_2xthru.s_db[:, 1, 1]
-            ax.plot(mm_2xthru.frequency.f, s1, color = '0.5', label = 'S21 - S11')
-            ax.plot(mm_2xthru.frequency.f, s2, color = 'k', label = 'S21 - S22')
-            self.plot_limit_fer3(mm_2xthru.frequency, ax)
-            ax.set_xlabel(f'Frequency ({mm_2xthru.frequency.unit})')
-            ax.set_ylabel('Magnitude (dB)')
-            ax.legend(loc = 'upper right')
+        ax = fig.add_subplot(2, 2, 4)
+        ax.set_title('FER6 Differential to common CDL - IL')
+        s1 = mm_2xthru.s_db[:, 2, 0] - mm_2xthru.s_db[:, 1, 0]
+        s2 = mm_2xthru.s_db[:, 3, 1] - mm_2xthru.s_db[:, 0, 1]
+        ax.plot(mm_2xthru.frequency.f, s1, color = '0.5', label = 'SCD21 - S21')
+        ax.plot(mm_2xthru.frequency.f, s2, color = 'k', label = 'SCD42 - S12')
+        self.plot_limit_fer6(mm_2xthru.frequency, ax)
+        ax.legend(loc = 'upper right')
 
-            ax = fig.add_subplot(2, 2, 4)
-            ax.set_title('FER6 Differential to common CDL - IL')
-            s1 = mm_2xthru.s_db[:, 2, 0] - mm_2xthru.s_db[:, 1, 0]
-            s2 = mm_2xthru.s_db[:, 3, 1] - mm_2xthru.s_db[:, 0, 1]
-            ax.plot(mm_2xthru.frequency.f, s1, color = '0.5', label = 'SCD21 - S21')
-            ax.plot(mm_2xthru.frequency.f, s2, color = 'k', label = 'SCD42 - S12')
-            self.plot_limit_fer6(mm_2xthru.frequency, ax)
-            ax.legend(loc = 'upper right')
-
-            fig.tight_layout()
-            return fig
+        fig.tight_layout()
+        return fig
 
     def plot_td_se_fer(self, s2xthru: Network, sfix_dut_fix: Network,
-                            fig: Figure = None, *, backend: str | None = None) -> Figure:
+                            fig: Figure = None) -> Figure:
         """
         Plot fixture electrical requirements (FER) for z values
-
-        With the plotly `backend` (default ``skrf.plotting.options.backend``), `fig`
-        may be a plotly Figure to draw into, and the plotly Figure is returned.
         """
+        if fig is None:
+            fig = figure(figsize=(8, 8))
+
+        fig.suptitle('Fixture electrical requirements (FER)')
         f = s2xthru.frequency.f
         s2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
         sfix_dut_fix_dc = IEEEP370.extrapolate_to_dc(sfix_dut_fix)
@@ -1841,82 +1677,70 @@ class IEEEP370_FER:
         t21 = fftshift(irfft(s21, n = n))
         x_k = np.argmax(t21) - n//2
         x_t = x_k * dt
-        backend = _resolve_backend(backend, fig)
-        if backend == 'plotly':
-            panels = _plotly_panels(3, fig)
-            _plotly_fer5(panels[0], sfix_dut_fix_dc, s2xthru_dc, 0, n, x_k, x_t)
-            _plotly_fer5(panels[1], sfix_dut_fix_dc, s2xthru_dc, 1, n, x_k, x_t)
-            _plotly_fer8(panels[2], s2xthru_dc, f, x_t)
-            titles = ['FER5 TDR Z variation side 1', 'FER5 TDR Z variation side 2', 'FER8 TDT minimum length']
-            return _plotly_combine_panels(panels, titles, [[{}, {}], [dict(colspan = 2), None]],
-                                          'Fixture electrical requirements (FER)', fig, (8, 8))
-        else:
-            if fig is None:
-                fig = figure(figsize=(8, 8))
 
-            fig.suptitle('Fixture electrical requirements (FER)')
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER5 TDR Z variation side 1')
+        sfix_dut_fix_dc.plot_z_time_step(0, 0, color = 'k', ax = ax)
+        s2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        self.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
 
-            ax = fig.add_subplot(2, 2, 1)
-            ax.set_title('FER5 TDR Z variation side 1')
-            sfix_dut_fix_dc.plot_z_time_step(0, 0, color = 'k', ax = ax, backend = 'matplotlib')
-            s2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax, backend = 'matplotlib')
-            x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
-            y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-            self.plot_limit_fer5(x, y, ax)
-            ax.legend(loc = 'lower right')
-            # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-            ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                                   1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-            ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                                   0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-            ax.set_ylim((ymin - 5, ymax + 5))
-            delay = 2 * x_t
-            ax.set_xlim((-0.5 * delay, 1.5 * delay))
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER5 TDR Z variation side 2')
+        sfix_dut_fix_dc.plot_z_time_step(1, 1, color = 'k', ax = ax)
+        s2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        self.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
 
-            ax = fig.add_subplot(2, 2, 2)
-            ax.set_title('FER5 TDR Z variation side 2')
-            sfix_dut_fix_dc.plot_z_time_step(1, 1, color = 'k', ax = ax, backend = 'matplotlib')
-            s2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax, backend = 'matplotlib')
-            x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
-            y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-            self.plot_limit_fer5(x, y, ax)
-            ax.legend(loc = 'lower right')
-            # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-            ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                                   1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-            ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                                   0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-            ax.set_ylim((ymin - 5, ymax + 5))
-            delay = 2 * x_t
-            ax.set_xlim((-0.5 * delay, 1.5 * delay))
+        ax = fig.add_subplot(2, 1, 2)
+        ax.set_title('FER8 TDT minimum length')
+        s2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax)
+        s2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
+        y = ax.lines[-1].get_ydata()
+        y_lim = [np.min(y), np.max(y)]
+        t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
+        ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
+        ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
+        ax.legend(loc = 'upper right')
+        ax.set_xlim((-1, x_t + 1))
 
-            ax = fig.add_subplot(2, 1, 2)
-            ax.set_title('FER8 TDT minimum length')
-            s2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax, backend = 'matplotlib')
-            s2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax, backend = 'matplotlib')
-            y = ax.lines[-1].get_ydata()
-            y_lim = [np.min(y), np.max(y)]
-            t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
-            ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
-            ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
-            ax.legend(loc = 'upper right')
-            ax.set_xlim((-1, x_t + 1))
-
-            fig.tight_layout()
-            return fig
+        fig.tight_layout()
+        return fig
 
     def plot_td_mm_fer(self, s2xthru: Network, sfix_dut_fix: Network,
-                            fig: Figure = None, *, backend: str | None = None) -> Figure:
+                            fig: Figure = None) -> Figure:
         """
         Plot fixture electrical requirements (FER) for z values
-
-        With the plotly `backend` (default ``skrf.plotting.options.backend``), `fig`
-        may be a plotly Figure to draw into, and the plotly Figure is returned.
         """
+        if fig is None:
+            fig = figure(figsize=(8, 8))
+
         mm_2xthru = s2xthru.copy()
         mm_2xthru.se2gmm(p=2)
         mm_fix_dut_fix = sfix_dut_fix.copy()
         mm_fix_dut_fix.se2gmm(p=2)
+
+        fig.suptitle('Fixture electrical requirements (FER)')
         f = mm_2xthru.frequency.f
         se_2xthru_dc = IEEEP370.extrapolate_to_dc(s2xthru)
         mm_2xthru_dc = IEEEP370.extrapolate_to_dc(mm_2xthru)
@@ -1927,80 +1751,62 @@ class IEEEP370_FER:
         t21 = fftshift(irfft(s21, n = n))
         x_k = np.argmax(t21) - n//2
         x_t = x_k * dt
-        backend = _resolve_backend(backend, fig)
-        if backend == 'plotly':
-            panels = _plotly_panels(4, fig)
-            _plotly_fer5(panels[0], mm_fix_dut_fix_dc, mm_2xthru_dc, 0, n, x_k, x_t)
-            _plotly_fer5(panels[1], mm_fix_dut_fix_dc, mm_2xthru_dc, 1, n, x_k, x_t)
-            se_2xthru_dc.plot_z_time_impulse(2, 0, fig = panels[2], backend = 'plotly', line = dict(color = 'gray'))
-            se_2xthru_dc.plot_z_time_impulse(3, 1, fig = panels[2], backend = 'plotly', line = dict(color = 'black'))
-            panels[2].update_xaxes(range = [-1, x_t + 1])
-            _plotly_fer8(panels[3], mm_2xthru_dc, f, x_t)
-            titles = ['FER5 TDR Z variation side 1', 'FER5 TDR Z variation side 2', 'FER7 TDT skew',
-                      'FER8 TDT minimum length']
-            return _plotly_combine_panels(panels, titles, [[{}, {}], [{}, {}]], 'Fixture electrical requirements (FER)',
-                                          fig, (8, 8))
-        else:
-            if fig is None:
-                fig = figure(figsize=(8, 8))
 
-            fig.suptitle('Fixture electrical requirements (FER)')
+        ax = fig.add_subplot(2, 2, 1)
+        ax.set_title('FER5 TDR Z variation side 1')
+        mm_fix_dut_fix_dc.plot_z_time_step(0, 0, color = 'k', ax = ax)
+        mm_2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        self.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
 
-            ax = fig.add_subplot(2, 2, 1)
-            ax.set_title('FER5 TDR Z variation side 1')
-            mm_fix_dut_fix_dc.plot_z_time_step(0, 0, color = 'k', ax = ax, backend = 'matplotlib')
-            mm_2xthru_dc.plot_z_time_step(0, 0, color = 'k', linestyle = 'dashed', ax = ax, backend = 'matplotlib')
-            x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
-            y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-            self.plot_limit_fer5(x, y, ax)
-            ax.legend(loc = 'lower right')
-            # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-            ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                                   1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-            ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                                   0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-            ax.set_ylim((ymin - 5, ymax + 5))
-            delay = 2 * x_t
-            ax.set_xlim((-0.5 * delay, 1.5 * delay))
+        ax = fig.add_subplot(2, 2, 2)
+        ax.set_title('FER5 TDR Z variation side 2')
+        mm_fix_dut_fix_dc.plot_z_time_step(1, 1, color = 'k', ax = ax)
+        mm_2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax)
+        x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
+        y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
+        self.plot_limit_fer5(x, y, ax)
+        ax.legend(loc = 'lower right')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
+                               0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
+        ax.set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * x_t
+        ax.set_xlim((-0.5 * delay, 1.5 * delay))
 
-            ax = fig.add_subplot(2, 2, 2)
-            ax.set_title('FER5 TDR Z variation side 2')
-            mm_fix_dut_fix_dc.plot_z_time_step(1, 1, color = 'k', ax = ax, backend = 'matplotlib')
-            mm_2xthru_dc.plot_z_time_step(1, 1, color = 'k', linestyle = 'dashed', ax = ax, backend = 'matplotlib')
-            x = ax.lines[-1].get_xdata()[:(x_k + n//2 + 1)]
-            y = ax.lines[-1].get_ydata()[:(x_k + n//2 + 1)]
-            self.plot_limit_fer5(x, y, ax)
-            ax.legend(loc = 'lower right')
-            # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-            ymax = np.max(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                                   1.1 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-            ymin = np.min(np.array([ax.lines[0].get_ydata()[(n // 2):(x_k + n // 2)],
-                                   0.9 * ax.lines[1].get_ydata()[(n // 2):(x_k + n // 2)]]))
-            ax.set_ylim((ymin - 5, ymax + 5))
-            delay = 2 * x_t
-            ax.set_xlim((-0.5 * delay, 1.5 * delay))
+        ax = fig.add_subplot(2, 2, 3)
+        ax.set_title('FER7 TDT skew')
+        se_2xthru_dc.plot_z_time_impulse(2, 0, color = '0.5', ax = ax)
+        se_2xthru_dc.plot_z_time_impulse(3, 1, color = 'k', ax = ax)
+        ax.legend(loc = 'upper right')
+        ax.set_xlim((-1, x_t + 1))
 
-            ax = fig.add_subplot(2, 2, 3)
-            ax.set_title('FER7 TDT skew')
-            se_2xthru_dc.plot_z_time_impulse(2, 0, color = '0.5', ax = ax, backend = 'matplotlib')
-            se_2xthru_dc.plot_z_time_impulse(3, 1, color = 'k', ax = ax, backend = 'matplotlib')
-            ax.legend(loc = 'upper right')
-            ax.set_xlim((-1, x_t + 1))
+        ax = fig.add_subplot(2, 2, 4)
+        ax.set_title('FER8 TDT minimum length')
+        mm_2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax)
+        mm_2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax)
+        y = ax.lines[-1].get_ydata()
+        y_lim = [np.min(y), np.max(y)]
+        t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
+        ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
+        ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
+        ax.legend(loc = 'upper right')
+        ax.set_xlim((-1, x_t + 1))
 
-            ax = fig.add_subplot(2, 2, 4)
-            ax.set_title('FER8 TDT minimum length')
-            mm_2xthru_dc.plot_z_time_impulse(1, 0, color = '0.5', ax = ax, backend = 'matplotlib')
-            mm_2xthru_dc.plot_z_time_impulse(1, 0, color = 'k', ax = ax, backend = 'matplotlib')
-            y = ax.lines[-1].get_ydata()
-            y_lim = [np.min(y), np.max(y)]
-            t_lim = [3.0e9 / f[-1], 3.0e9 / f[-1]]
-            ax.plot([0, 0], y_lim, color = 'b', linestyle = 'dashed', label = 'Start')
-            ax.plot(t_lim, y_lim, color = 'r', linestyle = 'dashed', label = 'Minimum A, B, C')
-            ax.legend(loc = 'upper right')
-            ax.set_xlim((-1, x_t + 1))
-
-            fig.tight_layout()
-            return fig
+        fig.tight_layout()
+        return fig
 
 class IEEEP370_FD_QM:
     def __init__(self, verbose: bool = False) -> None:
@@ -2018,8 +1824,7 @@ class IEEEP370_FD_QM:
         ----------
         verbose      : :boolean
                        Plot internal causality, passivity, and reciprocity
-                       figures (default False).
-                       The figures follow the plotting backend.
+                       figures (default False)
 
         References
         ----------
@@ -2194,43 +1999,27 @@ class IEEEP370_FD_QM:
         # verbose
         if verbose:
             name = ntwk.name if ntwk.name else 'Network'
-            backend = _resolve_backend()
-            if backend == 'plotly':
-                panels = _plotly_panels(3)
-                x = ntwk.frequency.f_scaled
-                x_label = f'Frequency ({ntwk.frequency.unit})'
-                ntwk.plot_s_polar(fig = panels[0], backend = 'plotly')
-                plot_rectangular(x, self.PM, x_label, '2-Norm(S)', fig = panels[1], backend = 'plotly',
-                                 line = dict(color = 'black'), label = name)
-                plot_rectangular(x[[0, -1]], [1., 1.], x_label, '2-Norm(S)', fig = panels[1], backend = 'plotly',
-                                 line = dict(color = 'red', dash = 'dash'), label = 'Maximum')
-                plot_rectangular(x, self.RM, x_label, 'Sum of S-pairs differences', fig = panels[2], backend = 'plotly',
-                                 line = dict(color = 'black'), label = name)
-                _plotly_combine_panels(panels, ['Causality', 'Passivity', 'Reciprocity'],
-                                       [[dict(type = 'polar'), {}, {}]],
-                                       'Initial checking in the frequency domain', figsize = (12, 4.4)).show()
-            else:
-                fig = figure(figsize = (12, 4.4))
-                fig.suptitle('Initial checking in the frequency domain')
-                ax = fig.add_subplot(1, 3, 1, projection = 'polar')
-                ax.set_title('Causality')
-                ntwk.plot_s_polar(ax = ax, backend = 'matplotlib')
-                ax.legend(loc = 'upper right')
-                ax = fig.add_subplot(1, 3, 2)
-                ax.set_title('Passivity')
-                ax.plot(ntwk.frequency.f_scaled, self.PM, color = 'k', label = name)
-                ax.plot([ntwk.frequency.f_scaled[0], ntwk.frequency.f_scaled[-1]],
-                        [1., 1.], color = 'r', linestyle = 'dashed', label = 'Maximum')
-                ax.set_xlabel(f'Frequency ({ntwk.frequency.unit})')
-                ax.set_ylabel('2-Norm(S)')
-                ax.legend(loc = 'upper right')
-                ax = fig.add_subplot(1, 3, 3)
-                ax.set_title('Reciprocity')
-                ax.plot(ntwk.frequency.f_scaled, self.RM, color = 'k', label = name)
-                ax.set_xlabel(f'Frequency ({ntwk.frequency.unit})')
-                ax.set_ylabel('Sum of S-pairs differences')
-                ax.legend(loc = 'upper right')
-                fig.tight_layout()
+            fig = figure(figsize = (12, 4.4))
+            fig.suptitle('Initial checking in the frequency domain')
+            ax = fig.add_subplot(1, 3, 1, projection = 'polar')
+            ax.set_title('Causality')
+            ntwk.plot_s_polar(ax = ax)
+            ax.legend(loc = 'upper right')
+            ax = fig.add_subplot(1, 3, 2)
+            ax.set_title('Passivity')
+            ax.plot(ntwk.frequency.f_scaled, self.PM, color = 'k', label = name)
+            ax.plot([ntwk.frequency.f_scaled[0], ntwk.frequency.f_scaled[-1]],
+                    [1., 1.], color = 'r', linestyle = 'dashed', label = 'Maximum')
+            ax.set_xlabel(f'Frequency ({ntwk.frequency.unit})')
+            ax.set_ylabel('2-Norm(S)')
+            ax.legend(loc = 'upper right')
+            ax = fig.add_subplot(1, 3, 3)
+            ax.set_title('Reciprocity')
+            ax.plot(ntwk.frequency.f_scaled, self.RM, color = 'k', label = name)
+            ax.set_xlabel(f'Frequency ({ntwk.frequency.unit})')
+            ax.set_ylabel('Sum of S-pairs differences')
+            ax.legend(loc = 'upper right')
+            fig.tight_layout()
 
         return QM
 
@@ -2318,8 +2107,7 @@ class IEEEP370_TD_QM:
         verbose      : :boolean
                        Plot extrapolated frequency data, generated pulse and
                        the time domain comparison between the original and the
-                       causality enforced responses.
-                       The figures follow the plotting backend.
+                       causality enforced responses
 
         References
         ----------
@@ -2756,24 +2544,13 @@ class IEEEP370_TD_QM:
         for i in range(N):
             self.v_pulse[i] = self.v_ref[np.mod(i + k_middle - k_start, N).astype(int)]
         if verbose:
-            backend = _resolve_backend()
-            if backend == 'plotly':
-                panels = _plotly_panels(1)
-                plot_rectangular(self.t_pulse, self.v_ref, 'Time (s)', 'Amplitude (V)', fig = panels[0],
-                                 backend = 'plotly',
-                                 line = dict(color = 'red'), label = 'Reference')
-                plot_rectangular(self.t_pulse, self.v_pulse, 'Time (s)', 'Amplitude (V)', fig = panels[0],
-                                 backend = 'plotly',
-                                 line = dict(dash = 'dash'), label = 'Generated')
-                _plotly_combine_panels(panels, ['Gaussian Pulse'], [[{}]]).show()
-            else:
-                fig, ax = subplots(1, 1)
-                ax.plot(self.t_pulse, self.v_ref, color = 'r', label = 'Reference')
-                ax.plot(self.t_pulse, self.v_pulse, linestyle = 'dashed', label = 'Generated')
-                ax.legend(loc = 'upper right')
-                ax.set_ylabel('Amplitude (V)')
-                ax.set_xlabel('Time (s)')
-                ax.set_title('Gaussian Pulse')
+            fig, ax = subplots(1, 1)
+            ax.plot(self.t_pulse, self.v_ref, color = 'r', label = 'Reference')
+            ax.plot(self.t_pulse, self.v_pulse, linestyle = 'dashed', label = 'Generated')
+            ax.legend(loc = 'upper right')
+            ax.set_ylabel('Amplitude (V)')
+            ax.set_xlabel('Time (s)')
+            ax.set_title('Gaussian Pulse')
 
         return fft(self.v_pulse)
 
@@ -2815,27 +2592,15 @@ class IEEEP370_TD_QM:
         self.v_pulse = interp(self.t_pulse)
 
         if verbose:
-            backend = _resolve_backend()
-            if backend == 'plotly':
-                panels = _plotly_panels(1)
-                plot_rectangular(self.t_ref, self.v_ref, 'Time (s)', 'Amplitude (V)', fig = panels[0],
-                                 backend = 'plotly',
-                                 line = dict(color = 'red'), marker = dict(symbol = 'circle', color = 'red'),
-                                 label = 'Reference')
-                plot_rectangular(self.t_pulse, self.v_pulse, 'Time (s)', 'Amplitude (V)', fig = panels[0],
-                                 backend = 'plotly',
-                                 line = dict(dash = 'dash'), label = 'Interpolated')
-                _plotly_combine_panels(panels, ['Rectangular Pulse'], [[{}]]).show()
-            else:
-                fig, ax = subplots(1, 1)
-                ax.plot(self.t_ref, self.v_ref, color = 'r', marker = 'o',
-                        label = 'Reference')
-                ax.plot(self.t_pulse, self.v_pulse, linestyle = 'dashed',
-                        label = 'Interpolated')
-                ax.legend(loc = 'upper right')
-                ax.set_ylabel('Amplitude (V)')
-                ax.set_xlabel('Time (s)')
-                ax.set_title('Rectangular Pulse')
+            fig, ax = subplots(1, 1)
+            ax.plot(self.t_ref, self.v_ref, color = 'r', marker = 'o',
+                    label = 'Reference')
+            ax.plot(self.t_pulse, self.v_pulse, linestyle = 'dashed',
+                    label = 'Interpolated')
+            ax.legend(loc = 'upper right')
+            ax.set_ylabel('Amplitude (V)')
+            ax.set_xlabel('Time (s)')
+            ax.set_title('Rectangular Pulse')
 
         return fft(self.v_pulse)
 
@@ -3025,48 +2790,30 @@ class IEEEP370_TD_QM:
         self.ntwk_interpolated = self.extrapolate_to_dc(self.ntwk_interpolated)
 
         if verbose:
-            backend = _resolve_backend()
+            fig, axs = subplots(2, 3, figsize = (12, 7))
+            fig.suptitle('Application-based checking in the time domain')
+            ax = axs[0, 0]
+            ax.set_title('Extrapolation')
             self.ntwk_interpolated.frequency.unit = ntwk.frequency.unit
-            if backend == 'plotly':
-                panels, (phase_panel,) = _plotly_panels(6), _plotly_panels(1)
-                ntwk.plot_s_db(1, 0, fig = panels[0], backend = 'plotly', line = dict(color = 'red'),
-                               label = 'Original, S21')
-                extrapolated = dict(backend = 'plotly', line = dict(color = 'blue', dash = 'dash'),
-                                    label = 'Extrapolated, S21')
-                if self.extrapolation == 2:
-                    nz_k = np.nonzero(self.ntwk_interpolated.s[:, 1, 0])[0]
-                    self.ntwk_interpolated[:nz_k[-1]].plot_s_db(1, 0, fig = panels[0], **extrapolated)
-                else:
-                    self.ntwk_interpolated.plot_s_db(1, 0, fig = panels[0], **extrapolated)
-                ntwk.plot_s_deg(1, 0, fig = phase_panel, backend = 'plotly', line = dict(color = 'magenta'),
-                                label = 'Original, S21')
-                self.ntwk_interpolated.plot_s_deg(1, 0, fig = phase_panel, backend = 'plotly',
-                                                  line = dict(color = 'cyan',
-                                                              dash = 'dash'), label = 'Extrapolated, S21')
+            # avoid log(0) issues with zero padding
+            ntwk.plot_s_db(1, 0, color = 'r', ax = ax, label = 'Original, S21')
+            if self.extrapolation == 2:
+                nz_k = np.nonzero(self.ntwk_interpolated.s[:, 1, 0])[0]
+                self.ntwk_interpolated[:nz_k[-1]].plot_s_db(1, 0, color = 'b',
+                                            linestyle = 'dashed', ax = ax,
+                                            label = 'Extrapolated, S21')
             else:
-                fig, axs = subplots(2, 3, figsize = (12, 7))
-                fig.suptitle('Application-based checking in the time domain')
-                ax = axs[0, 0]
-                ax.set_title('Extrapolation')
-                # avoid log(0) issues with zero padding
-                ntwk.plot_s_db(1, 0, color = 'r', ax = ax, label = 'Original, S21', backend = 'matplotlib')
-                if self.extrapolation == 2:
-                    nz_k = np.nonzero(self.ntwk_interpolated.s[:, 1, 0])[0]
-                    self.ntwk_interpolated[:nz_k[-1]].plot_s_db(1, 0, color = 'b',
-                                                linestyle = 'dashed', ax = ax,
-                                                label = 'Extrapolated, S21', backend = 'matplotlib')
-                else:
-                    self.ntwk_interpolated.plot_s_db(1, 0, color = 'b',
-                                                     linestyle = 'dashed', ax = ax,
-                                                     label = 'Extrapolated, S21', backend = 'matplotlib')
-                secax = ax.twinx()
-                ntwk.plot_s_deg(1, 0, color = 'm', ax = secax, label = 'Original, S21', backend = 'matplotlib')
-                self.ntwk_interpolated.plot_s_deg(1, 0, color = 'c',
-                                                  linestyle = 'dashed', ax = secax,
-                                                  label = 'Extrapolated, S21', backend = 'matplotlib')
-                ax.legend(loc = 'upper left')
-                secax.legend(loc = 'lower right')
-                fig.tight_layout()
+                self.ntwk_interpolated.plot_s_db(1, 0, color = 'b',
+                                                 linestyle = 'dashed', ax = ax,
+                                                 label = 'Extrapolated, S21')
+            secax = ax.twinx()
+            ntwk.plot_s_deg(1, 0, color = 'm', ax = secax, label = 'Original, S21')
+            self.ntwk_interpolated.plot_s_deg(1, 0, color = 'c',
+                                              linestyle = 'dashed', ax = secax,
+                                              label = 'Extrapolated, S21')
+            ax.legend(loc = 'upper left')
+            secax.legend(loc = 'lower right')
+            fig.tight_layout()
 
         # get Causal Matrix
         self.causal, self.delay_matrix = self.create_causal(self.ntwk_interpolated,
@@ -3118,89 +2865,57 @@ class IEEEP370_TD_QM:
             filter = self.add_conj(self.filter)
             pulse_response = self.pulse * filter
             v_filtered = np.real(np.fft.ifft(pulse_response))
-            if backend == 'plotly':
-                y_label = 'Amplitude (V)'
-                if self.pulse_shape == 1:
-                    plot_rectangular(self.t_pulse, self.v_ref, 'Time (s)', y_label, fig = panels[3], backend = 'plotly',
-                                     line = dict(color = 'red'), label = 'Reference')
-                    plot_rectangular(self.t_pulse, self.v_pulse, 'Time (s)', y_label, fig = panels[3],
-                                     backend = 'plotly',
-                                     line = dict(color = 'black', dash = 'dash'), label = 'Generated')
-                    pulse_title = 'Gaussian Pulse'
-                else:
-                    plot_rectangular(self.t_ref, self.v_ref, 'Time (s)', y_label, fig = panels[3], backend = 'plotly',
-                                     line = dict(color = 'red'), marker = dict(symbol = 'circle', color = 'red'),
-                                     label = 'Reference')
-                    plot_rectangular(self.t_pulse, self.v_pulse, 'Time (s)', y_label, fig = panels[3],
-                                     backend = 'plotly',
-                                     line = dict(color = 'black', dash = 'dash'), label = 'Interpolated')
-                    plot_rectangular(self.t_pulse, v_filtered, 'Time (s)', y_label, fig = panels[3], backend = 'plotly',
-                                     line = dict(color = 'blue', dash = 'dot'), label = 'Filtered')
-                    pulse_title = 'Filtered Rectangular Pulse'
-                for panel, m, n in ((panels[1], 0, 0), (panels[2], 1, 0), (panels[4], 0, 1), (panels[5], 1, 1)):
-                    plot_rectangular(self.t_causal * 1e9, self.v_causal[:, m, n] / 2., 'Time (ns)', y_label,
-                                     fig = panel,
-                                     backend = 'plotly', line = dict(color = 'red'), label = 'causal')
-                    plot_rectangular(self.t_origin * 1e9, self.v_origin[:, m, n] / 2., 'Time (ns)', y_label,
-                                     fig = panel,
-                                     backend = 'plotly', line = dict(color = 'black',
-                                                                     dash = 'dash'), label = 'original')
-                titles = ['Extrapolation', 'TDR11', 'TDT21', pulse_title, 'TDT12', 'TDR22']
-                _plotly_combine_panels(panels, titles, [[dict(secondary_y = True), {}, {}], [{}, {}, {}]],
-                                       'Application-based checking in the time domain', figsize = (12, 7),
-                                       twins = {0: phase_panel}).show()
-            else:
-                ax = axs[1, 0]
-                if self.pulse_shape == 1:
-                    ax.plot(self.t_pulse, self.v_ref, color = 'r',
-                            label = 'Reference')
-                    ax.plot(self.t_pulse, self.v_pulse, color = 'k', linestyle = 'dashed',
-                            label = 'Generated')
-                    ax.legend(loc = 'upper right')
-                    ax.set_title('Gaussian Pulse')
-                else:
-                    ax.plot(self.t_ref, self.v_ref, color = 'r', marker = 'o',
-                            label = 'Reference')
-                    ax.plot(self.t_pulse, self.v_pulse, color = 'k', linestyle = 'dashed',
-                            label = 'Interpolated')
-                    ax.plot(self.t_pulse, v_filtered, color = 'b', linestyle = 'dotted',
-                            label = 'Filtered')
-                    ax.set_title('Filtered Rectangular Pulse')
+            ax = axs[1, 0]
+            if self.pulse_shape == 1:
+                ax.plot(self.t_pulse, self.v_ref, color = 'r',
+                        label = 'Reference')
+                ax.plot(self.t_pulse, self.v_pulse, color = 'k', linestyle = 'dashed',
+                        label = 'Generated')
                 ax.legend(loc = 'upper right')
+                ax.set_title('Gaussian Pulse')
+            else:
+                ax.plot(self.t_ref, self.v_ref, color = 'r', marker = 'o',
+                        label = 'Reference')
+                ax.plot(self.t_pulse, self.v_pulse, color = 'k', linestyle = 'dashed',
+                        label = 'Interpolated')
+                ax.plot(self.t_pulse, v_filtered, color = 'b', linestyle = 'dotted',
+                        label = 'Filtered')
+                ax.set_title('Filtered Rectangular Pulse')
+            ax.legend(loc = 'upper right')
+            ax.set_ylabel('Amplitude (V)')
+            ax.set_xlabel('Time (s)')
+
+
+            # time domain transmission
+            ax = axs[0, 1]
+            ax.set_title('TDR11')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 0, 0] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 0, 0] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
+            ax = axs[0, 2]
+            ax.set_title('TDT21')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 1, 0] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 1, 0] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
+            ax = axs[1, 1]
+            ax.set_title('TDT12')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 0, 1] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 0, 1] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
+            ax = axs[1, 2]
+            ax.set_title('TDR22')
+            ax.plot(self.t_causal * 1e9, self.v_causal[:, 1, 1] / 2.,
+                    label = 'causal', color = 'r')
+            ax.plot(self.t_origin * 1e9, self.v_origin[:, 1, 1] / 2.,
+                    label = 'original', color = 'k', linestyle = 'dashed')
+            for ax in axs[:, 1:].reshape(-1):
+                ax.set_xlabel('Time (ns)')
                 ax.set_ylabel('Amplitude (V)')
-                ax.set_xlabel('Time (s)')
-
-
-                # time domain transmission
-                ax = axs[0, 1]
-                ax.set_title('TDR11')
-                ax.plot(self.t_causal * 1e9, self.v_causal[:, 0, 0] / 2.,
-                        label = 'causal', color = 'r')
-                ax.plot(self.t_origin * 1e9, self.v_origin[:, 0, 0] / 2.,
-                        label = 'original', color = 'k', linestyle = 'dashed')
-                ax = axs[0, 2]
-                ax.set_title('TDT21')
-                ax.plot(self.t_causal * 1e9, self.v_causal[:, 1, 0] / 2.,
-                        label = 'causal', color = 'r')
-                ax.plot(self.t_origin * 1e9, self.v_origin[:, 1, 0] / 2.,
-                        label = 'original', color = 'k', linestyle = 'dashed')
-                ax = axs[1, 1]
-                ax.set_title('TDT12')
-                ax.plot(self.t_causal * 1e9, self.v_causal[:, 0, 1] / 2.,
-                        label = 'causal', color = 'r')
-                ax.plot(self.t_origin * 1e9, self.v_origin[:, 0, 1] / 2.,
-                        label = 'original', color = 'k', linestyle = 'dashed')
-                ax = axs[1, 2]
-                ax.set_title('TDR22')
-                ax.plot(self.t_causal * 1e9, self.v_causal[:, 1, 1] / 2.,
-                        label = 'causal', color = 'r')
-                ax.plot(self.t_origin * 1e9, self.v_origin[:, 1, 1] / 2.,
-                        label = 'original', color = 'k', linestyle = 'dashed')
-                for ax in axs[:, 1:].reshape(-1):
-                    ax.set_xlabel('Time (ns)')
-                    ax.set_ylabel('Amplitude (V)')
-                    ax.legend(loc = 'upper right')
-                fig.tight_layout()
+                ax.legend(loc = 'upper right')
+            fig.tight_layout()
 
         QM = {'causality': {'value': causality_metric / 2., 'unit': 'mV',
                             'evaluation': ''},
@@ -3411,8 +3126,7 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
             (Default: None)
 
         verbose :
-            view the process (default: False). The figures follow the plotting
-            backend.
+            view the process (default: False)
 
         args, kwargs:
             passed to :func:`Deembedding.__init__`
@@ -3533,34 +3247,20 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
             self.z_x = z11x
 
             if self.verbose:
-                backend = _resolve_backend()
-                if backend == 'plotly':
-                    panels = _plotly_panels(2)
-                    marker = dict(mode = 'markers', marker = dict(symbol = 'circle'))
-                    plot_rectangular(np.arange(len(t21)), t21, fig = panels[0], backend = 'plotly', label = 't21')
-                    plot_rectangular([x], [t21[x]], fig = panels[0], backend = 'plotly', label = 't21x', **marker)
-                    plot_rectangular(np.arange(len(z11)), z11, 't-samples', fig = panels[1], backend = 'plotly',
-                                     label = 'z11')
-                    plot_rectangular([x], [z11x], 't-samples', fig = panels[1], backend = 'plotly', label = 'z11x',
-                                     **marker)
-                    panels[1].update_xaxes(range = [x - 50, x + 50])
-                    _plotly_combine_panels(panels, ['', ''], [[{}], [{}]],
-                                           'Midpoint length and impedance determination').show()
-                else:
-                    fig, (ax1, ax2) = subplots(2,1, sharex = True)
-                    fig.suptitle('Midpoint length and impedance determination')
-                    ax1.plot(t21, label = 't21')
-                    ax1.plot([x], [t21[x]], marker = 'o', linestyle = 'none',
-                                label = 't21x')
-                    ax1.grid()
-                    ax1.legend()
-                    ax2.plot(z11, label = 'z11')
-                    ax2.plot([x], [z11x], marker = 'o', linestyle = 'none',
-                                label = 'z11x')
-                    ax2.set_xlabel('t-samples')
-                    ax2.set_xlim((x - 50, x + 50))
-                    ax2.grid()
-                    ax2.legend()
+                fig, (ax1, ax2) = subplots(2,1, sharex = True)
+                fig.suptitle('Midpoint length and impedance determination')
+                ax1.plot(t21, label = 't21')
+                ax1.plot([x], [t21[x]], marker = 'o', linestyle = 'none',
+                            label = 't21x')
+                ax1.grid()
+                ax1.legend()
+                ax2.plot(z11, label = 'z11')
+                ax2.plot([x], [z11x], marker = 'o', linestyle = 'none',
+                            label = 'z11x')
+                ax2.set_xlabel('t-samples')
+                ax2.set_xlim((x - 50, x + 50))
+                ax2.grid()
+                ax2.legend()
 
             temp = Network(frequency = Frequency.from_f(f, 'Hz'), s = s, z0 = self.z0)
             temp.renormalize(z11x)
@@ -3710,65 +3410,44 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
 
         return (s_side1, s_side2)
 
-    @_validate_plot_args
-    def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
-        """
-        Plot the residuals of the self de-embedding of the 2x-thru against their limits.
-
-        Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
-        or `fig` the plotly Figure, of an earlier call to draw over.
-        """
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
         res = self.deembed(self.s2xthru)
         res.name = 'Residuals'
 
-        backend = _resolve_backend(backend, ax, fig)
-        if backend == 'plotly':
-            return _plotly_check_residuals(res, ((1, 0, dict(color = 'gray')), (0, 1, dict(color = 'black'))), fig)
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
         else:
-            if ax is None:
-                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
-            else:
-                fig = ax[0].get_figure()
+            fig = ax.get_figure()
 
-            fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
 
-            ax[0].set_title('Magnitude residuals')
-            res.plot_s_db(1,0, ax = ax[0], color = '0.5', backend = 'matplotlib')
-            res.plot_s_db(0,1, ax = ax[0], color = 'k', backend = 'matplotlib')
-            ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [0.1, 0.1],
-                           linestyle = 'dashed', color = 'r', label = 'Limit')
-            ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [-0.1, -0.1],
-                           linestyle = 'dashed', color = 'r')
-            ax[0].legend(loc = 'upper right')
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0], color = '0.5')
+        res.plot_s_db(0,1, ax = ax[0], color = 'k')
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
 
-            ax[1].set_title('Phase residuals')
-            res.plot_s_deg(1,0, ax = ax[1], color = '0.5', backend = 'matplotlib')
-            res.plot_s_deg(0,1, ax = ax[1], color = 'k', backend = 'matplotlib')
-            ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [1, 1],
-                           linestyle = 'dashed', color = 'r', label = 'Limit')
-            ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [-1, -1],
-                           linestyle = 'dashed', color = 'r')
-            ax[1].legend(loc = 'upper right')
-            fig.tight_layout()
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1], color = '0.5')
+        res.plot_s_deg(0,1, ax = ax[1], color = 'k')
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
 
-            return (fig, ax)
+        return (fig, ax)
 
-    @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
-                             window: str = 'hamming', *, fig = None,
-                             backend: str | None = None) -> (Figure, Axes):
-        """
-        Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
-
-        Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
-        or `fig` the plotly Figure, of an earlier call to draw over.
-        """
+                             window: str = 'hamming') -> (Figure, Axes):
         # if dc point already exists, it will be replaced
         s2xthru = IEEEP370.extrapolate_to_dc(self.s2xthru)
         fix1 = IEEEP370.extrapolate_to_dc(self.s_side1)
@@ -3778,79 +3457,57 @@ class IEEEP370_SE_NZC_2xThru(IEEEP370):
         n = s2xthru.frequency.npoints * 2 - 1
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
-        backend = _resolve_backend(backend, ax, fig)
-        if backend == 'plotly':
-            panels = _plotly_panels(2, fig)
-            for panel, fix, m in zip(panels, (fix1, fix2), (0, 1)):
-                fix.plot_z_time_step(0, 0, window = window, fig = panel, backend = 'plotly',
-                                     line = dict(color = 'black'))
-                s2xthru.plot_z_time_step(m, m, window = window, fig = panel, backend = 'plotly',
-                                         line = dict(color = 'rgb(51,51,51)', dash = 'dot'))
-                y = np.asarray(panel.data[-1].y)
-                if fix_dut_fix is not None:
-                    fix_dut_fix.plot_z_time_step(m, m, window = window, fig = panel, backend = 'plotly',
-                                                 line = dict(color = 'magenta', dash = 'dash'))
-                _plotly_point(panel, 0, y[n // 2], 'square', 'start')
-                _plotly_point(panel, (self.x_end - (n // 2) - 1) * dt, self.z_x, 'circle', f'z_x = {self.z_x:0.1f} ohm')
-                # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-                fitted = np.array([np.asarray(panel.data[k].y)[(n // 2):(self.x_end + n // 2)] for k in (0, 1)])
-                panel.update_yaxes(range = [np.min(fitted) - 5, np.max(fitted) + 5])
-            delay = 2 * (self.x_end - (n // 2)) * dt
-            panels[1].update_xaxes(range = [-0.5 * delay, 1.5 * delay])
-            title = 'Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX'
-            return _plotly_combine_panels(panels, ['Side 1', 'Side 2'], [[{}, {}]], title, fig, (10, 5))
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
         else:
-            if ax is None:
-                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
-            else:
-                fig = ax[0].get_figure()
+            fig = ax.get_figure()
 
-            fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
-            ax[0].set_title('Side 1')
-            fix1.plot_z_time_step(0, 0, window = window,
-                                  ax = ax[0], color = 'k', backend = 'matplotlib')
-            s2xthru.plot_z_time_step(0, 0, window = window,
-                                     ax = ax[0], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            y = ax[0].lines[-1].get_ydata()
-            if fix_dut_fix is not None:
-                fix_dut_fix.plot_z_time_step(0, 0, window = window,
-                                         ax = ax[0], linestyle = 'dashed', color = 'm', backend = 'matplotlib')
-            ax[0].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
-            ax[0].plot([(self.x_end - (n // 2) - 1) * dt], [self.z_x], marker = 'o',
-                       color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
-            # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-            ymax = np.max(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
-                                   ax[0].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
-            ymin = np.min(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
-                                   ax[0].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
-            ax[0].set_ylim((ymin - 5, ymax + 5))
-            ax[0].legend(loc = 'lower left')
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        y = ax[0].lines[-1].get_ydata()
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'm')
+        ax[0].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[0].plot([(self.x_end - (n // 2) - 1) * dt], [self.z_x], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[0].set_ylim((ymin - 5, ymax + 5))
+        ax[0].legend(loc = 'lower left')
 
-            ax[1].set_title('Side 2')
-            fix2.plot_z_time_step(0, 0, window = window,
-                                  ax = ax[1], color = 'k', backend = 'matplotlib')
-            s2xthru.plot_z_time_step(1, 1, window = window,
-                                     ax = ax[1], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            y = ax[1].lines[-1].get_ydata()
-            if fix_dut_fix is not None:
-                fix_dut_fix.plot_z_time_step(1, 1, window = window,
-                                         ax = ax[1], linestyle = 'dashed', color = 'm', backend = 'matplotlib')
-            ax[1].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
-            ax[1].plot([(self.x_end - (n // 2) - 1) * dt], [self.z_x], marker = 'o',
-                       color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
-            # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-            ymax = np.max(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
-                                   ax[1].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
-            ymin = np.min(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
-                                   ax[1].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
-            ax[1].set_ylim((ymin - 5, ymax + 5))
-            delay = 2 * (self.x_end - (n // 2)) * dt
-            ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
-            ax[1].legend(loc = 'lower left')
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        y = ax[1].lines[-1].get_ydata()
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'm')
+        ax[1].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[1].plot([(self.x_end - (n // 2) - 1) * dt], [self.z_x], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x:0.1f} ohm')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[1].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[1].set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * (self.x_end - (n // 2)) * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
+        ax[1].legend(loc = 'lower left')
 
-            fig.tight_layout()
+        fig.tight_layout()
 
-            return (fig, ax)
+        return (fig, ax)
 
 class IEEEP370_MM_NZC_2xThru(IEEEP370):
     """
@@ -4005,8 +3662,7 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
             (Default: None)
 
         verbose :
-            view the process (default: False). The figures follow the plotting
-            backend.
+            view the process (default: False)
 
         args, kwargs:
             passed to :func:`Deembedding.__init__`
@@ -4131,70 +3787,49 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
 
         return (se_side1, se_side2)
 
-    @_validate_plot_args
-    def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
-        """
-        Plot the residuals of the self de-embedding of the 2x-thru against their limits.
-
-        Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
-        or `fig` the plotly Figure, of an earlier call to draw over.
-        """
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
         res = self.deembed(self.s2xthru)
         res.name = 'Residuals'
         res.se2gmm(p=2)
 
-        backend = _resolve_backend(backend, ax, fig)
-        if backend == 'plotly':
-            return _plotly_check_residuals(res, ((1, 0, {}), (0, 1, {}), (3, 2, {}), (2, 3, {})), fig)
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
         else:
-            if ax is None:
-                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
-            else:
-                fig = ax[0].get_figure()
+            fig = ax.get_figure()
 
-            fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
 
-            ax[0].set_title('Magnitude residuals')
-            res.plot_s_db(1,0, ax = ax[0], backend = 'matplotlib')
-            res.plot_s_db(0,1, ax = ax[0], backend = 'matplotlib')
-            res.plot_s_db(3,2, ax = ax[0], backend = 'matplotlib')
-            res.plot_s_db(2,3, ax = ax[0], backend = 'matplotlib')
-            ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [0.1, 0.1],
-                           linestyle = 'dashed', color = 'r', label = 'Limit')
-            ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [-0.1, -0.1],
-                           linestyle = 'dashed', color = 'r')
-            ax[0].legend(loc = 'upper right')
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0])
+        res.plot_s_db(0,1, ax = ax[0])
+        res.plot_s_db(3,2, ax = ax[0])
+        res.plot_s_db(2,3, ax = ax[0])
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
 
-            ax[1].set_title('Phase residuals')
-            res.plot_s_deg(1,0, ax = ax[1], backend = 'matplotlib')
-            res.plot_s_deg(0,1, ax = ax[1], backend = 'matplotlib')
-            res.plot_s_deg(3,2, ax = ax[1], backend = 'matplotlib')
-            res.plot_s_deg(2,3, ax = ax[1], backend = 'matplotlib')
-            ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [1, 1],
-                           linestyle = 'dashed', color = 'r', label = 'Limit')
-            ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [-1, -1],
-                           linestyle = 'dashed', color = 'r')
-            ax[1].legend(loc = 'upper right')
-            fig.tight_layout()
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1])
+        res.plot_s_deg(0,1, ax = ax[1])
+        res.plot_s_deg(3,2, ax = ax[1])
+        res.plot_s_deg(2,3, ax = ax[1])
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f_scaled[0], res.frequency.f_scaled[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
 
-            return (fig, ax)
+        return (fig, ax)
 
-    @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
-                             window: str = 'hamming', *, fig = None,
-                             backend: str | None = None) -> (Figure, Axes):
-        """
-        Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
-
-        Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
-        or `fig` the plotly Figure, of an earlier call to draw over.
-        """
+                             window: str = 'hamming') -> (Figure, Axes):
         # if dc point already exists, it will be replaced
         s2xthru = self.s2xthru.copy()
         s2xthru.se2gmm(p=2)
@@ -4212,86 +3847,59 @@ class IEEEP370_MM_NZC_2xThru(IEEEP370):
         n = s2xthru.frequency.npoints * 2 - 1
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
-        backend = _resolve_backend(backend, ax, fig)
-        if backend == 'plotly':
-            panels = _plotly_panels(2, fig)
-            for panel, fix, m, m2 in zip(panels, (fix1, fix2), (0, 1), (2, 3)):
-                fix.plot_z_time_step(0, 0, window = window, fig = panel, backend = 'plotly',
-                                     line = dict(color = 'black'))
-                s2xthru.plot_z_time_step(m, m, window = window, fig = panel, backend = 'plotly',
-                                         line = dict(color = 'rgb(51,51,51)', dash = 'dot'))
-                y = np.asarray(panel.data[-1].y)
-                if fix_dut_fix is not None:
-                    fix_dut_fix.plot_z_time_step(m, m, window = window, fig = panel, backend = 'plotly',
-                                                 line = dict(color = 'magenta', dash = 'dash'))
-                _plotly_point(panel, 0, y[n // 2], 'square', 'start')
-                _plotly_point(panel, (self.x_end_dd - (n // 2) - 1) * dt, self.z_x_dd, 'circle',
-                              f'z_x = {self.z_x_dd:0.1f} ohm')
-                fix.plot_z_time_step(2, 2, window = window, fig = panel, backend = 'plotly',
-                                     line = dict(color = 'black'))
-                s2xthru.plot_z_time_step(m2, m2, window = window, fig = panel, backend = 'plotly',
-                                         line = dict(color = 'rgb(51,51,51)', dash = 'dot'))
-                if fix_dut_fix is not None:
-                    fix_dut_fix.plot_z_time_step(m2, m2, window = window, fig = panel, backend = 'plotly',
-                                                 line = dict(color = 'blue', dash = 'dash'))
-            delay = 2 * (self.x_end_dd - (n // 2)) * dt
-            panels[1].update_xaxes(range = [-0.5 * delay, 1.5 * delay])
-            title = 'Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX'
-            return _plotly_combine_panels(panels, ['Side 1', 'Side 2'], [[{}, {}]], title, fig, (10, 5))
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
         else:
-            if ax is None:
-                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
-            else:
-                fig = ax[0].get_figure()
+            fig = ax.get_figure()
 
-            fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
-            ax[0].set_title('Side 1')
-            fix1.plot_z_time_step(0, 0, window = window,
-                                  ax = ax[0], color = 'k', backend = 'matplotlib')
-            s2xthru.plot_z_time_step(0, 0, window = window,
-                                     ax = ax[0], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            y = ax[0].lines[-1].get_ydata()
-            if fix_dut_fix is not None:
-                fix_dut_fix.plot_z_time_step(0, 0, window = window,
-                                         ax = ax[0], linestyle = 'dashed', color = 'm', backend = 'matplotlib')
-            ax[0].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
-            ax[0].plot([(self.x_end_dd - (n // 2) - 1) * dt], [self.z_x_dd], marker = 'o',
-                       color = 'k', label = f'z_x = {self.z_x_dd:0.1f} ohm')
-            fix1.plot_z_time_step(2, 2, window = window,
-                                  ax = ax[0], color = 'k', backend = 'matplotlib')
-            s2xthru.plot_z_time_step(2, 2, window = window,
-                                     ax = ax[0], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            if fix_dut_fix is not None:
-                fix_dut_fix.plot_z_time_step(2, 2, window = window,
-                                         ax = ax[0], linestyle = 'dashed', color = 'b', backend = 'matplotlib')
-            ax[0].legend(loc = 'center left')
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        y = ax[0].lines[-1].get_ydata()
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'm')
+        ax[0].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[0].plot([(self.x_end_dd - (n // 2) - 1) * dt], [self.z_x_dd], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x_dd:0.1f} ohm')
+        fix1.plot_z_time_step(2, 2, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(2, 2, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(2, 2, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'b')
+        ax[0].legend(loc = 'center left')
 
-            ax[1].set_title('Side 2')
-            fix2.plot_z_time_step(0, 0, window = window,
-                                  ax = ax[1], color = 'k', backend = 'matplotlib')
-            s2xthru.plot_z_time_step(1, 1, window = window,
-                                     ax = ax[1], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            y = ax[1].lines[-1].get_ydata()
-            if fix_dut_fix is not None:
-                fix_dut_fix.plot_z_time_step(1, 1, window = window,
-                                         ax = ax[1], linestyle = 'dashed', color = 'm', backend = 'matplotlib')
-            ax[1].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
-            ax[1].plot([(self.x_end_dd - (n // 2) - 1) * dt], [self.z_x_dd], marker = 'o',
-                       color = 'k', label = f'z_x = {self.z_x_dd:0.1f} ohm')
-            fix2.plot_z_time_step(2, 2, window = window,
-                                  ax = ax[1], color = 'k', backend = 'matplotlib')
-            s2xthru.plot_z_time_step(3, 3, window = window,
-                                     ax = ax[1], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            if fix_dut_fix is not None:
-                fix_dut_fix.plot_z_time_step(3, 3, window = window,
-                                         ax = ax[1], linestyle = 'dashed', color = 'b', backend = 'matplotlib')
-            delay = 2 * (self.x_end_dd - (n // 2)) * dt
-            ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
-            ax[1].legend(loc = 'center left')
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        y = ax[1].lines[-1].get_ydata()
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'm')
+        ax[1].plot([0], [y[n // 2]], marker = 's', color = 'k', label = 'start')
+        ax[1].plot([(self.x_end_dd - (n // 2) - 1) * dt], [self.z_x_dd], marker = 'o',
+                   color = 'k', label = f'z_x = {self.z_x_dd:0.1f} ohm')
+        fix2.plot_z_time_step(2, 2, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(3, 3, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        if fix_dut_fix is not None:
+            fix_dut_fix.plot_z_time_step(3, 3, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'b')
+        delay = 2 * (self.x_end_dd - (n // 2)) * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
+        ax[1].legend(loc = 'center left')
 
-            fig.tight_layout()
+        fig.tight_layout()
 
-            return (fig, ax)
+        return (fig, ax)
 
 
 class IEEEP370_SE_ZC_2xThru(IEEEP370):
@@ -4405,8 +4013,7 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
             calibration error (default: 1)
 
         verbose :
-            view the process (default: False). The figures follow the plotting
-            backend.
+            view the process (default: False)
 
         args, kwargs:
             passed to :func:`Deembedding.__init__`
@@ -4529,35 +4136,21 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         if self.verbose:
             zdut1 = IEEEP370.getz(s11dut, f, z0)
             zdut2 = IEEEP370.getz(s22dut, f, z0)
-            backend = _resolve_backend()
-            if backend == 'plotly':
-                panels = _plotly_panels(2)
-                for panel, zdut, z_side, z_fdf, name in ((panels[0], zdut1, self.z_side1, z1, 'FIX-1'),
-                                                         (panels[1], zdut2, self.z_side2, z2, 'FIX-2')):
-                    for z, kwargs in ((zdut, dict(label = 'DUT')), (z_side, dict(label = name)),
-                                      (z_fdf, dict(line = dict(color = 'black', dash = 'dash'),
-                                      label = 'FIX-DUT-FIX'))):
-                        plot_rectangular(np.arange(len(z)), ifftshift(z), None, 'Z (ohm)', fig = panel,
-                                         backend = 'plotly',
-                                         **kwargs)
-                    panel.update_xaxes(range = [n - 50, n + x * 2 + 50])
-                _plotly_combine_panels(panels, ['Left', 'Right'], [[{}, {}]], figsize = (2*6.4, 4.8)).show()
-            else:
-                fig, axs = subplots(1, 2, sharex = True, figsize=(2*6.4, 4.8))
-                axs[0].plot(ifftshift(zdut1), label = 'DUT')
-                axs[0].plot(ifftshift(self.z_side1), label = 'FIX-1')
-                axs[0].plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
-                axs[0].set_xlim((n-50, n+x*2+50))
-                axs[0].legend()
-                axs[0].set_title('Left')
-                axs[0].set_ylabel('Z (ohm)')
-                axs[1].plot(ifftshift(zdut2), label = 'DUT')
-                axs[1].plot(ifftshift(self.z_side2), label = 'FIX-2')
-                axs[1].plot(ifftshift(z2), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
-                axs[1].set_xlim((n-50, n+x*2+50))
-                axs[1].legend()
-                axs[1].set_title('Right')
-                axs[1].set_ylabel('Z (ohm)')
+            fig, axs = subplots(1, 2, sharex = True, figsize=(2*6.4, 4.8))
+            axs[0].plot(ifftshift(zdut1), label = 'DUT')
+            axs[0].plot(ifftshift(self.z_side1), label = 'FIX-1')
+            axs[0].plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
+            axs[0].set_xlim((n-50, n+x*2+50))
+            axs[0].legend()
+            axs[0].set_title('Left')
+            axs[0].set_ylabel('Z (ohm)')
+            axs[1].plot(ifftshift(zdut2), label = 'DUT')
+            axs[1].plot(ifftshift(self.z_side2), label = 'FIX-2')
+            axs[1].plot(ifftshift(z2), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
+            axs[1].set_xlim((n-50, n+x*2+50))
+            axs[1].legend()
+            axs[1].set_title('Right')
+            axs[1].set_ylabel('Z (ohm)')
         return errorbox1, errorbox2.flipped()
 
     def makeErrorBox_v8(self, s_dut: Network, s2x: Network, gamma: ndarray,
@@ -4598,24 +4191,13 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
                 self.z_side1 = IEEEP370.getz(errorbox1.s[:, 0, 0], f, z0)
         if self.verbose:
             zdut1 = IEEEP370.getz(s11dut, f, z0)
-            backend = _resolve_backend()
-            if backend == 'plotly':
-                panels = _plotly_panels(1)
-                for z, kwargs in ((zdut1, dict(label = 'DUT')), (self.z_side1, dict(label = 'FIX')),
-                                  (z1, dict(line = dict(color = 'black', dash = 'dash'), label = 'FIX-DUT-FIX'))):
-                    plot_rectangular(np.arange(len(z)), ifftshift(z), None, 'Z (ohm)', fig = panels[0],
-                                     backend = 'plotly',
-                                     **kwargs)
-                panels[0].update_xaxes(range = [n - 50, n + x * 2 + 50])
-                _plotly_combine_panels(panels, [''], [[{}]]).show()
-            else:
-                fig, axs = subplots(1, 1, sharex = True, figsize=(6.4, 4.8))
-                axs.plot(ifftshift(zdut1), label = 'DUT')
-                axs.plot(ifftshift(self.z_side1), label = 'FIX')
-                axs.plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
-                axs.set_xlim((n-50, n+x*2+50))
-                axs.legend()
-                axs.set_ylabel('Z (ohm)')
+            fig, axs = subplots(1, 1, sharex = True, figsize=(6.4, 4.8))
+            axs.plot(ifftshift(zdut1), label = 'DUT')
+            axs.plot(ifftshift(self.z_side1), label = 'FIX')
+            axs.plot(ifftshift(z1), color = 'k', linestyle = 'dashed', label = 'FIX-DUT-FIX')
+            axs.set_xlim((n-50, n+x*2+50))
+            axs.legend()
+            axs.set_ylabel('Z (ohm)')
         return errorbox1
 
 
@@ -4683,36 +4265,24 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
             leadin1 = IEEEP370.shiftOnePort(temp1, -self.leadin, 0)
             leadin2 = IEEEP370.shiftOnePort(temp2, -self.leadin, 1)
             if self.verbose:
-                backend = _resolve_backend()
+                fig, axs = subplots(1, 2, sharex = True, figsize=(2*6.4, 4.8))
                 n = len(f)
                 zfdf1 = IEEEP370.getz(sfix_dut_fix.s[:, 0, 0], f, self.z0)
                 zlead1 = IEEEP370.getz(leadin1.s[:, 0, 0], f, self.z0)
+                axs[0].plot(ifftshift(zfdf1), label = 'FDF')
+                axs[0].plot(ifftshift(zlead1), label = f'leadin ({self.leadin})')
+                axs[0].set_xlim((n-self.leadin-10, n+10))
+                axs[0].legend()
+                axs[0].set_title('Left leadin')
+                axs[0].set_ylabel('Z (ohm)')
                 zfdf2 = IEEEP370.getz(sfix_dut_fix.s[:, 1, 1], f, self.z0)
                 zlead2 = IEEEP370.getz(leadin2.s[:, 1, 1], f, self.z0)
-                if backend == 'plotly':
-                    panels = _plotly_panels(2)
-                    for panel, zfdf, zlead in ((panels[0], zfdf1, zlead1), (panels[1], zfdf2, zlead2)):
-                        for z, name in ((zfdf, 'FDF'), (zlead, f'leadin ({self.leadin})')):
-                            plot_rectangular(np.arange(len(z)), ifftshift(z), None, 'Z (ohm)', fig = panel,
-                                             backend = 'plotly',
-                                             label = name)
-                        panel.update_xaxes(range = [n - self.leadin - 10, n + 10])
-                    _plotly_combine_panels(panels, ['Left leadin', 'Right leadin'], [[{}, {}]],
-                                           figsize = (2*6.4, 4.8)).show()
-                else:
-                    fig, axs = subplots(1, 2, sharex = True, figsize=(2*6.4, 4.8))
-                    axs[0].plot(ifftshift(zfdf1), label = 'FDF')
-                    axs[0].plot(ifftshift(zlead1), label = f'leadin ({self.leadin})')
-                    axs[0].set_xlim((n-self.leadin-10, n+10))
-                    axs[0].legend()
-                    axs[0].set_title('Left leadin')
-                    axs[0].set_ylabel('Z (ohm)')
-                    axs[1].plot(ifftshift(zfdf2), label = 'FDF')
-                    axs[1].plot(ifftshift(zlead2), label = f'leadin ({self.leadin})')
-                    axs[1].set_xlim((n-self.leadin-10, n+10))
-                    axs[1].legend()
-                    axs[1].set_title('Right leadin')
-                    axs[1].set_ylabel('Z (ohm)')
+                axs[1].plot(ifftshift(zfdf2), label = 'FDF')
+                axs[1].plot(ifftshift(zlead2), label = f'leadin ({self.leadin})')
+                axs[1].set_xlim((n-self.leadin-10, n+10))
+                axs[1].legend()
+                axs[1].set_title('Right leadin')
+                axs[1].set_ylabel('Z (ohm)')
 
         # calculate gamma
         #grabbing s21
@@ -4734,46 +4304,25 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
             #divide by 2*n + 1 to get prop constant per discrete unit length
             self.gamma = alpha_per_length_fit + 1j * beta_per_length # gamma without DC
         if self.verbose:
-            backend = _resolve_backend()
-            if backend == 'plotly':
-                panels = _plotly_panels(2)
-                x = s2xthru.frequency.f_scaled
-                x_label = f'Frequency ({s2xthru.frequency.unit})'
-                plot_rectangular(x, alpha_per_length, x_label, 'Alpha (Neper/length)', fig = panels[0],
-                                 backend = 'plotly',
-                                 label = 'alpha per length')
-                if self.bandwidth_limit != 0:
-                    f_bw_hz = self.bandwidth_limit
-                    f_bw = f_bw_hz / s2xthru.frequency.multiplier
-                    alpha_bw = b[0] * np.sqrt(f_bw_hz) + b[1] * f_bw_hz + b[2] * f_bw_hz**2
-                    plot_rectangular(x, alpha_per_length_fit, x_label, 'Alpha (Neper/length)', fig = panels[0],
-                                     backend = 'plotly', label = 'alpha per length fit')
-                    _plotly_point(panels[0], f_bw, alpha_bw, 'circle',
-                                  f'bandwidth_limit = {f_bw} {s2xthru.frequency.unit}')
-                plot_rectangular(x, beta_per_length, x_label, 'Beta (rad/length)', fig = panels[1], backend = 'plotly',
-                                 label = 'beta per length')
-                _plotly_combine_panels(panels, ['', ''], [[{}, {}]], 'Gamma determination',
-                                       figsize = (2*6.4, 4.8)).show()
-            else:
-                fig, axs = subplots(1, 2, figsize=(2*6.4, 4.8))
-                fig.suptitle('Gamma determination')
-                axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length, label = 'alpha per length')
-                if self.bandwidth_limit != 0:
-                    f_bw_hz = self.bandwidth_limit
-                    f_bw = f_bw_hz / s2xthru.frequency.multiplier
-                    unit = s2xthru.frequency.unit
-                    alpha_bw = b[0] * np.sqrt(f_bw_hz) + b[1] * f_bw_hz + b[2] * f_bw_hz**2
-                    axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length_fit,
-                                label = 'alpha per length fit')
-                    axs[0].plot([f_bw], [alpha_bw], color = 'k', marker = 'o', linestyle = None,
-                                label = f'bandwidth_limit = {f_bw} {unit}')
-                axs[0].legend()
-                axs[0].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
-                axs[0].set_ylabel('Alpha (Neper/length)')
-                axs[1].plot(s2xthru.frequency.f_scaled, beta_per_length, label = 'beta per length')
-                axs[1].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
-                axs[1].set_ylabel('Beta (rad/length)')
-                axs[1].legend()
+            fig, axs = subplots(1, 2, figsize=(2*6.4, 4.8))
+            fig.suptitle('Gamma determination')
+            axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length, label = 'alpha per length')
+            if self.bandwidth_limit != 0:
+                f_bw_hz = self.bandwidth_limit
+                f_bw = f_bw_hz / s2xthru.frequency.multiplier
+                unit = s2xthru.frequency.unit
+                alpha_bw = b[0] * np.sqrt(f_bw_hz) + b[1] * f_bw_hz + b[2] * f_bw_hz**2
+                axs[0].plot(s2xthru.frequency.f_scaled, alpha_per_length_fit,
+                            label = 'alpha per length fit')
+                axs[0].plot([f_bw], [alpha_bw], color = 'k', marker = 'o', linestyle = None,
+                            label = f'bandwidth_limit = {f_bw} {unit}')
+            axs[0].legend()
+            axs[0].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
+            axs[0].set_ylabel('Alpha (Neper/length)')
+            axs[1].plot(s2xthru.frequency.f_scaled, beta_per_length, label = 'beta per length')
+            axs[1].set_xlabel(f'Frequency ({s2xthru.frequency.unit})')
+            axs[1].set_ylabel('Beta (rad/length)')
+            axs[1].legend()
 
         # extract error boxes
         # make the both error box
@@ -4833,65 +4382,44 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         # unflip FIX-2 as per IEEEP370 numbering recommendation
         return (s_side1, s_side2.flipped())
 
-    @_validate_plot_args
-    def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
-        """
-        Plot the residuals of the self de-embedding of the 2x-thru against their limits.
-
-        Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
-        or `fig` the plotly Figure, of an earlier call to draw over.
-        """
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
         res = self.deembed(self.s2xthru)
         res.name = 'Residuals'
 
-        backend = _resolve_backend(backend, ax, fig)
-        if backend == 'plotly':
-            return _plotly_check_residuals(res, ((1, 0, dict(color = 'gray')), (0, 1, dict(color = 'black'))), fig)
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
         else:
-            if ax is None:
-                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
-            else:
-                fig = ax[0].get_figure()
+            fig = ax.get_figure()
 
-            fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
 
-            ax[0].set_title('Magnitude residuals')
-            res.plot_s_db(1,0, ax = ax[0], color = '0.5', backend = 'matplotlib')
-            res.plot_s_db(0,1, ax = ax[0], color = 'k', backend = 'matplotlib')
-            ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [0.1, 0.1],
-                           linestyle = 'dashed', color = 'r', label = 'Limit')
-            ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [-0.1, -0.1],
-                           linestyle = 'dashed', color = 'r')
-            ax[0].legend(loc = 'upper right')
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0], color = '0.5')
+        res.plot_s_db(0,1, ax = ax[0], color = 'k')
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
 
-            ax[1].set_title('Phase residuals')
-            res.plot_s_deg(1,0, ax = ax[1], color = '0.5', backend = 'matplotlib')
-            res.plot_s_deg(0,1, ax = ax[1], color = 'k', backend = 'matplotlib')
-            ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [1, 1],
-                           linestyle = 'dashed', color = 'r', label = 'Limit')
-            ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [-1, -1],
-                           linestyle = 'dashed', color = 'r')
-            ax[1].legend(loc = 'upper right')
-            fig.tight_layout()
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1], color = '0.5')
+        res.plot_s_deg(0,1, ax = ax[1], color = 'k')
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
 
-            return (fig, ax)
+        return (fig, ax)
 
-    @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
-                             window: str = 'hamming', *, fig = None,
-                             backend: str | None = None) -> (Figure, Axes):
-        """
-        Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
-
-        Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
-        or `fig` the plotly Figure, of an earlier call to draw over.
-        """
+                             window: str = 'hamming') -> (Figure, Axes):
         # if dc point already exists, it will be replaced
         s2xthru = IEEEP370.extrapolate_to_dc(self.s2xthru)
         fix1 = IEEEP370.extrapolate_to_dc(self.s_side1)
@@ -4903,80 +4431,57 @@ class IEEEP370_SE_ZC_2xThru(IEEEP370):
         n = s2xthru.frequency.npoints * 2 - 1
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
-        backend = _resolve_backend(backend, ax, fig)
-        if backend == 'plotly':
-            panels = _plotly_panels(2, fig)
-            for k, (panel, fix, pullback) in enumerate(zip(panels, (fix1, fix2), (self.pullback1, self.pullback2))):
-                fix.plot_z_time_step(0, 0, window = window, fig = panel, backend = 'plotly',
-                                     line = dict(color = 'black'))
-                y = np.asarray(panel.data[-1].y)
-                s2xthru.plot_z_time_step(k, k, window = window, fig = panel, backend = 'plotly',
-                                         line = dict(color = 'rgb(51,51,51)', dash = 'dot'))
-                fix_dut_fix.plot_z_time_step(k, k, window = window, fig = panel, backend = 'plotly',
-                                             line = dict(color = 'magenta', dash = 'dash'))
-                _plotly_point(panel, -self.leadin * dt, y[n // 2 - self.leadin], 'square',
-                              f'start (leadin = {self.leadin})')
-                _plotly_point(panel, self.x_end * dt, y[self.x_end + n // 2], 'circle',
-                              f'end (pullback{k + 1} = {pullback})')
-                # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-                fitted = np.array([np.asarray(panel.data[i].y)[(n // 2):(self.x_end + n // 2)] for i in (0, 2)])
-                panel.update_yaxes(range = [np.min(fitted) - 5, np.max(fitted) + 5])
-            delay = 2 * self.x_end * dt
-            panels[1].update_xaxes(range = [-0.5 * delay, 1.5 * delay])
-            title = 'Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX'
-            return _plotly_combine_panels(panels, ['Side 1', 'Side 2'], [[{}, {}]], title, fig, (10, 5))
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
         else:
-            if ax is None:
-                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
-            else:
-                fig = ax[0].get_figure()
+            fig = ax.get_figure()
 
-            fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
-            ax[0].set_title('Side 1')
-            fix1.plot_z_time_step(0, 0, window = window,
-                                  ax = ax[0], color = 'k', backend = 'matplotlib')
-            y = ax[0].lines[-1].get_ydata()
-            s2xthru.plot_z_time_step(0, 0, window = window,
-                                     ax = ax[0], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            fix_dut_fix.plot_z_time_step(0, 0, window = window,
-                                  ax = ax[0], linestyle = 'dashed', color = 'm', backend = 'matplotlib')
-            ax[0].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
-                       label = f'start (leadin = {self.leadin})')
-            ax[0].plot([self.x_end * dt], [y[self.x_end + n // 2]], marker = 'o', color = 'k',
-                       label = f'end (pullback1 = {self.pullback1})')
-            # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-            ymax = np.max(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
-                                   ax[0].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
-            ymin = np.min(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
-                                   ax[0].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
-            ax[0].set_ylim((ymin - 5, ymax + 5))
-            ax[0].legend(loc = 'lower left')
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        y = ax[0].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], linestyle = 'dashed', color = 'm')
+        ax[0].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
+                   label = f'start (leadin = {self.leadin})')
+        ax[0].plot([self.x_end * dt], [y[self.x_end + n // 2]], marker = 'o', color = 'k',
+                   label = f'end (pullback1 = {self.pullback1})')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[0].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[0].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[0].set_ylim((ymin - 5, ymax + 5))
+        ax[0].legend(loc = 'lower left')
 
-            ax[1].set_title('Side 2')
-            fix2.plot_z_time_step(0, 0, window = window,
-                                  ax = ax[1], color = 'k', backend = 'matplotlib')
-            y = ax[1].lines[-1].get_ydata()
-            s2xthru.plot_z_time_step(1, 1, window = window,
-                                     ax = ax[1], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            fix_dut_fix.plot_z_time_step(1, 1, window = window,
-                                  ax = ax[1], linestyle = 'dashed', color = 'm', backend = 'matplotlib')
-            ax[1].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
-                      label = f'start (leadin = {self.leadin})')
-            ax[1].plot([self.x_end * dt], [y[self.x_end + n // 2]], marker = 'o', color = 'k',
-                       label = f'end (pullback2 = {self.pullback2})')
-            # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
-            ymax = np.max(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
-                                   ax[1].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
-            ymin = np.min(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
-                                   ax[1].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
-            ax[1].set_ylim((ymin - 5, ymax + 5))
-            delay = 2 * self.x_end * dt
-            ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
-            ax[1].legend(loc = 'lower left')
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        y = ax[1].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                              ax = ax[1], linestyle = 'dashed', color = 'm')
+        ax[1].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
+                  label = f'start (leadin = {self.leadin})')
+        ax[1].plot([self.x_end * dt], [y[self.x_end + n // 2]], marker = 'o', color = 'k',
+                   label = f'end (pullback2 = {self.pullback2})')
+        # fit the plot around fix and 2x-thru in case FIX-DUT-FIX is much larger
+        ymax = np.max(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ymin = np.min(np.array([ax[1].lines[0].get_ydata()[(n // 2):(self.x_end + n // 2)],
+                               ax[1].lines[2].get_ydata()[(n // 2):(self.x_end + n // 2)]]))
+        ax[1].set_ylim((ymin - 5, ymax + 5))
+        delay = 2 * self.x_end * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
+        ax[1].legend(loc = 'lower left')
 
-            fig.tight_layout()
+        fig.tight_layout()
 
-            return (fig, ax)
+        return (fig, ax)
 
 
 class IEEEP370_MM_ZC_2xThru(IEEEP370):
@@ -5129,8 +4634,7 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
             calibration error (default: 1)
 
         verbose :
-            view the process (default: False). The figures follow the plotting
-            backend.
+            view the process (default: False)
 
         args, kwargs:
             passed to :func:`Deembedding.__init__`
@@ -5292,70 +4796,49 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
 
         return (se_side1, se_side2)
 
-    @_validate_plot_args
-    def plot_check_residuals(self, ax: Axes = None, *, fig = None, backend: str | None = None) -> (Figure, Axes):
-        """
-        Plot the residuals of the self de-embedding of the 2x-thru against their limits.
-
-        Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
-        or `fig` the plotly Figure, of an earlier call to draw over.
-        """
+    def plot_check_residuals(self, ax: Axes = None) -> (Figure, Axes):
         res = self.deembed(self.s2xthru)
         res.name = 'Residuals'
         res.se2gmm(p=2)
 
-        backend = _resolve_backend(backend, ax, fig)
-        if backend == 'plotly':
-            return _plotly_check_residuals(res, ((1, 0, {}), (0, 1, {}), (3, 2, {}), (2, 3, {})), fig)
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
         else:
-            if ax is None:
-                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
-            else:
-                fig = ax[0].get_figure()
+            fig = ax.get_figure()
 
-            fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
+        fig.suptitle('Consistency test #1: Self de-embedding of 2X-Thru')
 
-            ax[0].set_title('Magnitude residuals')
-            res.plot_s_db(1,0, ax = ax[0], backend = 'matplotlib')
-            res.plot_s_db(0,1, ax = ax[0], backend = 'matplotlib')
-            res.plot_s_db(3,2, ax = ax[0], backend = 'matplotlib')
-            res.plot_s_db(2,3, ax = ax[0], backend = 'matplotlib')
-            ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [0.1, 0.1],
-                           linestyle = 'dashed', color = 'r', label = 'Limit')
-            ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [-0.1, -0.1],
-                           linestyle = 'dashed', color = 'r')
-            ax[0].legend(loc = 'upper right')
+        ax[0].set_title('Magnitude residuals')
+        res.plot_s_db(1,0, ax = ax[0])
+        res.plot_s_db(0,1, ax = ax[0])
+        res.plot_s_db(3,2, ax = ax[0])
+        res.plot_s_db(2,3, ax = ax[0])
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [0.1, 0.1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[0].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-0.1, -0.1],
+                       linestyle = 'dashed', color = 'r')
+        ax[0].legend(loc = 'upper right')
 
-            ax[1].set_title('Phase residuals')
-            res.plot_s_deg(1,0, ax = ax[1], backend = 'matplotlib')
-            res.plot_s_deg(0,1, ax = ax[1], backend = 'matplotlib')
-            res.plot_s_deg(3,2, ax = ax[1], backend = 'matplotlib')
-            res.plot_s_deg(2,3, ax = ax[1], backend = 'matplotlib')
-            ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [1, 1],
-                           linestyle = 'dashed', color = 'r', label = 'Limit')
-            ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
-                           [-1, -1],
-                           linestyle = 'dashed', color = 'r')
-            ax[1].legend(loc = 'upper right')
-            fig.tight_layout()
+        ax[1].set_title('Phase residuals')
+        res.plot_s_deg(1,0, ax = ax[1])
+        res.plot_s_deg(0,1, ax = ax[1])
+        res.plot_s_deg(3,2, ax = ax[1])
+        res.plot_s_deg(2,3, ax = ax[1])
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [1, 1],
+                       linestyle = 'dashed', color = 'r', label = 'Limit')
+        ax[1].plot([res.frequency.f[0], res.frequency.f[-1]],
+                       [-1, -1],
+                       linestyle = 'dashed', color = 'r')
+        ax[1].legend(loc = 'upper right')
+        fig.tight_layout()
 
-            return (fig, ax)
+        return (fig, ax)
 
-    @_validate_plot_args
     def plot_check_impedance(self, fix_dut_fix: Network = None, ax: Axes = None,
-                             window: str = 'hamming', *, fig = None,
-                             backend: str | None = None) -> (Figure, Axes):
-        """
-        Plot the TDR impedance of the fixture models against the 2x-thru and FIX-DUT-FIX.
-
-        Returns the matplotlib Figure and Axes, or with the plotly `backend` (default
-        ``skrf.plotting.options.backend``) the plotly Figure. `ax` may be the Axes,
-        or `fig` the plotly Figure, of an earlier call to draw over.
-        """
+                             window: str = 'hamming') -> (Figure, Axes):
         # if dc point already exists, it will be replaced
         s2xthru = self.s2xthru.copy()
         s2xthru.se2gmm(p=2)
@@ -5377,81 +4860,54 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         n = s2xthru.frequency.npoints * 2 - 1
         dt = 1e9 / (n * s2xthru.frequency.step) # ns
 
-        backend = _resolve_backend(backend, ax, fig)
-        if backend == 'plotly':
-            panels = _plotly_panels(2, fig)
-            for k, (panel, fix, pullback,
-                    m2) in enumerate(zip(panels, (fix1, fix2), (self.pullback1, self.pullback2), (2, 3))):
-                fix.plot_z_time_step(0, 0, window = window, fig = panel, backend = 'plotly',
-                                     line = dict(color = 'black'))
-                y = np.asarray(panel.data[-1].y)
-                s2xthru.plot_z_time_step(k, k, window = window, fig = panel, backend = 'plotly',
-                                         line = dict(color = 'rgb(51,51,51)', dash = 'dot'))
-                fix_dut_fix.plot_z_time_step(k, k, window = window, fig = panel, backend = 'plotly',
-                                             line = dict(color = 'magenta', dash = 'dash'))
-                _plotly_point(panel, -self.leadin * dt, y[n // 2 - self.leadin], 'square',
-                              f'start (leadin = {self.leadin})')
-                _plotly_point(panel, self.x_end_dd * dt, y[self.x_end_dd + n // 2], 'circle',
-                              f'end (pullback{k + 1} = {pullback})')
-                fix.plot_z_time_step(2, 2, window = window, fig = panel, backend = 'plotly',
-                                     line = dict(color = 'black'))
-                s2xthru.plot_z_time_step(m2, m2, window = window, fig = panel, backend = 'plotly',
-                                         line = dict(color = 'rgb(51,51,51)', dash = 'dot'))
-                fix_dut_fix.plot_z_time_step(m2, m2, window = window, fig = panel, backend = 'plotly',
-                                             line = dict(color = 'blue', dash = 'dash'))
-            delay = 2 * self.x_end_dd * dt
-            panels[1].update_xaxes(range = [-0.5 * delay, 1.5 * delay])
-            title = 'Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX'
-            return _plotly_combine_panels(panels, ['Side 1', 'Side 2'], [[{}, {}]], title, fig, (10, 5))
+        if ax is None:
+            fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
         else:
-            if ax is None:
-                fig, ax = subplots(1, 2, sharex = True, figsize=(10, 5))
-            else:
-                fig = ax[0].get_figure()
+            fig = ax.get_figure()
 
-            fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
-            ax[0].set_title('Side 1')
-            fix1.plot_z_time_step(0, 0, window = window,
-                                  ax = ax[0], color = 'k', backend = 'matplotlib')
-            y = ax[0].lines[-1].get_ydata()
-            s2xthru.plot_z_time_step(0, 0, window = window,
-                                     ax = ax[0], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            fix_dut_fix.plot_z_time_step(0, 0, window = window,
-                                  ax = ax[0], linestyle = 'dashed', color = 'm', backend = 'matplotlib')
-            ax[0].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
-                       label = f'start (leadin = {self.leadin})')
-            ax[0].plot([self.x_end_dd * dt], [y[self.x_end_dd + n // 2]], marker = 'o', color = 'k',
-                       label = f'end (pullback1 = {self.pullback1})')
-            fix1.plot_z_time_step(2, 2, window = window,
-                                  ax = ax[0], color = 'k', backend = 'matplotlib')
-            s2xthru.plot_z_time_step(2, 2, window = window,
-                                     ax = ax[0], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            fix_dut_fix.plot_z_time_step(2, 2, window = window,
-                                         ax = ax[0], linestyle = 'dashed', color = 'b', backend = 'matplotlib')
-            ax[0].legend(loc = 'center left')
+        fig.suptitle('Consistency test #2: Compare the TDR of the fixture model to the FIX-DUT-FIX')
+        ax[0].set_title('Side 1')
+        fix1.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], color = 'k')
+        y = ax[0].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(0, 0, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(0, 0, window = window,
+                              ax = ax[0], linestyle = 'dashed', color = 'm')
+        ax[0].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
+                   label = f'start (leadin = {self.leadin})')
+        ax[0].plot([self.x_end_dd * dt], [y[self.x_end_dd + n // 2]], marker = 'o', color = 'k',
+                   label = f'end (pullback1 = {self.pullback1})')
+        fix1.plot_z_time_step(2, 2, window = window,
+                              ax = ax[0], color = 'k')
+        s2xthru.plot_z_time_step(2, 2, window = window,
+                                 ax = ax[0], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(2, 2, window = window,
+                                     ax = ax[0], linestyle = 'dashed', color = 'b')
+        ax[0].legend(loc = 'center left')
 
-            ax[1].set_title('Side 2')
-            fix2.plot_z_time_step(0, 0, window = window,
-                                  ax = ax[1], color = 'k', backend = 'matplotlib')
-            y = ax[1].lines[-1].get_ydata()
-            s2xthru.plot_z_time_step(1, 1, window = window,
-                                     ax = ax[1], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            fix_dut_fix.plot_z_time_step(1, 1, window = window,
-                                  ax = ax[1], linestyle = 'dashed', color = 'm', backend = 'matplotlib')
-            ax[1].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
-                      label = f'start (leadin = {self.leadin})')
-            ax[1].plot([self.x_end_dd * dt], [y[self.x_end_dd + n // 2]], marker = 'o', color = 'k',
-                       label = f'end (pullback2 = {self.pullback2})')
-            fix2.plot_z_time_step(2, 2, window = window,
-                                  ax = ax[1], color = 'k', backend = 'matplotlib')
-            s2xthru.plot_z_time_step(3, 3, window = window,
-                                     ax = ax[1], linestyle = 'dotted', color = '0.2', backend = 'matplotlib')
-            fix_dut_fix.plot_z_time_step(3, 3, window = window,
-                                         ax = ax[1], linestyle = 'dashed', color = 'b', backend = 'matplotlib')
-            delay = 2 * self.x_end_dd * dt
-            ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
-            ax[1].legend(loc = 'center left')
+        ax[1].set_title('Side 2')
+        fix2.plot_z_time_step(0, 0, window = window,
+                              ax = ax[1], color = 'k')
+        y = ax[1].lines[-1].get_ydata()
+        s2xthru.plot_z_time_step(1, 1, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(1, 1, window = window,
+                              ax = ax[1], linestyle = 'dashed', color = 'm')
+        ax[1].plot([-self.leadin * dt], [y[n // 2 - self.leadin]], marker = 's', color = 'k',
+                  label = f'start (leadin = {self.leadin})')
+        ax[1].plot([self.x_end_dd * dt], [y[self.x_end_dd + n // 2]], marker = 'o', color = 'k',
+                   label = f'end (pullback2 = {self.pullback2})')
+        fix2.plot_z_time_step(2, 2, window = window,
+                              ax = ax[1], color = 'k')
+        s2xthru.plot_z_time_step(3, 3, window = window,
+                                 ax = ax[1], linestyle = 'dotted', color = '0.2')
+        fix_dut_fix.plot_z_time_step(3, 3, window = window,
+                                     ax = ax[1], linestyle = 'dashed', color = 'b')
+        delay = 2 * self.x_end_dd * dt
+        ax[1].set_xlim((-0.5 * delay, 1.5 * delay))
+        ax[1].legend(loc = 'center left')
 
-            fig.tight_layout()
+        fig.tight_layout()
 
-            return (fig, ax)
+        return (fig, ax)

@@ -23,7 +23,6 @@ from numpy import ones, real, sqrt
 from .. import constants as _const
 from ..constants import NumberLike
 from ..data import materials
-from ..plotting import _validate_plot_args
 from .media import Media
 
 if TYPE_CHECKING:
@@ -313,59 +312,23 @@ class Freespace(Media):
         ep = self.ep_with_rho
         return sqrt(self.mu/ep)*ones(len(self))
 
-    @_validate_plot_args
-    def plot_ep(self, *, fig=None, backend: str | None = None):
+    def plot_ep(self):
         """
         Plot the real and imaginary part of the complex permittivity.
-
-        Parameters
-        ----------
-        fig : plotly Figure, optional
-            figure to draw on with the plotly backend.
-        backend : {'matplotlib', 'plotly'}, optional
-            plotting backend, default ``skrf.plotting.options.backend``.
-
-        Returns
-        -------
-        None, or the plotly Figure with the plotly backend
         """
-        fig = self.plot(self.ep_r.real, label=r'ep_r real', fig=fig, backend=backend)
-        return self.plot(self.ep_r.imag, label=r'ep_r imag', fig=fig, backend=backend)
+        self.plot(self.ep_r.real, label=r'ep_r real')
+        self.plot(self.ep_r.imag, label=r'ep_r imag')
 
-    @_validate_plot_args
-    def plot_mu(self, *, fig=None, backend: str | None = None):
+    def plot_mu(self):
         """
         Plot the real and imaginary part of the complex permeability.
-
-        Parameters
-        ----------
-        fig : plotly Figure, optional
-            figure to draw on with the plotly backend.
-        backend : {'matplotlib', 'plotly'}, optional
-            plotting backend, default ``skrf.plotting.options.backend``.
-
-        Returns
-        -------
-        None, or the plotly Figure with the plotly backend
         """
-        fig = self.plot(self.mu_r.real, label=r'mu_r real', fig=fig, backend=backend)
-        return self.plot(self.mu_r.imag, label=r'mu_r imag', fig=fig, backend=backend)
+        self.plot(self.mu_r.real, label=r'mu_r real')
+        self.plot(self.mu_r.imag, label=r'mu_r imag')
 
-    @_validate_plot_args
-    def plot_ep_mu(self, *, fig=None, backend: str | None = None):
+    def plot_ep_mu(self):
         """
         Plot the real and imaginary part of the complex permittivity with resistivity.
-
-        Parameters
-        ----------
-        fig : plotly Figure, optional
-            figure to draw on with the plotly backend.
-        backend : {'matplotlib', 'plotly'}, optional
-            plotting backend, default ``skrf.plotting.options.backend``.
-
-        Returns
-        -------
-        None, or the plotly Figure with the plotly backend
         """
-        fig = self.plot_ep(fig=fig, backend=backend)
-        return self.plot_mu(fig=fig, backend=backend)
+        self.plot_ep()
+        self.plot_mu()

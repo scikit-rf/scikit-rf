@@ -5298,7 +5298,7 @@ class Network:
                             if logx:
                                 ax.set_xscale('log')
 
-                            rfplt.scale_frequency_ticks(ax, self.frequency.unit, backend='matplotlib')
+                            rfplt.scale_frequency_ticks(ax, self.frequency.unit)
 
 
 
