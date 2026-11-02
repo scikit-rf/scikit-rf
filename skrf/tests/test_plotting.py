@@ -16,6 +16,13 @@ from skrf.networkSet import NetworkSet
 if "matplotlib" not in sys.modules:
     pytest.skip(allow_module_level=True)
 
+try:
+    import plotly.graph_objects as go
+except ImportError:
+    go = None
+
+needs_plotly = pytest.mark.skipif(go is None, reason="plotly not installed")
+
 
 @pytest.fixture(params=rf.Network.PRIMARY_PROPERTIES)
 def primary_properties(request):
@@ -134,14 +141,6 @@ def test_generated_violin_plots(ntwk_set_zip: NetworkSet, generated_functions: s
 
 
 # Plotting backend selection (skrf.plotting.options.backend) and the plotly backend
-
-try:
-    import plotly.graph_objects as go
-except ImportError:
-    go = None
-
-needs_plotly = pytest.mark.skipif(go is None, reason="plotly not installed")
-
 
 @pytest.fixture(autouse=True)
 def reset_plotting_backend():
@@ -457,6 +456,12 @@ def test_plotly_frequency_plot_complex(ntwk1: rf.Network):
         fig = rf.plotting.plot_rectangular([0, 1], [1 + 1j, 2], backend="plotly")
     np.testing.assert_array_equal(fig.data[0].y, [1, 2])
 
+@needs_plotly
+@pytest.mark.parametrize("label", [None, "_nolegend_"])
+def test_plotly_label_without_legend_entry(ntwk1: rf.Network, label):
+    fig = ntwk1.plot_s_db(0, 0, label=label, backend="plotly")
+    assert fig.data[0].name is None and not fig.data[0].showlegend
+
 def test_networkset_creation_adds_methods_once(ntwk1: rf.Network, monkeypatch):
     NetworkSet([ntwk1])
     calls = []
@@ -468,12 +473,6 @@ def test_networkset_plot_keeps_network_method_arguments(ntwk1: rf.Network, monke
     # a subclass or replaced method without a backend argument keeps working with matplotlib
     monkeypatch.setattr(rf.Network, "plot_s_db", lambda self, m=0, n=0: "drawn")
     assert NetworkSet([ntwk1, ntwk1]).plot_s_db(0, 0) == ["drawn", "drawn"]
-
-@needs_plotly
-@pytest.mark.parametrize("label", [None, "_nolegend_"])
-def test_plotly_label_without_legend_entry(ntwk1: rf.Network, label):
-    fig = ntwk1.plot_s_db(0, 0, label=label, backend="plotly")
-    assert fig.data[0].name is None and not fig.data[0].showlegend
 
 @needs_plotly
 def test_plotly_network_set_positional_ax(ntwk_set_zip: NetworkSet):
