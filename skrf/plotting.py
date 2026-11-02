@@ -145,11 +145,6 @@ class _PlottingOptions:
 options = _PlottingOptions()
 
 
-def _is_plotly_figure(fig) -> bool:
-    # checked by name so that plotly is not imported
-    return any(c.__module__.startswith('plotly.') and c.__name__ == 'Figure' for c in type(fig).__mro__)
-
-
 def _matplotlib_only(func: Callable) -> Callable:
     """Decorator for plots without plotly support, which raise rather than draw with the wrong backend."""
 
@@ -244,7 +239,7 @@ def subplots(*args, **kwargs) -> tuple[Figure, np.ndarray]:
 
 
 def _get_label_str(netw: Network, param: str, m: int, n: int, usetex: bool | None = None) -> str:
-    if usetex is None:
+    if usetex is None:  # text.usetex is a matplotlib setting, so plotly plots pass False and skip this import
         import matplotlib.pyplot as plt
         usetex = plt.rcParams['text.usetex']
 
@@ -347,6 +342,12 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
     if _resolve_backend(backend, ax, fig) == 'plotly':
         return _plotly_smith(smithR, chart_type, draw_labels, fig=_get_plotly_figure(fig, **_PLOTLY_SMITH_LAYOUT),
                              ref_imm=ref_imm, draw_vswr=draw_vswr)
+    _matplotlib_smith(smithR, chart_type, draw_labels, border, ax, ref_imm, draw_vswr)
+
+
+def _matplotlib_smith(smithR: Number, chart_type: str, draw_labels: bool, border: bool, ax: Axes | None,
+                      ref_imm: float, draw_vswr: list | bool | None):
+    """matplotlib counterpart of :func:`_plotly_smith`."""
     import matplotlib.pyplot as plt
     from matplotlib.patches import Circle
 
@@ -626,6 +627,11 @@ def _plotly_layout() -> dict:
     template = pio.templates[pio.templates.default] if pio.templates.default else None
     return {k: v if template is None or k == 'title' or template.layout[k] is None else template.layout[k]
             for k, v in _PLOTLY_LAYOUT.items()}
+
+
+def _is_plotly_figure(fig) -> bool:
+    # checked by name so that plotly is not imported
+    return any(c.__module__.startswith('plotly.') and c.__name__ == 'Figure' for c in type(fig).__mro__)
 
 
 def _get_plotly_figure(fig=None, **layout):
