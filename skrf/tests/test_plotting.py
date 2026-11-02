@@ -853,15 +853,15 @@ def test_plotly_deembedding(deembedding, plot: str):
 
 @needs_plotly
 def test_plotly_fer_limits(deembedding):
-    from skrf.calibration.deembedding import IEEEP370_FER
+    from skrf.calibration import deembedding as de
 
     freq = rf.Frequency(1, 10, 11, "GHz")
-    _, ax = rf.plotting._subplots(1, 1, "plotly")
-    IEEEP370_FER().plot_limit_fer2(freq, ax)
-    assert [t.name for t in ax.fig.data] == ["Maximum A", "Maximum B", "Maximum C"]
-    np.testing.assert_allclose(ax.fig.data[0].x, [1, 10])  # in the unit of the figure
-    IEEEP370_FER().plot_limit_fer5(np.arange(3), np.ones(3), ax)
-    assert [t.showlegend for t in ax.fig.data[3:5]] == [True, False]  # one legend entry for the +/- lines
+    fig = go.Figure()
+    de._plotly_limit_lines(fig, freq, de._PLOTLY_FER2_LIMITS)
+    assert [t.name for t in fig.data] == ["Maximum A", "Maximum B", "Maximum C"]
+    np.testing.assert_allclose(fig.data[0].x, [1, 10])  # in the unit of the figure
+    de._plotly_relative_limit_lines(fig, np.arange(3), np.ones(3))
+    assert [t.showlegend for t in fig.data[3:5]] == [True, False]  # one legend entry for the +/- lines
 
 @needs_plotly
 def test_plotly_legend_position():
