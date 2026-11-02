@@ -35,21 +35,10 @@ Plots and Charts
 
 Backend selection
 -----------------
-``skrf.plotting.options.backend`` holds the global plotting backend:
-``"matplotlib"`` (default) or ``"plotly"`` (needs
-``pip install scikit-rf[plotly]``). The general-purpose plot methods also
-take a per-call ``backend=`` argument.
-
-With plotly they return a ``plotly.graph_objects.Figure``; pass it as ``fig``
-to add traces to it. ``ax`` takes matplotlib Axes only, and ``fig`` plotly
-Figures only. Neither selects the backend: one that does not belong to the
-backend of the call raises a ``TypeError``. Likewise, keyword arguments go to the
-library of the backend, so plotly takes plotly keywords such as ``line=dict(...)``,
-not matplotlib ones such as ``linewidth``. ``label`` works with both, and names
-the trace with plotly. So far this covers `smith`, `plot_smith`, `plot_rectangular`,
-`plot_polar`, `plot_complex_rectangular`, `plot_complex_polar`, the plots of a single
-:class:`~skrf.network.Network`, and the plots a :class:`~skrf.networkSet.NetworkSet`
-takes from it. The other plots of this module raise a ``NotImplementedError``.
+``skrf.plotting.options.backend`` selects ``"matplotlib"`` (default) or ``"plotly"``
+(``pip install scikit-rf[plotly]``), and ``backend=`` does so for one plot. With plotly,
+plots return a plotly Figure, which ``fig`` takes to draw on, in place of ``ax``.
+Not all plots support plotly yet.
 
 Convenience plotting functions
 -------------------------------
@@ -74,7 +63,6 @@ import inspect
 import os
 from collections.abc import Callable
 from contextlib import suppress
-from contextvars import ContextVar
 from functools import partial, wraps
 from logging import getLogger
 from numbers import Number
@@ -138,12 +126,6 @@ def axes_kwarg(func):
 _PLOTTING_BACKENDS = ('matplotlib', 'plotly')
 
 
-def _validate_backend(backend: str) -> str:
-    if backend not in _PLOTTING_BACKENDS:
-        raise ValueError(f"Unknown plotting backend {backend!r}, choose one of {_PLOTTING_BACKENDS}")
-    return backend
-
-
 class _PlottingOptions:
     """Plotting settings: `backend` is 'matplotlib' (default) or 'plotly'."""
 
@@ -156,7 +138,7 @@ class _PlottingOptions:
 
     @backend.setter
     def backend(self, value: str):
-        self._backend = _validate_backend(value)
+        self._backend = _resolve_backend(value)
 
 
 # global plotting settings
@@ -186,29 +168,23 @@ def _resolve_backend(backend: str | None = None, *targets) -> str:
 
     Raises if one of `targets`, the `ax` and `fig` of the call, does not belong to that backend.
     """
-    backend = options.backend if backend is None else _validate_backend(backend)
+    backend = options.backend if backend is None else backend
+    if backend not in _PLOTTING_BACKENDS:
+        raise ValueError(f"Unknown plotting backend {backend!r}, choose one of {_PLOTTING_BACKENDS}")
     for target in targets:
         if target is not None and (backend == 'plotly') != _is_plotly_figure(target):
             raise TypeError(f"{type(target).__name__} cannot be used with backend={backend!r}")
     return backend
 
 
-_in_plot_call = ContextVar('_in_plot_call', default=False)
 _MATPLOTLIB_KEYWORDS = {'alpha', 'c', 'color', 'linestyle', 'linewidth', 'ls', 'lw', 'markersize', 'ms'}
 
 
 def _validate_plot_args(func: Callable) -> Callable:
-    """
-    Decorator checking the `ax` and `fig` of a plot function: matplotlib Axes and the plotly Figure to draw on.
-
-    The function takes `fig` as a keyword, or in its kwargs, which gets it only if it is set. Matplotlib keywords
-    are rejected with the plotly backend, except in calls from other decorated functions, as those are translated
-    for plotly.
-    """
+    """Decorator checking the `ax` and `fig` of a plot function, and rejecting matplotlib keywords with plotly."""
     parameters = inspect.signature(func).parameters
     has_ax_position = 'ax' in parameters and parameters['ax'].kind is parameters['ax'].POSITIONAL_OR_KEYWORD
     ax_index = list(parameters).index('ax') if has_ax_position else None
-    matplotlib_keywords = _MATPLOTLIB_KEYWORDS - set(parameters)
 
     @wraps(func)
     def wrapper(*args, fig=None, **kwargs):
@@ -220,20 +196,15 @@ def _validate_plot_args(func: Callable) -> Callable:
                 raise TypeError(f"fig must be a plotly Figure, not {type(fig).__name__}, pass matplotlib Axes as ax")
         if _is_plotly_figure(ax):
             raise TypeError("ax must be matplotlib Axes, pass a plotly Figure as fig")
-        if not _in_plot_call.get():
-            keywords = matplotlib_keywords & kwargs.keys()
-            if isinstance(kwargs.get('marker'), str):
-                keywords = keywords | {'marker'}
-            if keywords and _resolve_backend(kwargs.get('backend'), ax, fig) == 'plotly':
-                raise TypeError(f"Matplotlib keywords {sorted(keywords)} are not supported by the plotly backend, "
-                                "use plotly keywords such as line=dict(...) or marker=dict(...)")
+        keywords = _MATPLOTLIB_KEYWORDS & kwargs.keys()
+        if isinstance(kwargs.get('marker'), str):
+            keywords = keywords | {'marker'}
+        if keywords and _resolve_backend(kwargs.get('backend'), ax, fig) == 'plotly':
+            raise TypeError(f"Matplotlib keywords {sorted(keywords)} are not supported by the plotly backend, "
+                            "use plotly keywords such as line=dict(...) or marker=dict(...)")
         if fig is not None:
             kwargs['fig'] = fig
-        token = _in_plot_call.set(True)
-        try:
-            return func(*args, **kwargs)
-        finally:
-            _in_plot_call.reset(token)
+        return func(*args, **kwargs)
 
     return wrapper
 
@@ -448,8 +419,8 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
         cc.set_clip_path(clipc)
 
 
-def _smith_grid(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
-                ref_imm: float = 1.0, draw_vswr: list | bool | None = None) -> tuple[list, list]:
+def _smith_grid(smithR: Number, chart_type: str, draw_labels: bool, ref_imm: float,
+                draw_vswr: list | bool | None) -> tuple[list, list]:
     """
     Smith chart grid drawn by :func:`smith` and :func:`_plotly_smith`.
 
@@ -659,29 +630,12 @@ def plot_rectangular(x: NumberLike, y: NumberLike,
     return my_plot
 
 
-# plotly counterparts of the matplotlib plotting functions above. They only draw
-# data that scikit-rf has already computed, and import plotly when called.
-
-# layout of a new figure: a fixed size, as a notebook otherwise stretches a plotly figure across the whole cell,
-# with less room above the plot than plotly's default, and the title centered over the plot like matplotlib
+# layout of a new figure, with a fixed size as a notebook otherwise stretches it across the whole cell
 _PLOTLY_LAYOUT = dict(width=700, height=500, margin_t=60, title=dict(x=0.5, xanchor='center', xref='paper'))
-_PLOTLY_COLORS = {'b': 'blue', 'g': 'green', 'r': 'red', 'c': 'cyan', 'm': 'magenta', 'y': 'yellow',
-                  'k': 'black', 'w': 'white'}
-_PLOTLY_LINESTYLES = {'-': 'solid', '--': 'dash', ':': 'dot', '-.': 'dashdot', 'dashed': 'dash', 'dotted': 'dot'}
-_PLOTLY_MARKERS = {'o': 'circle', '.': 'circle', ',': 'circle', 's': 'square', 'd': 'diamond', 'D': 'diamond',
-                   '+': 'cross', 'P': 'cross', 'x': 'x', 'X': 'x', '^': 'triangle-up', 'v': 'triangle-down',
-                   '<': 'triangle-left', '>': 'triangle-right', '*': 'star', 'p': 'pentagon', 'h': 'hexagon',
-                   'H': 'hexagon2', '8': 'octagon', '1': 'y-down-open', '2': 'y-up-open', '3': 'y-left-open',
-                   '4': 'y-right-open', '|': 'line-ns-open', '_': 'line-ew-open'}
-_PLOTLY_NONE = ('', ' ', 'none', 'None')
 
 
 def _plotly_layout() -> dict:
-    """
-    Layout of a new figure, with the size and top margin of the default template if it sets them.
-
-    They are copied as plotly.js fills the page if the size is set by the template only.
-    """
+    """Layout of a new figure, copying the size of the default template, which plotly.js ignores there."""
     _import_plotly()
     import plotly.io as pio
 
@@ -692,53 +646,20 @@ def _plotly_layout() -> dict:
 
 def _get_plotly_figure(fig=None, **layout):
     """Return the plotly Figure `fig`, or a new Figure of the default size and `layout` if it is None."""
-    go = _import_plotly()
-    if fig is None:
-        return go.Figure(layout={**_plotly_layout(), **layout})
-    if not isinstance(fig, go.Figure):
-        raise TypeError(f"the plotly backend needs a plotly Figure as fig, not {type(fig).__name__}")
-    return fig
-
-
-def _plotly_style_dict(style):
-    """Plotly style object `style` such as a go.scatter.Line as a dict, other values are returned as they are."""
-    return style.to_plotly_json() if hasattr(style, 'to_plotly_json') else style
+    return _import_plotly().Figure(layout={**_plotly_layout(), **layout}) if fig is None else fig
 
 
 def _plotly_kwargs(args: tuple, kwargs: dict) -> dict:
-    """Translate the common matplotlib line keywords of skrf's own plots for go.Scatter; others are passed on."""
+    """`kwargs` for a plotly trace, with `label` as its name, like matplotlib only if it has a legend entry."""
     if args:
         raise TypeError(f"Positional matplotlib format arguments {args!r} are not supported by the plotly "
                         "backend, use plotly keywords such as line=dict(...) or marker=dict(...)")
     kw = dict(kwargs)
-    color, linestyle = kw.pop('color', None), kw.pop('linestyle', None)
-    marker = _plotly_style_dict(kw.pop('marker', None))
-    line = dict(_plotly_style_dict(kw.pop('line', {})))
-    markers = dict(marker) if isinstance(marker, dict) else {}  # a plotly marker dict is passed on
-    if color is not None:
-        line['color'] = markers['color'] = _plotly_color(color)
-    if linestyle not in _PLOTLY_NONE + (None,):
-        line['dash'] = _PLOTLY_LINESTYLES.get(linestyle, linestyle)
-    if isinstance(marker, str) and marker not in _PLOTLY_NONE:
-        markers['symbol'] = _PLOTLY_MARKERS.get(marker, marker)
     label = kw.pop('label', None)
-    if label is not None and not str(label).startswith('_'):  # others have no legend entry, as with matplotlib
+    if label is not None and not str(label).startswith('_'):
         kw.setdefault('name', str(label))
-    mode = [] if linestyle in _PLOTLY_NONE else ['lines']
-    if 'symbol' in markers or isinstance(marker, dict):
-        mode.append('markers')
-    kw.setdefault('mode', '+'.join(mode) or 'none')
-    return {**kw, 'line': line, 'marker': markers}
-
-
-def _plotly_color(color):
-    """plotly color for a matplotlib color, including gray levels such as '0.5'."""
-    if isinstance(color, str):
-        try:
-            return 'rgb({0},{0},{0})'.format(round(255 * float(color)))
-        except ValueError:
-            return _PLOTLY_COLORS.get(color, color)
-    return color
+    kw.setdefault('mode', 'lines+markers' if kw.get('marker') else 'lines')
+    return kw
 
 
 def _plotly_frequency_x(fig, frequency: Frequency) -> tuple[np.ndarray, str]:
@@ -758,15 +679,13 @@ def _plotly_frequency_x(fig, frequency: Frequency) -> tuple[np.ndarray, str]:
 
 def _plotly_rect(x: NumberLike, y: NumberLike, *args,
                  x_label: str | None = None, y_label: str | None = None,
-                 title: str | None = None, show_legend: bool = True,
-                 axis: str = 'tight', fig=None, **kwargs):
+                 title: str | None = None, show_legend: bool = True, fig=None, **kwargs):
     """plotly counterpart of :func:`plot_rectangular`, drawing on the plotly Figure `fig`."""
     trace = _plotly_kwargs(args, kwargs)
     trace.setdefault('showlegend', bool(show_legend and 'name' in trace))
     # the real part of complex data with a warning, like matplotlib, as plotly can't serialize it
     x = np.asarray(x).astype(float) if np.iscomplexobj(x) else x
     fig.add_trace(_import_plotly().Scatter(x=x, y=np.asarray(y).astype(float), **trace))
-    # the axes of the trace, the first subplot of a figure with several
     if x_label is not None:
         fig.update_layout(xaxis_title_text=x_label)
     if y_label is not None:
@@ -777,8 +696,7 @@ def _plotly_rect(x: NumberLike, y: NumberLike, *args,
 
 
 def _plotly_complex(z: NumberLike, x_label: str = 'Real', y_label: str = 'Imag',
-                    title: str = 'Complex Plane', show_legend: bool = True,
-                    axis: str = 'equal', fig=None, **kwargs):
+                    title: str = 'Complex Plane', show_legend: bool = True, fig=None, **kwargs):
     """plotly counterpart of :func:`plot_complex_rectangular`, with equal axis scales."""
     _plotly_rect(np.real(z), np.imag(z), x_label=x_label, y_label=y_label, title=title,
                  show_legend=show_legend, fig=fig, **kwargs)
@@ -797,13 +715,9 @@ _PLOTLY_SMITH_LAYOUT = dict(height=550, margin=dict(l=20, r=20, b=20))  # a new 
 _PLOTLY_ANCHORS = {'baseline': 'bottom', 'center': 'middle'}
 
 
-def _plotly_smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
-                  fig=None, ref_imm: float = 1.0, draw_vswr: list | bool | None = None):
-    """
-    plotly counterpart of :func:`smith`.
-
-    Each line weight is one trace, clipped to the chart radius, with ``meta='skrf_smith_chart'``.
-    """
+def _plotly_smith(smithR: Number, chart_type: str, draw_labels: bool, fig, ref_imm: float = 1.0,
+                  draw_vswr: list | bool | None = None):
+    """plotly counterpart of :func:`smith`, with one trace per line weight, marked ``meta='skrf_smith_chart'``."""
     go = _import_plotly()
     circles, labels = _smith_grid(smithR, chart_type, draw_labels, ref_imm, draw_vswr)
     y_flip_sign = -1 if chart_type.startswith('y') else 1

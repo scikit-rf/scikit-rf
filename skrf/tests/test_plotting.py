@@ -333,13 +333,6 @@ def test_plotly_errors(ntwk1: rf.Network, mpl_axes):
 
 @needs_plotly
 def test_plotly_kwargs_translation(ntwk1: rf.Network):
-    # the keywords of skrf's own plots, not available to users
-    fig = rf.plotting._get_plotly_figure()
-    rf.plotting._plotly_rect(ntwk1.f, ntwk1.s_db[:, 0, 0], fig=fig, color="r", linestyle="--", marker="o", label="a")
-    trace = fig.data[0]
-    assert (trace.line.color, trace.line.dash) == ("red", "dash")
-    assert (trace.marker.symbol, trace.mode) == ("circle", "lines+markers")
-    assert trace.name == "a"
     trace = ntwk1.plot_s_db(0, 0, marker=dict(size=5), backend="plotly").data[0]
     assert (trace.marker.size, trace.mode) == (5, "lines+markers")
     trace = ntwk1.plot_s_db(0, 0, line=go.scatter.Line(color="red"), marker=go.scatter.Marker(symbol="x"),
@@ -533,14 +526,6 @@ def test_plot_reciprocity_labels(three_port: rf.Network, mpl_axes, method: str, 
     fig = getattr(rf.plotting, method)(three_port, backend=backend)
     labels = [t.name for t in fig.data] if backend == "plotly" else [line.get_label() for line in mpl_axes.lines]
     assert labels == ["ports 21", "ports 31", "ports 32"]
-
-@needs_plotly
-def test_plotly_all_matplotlib_markers(ntwk1: rf.Network):
-    markers = [m for m in mpl.lines.Line2D.markers if isinstance(m, str) and len(m) == 1 and m != " "]
-    assert set(markers) <= rf.plotting._PLOTLY_MARKERS.keys()
-    for marker in markers:
-        fig = ntwk1.plot_s_db(0, 0, marker=dict(symbol=rf.plotting._PLOTLY_MARKERS[marker]), backend="plotly")
-        assert fig.data[0].marker.symbol == rf.plotting._PLOTLY_MARKERS[marker]
 
 @needs_plotly
 def test_plotly_network_set_positional_ax(ntwk_set_zip: NetworkSet):
