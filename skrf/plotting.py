@@ -176,7 +176,7 @@ _MATPLOTLIB_KEYWORDS = {'alpha', 'c', 'color', 'linestyle', 'linewidth', 'ls', '
 
 
 def _validate_plot_args(func: Callable) -> Callable:
-    """Decorator checking the `ax` and `fig` of a plot function, and rejecting matplotlib keywords with plotly."""
+    """Decorator checking the `ax` and `fig` of a plot function to maintain consistency with backend"""
     parameters = inspect.signature(func).parameters
     has_ax_position = 'ax' in parameters and parameters['ax'].kind is parameters['ax'].POSITIONAL_OR_KEYWORD
     ax_index = list(parameters).index('ax') if has_ax_position else None
@@ -202,6 +202,63 @@ def _validate_plot_args(func: Callable) -> Callable:
         return func(*args, **kwargs)
 
     return wrapper
+
+
+# layout of a new figure, with a fixed size as a notebook otherwise stretches it across the whole cell
+_PLOTLY_LAYOUT = dict(width=700, height=500, margin_t=60, title=dict(x=0.5, xanchor='center', xref='paper'))
+
+
+def _plotly_layout() -> dict:
+    """Layout of a new figure, copying the size of the default template, which plotly.js ignores there."""
+    import plotly.io as pio
+
+    template = pio.templates[pio.templates.default] if pio.templates.default else None
+    return {k: v if template is None or k == 'title' or template.layout[k] is None else template.layout[k]
+            for k, v in _PLOTLY_LAYOUT.items()}
+
+
+def _is_plotly_figure(fig) -> bool:
+    # checked by name so that plotly is not imported
+    return any(c.__module__.startswith('plotly.') and c.__name__ == 'Figure' for c in type(fig).__mro__)
+
+
+def _get_plotly_figure(fig=None, **layout):
+    """Return the plotly Figure `fig`, or a new Figure of the default size and `layout` if it is None."""
+    if fig is not None:
+        return fig
+    try:
+        import plotly.graph_objects as go
+    except ImportError as err:
+        raise ImportError("The plotly backend requires plotly: pip install scikit-rf[plotly]") from err
+    return go.Figure(layout={**_plotly_layout(), **layout})
+
+
+def _plotly_kwargs(args: tuple, kwargs: dict) -> dict:
+    """`kwargs` for a plotly trace, with `label` as its name, like matplotlib only if it has a legend entry."""
+    if args:
+        raise TypeError(f"Positional matplotlib format arguments {args!r} are not supported by the plotly "
+                        "backend, use plotly keywords such as line=dict(...) or marker=dict(...)")
+    kw = dict(kwargs)
+    label = kw.pop('label', None)
+    if label is not None and not str(label).startswith('_'):
+        kw.setdefault('name', str(label))
+    kw.setdefault('mode', 'lines+markers' if kw.get('marker') else 'lines')
+    return kw
+
+
+def _plotly_frequency_x(fig, frequency: Frequency) -> tuple[np.ndarray, str]:
+    """
+    Frequency values and x-axis label for a trace on `fig`.
+
+    All traces use the unit of the first one, which is kept in ``fig.layout.meta``.
+    """
+    meta = fig.layout.meta if isinstance(fig.layout.meta, dict) else {}
+    unit = meta.get('skrf_frequency_unit')
+    if unit is None:
+        unit = frequency.unit
+        if fig.layout.meta is None or isinstance(fig.layout.meta, dict):  # leave other user metadata alone
+            fig.update_layout(meta={**meta, 'skrf_frequency_unit': unit})
+    return frequency.f / frequency.multiplier_dict[unit.lower()], f'Frequency ({unit})'
 
 
 def figure(*args, **kwargs) -> Figure:
@@ -404,6 +461,43 @@ def _matplotlib_smith(smithR: Number, chart_type: str, draw_labels: bool, border
     for currentContour in contour:
         cc=ax.add_patch(currentContour)
         cc.set_clip_path(clipc)
+
+
+_PLOTLY_SMITH_COLORS = dict(superlight='whitesmoke', verylight='lightgrey', light='grey', heavy='black')
+_PLOTLY_SMITH_LAYOUT = dict(height=550, margin=dict(l=20, r=20, b=20))  # a new figure around a square chart
+_PLOTLY_ANCHORS = {'baseline': 'bottom', 'center': 'middle'}
+
+
+def _plotly_smith(smithR: Number, chart_type: str, draw_labels: bool, fig, ref_imm: float = 1.0,
+                  draw_vswr: list | bool | None = None):
+    """plotly counterpart of :func:`smith`, with one trace per line weight, marked ``meta='skrf_smith_chart'``."""
+    import plotly.graph_objects as go
+
+    circles, labels = _smith_grid(smithR, chart_type, draw_labels, ref_imm, draw_vswr)
+    y_flip_sign = -1 if chart_type.startswith('y') else 1
+    unit_circle = np.exp(2j * np.pi * np.linspace(0, 1, 361))
+    paths = {weight: [] for weight in _PLOTLY_SMITH_COLORS}
+    for center, radius, weight in circles:
+        paths[weight].append(complex(*center) + radius * unit_circle)
+    # clipping circle and x and y axis
+    line = np.linspace(-1, 1, 201) * smithR
+    paths['heavy'] += [smithR * unit_circle, line, y_flip_sign + 1j * line]
+
+    for weight, color in _PLOTLY_SMITH_COLORS.items():
+        if not paths[weight]:
+            continue
+        p = np.concatenate([np.append(path, np.nan) for path in paths[weight]])
+        p[np.abs(p) > smithR * (1 + 1e-9)] = np.nan
+        p = p[~(np.isnan(p) & np.isnan(np.roll(p, 1)))]  # one gap between line pieces is enough
+        fig.add_trace(go.Scatter(x=p.real, y=p.imag, mode='lines', line=dict(color=color, width=1),
+                                hoverinfo='skip', showlegend=False, meta='skrf_smith_chart'))
+    for text, x, y, ha, va, kw in labels:
+        fig.add_annotation(x=x, y=y, text=text.replace(r'$\infty$', '∞'), showarrow=False,
+                          xanchor=ha, yanchor=_PLOTLY_ANCHORS.get(va, va), font_color=kw.get('color'))
+
+    axis = dict(range=[-1.1 * smithR, 1.1 * smithR], showgrid=False, zeroline=False, showticklabels=False,
+                showline=False, ticks='', constrain='domain')
+    return fig.update_layout(xaxis=axis, yaxis=dict(axis, scaleanchor='x', scaleratio=1), plot_bgcolor='white')
 
 
 def _smith_grid(smithR: Number, chart_type: str, draw_labels: bool, ref_imm: float,
@@ -623,63 +717,6 @@ def _matplotlib_rectangular(x: NumberLike, y: NumberLike, x_label: str | None, y
     return my_plot
 
 
-# layout of a new figure, with a fixed size as a notebook otherwise stretches it across the whole cell
-_PLOTLY_LAYOUT = dict(width=700, height=500, margin_t=60, title=dict(x=0.5, xanchor='center', xref='paper'))
-
-
-def _plotly_layout() -> dict:
-    """Layout of a new figure, copying the size of the default template, which plotly.js ignores there."""
-    import plotly.io as pio
-
-    template = pio.templates[pio.templates.default] if pio.templates.default else None
-    return {k: v if template is None or k == 'title' or template.layout[k] is None else template.layout[k]
-            for k, v in _PLOTLY_LAYOUT.items()}
-
-
-def _is_plotly_figure(fig) -> bool:
-    # checked by name so that plotly is not imported
-    return any(c.__module__.startswith('plotly.') and c.__name__ == 'Figure' for c in type(fig).__mro__)
-
-
-def _get_plotly_figure(fig=None, **layout):
-    """Return the plotly Figure `fig`, or a new Figure of the default size and `layout` if it is None."""
-    if fig is not None:
-        return fig
-    try:
-        import plotly.graph_objects as go
-    except ImportError as err:
-        raise ImportError("The plotly backend requires plotly: pip install scikit-rf[plotly]") from err
-    return go.Figure(layout={**_plotly_layout(), **layout})
-
-
-def _plotly_kwargs(args: tuple, kwargs: dict) -> dict:
-    """`kwargs` for a plotly trace, with `label` as its name, like matplotlib only if it has a legend entry."""
-    if args:
-        raise TypeError(f"Positional matplotlib format arguments {args!r} are not supported by the plotly "
-                        "backend, use plotly keywords such as line=dict(...) or marker=dict(...)")
-    kw = dict(kwargs)
-    label = kw.pop('label', None)
-    if label is not None and not str(label).startswith('_'):
-        kw.setdefault('name', str(label))
-    kw.setdefault('mode', 'lines+markers' if kw.get('marker') else 'lines')
-    return kw
-
-
-def _plotly_frequency_x(fig, frequency: Frequency) -> tuple[np.ndarray, str]:
-    """
-    Frequency values and x-axis label for a trace on `fig`.
-
-    All traces use the unit of the first one, which is kept in ``fig.layout.meta``.
-    """
-    meta = fig.layout.meta if isinstance(fig.layout.meta, dict) else {}
-    unit = meta.get('skrf_frequency_unit')
-    if unit is None:
-        unit = frequency.unit
-        if fig.layout.meta is None or isinstance(fig.layout.meta, dict):  # leave other user metadata alone
-            fig.update_layout(meta={**meta, 'skrf_frequency_unit': unit})
-    return frequency.f / frequency.multiplier_dict[unit.lower()], f'Frequency ({unit})'
-
-
 def _plotly_rectangular(x: NumberLike, y: NumberLike, *args,
                  x_label: str | None = None, y_label: str | None = None,
                  title: str | None = None, show_legend: bool = True, fig=None, **kwargs):
@@ -698,58 +735,6 @@ def _plotly_rectangular(x: NumberLike, y: NumberLike, *args,
     if title is not None:
         fig.update_layout(title_text=title)
     return fig
-
-
-def _plotly_complex_rectangular(z: NumberLike, x_label: str = 'Real', y_label: str = 'Imag',
-                    title: str = 'Complex Plane', show_legend: bool = True, fig=None, **kwargs):
-    """plotly counterpart of :func:`plot_complex_rectangular`, with equal axis scales."""
-    _plotly_rectangular(np.real(z), np.imag(z), x_label=x_label, y_label=y_label, title=title,
-                 show_legend=show_legend, fig=fig, **kwargs)
-    # pad the range of all traces by 5% like matplotlib, as plotly's autorange fits lines tightly
-    for axis, attr in ((fig.layout.xaxis, 'x'), (fig.layout.yaxis, 'y')):
-        values = [getattr(t, attr, None) for t in fig.data if getattr(t, 'xaxis', None) in (None, 'x')]
-        values = np.concatenate([np.asarray(v, dtype=float) for v in values if v is not None])
-        lo, hi = np.nanmin(values), np.nanmax(values)
-        axis.range = [lo - 0.05 * (hi - lo), hi + 0.05 * (hi - lo)]
-    # shrink the plot area rather than widen the range, so it fits the data and zoom boxes match the drag
-    return fig.update_layout(xaxis_constrain='domain', yaxis=dict(scaleanchor='x', scaleratio=1, constrain='domain'))
-
-
-_PLOTLY_SMITH_COLORS = dict(superlight='whitesmoke', verylight='lightgrey', light='grey', heavy='black')
-_PLOTLY_SMITH_LAYOUT = dict(height=550, margin=dict(l=20, r=20, b=20))  # a new figure around a square chart
-_PLOTLY_ANCHORS = {'baseline': 'bottom', 'center': 'middle'}
-
-
-def _plotly_smith(smithR: Number, chart_type: str, draw_labels: bool, fig, ref_imm: float = 1.0,
-                  draw_vswr: list | bool | None = None):
-    """plotly counterpart of :func:`smith`, with one trace per line weight, marked ``meta='skrf_smith_chart'``."""
-    import plotly.graph_objects as go
-
-    circles, labels = _smith_grid(smithR, chart_type, draw_labels, ref_imm, draw_vswr)
-    y_flip_sign = -1 if chart_type.startswith('y') else 1
-    unit_circle = np.exp(2j * np.pi * np.linspace(0, 1, 361))
-    paths = {weight: [] for weight in _PLOTLY_SMITH_COLORS}
-    for center, radius, weight in circles:
-        paths[weight].append(complex(*center) + radius * unit_circle)
-    # clipping circle and x and y axis
-    line = np.linspace(-1, 1, 201) * smithR
-    paths['heavy'] += [smithR * unit_circle, line, y_flip_sign + 1j * line]
-
-    for weight, color in _PLOTLY_SMITH_COLORS.items():
-        if not paths[weight]:
-            continue
-        p = np.concatenate([np.append(path, np.nan) for path in paths[weight]])
-        p[np.abs(p) > smithR * (1 + 1e-9)] = np.nan
-        p = p[~(np.isnan(p) & np.isnan(np.roll(p, 1)))]  # one gap between line pieces is enough
-        fig.add_trace(go.Scatter(x=p.real, y=p.imag, mode='lines', line=dict(color=color, width=1),
-                                hoverinfo='skip', showlegend=False, meta='skrf_smith_chart'))
-    for text, x, y, ha, va, kw in labels:
-        fig.add_annotation(x=x, y=y, text=text.replace(r'$\infty$', '∞'), showarrow=False,
-                          xanchor=ha, yanchor=_PLOTLY_ANCHORS.get(va, va), font_color=kw.get('color'))
-
-    axis = dict(range=[-1.1 * smithR, 1.1 * smithR], showgrid=False, zeroline=False, showticklabels=False,
-                showline=False, ticks='', constrain='domain')
-    return fig.update_layout(xaxis=axis, yaxis=dict(axis, scaleanchor='x', scaleratio=1), plot_bgcolor='white')
 
 
 @_validate_plot_args
@@ -805,21 +790,6 @@ def plot_polar(theta: NumberLike, r: NumberLike,
         _matplotlib_polar(theta, r, x_label, y_label, title, show_legend, axis_equal, ax, *args, **kwargs)
 
 
-def _plotly_polar(theta: NumberLike, r: NumberLike, *args, y_label: str | None = None, title: str | None = None,
-                  show_legend: bool = True, fig=None, **kwargs):
-    """plotly counterpart of :func:`_matplotlib_polar`."""
-    import plotly.graph_objects as go
-
-    trace = _plotly_kwargs(args, kwargs)
-    trace.setdefault('showlegend', bool(show_legend and 'name' in trace))
-    fig.add_trace(go.Scatterpolar(r=r, theta=theta, thetaunit='radians', **trace))
-    if y_label is not None:
-        fig.update_polars(radialaxis_title_text=y_label)
-    if title is not None:
-        fig.update_layout(title_text=title)
-    return fig
-
-
 def _matplotlib_polar(theta: NumberLike, r: NumberLike, x_label: str | None, y_label: str | None, title: str | None,
                       show_legend: bool, axis_equal: bool, ax: Axes | None, *args, **kwargs):
     """matplotlib counterpart of :func:`_plotly_polar`."""
@@ -866,6 +836,21 @@ def _matplotlib_polar(theta: NumberLike, r: NumberLike, x_label: str | None, y_l
 
     if plt.isinteractive():
         plt.draw()
+
+
+def _plotly_polar(theta: NumberLike, r: NumberLike, *args, y_label: str | None = None, title: str | None = None,
+                  show_legend: bool = True, fig=None, **kwargs):
+    """plotly counterpart of :func:`_matplotlib_polar`."""
+    import plotly.graph_objects as go
+
+    trace = _plotly_kwargs(args, kwargs)
+    trace.setdefault('showlegend', bool(show_legend and 'name' in trace))
+    fig.add_trace(go.Scatterpolar(r=r, theta=theta, thetaunit='radians', **trace))
+    if y_label is not None:
+        fig.update_polars(radialaxis_title_text=y_label)
+    if title is not None:
+        fig.update_layout(title_text=title)
+    return fig
 
 
 @_validate_plot_args
@@ -925,6 +910,21 @@ def _matplotlib_complex_rectangular(z: NumberLike, x_label: str, y_label: str, t
     plot_rectangular(x=x, y=y, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, backend='matplotlib', **kwargs)
+
+
+def _plotly_complex_rectangular(z: NumberLike, x_label: str = 'Real', y_label: str = 'Imag',
+                    title: str = 'Complex Plane', show_legend: bool = True, fig=None, **kwargs):
+    """plotly counterpart of :func:`plot_complex_rectangular`, with equal axis scales."""
+    _plotly_rectangular(np.real(z), np.imag(z), x_label=x_label, y_label=y_label, title=title,
+                 show_legend=show_legend, fig=fig, **kwargs)
+    # pad the range of all traces by 5% like matplotlib, as plotly's autorange fits lines tightly
+    for axis, attr in ((fig.layout.xaxis, 'x'), (fig.layout.yaxis, 'y')):
+        values = [getattr(t, attr, None) for t in fig.data if getattr(t, 'xaxis', None) in (None, 'x')]
+        values = np.concatenate([np.asarray(v, dtype=float) for v in values if v is not None])
+        lo, hi = np.nanmin(values), np.nanmax(values)
+        axis.range = [lo - 0.05 * (hi - lo), hi + 0.05 * (hi - lo)]
+    # shrink the plot area rather than widen the range, so it fits the data and zoom boxes match the drag
+    return fig.update_layout(xaxis_constrain='domain', yaxis=dict(scaleanchor='x', scaleratio=1, constrain='domain'))
 
 
 @_validate_plot_args
@@ -1040,16 +1040,6 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
                                force_chart, draw_vswr, draw_labels, **kwargs)
 
 
-def _plotly_plot_smith(s: NumberLike, smith_r: float, chart_type: str, x_label: str, y_label: str, title: str,
-                       show_legend: bool, force_chart: bool, draw_vswr: list | bool | None, draw_labels: bool,
-                       fig, **kwargs):
-    """plotly counterpart of :func:`_matplotlib_plot_smith`."""
-    if not force_chart and not any(trace.meta == 'skrf_smith_chart' for trace in fig.data):
-        _plotly_smith(smith_r, chart_type, draw_labels, fig=fig, draw_vswr=draw_vswr)
-    return _plotly_rectangular(np.real(s), np.imag(s), x_label=x_label, y_label=y_label, title=title,
-                               show_legend=show_legend, fig=fig, **kwargs)
-
-
 def _matplotlib_plot_smith(s: NumberLike, smith_r: float, chart_type: str, x_label: str, y_label: str, title: str,
                            show_legend: bool, axis: str, ax: Axes | None, force_chart: bool,
                            draw_vswr: list | bool | None, draw_labels: bool, **kwargs):
@@ -1072,6 +1062,16 @@ def _matplotlib_plot_smith(s: NumberLike, smith_r: float, chart_type: str, x_lab
     ax.axis(smith_r*np.array([-1.1, 1.1, -1.1, 1.1]))
     if plt.isinteractive():
         plt.draw()
+
+
+def _plotly_plot_smith(s: NumberLike, smith_r: float, chart_type: str, x_label: str, y_label: str, title: str,
+                       show_legend: bool, force_chart: bool, draw_vswr: list | bool | None, draw_labels: bool,
+                       fig, **kwargs):
+    """plotly counterpart of :func:`_matplotlib_plot_smith`."""
+    if not force_chart and not any(trace.meta == 'skrf_smith_chart' for trace in fig.data):
+        _plotly_smith(smith_r, chart_type, draw_labels, fig=fig, draw_vswr=draw_vswr)
+    return _plotly_rectangular(np.real(s), np.imag(s), x_label=x_label, y_label=y_label, title=title,
+                               show_legend=show_legend, fig=fig, **kwargs)
 
 
 @_matplotlib_only
