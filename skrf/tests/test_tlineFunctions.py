@@ -180,6 +180,57 @@ class TestVoltageCurrentPropagation(unittest.TestCase):
         assert_almost_equal(v2, -v1)
         assert_almost_equal(i2, -i1)
 
+    @staticmethod
+    def expected_propagation(v1, i1, z0, theta):
+        """
+        Closed-form inverse of the unit-determinant ABCD matrix, for inputs already aligned with theta.
+        """
+        return (np.cosh(theta)*v1 - z0*np.sinh(theta)*i1,
+                -np.sinh(theta)/z0*v1 + np.cosh(theta)*i1)
+
+    def test_2d_theta_per_frequency_inputs(self):
+        """
+        Propagate (nfreqs,) voltage, current and z0 on a (nfreqs, ntheta) electrical length,
+        including square and single column theta.
+        """
+        z0 = array([50., 75.])
+        v1 = array([1., 2.])
+        i1 = array([0.02, 0.01])
+        gamma = array([0.1 + 1j, 0.2 + 2j])
+        for d in ([0., 0.5, 1.], [0.3, 0.7], [0.7]):
+            theta = gamma[:, np.newaxis] * array(d)
+            v2, i2 = tlFuncs.voltage_current_propagation(v1, i1, z0, theta)
+            v2_expected, i2_expected = self.expected_propagation(
+                v1[:, np.newaxis], i1[:, np.newaxis], z0[:, np.newaxis], theta)
+            assert_equal(v2.shape, theta.shape)
+            assert_equal(i2.shape, theta.shape)
+            assert_allclose(v2, v2_expected, rtol=1e-12, atol=1e-12, err_msg=f"d={d}")
+            assert_allclose(i2, i2_expected, rtol=1e-12, atol=1e-12, err_msg=f"d={d}")
+
+    def test_broadcasting_preserved(self):
+        """
+        Scalar inputs, inputs not of length nfreqs and 1D theta keep NumPy broadcasting.
+        """
+        gamma = array([0.1 + 1j, 0.2 + 2j])
+        theta_2d = gamma[:, np.newaxis] * array([0., 0.5, 1.])
+        theta_1d = (0.1 + 1j) * array([0., 0.3, 0.7])
+        v1_1d = array([1., 2., 0.5])
+        i1_1d = array([0.02, 0.01, 0.03])
+        cases = [
+            (1., 0.02, 50., theta_2d),  # scalars on (nfreqs, ntheta) theta
+            (v1_1d, i1_1d, 50., theta_2d),  # (ntheta,) inputs on (nfreqs, ntheta) theta, nfreqs != ntheta
+            (v1_1d, i1_1d, 50., theta_1d),  # inputs along a 1D theta, e.g. positions
+            (array([1., 2.]), array([0.02, 0.01]), array([50., 75.]), gamma * 0.7),  # 1D theta along frequency
+            (array([1.]), array([0.02]), array([50.]), theta_1d[np.newaxis, :]),  # single frequency (1, ntheta)
+        ]
+        for v1, i1, z0, theta in cases:
+            v2, i2 = tlFuncs.voltage_current_propagation(v1, i1, z0, theta)
+            v2_expected, i2_expected = self.expected_propagation(v1, i1, z0, theta)
+            assert_equal(v2.shape, theta.shape)
+            assert_equal(i2.shape, theta.shape)
+            assert_allclose(v2, v2_expected, rtol=1e-12, atol=1e-12)
+            assert_allclose(i2, i2_expected, rtol=1e-12, atol=1e-12)
+
 
 class SurfaceImpedanceTests(unittest.TestCase):
     """

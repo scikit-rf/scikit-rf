@@ -1034,6 +1034,12 @@ def voltage_current_propagation(v1: NumberLike, i1: NumberLike, z0: NumberLike, 
     """
     # outer product by broadcasting of the electrical length
     # theta = gamma[:, np.newaxis] * d  # (nbfreqs x nbd)
+    if np.ndim(theta) == 2:
+        # align 1-D (nfreqs,) inputs with the frequency axis of theta (nfreqs, ntheta),
+        # which NumPy broadcasting would otherwise align with the last (ntheta) axis
+        nfreqs = np.shape(theta)[0]
+        v1, i1, z0 = (x[:, np.newaxis] if x.ndim == 1 and len(x) == nfreqs else x
+                      for x in (np.asarray(v1), np.asarray(i1), np.asarray(z0)))
     # ABCD parameters of a transmission line (gamma, z0)
     A = np.cosh(theta)
     B = z0*np.sinh(theta)
