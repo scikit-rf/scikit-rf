@@ -153,7 +153,7 @@ class NanoVNAv2(vna.VNA):
         hardware = int.from_bytes(hardware, 'little')
         fw_major = self.query(OP.READ, REG_ADDR.FIRMWARE_MAJOR, 1)
         fw_major = int.from_bytes(fw_major, 'little')
-        fw_minor = self.query(OP.READ, REG_ADDR.FIRMWARE_MAJOR, 1)
+        fw_minor = self.query(OP.READ, REG_ADDR.FIRMWARE_MINOR, 1)
         fw_minor = int.from_bytes(fw_minor, 'little')
 
         return (
