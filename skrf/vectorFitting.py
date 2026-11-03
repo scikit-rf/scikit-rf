@@ -657,7 +657,8 @@ class VectorFitting:
                 poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=enforce_dc)
             delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                     weights_responses)
-            error_peak_history.append(np.max(delta))
+            error_peak = np.max(delta)
+            error_peak_history.append(error_peak)
 
             m = 3
             if len(error_peak_history) > m:
