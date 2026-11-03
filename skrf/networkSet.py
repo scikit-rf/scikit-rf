@@ -1016,7 +1016,7 @@ class NetworkSet:
             )
         return df
 
-    def interpolate_from_network(self, ntw_param: ArrayLike, x: float, interp_kind: str = 'linear'):
+    def interpolate_from_network(self, ntw_param: ArrayLike, x: float, interp_kind: str | int = 'linear'):
         """
         Interpolate a Network from a NetworkSet, as a multi-file N-port network.
 
@@ -1034,10 +1034,13 @@ class NetworkSet:
             to the length of the NetworkSet
         x : real
             Point to evaluate the interpolated network at
-        interp_kind: str
-            Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic',
-            'cubic'. See :class:`scipy.interpolate.interp1d` for detailed description.
+        interp_kind: str or int
+            Specifies the kind of interpolation as a string or an int: 'linear', 'nearest', 'zero', 'slinear',
+            'quadratic', 'cubic'. If using an int, it describes the order of the spline interpolator.
+            See :class:`scipy.interpolate.interp1d` for detailed description.
             Default is 'linear'.
+            Duplicated values in `ntw_param` may cause the interpolation to
+            fail depending on the `interp_kind` used.
 
         Returns
         -------
@@ -1345,9 +1348,16 @@ class NetworkSet:
 
 
     def interpolate_from_params(self, param: str, x: float,
-                                sub_params: dict=None, interp_kind: str = 'linear'):
+                                sub_params: dict=None, interp_kind: str | int = 'linear'):
         """
         Interpolate a Network from given parameters of NetworkSet's Networks.
+
+        If several Networks share the same value of `param`, they are
+        averaged (mean of the scattering parameters) before interpolation,
+        so duplicated parameter values are accepted for every `interp_kind`.
+        If the parameters other than `param` are not fixed by `sub_params`
+        and take several values in the NetworkSet, the interpolation is
+        ambiguous and a ValueError is raised.
 
         Parameters
         ----------
@@ -1359,9 +1369,11 @@ class NetworkSet:
             Dictionary of parameter/values to filter the NetworkSet,
             if necessary to avoid an ambiguity.
             Default is empty dict.
-        interp_kind: str
-            Specifies the kind of interpolation as a string: 'linear', 'nearest',
-            'zero', 'slinear', 'quadratic', 'cubic'.
+        interp_kind: str or int
+            Specifies the kind of interpolation as a string or an int:
+            'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.
+            If using an int, it describes the order of the spline
+            interpolator.
             Cf :class:`scipy.interpolate.interp1d` for detailed description.
             Default is 'linear'.
 
@@ -1425,7 +1437,35 @@ class NetworkSet:
 
         # interpolating the sub-NetworkSet matching the passed sub-parameters
         sub_ns = self.sel(sub_params)
-        interp_ntwk = sub_ns.interpolate_from_network(sub_ns.coords[param],
+
+        if len(sub_ns) == 0:
+            raise ValueError('No Network matches the passed sub-parameters.')
+
+        # the interpolation must not be ambiguous: once the sub-parameters
+        # are fixed, every other parameter must be constant in the
+        # sub-NetworkSet, otherwise the interpolation could be performed
+        # along different combinations of the other parameters
+        for p in sub_ns.dims:
+            if p != param and len(sub_ns.coords[p]) > 1:
+                raise ValueError(
+                    f'Ambiguous interpolation: parameter {p} takes multiple '
+                    f'values {sub_ns.coords[p]} in the selected NetworkSet. '
+                    f'Use sub_params to select a single value of {p}.')
+
+        # parameter value associated to each Network of the sub-NetworkSet
+        param_values = sub_ns.params_values[param]
+
+        # Networks sharing the same parameter value are averaged, so that
+        # the interpolation is performed on unique (sorted) parameter
+        # values: scipy.interpolate.interp1d does not accept duplicated
+        # values for all the interpolation kinds
+        unique_values = sorted(set(param_values))
+        if len(unique_values) != len(param_values):
+            sub_ns = NetworkSet([sub_ns.sel({param: value}).mean_s
+                                 for value in unique_values])
+            param_values = unique_values
+
+        interp_ntwk = sub_ns.interpolate_from_network(param_values,
                                                       x, interp_kind)
 
         return interp_ntwk

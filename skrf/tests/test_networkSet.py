@@ -361,6 +361,37 @@ class NetworkSetTestCase(unittest.TestCase):
         ns2 = NetworkSet([ntwk0, ntwk1])
         self.assertTrue(np.all(ns2.interpolate_from_params("s", 0.3).s == 0.3))
 
+    def test_interpolate_from_params_duplicated_values(self):
+        """Duplicated parameter values in interpolate_from_params (#999)"""
+        f1 = rf.Frequency(1, 1, 1, unit="GHz")
+
+        def ntwk(s_val, param_val):
+            return rf.Network(frequency=f1, s=[[s_val]], params={"s": param_val})
+
+        # duplicated value 1: the two Networks sharing it are averaged,
+        # for every interpolation kind (scipy's interp1d rejects duplicated
+        # values for quadratic/cubic interpolations)
+        ns = NetworkSet([ntwk(0.0, 0), ntwk(0.6, 1), ntwk(1.4, 1), ntwk(2.0, 2)])
+        for kind in ("linear", "quadratic"):
+            interp = ns.interpolate_from_params("s", 1.0, interp_kind=kind)
+            np.testing.assert_allclose(interp.s, 1.0)  # mean of 0.6 and 1.4
+            interp = ns.interpolate_from_params("s", 0.5, interp_kind=kind)
+            np.testing.assert_allclose(interp.s, 0.5)
+
+        # example of issue #999: duplicated values in a larger NetworkSet
+        # (enough unique values to also exercise cubic interpolation)
+        vals = [1, 2, 2, 3, 4, 20, 50, 100]
+        ns_issue = NetworkSet([ntwk(float(v), v) for v in vals])
+        for kind in ("linear", "quadratic", "cubic"):
+            interp = ns_issue.interpolate_from_params("s", 5.0, interp_kind=kind)
+            np.testing.assert_allclose(interp.s, 5.0)
+
+        # unordered (but unique) parameter values must stay paired with
+        # their own Network
+        ns_unordered = NetworkSet([ntwk(v, v) for v in (3.0, 1.0, 4.0, 2.0)])
+        interp = ns_unordered.interpolate_from_params("s", 1.5)
+        np.testing.assert_allclose(interp.s, 1.5)
+
     def test_params_values(self):
         """Test the dictionary containing all parameters names and values"""
         # returns None when no parameters are defined in a NetworkSet
