@@ -87,7 +87,6 @@ class VectorFittingTestCase(unittest.TestCase):
 
         self.assertTrue(np.all(abs_real_errors < 1e-10))
 
-
     def test_read_write_npz(self):
         # fit ring slot example network
         nw = skrf.data.ring_slot
@@ -142,6 +141,16 @@ class VectorFittingTestCase(unittest.TestCase):
         vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
         vf.auto_fit()
         self.assertLess(vf.get_rms_error(), 1e-05)
+
+    def test_autofit_iteration_limit(self):
+        # an error target of 0 and a tiny alpha keep the adding and skimming loop running until the pass limit
+        # stops it (alpha must stay above 0, the loop starts with delta_eps = 10 * alpha)
+        vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
+        vf.max_iterations = 2
+
+        with pytest.warns(RuntimeWarning, match='adding and skimming loop'):
+            vf.auto_fit(target_error=0.0, alpha=1e-9)
+            self.assertGreater(len(vf.delta_max_history), vf.max_iterations)
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(VectorFittingTestCase)
