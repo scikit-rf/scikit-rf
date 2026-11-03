@@ -1353,8 +1353,12 @@ class NetworkSet:
         Interpolate a Network from given parameters of NetworkSet's Networks.
 
         If several Networks share the same value of `param`, they are
-        averaged (mean of the scattering parameters) before interpolation,
-        so duplicated parameter values are accepted for every `interp_kind`.
+        averaged before interpolation: the element-wise arithmetic mean
+        of their complex scattering parameters is used. Duplicated
+        parameter values are therefore accepted for every `interp_kind`,
+        provided the number of distinct values still satisfies the point
+        requirement of the chosen `interp_kind` (for example, 'cubic'
+        requires at least four distinct values).
         If the parameters other than `param` are not fixed by `sub_params`
         and take several values in the NetworkSet, the interpolation is
         ambiguous and a ValueError is raised.
