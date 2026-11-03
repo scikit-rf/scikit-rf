@@ -103,8 +103,8 @@ class VectorFitting:
 
         self.max_iterations = 100
         """ Instance variable specifying the maximum number of iterations for the fitting process and for the passivity
-        enforcement. To be changed by the user before calling :func:`vector_fit`, :func:`auto_fit()`, or 
-        :func:`passivity_enforce`. In :func:`auto_fit()`, it limits the number of iterations within the intermediate 
+        enforcement. To be changed by the user before calling :func:`vector_fit`, :func:`auto_fit()`, or
+        :func:`passivity_enforce`. In :func:`auto_fit()`, it limits the number of iterations within the intermediate
         adding and skimming loop."""
 
         self.max_tol = 1e-6
