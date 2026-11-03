@@ -79,6 +79,10 @@ plot = [
     "matplotlib >=3.5"
 ]
 
+plotly = [
+    "plotly >=5.15"
+]
+
 xlsx = [
     "openpyxl >=3.0"
 ]

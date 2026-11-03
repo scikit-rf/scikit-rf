@@ -58,7 +58,13 @@ from numpy import (
 
 from . import constants as _constants
 from .constants import FREQ_UNITS, ZERO
-from .plotting import axes_kwarg
+from .plotting import (
+    _get_plotly_figure,
+    _plotly_frequency_x,
+    _plotly_rectangular,
+    _resolve_backend,
+    _validate_plot_args,
+)
 from .util import find_nearest_index, slice_domain
 
 
@@ -718,8 +724,8 @@ class Frequency:
             sweep_type = 'unknown'
         return sweep_type
 
-    @axes_kwarg
-    def labelXAxis(self, ax: Axes = None):
+    @_validate_plot_args
+    def labelXAxis(self, ax: Axes = None, *, fig=None, backend: str | None = None):
         """
         Label the x-axis of a plot.
 
@@ -731,21 +737,47 @@ class Frequency:
         ax : :class:`matplotlib.Axes` or None, optional
                 Axes on which to label the plot.
                 Defaults is None, for the current axe
-                returned by :func:`matplotlib.gca()`
+                returned by :func:`matplotlib.gca()`.
+        fig : plotly Figure, optional
+            figure to draw on with the plotly backend.
+        backend : {'matplotlib', 'plotly'}, optional
+                plotting backend, default ``skrf.plotting.options.backend``.
+
+        Returns
+        -------
+        None, or the plotly Figure with the plotly backend
         """
+        if _resolve_backend(backend, ax, fig) == 'plotly':
+            return _get_plotly_figure(fig).update_layout(xaxis_title_text=f'Frequency ({self.unit})')
+        else:
+            import matplotlib.pyplot as plt
 
-        ax.set_xlabel(f'Frequency ({self.unit})')
+            if ax is None:
+                ax = plt.gca()
 
-    @axes_kwarg
-    def plot(self, y: NumberLike, *args, ax: Axes=None, **kwargs):
+            ax.set_xlabel(f'Frequency ({self.unit})')
+
+    @_validate_plot_args
+    def plot(self, y: NumberLike, *args, ax: Axes=None, fig=None, backend: str | None = None, **kwargs):
         """
         Plot something vs this frequency.
 
         This plots whatever is given vs. `self.f_scaled` and then
-        calls `labelXAxis`.
+        calls `labelXAxis`. With the plotly `backend` (default
+        ``skrf.plotting.options.backend``), it draws on the plotly Figure
+        `fig`, or a new one, and returns it.
         """
 
         from .plotting import scale_frequency_ticks
+
+        backend = _resolve_backend(backend, ax, fig)
+        if backend == 'plotly':
+            fig = _get_plotly_figure(fig)
+        else:
+            import matplotlib.pyplot as plt
+
+            if ax is None:
+                ax = plt.gca()
 
         try:
             if len(np.shape(y)) > 2:
@@ -755,8 +787,8 @@ class Frequency:
                     # the dimensions are full, so lets loop and plot each
                     for m in range(np.shape(y)[1]):
                         for n in range(np.shape(y)[2]):
-                            self.plot(y[:, m, n], *args, **kwargs)
-                    return
+                            self.plot(y[:, m, n], *args, fig=fig, backend=backend, **kwargs)
+                    return fig
             if len(y) == len(self):
                 pass
             else:
@@ -766,11 +798,17 @@ class Frequency:
         except(TypeError):
             y = y * np.ones(len(self))
 
-        # plt.plot(self.f_scaled, y, *args, **kwargs)
-        ax.plot(self.f, y, *args, **kwargs)
-        scale_frequency_ticks(ax, self.unit)
-        ax.autoscale(axis='x', tight=True)
-        self.labelXAxis()
+        if backend == 'plotly':
+            x, x_label = _plotly_frequency_x(fig, self)
+            for column in np.reshape(y, (len(self), -1)).T:
+                _plotly_rectangular(x, column, *args, x_label=x_label, fig=fig, **kwargs)
+            return fig
+        else:
+            # plt.plot(self.f_scaled, y, *args, **kwargs)
+            ax.plot(self.f, y, *args, **kwargs)
+            scale_frequency_ticks(ax, self.unit)
+            ax.autoscale(axis='x', tight=True)
+            self.labelXAxis(backend='matplotlib')
 
 
 def overlap_freq(f1: Frequency,f2: Frequency) -> Frequency:
