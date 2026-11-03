@@ -103,7 +103,9 @@ class VectorFitting:
 
         self.max_iterations = 100
         """ Instance variable specifying the maximum number of iterations for the fitting process and for the passivity
-        enforcement. To be changed by the user before calling :func:`vector_fit` and/or :func:`passivity_enforce`. """
+        enforcement. To be changed by the user before calling :func:`vector_fit`, :func:`auto_fit()`, or 
+        :func:`passivity_enforce`. In :func:`auto_fit()`, it limits the number of iterations within the intermediate 
+        adding and skimming loop."""
 
         self.max_tol = 1e-6
         """ Instance variable specifying the convergence criterion in terms of relative tolerance. To be changed by the
@@ -579,9 +581,14 @@ class VectorFitting:
         model_order_history.append(model_order)
 
         delta_eps = 10 * alpha
+        n_passes = 0
+        n_passes_max = self.max_iterations // iters_inter
 
         # POLE SKIMMING AND ADDING LOOP
-        while error_peak > target_error and model_order < model_order_max and delta_eps > alpha:
+        while (error_peak > target_error and model_order < model_order_max and delta_eps > alpha and
+               n_passes < n_passes_max):
+
+            n_passes += 1
 
             # SKIMMING OF SPURIOUS POLES
             spurious = self.get_spurious(poles, residues, gamma=gamma)
@@ -668,6 +675,12 @@ class VectorFitting:
 
             model_order = self.get_model_order(poles)
             model_order_history.append(model_order)
+
+        if n_passes == n_passes_max:
+            warnings.warn(
+                'Vector Fitting: The adding and skimming loop of auto_fit() stopped after reaching the '
+                f'maximum number of iterations (N_max = {self.max_iterations}). The results might not be optimal.',
+                RuntimeWarning, stacklevel=2)
 
         # SKIMMING OF SPURIOUS POLES
         spurious = self.get_spurious(poles, residues, gamma=gamma)
