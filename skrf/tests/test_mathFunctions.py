@@ -174,6 +174,23 @@ class TestUnitConversions(unittest.TestCase):
         y = np.array([0, INF, 0, -INF])
         assert_equal(mFuncs.inf_to_num(x), y)
 
+    def test_sqrt_known_sign(self):
+        """
+        Test that the result squares back to z_squared, with the root
+        chosen by the sign of z_approx
+        """
+        # principal root already has the requested sign
+        assert_almost_equal(mFuncs.sqrt_known_sign(2j, 1+1j), 1+1j)
+        # negated root is requested, conjugate is not a square root
+        assert_almost_equal(mFuncs.sqrt_known_sign(2j, -1-1j), -1-1j)
+        assert_almost_equal(mFuncs.sqrt_known_sign(4, -2), -2)
+
+        # array: z_approx equals the exact root in every quadrant/axis
+        z = np.array([1+1j, -1-1j, 1-1j, -1+1j, 2, -2, 3j, -3j])
+        r = mFuncs.sqrt_known_sign(z * z, z)
+        np.testing.assert_allclose(r, z)
+        np.testing.assert_allclose(r * r, z * z)
+
     def test_rsolve(self):
         rng = np.random.default_rng()
         A = rng.random((3, 2, 2)) + 1j*rng.random((3, 2, 2))
