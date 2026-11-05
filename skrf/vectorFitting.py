@@ -613,6 +613,9 @@ class VectorFitting:
 
             for i in range(n_add):
                 omega_add = omega_norm[idx_freqs_max[i]]
+                if omega_add == 0.0:
+                    # omega = 0 will cause division by zero; increase frequency slightly by 'nu'
+                    omega_add += nu
                 pole_add = (-0.01 + 1j) * omega_add
 
                 # compute distance to neighbouring poles
