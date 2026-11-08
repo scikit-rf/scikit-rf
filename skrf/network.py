@@ -1209,11 +1209,11 @@ class Network:
         ----------
         .. [#] https://en.wikipedia.org/wiki/Two-port_network#Inverse_hybrid_parameters_(g-parameters)
         """
-        return s2g(self.s, self.z0)
+        return s2g(self.s, self.z0, s_def=self.s_def)
 
     @g.setter
     def g(self, value: np.ndarray) -> None:
-        self._s = g2s(fix_param_shape(value), self.z0)
+        self._s = g2s(fix_param_shape(value), self.z0, s_def=self.s_def)
 
     @property
     def h(self) -> np.ndarray:
@@ -1244,11 +1244,11 @@ class Network:
         ----------
         .. [#] http://en.wikipedia.org/wiki/Two-port_network#Hybrid_parameters_(h-parameters)
         """
-        return s2h(self.s, self.z0)
+        return s2h(self.s, self.z0, s_def=self.s_def)
 
     @h.setter
     def h(self, value: np.ndarray) -> None:
-        self._s = h2s(fix_param_shape(value), self.z0)
+        self._s = h2s(fix_param_shape(value), self.z0, s_def=self.s_def)
 
     @property
     def y(self) -> np.ndarray:
@@ -1416,11 +1416,11 @@ class Network:
         ----------
         .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         """
-        return s2a(self.s, self.z0)
+        return s2a(self.s, self.z0, s_def=self.s_def)
 
     @a.setter
     def a(self, value: np.ndarray) -> None:
-        self._s = a2s(fix_param_shape(value), self.z0)
+        self._s = a2s(fix_param_shape(value), self.z0, s_def=self.s_def)
 
     @property
     def z0(self) -> np.ndarray:
@@ -7455,6 +7455,8 @@ def s2s(s: NumberLike, z0: NumberLike, s_def_new: SdefT, s_def_old: SdefT):
         # definition (power or travelling) does not make a difference.
         return s
 
+    s = np.asarray(s, dtype=complex)
+
     # Calculate port voltages and currents using the old s_def.
     F, G = np.zeros_like(s), np.zeros_like(s)
     if s_def_old == 'power':
@@ -7693,7 +7695,7 @@ def z2t(z: np.ndarray) -> NoReturn:
     raise (NotImplementedError)
 
 
-def a2s(a: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
+def a2s(a: np.ndarray, z0: NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     """
     Convert abcd parameters to s parameters.
 
@@ -7703,11 +7705,16 @@ def a2s(a: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
         abcd parameters
     z0 : complex array-like or number
         port impedances
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
+        Scattering parameter definition of the output: 'power' for power-waves definition,
+        'pseudo' for pseudo-waves definition.
+        'traveling' corresponds to the initial implementation.
+        The definition matters only if `z0` has complex values.
 
     Returns
     -------
     s : complex array-like
-        abcd parameters
+        scattering parameters
 
     """
     nfreqs, nports, nports = a.shape
@@ -7724,6 +7731,7 @@ def a2s(a: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
     D = a[:,1,1]
     denom = A*z02 + B + C*z01*z02 + D*z01
 
+    # The closed-form expressions below give power-waves.
     s = np.array([
         [
             (A*z02 + B - C*z01.conj()*z02 - D*z01.conj() ) / denom,
@@ -7734,9 +7742,7 @@ def a2s(a: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
             (-A*z02.conj() + B - C*z01*z02.conj() + D*z01) / denom,
         ],
     ]).transpose()
-    return s
-
-    #return z2s(a2z(a), z0)
+    return s2s(s, z0, s_def, 'power')
 
 
 
@@ -7833,7 +7839,7 @@ def z2a(z: np.ndarray) -> np.ndarray:
     return abcd
 
 
-def s2a(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
+def s2a(s: np.ndarray, z0: NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     """
     Convert scattering parameters to abcd parameters [#]_.
 
@@ -7844,6 +7850,12 @@ def s2a(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
 
     z0: number or, :class:`numpy.ndarray` (shape `fx2`)
         port impedance
+
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
+        Scattering parameter definition of `s`: 'power' for power-waves definition,
+        'pseudo' for pseudo-waves definition.
+        'traveling' corresponds to the initial implementation.
+        The definition matters only if `z0` has complex values.
 
     Returns
     -------
@@ -7861,6 +7873,9 @@ def s2a(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
         raise IndexError('abcd parameters are defined for 2-ports networks only')
 
     z0 = fix_z0_shape(z0, nfreqs, nports)
+    # The closed-form expressions below are for power-waves. Going through
+    # power-waves instead of Z keeps ideal through (singular Z) supported.
+    s = s2s(s, z0, 'power', s_def)
     z01 = z0[:,0]
     z02 = z0[:,1]
     denom = (2*s[:,1,0]*np.sqrt(z01.real * z02.real))
@@ -8290,7 +8305,7 @@ def h2z(h: np.ndarray) -> np.ndarray:
     return z2h(h)
 
 
-def h2s(h: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
+def h2s(h: np.ndarray, z0: NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     """
     Convert hybrid parameters to s parameters.
 
@@ -8300,6 +8315,11 @@ def h2s(h: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
         hybrid parameters
     z0 : complex array-like or number
         port impedances
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
+        Scattering parameter definition of the output: 'power' for power-waves definition,
+        'pseudo' for pseudo-waves definition.
+        'traveling' corresponds to the initial implementation.
+        The definition matters only if `z0` has complex values.
 
     Returns
     -------
@@ -8308,10 +8328,10 @@ def h2s(h: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
 
     """
 
-    return z2s(h2z(h), z0)
+    return z2s(h2z(h), z0, s_def)
 
 
-def s2h(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
+def s2h(s: np.ndarray, z0: NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     """
     Convert scattering parameters [#]_ to hybrid parameters [#]_.
 
@@ -8322,6 +8342,11 @@ def s2h(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
         scattering parameters
     z0 : complex array-like or number
         port impedances.
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
+        Scattering parameter definition of `s`: 'power' for power-waves definition,
+        'pseudo' for pseudo-waves definition.
+        'traveling' corresponds to the initial implementation.
+        The definition matters only if `z0` has complex values.
 
     Returns
     -------
@@ -8336,7 +8361,7 @@ def s2h(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
     .. [#] http://en.wikipedia.org/wiki/Two-port_network#Hybrid_parameters_(h-parameters)
 
     """
-    return z2h(s2z(s, z0))
+    return z2h(s2z(s, z0, s_def))
 
 
 def z2h(z: np.ndarray) -> np.ndarray:
@@ -8387,7 +8412,7 @@ def z2h(z: np.ndarray) -> np.ndarray:
     ]).transpose()
     return h
 
-def g2s(g: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
+def g2s(g: np.ndarray, z0: NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     """
     Convert inverse hybrid parameters to s parameters.
 
@@ -8397,6 +8422,11 @@ def g2s(g: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
         inverse hybrid parameters
     z0 : complex array-like or number
         port impedances
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
+        Scattering parameter definition of the output: 'power' for power-waves definition,
+        'pseudo' for pseudo-waves definition.
+        'traveling' corresponds to the initial implementation.
+        The definition matters only if `z0` has complex values.
 
     Returns
     -------
@@ -8404,11 +8434,11 @@ def g2s(g: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
         scattering parameters
 
     """
-    return h2s(np.linalg.inv(g), z0)
+    return h2s(np.linalg.inv(g), z0, s_def)
 
-def s2g(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
+def s2g(s: np.ndarray, z0: NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.ndarray:
     """
-    Convert inverse hybrid parameters to s parameters.
+    Convert scattering parameters to inverse hybrid parameters.
 
     Parameters
     ----------
@@ -8416,6 +8446,11 @@ def s2g(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
         scattering parameters
     z0 : complex array-like or number
         port impedances
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
+        Scattering parameter definition of `s`: 'power' for power-waves definition,
+        'pseudo' for pseudo-waves definition.
+        'traveling' corresponds to the initial implementation.
+        The definition matters only if `z0` has complex values.
 
     Returns
     -------
@@ -8423,7 +8458,7 @@ def s2g(s: np.ndarray, z0: NumberLike = 50) -> np.ndarray:
         inverse hybrid parameters
 
     """
-    return z2h(s2y(s, z0))
+    return z2h(s2y(s, z0, s_def))
 
 
 ## these methods are used in the secondary properties
