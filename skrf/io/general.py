@@ -255,7 +255,7 @@ def write(file, obj, overwrite = True):
         fid.close()
 
 def read_all(dir: str | Path = '.', sort = True, contains = None, f_unit = None,
-        obj_type=None, files: list=None, recursive=False) -> dict:
+        obj_type=None, files: list | None = None, recursive=False) -> dict:
     """
     Read all skrf objects in a directory.
 
@@ -635,7 +635,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
     if remove_tmp_file:
         os.rename(new_file_name,file_name)
 
-def network_2_spreadsheet(ntwk: Network, file_name: str | Path = None,
+def network_2_spreadsheet(ntwk: Network, file_name: str | Path | None = None,
         file_type: str = 'excel', form: str ='db', *args, **kwargs):
     r"""
     Write a Network object to a spreadsheet, for your boss.
@@ -718,8 +718,8 @@ def network_2_spreadsheet(ntwk: Network, file_name: str | Path = None,
     df.__getattribute__(f'to_{file_type}')(file_name,
         index_label=f'Freq({ntwk.frequency.unit})', **kwargs)
 
-def network_2_dataframe(ntwk: Network, attrs: list[str] =None,
-        ports: list[tuple[int, int]] = None, port_sep: str | None = None):
+def network_2_dataframe(ntwk: Network, attrs: list[str] | None = None,
+        ports: list[tuple[int, int]] | None = None, port_sep: str | None = None):
     """
     Convert one or more attributes of a network to a pandas DataFrame.
 
@@ -759,7 +759,7 @@ def network_2_dataframe(ntwk: Network, attrs: list[str] =None,
             d[f'{attr} {m+1}{port_sep}{n+1}'] = attr_array[:, m, n]
     return DataFrame(d, index=ntwk.frequency.f)
 
-def networkset_2_spreadsheet(ntwkset: NetworkSet, file_name: str = None, file_type: str = 'excel',
+def networkset_2_spreadsheet(ntwkset: NetworkSet, file_name: str | None = None, file_type: str = 'excel',
     *args, **kwargs):
     r"""
     Write a NetworkSet object to a spreadsheet, for your boss.
