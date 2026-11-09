@@ -376,8 +376,8 @@ class Network:
     """
 
     # CONSTRUCTOR
-    def __init__(self, file: str = None, name: str = None, params: dict = None,
-                 comments: str = None, f_unit: FrequencyUnitT | None = None,
+    def __init__(self, file: str | None = None, name: str | None = None, params: dict | None = None,
+                 comments: str | None = None, f_unit: FrequencyUnitT | None = None,
                  s_def: SdefT | None = None, **kwargs) -> None:
         r"""
         Network constructor.
@@ -2618,11 +2618,11 @@ class Network:
         ntwk = Network(fileobj)
         return ntwk
 
-    def write_touchstone(self, filename: str | Path = None, dir: str | Path = None,
+    def write_touchstone(self, filename: str | Path | None = None, dir: str | Path | None = None,
                          write_z0: bool = False, skrf_comment: bool = True,
-                         return_string: bool = False, to_archive: bool = None,
+                         return_string: bool = False, to_archive: bool | None = None,
                          form: SparamFormatT = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
-                         format_spec_freq: str = '{}', r_ref: float = None,
+                         format_spec_freq: str = '{}', r_ref: float | None = None,
                          format_spec_nf_freq: str = '{}', format_spec_nf_min: str = '{}',
                          format_spec_g_opt_mag: str = '{}', format_spec_g_opt_phase: str = '{}',
                          format_spec_rn: str = '{}', write_noise: bool = True,
@@ -3082,7 +3082,7 @@ class Network:
         from .io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
 
-    def to_dataframe(self, attrs: list[str] =None,
+    def to_dataframe(self, attrs: list[str] | None = None,
             ports: list[tuple[int, int]] = None, port_sep: str | None = None):
         """
         Convert attributes of a Network to a pandas DataFrame.
@@ -3915,7 +3915,7 @@ class Network:
         return connect(self, port, l, 0)
 
     def windowed(self, window: str | float | tuple[str, float] | Callable =('kaiser', 6),
-            normalize: bool = True, center_to_dc: bool = None) -> Network:
+            normalize: bool = True, center_to_dc: bool | None = None) -> Network:
         """
         Return a windowed version of s-matrix. Used in time-domain analysis.
 
@@ -4188,7 +4188,7 @@ class Network:
         return s_error(ntwkA=self, ntwkB=ntwk, error_function=error_function)
 
     # generalized mixed mode transformations
-    def se2gmm(self, p: int, z0_mm: np.ndarray = None, s_def : str = None) -> None:
+    def se2gmm(self, p: int, z0_mm: np.ndarray = None, s_def : str | None = None) -> None:
         """
         Transform network from single ended parameters to generalized mixed mode parameters [#]_.
 
@@ -4346,7 +4346,7 @@ class Network:
         self.s = mf.rsolve(B, A)
         self.z0 = z0_mm
 
-    def gmm2se(self, p: int, z0_se: NumberLike = None, s_def : str = None) -> None:
+    def gmm2se(self, p: int, z0_se: NumberLike = None, s_def : str | None = None) -> None:
         """
         Transform network from generalized mixed mode parameters [#]_ to single ended parameters.
 
