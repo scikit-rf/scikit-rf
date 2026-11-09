@@ -490,7 +490,7 @@ class Touchstone:
         self._parse_dict_v2: dict[str, Callable[[str], None]] = {
             "[number of ports]": lambda x: setattr(state, "rank", int(x.split()[3])),
             "[reference]": lambda x: setattr(
-                state, "resistance", self._parse_n_floats(line=x, fid=fid, n=state.rank, before_comment=True)
+                self, "reference", self._parse_n_floats(line=x, fid=fid, n=state.rank, before_comment=True)
             ),
             "[number of frequencies]": lambda x: setattr(self, "frequency_nb", int(x.split()[3])),
             "[matrix format]": lambda x: setattr(state, "matrix_format", x.split()[2].lower()),
@@ -601,7 +601,7 @@ class Touchstone:
         elif self.reference is None:
             self.z0 = np.broadcast_to(self.resistance, (len(state.f), state.rank)).copy()
         else:
-            self.z0 = np.empty((len(state.f), state.rank), dtype=complex).fill(self.reference)
+            self.z0 = np.broadcast_to(self.reference, (len(state.f), state.rank)).copy()
 
         self.f = np.array(state.f)
         if not len(self.f):
