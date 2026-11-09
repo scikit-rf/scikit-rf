@@ -13,7 +13,6 @@ Media class.
 """
 from __future__ import annotations
 
-import re
 import warnings
 from abc import ABC, abstractmethod
 from copy import deepcopy as copy
@@ -1111,7 +1110,7 @@ class Media(ABC):
 
         """
         if isinstance(z0, str):
-            z0 = self.parse_z0(z0) * self.z0
+            z0 = parse_z0(z0) * self.z0
 
         if z0 is None:
             z0 = self.z0
@@ -1995,14 +1994,15 @@ def parse_z0(s: str) -> NumberLike:
         If could not arse the z0 string.
     """
     # they passed a string for z0, try to parse it
-    re_numbers = re.compile(r'\d+')
-    numbers = re.findall(re_numbers, s)
-    if len(numbers)==2:
-        out = float(numbers[0]) +1j*float(numbers[1])
-    elif len(numbers)==1:
-        out = float(numbers[0])
-    else:
-        raise ValueError('couldnt parse z0 string')
+    # whitespace is ignored, so that e.g. '50 + 10j' is accepted
+    s_compact = ''.join(s.split())
+    try:
+        out = complex(s_compact)
+    except ValueError as err:
+        raise ValueError(f'couldnt parse z0 string {s!r}') from err
+    if 'j' not in s_compact.lower():
+        # real input gives a real impedance
+        out = out.real
     return out
 
 def get_z0_load(z0: np.ndarray,  port_idx: int) -> np.ndarray:

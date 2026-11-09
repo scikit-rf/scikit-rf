@@ -8,6 +8,7 @@ from numpy.testing import assert_array_almost_equal
 from skrf.constants import S_DEF_DEFAULT
 from skrf.frequency import Frequency
 from skrf.media import DefinedGammaZ0
+from skrf.media.media import parse_z0
 from skrf.network import Network, concat_ports, connect
 
 
@@ -626,6 +627,74 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
             line = self.dummy_media.line_floating(d, unit, z0)
             ref_line = yparam_ref(self.dummy_media, d, unit, z0)
             assert_array_almost_equal(ref_line.s, line.s)
+
+    def test_parse_z0(self):
+        """
+        Test that z0 strings are parsed to their mathematical values.
+        Real strings give a float, strings with an imaginary part a complex.
+        """
+        cases = {
+            '2': 2.,
+            '50': 50.,
+            ' 2 ': 2.,
+            '1.5': 1.5,
+            '1e1': 10.,
+            '50+10j': 50+10j,
+            '50 + 10j': 50+10j,
+            '1+.2j': 1+.2j,
+            '1-.5j': 1-.5j,
+            '-1-2j': -1-2j,
+            '.2j': .2j,
+        }
+        for s, expected in cases.items():
+            with self.subTest(s=s):
+                z0 = parse_z0(s)
+                self.assertEqual(z0, expected)
+                self.assertEqual(isinstance(z0, complex), 'j' in s)
+
+    def test_parse_z0_invalid(self):
+        """
+        Test that unparsable z0 strings raise a ValueError.
+        """
+        for s in ('', 'abc', '50ohm', '1+2j+3'):
+            with self.subTest(s=s):
+                with self.assertRaises(ValueError):
+                    parse_z0(s)
+
+    def test_string_z0(self):
+        """
+        Test that a string z0 is a normalized impedance for match, line and
+        line_floating, e.g. z0='1+.2j' is (1+.2j) times the media z0.
+        """
+        for s, factor in (('2', 2), ('1+.2j', 1+.2j), ('50+10j', 50+10j)):
+            z0 = factor * self.dummy_media.z0
+            with self.subTest(s=s, method='match'):
+                ntwk = self.dummy_media.match(nports=2, z0=s)
+                assert_array_almost_equal(ntwk.z0[:, 0], z0)
+                assert_array_almost_equal(ntwk.z0[:, 1], z0)
+            with self.subTest(s=s, method='line'):
+                ntwk = self.dummy_media.line(90, 'deg', z0=s)
+                ref = self.dummy_media.line(90, 'deg', z0=z0)
+                assert_array_almost_equal(ntwk.z0[:, 0], z0)
+                assert_array_almost_equal(ntwk.z0, ref.z0)
+                assert_array_almost_equal(ntwk.s, ref.s)
+            with self.subTest(s=s, method='line_floating'):
+                ntwk = self.dummy_media.line_floating(90, 'deg', z0=s)
+                ref = self.dummy_media.line_floating(90, 'deg', z0=z0)
+                self.assertEqual(ntwk.nports, 4)
+                assert_array_almost_equal(ntwk.z0[:, 0], z0)
+                assert_array_almost_equal(ntwk.z0, ref.z0)
+                assert_array_almost_equal(ntwk.s, ref.s)
+
+    def test_line_floating_z0_array(self):
+        """
+        Test that line_floating accepts an array z0, equal to the scalar case.
+        """
+        z0 = 75 * np.ones(len(self.dummy_media))
+        ntwk = self.dummy_media.line_floating(90, 'deg', z0=z0)
+        ref = self.dummy_media.line_floating(90, 'deg', z0=75)
+        assert_array_almost_equal(ntwk.z0, ref.z0)
+        assert_array_almost_equal(ntwk.s, ref.s)
 
     def test_scalar_gamma_z0_media(self):
         """
