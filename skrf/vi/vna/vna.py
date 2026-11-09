@@ -9,7 +9,8 @@ Provides the VNA base class
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     pass
@@ -293,7 +294,7 @@ class VNA:
 
         return fn(cmd, values, **kwargs)
 
-    def query(self, cmd, **kwargs) -> None:
+    def query(self, cmd, **kwargs) -> str:
         logger.debug(f"Query with command: {cmd}")
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             fn = self._resource.query
@@ -304,16 +305,16 @@ class VNA:
 
         return fn(cmd, **kwargs)
 
-    def query_values(self, cmd, complex_values: bool = False, **kwargs) -> None:
+    def query_values(self, cmd, complex_values: bool = False, **kwargs) -> Sequence[Any]:
         logger.debug(f"Query values with command: {cmd}")
 
         if isinstance(self._resource, pyvisa.resources.MessageBasedResource):
             if self._values_fmt == ValuesFormat.ASCII:
-                fn = self._resource.query_ascii_values
+                fn = self._resource.query_ascii_values  # -> Sequence[Any]
             elif self._values_fmt == ValuesFormat.BINARY_32:
-                fn = self._resource.query_binary_values
+                fn = self._resource.query_binary_values  # -> Sequence[int | float]
             elif self._values_fmt == ValuesFormat.BINARY_64:
-                fn = functools.partial(self._resource.query_binary_values, datatype="d")
+                fn = functools.partial(self._resource.query_binary_values, datatype="d")  # -> Sequence[int | float]
         elif isinstance(self._resource, pyvisa.resources.RegisterBasedResource):
             raise NotImplementedError()
         else:
