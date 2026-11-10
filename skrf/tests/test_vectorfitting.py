@@ -146,7 +146,7 @@ class VectorFittingTestCase(unittest.TestCase):
         # an error target of 0 and a tiny alpha keep the adding and skimming loop running until the pass limit
         # stops it (alpha must stay above 0, the loop starts with delta_eps = 10 * alpha)
         vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
-        vf.max_iterations = 2
+        vf.max_iterations = 6       # adding/skimming loop will run for 6/3=2 passes (iters_inter=3).
 
         with pytest.warns(RuntimeWarning, match='adding and skimming loop'):
             vf.auto_fit(target_error=0.0, alpha=1e-9)
