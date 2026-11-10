@@ -443,7 +443,8 @@ class VectorFitting:
             Target for the model error to be reached during the refinement process. The actual achievable error is
             bound by the noise in the data. If specified with a number greater than the noise floor, this parameter
             provides another stopping criterion for the refinement process. It therefore affects both the convergence,
-            the final error, and the final model order (number of poles used in the model).
+            the final error, and the final model order (number of poles used in the model). The target error can also
+            be set to zero for maximal accuracy, but the resulting model order might then be overly high.
 
         alpha: float, optional
             Threshold for the error decay to stop the refinement loop in case of error stagnation. This parameter
