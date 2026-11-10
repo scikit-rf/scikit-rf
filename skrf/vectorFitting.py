@@ -583,7 +583,10 @@ class VectorFitting:
 
         delta_eps = 10 * alpha
         n_passes = 0
-        n_passes_max = self.max_iterations // iters_inter
+        if iters_inter > 0:
+            n_passes_max = self.max_iterations // iters_inter
+        else:
+            n_passes_max = self.max_iterations
 
         # POLE SKIMMING AND ADDING LOOP
         while (error_peak > target_error and model_order < model_order_max and delta_eps > alpha and
