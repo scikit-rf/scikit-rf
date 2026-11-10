@@ -103,7 +103,9 @@ class VectorFitting:
 
         self.max_iterations = 100
         """ Instance variable specifying the maximum number of iterations for the fitting process and for the passivity
-        enforcement. To be changed by the user before calling :func:`vector_fit` and/or :func:`passivity_enforce`. """
+        enforcement. To be changed by the user before calling :func:`vector_fit`, :func:`auto_fit()`, or
+        :func:`passivity_enforce`. In :func:`auto_fit()`, it limits the number of iterations within the intermediate
+        adding and skimming loop."""
 
         self.max_tol = 1e-6
         """ Instance variable specifying the convergence criterion in terms of relative tolerance. To be changed by the
@@ -441,7 +443,8 @@ class VectorFitting:
             Target for the model error to be reached during the refinement process. The actual achievable error is
             bound by the noise in the data. If specified with a number greater than the noise floor, this parameter
             provides another stopping criterion for the refinement process. It therefore affects both the convergence,
-            the final error, and the final model order (number of poles used in the model).
+            the final error, and the final model order (number of poles used in the model). The target error can also
+            be set to zero for maximal accuracy, but the resulting model order might then be overly high.
 
         alpha: float, optional
             Threshold for the error decay to stop the refinement loop in case of error stagnation. This parameter
@@ -579,9 +582,17 @@ class VectorFitting:
         model_order_history.append(model_order)
 
         delta_eps = 10 * alpha
+        n_passes = 0
+        if iters_inter > 0:
+            n_passes_max = self.max_iterations // iters_inter
+        else:
+            n_passes_max = self.max_iterations
 
         # POLE SKIMMING AND ADDING LOOP
-        while error_peak > target_error and model_order < model_order_max and delta_eps > alpha:
+        while (error_peak > target_error and model_order < model_order_max and delta_eps > alpha and
+               n_passes < n_passes_max):
+
+            n_passes += 1
 
             # SKIMMING OF SPURIOUS POLES
             spurious = self.get_spurious(poles, residues, gamma=gamma)
@@ -606,6 +617,9 @@ class VectorFitting:
 
             for i in range(n_add):
                 omega_add = omega_norm[idx_freqs_max[i]]
+                if omega_add == 0.0:
+                    # omega = 0 will cause division by zero; increase frequency slightly by 'nu'
+                    omega_add += nu
                 pole_add = (-0.01 + 1j) * omega_add
 
                 # compute distance to neighbouring poles
@@ -657,7 +671,8 @@ class VectorFitting:
                 poles, freqs_norm, freq_responses, fit_constant, fit_proportional, enforce_dc=enforce_dc)
             delta = self._get_delta(poles, residues, constant_coeff, proportional_coeff, freqs_norm, freq_responses,
                                     weights_responses)
-            error_peak_history.append(np.max(delta))
+            error_peak = np.max(delta)
+            error_peak_history.append(error_peak)
 
             m = 3
             if len(error_peak_history) > m:
@@ -667,6 +682,12 @@ class VectorFitting:
 
             model_order = self.get_model_order(poles)
             model_order_history.append(model_order)
+
+        if n_passes == n_passes_max:
+            warnings.warn(
+                'Vector Fitting: The adding and skimming loop of auto_fit() stopped after reaching the '
+                f'maximum number of iterations (N_max = {self.max_iterations}). The results might not be optimal.',
+                RuntimeWarning, stacklevel=2)
 
         # SKIMMING OF SPURIOUS POLES
         spurious = self.get_spurious(poles, residues, gamma=gamma)
