@@ -185,7 +185,7 @@ def slice_domain(x: np.ndarray, domain: tuple):
 
     Parameters
     ----------
-    vector : np.ndarray
+    x : np.ndarray
         an array of values
     domain : tuple
         tuple of (start,stop) values defining the domain over

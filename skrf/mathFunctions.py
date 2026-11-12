@@ -427,7 +427,7 @@ def np_2_db(x: NumberLike):
 
     Parameters
     ----------
-    np : number or array_like
+    x : number or array_like
         A real number or sequence of real numbers
 
     Returns

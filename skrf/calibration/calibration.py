@@ -2121,7 +2121,7 @@ class TwoPortOnePath(TwelveTerm):
 
         Parameters
         ----------
-        network_tuple: tuple, or Network
+        ntwk_tuple: tuple, or Network
             tuple of 2-port Networks in order (forward, reverse) OR
             a single 2-port Network.
 
