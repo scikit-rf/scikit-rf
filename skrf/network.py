@@ -7742,7 +7742,7 @@ def a2s(a: np.ndarray, z0: NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.
             (-A*z02.conj() + B - C*z01*z02.conj() + D*z01) / denom,
         ],
     ]).transpose()
-    return s2s(s, z0, s_def, 'power')
+    return s2s(s, z0, s_def_new=s_def, s_def_old='power')
 
 
 
@@ -7875,7 +7875,7 @@ def s2a(s: np.ndarray, z0: NumberLike = 50, s_def: SdefT = S_DEF_DEFAULT) -> np.
     z0 = fix_z0_shape(z0, nfreqs, nports)
     # The closed-form expressions below are for power-waves. Going through
     # power-waves instead of Z keeps ideal through (singular Z) supported.
-    s = s2s(s, z0, 'power', s_def)
+    s = s2s(s, z0, s_def_new='power', s_def_old=s_def)
     z01 = z0[:,0]
     z02 = z0[:,1]
     denom = (2*s[:,1,0]*np.sqrt(z01.real * z02.real))
