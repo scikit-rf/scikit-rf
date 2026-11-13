@@ -56,6 +56,13 @@ Voltages and Currents
    Circuit.currents
    Circuit.currents_external
 
+Noise
+-----
+.. autosummary::
+   :toctree: generated/
+
+   Circuit.cs_external
+
 Circuit internals
 ------------------
 .. autosummary::
@@ -102,7 +109,7 @@ from typing import TYPE_CHECKING, TypedDict
 import numpy as np
 from typing_extensions import NotRequired, Unpack
 
-from .constants import S_DEF_DEFAULT
+from .constants import K_BOLTZMANN, S_DEF_DEFAULT
 from .media import media
 from .network import Network, connect, innerconnect, s2s
 from .plotting import subplots
@@ -182,7 +189,8 @@ class Circuit:
                  connections: list[list[tuple[Network, int]]],
                  name: str | None = None,
                  *,
-                 auto_reduce: bool = False, **kwargs: Unpack[_REDUCE_OPTIONS]) -> None:
+                 auto_reduce: bool = False,
+                 temperature: float | None = None, **kwargs: Unpack[_REDUCE_OPTIONS]) -> None:
         """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
@@ -203,6 +211,10 @@ class Circuit:
             Suitable for cases where only the S-parameters of the final circuit ports are of interest. Default is False.
             If `check_duplication`, `split_ground` or `max_nports` are provided as kwargs, `auto_reduce` will be
             automatically set to True, as this indicates an intent to use the `reduce_circuit` method.
+        temperature : float or None, optional
+            Physical temperature, in K, of the networks without noise data, for the circuit noise
+            (see :func:`cs_external`). These networks are then taken as passive, with the thermal noise
+            given by Bosma's theorem. Default is None: they are noiseless.
         **kwargs :
             keyword arguments passed to `reduce_circuit` method.
 
@@ -301,6 +313,7 @@ class Circuit:
         """
         self._connections = connections
         self.name = name
+        self.temperature = temperature
 
         # check if all networks have a name
         for cnx in self.connections:
@@ -472,7 +485,7 @@ class Circuit:
             self.connections = connections
             return None
 
-        return Circuit(connections=connections, name=name)
+        return Circuit(connections=connections, name=name, temperature=self.temperature)
 
     @classmethod
     def check_duplicate_names(cls, connections_list: list[tuple[int, tuple[Network, int]]]):
@@ -1406,6 +1419,10 @@ class Circuit:
         """
         Return the Network associated to external ports.
 
+        If the circuit is a 2-port and has noise (a noisy network, or `temperature` set),
+        the Network carries that noise, so that its noise properties (`nf`, `nfmin`, `rn`,
+        `g_opt`, `nf_circle`, ...) can be used. See :func:`cs_external`.
+
         Returns
         -------
         ntw : :class:`~skrf.network.Network`
@@ -1414,12 +1431,82 @@ class Circuit:
         See Also
         --------
         port_names
+        cs_external
         """
         ntw = Network(frequency = self.frequency, z0 = self.port_z0,
                       s = self.s_external, name = self.name)
         # the external ports are named, keep track of which port is where
         ntw.port_names = self.port_names
+
+        if ntw.nports == 2 and (self.temperature is not None or any(n.noisy for n in self.networks_list())):
+            m = _noise_wave_map(ntw.a, ntw.z0)
+            ntw.noise = m @ self.cs_external @ m.conj().swapaxes(-1, -2)
+            ntw.noise_freq = self.frequency
         return ntw
+
+    @property
+    def cs_external(self) -> np.ndarray:
+        r"""
+        Return the noise-wave correlation matrix of the external ports.
+
+        This is :math:`C_S = \langle c \, c^H \rangle`, in W/Hz, for the noise waves :math:`c`
+        leaving the external ports into noiseless matched loads, as power waves like
+        :func:`s_external`. A matched load at temperature :math:`T` gives :math:`k T`.
+
+        The noise of each network comes from:
+
+        * its noise data, for a noisy 2-port: its chain correlation matrix
+          :attr:`~skrf.network.Network.n` [#HR]_, converted to noise waves;
+        * otherwise, if `temperature` is set, Bosma's theorem [#Bosma]_: the network is taken
+          as passive and at that temperature, :math:`C_S = k T (I - S S^H)`;
+        * otherwise, nothing: the network is noiseless.
+
+        The port networks are noiseless, and so are the matched loads of the unconnected ports.
+
+        The global scattering matrix :func:`s` maps the waves leaving every network to the waves
+        incident on the external ports. With :math:`C_c` the correlation matrix of the networks'
+        noise waves, set in the same index space as :func:`C`, the noise waves of the external
+        ports [#WR]_ follow as
+
+        .. math::
+
+            C_S = M C_c M^H, \quad M = S_{[ports, :]}
+
+        Returns
+        -------
+        cs : :class:`numpy.ndarray`
+            shape `f x nb_ports x nb_ports`
+
+        References
+        ----------
+        .. [#HR] H. Hillbrand and P. H. Russer, "An efficient method for computer aided noise analysis
+            of linear amplifier networks", IEEE Transactions on Circuits and Systems, vol. 23, no. 4,
+            pp. 235-238, 1976.
+        .. [#WR] S. W. Wedge and D. B. Rutledge, "Wave techniques for noise modeling and measurement",
+            IEEE Transactions on Microwave Theory and Techniques, vol. 40, no. 11, pp. 2004-2012, 1992.
+        .. [#Bosma] H. Bosma, "On the theory of linear noisy systems", Philips Research Reports
+            Supplements, no. 10, 1967.
+        """
+        # same port re-ordering as in _C, the global matrix is not block diagonal by network
+        ntws = {k:v for k,v in self.networks_dict().items() if not Circuit._is_port(v)}
+        ntws_ports_reordering = {ntw:[] for ntw in ntws}
+        for (idx_cnx, (ntw, ntw_port)) in self.connections_list:
+            if ntw.name in ntws.keys():
+                ntws_ports_reordering[ntw.name].append([ntw_port, idx_cnx])
+
+        cs = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex')
+        for (ntw_name, ntw_ports) in ntws_ports_reordering.items():
+            cs_ntw = _noise_cs(ntws[ntw_name], self.temperature)
+            if cs_ntw is not None:
+                from_port, to_port = np.array(ntw_ports).T
+                cs[:, to_port[:, None], to_port] = cs_ntw[:, from_port[:, None], from_port]
+
+        m = self.s[:, self.port_indexes, :]
+        cs = m @ cs @ m.conj().swapaxes(-1, -2)
+
+        # traveling waves to power waves at the external ports
+        d = np.sqrt(self.port_z0.real) / np.sqrt(self.port_z0)
+        return d[:, :, None] * cs * d.conj()[:, None, :]
 
     def s_active(self, a: NumberLike) -> np.ndarray:
         r"""
@@ -2004,6 +2091,8 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
                     Circuit._is_port(ntwk)
                     or ntwk.nports > max_nports
                     or ntwk.name in ignore_ntwk_names
+                    # connect() does not carry the noise of multi-ports, Circuit does
+                    or ntwk.noisy
                 )
                 for ntwk, _ in cnx
             )
@@ -2180,3 +2269,46 @@ def reduce_circuit(connections: list[list[tuple[Network, int]]],
         max_nports=max_nports,
         dynamic_networks=dynamic_networks,
     )
+
+
+def _noise_wave_map(a: np.ndarray, z0: np.ndarray) -> np.ndarray:
+    """
+    Return the matrix M mapping the noise waves of a 2-port to its chain noise sources.
+
+    For a 2-port of ABCD matrix `a` and port impedances `z0`, :math:`[v_n, i_n]^T = M c`,
+    where `c` are the power waves leaving the ports into noiseless matched loads and
+    :math:`v_n, i_n` the input noise sources of the chain representation, so that
+    :math:`C_A = M C_S M^H`.
+    """
+    r = np.sqrt(z0.real)
+    m = np.empty_like(a)
+    m[:, 0, 0] = z0[:, 0] / r[:, 0]
+    m[:, 1, 0] = -1 / r[:, 0]
+    m[:, 0, 1] = -(a[:, 0, 0] * z0[:, 1] + a[:, 0, 1]) / r[:, 1]
+    m[:, 1, 1] = -(a[:, 1, 0] * z0[:, 1] + a[:, 1, 1]) / r[:, 1]
+    return m
+
+
+def _noise_cs(ntw: Network, temperature: float | None) -> np.ndarray | None:
+    """
+    Return the noise-wave correlation matrix of a network, in traveling waves as `Circuit.s`.
+
+    From the noise data of a noisy 2-port, else from Bosma's theorem if `temperature` is set,
+    else None (noiseless).
+    """
+    if ntw.noisy and ntw.nports == 2:
+        m = np.linalg.inv(_noise_wave_map(ntw.a, ntw.z0))
+        cs = m @ ntw.n @ m.conj().swapaxes(-1, -2)
+    elif temperature is not None:
+        s = s2s(ntw.s, ntw.z0, 'power', ntw.s_def)
+        dissipation = np.eye(ntw.nports) - s @ s.conj().swapaxes(-1, -2)
+        if np.linalg.eigvalsh(dissipation).min() < -1e-3:
+            raise ValueError(f'Network {ntw.name} has no noise data and is not passive, '
+                             'so its noise cannot be set by its temperature. Give it noise data.')
+        cs = K_BOLTZMANN * temperature * dissipation
+    else:
+        return None
+
+    # power waves to traveling waves
+    d = np.sqrt(ntw.z0) / np.sqrt(ntw.z0.real)
+    return d[:, :, None] * cs * d.conj()[:, None, :]

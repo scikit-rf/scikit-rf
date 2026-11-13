@@ -6,7 +6,7 @@ from numpy.testing import assert_array_almost_equal
 
 import skrf as rf
 from skrf.circuit import Circuit
-from skrf.constants import INF, S_DEF_DEFAULT
+from skrf.constants import INF, K_BOLTZMANN, S_DEF_DEFAULT, T0
 from skrf.network import connect, innerconnect, renormalize_s, s2s
 
 
@@ -1462,6 +1462,93 @@ class CircuitTestVoltagesNonReciprocal(unittest.TestCase):
         I_at_ports = crt.currents_external(power, phase)
         np.testing.assert_allclose(V_at_ports, [[10+0j, 10+0j]])
         np.testing.assert_allclose(I_at_ports, [[-0.2+0j, 0.2+0j]])
+
+
+class CircuitTestNoise(unittest.TestCase):
+    """
+    Noise of a circuit made of noisy and passive networks.
+    """
+    def setUp(self):
+        test_dir = os.path.dirname(os.path.abspath(__file__))
+        self.a = rf.Network(os.path.join(test_dir, 'ntwk1.s2p'), name='a')
+        self.b = rf.Network(os.path.join(test_dir, 'ntwk2.s2p'), name='b')
+        self.freq = self.a.frequency
+        self.a.set_noise_a(self.freq, nfmin_db=1.5, gamma_opt=0.3 + 0.2j, rn=12)
+        self.b.set_noise_a(self.freq, nfmin_db=3.0, gamma_opt=-0.1 + 0.4j, rn=30)
+        self.port1 = Circuit.Port(self.freq, name='port1')
+        self.port2 = Circuit.Port(self.freq, name='port2')
+
+    def test_attenuator_noise_figure(self):
+        # matched resistive tee attenuator of loss L at T: F = 1 + (L - 1) T / T0, so F = L at T0
+        z0, att_db = 50, 6.
+        k = 10**(att_db / 20)
+        med = rf.media.DefinedGammaZ0(self.freq)
+        r1, r2 = z0 * (k - 1) / (k + 1), 2 * z0 * k / (k**2 - 1)
+        ra, rb, rs = med.resistor(r1, name='ra'), med.resistor(r1, name='rb'), med.resistor(r2, name='rs')
+        gnd = Circuit.Ground(self.freq, name='gnd')
+        cnx = [[(self.port1, 0), (ra, 0)], [(ra, 1), (rs, 0), (rb, 0)], [(rs, 1), (gnd, 0)], [(rb, 1), (self.port2, 0)]]
+        for T in (T0, 1000.):
+            ntw = Circuit(cnx, temperature=T).network
+            np.testing.assert_allclose(ntw.nf(z0), 1 + (k**2 - 1) * T / T0, rtol=1e-9)
+
+    def test_cascade_noisy_2ports(self):
+        # same noise as the 2-port noisy cascade of Network
+        cnx = [[(self.port1, 0), (self.a, 0)], [(self.a, 1), (self.b, 0)], [(self.b, 1), (self.port2, 0)]]
+        ntw, ref = Circuit(cnx).network, self.a ** self.b
+        self.assertTrue(ntw.noisy)
+        np.testing.assert_allclose(ntw.noise / (4 * K_BOLTZMANN * T0), ref.noise / (4 * K_BOLTZMANN * T0),
+                                   rtol=1e-9, atol=1e-9)
+        np.testing.assert_allclose(ntw.nfmin, ref.nfmin, rtol=1e-9)
+
+    def test_multiport_splitter_amplifiers(self):
+        # resistive 3-port splitter at T0 feeding two noisy 2-ports, checked against a nodal analysis
+        z0, T = 50., T0
+        spl = rf.Network(frequency=self.freq, s=np.broadcast_to((np.ones((3, 3)) - np.eye(3)) / 2,
+                                                                (len(self.freq), 3, 3)), z0=z0, name='spl')
+        port3 = Circuit.Port(self.freq, name='port3')
+        cnx = [[(self.port1, 0), (spl, 0)], [(spl, 1), (self.a, 0)], [(spl, 2), (self.b, 0)],
+               [(self.a, 1), (self.port2, 0)], [(self.b, 1), (port3, 0)]]
+        cs = Circuit(cnx, temperature=T).cs_external
+
+        # nodes: in, a_in, b_in, a_out, b_out, splitter centre (three Z0/3 resistors to the ports)
+        nf = len(self.freq)
+        y, cj = np.zeros((nf, 6, 6), dtype=complex), np.zeros((nf, 6, 6), dtype=complex)
+        g = 3 / z0 * np.array([[1, -1], [-1, 1]])
+        for nodes, y_el, cy_el in [((0, 5), g, 4 * K_BOLTZMANN * T * g),
+                                   ((1, 5), g, 4 * K_BOLTZMANN * T * g),
+                                   ((2, 5), g, 4 * K_BOLTZMANN * T * g),
+                                   ((1, 3), self.a.y, None), ((2, 4), self.b.y, None)]:
+            if cy_el is None:  # chain to admittance noise, Hillbrand & Russer
+                ntw = self.a if nodes[0] == 1 else self.b
+                t = np.zeros((nf, 2, 2), dtype=complex)
+                t[:, 0, 0], t[:, 0, 1], t[:, 1, 0] = -ntw.y[:, 0, 0], 1, -ntw.y[:, 1, 0]
+                cy_el = t @ ntw.noise @ t.conj().swapaxes(-1, -2)
+            idx = np.ix_(nodes, nodes)
+            y[:, idx[0], idx[1]] += y_el
+            cj[:, idx[0], idx[1]] += cy_el
+        ports = [0, 3, 4]
+        y[:, ports, ports] += 1 / z0
+        zn = np.linalg.inv(y)[:, ports, :]
+        cs_nodal = zn @ cj @ zn.conj().swapaxes(-1, -2) / z0
+
+        scale = K_BOLTZMANN * T0
+        np.testing.assert_allclose(cs / scale, cs_nodal / scale, rtol=1e-9, atol=1e-9)
+        # auto_reduce keeps the noisy networks
+        np.testing.assert_allclose(Circuit(cnx, temperature=T, auto_reduce=True).cs_external / scale,
+                                   cs_nodal / scale, rtol=1e-9, atol=1e-9)
+        # Bosma's theorem does not apply to an active network without noise data
+        gain = rf.Network(frequency=self.freq, s=np.broadcast_to([[0, 0], [10, 0]], (nf, 2, 2)), z0=z0, name='a')
+        with self.assertRaises(ValueError):
+            Circuit(cnx, temperature=T).update_networks([gain]).cs_external
+
+    def test_noiseless_circuit(self):
+        a, b = self.a.copy(), self.b.copy()
+        a.noise = b.noise = None
+        cir = Circuit([[(self.port1, 0), (a, 0)], [(a, 1), (b, 0)], [(b, 1), (self.port2, 0)]])
+        ntw = cir.network
+        self.assertFalse(ntw.noisy)
+        np.testing.assert_array_equal(ntw.s, cir.s_external)
+
 
 if __name__ == '__main__':
     unittest.main()
