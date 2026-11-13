@@ -28,6 +28,7 @@ from skrf.network import (
     concat_ports,
     connect,
     fix_z0_shape,
+    g2s,
     h2s,
     innerconnect,
     n_twoports_2_nport,
@@ -35,6 +36,7 @@ from skrf.network import (
     parallelconnect,
     renormalize_s,
     s2a,
+    s2g,
     s2h,
     s2s,
     s2s_active,
@@ -2009,6 +2011,58 @@ class NetworkTestCase(unittest.TestCase):
             np.testing.assert_allclose(ntwk.s_traveling, s_traveling)
             np.testing.assert_allclose(ntwk.s_power, s_power)
             np.testing.assert_allclose(ntwk.s_pseudo, s_pseudo)
+
+    def test_abcd_h_g_s_def(self):
+        """
+        a, h and g must follow the network s_def for complex, unequal z0 and
+        a non-reciprocal Z, checked against port voltage/current relations.
+        """
+        freq = Frequency(1, 1, 1, 'GHz')
+        z0 = np.array([[50 + 15j, 75 - 12j]])
+        Z = np.array([[[80 + 10j, 12 + 4j], [9 - 3j, 60 + 7j]]])
+        z11, z12, z21, z22 = Z[0].ravel()
+
+        # V1 = z11 I1 + z12 I2, V2 = z21 I1 + z22 I2, ABCD uses I_out = -I2
+        a_ref = np.array([[[z11 / z21, (z11 * z22 - z12 * z21) / z21], [1 / z21, z22 / z21]]])
+        # h: (V1, I2) = h (I1, V2), g: (I1, V2) = g (V1, I2)
+        h_ref = np.array([[[(z11 * z22 - z12 * z21) / z22, z12 / z22], [-z21 / z22, 1 / z22]]])
+        g_ref = np.linalg.inv(h_ref)
+
+        for s_def in S_DEFINITIONS:
+            ntwk = rf.Network(frequency=freq, z=Z, z0=z0, s_def=s_def)
+            np.testing.assert_allclose(ntwk.a, a_ref)
+            np.testing.assert_allclose(ntwk.h, h_ref)
+            np.testing.assert_allclose(ntwk.g, g_ref)
+            np.testing.assert_allclose(s2a(ntwk.s, z0, s_def), a_ref)
+            np.testing.assert_allclose(s2h(ntwk.s, z0, s_def), h_ref)
+            np.testing.assert_allclose(s2g(ntwk.s, z0, s_def), g_ref)
+            for ref, to_s in ((a_ref, a2s), (h_ref, h2s), (g_ref, g2s)):
+                np.testing.assert_allclose(to_s(ref, z0, s_def), ntwk.s)
+
+            for name, ref in (('a', a_ref), ('h', h_ref), ('g', g_ref)):
+                other = rf.Network(frequency=freq, s=np.zeros((1, 2, 2)), z0=z0, s_def=s_def)
+                setattr(other, name, ref)
+                np.testing.assert_allclose(other.z, Z)
+
+    def test_abcd_s_def_ideal_thru(self):
+        """ABCD of an ideal thru has a singular Z but must convert for every s_def."""
+        freq = Frequency(1, 1, 1, 'GHz')
+        z0 = np.array([[50 + 15j, 75 - 12j]])
+        thru = np.eye(2, dtype=complex)[None]
+        for s_def in S_DEFINITIONS:
+            ntwk = rf.Network(frequency=freq, s=np.zeros((1, 2, 2)), z0=z0, s_def=s_def)
+            ntwk.a = thru
+            self.assertTrue(np.isfinite(ntwk.s).all())
+            np.testing.assert_allclose(ntwk.a, thru, atol=1e-12)
+
+    def test_real_s_def_conversion_with_complex_z0(self):
+        """Real-valued through data must retain complex wave coefficients."""
+        s = np.array([[[0., 1.], [1., 0.]]])
+        z0 = 3 + 4j
+        power = np.array([[[4j / z0, 3 / z0], [3 / z0, 4j / z0]]])
+        for s_def in ('pseudo', 'traveling'):
+            np.testing.assert_allclose(s2s(s, z0, 'power', s_def), power)
+            np.testing.assert_allclose(s2a(s, z0, s_def), np.eye(2)[None], atol=1e-12)
 
     def test_sparam_conversion_with_complex_char_impedance(self):
         """
