@@ -1503,10 +1503,7 @@ class Circuit:
 
         m = self.s[:, self.port_indexes, :]
         cs = m @ cs @ m.conj().swapaxes(-1, -2)
-
-        # traveling waves to power waves at the external ports
-        d = np.sqrt(self.port_z0.real) / np.sqrt(self.port_z0)
-        return d[:, :, None] * cs * d.conj()[:, None, :]
+        return _cs2cs(cs, self.port_z0, 'power', 'traveling')  # power waves, as s_external
 
     def s_active(self, a: NumberLike) -> np.ndarray:
         r"""
@@ -2309,6 +2306,26 @@ def _noise_cs(ntw: Network, temperature: float | None) -> np.ndarray | None:
     else:
         return None
 
-    # power waves to traveling waves
-    d = np.sqrt(ntw.z0) / np.sqrt(ntw.z0.real)
+    return _cs2cs(cs, ntw.z0, 'traveling', 'power')
+
+
+def _cs2cs(cs: np.ndarray, z0: np.ndarray, s_def_new: str, s_def_old: str) -> np.ndarray:
+    r"""
+    Convert a noise-wave correlation matrix to another wave definition, as
+    :func:`~skrf.network.s2s` does for scattering parameters. Only 'power' and 'traveling'.
+
+    Noise waves leave ports terminated in their reference impedance, so in either definition
+    nothing is incident, :math:`a = 0` and :math:`v = -z_0 i`. The voltage and current relations
+    of :func:`~skrf.network.s2s` then give one factor per port,
+    :math:`b_{power} = \sqrt{\Re z_0} / \sqrt{z_0} \, b_{traveling}`, which is 1 for a real `z0`.
+    :func:`~skrf.network.s2s` itself does not apply: it normalises by the incident wave, and
+    noise waves are absolute amplitudes.
+    """
+    if s_def_new == s_def_old:
+        return cs
+    d = np.sqrt(z0.real) / np.sqrt(z0)  # traveling to power
+    if (s_def_old, s_def_new) == ('power', 'traveling'):
+        d = 1 / d
+    elif (s_def_old, s_def_new) != ('traveling', 'power'):
+        raise ValueError(f'Unsupported noise-wave conversion: {s_def_old} to {s_def_new}')
     return d[:, :, None] * cs * d.conj()[:, None, :]

@@ -1541,6 +1541,29 @@ class CircuitTestNoise(unittest.TestCase):
         with self.assertRaises(ValueError):
             Circuit(cnx, temperature=T).update_networks([gain]).cs_external
 
+    def test_complex_z0(self):
+        # complex z0 on the networks and the ports, so the noise waves change definition on the way
+        p1, p2 = Circuit.Port(self.freq, name='port1', z0=40 - 15j), Circuit.Port(self.freq, name='port2', z0=60 + 25j)
+        # a passive circuit at T obeys Bosma's theorem as a whole, in the power waves of s_external
+        med = rf.media.DefinedGammaZ0(self.freq)
+        ra, rb, rs = med.resistor(20, name='ra'), med.resistor(30, name='rb'), med.resistor(70, name='rs')
+        ra.renormalize(30 + 20j)
+        rb.renormalize([45 - 10j, 25 + 5j])
+        rs.renormalize(55 + 30j)
+        gnd = Circuit.Ground(self.freq, name='gnd')
+        cir = Circuit([[(p1, 0), (ra, 0)], [(ra, 1), (rs, 0), (rb, 0)], [(rs, 1), (gnd, 0)], [(rb, 1), (p2, 0)]],
+                      temperature=T0)
+        s = cir.s_external
+        np.testing.assert_allclose(cir.cs_external / (K_BOLTZMANN * T0), np.eye(2) - s @ s.conj().swapaxes(-1, -2),
+                                   atol=1e-9)
+        # the chain noise of a noisy cascade does not depend on the reference impedances
+        a, b = self.a.copy(), self.b.copy()
+        a.renormalize([35 + 10j, 45 - 20j])
+        b.renormalize([65 + 15j, 50 - 5j])
+        ntw, ref = Circuit([[(p1, 0), (a, 0)], [(a, 1), (b, 0)], [(b, 1), (p2, 0)]]).network, self.a ** self.b
+        np.testing.assert_allclose(ntw.noise / (4 * K_BOLTZMANN * T0), ref.noise / (4 * K_BOLTZMANN * T0),
+                                   rtol=1e-9, atol=1e-9)
+
     def test_noiseless_circuit(self):
         a, b = self.a.copy(), self.b.copy()
         a.noise = b.noise = None
