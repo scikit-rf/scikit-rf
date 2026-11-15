@@ -4,6 +4,14 @@
 scikit-rf *— Object Oriented RF Engineering*
 ==================================================
 
+.. image:: _static/scikit-rf-title-flat.svg
+    :alt: scikit-rf: Object Oriented RF Engineering
+    :class: sk-title sk-light-only
+
+.. image:: _static/scikit-rf-title-flat_dark.svg
+    :alt: scikit-rf: Object Oriented RF Engineering
+    :class: sk-title sk-dark-only
+
 **scikit-rf** (aka `skrf`) is an Open Source, BSD-licensed package for RF/Microwave engineering implemented
 in the Python programming language. It provides a modern, object-oriented library for network analysis and
 calibration which is both flexible and scalable.
@@ -11,26 +19,28 @@ calibration which is both flexible and scalable.
 Getting Started
 ---------------
 
-Plot touchstone data on a smith chart, in **3 lines**.
-
 .. container:: sk-side-by-side
 
-    .. code-block:: python
+    .. container::
 
-        import skrf as rf
-        ntwk = rf.Network('ring slot.s2p')
-        ntwk.plot_s_smith()
+        Plot touchstone data on a smith chart, in **3 lines**.
+
+        .. code-block:: python
+
+            import skrf as rf
+            ntwk = rf.Network('ring slot.s2p')
+            ntwk.plot_s_smith()
+
+        Install it from `pip <https://pypi.org/project/scikit-rf/>`__ or `conda-forge <https://anaconda.org/conda-forge/scikit-rf>`__,
+        as described in :doc:`tutorials/Installation`.
+
+        .. code-block:: shell
+
+            python -m pip install scikit-rf
+            conda install -c conda-forge scikit-rf
 
     .. image:: _static/smith_chart.png
         :alt: S-parameters of the ring slot on a Smith chart
-
-Install it from `pip <https://pypi.org/project/scikit-rf/>`__ or `conda-forge <https://anaconda.org/conda-forge/scikit-rf>`__,
-as described in :doc:`tutorials/Installation`.
-
-.. code-block:: shell
-
-    python -m pip install scikit-rf
-    conda install -c conda-forge scikit-rf
 
 Features
 --------

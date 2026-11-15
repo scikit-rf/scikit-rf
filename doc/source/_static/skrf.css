@@ -413,7 +413,7 @@ html:not(.dark) .yue dl.py.property > dt {
   opacity: 0.25;
 }
 
-/* The landing page's first example, with the chart it draws beside it. */
+/* The landing page's first examples, with the chart they draw beside them. */
 .yue .sk-side-by-side {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -421,8 +421,12 @@ html:not(.dark) .yue dl.py.property > dt {
   align-items: center;
 }
 
-.yue .sk-side-by-side > div[class*="highlight"] {
-  margin: 0;
+.yue .sk-side-by-side > div > :first-child {
+  margin-top: 0;
+}
+
+.yue .sk-side-by-side > div > :last-child {
+  margin-bottom: 0;
 }
 
 .yue .sk-side-by-side img {
@@ -436,9 +440,31 @@ html:not(.dark) .yue dl.py.property > dt {
     justify-items: center;
   }
 
-  .yue .sk-side-by-side > div[class*="highlight"] {
+  .yue .sk-side-by-side > div {
     width: 100%;
   }
+}
+
+/* The landing page shows the scikit-rf title graphic in place of its heading,
+   which stays for the browser title and screen readers. */
+.yue section#scikit-rf-object-oriented-rf-engineering > h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.yue img.sk-title {
+  display: block;
+  width: min(100%, 460px);
+  margin: 0.5rem auto 2rem;
+}
+
+html.dark .yue img.sk-light-only,
+html:not(.dark) .yue img.sk-dark-only {
+  display: none;
 }
 
 /* Users: each organization's logo beside its description. */
