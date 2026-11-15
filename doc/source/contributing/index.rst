@@ -2,12 +2,6 @@
     :github_url:
 
 
-.. image:: ../_static/scikit-rf-title-flat.svg
-    :target: ../_static/scikit-rf-title-flat.svg
-    :height: 100
-    :align: center
-
-
 Contributing to scikit-rf
 ==========================
 
