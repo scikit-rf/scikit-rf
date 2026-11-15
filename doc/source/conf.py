@@ -197,9 +197,10 @@ codeautolink_concat_default = True
 suppress_warnings = ['codeautolink.parse_block', 'codeautolink.match_block']
 
 # Gallery thumbnails for notebooks that draw no plot, taken from their own figures.
+# The paths are in the built site, where Sphinx copies the notebooks' figures to _images/.
 nbsphinx_thumbnails = {
-    'tutorials/Connecting_Networks': 'tutorials/figures/networks_connecting_2_2ports.svg',
-    'tutorials/VectorFitting': 'tutorials/figures/circuit_cc-pole_rlc-passive.svg',
+    'tutorials/Connecting_Networks': '_images/networks_connecting_2_2ports.svg',
+    'tutorials/VectorFitting': '_images/circuit_cc-pole_rlc-passive.svg',
 }
 
 # Copy code without its prompts.
