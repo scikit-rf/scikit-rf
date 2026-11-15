@@ -218,6 +218,15 @@ html,
   direction: ltr;
 }
 
+/* In the left sidebar, hide a page's own headings (the right sidebar lists those), but keep headings
+   that group other pages, as on the API module pages. A list whose links all point within the page
+   is hidden, with the fold arrow Shibuya adds right after it. Done in CSS, not script, so the sidebar
+   doesn't draw them and then fold them away. (:has() can't nest inside :has(), hence the sibling selector.) */
+.sy-lside .globaltoc li > ul:not(:has(a:not([href^="#"]))),
+.sy-lside .globaltoc li > ul:not(:has(a:not([href^="#"]))) + button {
+  display: none;
+}
+
 /* Long module paths, such as (skrf.calibration.calibration), break rather than run off the edge. */
 .sy-lside .globaltoc a {
   overflow-wrap: anywhere;

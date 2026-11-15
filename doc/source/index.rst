@@ -128,9 +128,9 @@ If you use scikit-rf, see :doc:`citations_ack/acknowledging`.
     :caption: Project
     :hidden:
 
-    about
-    users
     Contributing <contributing/index>
     Citing scikit-rf <citations_ack/acknowledging>
     scikit-rf Citations <citations_ack/citations>
+    about
+    users
     license

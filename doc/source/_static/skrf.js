@@ -8,16 +8,3 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// In the left sidebar, drop a page's own headings (the right sidebar lists those),
-// but keep headings that group other pages, such as the sections of the examples and API pages.
-document.addEventListener("DOMContentLoaded", () => {
-  for (const ul of document.querySelectorAll(".sy-lside .globaltoc li > ul")) {
-    const links = [...ul.querySelectorAll("a[href]")];
-    if (links.every((a) => a.getAttribute("href").startsWith("#"))) {
-      const li = ul.parentElement;
-      li.classList.remove("_expand");
-      li.querySelector(":scope > button")?.remove();
-      ul.remove();
-    }
-  }
-});
