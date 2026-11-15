@@ -421,6 +421,9 @@ html:not(.dark) .yue dl.py.property > dt {
 }
 
 .yue ul.sk-features > li {
+  /* An inline block can't be split across columns, which break-inside alone doesn't guarantee. */
+  display: inline-block;
+  width: 100%;
   break-inside: avoid;
   margin: 0 0 0.6rem;
 }
@@ -568,4 +571,17 @@ html:not(.dark) .yue img.sk-dark-only {
 
 .yue section:has(img.align-right, img.align-left) {
   display: flow-root;
+}
+
+/* The Download link at the right end of a notebook page's breadcrumbs. */
+.sy-breadcrumbs .sk-download {
+  margin-left: 1rem;
+  white-space: nowrap;
+  font-size: 0.94rem;
+  color: var(--sk-link);
+}
+
+.sy-breadcrumbs .sk-download:hover {
+  color: var(--sk-link-hover);
+  text-decoration: underline;
 }
