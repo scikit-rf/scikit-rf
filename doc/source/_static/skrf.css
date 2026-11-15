@@ -458,7 +458,7 @@ html:not(.dark) .yue dl.py.property > dt {
 
 .yue img.sk-title {
   display: block;
-  width: min(100%, 460px);
+  width: min(100%, 322px);
   margin: 0.5rem auto 2rem;
 }
 
