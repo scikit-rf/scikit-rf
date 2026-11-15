@@ -196,6 +196,12 @@ codeautolink_concat_default = True
 # Some docstring examples are pseudo-code that isn't valid Python; those just go unlinked.
 suppress_warnings = ['codeautolink.parse_block', 'codeautolink.match_block']
 
+# Gallery thumbnails for notebooks that draw no plot, taken from their own figures.
+nbsphinx_thumbnails = {
+    'tutorials/Connecting_Networks': 'tutorials/figures/networks_connecting_2_2ports.svg',
+    'tutorials/VectorFitting': 'tutorials/figures/circuit_cc-pole_rlc-passive.svg',
+}
+
 # Copy code without its prompts.
 copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: "
 copybutton_prompt_is_regexp = True

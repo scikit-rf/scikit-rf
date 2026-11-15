@@ -191,6 +191,13 @@ body {
   color: var(--sk-heading-link);
 }
 
+/* Jumps to a section stop 2px short of the line Shibuya uses to pick the active entry in the
+   right sidebar (the outer section's scroll-margin-top, offset + 24px), so subpixel rounding can't leave
+   the line inside the section above and highlight that one instead. */
+.yue section section {
+  scroll-margin-top: calc(var(--sy-s-offset-top) + 22px);
+}
+
 /* The right sidebar lists two levels of headings. */
 .sy-rside .localtoc > ul > li > ul > li > ul {
   display: none;
