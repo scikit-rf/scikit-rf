@@ -410,18 +410,19 @@ html:not(.dark) .yue dl.py.property > dt {
   letter-spacing: 0;
 }
 
-/* Features: a compact grid of small lists. */
+/* Features: small lists flowing down two columns, so short groups don't leave gaps. */
 .yue ul.sk-features {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
-  gap: 0.5rem 2rem;
+  columns: 2 16rem;
+  column-gap: 2rem;
   padding-left: 0;
   list-style: none;
   margin-top: 0.75rem;
+  line-height: 1.5;
 }
 
 .yue ul.sk-features > li {
-  margin: 0;
+  break-inside: avoid;
+  margin: 0 0 0.6rem;
 }
 
 .yue ul.sk-features > li > p {
@@ -431,13 +432,23 @@ html:not(.dark) .yue dl.py.property > dt {
 }
 
 .yue ul.sk-features > li > ul {
-  margin: 0.15rem 0 0;
+  margin: 0.1rem 0 0;
   padding-left: 1.1rem;
 }
 
 .yue ul.sk-features li li,
 .yue ul.sk-features li li > p {
-  margin: 0.05rem 0;
+  margin: 0;
+}
+
+/* A section heading that links somewhere keeps the heading's color until hovered. */
+.yue h2 > a.reference {
+  color: inherit;
+  font-weight: inherit;
+}
+
+.yue h2 > a.reference:hover {
+  color: var(--sk-link-hover);
 }
 
 /* The API index and other toctrees list their pages under small captions rather than section headings. */

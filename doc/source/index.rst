@@ -79,8 +79,8 @@ Features
 
   * Coax, CPW, Freespace, RectangularWaveguide, DistributedCircuit
 
-Some Examples
--------------
+:doc:`Some Examples <examples/index>`
+-------------------------------------
 
 .. nblinkgallery::
 
