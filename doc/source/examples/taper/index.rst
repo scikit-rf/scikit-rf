@@ -1,0 +1,7 @@
+Taper
+=====
+
+.. nbgallery::
+    :glob:
+
+    *

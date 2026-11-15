@@ -15,7 +15,7 @@ Sponsoring is one more way to contribute to open source: financially supporting 
 Contributing to the Code
 ------------------------
 
-.. note:: if you feel that the instructions on this page are too complicated, but you still would like to contribute, do not hesitate to email us on the `scikit-rf mailing list <https://groups.google.com/forum/#!forum/scikit-rf>`_ or join us in the `scikit-rf Slack channel <https://join.slack.com/t/scikit-rf/shared_invite/zt-d82b62wg-0bdSJjZVhHBKf6687V80Jg>`_ or the `scikit-rf Matrix/Element channel <https://app.element.io/#/room/#scikit-rf:matrix.org>`_ to get some help.
+.. note:: if you feel that the instructions on this page are too complicated, but you still would like to contribute, do not hesitate to email us on the `scikit-rf mailing list <https://groups.google.com/forum/#!forum/scikit-rf>`_ or join us in the `scikit-rf Matrix/Element channel <https://app.element.io/#/room/#scikit-rf:matrix.org>`_ to get some help.
 
 
 **skrf** uses the "Fork + Pull" collaborative development model. If this is new to you, see GitHub's articles on  `forking <https://help.github.com/articles/fork-a-repo>`_ and `pull requests <https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_.

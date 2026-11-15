@@ -1,0 +1,7 @@
+Q-factor
+========
+
+.. nbgallery::
+    :glob:
+
+    *

@@ -97,7 +97,7 @@ Questions or comments? Ask the Community
 ----------------------------------------
 
 * `LinkedIn scikit-rf Users Group <https://www.linkedin.com/groups/12462155/>`_: User group to ask and answer questions and to received scikit-rf announcements.
-* Chat: scikit-rf have channels on both `Slack <https://join.slack.com/t/scikit-rf/shared_invite/zt-d82b62wg-0bdSJjZVhHBKf6687V80Jg>`_ and `Matrix <https://app.element.io/#/room/#scikit-rf:matrix.org>`_
+* Chat: scikit-rf has a channel on `Matrix <https://app.element.io/#/room/#scikit-rf:matrix.org>`_
 * `Suggestion box <https://docs.google.com/forms/d/e/1FAIpQLSfkSNy8KzoHwdDxYGCmHHiA3GsHgN6zKTFI2NrcUR29U7Xx6A/viewform?usp=sf_link>`_: if you would like to suggest a feature/topic for consideration (optionally anonymous).
 
 If you use scikit-rf, see :doc:`citations_ack/acknowledging`.

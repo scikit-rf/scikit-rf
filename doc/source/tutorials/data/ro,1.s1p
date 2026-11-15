@@ -1,9 +1,8 @@
 !Created with mwavepy.
 !
-! Created with skrf 2.2.0 (http://scikit-rf.org).
+! Created with skrf (http://scikit-rf.org).
 # GHz S RI R 50.0 
 !freq ReS11 ImS11
-!
 500.0 0.04771157387 -0.205878949771
 501.25 0.0613094709692 -0.197077138751
 502.5 0.0443028217713 -0.200078566466

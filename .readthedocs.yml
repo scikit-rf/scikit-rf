@@ -27,4 +27,3 @@ sphinx:
 # Shibuya cannot render the single-page HTML that the htmlzip format needs, so that format is left out.
 formats:
   - pdf
-  - epub

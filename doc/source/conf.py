@@ -117,11 +117,6 @@ html_theme_options = {
             "icon": "simple-icons:linkedin",
         },
         {
-            "name": "Slack",
-            "url": "https://join.slack.com/t/scikit-rf/shared_invite/zt-d82b62wg-0bdSJjZVhHBKf6687V80Jg",
-            "icon": "simple-icons:slack",
-        },
-        {
             "name": "Matrix",
             "url": "https://app.element.io/#/room/#scikit-rf:matrix.org",
             "icon": "simple-icons:matrix",
