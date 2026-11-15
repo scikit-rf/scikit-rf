@@ -41,6 +41,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'nbsphinx',
     'sphinx_codeautolink',
+    'sphinx_copybutton',
     #'inheritance_diagram',
     'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting',
@@ -111,10 +112,9 @@ html_theme_options = {
         {"title": "scikit-rf.org", "url": "https://scikit-rf.org", "external": True},
         {"title": "GitHub", "url": "https://github.com/scikit-rf/scikit-rf", "external": True},
     ],
-    # Unfold only the branch of the current page, down through the section
-    # headings that group examples and API members.
+    # Two levels: each page, and the pages or section headings under it.
     "toctree_collapse": True,
-    "toctree_maxdepth": 4,
+    "toctree_maxdepth": 2,
     "toctree_titles_only": False,
     "show_ai_links": False,
 }
@@ -195,6 +195,10 @@ autosummary_generate = True
 codeautolink_concat_default = True
 # Some docstring examples are pseudo-code that isn't valid Python; those just go unlinked.
 suppress_warnings = ['codeautolink.parse_block', 'codeautolink.match_block']
+
+# Copy code without its prompts.
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: "
+copybutton_prompt_is_regexp = True
 
 # -- Options for manual page output --------------------------------------------
 

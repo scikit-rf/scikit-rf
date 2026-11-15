@@ -8,7 +8,7 @@ Each page can be followed along in a browser, or downloaded as an
 ipython `notebook <http://ipython.org/notebook.html>`_
 
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 2
 
     Installation

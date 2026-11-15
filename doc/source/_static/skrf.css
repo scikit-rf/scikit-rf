@@ -14,6 +14,7 @@ html:root {
 
   /* The desk, a faint tan like the paper around a page, and the page on it. */
   --sk-desk: #e9e7e3;
+  --sk-scroll-thumb: #c4c0b9;
   --sk-page: #fcfcfc;
   --sk-page-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.08);
 
@@ -62,6 +63,7 @@ html.dark {
   /* Dark-mode code uses the background of its own (github-dark) style. */
   --code-block-background: var(--syntax-dark-background);
   --sk-desk: #16181b;
+  --sk-scroll-thumb: #3a3f46;
   --sk-page: #212429;
   --sk-page-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
   --sk-text: #d0d4d9;
@@ -187,6 +189,17 @@ body {
   font-family: var(--sy-f-heading);
   font-weight: 700;
   color: var(--sk-heading-link);
+}
+
+/* The right sidebar lists two levels of headings. */
+.sy-rside .localtoc > ul > li > ul > li > ul {
+  display: none;
+}
+
+/* Scrollbars sit on the desk: no white track beside the sidebars. */
+html,
+.sy-scrollbar {
+  scrollbar-color: var(--sk-scroll-thumb) var(--sk-desk);
 }
 
 /* Entries sit further in than the section headings above them. */
@@ -390,4 +403,12 @@ html:not(.dark) .yue dl.py.property > dt {
 
 .yue .toctree-wrapper li {
   margin: 0.15rem 0;
+}
+
+/* Notebooks without a plot show a faded logo instead of nbsphinx's "no thumbnail" placeholder. */
+.yue .nbsphinx-gallery img[src$="nbsphinx-no-thumbnail.svg"] {
+  content: url("logo.svg");
+  object-fit: contain;
+  padding: 1.25rem;
+  opacity: 0.25;
 }
