@@ -39,7 +39,7 @@ Getting Started
             python -m pip install scikit-rf
             conda install -c conda-forge scikit-rf
 
-    .. image:: _static/smith_chart.png
+    .. image:: _static/smith_chart.svg
         :alt: S-parameters of the ring slot on a Smith chart
 
 Features

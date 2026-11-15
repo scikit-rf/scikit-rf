@@ -209,6 +209,61 @@ html,
   scrollbar-color: var(--sk-scroll-thumb) var(--sk-desk);
 }
 
+/* The left sidebar's scrollbar sits on its left edge, away from the page. */
+.sy-lside .sy-scrollbar {
+  direction: rtl;
+}
+
+.sy-lside .sy-scrollbar > * {
+  direction: ltr;
+}
+
+/* Long module paths, such as (skrf.calibration.calibration), break rather than run off the edge. */
+.sy-lside .globaltoc a {
+  overflow-wrap: anywhere;
+}
+
+/* Breadcrumbs above each page, as rtd shows them: links in the link color, wrapping when long.
+   Shibuya hides them on wide screens and keeps them sticky; they stay sticky only on phones,
+   where they hold the menu button. */
+.sy-breadcrumbs {
+  display: block;
+  background-color: var(--sk-page);
+  border-radius: 8px 8px 0 0;
+}
+
+.sy-breadcrumbs ol {
+  flex-wrap: wrap;
+  white-space: normal;
+  row-gap: 0.2rem;
+}
+
+.sy-breadcrumbs ol a {
+  color: var(--sk-link);
+}
+
+.sy-breadcrumbs ol a:hover {
+  color: var(--sk-link-hover);
+  text-decoration: underline;
+}
+
+@media (min-width: 768px) {
+  .sy-breadcrumbs {
+    position: static;
+  }
+
+  /* On the home page the trail would only repeat the title. */
+  .sy-main:has(#scikit-rf-object-oriented-rf-engineering) .sy-breadcrumbs {
+    display: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .sy-breadcrumbs {
+    padding: 0 3rem;
+  }
+}
+
 /* Entries sit further in than the section headings above them. */
 .sy-lside .globaltoc > ul {
   padding-left: 1rem;
@@ -437,7 +492,7 @@ html:not(.dark) .yue dl.py.property > dt {
 }
 
 .yue .sk-side-by-side img {
-  width: 230px;
+  width: 276px;
   margin: 0;
 }
 
