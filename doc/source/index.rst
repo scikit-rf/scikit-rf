@@ -42,6 +42,20 @@ Getting Started
     .. image:: _static/smith_chart.svg
         :alt: S-parameters of the ring slot on a Smith chart
 
+:doc:`Some Examples <examples/index>`
+-------------------------------------
+
+.. nblinkgallery::
+
+    examples/plotting/Modeling RG-58
+    examples/metrology/Multiline TRL
+    examples/vectorfitting/vectorfitting_ex1_ringslot
+    examples/circuit/Wilkinson Power Splitter
+    examples/matching/Impedance Matching
+    examples/networktheory/Time Domain
+    examples/networktheory/Renormalizing S-parameters
+    examples/networktheory/Properties of Rectangular Waveguides
+
 Features
 --------
 
@@ -78,18 +92,6 @@ Features
 * Transmission Line Physics:
 
   * Coax, CPW, Freespace, RectangularWaveguide, DistributedCircuit
-
-:doc:`Some Examples <examples/index>`
--------------------------------------
-
-.. nblinkgallery::
-
-    examples/plotting/Modeling RG-58
-    examples/metrology/Multiline TRL
-    examples/vectorfitting/vectorfitting_ex1_ringslot
-    examples/circuit/Wilkinson Power Splitter
-    examples/matching/Impedance Matching
-    examples/networktheory/Time Domain
 
 Questions or comments? Ask the Community
 ----------------------------------------
