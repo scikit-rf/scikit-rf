@@ -34,9 +34,9 @@ html:root {
   --sk-sig-bg: #e7f2fa;
   --sk-sig-border: #6ab0de;
   --sk-sig-text: #2980b9;
-  --sk-nav-bg: #343131;
-  --sk-nav-text: #d9d9d9;
-  --sk-nav-hover: #ffffff;
+  --sk-nav-bg: #2980b9;
+  --sk-nav-text: #ffffff;
+  --sk-nav-hover: #d6eaf8;
 
   --sy-c-text: var(--sk-text);
   --sy-c-heading: var(--sk-text);
@@ -80,8 +80,8 @@ html.dark {
   --sk-sig-bg: #1d2b38;
   --sk-sig-border: #2f6d97;
   --sk-sig-text: #8cc8ee;
-  --sk-nav-bg: #0b0c0e;
-  --sk-nav-text: #c8cbd0;
+  --sk-nav-bg: #1c4f72;
+  --sk-nav-text: #e6eef4;
   --sk-nav-hover: #ffffff;
 
   --sy-c-bold: #ffffff;
@@ -115,7 +115,7 @@ body {
   }
 }
 
-/* The navbar, in the charcoal of rtd's sidebar. */
+/* The navbar, in the blue of rtd's search panel. */
 .sy-head-blur {
   background-color: var(--sk-nav-bg);
   backdrop-filter: none;
@@ -138,7 +138,7 @@ body {
 /* Below md the links and search fold into a dropdown that keeps the page colors, so only recolor them in the bar itself. */
 @media (min-width: 768px) {
   .sy-head .searchbox input {
-    background-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.18);
     color: #ffffff;
   }
 

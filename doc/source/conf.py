@@ -111,7 +111,11 @@ html_theme_options = {
         {"title": "scikit-rf.org", "url": "https://scikit-rf.org", "external": True},
         {"title": "GitHub", "url": "https://github.com/scikit-rf/scikit-rf", "external": True},
     ],
-    "toctree_maxdepth": 1,
+    # Unfold only the branch of the current page, down through the section
+    # headings that group examples and API members.
+    "toctree_collapse": True,
+    "toctree_maxdepth": 4,
+    "toctree_titles_only": False,
     "show_ai_links": False,
 }
 
