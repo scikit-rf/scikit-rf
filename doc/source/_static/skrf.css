@@ -492,8 +492,14 @@ html:not(.dark) .yue dl.py.property > dt {
 }
 
 .yue .sk-side-by-side img {
-  width: 276px;
+  width: 248px;
   margin: 0;
+}
+
+/* The chart has a transparent background; in dark mode, invert it so its black lines turn
+   white, and turn the hues back round so the traces keep their colors. */
+html.dark .yue .sk-side-by-side img {
+  filter: invert(1) hue-rotate(180deg);
 }
 
 @media (max-width: 640px) {
