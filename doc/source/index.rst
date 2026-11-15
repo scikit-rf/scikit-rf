@@ -13,11 +13,16 @@ Getting Started
 
 Plot touchstone data on a smith chart, in **3 lines**.
 
-.. code-block:: python
+.. container:: sk-side-by-side
 
-    import skrf as rf
-    ntwk = rf.Network('ring slot.s2p')
-    ntwk.plot_s_smith()
+    .. code-block:: python
+
+        import skrf as rf
+        ntwk = rf.Network('ring slot.s2p')
+        ntwk.plot_s_smith()
+
+    .. image:: _static/smith_chart.png
+        :alt: S-parameters of the ring slot on a Smith chart
 
 Install it from `pip <https://pypi.org/project/scikit-rf/>`__ or `conda-forge <https://anaconda.org/conda-forge/scikit-rf>`__,
 as described in :doc:`tutorials/Installation`.
@@ -111,6 +116,9 @@ If you use scikit-rf, see :doc:`citations_ack/acknowledging`.
     :caption: Project
     :hidden:
 
-    contributing/index
-    citations_ack/index
+    about
+    users
+    Contributing <contributing/index>
+    Citing scikit-rf <citations_ack/acknowledging>
+    scikit-rf Citations <citations_ack/citations>
     license

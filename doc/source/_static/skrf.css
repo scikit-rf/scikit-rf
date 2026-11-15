@@ -412,3 +412,55 @@ html:not(.dark) .yue dl.py.property > dt {
   padding: 1.25rem;
   opacity: 0.25;
 }
+
+/* The landing page's first example, with the chart it draws beside it. */
+.yue .sk-side-by-side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.yue .sk-side-by-side > div[class*="highlight"] {
+  margin: 0;
+}
+
+.yue .sk-side-by-side img {
+  width: 230px;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .yue .sk-side-by-side {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .yue .sk-side-by-side > div[class*="highlight"] {
+    width: 100%;
+  }
+}
+
+/* Users: each organization's logo beside its description. */
+.yue section.sk-users {
+  display: flow-root;
+}
+
+.yue section.sk-users img {
+  float: right;
+  max-width: 180px;
+  max-height: 110px;
+  object-fit: contain;
+  margin: 0.25rem 0 1rem 1.5rem;
+}
+
+/* Images floated beside text stay modest, and stay inside their section. */
+.yue img.align-right,
+.yue img.align-left {
+  max-width: min(40%, 280px);
+  height: auto;
+}
+
+.yue section:has(img.align-right, img.align-left) {
+  display: flow-root;
+}

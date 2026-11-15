@@ -1,3 +1,5 @@
+:orphan:
+
 .. _acknowledging:
     :github_url:
 

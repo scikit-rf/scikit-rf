@@ -14,7 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
   for (const ul of document.querySelectorAll(".sy-lside .globaltoc li > ul")) {
     const links = [...ul.querySelectorAll("a[href]")];
     if (links.every((a) => a.getAttribute("href").startsWith("#"))) {
-      ul.parentElement.classList.remove("_expand");
+      const li = ul.parentElement;
+      li.classList.remove("_expand");
+      li.querySelector(":scope > button")?.remove();
       ul.remove();
     }
   }
