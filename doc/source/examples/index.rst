@@ -10,7 +10,7 @@ ipython `notebook <http://ipython.org/notebook.html>`_
 Network Theory
 ------------------
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -18,7 +18,7 @@ Network Theory
 
 Matching
 ------------------
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -27,7 +27,7 @@ Matching
 Metrology and Calibration
 --------------------------
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -37,7 +37,7 @@ Metrology and Calibration
 NetworkSets
 ------------------
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -46,7 +46,7 @@ NetworkSets
 Plotting
 ------------------
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -55,7 +55,7 @@ Plotting
 Circuit
 ------------------
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -64,7 +64,7 @@ Circuit
 Mixed Mode
 ------------------
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -73,7 +73,7 @@ Mixed Mode
 Vector Fitting
 ------------------
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -82,7 +82,7 @@ Vector Fitting
 Parametric Vector Fitting
 ------------------
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -91,7 +91,7 @@ Parametric Vector Fitting
 Q-factor
 ------------------
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -99,7 +99,7 @@ Q-factor
 
 Taper
 ------------------
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -109,7 +109,7 @@ Taper
 Instrument Control
 ------------------
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 
@@ -118,7 +118,7 @@ Instrument Control
 Interactive
 ------------------
 
-.. toctree::
+.. nbgallery::
     :maxdepth: 1
     :glob:
 

@@ -1,0 +1,393 @@
+/* Shibuya, laid out as a sheet of paper on a desk, in the sphinx_rtd_theme colors these docs used before. */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700;900&family=Lato:ital,wght@0,400;0,700;1,400&family=Roboto+Mono:wght@400;700&display=swap');
+
+/* html:root outranks the :root that Shibuya's inline webfont <style> sets after this file. */
+html:root {
+  --sy-f-text: "Lato", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+  --sy-f-heading: "Roboto Slab", Georgia, serif;
+  --sy-f-mono: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+:root {
+  /* Code blocks keep the green of the sphinx pygments style. */
+  --code-block-background: #eeffcc;
+
+  /* The desk, a faint tan like the paper around a page, and the page on it. */
+  --sk-desk: #e9e7e3;
+  --sk-page: #fcfcfc;
+  --sk-page-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.08);
+
+  /* sphinx_rtd_theme's palette */
+  --sk-text: #404040;
+  --sk-link: #2980b9;
+  --sk-link-hover: #3091d1;
+  --sk-heading-link: #1f4e8c;
+  --sk-rule: #e1e4e5;
+  --sk-code-bg: #ffffff;
+  --sk-code-text: #e74c3c;
+  --sk-code-border: #e1e4e5;
+  --sk-sidebar-link: #404040;
+  --sk-note-bg: #e7f2fa;
+  --sk-note-title: #6ab0de;
+  --sk-warn-bg: #ffedcc;
+  --sk-warn-title: #f0b37e;
+  --sk-sig-bg: #e7f2fa;
+  --sk-sig-border: #6ab0de;
+  --sk-sig-text: #2980b9;
+  --sk-nav-bg: #343131;
+  --sk-nav-text: #d9d9d9;
+  --sk-nav-hover: #ffffff;
+
+  --sy-c-text: var(--sk-text);
+  --sy-c-heading: var(--sk-text);
+  --sy-c-bold: #000000;
+  --sy-c-light: #606060;
+  --sy-c-link: var(--sk-link);
+  --sy-c-link-hover: var(--sk-link-hover);
+  --sy-c-background: var(--sk-desk);
+  --sy-c-foot-background: var(--sk-desk);
+  --sy-c-foot-text: #808080;
+  --sy-c-background-dropback: #e9e7e3cc;
+
+  --yue-c-link-1: var(--sk-link);
+  --yue-c-link-2: var(--sk-link-hover);
+  --yue-c-link-border: var(--sk-link);
+  --yue-c-code-text: var(--sk-code-text);
+  --yue-c-code-background: var(--sk-code-bg);
+  --yue-c-hr: var(--sk-rule);
+}
+
+/* The dark version of the same palette: a dim desk, a slate page, and the rtd blue lightened. */
+html.dark {
+  /* Dark-mode code uses the background of its own (github-dark) style. */
+  --code-block-background: var(--syntax-dark-background);
+  --sk-desk: #16181b;
+  --sk-page: #212429;
+  --sk-page-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --sk-text: #d0d4d9;
+  --sk-link: #5dade2;
+  --sk-link-hover: #8cc8ee;
+  --sk-heading-link: #8cc8ee;
+  --sk-rule: #3a3f46;
+  --sk-code-bg: #2c3138;
+  --sk-code-text: #ff8a7d;
+  --sk-code-border: #3a3f46;
+  --sk-sidebar-link: #bfc4ca;
+  --sk-note-bg: #1d2b38;
+  --sk-note-title: #2f6d97;
+  --sk-warn-bg: #3a2f1f;
+  --sk-warn-title: #9a6a3c;
+  --sk-sig-bg: #1d2b38;
+  --sk-sig-border: #2f6d97;
+  --sk-sig-text: #8cc8ee;
+  --sk-nav-bg: #0b0c0e;
+  --sk-nav-text: #c8cbd0;
+  --sk-nav-hover: #ffffff;
+
+  --sy-c-bold: #ffffff;
+  --sy-c-light: #a3a9b0;
+  --sy-c-background-dropback: #16181bcc;
+}
+
+body {
+  background-color: var(--sk-desk);
+}
+
+/* The page */
+.sy-main {
+  background-color: var(--sk-page);
+  box-shadow: var(--sk-page-shadow);
+  border-radius: 8px;
+  margin: 1.5rem 0 4rem;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .sy-main {
+    margin: 0.75rem 0 2rem;
+    border-radius: 6px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .sy-rside-inner {
+    padding-left: 1.75rem;
+  }
+}
+
+/* The navbar, in the charcoal of rtd's sidebar. */
+.sy-head-blur {
+  background-color: var(--sk-nav-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.sy-head-brand,
+.sy-head-brand strong,
+.sy-head-actions button,
+.sy-head-socials a,
+.sy-head .theme-switch {
+  color: #ffffff;
+}
+
+.sy-head .hamburger > span {
+  background-color: #ffffff;
+}
+
+/* Below md the links and search fold into a dropdown that keeps the page colors, so only recolor them in the bar itself. */
+@media (min-width: 768px) {
+  .sy-head .searchbox input {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+  }
+
+  .sy-head .searchbox input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .sy-head-links a,
+  .sy-head-links .link i.external-link {
+    color: var(--sk-nav-text);
+  }
+
+  .sy-head-links a:hover,
+  .sy-head-socials a:hover {
+    color: var(--sk-nav-hover);
+  }
+}
+
+.sy-head-brand img {
+  height: 36px;
+  width: 36px;
+}
+
+/* Sidebars sit on the desk. */
+.sy-lside .globaltoc a,
+.sy-rside a {
+  color: var(--sk-sidebar-link);
+}
+
+.sy-lside .globaltoc a:hover,
+.sy-rside a:hover {
+  color: var(--sk-link);
+}
+
+/* The current page on the left (or the page it sits under), and the section in view on the right, are underlined. */
+.sy-lside .globaltoc a.current,
+.sy-lside .globaltoc li.current > a,
+.sy-rside .localtoc li.active > a {
+  color: var(--sk-link);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.sy-lside .globaltoc .caption {
+  font-family: var(--sy-f-heading);
+  font-weight: 700;
+  color: var(--sk-heading-link);
+}
+
+/* Entries sit further in than the section headings above them. */
+.sy-lside .globaltoc > ul {
+  padding-left: 1rem;
+}
+
+/* Code cells, as rtd draws them: a thin border and square corners. */
+.highlight > pre,
+pre.literal-block {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 12px;
+  border-radius: 0;
+}
+
+html:not(.dark) .highlight > pre {
+  border: 1px solid var(--sk-code-border);
+}
+
+/* In light mode, text pygments leaves untagged stays dark on the green. */
+html:not(.dark) .highlight {
+  --syntax-text: #333333;
+}
+
+/* A code block's caption is a plain label above it. */
+.yue .code-block-caption {
+  background: none;
+  padding: 0 0 0.3rem;
+  font-family: var(--sy-f-heading);
+  font-weight: 400;
+  color: var(--sk-text);
+}
+
+/* Names that sphinx-codeautolink links to the API reference are underlined only on hover. */
+.highlight a.sphinx-codeautolink-a {
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+.highlight a.sphinx-codeautolink-a:hover {
+  text-decoration: underline solid var(--sk-link);
+}
+
+/* Inline code, as rtd draws it: red on white with a thin border. */
+.yue code.literal {
+  font-weight: 400;
+  font-size: 0.8em;
+  padding: 2px 5px;
+  border: 1px solid var(--sk-code-border);
+  border-radius: 0;
+}
+
+/* Inline code that is a link keeps the link color, as in rtd. */
+.yue a code.literal,
+.yue a code.xref {
+  color: var(--sk-link);
+  border: 0;
+  background: none;
+  padding: 0;
+  font-weight: 700;
+}
+
+/* Headings */
+.yue h1,
+.yue h2,
+.yue h3,
+.yue h4 {
+  font-family: var(--sy-f-heading);
+}
+
+.yue h1 {
+  font-weight: 700;
+  padding-bottom: 0.2em;
+  border-bottom: 3px solid currentColor;
+}
+
+.yue h2 {
+  padding-bottom: 0.2em;
+  border-bottom: 2px solid var(--sk-rule);
+}
+
+.yue a {
+  text-decoration: none;
+  font-weight: 400;
+}
+
+.yue a:hover {
+  color: var(--sk-link-hover);
+  text-decoration: underline;
+}
+
+/* API signatures, in rtd's blue band. */
+.yue dl.py.class > dt,
+.yue dl.py.function > dt,
+.yue dl.py.exception > dt {
+  background: var(--sk-sig-bg);
+  border-top: 3px solid var(--sk-sig-border);
+  color: var(--sk-sig-text);
+}
+
+.yue dl.py.method > dt,
+.yue dl.py.attribute > dt,
+.yue dl.py.property > dt {
+  background: var(--sk-note-bg);
+  border-left: 3px solid var(--sk-rule);
+}
+
+html.dark .yue dl.py.method > dt,
+html.dark .yue dl.py.attribute > dt,
+html.dark .yue dl.py.property > dt {
+  background: #2a2e34;
+}
+
+html:not(.dark) .yue dl.py.method > dt,
+html:not(.dark) .yue dl.py.attribute > dt,
+html:not(.dark) .yue dl.py.property > dt {
+  background: #f0f0f0;
+  border-left-color: #cccccc;
+}
+
+/* Admonitions, as rtd draws them: a tinted body under a solid title bar. */
+.yue .admonition.note,
+.yue .admonition.seealso,
+.yue .admonition.tip,
+.yue .admonition.hint {
+  --color-1: var(--sk-note-title);
+  background-color: var(--sk-note-bg);
+}
+
+.yue .admonition.warning,
+.yue .admonition.danger,
+.yue .admonition.caution,
+.yue .admonition.attention,
+.yue .admonition.error {
+  --color-1: var(--sk-warn-title);
+  background-color: var(--sk-warn-bg);
+}
+
+/* Landing page */
+.yue h1 em {
+  font-size: 0.55em;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* Features: a compact grid of small lists. */
+.yue ul.sk-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 0.5rem 2rem;
+  padding-left: 0;
+  list-style: none;
+  margin-top: 0.75rem;
+}
+
+.yue ul.sk-features > li {
+  margin: 0;
+}
+
+.yue ul.sk-features > li > p {
+  margin: 0;
+  font-family: var(--sy-f-heading);
+  font-weight: 700;
+}
+
+.yue ul.sk-features > li > ul {
+  margin: 0.15rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.yue ul.sk-features li li,
+.yue ul.sk-features li li > p {
+  margin: 0.05rem 0;
+}
+
+/* The API index and other toctrees list their pages under small captions rather than section headings. */
+.yue .toctree-wrapper {
+  margin: 0;
+}
+
+.yue .toctree-wrapper p.caption {
+  margin: 0.9rem 0 0.1rem;
+  padding: 0;
+  border: 0;
+  font-family: var(--sy-f-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sk-heading-link);
+}
+
+.yue .toctree-wrapper ul {
+  margin: 0;
+  padding-top: 0;
+  border: 0;
+}
+
+.yue .toctree-wrapper li {
+  margin: 0.15rem 0;
+}
