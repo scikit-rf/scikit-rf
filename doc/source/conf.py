@@ -106,10 +106,26 @@ html_theme_options = {
     "github_url": "https://github.com/scikit-rf/scikit-rf",
     # Icons in the navbar, linking to the community channels the README lists.
     "nav_socials": [
-        {"name": "GitHub", "url": "https://github.com/scikit-rf/scikit-rf", "icon": "simple-icons:github"},
-        {"name": "LinkedIn", "url": "https://www.linkedin.com/groups/12462155/", "icon": "simple-icons:linkedin"},
-        {"name": "Slack", "url": "https://join.slack.com/t/scikit-rf/shared_invite/zt-d82b62wg-0bdSJjZVhHBKf6687V80Jg", "icon": "simple-icons:slack"},
-        {"name": "Matrix", "url": "https://app.element.io/#/room/#scikit-rf:matrix.org", "icon": "simple-icons:matrix"},
+        {
+            "name": "GitHub",
+            "url": "https://github.com/scikit-rf/scikit-rf",
+            "icon": "simple-icons:github",
+        },
+        {
+            "name": "LinkedIn",
+            "url": "https://www.linkedin.com/groups/12462155/",
+            "icon": "simple-icons:linkedin",
+        },
+        {
+            "name": "Slack",
+            "url": "https://join.slack.com/t/scikit-rf/shared_invite/zt-d82b62wg-0bdSJjZVhHBKf6687V80Jg",
+            "icon": "simple-icons:slack",
+        },
+        {
+            "name": "Matrix",
+            "url": "https://app.element.io/#/room/#scikit-rf:matrix.org",
+            "icon": "simple-icons:matrix",
+        },
     ],
     "nav_links": [
         {"title": "Home", "url": "index"},
