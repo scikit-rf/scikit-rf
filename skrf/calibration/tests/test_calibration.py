@@ -26,6 +26,7 @@ from skrf.calibration import (
     TwelveTerm,
     TwoPortOnePath,
     UnknownThru,
+    align_measured_ideals,
     compute_switch_terms,
     convert_8term_2_12term,
     convert_12term_2_8term,
@@ -57,6 +58,76 @@ def _compare_dicts_allclose(first: dict, second: dict) -> None:
     assert first.keys() == second.keys()
     for k in first.keys():
         np.testing.assert_allclose(first[k], second[k], err_msg=f"Values from key '{k}' not equal!")
+
+
+@pytest.mark.parametrize("as_dict", [False, True])
+def test_exact_standard_alignment(as_dict):
+    frequency = rf.Frequency(1, 3, 3, 'GHz')
+    directivity = np.array([0.02 + 0.01j, -0.01 + 0.02j, 0.01 - 0.03j])
+    tracking = np.array([0.7 + 0.1j, 0.8 - 0.05j, 0.6 + 0.2j])
+    source_match = np.array([0.1 - 0.02j, 0.05 + 0.08j, -0.07 + 0.03j])
+
+    def network(name, gamma):
+        return rf.Network(frequency=frequency, s=np.broadcast_to(gamma, (3,)), z0=50, name=name)
+
+    def measured_response(gamma):
+        return directivity + tracking * gamma / (1 - source_match * gamma)
+
+    ideals = [network(f'{gender}-{name}', gamma)
+              for gender, values in [('male', (-0.8, 0.9, 0.1)), ('female', (-1., 1., 0.))]
+              for name, gamma in zip(('short', 'open', 'load'), values)]
+    measured = [network(ideal.name, measured_response(ideal.s[:, 0, 0])) for ideal in ideals[3:]]
+    measured.reverse()
+    original_ideals = [ideal.copy() for ideal in ideals]
+    original_measured = [measure.copy() for measure in measured]
+    cal = OnePort(
+        measured={m.name: m for m in measured} if as_dict else measured,
+        ideals={i.name: i for i in ideals} if as_dict else ideals,
+        sloppy_input='exact',
+    )
+
+    assert [m.name for m in cal.measured] == ['female-load', 'female-open', 'female-short']
+    assert [i.name for i in cal.ideals] == [m.name for m in cal.measured]
+    expected = np.array([0.2 + 0.1j, -0.3 + 0.2j, 0.1 - 0.2j])
+    corrected = cal.apply_cal(network('dut', measured_response(expected)))
+    np.testing.assert_allclose(corrected.s[:, 0, 0], expected, rtol=1e-12, atol=1e-12)
+    for originals, inputs in [(original_ideals, ideals), (original_measured, measured)]:
+        assert [n.name for n in originals] == [n.name for n in inputs]
+        for original, supplied in zip(originals, inputs):
+            np.testing.assert_array_equal(original.s, supplied.s)
+
+
+def test_exact_standard_alignment_repeated_measurements():
+    ideal = WG.load(0.1, name='load')
+    measured = [WG.load(0.2, name='load'), WG.load(0.3, name='load')]
+    aligned_measured, aligned_ideals = align_measured_ideals(measured, [ideal], strict=True)
+    assert len(aligned_measured) == len(aligned_ideals) == 2
+    assert all(actual is supplied for actual, supplied in zip(aligned_measured, measured))
+    assert all(actual is ideal for actual in aligned_ideals)
+
+
+@pytest.mark.parametrize('name', [None, '', 'missing'])
+def test_exact_standard_alignment_missing_name(name):
+    measured = [WG.match(name=name)]
+    ideals = [WG.match(name='load')]
+    with pytest.raises(ValueError, match='exactly one ideal'):
+        align_measured_ideals(measured, ideals, strict=True)
+
+
+def test_exact_standard_alignment_duplicate_ideals():
+    measured = [WG.match(name='load')]
+    ideals = [WG.match(name='load'), WG.load(0.1, name='load')]
+    with pytest.raises(ValueError, match='exactly one ideal'):
+        align_measured_ideals(measured, ideals, strict=True)
+
+
+def test_standard_alignment_substring_compatibility():
+    ideal = WG.match(name='load')
+    measured = [WG.load(0.2, name='load,1'), WG.load(0.3, name='load,2')]
+    aligned_measured, aligned_ideals = align_measured_ideals(measured, [ideal])
+    assert len(aligned_measured) == len(aligned_ideals) == 2
+    assert all(actual is supplied for actual, supplied in zip(aligned_measured, measured))
+    assert all(actual is ideal for actual in aligned_ideals)
 
 
 class DetermineTest(unittest.TestCase):
