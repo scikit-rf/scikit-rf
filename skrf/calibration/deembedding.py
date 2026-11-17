@@ -51,6 +51,7 @@ De-embedding Methods
    IEEEP370_MM_NZC_2xThru
    IEEEP370_SE_ZC_2xThru
    IEEEP370_MM_ZC_2xThru
+   Modal_NZC_2xThru
 
 """
 
@@ -66,9 +67,11 @@ import scipy
 from numpy import angle, concatenate, conj, exp, flip, imag, ndarray, real, unwrap, zeros
 from numpy.fft import fft, fftshift, ifftshift, irfft
 from numpy.linalg import norm
+from scipy.optimize import linear_sum_assignment
 
+from .. import mathFunctions as mf
 from ..frequency import Frequency
-from ..network import Network, concat_ports, overlap_multi, subnetwork
+from ..network import Network, concat_ports, overlap_multi, s2t, subnetwork
 from ..plotting import figure, subplots
 
 if TYPE_CHECKING:
@@ -4911,3 +4914,821 @@ class IEEEP370_MM_ZC_2xThru(IEEEP370):
         fig.tight_layout()
 
         return (fig, ax)
+
+
+# ---------------------------------------------------------------------------
+# Modal 2x-thru de-embedding of N coupled lines (extension outside IEEE 370)
+# ---------------------------------------------------------------------------
+
+# Modal transform of a differential pair, columns are (differential, common) modes:
+# V1 = Vd / 2 + Vc, V2 = -Vd / 2 + Vc. It gives the same S-parameters as `Network.se2gmm(p=2)`.
+_MIXED_MODE_TV = np.array([[0.5, 1.0], [-0.5, 1.0]])
+
+
+def _modal_xi(tv: ndarray, z0: float, z_modal: ndarray) -> tuple[ndarray, ndarray, ndarray, ndarray]:
+    r"""
+    Matrices of the S-parameter change of basis between terminal and modal waves.
+
+    The terminal voltages and currents of N lines are written as
+    :math:`V = T_v V_m` and :math:`I = T_i I_m` with :math:`T_i = T_v^{-T}`, which
+    conserves power and preserves reciprocity. Modal waves are defined with the
+    real modal reference impedances `z_modal`. The returned matrices follow the
+    convention of :meth:`skrf.network.Network.se2gmm`, that is
+    :math:`S_m = (X_{21} + X_{22} S)(X_{11} + X_{12} S)^{-1}`.
+
+    Parameters
+    ----------
+    tv : :class:`numpy.ndarray`, shape (F, N, N)
+        Modal transform, one mode per column.
+    z0 : float
+        Real terminal reference impedance of the 2N ports.
+    z_modal : :class:`numpy.ndarray`, shape (N,)
+        Real modal reference impedance of every mode.
+
+    Returns
+    -------
+    X11, X12, X21, X22 : :class:`numpy.ndarray`, shape (F, 2N, 2N)
+        The same N x N block acts on the ports of the left side and of the right side.
+    """
+    tv = np.asarray(tv, dtype=complex)
+    z_modal = np.asarray(z_modal, dtype=float)
+    n_f, n, _ = tv.shape
+    sqrt_z0 = np.sqrt(z0)
+    u = np.linalg.inv(tv) * sqrt_z0
+    w = z_modal[None, :, None] * np.swapaxes(tv, 1, 2) / sqrt_z0
+    dm = 1.0 / (2.0 * np.sqrt(z_modal))[None, :, None]
+    p = dm * (u + w)
+    m = dm * (u - w)
+    x_p = np.zeros((n_f, 2 * n, 2 * n), dtype=complex)
+    x_m = np.zeros_like(x_p)
+    x_p[:, :n, :n] = p
+    x_p[:, n:, n:] = p
+    x_m[:, :n, :n] = m
+    x_m[:, n:, n:] = m
+    return x_p, x_m, x_m, x_p
+
+
+def _se2modal(s: ndarray, xi: tuple[ndarray, ndarray, ndarray, ndarray]) -> ndarray:
+    """
+    Terminal S-parameters to modal S-parameters, see :func:`_modal_xi`.
+    """
+    x11, x12, x21, x22 = xi
+    a = x21 + x22 @ s
+    b = x11 + x12 @ s
+    return mf.rsolve(b, a)
+
+
+def _modal2se(s_m: ndarray, xi: tuple[ndarray, ndarray, ndarray, ndarray]) -> ndarray:
+    """
+    Modal S-parameters to terminal S-parameters, see :func:`_modal_xi`.
+    """
+    x11, x12, x21, x22 = xi
+    return np.linalg.solve(x22 - s_m @ x12, s_m @ x11 - x21)
+
+
+def _abcd_2nport(s: ndarray, z0: float) -> ndarray:
+    """
+    ABCD matrix of a 2N-port in 'second' port order, [V1; I1] = ABCD [V2; -I2].
+
+    :func:`skrf.network.s2a` handles two-ports only. Here the scattering transfer
+    matrix of :func:`skrf.network.s2t`, [b1; a1] = T [a2; b2], is converted with
+    a real, scalar reference impedance `z0`.
+
+    Parameters
+    ----------
+    s : :class:`numpy.ndarray`, shape (F, 2N, 2N)
+    z0 : float
+        Real reference impedance of all the ports.
+
+    Returns
+    -------
+    abcd : :class:`numpy.ndarray`, shape (F, 2N, 2N)
+        N x N blocks [[A, B], [C, D]].
+    """
+    n = s.shape[1] // 2
+    eye = np.eye(n)
+    sqrt_z0 = np.sqrt(z0)
+    k = np.block([[sqrt_z0 * eye, sqrt_z0 * eye], [-eye / sqrt_z0, eye / sqrt_z0]])
+    return k @ s2t(s) @ np.linalg.inv(k)
+
+
+def _eig_gap(lam: ndarray) -> ndarray:
+    """
+    Relative spacing of the eigenvalues, shape (F,).
+
+    For each pair of eigenvalues, ``|l_i - l_j| / max(|l_i|, |l_j|)``; the result
+    is the smallest over all the pairs. It is ``inf`` when there is a single mode.
+    """
+    n_f, n = lam.shape
+    gap = np.full(n_f, np.inf)
+    for i in range(n):
+        for j in range(i + 1, n):
+            scale = np.maximum(np.maximum(np.abs(lam[:, i]), np.abs(lam[:, j])), 1e-30)
+            gap = np.minimum(gap, np.abs(lam[:, i] - lam[:, j]) / scale)
+    return gap
+
+
+def _track_modes(vec: ndarray, lam: ndarray, start: int) -> tuple[ndarray, ndarray]:
+    """
+    Make eigenvectors continuous over frequency (in place).
+
+    Starting at index `start`, where the modes are the best separated, and going
+    outward in both directions, the columns of every frequency are matched to the
+    previous one with a linear assignment on the overlap magnitudes, then their sign
+    is chosen so that the overlap is positive. The loop is sequential by nature.
+    """
+    n_f = vec.shape[0]
+    for indices in (range(start + 1, n_f), range(start - 1, -1, -1)):
+        prev = start
+        for i in indices:
+            cost = -np.abs(vec[prev].conj().T @ vec[i])
+            _, col = linear_sum_assignment(cost)
+            vec[i] = vec[i][:, col]
+            lam[i] = lam[i][col]
+            sign = np.sign(np.real(np.einsum('ik,ik->k', vec[prev].conj(), vec[i])))
+            sign[sign == 0] = 1.0
+            vec[i] = vec[i] * sign
+            prev = i
+    return vec, lam
+
+
+def _transform_ripple(vec: ndarray, f: ndarray, deg: int = 3) -> float:
+    """
+    Largest deviation of the modal vectors from a low-order polynomial of frequency.
+
+    The real and imaginary parts of every entry of `vec` (shape (F, N, N)) are fitted
+    with a polynomial of degree `deg` in `f`. The result is about 1e-8 for a uniform
+    coupled line and several 1e-2 or more for fixtures that are not line-like.
+    """
+    if len(f) < 2 * (deg + 2):
+        return 0.0
+    x = f / f[-1]
+    data = vec.reshape(len(f), -1)
+    data = np.concatenate([data.real, data.imag], axis=1)
+    vander = np.vander(x, deg + 1)
+    coef = np.linalg.lstsq(vander, data, rcond=None)[0]
+    return float(np.max(np.abs(data - vander @ coef)))
+
+
+def _eig_modal_transform(s2x: Network, z0: float, mode: str = 'const',
+                         eig_scaling: str = 'unit') -> tuple[ndarray, dict]:
+    r"""
+    Estimate the modal transform of a mirror-symmetric 2N-port 2x-thru.
+
+    For a reciprocal fixture-fixture network that is the mirror image of
+    itself, the A block of its ABCD matrix is :math:`A = T_v \cosh(\gamma \ell) T_v^{-1}`
+    when it behaves as N uniform coupled lines, so the columns of :math:`T_v` are
+    the eigenvectors of A.
+
+    Parameters
+    ----------
+    s2x : :class:`~skrf.network.Network`
+        2x-thru, 2N-port, 'second' port order.
+    z0 : float
+        Real reference impedance of the 2x-thru.
+    mode : {'const', 'freq'}
+        'freq' returns the eigenvectors of every frequency point, after tracking them
+        over frequency. 'const' returns a single transform, the average of the real
+        part of the eigenvectors weighted by the relative eigenvalue spacing, which
+        is much less sensitive to noise.
+    eig_scaling : {'unit', 'image'}
+        Column scaling of the 'freq' transform. 'unit': unit norm, with
+        :math:`v^T v` real and positive. 'image': scaled so that the modal image
+        impedance is constant.
+
+    Returns
+    -------
+    tv : :class:`numpy.ndarray`, shape (F, N, N)
+        Modal transform, one mode per column.
+    info : dict
+        'eigenvalues' (F, N), 'eig_gap' (F,), 'mode_order' (N,), 'ripple' (float).
+        A DC point, if any, is excluded from the estimation and takes the values of the
+        first other frequency.
+    """
+    if mode not in ('const', 'freq'):
+        raise ValueError(f"mode must be 'const' or 'freq', not {mode!r}.")
+    if eig_scaling not in ('unit', 'image'):
+        raise ValueError(f"eig_scaling must be 'unit' or 'image', not {eig_scaling!r}.")
+    f = s2x.f
+    s = s2x.s
+    n = s.shape[1] // 2
+    valid = np.flatnonzero(f > 0)
+    if len(valid) == 0:
+        raise ValueError('The 2x-thru has no frequency point above DC.')
+
+    abcd = _abcd_2nport(s[valid], z0)
+    lam, vec = np.linalg.eig(abcd[:, :n, :n])
+    vec = vec / np.linalg.norm(vec, axis=1, keepdims=True)
+    vec = vec * np.exp(-0.5j * np.angle(np.einsum('fik,fik->fk', vec, vec)))[:, None, :]
+    gap = _eig_gap(lam)
+    vec, lam = _track_modes(vec, lam, int(np.argmax(gap)))
+
+    # deterministic order: the slowest mode (smallest Re(cosh) at the lowest frequency) first
+    order = np.argsort(lam[0].real, kind='stable')
+    vec = vec[:, :, order]
+    lam = lam[:, order]
+    ripple = _transform_ripple(vec, f[valid])
+
+    if mode == 'const':
+        weight = np.where(np.isfinite(gap), gap, 1.0)
+        if not weight.sum() > 0:
+            weight = np.ones_like(weight)
+        const = np.einsum('f,fik->ik', weight / weight.sum(), vec.real)
+        const = const / np.linalg.norm(const, axis=0, keepdims=True)
+        vec = np.broadcast_to(const, vec.shape).astype(complex)
+    elif eig_scaling == 'image':
+        ti = np.linalg.inv(np.swapaxes(vec, 1, 2))
+        b_m = np.linalg.inv(vec) @ abcd[:, :n, n:] @ ti
+        c_m = np.linalg.inv(ti) @ abcd[:, n:, :n] @ vec
+        z_k = np.sqrt(np.diagonal(b_m, axis1=1, axis2=2) / np.diagonal(c_m, axis1=1, axis2=2))
+        z_k = np.where(z_k.real < 0, -z_k, z_k)
+        z_ref = np.median(np.abs(z_k), axis=0)
+        vec = vec * np.sqrt(z_k / z_ref)[:, None, :]
+
+    tv = np.empty((len(f), n, n), dtype=complex)
+    tv[:] = vec[0]
+    tv[valid] = vec
+    eigenvalues = np.empty((len(f), n), dtype=complex)
+    eigenvalues[:] = lam[0]
+    eigenvalues[valid] = lam
+    eig_gap = np.full(len(f), gap[0])
+    eig_gap[valid] = gap
+    info = {'eigenvalues': eigenvalues, 'eig_gap': eig_gap, 'mode_order': order, 'ripple': ripple}
+    return tv, info
+
+
+def _modal_references(tv: ndarray, z0: float) -> ndarray:
+    """
+    Real modal reference impedances that go with the modal transform `tv`.
+
+    For the mode k, ``z0 * median_f(norm(Ti[:, k]) / norm(Tv[:, k]))`` with ``Ti = Tv^-T``.
+    For the mixed-mode transform of a differential pair it gives exactly ``2 * z0``
+    (differential) and ``z0 / 2`` (common).
+    """
+    ti = np.linalg.inv(np.swapaxes(tv, 1, 2))
+    ratio = np.linalg.norm(ti, axis=1) / np.linalg.norm(tv, axis=1)
+    return z0 * np.median(ratio, axis=0)
+
+
+class Modal_NZC_2xThru(IEEEP370):
+    r"""
+    Creates error boxes from a 2N-port test fixture 2x-thru, for N coupled lines.
+
+    Based on [ElSA20]_ and [I3E370]_, but **not part of the IEEE 370 standard**.
+
+    A deembedding object is created with a single 2x-thru (FIX-FIX) network of
+    N coupled lines, that is 2N ports. The 2x-thru is transformed to modal
+    S-parameters, each mode is split into a left (FIX-1) and a right (FIX-2) half
+    with the single-ended IEEEP370 NZC method (:class:`IEEEP370_SE_NZC_2xThru`),
+    and the two halves are transformed back to terminal S-parameters.
+
+    When :func:`Deembedding.deembed` is applied, the S-parameters of FIX-1 and
+    FIX-2 are deembedded from the FIX-DUT-FIX network.
+
+    For a differential pair (N = 2) with ``modal_transform='mixed'``, this is the
+    method of :class:`IEEEP370_MM_NZC_2xThru`: the modal transform is then the
+    differential and common mode transform. The other options are meant for
+    N > 2 lines, or for pairs whose modes are not the differential and
+    common modes.
+
+    Warning
+    -------
+    This is an extension that goes beyond IEEE 370. The standard uses only the
+    differential-differential and common-common blocks (Sdd and Scc) of a
+    differential 2x-thru, and its fixture electrical requirement FER6 limits the
+    mode conversion of the fixture. Here the full modal 2N-port is split.
+
+    The single-line splitting of each mode is valid when the 2x-thru behaves as
+    N uniform coupled lines in the modal basis, so that each mode propagates as
+    its own transmission line. Mode conversion generated by the fixture
+    (launches that are not mirror-symmetric between the lines, asymmetric
+    discontinuities, and so on) breaks this assumption.
+    The following attributes are set to help judge it, and a
+    :class:`RuntimeWarning` starting with ``Modal 2x-thru:`` is issued when a
+    limit is exceeded:
+
+    - ``mode_conversion_db``: worst cross-mode transmission minus the insertion
+      loss of the mode, per frequency, in the modal basis (like FER6 for a
+      differential pair). The limit is `conversion_limit_db`.
+    - ``transform_ripple`` (limit ``transform_ripple_limit``, warns for
+      ``'eig'`` only): deviation of the per-frequency modal vectors from a smooth
+      polynomial of frequency.
+    - ``mirror_asymmetry`` (limit ``mirror_asymmetry_limit``): how far the
+      2x-thru is from being the mirror image of itself.
+    - ``eig_gap`` (limit ``eig_gap_limit``, eigenvector options only): relative
+      spacing of the modal eigenvalues.
+
+    The limits are class attributes and can be changed. They were set on a few
+    synthetic fixtures and are not a certification of the result.
+
+    De-embedding the 2x-thru itself to a thru is **not** a quality check for
+    ``modal_transform='eig'``. The eigenvectors of a reciprocal, mirror-symmetric
+    2x-thru always decouple it exactly, whether or not the fixture is
+    line-like. Compare a known device, or the diagnostics above, instead.
+
+    Note
+    ----
+    The modal transform relates terminal and modal voltages :math:`V = T_v V_m`,
+    with the modes in the columns of :math:`T_v`, and currents
+    :math:`I = T_v^{-T} I_m`. It is real and constant for a uniform coupled
+    line in the quasi-TEM approximation, but it is not unique: a scale of each
+    column changes the modal characteristic impedance. The modal reference
+    impedances ``z_modal`` are real constants computed from the transform, or
+    given with `modal_z0`. As for the choice of `z0` in the mixed-mode class,
+    the split depends weakly on them: on synthetic lines, a reference 10 %
+    away from the modal impedance of the lines changed the de-embedded DUT
+    by about 1e-3 in S-parameter units.
+
+    ``modal_transform`` can be:
+
+    ``'eig_const'`` (default)
+        One constant, real transform estimated from the eigenvectors of the
+        2x-thru, which are tracked over frequency and averaged with the
+        relative eigenvalue spacing as weight. This is much less sensitive to
+        noise than ``'eig'``. It needs modes with different propagation delays or
+        losses; it cannot find the transform of lines in a homogeneous medium
+        with equal losses, in which case the transform should be supplied.
+    ``'eig'``
+        One transform for each frequency from the eigenvectors of the 2x-thru
+        (tracked over frequency, unit-norm columns, or the image impedance
+        scaling with ``eig_scaling='image'``). It is fragile with measured
+        data: near-equal eigenvalues (at low frequency, and wherever the modes
+        have the same electrical length modulo a half-wave) make the vectors
+        noisy. A :class:`RuntimeWarning` is issued if they are not smooth.
+    ``'mixed'``
+        The differential and common mode transform, N = 2 only. Exactly
+        :class:`IEEEP370_MM_NZC_2xThru`.
+    array
+        A transform of shape (N, N), or (F, N, N) for one transform per
+        frequency, columns being the modes. Use it when the modes are known, for
+        example from a field solver or from the line geometry.
+
+    Port numbering follows the `port_order` of
+    :class:`IEEEP370_MM_NZC_2xThru`, extended to N lines.
+
+    numbering diagram, N = 3 lines::
+
+      port_order = 'first'          port_order = 'second'
+           +---------+                   +---------+
+          -|0       1|-                 -|0       3|-
+          -|2       3|-                 -|1       4|-
+          -|4       5|-                 -|2       5|-
+           +---------+                   +---------+
+
+      port_order = 'third'
+           +---------+
+          -|0       5|-
+          -|1       4|-
+          -|2       3|-
+           +---------+
+
+    The `scikit-rf` cascade ** 2N-port operator uses the second scheme, which
+    is used internally. The error boxes ``se_side1`` and ``se_side2`` are
+    always in this scheme, whatever `port_order` is.
+
+    Example
+    -------
+    >>> import skrf as rf
+    >>> from skrf.calibration.deembedding import Modal_NZC_2xThru
+
+    Create network objects for 2x-thru and FIX-DUT-FIX, here with 6 ports (3 lines)
+
+    >>> s2xthru = rf.Network('2xthru.s6p')
+    >>> fdf = rf.Network('f-dut-f.s6p')
+
+    Create de-embedding object
+
+    >>> dm = Modal_NZC_2xThru(dummy_2xthru = s2xthru, name = '2xthru')
+
+    Apply deembedding to get the actual DUT network
+
+    >>> dut = dm.deembed(fdf)
+
+    Note
+    ----
+    numbering diagram, port_order = 'second', N = 2 lines::
+
+         FIX-1    DUT      FIX-2
+         +----+   +----+   +----+
+        -|0  2|---|0  2|---|2  0|-
+        -|1  3|---|1  3|---|3  1|-
+         +----+   +----+   +----+
+
+    Attributes
+    ----------
+    se_side1, se_side2 : :class:`~skrf.network.Network`
+        Left and right error boxes, 'second' port order.
+    tv : :class:`numpy.ndarray`
+        Modal transform used, shape (F, N, N).
+    z_modal : :class:`numpy.ndarray`
+        Modal reference impedance of every mode, shape (N,), real.
+    modal_2xthru : :class:`~skrf.network.Network`
+        The 2x-thru in the modal basis.
+    mode_order : :class:`numpy.ndarray`
+        Order of the modes of the eigenvector options: slowest first,
+        by the real part of the eigenvalue at the lowest frequency.
+    x_end, z_x : list
+        Debug outputs of :class:`IEEEP370_SE_NZC_2xThru`, one entry for each mode.
+    mode_conversion_db, transform_ripple, mirror_asymmetry, eig_gap :
+        Diagnostics, see above. ``None`` when they do not apply.
+
+    References
+    ----------
+    .. [ElSA20] Ellison J, Smith SB, Agili S., "Using a 2x-thru standard to achieve
+        accurate de-embedding of measurements", Microwave Optical Technology
+        Letter, 2020, https://doi.org/10.1002/mop.32098
+    .. [I3E370] https://opensource.ieee.org/elec-char/ieee-370/-/blob/master/TG1/IEEEP370mmZc2xthru.m
+       commit 49ddd78cf68ad5a7c0aaa57a73415075b5178aa6
+    """
+
+    #: warn if the modal vectors deviate more than this from a cubic fit in frequency (``'eig'``)
+    transform_ripple_limit = 1e-2
+    #: warn if the 2x-thru is farther than this from the mirror image of itself, relative. Noise of
+    #: 2e-4 in magnitude and 0.2 degree in phase gives about 1e-2 on synthetic data, a fixture that
+    #: is not its own mirror image gives 0.5 or more.
+    mirror_asymmetry_limit = 5e-2
+    #: warn if the relative eigenvalue spacing is below this over most of the band
+    eig_gap_limit = 1e-4
+
+    _TRANSFORMS = ('mixed', 'eig_const', 'eig')
+
+    def __init__(self, dummy_2xthru: Network, name: str = None,
+                 z0: float = 50, port_order: PortOrderT = 'second',
+                 modal_transform: str | ndarray = 'eig_const', modal_z0: Sequence[float] = None,
+                 eig_scaling: Literal['unit', 'image'] = 'unit',
+                 use_z_instead_ifft: bool = False, forced_z0_line: Sequence[float] = None,
+                 conversion_limit_db: float = -30.0, verbose: bool = False,
+                 *args, **kwargs) -> None:
+        """
+        Modal_NZC_2xThru De-embedding Initializer
+
+        Parameters
+        -----------
+
+        dummy_2xthru : :class:`~skrf.network.Network` object
+            2x-thru (FIX-FIX) network with 2N ports. It is expected to be
+            reciprocal and the mirror image of itself, and to have a harmonic
+            frequency axis, like for the single-ended method.
+
+        name : string
+            optional name of de-embedding object
+
+        z0 : float
+            real reference impedance of the S-parameters, the same for all
+            the ports (default: 50). The 2x-thru is renormalized (a copy) if
+            it has another reference impedance.
+
+        port_order : ['first', 'second', 'third']
+            specify what numbering scheme to use. See above. (default: second)
+
+        modal_transform : ['eig_const', 'eig', 'mixed'] or array
+            how the modal transform is obtained, see above. (default: 'eig_const')
+
+        modal_z0 : array-like of N reals, optional
+            modal reference impedances, overriding the ones computed from the
+            modal transform. They have the same role as the factors 2 * z0
+            (differential) and z0 / 2 (common) of the mixed-mode class.
+
+        eig_scaling : ['unit', 'image']
+            column scaling of the per-frequency eigenvectors, only for
+            ``modal_transform='eig'``: unit norm, or constant modal image
+            impedance. Neither is universally better: unit-norm columns
+            are wrong if the true transform depends on frequency, and the image
+            impedance scaling is biased by connectors. (default: 'unit')
+
+        use_z_instead_ifft :
+            use z-transform instead ifft, for each mode. See
+            :class:`IEEEP370_SE_NZC_2xThru`. (default: False)
+
+        forced_z0_line : array-like of N reals, optional
+            If specified, the split plane impedance of each mode is forced to
+            these values, in modal ohms, in the order of the columns of the
+            transform (``mode_order`` for the eigenvector options). An entry
+            None leaves the mode free. It has the same meaning as
+            `forced_z0_line_dd` and `forced_z0_line_cc` of
+            :class:`IEEEP370_MM_NZC_2xThru`, which are the entries for the
+            differential and the common modes. (Default: None)
+
+        conversion_limit_db : float
+            limit of ``mode_conversion_db`` in dB above which a warning is
+            issued. FER6 of IEEE 370 uses -15 dB for the differential to common
+            conversion of a 2x-thru, but the conversion left in the estimated
+            modal basis reached only -24 dB on synthetic fixtures with a
+            mode-converting launch, where the de-embedding error was already
+            0.14 (S-parameter units), so the default is stricter. (default: -30)
+
+        verbose :
+            view the process (default: False)
+
+        args, kwargs:
+            passed to :func:`Deembedding.__init__`
+
+        Raises
+        ------
+        ValueError
+            for an odd number of ports, an invalid option, a transform that is
+            not invertible or does not fit the 2x-thru.
+
+        See Also
+        ---------
+        :func:`Deembedding.__init__`
+        :class:`IEEEP370_MM_NZC_2xThru`
+
+        """
+        self.s2xthru = dummy_2xthru.copy()
+        nports = self.s2xthru.nports
+        if nports % 2 != 0 or nports < 2:
+            raise ValueError('2xthru must have an even number of ports (2N ports for N lines), '
+                             f'it has {nports}.')
+        self.n_lines = n = nports // 2
+
+        z0_arr = np.asarray(z0)
+        if z0_arr.ndim != 0 or np.imag(z0_arr) != 0 or not np.real(z0_arr) > 0:
+            raise ValueError('z0 must be a positive real scalar.')
+        self.z0 = float(np.real(z0_arr))
+        if np.any(np.abs(self.s2xthru.z0 - self.z0) > 1e-9 * self.z0):
+            self.s2xthru.renormalize(self.z0)
+
+        if port_order not in ('first', 'second', 'third'):
+            raise ValueError(f"port_order must be 'first', 'second' or 'third', not {port_order!r}.")
+        self.port_order = port_order
+
+        self._tv_user = None
+        if isinstance(modal_transform, str):
+            if modal_transform not in self._TRANSFORMS:
+                raise ValueError(f'modal_transform must be one of {self._TRANSFORMS} or an array, '
+                                 f'not {modal_transform!r}.')
+            if modal_transform == 'mixed' and n != 2:
+                raise ValueError("modal_transform='mixed' is for differential pairs only (4 ports).")
+        else:
+            tv = np.asarray(modal_transform)
+            if tv.ndim == 2:
+                tv = tv[None]
+            if tv.ndim != 3 or tv.shape[1:] != (n, n):
+                raise ValueError(f'modal_transform array must have shape ({n}, {n}) or (F, {n}, {n}), '
+                                 f'not {np.shape(modal_transform)}.')
+            if tv.shape[0] not in (1, self.s2xthru.frequency.npoints):
+                raise ValueError(f'modal_transform array has {tv.shape[0]} frequency points, '
+                                 f'the 2x-thru has {self.s2xthru.frequency.npoints}.')
+            if not np.all(np.isfinite(tv)) or np.any(np.linalg.cond(tv) > 1.0 / np.finfo(float).eps):
+                raise ValueError('modal_transform is not invertible.')
+            self._tv_user = tv.astype(complex)
+            modal_transform = 'user'
+        self.modal_transform = modal_transform
+
+        if eig_scaling not in ('unit', 'image'):
+            raise ValueError(f"eig_scaling must be 'unit' or 'image', not {eig_scaling!r}.")
+        if eig_scaling == 'image' and modal_transform != 'eig':
+            raise ValueError("eig_scaling='image' applies to modal_transform='eig' only.")
+        self.eig_scaling = eig_scaling
+
+        if modal_z0 is not None:
+            modal_z0 = np.asarray(modal_z0, dtype=float)
+            if modal_z0.shape != (n,) or not np.all(modal_z0 > 0):
+                raise ValueError(f'modal_z0 must be {n} positive real impedances.')
+        self.modal_z0 = modal_z0
+
+        if forced_z0_line is not None:
+            forced_z0_line = list(np.atleast_1d(forced_z0_line))
+            if len(forced_z0_line) != n:
+                raise ValueError(f'forced_z0_line must have one entry for each of the {n} modes, '
+                                 f'it has {len(forced_z0_line)}.')
+        self.forced_z0_line = forced_z0_line
+
+        self.conversion_limit_db = conversion_limit_db
+        self.use_z_instead_ifft = use_z_instead_ifft
+        self.verbose = verbose
+        dummies = [self.s2xthru]
+
+        # debug outputs and diagnostics
+        self.x_end = None
+        self.z_x = None
+        self.tv = None
+        self.z_modal = None
+        self.modal_2xthru = None
+        self.mode_order = None
+        self.eigenvalues = None
+        self.mode_conversion_db = None
+        self.transform_ripple = None
+        self.mirror_asymmetry = None
+        self.eig_gap = None
+
+        IEEEP370.__init__(self, dummies, name, *args, **kwargs)
+        self.se_side1, self.se_side2 = self.split2xthru(self.s2xthru)
+
+    def _port_permutation(self, nports: int) -> list[int] | None:
+        """
+        Position of the 'second' ports in the `port_order` numbering, None for 'second'.
+        """
+        if self.port_order == 'first':
+            return list(range(0, nports, 2)) + list(range(1, nports, 2))
+        if self.port_order == 'third':
+            return list(range(0, nports // 2)) + list(range(nports - 1, nports // 2 - 1, -1))
+        return None
+
+    def _to_second(self, ntwk: Network) -> Network:
+        """
+        Copy of `ntwk` renumbered from `port_order` to the 'second' order.
+        """
+        perm = self._port_permutation(ntwk.nports)
+        if perm is None:
+            return ntwk.copy()
+        return ntwk.renumbered(perm, list(range(ntwk.nports)))
+
+    def _from_second(self, ntwk: Network) -> Network:
+        """
+        Copy of `ntwk` renumbered from the 'second' order to `port_order`.
+        """
+        perm = self._port_permutation(ntwk.nports)
+        if perm is None:
+            return ntwk.copy()
+        return ntwk.renumbered(list(range(ntwk.nports)), perm)
+
+    def deembed(self, ntwk: Network) -> Network:
+        """
+        Perform the de-embedding calculation
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+            FIX-DUT-FIX network from which FIX-1 and FIX-2 fixtures needs
+            to be removed via de-embedding. It is not modified.
+
+        Returns
+        -------
+        caled : :class:`~skrf.network.Network` object
+            Network data of the device after de-embedding, with the port
+            numbering of `port_order`.
+
+        """
+        if ntwk.nports != self.s2xthru.nports:
+            raise ValueError(f'The network has {ntwk.nports} ports, the 2xthru has {self.s2xthru.nports}.')
+
+        # check if the frequencies match with dummy frequencies
+        if ntwk.frequency != self.s2xthru.frequency:
+            warnings.warn('Network frequencies dont match dummy frequencies, attempting overlap.',
+                          RuntimeWarning, stacklevel=2)
+            ntwk, s2xthru = overlap_multi([ntwk, self.s2xthru])
+            se_side1, se_side2 = self.split2xthru(s2xthru)
+        else:
+            se_side1 = self.se_side1
+            se_side2 = self.se_side2
+
+        ntwk = ntwk.copy()
+        if np.any(np.abs(ntwk.z0 - self.z0) > 1e-9 * self.z0):
+            ntwk.renormalize(self.z0)
+        ntwk = self._to_second(ntwk)
+        deembedded = se_side1.inv ** ntwk ** se_side2.flipped().inv
+        return self._from_second(deembedded)
+
+    def _get_transform(self, s2x: Network) -> tuple[ndarray, dict]:
+        """
+        Modal transform, shape (F, N, N), and information of the eigenvector options.
+        """
+        n_f = s2x.frequency.npoints
+        if self.modal_transform == 'mixed':
+            return np.broadcast_to(_MIXED_MODE_TV, (n_f, 2, 2)).astype(complex), {}
+        if self.modal_transform == 'user':
+            tv = self._tv_user
+            if tv.shape[0] not in (1, n_f):
+                raise ValueError(f'modal_transform has {tv.shape[0]} frequency points, the 2x-thru has {n_f}.')
+            return np.broadcast_to(tv, (n_f, self.n_lines, self.n_lines)).astype(complex), {}
+        mode = 'freq' if self.modal_transform == 'eig' else 'const'
+        try:
+            return _eig_modal_transform(s2x, self.z0, mode, self.eig_scaling)
+        except np.linalg.LinAlgError as err:
+            raise ValueError('Modal 2x-thru: the S21 block of the 2x-thru is singular at some frequency, '
+                             'its ABCD matrix does not exist.') from err
+
+    def split2xthru(self, se_2xthru: Network) -> (Network, Network):
+        """
+        Perform the fixtures extraction.
+
+        Parameters
+        ----------
+        se_2xthru : :class:`~skrf.network.Network` object
+            2x-thru with the numbering of `port_order`. It is not modified.
+
+        Returns
+        -------
+        se_side1, se_side2 : :class:`~skrf.network.Network`
+            FIX-1 and FIX-2 error boxes in 'second' order, FIX-2 being
+            the mirror image, like for :class:`IEEEP370_MM_NZC_2xThru`.
+        """
+        n = self.n_lines
+        if se_2xthru.nports != 2 * n:
+            raise ValueError(f'2xthru has to be a {2 * n}-port network.')
+        s2x = self._to_second(se_2xthru)
+        frequency = s2x.frequency
+        n_f = frequency.npoints
+
+        tv, info = self._get_transform(s2x)
+        z_modal = self.modal_z0 if self.modal_z0 is not None else _modal_references(tv, self.z0)
+        z_modal = np.asarray(z_modal, dtype=float)
+        xi = _modal_xi(tv, self.z0, z_modal)
+        try:
+            s_m = _se2modal(s2x.s, xi)
+        except np.linalg.LinAlgError as err:
+            raise ValueError('Modal 2x-thru: the modal transformation of the 2x-thru is singular.') from err
+        self.tv = tv
+        self.z_modal = z_modal
+        self.modal_2xthru = Network(frequency=frequency, s=s_m,
+                                    z0=np.broadcast_to(np.concatenate([z_modal, z_modal]), (n_f, 2 * n)).copy())
+        self.eigenvalues = info.get('eigenvalues')
+        self.mode_order = info.get('mode_order')
+        self._check_line_likeness(s2x, s_m, info)
+
+        # split every mode, a single-ended 2-port between ports k and N + k
+        s_1 = np.zeros_like(s_m)
+        s_2 = np.zeros_like(s_m)
+        x_end = []
+        z_x = []
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter('always')
+            for k in range(n):
+                idx = [k, n + k]
+                two = Network(frequency=frequency, s=s_m[:, idx][:, :, idx], z0=z_modal[k])
+                forced = None if self.forced_z0_line is None else self.forced_z0_line[k]
+                dm = IEEEP370_SE_NZC_2xThru(dummy_2xthru=two, z0=float(z_modal[k]),
+                                            use_z_instead_ifft=self.use_z_instead_ifft,
+                                            verbose=self.verbose, forced_z0_line=forced)
+                x_end.append(dm.x_end)
+                z_x.append(dm.z_x)
+                for i in range(2):
+                    for j in range(2):
+                        s_1[:, idx[i], idx[j]] = dm.s_side1.s[:, i, j]
+                        s_2[:, idx[i], idx[j]] = dm.s_side2.s[:, i, j]
+        # the single-ended method warns for every mode, say it once
+        seen = set()
+        for w in caught:
+            key = (w.category, str(w.message))
+            if key not in seen:
+                seen.add(key)
+                warnings.warn(w.message, w.category, stacklevel=3)
+        self.x_end = x_end
+        self.z_x = z_x
+
+        # back to terminal S-parameters
+        se_side1 = Network(frequency=frequency, s=_modal2se(s_1, xi), z0=self.z0)
+        se_side2 = Network(frequency=frequency, s=_modal2se(s_2, xi), z0=self.z0)
+        return (se_side1, se_side2)
+
+    def _check_line_likeness(self, s2x: Network, s_m: ndarray, info: dict) -> None:
+        """
+        Compute the diagnostics and warn if the 2x-thru does not look like N uniform coupled lines.
+        """
+        n = self.n_lines
+        f = s2x.f
+        prefix = 'Modal 2x-thru: '
+
+        # mode conversion in the modal basis, like FER6
+        mag_db = 20.0 * np.log10(np.abs(s_m) + 1e-300)
+        conversion = np.full(len(f), -np.inf)
+        for k in range(n):
+            for j in range(n):
+                if j != k:
+                    conversion = np.maximum(conversion, mag_db[:, j, n + k] - mag_db[:, k, n + k])
+        self.mode_conversion_db = conversion
+        worst = int(np.argmax(conversion))
+        if conversion[worst] > self.conversion_limit_db:
+            warnings.warn(f'{prefix}the mode conversion of the 2x-thru reaches {conversion[worst]:.1f} dB '
+                          f'relative to the insertion loss of the mode at {f[worst] / 1e9:.4g} GHz, above the '
+                          f'limit of {self.conversion_limit_db:g} dB. The fixture does not look like uniform '
+                          'coupled lines in this modal basis, the splitting of each mode may be inaccurate.',
+                          RuntimeWarning, stacklevel=3)
+
+        # mirror symmetry, A = D^T for a reciprocal 2x-thru that is its own mirror image
+        valid = f > 0
+        try:
+            abcd = _abcd_2nport(s2x.s[valid], self.z0)
+        except np.linalg.LinAlgError as err:
+            raise ValueError('Modal 2x-thru: the S21 block of the 2x-thru is singular at some frequency, '
+                             'its ABCD matrix does not exist.') from err
+        block_a = abcd[:, :n, :n]
+        block_d = abcd[:, n:, n:]
+        asym = np.linalg.norm(block_a - np.swapaxes(block_d, 1, 2), axis=(1, 2)) / np.linalg.norm(block_a, axis=(1, 2))
+        self.mirror_asymmetry = float(np.max(asym))
+        if self.mirror_asymmetry > self.mirror_asymmetry_limit:
+            warnings.warn(f'{prefix}the 2x-thru is not the mirror image of itself, the relative difference '
+                          f'between the blocks A and D^T of its ABCD matrix is {self.mirror_asymmetry:.2g} '
+                          f'(limit {self.mirror_asymmetry_limit:g}). The splitting assumes FIX-2 is the mirror '
+                          'of FIX-1.', RuntimeWarning, stacklevel=3)
+
+        if self.modal_transform not in ('eig', 'eig_const'):
+            self.transform_ripple = None
+            self.eig_gap = None
+            return
+        self.transform_ripple = info['ripple']
+        self.eig_gap = info['eig_gap']
+        if self.modal_transform == 'eig' and info['ripple'] > self.transform_ripple_limit:
+            warnings.warn(f'{prefix}the eigenvectors of the 2x-thru deviate by {info["ripple"]:.2g} from a smooth '
+                          f'function of frequency (limit {self.transform_ripple_limit:g}). Either the data are '
+                          'noisy, or the fixture does not look like uniform coupled lines. Consider '
+                          "modal_transform='eig_const' or a transform given as an array.",
+                          RuntimeWarning, stacklevel=3)
+        if np.mean(info['eig_gap'][valid] < self.eig_gap_limit) > 0.5:
+            warnings.warn(f'{prefix}the modes of the 2x-thru have nearly equal eigenvalues over most of the band '
+                          f'(relative spacing below {self.eig_gap_limit:g}), as in a homogeneous medium. The '
+                          'modal transform cannot be found from the 2x-thru, supply it as an array or use '
+                          "modal_transform='mixed' for a differential pair.",
+                          RuntimeWarning, stacklevel=3)
