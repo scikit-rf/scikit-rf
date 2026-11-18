@@ -67,7 +67,6 @@ import scipy
 from numpy import angle, concatenate, conj, exp, flip, imag, ndarray, real, unwrap, zeros
 from numpy.fft import fft, fftshift, ifftshift, irfft
 from numpy.linalg import norm
-from scipy.optimize import linear_sum_assignment
 
 from .. import mathFunctions as mf
 from ..frequency import Frequency
@@ -5042,6 +5041,8 @@ def _track_modes(vec: ndarray, lam: ndarray, start: int) -> tuple[ndarray, ndarr
         prev = start
         for i in indices:
             cost = -np.abs(vec[prev].conj().T @ vec[i])
+            from scipy.optimize import linear_sum_assignment
+
             _, col = linear_sum_assignment(cost)
             vec[i] = vec[i][:, col]
             lam[i] = lam[i][col]
