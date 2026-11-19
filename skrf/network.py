@@ -230,7 +230,7 @@ from .constants import (
     SparamFormatT,
 )
 from .frequency import Frequency
-from .plotting import axes_kwarg
+from .plotting import _validate_plot_args
 from .time import get_window, time_gate
 from .util import copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
 
@@ -5192,14 +5192,22 @@ class Network:
         second index of the s-parameter matrix, if None will use all
     ax : :class:`matplotlib.Axes` object, optional
         An existing Axes object to plot on
+    fig : plotly Figure, optional
+        figure to draw on with the plotly backend.
     show_legend : Boolean
         draw legend or not
     y_label : string, optional
         the y-axis label
     logx : Boolean, optional
         Enable logarithmic x-axis, default off
+    backend : {{'matplotlib', 'plotly'}}, optional
+        plotting backend, default ``skrf.plotting.options.backend``.
     \**kwargs : arguments, keyword arguments
-        passed to :func:`matplotlib.plot`
+        passed to :func:`matplotlib.plot` (or :class:`plotly.graph_objects.Scatter`)
+
+    Returns
+    -------
+    None, or the plotly Figure with the plotly backend
 
     Note
     ----
@@ -5213,7 +5221,7 @@ class Network:
 
     """
 
-    @axes_kwarg
+    @_validate_plot_args
     def plot_attribute(     self,
                             attribute: PrimaryPropertiesT,
                             conversion: ComponentFuncT,
@@ -5222,7 +5230,17 @@ class Network:
                             ax: Axes=None,
                             show_legend=True,
                             y_label=None,
-                            logx=False, **kwargs):
+                            logx=False, backend=None, *, fig=None, **kwargs):
+
+        backend = rfplt._resolve_backend(backend, ax, fig)
+        plotly = backend == 'plotly'
+        if plotly:
+            fig = rfplt._get_plotly_figure(fig)
+        else:
+            import matplotlib.pyplot as plt
+
+            if ax is None:
+                ax = plt.gca()
 
         # create y_label if not provided
         if y_label is None:
@@ -5265,14 +5283,15 @@ class Network:
                 # name if it exists, and they didn't pass a name key in
                 # the kwargs
                 if gen_label:
-                    kwargs['label'] = rfplt._get_label_str(self, attribute[0].upper(), m, n)
+                    kwargs['label'] = rfplt._get_label_str(self, attribute[0].upper(), m, n,
+                                                           usetex=False if plotly else None)
 
                 if conversion in ["time_impulse", "time_step"]:
                     rfplt.plot_rectangular(x=x * 1e9,
                                         y=y[:, m, n],
                                         x_label=xlabel,
                                         y_label=y_label,
-                                        show_legend=show_legend, ax=ax,
+                                        show_legend=show_legend, ax=ax, fig=fig, backend=backend,
                                         **kwargs)
 
                 else:
@@ -5290,11 +5309,17 @@ class Network:
                         x = self.frequency.f  # always plot f, and then scale the ticks instead
                         y = self.attribute(attribute, conversion)[:, m, n]
 
-                        # scale the ticklabels according to the frequency unit and set log-scale if desired:
-                        if logx:
-                            ax.set_xscale('log')
+                        if plotly:
+                            # plotly has no tick formatter, so plot f in the figure's frequency unit
+                            x, xlabel = rfplt._plotly_frequency_x(fig, self.frequency)
+                            if logx:
+                                fig.update_layout(xaxis_type='log')
+                        else:
+                            # scale the ticklabels according to the frequency unit and set log-scale if desired:
+                            if logx:
+                                ax.set_xscale('log')
 
-                        rfplt.scale_frequency_ticks(ax, self.frequency.unit)
+                            rfplt.scale_frequency_ticks(ax, self.frequency.unit)
 
 
 
@@ -5302,8 +5327,10 @@ class Network:
                                         y=y,
                                         x_label=xlabel,
                                         y_label=y_label,
-                                        show_legend=show_legend, ax=ax,
+                                        show_legend=show_legend, ax=ax, fig=fig, backend=backend,
                                         **kwargs)
+
+        return fig if plotly else None
 
     plot_attribute.__doc__ = _plot_attribute_doc.format(
         attribute="conversion",
@@ -5336,6 +5363,7 @@ class Network:
     def plot_s_db_time(self, center_to_dc=None, *args, **kwargs):
         return rfplt.plot_s_db_time(self, *args, center_to_dc=center_to_dc, **kwargs)
 
+    @_validate_plot_args
     @copy_doc(rfplt.plot_s_smith)
     def plot_s_smith(self, m=None, n=None,r=1, ax=None, show_legend=True,\
         chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):

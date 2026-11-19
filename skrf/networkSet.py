@@ -455,9 +455,21 @@ class NetworkSet:
 
 
     def __add_a_element_wise_method(self, network_method_name: str):
+        if network_method_name in self.__class__.__dict__:  # added by an earlier NetworkSet
+            return
+
+        is_plot = network_method_name.startswith('plot_')
+
         def func(self,  *args, **kwargs):
+            if is_plot and skrf_plt._resolve_backend(kwargs.get('backend'), kwargs.get('ax'),
+                                                     kwargs.get('fig')) == 'plotly':
+                # draw all networks on one figure, created by the first call unless fig is given
+                for ntwk in self.ntwk_set:
+                    kwargs['fig'] = getattr(ntwk, network_method_name)(*args, **kwargs)
+                return kwargs['fig']
             return self.element_wise_method(network_method_name, *args, **kwargs)
-        setattr(self.__class__,network_method_name,func)
+
+        setattr(self.__class__,network_method_name,skrf_plt._validate_plot_args(func) if is_plot else func)
 
 
     def __add_a_func_on_property(self, func, network_property_name: str):

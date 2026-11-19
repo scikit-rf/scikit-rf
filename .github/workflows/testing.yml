@@ -36,7 +36,7 @@ jobs:
       timeout-minutes: 25
       if: ${{ always() }}
       run: |
-        uv pip install -e .[visa,netw,xlsx,plot] --group dev --compile -v
+        uv pip install -e .[visa,netw,xlsx,plot,plotly] --group dev --compile -v
         echo "Finished installing dependencies, now running tests"
         . .venv/bin/activate
         echo "Running tests with Python ${{ matrix.python-version }}"
