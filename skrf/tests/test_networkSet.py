@@ -361,6 +361,99 @@ class NetworkSetTestCase(unittest.TestCase):
         ns2 = NetworkSet([ntwk0, ntwk1])
         self.assertTrue(np.all(ns2.interpolate_from_params("s", 0.3).s == 0.3))
 
+    def test_interpolate_from_params_duplicated_values(self):
+        """Duplicated parameter values in interpolate_from_params (#999)"""
+        f1 = rf.Frequency(1, 1, 1, unit="GHz")
+
+        def ntwk(s_val, param_val):
+            return rf.Network(frequency=f1, s=[[s_val]], params={"s": param_val})
+
+        # duplicated value 1: the two Networks sharing it are averaged,
+        # for every interpolation kind (scipy's interp1d rejects duplicated
+        # values for quadratic/cubic interpolations)
+        ns = NetworkSet([ntwk(0.0, 0), ntwk(0.6, 1), ntwk(1.4, 1), ntwk(2.0, 2)])
+        for kind in ("linear", "quadratic"):
+            interp = ns.interpolate_from_params("s", 1.0, interp_kind=kind)
+            np.testing.assert_allclose(interp.s, 1.0)  # mean of 0.6 and 1.4
+            interp = ns.interpolate_from_params("s", 0.5, interp_kind=kind)
+            np.testing.assert_allclose(interp.s, 0.5)
+
+        # example of issue #999: duplicated values in a larger NetworkSet
+        # (enough unique values to also exercise cubic interpolation)
+        vals = [1, 2, 2, 3, 4, 20, 50, 100]
+        ns_issue = NetworkSet([ntwk(float(v), v) for v in vals])
+        for kind in ("linear", "quadratic", "cubic"):
+            interp = ns_issue.interpolate_from_params("s", 5.0, interp_kind=kind)
+            np.testing.assert_allclose(interp.s, 5.0)
+
+        # unordered (but unique) parameter values must stay paired with
+        # their own Network
+        ns_unordered = NetworkSet([ntwk(v, v) for v in (3.0, 1.0, 4.0, 2.0)])
+        interp = ns_unordered.interpolate_from_params("s", 1.5)
+        np.testing.assert_allclose(interp.s, 1.5)
+
+    def test_interpolate_from_params_ambiguity_and_selection(self):
+        """Ambiguity check, empty selection and sel-path pairing (#999)"""
+        f1 = rf.Frequency(1, 1, 1, unit="GHz")
+
+        def ntwk(s_val, **params):
+            return rf.Network(frequency=f1, s=[[s_val]], params=params)
+
+        # another parameter taking several values in the selection makes
+        # the interpolation ambiguous, even if it co-varies one-to-one
+        # with the interpolated parameter (b = 2*a here)
+        ns_covary = NetworkSet([ntwk(float(v), a=v, b=2 * v) for v in (0, 1, 2, 3)])
+        with self.assertRaises(ValueError) as cm:
+            ns_covary.interpolate_from_params("a", 1.5)
+        self.assertIn("Ambiguous interpolation", str(cm.exception))
+
+        # a sub_params combination matching no Network (each value exists
+        # on its own, but never together) raises an explicit ValueError
+        ns_empty = NetworkSet([ntwk(0.0, a=0, X=10), ntwk(1.0, a=1, X=20),
+                               ntwk(2.0, a=2, X=10)])
+        with self.assertRaises(ValueError) as cm:
+            ns_empty.interpolate_from_params("a", 0.5, {"a": 0, "X": 20})
+        self.assertEqual(str(cm.exception),
+                         'No Network matches the passed sub-parameters.')
+
+        # duplicated values are accepted, but the distinct values must
+        # still satisfy the point requirement of the interpolation kind:
+        # two distinct values are not enough for quadratic/cubic (the
+        # error is raised by scipy's interp1d)
+        ns_few = NetworkSet([ntwk(0.6, s=1), ntwk(1.4, s=1), ntwk(2.0, s=2)])
+        for kind in ("quadratic", "cubic"):
+            with self.assertRaises(ValueError):
+                ns_few.interpolate_from_params("s", 1.5, interp_kind=kind)
+        # while linear interpolation works and uses the averaged value
+        interp = ns_few.interpolate_from_params("s", 1.5)
+        np.testing.assert_allclose(interp.s, 1.5)  # mean(0.6, 1.4)=1.0 at 1
+
+        # filtering with sub_params first: the remaining parameter values,
+        # stored unordered, must stay paired with their own Network
+        ns_sel_unord = NetworkSet([
+            ntwk(3.0, a=3.0, X=10),
+            ntwk(99.0, a=4.0, X=20),  # removed by the filter
+            ntwk(1.0, a=1.0, X=10),
+            ntwk(2.0, a=2.0, X=10),
+            ntwk(0.0, a=0.0, X=10),
+        ])
+        interp = ns_sel_unord.interpolate_from_params("a", 1.5, {"X": 10})
+        np.testing.assert_allclose(interp.s, 1.5)
+
+        # filtering first, with duplicated values left after the filter:
+        # only the Networks matching sub_params are averaged
+        ns_sel_dup = NetworkSet([
+            ntwk(0.0, a=0.0, X=10),
+            ntwk(100.0, a=1.0, X=20),  # same a, filtered out: must not count
+            ntwk(0.6, a=1.0, X=10),
+            ntwk(1.4, a=1.0, X=10),
+            ntwk(2.0, a=2.0, X=10),
+        ])
+        interp = ns_sel_dup.interpolate_from_params("a", 1.0, {"X": 10})
+        np.testing.assert_allclose(interp.s, 1.0)  # mean of 0.6 and 1.4 only
+        interp = ns_sel_dup.interpolate_from_params("a", 0.5, {"X": 10})
+        np.testing.assert_allclose(interp.s, 0.5)
+
     def test_params_values(self):
         """Test the dictionary containing all parameters names and values"""
         # returns None when no parameters are defined in a NetworkSet
