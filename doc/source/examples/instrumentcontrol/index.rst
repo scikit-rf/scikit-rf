@@ -1,0 +1,7 @@
+Instrument Control
+==================
+
+.. nbgallery::
+    :glob:
+
+    *

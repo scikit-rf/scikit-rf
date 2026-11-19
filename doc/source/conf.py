@@ -39,8 +39,9 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
-    'sphinx_rtd_theme',
     'nbsphinx',
+    'sphinx_codeautolink',
+    'sphinx_copybutton',
     #'inheritance_diagram',
     'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting',
@@ -96,14 +97,54 @@ pygments_style = 'sphinx'
 # further.  For a list of options available for each theme, see the
 # documentation.
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "shibuya"
+
+html_theme_options = {
+    "accent_color": "blue",
+    "light_logo": "_static/logo.svg",
+    "dark_logo": "_static/logo.svg",
+    "github_url": "https://github.com/scikit-rf/scikit-rf",
+    # Icons in the navbar, linking to the community channels the README lists.
+    "nav_socials": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/scikit-rf/scikit-rf",
+            "icon": "simple-icons:github",
+        },
+        {
+            "name": "LinkedIn",
+            "url": "https://www.linkedin.com/groups/12462155/",
+            "icon": "simple-icons:linkedin",
+        },
+        {
+            "name": "Matrix",
+            "url": "https://app.element.io/#/room/#scikit-rf:matrix.org",
+            "icon": "simple-icons:matrix",
+        },
+    ],
+    "nav_links": [
+        {"title": "Home", "url": "index"},
+        {"title": "Tutorials", "url": "tutorials/index"},
+        {"title": "Examples", "url": "examples/index"},
+        {"title": "API", "url": "api/index"},
+        {"title": "GitHub", "url": "https://github.com/scikit-rf/scikit-rf", "external": True},
+    ],
+    # Two levels: each page, and the pages or section headings under it.
+    "toctree_collapse": True,
+    "toctree_maxdepth": 2,
+    "toctree_titles_only": False,
+    "show_ai_links": False,
+}
+
+html_css_files = ['skrf.css']
+html_js_files = ['skrf.js']
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = 'scikit-rf Documentation'
+html_title = 'scikit-rf'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 html_short_title = html_title
@@ -166,6 +207,15 @@ latex_preamble = r'\usepackage{epstopdf}'
 #latex_domain_indices = True
 
 autosummary_generate = True
+
+# Link names in code examples, notebooks included, to their API pages.
+codeautolink_concat_default = True
+# Some docstring examples are pseudo-code that isn't valid Python; those just go unlinked.
+suppress_warnings = ['codeautolink.parse_block', 'codeautolink.match_block']
+
+# Copy code without its prompts.
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: "
+copybutton_prompt_is_regexp = True
 
 # -- Options for manual page output --------------------------------------------
 

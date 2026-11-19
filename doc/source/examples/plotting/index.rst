@@ -1,0 +1,7 @@
+Plotting
+========
+
+.. nbgallery::
+    :glob:
+
+    *

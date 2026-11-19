@@ -24,6 +24,6 @@ sphinx:
    configuration: doc/source/conf.py
 
 # build docs in additional formats
+# Shibuya cannot render the single-page HTML that the htmlzip format needs, so that format is left out.
 formats:
   - pdf
-  - htmlzip

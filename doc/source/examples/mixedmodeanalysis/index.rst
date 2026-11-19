@@ -1,0 +1,7 @@
+Mixed Mode
+==========
+
+.. nbgallery::
+    :glob:
+
+    *

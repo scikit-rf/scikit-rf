@@ -1,0 +1,7 @@
+Interactive
+===========
+
+.. nbgallery::
+    :glob:
+
+    *

@@ -7,119 +7,126 @@ These examples are meant to give an overview of how skrf can be used.
 Each page can be followed along in a browser, or downloaded as an
 ipython `notebook <http://ipython.org/notebook.html>`_
 
-Network Theory
-------------------
-
 .. toctree::
-    :maxdepth: 1
+    :hidden:
+
+    networktheory/index
+    matching/index
+    metrology/index
+    networksets/index
+    plotting/index
+    circuit/index
+    mixedmodeanalysis/index
+    vectorfitting/index
+    vectorfitting_parametric/index
+    qfactor/index
+    taper/index
+    instrumentcontrol/index
+    interactive/index
+
+.. The category headings are rubrics rather than sections, so the sidebar lists each category once,
+   as its page.  Each gallery's ``[!i]*`` pattern matches every notebook in the folder but its index page.
+
+.. rubric:: :doc:`Network Theory <networktheory/index>`
+    :heading-level: 2
+
+.. nblinkgallery::
     :glob:
 
-    networktheory/*
+    networktheory/[!i]*
 
-Matching
-------------------
-.. toctree::
-    :maxdepth: 1
+.. rubric:: :doc:`Matching <matching/index>`
+    :heading-level: 2
+
+.. nblinkgallery::
     :glob:
 
-    matching/*
+    matching/[!i]*
 
-Metrology and Calibration
---------------------------
+.. rubric:: :doc:`Metrology and Calibration <metrology/index>`
+    :heading-level: 2
 
-.. toctree::
-    :maxdepth: 1
+.. nblinkgallery::
     :glob:
 
-    metrology/*
+    metrology/[!i]*
 
+.. rubric:: :doc:`NetworkSets <networksets/index>`
+    :heading-level: 2
 
-NetworkSets
-------------------
-
-.. toctree::
-    :maxdepth: 1
+.. nblinkgallery::
     :glob:
 
-    networksets/*
+    networksets/[!i]*
 
-Plotting
-------------------
+.. rubric:: :doc:`Plotting <plotting/index>`
+    :heading-level: 2
 
-.. toctree::
-    :maxdepth: 1
+.. nblinkgallery::
     :glob:
 
-    plotting/*
+    plotting/[!i]*
 
-Circuit
-------------------
+.. rubric:: :doc:`Circuit <circuit/index>`
+    :heading-level: 2
 
-.. toctree::
-    :maxdepth: 1
+.. nblinkgallery::
     :glob:
 
-    circuit/*
+    circuit/[!i]*
 
-Mixed Mode
-------------------
+.. rubric:: :doc:`Mixed Mode <mixedmodeanalysis/index>`
+    :heading-level: 2
 
-.. toctree::
-    :maxdepth: 1
+.. nblinkgallery::
     :glob:
 
-    mixedmodeanalysis/*
+    mixedmodeanalysis/[!i]*
 
-Vector Fitting
-------------------
+.. rubric:: :doc:`Vector Fitting <vectorfitting/index>`
+    :heading-level: 2
 
-.. toctree::
-    :maxdepth: 1
+.. nblinkgallery::
     :glob:
 
-    vectorfitting/*
+    vectorfitting/[!i]*
 
-Parametric Vector Fitting
-------------------
+.. rubric:: :doc:`Parametric Vector Fitting <vectorfitting_parametric/index>`
+    :heading-level: 2
 
-.. toctree::
-    :maxdepth: 1
+.. nblinkgallery::
     :glob:
 
-    vectorfitting_parametric/*
+    vectorfitting_parametric/[!i]*
 
-Q-factor
-------------------
+.. rubric:: :doc:`Q-factor <qfactor/index>`
+    :heading-level: 2
 
-.. toctree::
-    :maxdepth: 1
+.. nblinkgallery::
     :glob:
 
-    qfactor/*
+    qfactor/[!i]*
 
-Taper
-------------------
-.. toctree::
-    :maxdepth: 1
+.. rubric:: :doc:`Taper <taper/index>`
+    :heading-level: 2
+
+.. nblinkgallery::
     :glob:
 
-    taper/*
+    taper/[!i]*
 
+.. rubric:: :doc:`Instrument Control <instrumentcontrol/index>`
+    :heading-level: 2
 
-Instrument Control
-------------------
-
-.. toctree::
-    :maxdepth: 1
+.. nblinkgallery::
     :glob:
 
-    instrumentcontrol/*
+    instrumentcontrol/[!i]*
 
-Interactive
-------------------
+.. rubric:: :doc:`Interactive <interactive/index>`
+    :heading-level: 2
 
-.. toctree::
-    :maxdepth: 1
+.. nblinkgallery::
     :glob:
 
-    interactive/*
+    interactive/[!i]*

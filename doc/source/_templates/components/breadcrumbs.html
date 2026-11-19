@@ -1,0 +1,56 @@
+{#- Shibuya 2026.7.12's components/breadcrumbs.html, plus a Download link on notebook pages. -#}
+{%- if meta and meta.hide_breadcrumbs == "true" -%}
+  {% set hide_breadcrumbs = True %}
+{%- elif theme_hide_breadcrumbs -%}
+  {% set hide_breadcrumbs = True %}
+{%- else -%}
+  {% set hide_breadcrumbs = False %}
+{%- endif -%}
+{%- if not hide_breadcrumbs %}
+<div class="sy-breadcrumbs" role="navigation">
+  <div class="sy-breadcrumbs-inner flex items-center">
+    <div class="md:hidden mr-3">
+      <button class="js-menu" aria-label="Menu" type="button" aria-controls="lside" aria-expanded="false">
+        <i class="i-lucide menu"></i>
+      </button>
+    </div>
+    <ol class="flex-1" itemscope itemtype="https://schema.org/BreadcrumbList">
+      {%- block breadcrumbs -%}
+      {%- if project == title -%}
+      <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="{{ pathto(root_doc) }}"><span itemprop="name">{{ project }}</span></a>
+        <meta itemprop="position" content="1" />
+      </li>
+      {%- else -%}
+      <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="{{ pathto(root_doc) }}"><span itemprop="name">{{ project }}</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="1" />
+      </li>
+      {%- for doc in parents -%}
+      <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="{{ doc.link|e }}"><span itemprop="name">{{ doc.title }}</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="{{ loop.index + 1 }}" />
+      </li>
+      {%- endfor -%}
+      <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <strong itemprop="name">{{ title }}</strong>
+        <meta itemprop="position" content="{{ parents|count + 2 }}" />
+      </li>
+      {%- endif -%}
+      {%- endblock -%}
+    </ol>
+    {#- scikit-rf: pages built from a notebook link to it; nbsphinx copies each notebook next to its page. #}
+    {%- if page_source_suffix == '.ipynb' %}
+    <a class="sk-download" href="{{ pagename.split('/')[-1]|urlencode }}.ipynb" download>Download</a>
+    {%- endif %}
+    <div class="xl:hidden ml-1">
+      <button class="js-menu" aria-label="Show table of contents" type="button" aria-controls="rside"
+        aria-expanded="false">
+        <i class="i-lucide outdent"></i>
+      </button>
+    </div>
+  </div>
+</div>
+{%- endif -%}

@@ -1,0 +1,7 @@
+Matching
+========
+
+.. nbgallery::
+    :glob:
+
+    *

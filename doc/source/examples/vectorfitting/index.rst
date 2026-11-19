@@ -1,0 +1,7 @@
+Vector Fitting
+==============
+
+.. nbgallery::
+    :glob:
+
+    *
