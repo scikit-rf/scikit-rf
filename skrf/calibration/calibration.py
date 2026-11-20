@@ -128,7 +128,7 @@ from numpy.typing import NDArray
 from .. import __version__ as skrf__version__
 from .. import util
 from ..io.touchstone import read_zipped_touchstones
-from ..mathFunctions import ALMOST_ZERO, cross_ratio, find_closest, find_correct_sign, rand_c, sqrt_phase_unwrap
+from ..mathFunctions import ALMOST_ZERO, cross_ratio, find_closest, rand_c, sqrt_phase_unwrap
 from ..network import (
     Network,
     average,
@@ -6558,8 +6558,8 @@ def determine_line(thru_m, line_m, line_approx=None):
     Given raw measurements of a `thru` and a matched `line` with unknown
     s21, this will calculate the response of the line. This works for
     lossy lines, and attenuators. The `line_approx`
-    is an approximation to line, this used to choose the correct
-    root sign. If left as `None`, it will be estimated from raw measurements,
+    is an approximation to the line response. The root closest to its
+    complex transmission is selected. If left as `None`, it will be estimated from raw measurements,
     which requires your error networks to be well matched  (S_ij >>S_ii).
 
 
@@ -6618,7 +6618,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     # we need to choose the correct one
     w,v = linalg.eig(C.t)
     s12_0, s12_1 = w[:,0], w[:,1]
-    s12 = find_correct_sign(s12_0, s12_1, line_approx_s21)
+    s12 = find_closest(s12_0, s12_1, line_approx_s21)
     found_line = line_m.copy()
     found_line.s = np.array([[zero, s12],[s12,zero]]).transpose(2,0,1)
     return found_line

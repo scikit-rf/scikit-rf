@@ -97,6 +97,20 @@ class DetermineTest(unittest.TestCase):
                                  line_approx=self.L_approx)
         self.assertEqual(L_found,self.L)
 
+    def test_determine_line_across_phase_wrap(self):
+        medium = DefinedGammaZ0(rf.Frequency(99.5, 99.7, 3, unit='GHz'), z0=50)
+        line = medium.match(nports=2)
+        transmission = 0.4 * np.exp(1j * np.deg2rad([-179.9, 179.9, -90.0]))
+        line.s[:, 1, 0] = transmission
+        line.s[:, 0, 1] = transmission
+        approximate = line.copy()
+        approximate_transmission = 0.41 * np.exp(1j * np.deg2rad([179.8, -179.8, -90.0]))
+        approximate.s[:, 1, 0] = approximate_transmission
+        approximate.s[:, 0, 1] = approximate_transmission
+
+        recovered = determine_line(medium.thru(), line, line_approx=approximate)
+        np.testing.assert_allclose(recovered.s, line.s, rtol=1e-12, atol=1e-12)
+
     def test_determine_reflect(self):
         r_found = [determine_reflect(self.T_m,k,self.L_m, l, self.L_approx) \
                    for k,l in zip(self.R_m, self.r_estimate)]
