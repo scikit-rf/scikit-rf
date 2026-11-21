@@ -17,6 +17,7 @@ ipython `notebook <http://ipython.org/notebook.html>`_
     Networks
     Connecting_Networks
     Plotting
+    Network_Parameters
     NetworkSet
     Circuit
     Calibration
