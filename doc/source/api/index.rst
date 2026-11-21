@@ -9,6 +9,7 @@ API
 
 
     network
+    parameters
     frequency
     networkSet
     plotting

@@ -230,6 +230,7 @@ from .constants import (
     SparamFormatT,
 )
 from .frequency import Frequency
+from .parameters import NetworkParameter
 from .plotting import axes_kwarg
 from .time import get_window, time_gate
 from .util import copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
@@ -1039,11 +1040,11 @@ class Network:
 
     def attribute(self, prop_name: PrimaryPropertiesT, conversion: ComponentFuncT) -> np.ndarray:
         prop = getattr(self, prop_name)
-        return self.COMPONENT_FUNC_DICT[conversion](prop)
+        return self.COMPONENT_FUNC_DICT[conversion](np.asarray(prop))
 
     # PRIMARY PROPERTIES
     @property
-    def s(self) -> np.ndarray:
+    def s(self) -> NetworkParameter:
         """
         Scattering parameter matrix.
 
@@ -1070,7 +1071,7 @@ class Network:
         ----------
         .. [#] http://en.wikipedia.org/wiki/Scattering_parameters
         """
-        return self._s
+        return NetworkParameter._attach(self._s, self, 's')
 
     @s.setter
     def s(self, s: np.ndarray) -> None:
@@ -1181,7 +1182,7 @@ class Network:
         self.s = s2s(s, self.z0, self.s_def, 'pseudo')
 
     @property
-    def g(self) -> np.ndarray:
+    def g(self) -> NetworkParameter:
         """
         Inverse hybrid parameter matrix.
 
@@ -1209,14 +1210,14 @@ class Network:
         ----------
         .. [#] https://en.wikipedia.org/wiki/Two-port_network#Inverse_hybrid_parameters_(g-parameters)
         """
-        return s2g(self.s, self.z0, s_def=self.s_def)
+        return NetworkParameter._attach(s2g(self._s, self.z0, s_def=self.s_def), self, 'g')
 
     @g.setter
     def g(self, value: np.ndarray) -> None:
         self._s = g2s(fix_param_shape(value), self.z0, s_def=self.s_def)
 
     @property
-    def h(self) -> np.ndarray:
+    def h(self) -> NetworkParameter:
         """
         Hybrid parameter matrix.
 
@@ -1244,14 +1245,14 @@ class Network:
         ----------
         .. [#] http://en.wikipedia.org/wiki/Two-port_network#Hybrid_parameters_(h-parameters)
         """
-        return s2h(self.s, self.z0, s_def=self.s_def)
+        return NetworkParameter._attach(s2h(self._s, self.z0, s_def=self.s_def), self, 'h')
 
     @h.setter
     def h(self, value: np.ndarray) -> None:
         self._s = h2s(fix_param_shape(value), self.z0, s_def=self.s_def)
 
     @property
-    def y(self) -> np.ndarray:
+    def y(self) -> NetworkParameter:
         """
         Admittance parameter matrix.
 
@@ -1278,14 +1279,14 @@ class Network:
         ----------
         .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
         """
-        return s2y(self._s, self.z0, s_def=self.s_def)
+        return NetworkParameter._attach(s2y(self._s, self.z0, s_def=self.s_def), self, 'y')
 
     @y.setter
     def y(self, value: np.ndarray) -> None:
         self._s = y2s(fix_param_shape(value), self.z0, s_def=self.s_def)
 
     @property
-    def z(self) -> np.ndarray:
+    def z(self) -> NetworkParameter:
         """
         Impedance parameter matrix.
 
@@ -1312,14 +1313,14 @@ class Network:
         ----------
         .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         """
-        return s2z(self._s, self.z0, s_def=self.s_def)
+        return NetworkParameter._attach(s2z(self._s, self.z0, s_def=self.s_def), self, 'z')
 
     @z.setter
     def z(self, value: np.ndarray) -> None:
         self._s = z2s(fix_param_shape(value), self.z0, s_def=self.s_def)
 
     @property
-    def t(self) -> np.ndarray:
+    def t(self) -> NetworkParameter:
         """
         Scattering transfer parameter matrix.
 
@@ -1349,7 +1350,7 @@ class Network:
         -----------
         .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Scattering_transfer_parameters
         """
-        return s2t(self.s)
+        return NetworkParameter._attach(s2t(self._s), self, 't')
 
     @t.setter
     def t(self, value: np.ndarray) -> None:
@@ -1388,7 +1389,7 @@ class Network:
         raise NotImplementedError
 
     @property
-    def a(self) -> np.ndarray:
+    def a(self) -> NetworkParameter:
         """
         abcd parameter matrix. Used to cascade two-ports.
 
@@ -1416,7 +1417,7 @@ class Network:
         ----------
         .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         """
-        return s2a(self.s, self.z0, s_def=self.s_def)
+        return NetworkParameter._attach(s2a(self._s, self.z0, s_def=self.s_def), self, 'a')
 
     @a.setter
     def a(self, value: np.ndarray) -> None:
@@ -5394,6 +5395,19 @@ for func_name, (_func, prop_name, conversion) in Network._generated_functions().
 for prop_name in Network.PRIMARY_PROPERTIES:
     setattr(Network, f"plot_{prop_name}_polar", partial_with_docs(Network.plot_prop_polar, prop_name))
     setattr(Network, f"plot_{prop_name}_complex", partial_with_docs(Network.plot_prop_complex, prop_name))
+
+# the scalar components of each parameter, like ntwk.s.db, from the same table as ntwk.s_db.
+# time_impulse and time_step are left out, they have no values, only the plots plot_s_time_step and the like
+for _conversion, _func in Network.COMPONENT_FUNC_DICT.items():
+    if _func is None:
+        continue
+    setattr(NetworkParameter, _conversion, property(
+        fget=lambda self, conversion=_conversion, func=_func: self._project(conversion, func),
+        doc=f"""
+        The {_conversion} component of the parameter matrix, as a :class:`~skrf.parameters.Projection`.
+
+        Same values as the flat attribute, ``ntwk.s.{_conversion}`` equals ``ntwk.s_{_conversion}``.
+        """))
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
 PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES

@@ -19,6 +19,7 @@ from . import (
     media,
     network,
     networkSet,
+    parameters,
     plotting,
     qfactor,
     taper,
@@ -30,6 +31,7 @@ from . import (
 from .calibration import calibrationSet, deembedding
 from .frequency import Frequency
 from .network import Network
+from .parameters import NetworkParameter, Projection
 from .plotting import stylely
 
 
