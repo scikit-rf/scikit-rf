@@ -62,6 +62,8 @@ docs = [
     "nbsphinx >= 0.8.9",
     "openpyxl >= 3",
     "typing-extensions>=4.15.0",
+    "xarray >=2023.1",
+    "zarr >=2.18",
 ]
 test = [
     "pytest <9.0",
@@ -87,6 +89,11 @@ xlsx = [
 
 netw = [
     "networkx >= 2.0"
+]
+
+xarray = [
+    "xarray >=2023.1",
+    "zarr >=2.18"
 ]
 
 visa = [

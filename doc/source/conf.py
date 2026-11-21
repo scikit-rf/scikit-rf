@@ -233,6 +233,7 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/doc/stable', None),
     'pd': ('https://pandas.pydata.org/docs', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    'xarray': ('https://docs.xarray.dev/en/stable', None),
 }
 
 def process_signature(app, what, name, obj, options, signature, return_annotation):
