@@ -229,7 +229,8 @@ class Calibration:
         `sloppy_input=False`, then their elements must align. However,
         if the measured and ideals are dictionaries, or
         `sloppy_input=True`, then we will try to align them for you
-        based on the names of the networks (see `func:`align_measured_ideals`).
+        based on the names of the networks (see :func:`align_measured_ideals`).
+        Use `sloppy_input='exact'` to require exact network-name matches.
 
         You do not want to use this `sloppy_input` feature if the
         calibration depends on the standard order (like TRL).
@@ -244,9 +245,14 @@ class Calibration:
             Predicted ideal response of the calibration standards.
             The order must align with `ideals` list ( or use `sloppy_input`)
 
-        sloppy_input :  Boolean.
-            Allows ideals and measured lists to be 'aligned' based on
-            the network names.
+        sloppy_input : bool or 'exact'
+            Align standards by network name. True matches ideal names as
+            substrings of measured names, allowing repeated measurements
+            such as 'load,1' and 'load,2' to match 'load'. 'exact' requires
+            each measured name to match exactly one ideal name; unused
+            ideals are ignored. False keeps the supplied list order.
+            Dictionaries automatically enable substring matching unless
+            'exact' is requested. Dictionary keys are not used for matching.
 
         is_reciprocal : Boolean
             enables the reciprocity assumption on the calculation of the
@@ -289,7 +295,7 @@ class Calibration:
         self.sloppy_input=sloppy_input
         if sloppy_input:
             self.measured, self.ideals = \
-                align_measured_ideals(self.measured, self.ideals)
+                align_measured_ideals(self.measured, self.ideals, strict=sloppy_input == 'exact')
 
         self.self_calibration = self_calibration
         if not self_calibration and len(self.measured) != len(self.ideals):
@@ -6961,11 +6967,41 @@ def convert_skrfcoefs_2_pna(coefs, ports = (1,2)):
 
     return pna_coefs
 
-def align_measured_ideals(measured, ideals):
+def align_measured_ideals(measured, ideals, strict=False):
     """
-    Aligns two lists of networks based on the intersection of their names.
+    Align two lists of networks by name.
+
+    Parameters
+    ----------
+    measured, ideals : list of :class:`~skrf.network.Network`
+        Measured and ideal calibration standards.
+    strict : bool, optional
+        If False, match ideal names as substrings of measured names.
+        If True, require a nonempty measured name and exactly one ideal
+        with the same name. Repeated measurements can share one ideal.
+
+    Returns
+    -------
+    measured, ideals : list of :class:`~skrf.network.Network`
+        Aligned standards in measured order. Unused ideals are omitted.
+
+    Raises
+    ------
+    ValueError
+        If strict matching cannot find exactly one ideal for a measurement.
 
     """
+    if strict:
+        aligned_measured, aligned_ideals = [], []
+        for measure in measured:
+            matches = [ideal for ideal in ideals if measure.name and ideal.name == measure.name]
+            if len(matches) != 1:
+                raise ValueError(f'Measured standard {measure.name!r} must match exactly one ideal by name; '
+                                 f'found {len(matches)}.')
+            aligned_measured.append(measure)
+            aligned_ideals.append(matches[0])
+        return aligned_measured, aligned_ideals
+
     measured = [ measure for measure in measured\
         for ideal in ideals if ideal.name in measure.name]
     ideals = [ ideal for measure in measured\
