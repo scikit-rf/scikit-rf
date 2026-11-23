@@ -298,7 +298,7 @@ class Frequency:
         elif len(self.f) == len(other.f) == 0:
             return True
         else:
-            return (max(abs(self.f-other.f)) < ZERO)
+            return bool(np.max(np.abs(self.f - other.f)) < ZERO)
 
     def __ne__(self,other: object) -> bool:
         return (not self.__eq__(other))
