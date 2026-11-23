@@ -1,9 +1,9 @@
 """
 .. module:: skrf.calibration.deembedding
 
-====================================================
-deembedding (:mod:`skrf.calibration.deembedding`)
-====================================================
+=============================================================
+:mod:`calibration.deembedding <skrf.calibration.deembedding>`
+=============================================================
 
 De-embedding is the procedure of removing effects of the
 test fixture that is often present in the measurement of a device

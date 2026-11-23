@@ -126,7 +126,7 @@ html_theme_options = {
         {"title": "Home", "url": "index"},
         {"title": "Tutorials", "url": "tutorials/index"},
         {"title": "Examples", "url": "examples/index"},
-        {"title": "API", "url": "api/index"},
+        {"title": "API", "url": "skrf/index"},
         {"title": "GitHub", "url": "https://github.com/scikit-rf/scikit-rf", "external": True},
     ],
     # Two levels: each page, and the pages or section headings under it.

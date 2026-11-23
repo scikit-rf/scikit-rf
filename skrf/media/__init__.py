@@ -1,7 +1,7 @@
 """
 .. module:: skrf.media
 ========================================
-media (:mod:`skrf.media`)
+:mod:`media <skrf.media>`
 ========================================
 
 This package provides objects representing transmission line mediums.

@@ -1,5 +1,5 @@
-Media
-=====
+:mod:`media <skrf.media>`
+=========================
 .. automodule:: skrf.media
 
 

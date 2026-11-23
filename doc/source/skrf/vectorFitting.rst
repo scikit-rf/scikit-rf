@@ -1,4 +1,4 @@
-vectorFitting (:mod:`skrf.vectorFitting`)
+:mod:`vectorFitting <skrf.vectorFitting>`
 =========================================
 Module for vector fitting of networks.
 

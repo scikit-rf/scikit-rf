@@ -2,7 +2,7 @@
 .. currentmodule:: skrf.constants
 
 ========================================
-constants (:mod:`skrf.constants`)
+:mod:`constants <skrf.constants>`
 ========================================
 
 This module contains constants, numerical approximations, and unit conversions

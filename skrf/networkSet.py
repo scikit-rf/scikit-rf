@@ -2,7 +2,7 @@
 .. module:: skrf.networkSet
 
 ========================================
-networkSet (:mod:`skrf.networkSet`)
+:mod:`networkSet <skrf.networkSet>`
 ========================================
 
 Provides a class representing an un-ordered set of n-port microwave networks.

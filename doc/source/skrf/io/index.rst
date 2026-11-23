@@ -1,5 +1,5 @@
-IO
-==
+:mod:`io <skrf.io>`
+===================
 
 This Package provides functions and objects for input/output.
 

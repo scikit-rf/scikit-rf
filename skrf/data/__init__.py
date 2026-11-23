@@ -1,5 +1,5 @@
 """
-data (:mod:`skrf.data`)
+:mod:`data <skrf.data>`
 ========================================
 
 This Package provides data to be used in examples and testcases.
