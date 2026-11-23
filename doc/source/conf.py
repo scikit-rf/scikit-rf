@@ -66,6 +66,10 @@ nbsphinx_allow_errors = True
 nbsphinx_kernel_name = 'python'
 numpydoc_show_class_members = False
 nbsphinx_timeout = 180
+# Render notebook figures as SVG, so they stay sharp on high-DPI screens
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg'}",
+]
 
 # Autodoc settings
 autodoc_typehints = "description"
