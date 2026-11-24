@@ -235,6 +235,18 @@ from .time import get_window, time_gate
 from .util import copy_doc, find_nearest_index, get_extn, get_fid, partial_with_docs
 
 
+def _read_only(param: np.ndarray) -> np.ndarray:
+    """Return a freshly computed network parameter as a read-only array.
+
+    Parameters such as ``z`` and ``y`` are recomputed from ``s`` on every read,
+    so writing into them in place would be silently lost. Making the array
+    read-only turns that mistake into an error. Assign a whole matrix instead,
+    for example ``ntwk.z = new_z``.
+    """
+    param.flags.writeable = False
+    return param
+
+
 def _normalize_touchstone_encoding(encoding: str) -> str:
     """Return a supported Python codec name for a Touchstone file."""
     try:
@@ -1209,7 +1221,7 @@ class Network:
         ----------
         .. [#] https://en.wikipedia.org/wiki/Two-port_network#Inverse_hybrid_parameters_(g-parameters)
         """
-        return s2g(self.s, self.z0, s_def=self.s_def)
+        return _read_only(s2g(self.s, self.z0, s_def=self.s_def))
 
     @g.setter
     def g(self, value: np.ndarray) -> None:
@@ -1244,7 +1256,7 @@ class Network:
         ----------
         .. [#] http://en.wikipedia.org/wiki/Two-port_network#Hybrid_parameters_(h-parameters)
         """
-        return s2h(self.s, self.z0, s_def=self.s_def)
+        return _read_only(s2h(self.s, self.z0, s_def=self.s_def))
 
     @h.setter
     def h(self, value: np.ndarray) -> None:
@@ -1278,7 +1290,7 @@ class Network:
         ----------
         .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
         """
-        return s2y(self._s, self.z0, s_def=self.s_def)
+        return _read_only(s2y(self._s, self.z0, s_def=self.s_def))
 
     @y.setter
     def y(self, value: np.ndarray) -> None:
@@ -1312,7 +1324,7 @@ class Network:
         ----------
         .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         """
-        return s2z(self._s, self.z0, s_def=self.s_def)
+        return _read_only(s2z(self._s, self.z0, s_def=self.s_def))
 
     @z.setter
     def z(self, value: np.ndarray) -> None:
@@ -1349,7 +1361,7 @@ class Network:
         -----------
         .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Scattering_transfer_parameters
         """
-        return s2t(self.s)
+        return _read_only(s2t(self.s))
 
     @t.setter
     def t(self, value: np.ndarray) -> None:
@@ -1416,7 +1428,7 @@ class Network:
         ----------
         .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         """
-        return s2a(self.s, self.z0, s_def=self.s_def)
+        return _read_only(s2a(self.s, self.z0, s_def=self.s_def))
 
     @a.setter
     def a(self, value: np.ndarray) -> None:
