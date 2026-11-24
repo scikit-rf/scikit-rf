@@ -3352,3 +3352,31 @@ class NetworkTestCase(unittest.TestCase):
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
+
+
+class TestComputedParametersReadOnly:
+    """Computed parameters are recomputed from s on every read (#1485)."""
+
+    @pytest.mark.parametrize("param", ["z", "y", "a", "g", "h", "t"])
+    def test_in_place_write_raises(self, param):
+        ntwk = rf.data.ring_slot.copy()
+        arr = getattr(ntwk, param)
+        assert not arr.flags.writeable
+        with pytest.raises(ValueError, match="read-only"):
+            arr[:, 0, 0] = 0
+
+    @pytest.mark.parametrize("param", ["z", "y", "a", "g", "h", "t"])
+    def test_whole_matrix_assignment_still_works(self, param):
+        ntwk = rf.data.ring_slot.copy()
+        new = getattr(ntwk, param).copy()
+        new[:, 0, 0] *= 2
+        setattr(ntwk, param, new)
+        np.testing.assert_allclose(getattr(ntwk, param), new)
+
+    def test_s_stays_writable(self):
+        ntwk = rf.data.ring_slot.copy()
+        for param in ["z", "y", "a", "g", "h", "t"]:
+            getattr(ntwk, param)
+        assert ntwk.s.flags.writeable
+        ntwk.s[:, 0, 0] = 0
+        np.testing.assert_allclose(ntwk.s[:, 0, 0], 0)
