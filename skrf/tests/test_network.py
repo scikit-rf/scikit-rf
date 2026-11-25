@@ -3349,6 +3349,90 @@ class NetworkTestCase(unittest.TestCase):
                 # Ensure that the resulting networks are equal
                 self.assertEqual(n1, n2)
 
+    def test_cascade_2port_s(self):
+        """Test the two-port fast path cascade_2port_s."""
+        from skrf.network import cascade_2port_s, connect_s
+
+        # 3D arrays (multiple frequencies)
+        s1 = (self.rng.random((10, 2, 2)) + 1j * self.rng.random((10, 2, 2))) * 0.1
+        s2 = (self.rng.random((10, 2, 2)) + 1j * self.rng.random((10, 2, 2))) * 0.1
+
+        res_fast = cascade_2port_s(s1, s2)
+        res_conn = connect_s(s1, 1, s2, 0)
+        np.testing.assert_allclose(res_fast, res_conn)
+
+        # 2D arrays (single frequency point)
+        s1_2d = s1[0]
+        s2_2d = s2[0]
+        res_fast_2d = cascade_2port_s(s1_2d, s2_2d)
+        np.testing.assert_allclose(res_fast_2d, res_conn[0])
+
+    def test_cascade_list_2port(self):
+        """Test cascade_list fast path for 2-port networks."""
+        freq = rf.Frequency(1, 10, 21, unit='GHz')
+        nets = [
+            rf.Network(
+                frequency=freq,
+                s=(self.rng.random((21, 2, 2)) + 1j * self.rng.random((21, 2, 2))) * 0.1,
+                z0=50,
+                name=f"net{i}",
+            )
+            for i in range(5)
+        ]
+
+        # Test against sequential ** cascading
+        res_seq = nets[0] ** nets[1] ** nets[2] ** nets[3] ** nets[4]
+        res_list = rf.network.cascade_list(nets)
+
+        self.assertEqual(res_list, res_seq)
+        np.testing.assert_allclose(res_list.s, res_seq.s)
+        np.testing.assert_allclose(res_list.z0, res_seq.z0)
+
+        # Test port names preservation
+        nets[0].port_names = ['input', 'mid0']
+        nets[-1].port_names = ['mid3', 'output']
+        res_named = rf.network.cascade_list(nets)
+        self.assertEqual(res_named.port_names, ['input', 'output'])
+
+        # Test non-trivial matching z0 across cascade
+        z_stages = [50, 75, 100, 75, 50, 25]
+        z_nets = [
+            rf.Network(
+                frequency=freq,
+                s=(self.rng.random((21, 2, 2)) + 1j * self.rng.random((21, 2, 2))) * 0.1,
+                z0=[z_stages[i], z_stages[i + 1]],
+            )
+            for i in range(5)
+        ]
+        res_z_seq = z_nets[0] ** z_nets[1] ** z_nets[2] ** z_nets[3] ** z_nets[4]
+        res_z_list = rf.network.cascade_list(z_nets)
+        np.testing.assert_allclose(res_z_list.s, res_z_seq.s)
+        np.testing.assert_allclose(res_z_list.z0, res_z_seq.z0)
+        self.assertEqual(res_z_list.z0[0, 0], 50)
+        self.assertEqual(res_z_list.z0[0, 1], 25)
+
+        # Test fallback when internal z0 does not match
+        z_mismatch = [
+            rf.Network(frequency=freq, s=self.rng.random((21, 2, 2)) * 0.1, z0=50),
+            rf.Network(frequency=freq, s=self.rng.random((21, 2, 2)) * 0.1, z0=75),
+        ]
+        res_mismatch_seq = z_mismatch[0] ** z_mismatch[1]
+        res_mismatch_list = rf.network.cascade_list(z_mismatch)
+        np.testing.assert_allclose(res_mismatch_list.s, res_mismatch_seq.s)
+
+        # Test singular case fallback
+        sing_A = np.array([[[0, 1], [1, 1]]], dtype=complex)
+        sing_B = np.array([[[1, 1], [1, 0]]], dtype=complex)
+        sing_netA = rf.Network(frequency=rf.Frequency(1, 1, 1, 'GHz'), s=sing_A, z0=50)
+        sing_netB = rf.Network(frequency=rf.Frequency(1, 1, 1, 'GHz'), s=sing_B, z0=50)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            sing_res = rf.network.cascade_list([sing_netA, sing_netB])
+            self.assertTrue(any(item.category is RuntimeWarning for item in w))
+            sing_seq = sing_netA ** sing_netB
+            np.testing.assert_allclose(sing_res.s, sing_seq.s)
+
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
