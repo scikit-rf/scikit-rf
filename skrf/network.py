@@ -2331,8 +2331,9 @@ class Network:
             ntwk.name = self.name
 
         if self.noise is not None and self.noise_freq is not None:
-            ntwk.noise = np.copy(self.noise[key,:])
-            ntwk.noise_freq = copy(self.noise_freq[key])
+            # the noise data has its own frequency axis, `key` indexes the s-parameters only
+            ntwk.noise = np.copy(self.noise)
+            ntwk.noise_freq = copy(self.noise_freq)
 
         try:
             ntwk.port_names = copy(self.port_names)

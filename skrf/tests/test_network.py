@@ -2631,6 +2631,20 @@ class NetworkTestCase(unittest.TestCase):
 
         return
 
+    def test_noise_getitem_index(self):
+        # the noise frequencies are independent of the s-parameter ones
+        ntwk = rf.Network(frequency=Frequency(1, 3, 5, 'GHz'), s=np.full((5, 2, 2), 0.1), z0=50)
+        ntwk.set_noise_a(Frequency(1, 3, 3, 'GHz'), nfmin_db=[1, 1.5, 2], gamma_opt=0.1, rn=10)
+
+        for key in (slice(3, 5), slice(0, 2), slice(None, None, 2)):
+            sub = ntwk[key]
+            self.assertTrue(sub.noisy)
+            np.testing.assert_allclose(sub.nfmin_db, ntwk.nfmin_db[key])
+            np.testing.assert_allclose(sub.rn, ntwk.rn[key])
+
+        # same result as slicing with a string
+        np.testing.assert_allclose(ntwk[3:5].nfmin_db, ntwk['2.5-3GHz'].nfmin_db)
+
     def test_noise_dc_extrapolation(self):
         ntwk = self.ntwk_noise
         ntwk = ntwk["0-1.5GHz"] # using only the first samples, as ntwk_noise has duplicate x value
