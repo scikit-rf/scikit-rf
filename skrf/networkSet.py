@@ -1352,13 +1352,13 @@ class NetworkSet:
         """
         Interpolate a Network from given parameters of NetworkSet's Networks.
 
-        If several Networks share the same value of `param`, they are
-        averaged before interpolation: the element-wise arithmetic mean
-        of their complex scattering parameters is used. Duplicated
-        parameter values are therefore accepted for every `interp_kind`,
-        provided the number of distinct values still satisfies the point
-        requirement of the chosen `interp_kind` (for example, 'cubic'
-        requires at least four distinct values).
+        The value of `param` must be unique across the selected Networks:
+        if several Networks share the same value of `param`, there is no
+        unique Network to interpolate from at that value, so a ValueError
+        is raised. How to aggregate such Networks (for example replicates
+        of the same measurement) is left to the user: aggregate them
+        beforehand so that each value of `param` is associated with a
+        single Network.
         If the parameters other than `param` are not fixed by `sub_params`
         and take several values in the NetworkSet, the interpolation is
         ambiguous and a ValueError is raised.
@@ -1459,15 +1459,20 @@ class NetworkSet:
         # parameter value associated to each Network of the sub-NetworkSet
         param_values = sub_ns.params_values[param]
 
-        # Networks sharing the same parameter value are averaged, so that
-        # the interpolation is performed on unique (sorted) parameter
-        # values: scipy.interpolate.interp1d does not accept duplicated
-        # values for all the interpolation kinds
-        unique_values = sorted(set(param_values))
-        if len(unique_values) != len(param_values):
-            sub_ns = NetworkSet([sub_ns.sel({param: value}).mean_s
-                                 for value in unique_values])
-            param_values = unique_values
+        # duplicated parameter values are ambiguous: several Networks
+        # share the same value of `param`, so there is no unique Network
+        # to interpolate from at that value. How to aggregate them is
+        # left to the user.
+        if len(set(param_values)) != len(param_values):
+            duplicated = sorted({value for value in param_values
+                                 if param_values.count(value) > 1})
+            raise ValueError(
+                f'Duplicated values of parameter {param}: {duplicated} '
+                f'in the selected NetworkSet. interpolate_from_params '
+                f'does not aggregate Networks sharing the same value of '
+                f'{param}: aggregate them first (e.g. by averaging them) '
+                f'so that each value of {param} is associated with a '
+                f'single Network.')
 
         interp_ntwk = sub_ns.interpolate_from_network(param_values,
                                                       x, interp_kind)
