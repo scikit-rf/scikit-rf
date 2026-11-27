@@ -183,10 +183,11 @@ Network utilities
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, Literal, NoReturn, TextIO, get_args
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence, Sized
+    from collections.abc import Callable, Sized
 
     from .plotting import Axes
 
@@ -6155,7 +6156,51 @@ def cascade_list(l: Sequence[Network]) -> Network:
         the results of cascading all networks in the list `l`
 
     """
+    if not isinstance(l, Sequence):
+        l = list(l)
+
+    if len(l) <= 1:
+        return reduce(cascade, l)
+
+    first = l[0]
+    if (
+        all(ntwk.nports == 2 for ntwk in l)
+        and not any(ntwk.noisy for ntwk in l)
+        and all(ntwk.frequency == first.frequency for ntwk in l[1:])
+        and all(ntwk.s_def == first.s_def for ntwk in l[1:])
+        and not any((ntwk.z0.imag != 0).any() for ntwk in l)
+    ):
+        z0_matches = True
+        for i in range(len(l) - 1):
+            if not np.array_equal(l[i].z0[:, 1], l[i + 1].z0[:, 0]):
+                z0_matches = False
+                break
+
+        if z0_matches:
+            S = first.s.copy()
+            singular = False
+            for ntwk in l[1:]:
+                det = 1.0 - S[..., 1, 1] * ntwk.s[..., 0, 0]
+                if np.allclose(det, 0.0):
+                    singular = True
+                    break
+                S = cascade_2port_s(S, ntwk.s)
+
+            if not singular:
+                out = first.copy(shallow_copy=True)
+                out.s = S
+                out.z0 = np.hstack((first.z0[:, [0]], l[-1].z0[:, [1]]))
+                if any(ntwk.port_names is not None for ntwk in l):
+                    pn_first = first.port_names[0] if first.port_names is not None else '0'
+                    pn_last = l[-1].port_names[1] if l[-1].port_names is not None else '1'
+                    out.port_names = [pn_first, pn_last]
+                else:
+                    out.port_names = None
+                out._ext_attrs = {}
+                return out
+
     return reduce(cascade, l)
+
 
 
 def de_embed(ntwkA: Network, ntwkB: Network) -> Network:
@@ -6890,6 +6935,36 @@ def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Netwo
 
 
 ## Functions operating on s-parameter matrices
+def cascade_2port_s(A: np.ndarray, B: np.ndarray) -> np.ndarray:
+    """
+    Cascade two 2-port s-matrices directly.
+
+    Computes the scattering parameters of cascading port 1 of 2-port network `A`
+    to port 0 of 2-port network `B`.
+
+    Parameters
+    ----------
+    A : np.ndarray
+        S-parameter matrix of shape (..., 2, 2)
+    B : np.ndarray
+        S-parameter matrix of shape (..., 2, 2)
+
+    Returns
+    -------
+    C : np.ndarray
+        Cascaded S-parameter matrix of shape (..., 2, 2)
+    """
+    a11, a12, a21, a22 = A[..., 0, 0], A[..., 0, 1], A[..., 1, 0], A[..., 1, 1]
+    b11, b12, b21, b22 = B[..., 0, 0], B[..., 0, 1], B[..., 1, 0], B[..., 1, 1]
+    d = 1.0 / (1.0 - a22 * b11)
+    C = np.empty_like(A, dtype=np.result_type(A, B))
+    C[..., 0, 0] = a11 + a12 * b11 * a21 * d
+    C[..., 0, 1] = a12 * b12 * d
+    C[..., 1, 0] = b21 * a21 * d
+    C[..., 1, 1] = b22 + b21 * a22 * b12 * d
+    return C
+
+
 def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.ndarray:
     """
     Connect two n-port networks' s-matrices together.
@@ -6927,6 +7002,7 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.
 
     See Also
     --------
+    cascade_2port_s : direct 2-port cascading fast path.
     connect : operates on :class:`Network` types
     innerconnect_s : function which implements the connection algorithm
     innerconnect_s_lstsq : actual S-parameter connection algorithm using lstsq.
@@ -6941,6 +7017,11 @@ def connect_s(A: np.ndarray, k: int, B: np.ndarray, l: int, num: int = 1) -> np.
     nA = A.shape[1]  # num ports on A
     nB = B.shape[1]  # num ports on B
     nC = nA + nB  # num ports on C
+
+    if num == 1 and nA == 2 and nB == 2 and k == 1 and l == 0:
+        det = 1.0 - A[..., 1, 1] * B[..., 0, 0]
+        if not np.allclose(det, 0.0):
+            return cascade_2port_s(A, B)
 
     # create composite matrix, appending each sub-matrix diagonally
     C = np.zeros((nf, nC, nC), dtype='complex', order='F')
