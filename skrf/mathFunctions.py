@@ -580,7 +580,7 @@ def sqrt_known_sign(z_squared: NumberLike, z_approx: NumberLike):
     z = np.sqrt(z_squared)
     return np.where(
         np.sign(np.angle(z)) == np.sign(np.angle(z_approx)),
-        z, z.conj())
+        z, -z)
 
 
 def find_correct_sign(z1: NumberLike, z2: NumberLike, z_approx: NumberLike):
