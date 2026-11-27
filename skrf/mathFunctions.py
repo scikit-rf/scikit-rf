@@ -1,5 +1,5 @@
 """
-mathFunctions (:mod:`skrf.mathFunctions`)
+:mod:`mathFunctions <skrf.mathFunctions>`
 =============================================
 
 

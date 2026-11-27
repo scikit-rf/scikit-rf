@@ -1,5 +1,5 @@
 r"""
-Qfactor (:mod:`skrf.qfactor`)
+:mod:`qfactor <skrf.qfactor>`
 ========================================
 Module for estimating the Quality (Q) factor(s) from S-parameters.
 

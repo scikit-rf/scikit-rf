@@ -1,7 +1,7 @@
 """
 .. module:: skrf.vi
 ========================================================
-virtual instruments (:mod:`skrf.vi`)
+:mod:`vi <skrf.vi>`
 ========================================================
 
 This module defines "virtual instruments" or interfaces to a number of different

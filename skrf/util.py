@@ -2,7 +2,7 @@
 
 .. currentmodule:: skrf.util
 ========================================
-util (:mod:`skrf.util`)
+:mod:`util <skrf.util>`
 ========================================
 
 Holds utilities that are general conveniences.

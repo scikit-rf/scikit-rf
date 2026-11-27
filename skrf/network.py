@@ -1,7 +1,7 @@
 """
 .. module:: skrf.network
 ========================================
-network (:mod:`skrf.network`)
+:mod:`network <skrf.network>`
 ========================================
 
 Provide an n-port network class and associated functions.

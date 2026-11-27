@@ -2,7 +2,7 @@
 .. currentmodule:: skrf.frequency
 
 ========================================
-frequency (:mod:`skrf.frequency`)
+:mod:`frequency <skrf.frequency>`
 ========================================
 
 Provides a frequency object and related functions.

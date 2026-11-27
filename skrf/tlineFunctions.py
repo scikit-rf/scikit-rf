@@ -1,7 +1,7 @@
 r"""
 .. module:: skrf.tlineFunctions
 ===============================================
-tlineFunctions (:mod:`skrf.tlineFunctions`)
+:mod:`tlineFunctions <skrf.tlineFunctions>`
 ===============================================
 
 This module provides functions related to transmission line theory.

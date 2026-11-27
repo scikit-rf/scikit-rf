@@ -1,8 +1,8 @@
 .. _api:
 
 
-API
-=========
+``skrf``
+========
 
 .. toctree::
     :maxdepth: 1

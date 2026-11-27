@@ -1,5 +1,5 @@
 """
-taper (:mod:`skrf.taper`)
+:mod:`taper <skrf.taper>`
 =========================
 
 Taper Objects

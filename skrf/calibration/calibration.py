@@ -2,7 +2,7 @@
 .. module:: skrf.calibration.calibration
 
 ================================================================
-calibration (:mod:`skrf.calibration.calibration`)
+:mod:`calibration <skrf.calibration.calibration>`
 ================================================================
 
 

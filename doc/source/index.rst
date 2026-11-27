@@ -121,7 +121,7 @@ If you use scikit-rf, see :doc:`citations_ack/acknowledging`.
     :caption: Reference
     :hidden:
 
-    api/index
+    skrf/index
     glossary
 
 .. toctree::

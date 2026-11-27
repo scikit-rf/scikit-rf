@@ -1,7 +1,7 @@
 """
 .. module:: skrf.time
 ========================================
-time (:mod:`skrf.time`)
+:mod:`time <skrf.time>`
 ========================================
 
 Time domain functions

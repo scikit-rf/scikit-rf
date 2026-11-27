@@ -1,5 +1,5 @@
 """
-circuit (:mod:`skrf.circuit`)
+:mod:`circuit <skrf.circuit>`
 ========================================
 
 The Circuit class represents a circuit of arbitrary topology,

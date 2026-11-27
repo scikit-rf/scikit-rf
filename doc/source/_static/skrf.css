@@ -335,6 +335,21 @@ html:not(.dark) .highlight {
   font-weight: 700;
 }
 
+/* API pages are titled with their module's name, as code linking to the module. In a page's heading
+   and in the API index those titles take the heading color, and the link color only on hover. */
+.yue h1 code.literal,
+.yue .toctree-wrapper a code.xref {
+  color: var(--sy-c-heading);
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+.yue h1 a:hover code.xref,
+.yue .toctree-wrapper a:hover code.xref {
+  color: var(--sk-link-hover);
+}
+
 /* Headings */
 .yue h1,
 .yue h2,

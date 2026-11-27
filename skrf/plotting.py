@@ -1,5 +1,5 @@
 """
-plotting (:mod:`skrf.plotting`)
+:mod:`plotting <skrf.plotting>`
 ========================================
 
 

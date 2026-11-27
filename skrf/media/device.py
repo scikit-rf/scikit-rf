@@ -2,7 +2,7 @@
 .. currentmodule:: skrf.media.device
 
 ========================================
-device (:mod:`skrf.media.device`)
+:mod:`media.device <skrf.media.device>`
 ========================================
 
 Device is a generic n-port microwave device class to create common Network.

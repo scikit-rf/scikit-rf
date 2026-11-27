@@ -2,7 +2,7 @@
 
 .. currentmodule:: skrf.instances
 ========================================
-instances (:mod:`skrf.instances`)
+:mod:`instances <skrf.instances>`
 ========================================
 
 This module contains commonly used  instantiated objects's.
