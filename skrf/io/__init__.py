@@ -23,9 +23,11 @@ through the Network constructor, :func:`~skrf.network.Network.__init__`
 
 .. automodule:: skrf.io.csv
 
+.. automodule:: skrf.io.xarray
+
 
 """
-from . import citi, csv, general, mdif, metas, touchstone
+from . import citi, csv, general, mdif, metas, touchstone, xarray
 from .citi import Citi
 from .general import load_all_touchstones, read, read_all, write, write_all
 from .mdif import Mdif

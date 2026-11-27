@@ -18,6 +18,7 @@ ipython `notebook <http://ipython.org/notebook.html>`_
     Connecting_Networks
     Plotting
     NetworkSet
+    Xarray_and_Zarr
     Circuit
     Calibration
     Deembedding
