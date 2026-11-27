@@ -640,7 +640,7 @@ class SplitPi(Deembedding):
             thru = self.thru
 
         left = thru.copy()
-        left_y = left.y
+        left_y = left.y.copy()
         left_y[:,0,0] = (thru.y[:,0,0] - thru.y[:,1,0] + thru.y[:,1,1] - thru.y[:,0,1]) / 2
         left_y[:,0,1] = thru.y[:,1,0] + thru.y[:,0,1]
         left_y[:,1,0] = thru.y[:,1,0] + thru.y[:,0,1]
@@ -741,7 +741,7 @@ class SplitTee(Deembedding):
             thru = self.thru
 
         left = thru.copy()
-        left_z = left.z
+        left_z = left.z.copy()
         left_z[:,0,0] = (thru.z[:,0,0] + thru.z[:,1,0] + thru.z[:,1,1] + thru.z[:,0,1]) / 2
         left_z[:,0,1] = thru.z[:,1,0] + thru.z[:,0,1]
         left_z[:,1,0] = thru.z[:,1,0] + thru.z[:,0,1]
